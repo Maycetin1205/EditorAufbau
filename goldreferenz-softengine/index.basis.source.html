@@ -1,0 +1,810 @@
+<!--SOFTENGINE-VAR!JWHtmlStart-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--SOFTENGINE-VAR!JWHtmlLadeDatei-->
+  <script>
+    // SoftENGINE kann Erstellen sehr frueh aufrufen; der echte Loader wird unten verdrahtet.
+    window.__FF_ErstellenQueue = false;
+    window.__GOLDREF_DEBUG = window.__GOLDREF_DEBUG || [];
+    window.Erstellen = function () {
+      try { if (typeof ResetDataBasis === "function") ResetDataBasis(); } catch (err) {}
+      try { if (typeof InitialisiereDatenBasis === "function") InitialisiereDatenBasis(); } catch (err) {}
+      window.__FF_ErstellenQueue = true;
+      if (typeof window.__GOLDREF_LOAD_ALL === "function") window.__GOLDREF_LOAD_ALL();
+    };
+    window.initData = window.Erstellen;
+    window.ReloadData = function () {
+      window.__FF_ErstellenQueue = true;
+      if (typeof window.__GOLDREF_LOAD_ALL === "function") window.__GOLDREF_LOAD_ALL();
+    };
+  </script>
+  <title>SoftENGINE Goldreferenz</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --line: #d8dde6;
+      --text: #172033;
+      --muted: #667085;
+      --blue: #1f6feb;
+      --green: #16833a;
+      --red: #c7352b;
+      --yellow: #946200;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: minmax(420px, 1.4fr) minmax(340px, 1fr);
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .panel h1,
+    .panel h2 {
+      margin: 0;
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .pill.ok {
+      color: var(--green);
+      border-color: #b7dfc4;
+    }
+
+    .pill.warn {
+      color: var(--yellow);
+      border-color: #ead391;
+    }
+
+    .content {
+      padding: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #edf0f5;
+      padding: 7px 8px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 700;
+      background: #fbfcfe;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr[data-key] {
+      cursor: pointer;
+    }
+
+    tr[data-key]:hover,
+    tr.selected {
+      background: #eef5ff;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 4px 7px;
+      background: #fff;
+    }
+
+    button {
+      min-height: 30px;
+      border: 1px solid #1d5fc4;
+      border-radius: 4px;
+      padding: 5px 10px;
+      color: #fff;
+      background: var(--blue);
+      cursor: pointer;
+    }
+
+    button.secondary {
+      color: var(--text);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .value {
+      min-height: 30px;
+      border: 1px solid #edf0f5;
+      border-radius: 4px;
+      padding: 7px 8px;
+      background: #fbfcfe;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .log {
+      height: 210px;
+      overflow: auto;
+      margin: 0;
+      padding: 10px;
+      background: #101828;
+      color: #d0d5dd;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 900px) {
+      .page,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel">
+      <h1>SoftENGINE Goldreferenz</h1>
+      <div class="status" id="status"></div>
+      <div class="content">
+        <div class="field">
+          <label for="search">Terminplaner filtern</label>
+          <input id="search" type="text" placeholder="Text in sichtbaren Feldern suchen">
+        </div>
+        <div style="max-height: 520px; overflow: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>PINDEX</th>
+                <th>Kunde/Tier-Schluessel</th>
+                <th>Status/Notiz</th>
+                <th>Beleg-Nr.</th>
+                <th>Beleg-Verknuepfung</th>
+              </tr>
+            </thead>
+            <tbody id="terminRows">
+              <tr><td colspan="5">Warte auf SEDATA...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>Auswahl, Join und Relationen</h2>
+      <div class="content">
+        <div class="grid">
+          <div class="field">
+            <label>Ausgewaehlter PINDEX</label>
+            <div class="value" id="selectedKey">-</div>
+          </div>
+          <div class="field">
+            <label>IDBID fuer Relation</label>
+            <div class="value" id="relationId">ID0005</div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Terminplaner 10_8</label>
+            <div class="value" id="terminField">-</div>
+          </div>
+          <div class="field">
+            <label>PUT Statuswert</label>
+            <select id="statusValue">
+              <option value="Offen">Offen</option>
+              <option value="In Arbeit">In Arbeit</option>
+              <option value="Erledigt">Erledigt</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Join Kundenhaustiere 10_8</label>
+            <div class="value" id="petJoin">-</div>
+          </div>
+          <div class="field">
+            <label>Join Beleg_1 11_8</label>
+            <div class="value" id="belegJoin">-</div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>GET_RELATION Ergebnis</label>
+            <div class="value" id="getResult">-</div>
+          </div>
+          <div class="field">
+            <label for="toolNr">START_TOOL Nummer</label>
+            <input id="toolNr" type="text" value="1200">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="btnGet" type="button">GET_RELATION 640 testen</button>
+          <button id="btnPut" type="button">PUT_RELATION 174 senden</button>
+          <button id="btnTool" type="button">START_TOOL testen</button>
+          <button id="btnReload" class="secondary" type="button">SEDATA neu lesen</button>
+        </div>
+
+        <p class="small">
+          Laborfunktionen sind bewusst nicht aktiv: MASKENEVENT, normales VAR,
+          PUTADD_RELATION und Refresh/Lifecycle.
+        </p>
+      </div>
+      <pre class="log" id="log"></pre>
+    </aside>
+  </main>
+
+  <script>
+    window.__FF_SEFILELOOP = [
+      { INDEX_NR: 0, ALIAS: "Terminplaner", ID: "IDBID0005", FELDER: "*" },
+      { INDEX_NR: 0, ALIAS: "Kundenhaustiere", ID: "IDBID0009", FELDER: "*" },
+      { INDEX_NR: 0, ALIAS: "Beleg_1", ID: "BEL", FELDER: "19_10,3_8,11_8,1_1" }
+    ];
+    window.__FF_SEVARS = { SEFILELOOP: window.__FF_SEFILELOOP };
+    window.__FF_ALIAS_TO_ID = {};
+    window.__FF_SEFILELOOP.forEach(function (entry) {
+      if (entry.ALIAS && entry.ID) {
+        window.__FF_ALIAS_TO_ID[String(entry.ALIAS).toLowerCase()] = entry.ID;
+      }
+    });
+
+    // SoftENGINE fragt die Variablen-Datei je nach Host per XHR/fetch ab.
+    (function () {
+      var seJson = JSON.stringify(window.__FF_SEVARS);
+
+      function isSEVarUrl(url) {
+        return typeof url === "string" && url.indexOf("SEvariablen") !== -1;
+      }
+
+      var oldOpen = window.XMLHttpRequest && window.XMLHttpRequest.prototype.open;
+      var oldSend = window.XMLHttpRequest && window.XMLHttpRequest.prototype.send;
+
+      if (oldOpen && oldSend) {
+        window.XMLHttpRequest.prototype.open = function (method, url) {
+          if (isSEVarUrl(url)) {
+            this.__ffIntercept = true;
+            this.__ffJson = seJson;
+            window.__GOLDREF_DEBUG.push("SEvariablen XHR abgefangen: " + url);
+          }
+          return oldOpen.apply(this, arguments);
+        };
+
+        window.XMLHttpRequest.prototype.send = function () {
+          if (this.__ffIntercept) {
+            var self = this;
+            Object.defineProperty(self, "readyState", { get: function () { return 4; }, configurable: true });
+            Object.defineProperty(self, "status", { get: function () { return 200; }, configurable: true });
+            Object.defineProperty(self, "responseText", { get: function () { return self.__ffJson; }, configurable: true });
+            Object.defineProperty(self, "response", { get: function () { return self.__ffJson; }, configurable: true });
+            setTimeout(function () {
+              if (typeof self.onreadystatechange === "function") self.onreadystatechange();
+              if (typeof self.onload === "function") self.onload();
+            }, 0);
+            return;
+          }
+          return oldSend.apply(this, arguments);
+        };
+      }
+
+      if (typeof window.fetch === "function") {
+        var oldFetch = window.fetch.bind(window);
+        window.fetch = function (input, init) {
+          var url = typeof input === "string" ? input : (input && input.url ? input.url : String(input));
+          if (isSEVarUrl(url)) {
+            window.__GOLDREF_DEBUG.push("SEvariablen fetch abgefangen: " + url);
+            return Promise.resolve(new Response(seJson, {
+              status: 200,
+              headers: { "Content-Type": "application/json; charset=utf-8" }
+            }));
+          }
+          return oldFetch(input, init);
+        };
+      }
+    })();
+
+    // Der funktionierende Export startet zuerst die SE-Kommunikation.
+    (function () {
+      try {
+        if (window.selib && window.selib.Json && typeof window.selib.Json.InitializeERPConnection === "function") {
+          window.selib.Json.InitializeERPConnection();
+          window.__GOLDREF_DEBUG.push("selib.Json.InitializeERPConnection aufgerufen");
+          return;
+        }
+      } catch (err) {
+        window.__GOLDREF_DEBUG.push("selib.Json.InitializeERPConnection Fehler: " + String(err));
+      }
+
+      try {
+        if (typeof window.InitialisiereSchnittstelle === "function") {
+          window.InitialisiereSchnittstelle();
+          window.__GOLDREF_DEBUG.push("InitialisiereSchnittstelle aufgerufen");
+        } else {
+          window.__GOLDREF_DEBUG.push("Keine SE-Schnittstellenfunktion gefunden");
+        }
+      } catch (err2) {
+        window.__GOLDREF_DEBUG.push("InitialisiereSchnittstelle Fehler: " + String(err2));
+      }
+    })();
+
+    (function () {
+      "use strict";
+
+      var state = {
+        rows: {},
+        selectedRow: null,
+        selectedKey: ""
+      };
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function log(message, data) {
+        var line = new Date().toLocaleTimeString() + " " + message;
+        if (data !== undefined) {
+          try {
+            line += " " + JSON.stringify(data);
+          } catch (err) {
+            line += " " + String(data);
+          }
+        }
+        el("log").textContent = line + "\n" + el("log").textContent;
+        if (window.console) console.log("[GOLDREF]", message, data || "");
+      }
+
+      function normalizeRelationId(value) {
+        var raw = String(value || "").trim();
+        if (/^IDBID\d+$/i.test(raw)) return raw.replace(/^IDBID/i, "ID").toUpperCase();
+        if (/^IDB\d+$/i.test(raw)) return raw.replace(/^IDB/i, "ID").toUpperCase();
+        return raw;
+      }
+
+      function getRowKey(row, fallbackIndex) {
+        return getVal(row, "PINDEX") ||
+          getVal(row, "pindex") ||
+          getVal(row, "KEY") ||
+          getVal(row, "key") ||
+          getVal(row, "ID") ||
+          getVal(row, "id") ||
+          String(fallbackIndex);
+      }
+
+      function getVal(row, field) {
+        if (!row || !field) return "";
+        if (row[field] != null && String(row[field]).trim() !== "") return String(row[field]).trim();
+
+        var wanted = String(field).toLowerCase();
+        var keys = Object.keys(row);
+        for (var i = 0; i < keys.length; i++) {
+          var key = keys[i];
+          var lower = key.toLowerCase();
+          if (lower === wanted || lower.slice(-wanted.length - 1) === "_" + wanted) {
+            if (row[key] != null && String(row[key]).trim() !== "") return String(row[key]).trim();
+          }
+        }
+
+        // SoftENGINE rows may expose a raw fixed-width record.
+        var raw = String(row.SATZNEU || row.SATZ || row.RAW || row.raw || "");
+        var match = /^(\d+)_(\d+)$/.exec(String(field));
+        if (raw && match) {
+          var pos = parseInt(match[1], 10);
+          var len = parseInt(match[2], 10);
+          if (!isNaN(pos) && !isNaN(len) && len > 0) return raw.substring(pos, pos + len).trim();
+        }
+
+        return "";
+      }
+
+      function findLoop(alias) {
+        var data = window.SEDATA && window.SEDATA.Daten;
+        var loop = data && data.SEFileLoop;
+        var wanted = String(alias || "").toLowerCase();
+
+        if (Array.isArray(loop)) {
+          for (var i = 0; i < loop.length; i++) {
+            if (String(loop[i].ALIAS || loop[i].alias || "").toLowerCase() === wanted) return loop[i];
+          }
+        }
+
+        if (loop && typeof loop === "object") {
+          var keys = Object.keys(loop);
+          for (var k = 0; k < keys.length; k++) {
+            var entry = loop[keys[k]];
+            if (String(keys[k]).toLowerCase() === wanted) return entry;
+            if (String(entry && (entry.ALIAS || entry.alias) || "").toLowerCase() === wanted) return entry;
+          }
+        }
+
+        return null;
+      }
+
+      function rowsFromContainer(container) {
+        if (!container) return [];
+        if (Array.isArray(container)) return container;
+        var rows = container.Zeilen || container.zeilen || container.Saetze ||
+          container.saetze || container.Rows || container.rows ||
+          container.Daten || container.daten || [];
+        if (typeof rows === "string") {
+          try {
+            rows = JSON.parse(rows);
+          } catch (err) {
+            rows = [];
+          }
+        }
+        return Array.isArray(rows) ? rows : [];
+      }
+
+      function loadRows(alias) {
+        var data = window.SEDATA && window.SEDATA.Daten;
+        if (!data) return [];
+
+        var loopEntry = findLoop(alias);
+        var rows = rowsFromContainer(loopEntry);
+        if (rows.length) return rows;
+
+        var tabellen = data.Tabellen || data.tabellen;
+        if (!tabellen) return [];
+
+        var config = window.__FF_SEFILELOOP.filter(function (item) {
+          return item.ALIAS === alias;
+        })[0];
+        var candidates = [alias];
+        if (config && config.ID) {
+          candidates.push(config.ID);
+          candidates.push(normalizeRelationId(config.ID));
+        }
+
+        for (var i = 0; i < candidates.length; i++) {
+          rows = rowsFromContainer(tabellen[candidates[i]]);
+          if (rows.length) return rows;
+        }
+
+        return [];
+      }
+
+      function findJoinedRow(alias, field, value) {
+        var rows = state.rows[alias] || [];
+        for (var i = 0; i < rows.length; i++) {
+          if (String(getVal(rows[i], field)) === String(value)) return rows[i];
+        }
+        return null;
+      }
+
+      function setStatus() {
+        var hasSeData = !!(window.SEDATA && window.SEDATA.Daten);
+        var html = "";
+        html += '<span class="pill ' + (hasSeData ? "ok" : "warn") + '">' + (hasSeData ? "SEDATA erkannt" : "Warte auf SEDATA") + "</span>";
+        html += '<span class="pill">Terminplaner: ' + (state.rows.Terminplaner || []).length + "</span>";
+        html += '<span class="pill">Kundenhaustiere: ' + (state.rows.Kundenhaustiere || []).length + "</span>";
+        html += '<span class="pill">Beleg_1: ' + (state.rows.Beleg_1 || []).length + "</span>";
+        el("status").innerHTML = html;
+      }
+
+      function renderTable() {
+        var tbody = el("terminRows");
+        var rows = state.rows.Terminplaner || [];
+        var search = String(el("search").value || "").toLowerCase();
+        var html = "";
+
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var key = getRowKey(row, i);
+          var visible = [
+            key,
+            getVal(row, "10_8"),
+            getVal(row, "118_30"),
+            getVal(row, "3_8"),
+            getVal(row, "11_8")
+          ];
+          if (search && visible.join(" ").toLowerCase().indexOf(search) < 0) continue;
+
+          html += '<tr data-key="' + esc(key) + '"' + (key === state.selectedKey ? ' class="selected"' : "") + ">";
+          for (var c = 0; c < visible.length; c++) html += "<td>" + esc(visible[c]) + "</td>";
+          html += "</tr>";
+        }
+
+        tbody.innerHTML = html || '<tr><td colspan="5">Keine Zeilen gefunden.</td></tr>';
+      }
+
+      function renderSelection() {
+        var row = state.selectedRow;
+        var joinValue = row ? getVal(row, "10_8") : "";
+        var belegValue = row ? getVal(row, "11_8") : "";
+        var pet = joinValue ? findJoinedRow("Kundenhaustiere", "10_8", joinValue) : null;
+        var beleg = belegValue ? findJoinedRow("Beleg_1", "11_8", belegValue) : null;
+
+        el("selectedKey").textContent = state.selectedKey || "-";
+        el("terminField").textContent = joinValue || "-";
+        el("petJoin").textContent = pet ? JSON.stringify(pickPreview(pet)) : "-";
+        el("belegJoin").textContent = beleg ? JSON.stringify(pickPreview(beleg)) : "-";
+        el("btnPut").disabled = !row;
+      }
+
+      function pickPreview(row) {
+        var out = {};
+        ["10_8", "11_8", "19_10", "3_8", "1_1", "118_30"].forEach(function (field) {
+          var value = getVal(row, field);
+          if (value) out[field] = value;
+        });
+        return out;
+      }
+
+      function selectByKey(key) {
+        var rows = state.rows.Terminplaner || [];
+        for (var i = 0; i < rows.length; i++) {
+          if (getRowKey(rows[i], i) === key) {
+            state.selectedRow = rows[i];
+            state.selectedKey = key;
+            log("Auswahl gesetzt", { PINDEX: key, join10_8: getVal(rows[i], "10_8") });
+            renderTable();
+            renderSelection();
+            return;
+          }
+        }
+      }
+
+      function sendMessage(type, payload) {
+        if (typeof window.basisHTML_SND_MSG === "function") {
+          window.basisHTML_SND_MSG(type, payload);
+          return true;
+        }
+        log("basisHTML_SND_MSG nicht vorhanden", { type: type, payload: payload });
+        return false;
+      }
+
+      function getRelation640() {
+        var payload = { NR: "640", PARAMS: [normalizeRelationId("IDBID0005"), "", ""] };
+        el("getResult").textContent = "warte...";
+        log("GET_RELATION senden", payload);
+        sendMessage("GET_RELATION", payload);
+
+        window.__GOLDREF_GET_TIMER = window.setTimeout(function () {
+          if (el("getResult").textContent === "warte...") {
+            el("getResult").textContent = "Timeout/keine BWMSG";
+            log("GET_RELATION Timeout oder keine Antwort");
+          }
+        }, 5000);
+      }
+
+      function putRelation174() {
+        if (!state.selectedRow) {
+          log("PUT_RELATION abgebrochen: keine Auswahl");
+          return;
+        }
+        var params = [
+          "118",
+          "30",
+          "L",
+          state.selectedKey,
+          normalizeRelationId("IDBID0005"),
+          el("statusValue").value
+        ];
+        var payload = { NR: "174", PARAMS: params };
+        log("PUT_RELATION fire-and-forget senden", payload);
+        sendMessage("PUT_RELATION", payload);
+      }
+
+      function startTool() {
+        var nr = String(el("toolNr").value || "").trim();
+        if (!nr) {
+          log("START_TOOL abgebrochen: keine Toolnummer");
+          return;
+        }
+
+        var command = "0,START_TOOL," + nr;
+        if (typeof window.sendBWLinkIntern === "function") {
+          log("START_TOOL via sendBWLinkIntern", command);
+          window.sendBWLinkIntern(command);
+          return;
+        }
+
+        log("START_TOOL via basisHTML_SND_MSG", { NR: nr });
+        if (!sendMessage("START_TOOL", { NR: nr })) {
+          window.location.href = "bw-link:" + command;
+        }
+      }
+
+      function loadAll() {
+        state.rows.Terminplaner = loadRows("Terminplaner");
+        state.rows.Kundenhaustiere = loadRows("Kundenhaustiere");
+        state.rows.Beleg_1 = loadRows("Beleg_1");
+        setStatus();
+        renderTable();
+        renderSelection();
+        if (window.SEDATA && window.SEDATA.Daten && !window.__GOLDREF_SHAPE_LOGGED) {
+          window.__GOLDREF_SHAPE_LOGGED = true;
+          log("SEDATA-Struktur", {
+            keys: Object.keys(window.SEDATA.Daten),
+            hasSEFileLoop: !!window.SEDATA.Daten.SEFileLoop,
+            hasTabellen: !!window.SEDATA.Daten.Tabellen
+          });
+        }
+      }
+
+      function requestSoftEngineData() {
+        if (window.SEDATA && window.SEDATA.Daten) return;
+        try {
+          if (typeof window.ResetDataBasis === "function") window.ResetDataBasis();
+        } catch (err) {
+          log("ResetDataBasis Fehler", String(err));
+        }
+        try {
+          if (typeof window.InitialisiereDatenBasis === "function") {
+            window.InitialisiereDatenBasis();
+            log("InitialisiereDatenBasis aufgerufen");
+          }
+        } catch (err) {
+          log("InitialisiereDatenBasis Fehler", String(err));
+        }
+      }
+
+      window.__GOLDREF_LOAD_ALL = loadAll;
+      window.Erstellen = function () {
+        requestSoftEngineData();
+        loadAll();
+      };
+      window.initData = window.Erstellen;
+      window.ReloadData = window.Erstellen;
+
+      function boot() {
+        el("terminRows").addEventListener("click", function (event) {
+          var row = event.target.closest && event.target.closest("tr[data-key]");
+          if (row) selectByKey(row.getAttribute("data-key"));
+        });
+        el("search").addEventListener("input", renderTable);
+        el("btnGet").addEventListener("click", getRelation640);
+        el("btnPut").addEventListener("click", putRelation174);
+        el("btnTool").addEventListener("click", startTool);
+        el("btnReload").addEventListener("click", function () {
+          log("SEDATA neu gelesen");
+          loadAll();
+        });
+
+        window.addEventListener("message", function (event) {
+          var data = typeof event.data === "string" ? tryJson(event.data) : event.data;
+          if (data && data.MSG && data.MSG.DATA && data.MSG.DATA.Daten) {
+            window.SEDATA = window.SEDATA || {};
+            window.SEDATA.Daten = data.MSG.DATA.Daten;
+            log("SEDATA per Message empfangen");
+            loadAll();
+          }
+          var result = data && data.MSG && data.MSG.DATA && data.MSG.DATA.RESULT;
+          if (result != null) {
+            window.clearTimeout(window.__GOLDREF_GET_TIMER);
+            el("getResult").textContent = String(result);
+            log("GET_RELATION Antwort", result);
+          }
+        });
+
+        requestSoftEngineData();
+        loadAll();
+        if (window.__GOLDREF_DEBUG && window.__GOLDREF_DEBUG.length) {
+          for (var i = 0; i < window.__GOLDREF_DEBUG.length; i++) log(window.__GOLDREF_DEBUG[i]);
+        } else {
+          log("Noch kein SEvariablen-XHR/fetch abgefangen");
+        }
+        window.__GOLDREF_POLL = window.setInterval(loadAll, 1000);
+        log("Goldreferenz gestartet");
+      }
+
+      function tryJson(text) {
+        try {
+          return JSON.parse(text);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
+<!--SOFTENGINE-VAR!JWHtmlEnde-->
