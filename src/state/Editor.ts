@@ -1,18 +1,17 @@
 // Editor
-// Zentrale Klasse fuer Editor-Zustand. Erbt von Subject (Observer-Pattern).
-// Komponenten abonnieren via editor.subscribe(fn).
-// Bei jeder Aenderung ruft Editor notify(this) auf -> alle Observer reagieren.
+// Singleton-Klasse mit Editor-State. Speichert ausschliesslich serialisierbare BlockData.
+// Erbt von Subject (Observer-Pattern). React-Bruecke via useSyncExternalStore (siehe useEditor.ts).
 
-import type { BasicBlock } from '../core/blocks/BasicBlock'
-import { createBlock } from '../core/blocks/blockFactory'
+import type { BlockData } from '../core/blocks/BlockData'
+import { createBlockData } from '../core/blocks/blockFactory'
 import { Subject } from './Subject'
 
 export class Editor extends Subject<Editor> {
-  private _blocks: BasicBlock[] = []
+  private _blocks: BlockData[] = []
   private _selectedId: string | null = null
   private _version: number = 0
 
-  get blocks(): readonly BasicBlock[] {
+  get blocks(): readonly BlockData[] {
     return this._blocks
   }
 
@@ -20,13 +19,12 @@ export class Editor extends Subject<Editor> {
     return this._selectedId
   }
 
-  get selectedBlock(): BasicBlock | null {
+  get selectedBlock(): BlockData | null {
     if (this._selectedId === null) return null
     return this._blocks.find((b) => b.id === this._selectedId) ?? null
   }
 
-  // Versions-Zaehler: useSyncExternalStore vergleicht primitive Werte mit Object.is.
-  // Bei jeder Aenderung erhoeht. React rendert nur wenn version sich aendert.
+  // Versions-Zaehler: useSyncExternalStore vergleicht primitive Snapshots mit Object.is.
   get version(): number {
     return this._version
   }
@@ -36,11 +34,11 @@ export class Editor extends Subject<Editor> {
     super.notify(data)
   }
 
-  addBlock(type: string): BasicBlock {
-    const block = createBlock(type)
-    this._blocks.push(block)
+  addBlock(type: string): BlockData {
+    const data = createBlockData(type)
+    this._blocks = [...this._blocks, data]
     this.notify(this)
-    return block
+    return data
   }
 
   removeBlock(id: string): void {
@@ -55,12 +53,13 @@ export class Editor extends Subject<Editor> {
   }
 
   updateProperty(id: string, attr: string, value: unknown): void {
-    const block = this._blocks.find((b) => b.id === id)
-    if (!block) return
-    Reflect.set(block, attr, value)
+    // Immutables Update: neue BlockData mit neuem props-Objekt.
+    // Notwendig damit React den BlockData-Wechsel in BlockHost erkennt (Object.is-Vergleich).
+    this._blocks = this._blocks.map((b) =>
+      b.id === id ? { ...b, props: { ...b.props, [attr]: value } } : b,
+    )
     this.notify(this)
   }
 }
 
-// Singleton-Instanz fuer die ganze App.
 export const editor = new Editor()

@@ -1,23 +1,16 @@
 // TextBlock
-// Konkreter Block-Typ: Text.
-// Erweitert BasicBlock um content, fontSize, color, align.
-// Registriert sich am Ende der Datei als Custom-Element <ff-text>.
-// Validiert dass Vererbungs-Muster wiederverwendbar ist (zweiter Block nach Button).
+// Lit Web Component fuer den Text-Block.
+// Reine View: haelt nur Render-Properties (content, fontSize, color, align).
+// Editor-State (id, layout, type) lebt im Editor als BlockData.
 
-import { html, type TemplateResult } from 'lit'
-import { BasicBlock } from '../../core/blocks/BasicBlock'
-import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { html, LitElement, type TemplateResult } from 'lit'
 import { registerBlockType } from '../../core/blocks/blockRegistry'
 
-export class TextBlock extends BasicBlock {
-  protected _content: string = 'Neuer Text'
-  protected _fontSize: number = 16
-  protected _color: string = '#000000'
-  protected _align: 'left' | 'center' | 'right' = 'left'
-
-  constructor(id: string = crypto.randomUUID(), width: number = 200, height: number = 40) {
-    super(id, 'text', width, height)
-  }
+export class TextBlock extends LitElement {
+  private _content: string = 'Neuer Text'
+  private _fontSize: number = 16
+  private _color: string = '#000000'
+  private _align: string = 'left'
 
   get content(): string {
     return this._content
@@ -46,53 +39,63 @@ export class TextBlock extends BasicBlock {
     this.requestUpdate('color', old)
   }
 
-  get align(): 'left' | 'center' | 'right' {
+  get align(): string {
     return this._align
   }
-  set align(v: 'left' | 'center' | 'right') {
+  set align(v: string) {
     const old = this._align
     this._align = v
     this.requestUpdate('align', old)
   }
 
-  override get customProperties(): PropertyDescription[] {
-    return [
-      {
-        attributeName: 'content',
-        name: 'Inhalt',
-        description: 'Text-Inhalt des Blocks',
-        isArray: false,
-        maxLength: 500,
-      },
-      {
-        attributeName: 'fontSize',
-        name: 'Schriftgroesse',
-        description: 'Groesse in Pixel',
-        isArray: false,
-        maxLength: 4,
-      },
-      {
-        attributeName: 'color',
-        name: 'Farbe',
-        description: 'Schriftfarbe als Hex-Code',
-        isArray: false,
-        maxLength: 7,
-      },
-      {
-        attributeName: 'align',
-        name: 'Ausrichtung',
-        description: 'Links, Mitte oder Rechts',
-        isArray: false,
-        maxLength: 6,
-      },
-    ]
-  }
-
-  override render(): TemplateResult {
+  render(): TemplateResult {
     const style = `font-size:${this._fontSize}px;color:${this._color};text-align:${this._align};`
     return html`<span style="${style}">${this._content}</span>`
   }
 }
 
-customElements.define('ff-text', TextBlock)
-registerBlockType('text', TextBlock)
+if (!customElements.get('ff-text')) {
+  customElements.define('ff-text', TextBlock)
+}
+
+registerBlockType({
+  type: 'text',
+  tagName: 'ff-text',
+  defaultProps: {
+    content: 'Neuer Text',
+    fontSize: 16,
+    color: '#000000',
+    align: 'left',
+  },
+  defaultLayout: { width: 200, height: 40 },
+  customProperties: [
+    {
+      attributeName: 'content',
+      name: 'Inhalt',
+      description: 'Text-Inhalt des Blocks',
+      isArray: false,
+      maxLength: 500,
+    },
+    {
+      attributeName: 'fontSize',
+      name: 'Schriftgroesse',
+      description: 'Groesse in Pixel',
+      isArray: false,
+      maxLength: 4,
+    },
+    {
+      attributeName: 'color',
+      name: 'Farbe',
+      description: 'Schriftfarbe als Hex-Code',
+      isArray: false,
+      maxLength: 7,
+    },
+    {
+      attributeName: 'align',
+      name: 'Ausrichtung',
+      description: 'Links, Mitte oder Rechts',
+      isArray: false,
+      maxLength: 6,
+    },
+  ],
+})

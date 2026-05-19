@@ -18,9 +18,9 @@ Leitsatz:
 React baut die Werkstatt.
 Mantine liefert die einheitliche Editor-UI.
 Lit/Web Components sind die echten WYSIWYG-Bausteine.
-Zustand haelt den Zustand und bildet das Observer Pattern.
-TypeScript/Zod beschreiben die Regeln.
-SoftEngine wird ueber Kataloge, Vertrage und Export-Adapter angebunden.
+Eine hand-gebaute Subject-Klasse plus Editor-Singleton bildet das Observer Pattern; React haengt sich via useSyncExternalStore an.
+TypeScript beschreibt die Regeln. Zod nur dort, wo externe Daten in den Editor kommen.
+SoftEngine wird ueber Kataloge, Vertraege und Export-Adapter angebunden.
 ```
 
 ## 2. Nicht verhandelbare Regeln
@@ -46,8 +46,8 @@ SoftEngine wird ueber Kataloge, Vertrage und Export-Adapter angebunden.
 | Editor Shell | React + Vite | App, Layout, Canvas, Inspector, Workflow |
 | Editor UI | Mantine | Einheitlicher professioneller Look fuer Panels, Forms, Modals, Tabs, Tabellen |
 | Echte Blocks | Lit/Web Components | WYSIWYG-Bausteine fuer Editor und Export |
-| State | Zustand | Zentraler Zustand mit selektiven Subscriptions, Observer Pattern |
-| Regeln | TypeScript + Zod | Schemas, Validierung, verstaendliche Datenmodelle |
+| State | Subject-Klasse + Editor-Singleton (hand-gebaut) | Observer Pattern, React-Bruecke via useSyncExternalStore, keine externe State-Library |
+| Regeln | TypeScript | Statische Typen + Interfaces; Zod nur an Aussengrenzen (XML-/JSON-Import) |
 | Drag/Resize | dnd-kit plus eigene Canvas-Logik | Interaktion im Editor |
 | Icons | Tabler/Mantine oder lucide, aber einheitlich | Werkzeug-Icons |
 
@@ -96,22 +96,33 @@ Zielstruktur, abgeleitet aus OOP-Klassen-Modell (§6):
 src/
   app/
     App.tsx
-    providers.tsx
+    providers.tsx                MantineProvider und weitere Context-Provider
 
   ui/
-    theme.ts
+    theme.ts                     Mantine-Theme
 
-  store/
-    editorStore.ts        Zustand-Store: blocks, selection, addBlock, updateBlock ...
-    selectors.ts          Selektor-Helfer
+  state/
+    Subject.ts                   generische Observer-Klasse
+    Editor.ts                    class Editor extends Subject<Editor>, haelt BlockData[]
+    useEditor.ts                 React-Hook via useSyncExternalStore
 
   core/
     blocks/
-      BlockComponent.ts          Interface: Vertrag jeder Block-Klasse
-      PropertyDescription.ts     Interface: Inspector-Eigenschaft
-      BasicBlock.ts              Basisklasse: extends LitElement, implements BlockComponent
-      blockRegistry.ts           Map type-name -> Klasse
-      blockFactory.ts            createBlock(typeName) -> Instanz
+      BlockData.ts               interface BlockData = { id, type, layout, props }
+      PropertyDescription.ts     interface fuer Inspector-Felder (Notiz Woche 2)
+      BlockDefinition.ts         interface { type, tagName, defaultProps, customProperties }
+      blockRegistry.ts           Map type-name -> BlockDefinition
+      blockFactory.ts            createBlockData(type) -> BlockData
+      BasicBlock.ts              optional: duenne Basisklasse fuer View-Helfer (extends LitElement)
+
+  blocks/
+    register.ts                  zentrale Side-Effect-Imports aller Built-in-Blocks
+    button/
+      ButtonBlock.ts             class ButtonBlock extends LitElement (View), HMR-Schutz, Self-Registry
+    text/
+      TextBlock.ts               class TextBlock extends LitElement
+    formfield/
+      FormFieldBlock.ts          class FormFieldBlock extends LitElement
 
   editor/
     shell/
@@ -120,28 +131,20 @@ src/
       StatusBar.tsx
     canvas/
       Canvas.tsx
-      BlockHost.tsx              rendert eine Block-Instanz ueber ihr Custom-Element
+      BlockHost.tsx              nimmt BlockData, erzeugt+syncronisiert das passende Custom-Element
       SelectionOverlay.tsx
       ResizeHandles.tsx
     sidebar/
       Sidebar.tsx
       BlockPalette.tsx
     inspector/
-      Inspector.tsx              liest customProperties() der selektierten Block-Instanz
+      Inspector.tsx              liest BlockDefinition.customProperties aus Registry
       controls/                  Mantine-Inputs nach Datentyp
         TextControl.tsx
         NumberControl.tsx
         SelectControl.tsx
         SwitchControl.tsx
         ColorControl.tsx
-
-  blocks/
-    button/
-      ButtonBlock.ts             class ButtonBlock extends BasicBlock
-    text/
-      TextBlock.ts               class TextBlock extends BasicBlock
-    formfield/
-      FormFieldBlock.ts          class FormFieldBlock extends BasicBlock
 
   softengine/
     catalog/
@@ -156,39 +159,60 @@ src/
       dataAdapter.ts
 ```
 
-Eine Datei pro Block-Klasse. Keine getrennten `*.schema.ts` / `*.inspector.ts` / `*.export.ts` Dateien — alle Concerns leben in der Klasse (Properties, `customProperties()`, `render()`, statische `exportHtml()`).
+Eine Datei pro Block-View-Klasse. Editor-State haelt nur serialisierbare `BlockData`-Objekte. Lit-View-Klassen halten reine Render-Properties. Bruecke = `BlockHost`. Zentrale `blocks/register.ts` triggert Self-Registrierung aller Built-in-Blocks.
 
 Diese Struktur ist ein Ziel. Wir bauen sie Schritt fuer Schritt, nicht in einem Rutsch. Ordner wie `softengine/runtime` entstehen erst wenn der Editor SoftEngine-Daten wirklich anbindet.
 
 ## 6. Block-System
 
-Jeder Block ist eine TypeScript-Klasse mit Vererbungs-Hierarchie. Modell aus Notizen Woche 2.
+Strikte Trennung zwischen serialisierbarem **State** (im Editor-Store) und **View-Klasse** (Lit Web Component).
 
-Klassen-Hierarchie:
+### 6.1 State: BlockData
 
-```txt
-Interface BlockComponent             Vertrag: was jeder Block koennen muss
-  ^
-  | implements
-BasicBlock extends LitElement        Basisklasse: gemeinsame Properties + Render-Geruest
-  ^
-  | extends
-ButtonBlock, TextBlock, KanbanBlock  konkrete Block-Klassen
-```
-
-Interface `BlockComponent` definiert den Vertrag jeder Block-Klasse:
+Der Editor speichert ausschliesslich plain Objekte. Keine LitElement-Instanzen, keine DOM-Knoten im fachlichen State (Regel 5).
 
 ```ts
-interface BlockComponent {
-  get id(): string
-  get type(): string
-  get width(): number
-  get height(): number
-  customProperties(): PropertyDescription[]
+interface BlockData {
+  id: string
+  type: string                              // 'button', 'text', 'kanban', ...
+  layout: { x: number; y: number; width: number; height: number }
+  props: Record<string, unknown>            // blockspezifische Werte: label, variant, content, ...
 }
 ```
 
-Interface `PropertyDescription` (1:1 aus Notizen Woche 2) beschreibt jede editierbare Eigenschaft:
+Vorteile: localStorage-Persistenz trivial, Undo/Redo via Deep-Clone, Import/Export ohne DOM-Tricks, Tests ohne DOM-Mock.
+
+### 6.2 View: Lit Web Component
+
+Pro Block-Typ eine Klasse, erbt von `LitElement`. Klasse haelt **nur Render-Properties** (Lit-Reactive-Properties), keine ID/keinen Type, kein Layout — das lebt im Store als BlockData.
+
+```ts
+class ButtonBlock extends LitElement {
+  // Lit-Reactive-Properties (manuell, weil erasableSyntaxOnly: true keine Decorators erlaubt)
+  private _label: string = 'Klick mich'
+  get label(): string { return this._label }
+  set label(v: string) { const o = this._label; this._label = v; this.requestUpdate('label', o) }
+
+  // ... weitere View-Props analog
+
+  render() { return html`<button>${this._label}</button>` }
+}
+```
+
+### 6.3 Vertrag pro Block-Typ: BlockDefinition
+
+Statt einer Mehrstufen-Klassen-Hierarchie wird jeder Block ueber ein Daten-Objekt registriert:
+
+```ts
+interface BlockDefinition {
+  type: string                              // 'button'
+  tagName: string                           // 'ff-button'
+  defaultProps: Record<string, unknown>     // initiale props beim Anlegen
+  customProperties: PropertyDescription[]   // Inspector-Felder
+}
+```
+
+`PropertyDescription` aus Notiz Woche 2 bleibt unveraendert:
 
 ```ts
 interface PropertyDescription {
@@ -200,30 +224,45 @@ interface PropertyDescription {
 }
 ```
 
-Basisklasse `BasicBlock` erbt von `LitElement` und implementiert `BlockComponent`. Sie haelt gemeinsame Properties (`_id`, `_width`, `_height`, Position) als `private` Felder mit `public` Getter/Setter. Konkrete Blocks erweitern `BasicBlock`.
+### 6.4 Vererbung optional
 
-Sichtbarkeits-Regeln (Notizen Woche 2):
+`BasicBlock extends LitElement` darf bleiben als duenne Basisklasse fuer geteilte View-Helfer (z.B. gemeinsames Styling), ist aber kein Zwang. Notiz-Woche-2-OOP-Konzepte (Vererbung, Polymorphie, Sichtbarkeit) gelten **innerhalb der View-Klassen**, nicht fuer den Editor-State.
 
-```txt
-private    interne Felder (_width, _label, ...)
-protected  Felder, die abgeleitete Klassen lesen/setzen duerfen
-public     Getter/Setter als Schnittstelle nach aussen
+### 6.5 BlockHost: Bruecke State <-> View
+
+Generische React-Komponente. Bekommt `BlockData`, schaut den `tagName` aus der Registry, erzeugt `document.createElement(tagName)`, setzt die `props` auf das Element und mountet es in die DOM. Bei jeder BlockData-Aenderung syncronisiert es die props nach (Lit re-rendert intern).
+
+### 6.6 HMR-Schutz
+
+Vite-HMR re-evaluiert Module beim Speichern. `customElements.define(tag, Class)` darf nur einmal pro Tag laufen. Daher in jeder Block-Datei:
+
+```ts
+if (!customElements.get('ff-button')) {
+  customElements.define('ff-button', ButtonBlock)
+}
 ```
 
-Methodenueberschreibung erlaubt Polymorphie: jeder Block-Subtyp kann `customProperties()` neu definieren und seine spezifischen Eigenschaften melden.
+### 6.7 Zentrale Registrierung
 
-Eine Datei pro Block:
+Statt verstreuter Side-Effect-Imports an verschiedenen Stellen gibt es eine Datei `src/blocks/register.ts`, die alle Built-in-Blocks importiert. Wer Blocks benutzen will, importiert diese eine Datei.
 
-```txt
-blocks/button/ButtonBlock.ts    class ButtonBlock extends BasicBlock
-blocks/text/TextBlock.ts        class TextBlock extends BasicBlock
+```ts
+// src/blocks/register.ts
+import './button/ButtonBlock'
+import './text/TextBlock'
+// neue Blocks hier einreihen
 ```
 
-Inspector liest `customProperties()` der selektierten Block-Instanz und baut daraus dynamisch die Editier-Controls (Mantine-Inputs).
+### 6.8 Dateistruktur pro Block
 
-Canvas nutzt einen generischen `BlockHost`, der jede Block-Instanz ueber ihr `<custom-element>`-Tag rendert.
+```txt
+blocks/button/ButtonBlock.ts
+  - class ButtonBlock extends LitElement  (View)
+  - customElements.define (HMR-geschuetzt)
+  - registerBlockType(BlockDefinition)    (Self-Registrierung in Registry)
+```
 
-Keine separaten `*.schema.ts` / `*.definition.ts` / `*.inspector.ts` / `*.export.ts` Dateien. Alle Verantwortlichkeiten leben in der Block-Klasse selbst (Properties = Schema, `customProperties()` = Inspector-Config, `render()` = Canvas, statische `exportHtml()` Methode = Export).
+Inspector liest `BlockDefinition.customProperties` (aus Registry), nicht von der Instanz. Canvas rendert via `BlockHost(blockData)`.
 
 ## 7. WYSIWYG-Regel
 
@@ -248,42 +287,64 @@ Diese Dinge duerfen nie Teil der exportierten Komponente sein.
 
 ## 8. State und Observer Pattern
 
-Wir verwenden Zustand als Observer Pattern:
+State lebt im Editor-Singleton und wird ueber eine **hand-gebaute Subject-Klasse** beobachtbar (Notiz Woche 1, OOP-konsistent zum restlichen Code).
 
-```txt
-Store aendert sich
-  Canvas beobachtet relevante Blockdaten
-  Inspector beobachtet selectedBlockId und selectedBlock
-  StatusBar beobachtet selection/zoom
-  BlockHost beobachtet nur seinen Block
-```
-
-Wichtig: Eine zentrale Wahrheit, aber keine riesige Alles-Datei.
-
-Der Store darf intern in Slices organisiert sein:
-
-```txt
-blocksSlice      Blocks anlegen, aktualisieren, loeschen
-selectionSlice   Auswahl, Multi-Select
-historySlice     Undo/Redo
-uiSlice          Zoom, Panels, Modus
-catalogSlice     geladener SoftEngine-Katalog
-```
-
-Komponenten abonnieren nur das, was sie brauchen.
-
-Richtig:
+### 8.1 Subject (generisch)
 
 ```ts
-const block = useEditorStore((s) => s.blocks[id])
-const updateBlock = useEditorStore((s) => s.updateBlock)
+class Subject<T = void> {
+  private listeners: Array<(data: T) => void> = []
+  subscribe(fn): () => void   // gibt Unsubscribe-Funktion zurueck
+  notify(data: T): void       // ruft alle Listener auf
+}
 ```
 
-Falsch:
+### 8.2 Editor (Singleton, extends Subject)
 
 ```ts
-const entireStore = useEditorStore()
+class Editor extends Subject<Editor> {
+  blocks: BlockData[]
+  selectedId: string | null
+  version: number             // primitiv, fuer useSyncExternalStore-Snapshot
+
+  addBlock(type)              // erzeugt BlockData mit defaultProps aus Registry
+  removeBlock(id)
+  selectBlock(id | null)
+  updateProperty(id, attr, value)   // mutiert blockData.props[attr]
+}
+
+export const editor = new Editor()
 ```
+
+Bei jeder Aenderung ruft Editor `notify(this)` -> alle Listener reagieren. Version inkrementiert -> useSyncExternalStore erkennt Aenderung.
+
+### 8.3 React-Bruecke
+
+`useEditor()` Hook nutzt `useSyncExternalStore` (offizielle React-18-API fuer externe Stores):
+
+```ts
+function useEditor() {
+  useSyncExternalStore(
+    (cb) => editor.subscribe(() => cb()),
+    () => editor.version,
+  )
+  return editor
+}
+```
+
+Concurrent-Mode-sicher, kein useState-Trick.
+
+### 8.4 Keine externe State-Library
+
+Bewusst gegen Zustand, Redux, Jotai, Recoil. Begruendung:
+- Notiz-Konzept (Observer-Pattern) direkt umsetzbar
+- OOP-Stil konsistent zum Block-System
+- Lernwert hoeher
+- Keine zusaetzliche Dependency
+
+### 8.5 Spaetere Erweiterungen als eigene Subjects
+
+Falls Performance bei vielen Blocks Re-Render-Probleme macht: feinere Subjects als Komposition (z.B. `selection`, `catalog`, `history` jeweils eigenes Subject). Nicht jetzt, nur wenn echtes Problem auftritt.
 
 ## 9. Datenfluss
 

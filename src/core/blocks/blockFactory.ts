@@ -1,15 +1,26 @@
 // blockFactory
-// Erzeugt Block-Instanzen anhand des Typ-Namens.
-// Liest die passende Klasse aus blockRegistry und ruft new auf.
-// Sidebar/Store nutzen diese Funktion statt direkter Klassen-Imports.
+// Erzeugt eine serialisierbare BlockData-Instanz aus Typ-Name + Defaults aus Registry.
+// Editor.addBlock(type) ruft das auf, schiebt das Ergebnis in den State.
 
-import type { BasicBlock } from './BasicBlock'
-import { getBlockConstructor } from './blockRegistry'
+import type { BlockData } from './BlockData'
+import { getBlockDefinition } from './blockRegistry'
 
-export function createBlock(type: string, id?: string): BasicBlock {
-  const Ctor = getBlockConstructor(type)
-  if (!Ctor) {
+const FALLBACK_LAYOUT = { width: 120, height: 40 }
+
+export function createBlockData(type: string, id?: string): BlockData {
+  const def = getBlockDefinition(type)
+  if (!def) {
     throw new Error(`Unbekannter Block-Typ: "${type}". Vorher mit registerBlockType registrieren.`)
   }
-  return new Ctor(id)
+  return {
+    id: id ?? crypto.randomUUID(),
+    type,
+    layout: {
+      x: 0,
+      y: 0,
+      width: def.defaultLayout?.width ?? FALLBACK_LAYOUT.width,
+      height: def.defaultLayout?.height ?? FALLBACK_LAYOUT.height,
+    },
+    props: { ...def.defaultProps },
+  }
 }

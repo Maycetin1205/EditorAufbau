@@ -1,13 +1,13 @@
 // main.tsx
-// Test-Spielwiese fuer die Atom-Phase.
-// Prueft: addBlock, removeBlock, selectBlock, updateProperty + React-Re-Render via useSyncExternalStore.
+// Test-Spielwiese fuer die Atom- und Molekuel-Phase.
+// Built-in-Blocks werden ueber blocks/register importiert (zentrale Side-Effect-Datei).
 
-// Self-Registrierung der Block-Klassen ausloesen.
-import './blocks/button/ButtonBlock'
-import './blocks/text/TextBlock'
+import './blocks/register'
 
 import { createRoot } from 'react-dom/client'
 import { useEditor } from './state/useEditor'
+import { BlockHost } from './editor/canvas/BlockHost'
+import { Providers } from './app/providers'
 
 function Playground() {
   const ed = useEditor()
@@ -27,6 +27,27 @@ function Playground() {
         Selektiert: <strong>{ed.selectedId ?? '(nichts)'}</strong> ({ed.blocks.length} Blocks gesamt)
       </p>
 
+      <h2 style={{ marginTop: 24 }}>Canvas</h2>
+      <div
+        style={{
+          minHeight: 120,
+          padding: 8,
+          border: '1px dashed #888',
+          borderRadius: 4,
+          background: '#fafafa',
+        }}
+      >
+        {ed.blocks.map((b) => (
+          <BlockHost
+            key={b.id}
+            block={b}
+            selected={ed.selectedId === b.id}
+            onSelect={() => ed.selectBlock(b.id)}
+          />
+        ))}
+      </div>
+
+      <h2 style={{ marginTop: 24 }}>Liste + Aktionen</h2>
       <ul>
         {ed.blocks.map((b) => (
           <li key={b.id} style={{ marginBottom: 6 }}>
@@ -62,4 +83,8 @@ function Playground() {
 
 const rootEl = document.getElementById('root')
 if (!rootEl) throw new Error('#root nicht gefunden in index.html')
-createRoot(rootEl).render(<Playground />)
+createRoot(rootEl).render(
+  <Providers>
+    <Playground />
+  </Providers>,
+)

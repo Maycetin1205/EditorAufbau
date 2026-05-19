@@ -1,21 +1,15 @@
 // ButtonBlock
-// Konkreter Block-Typ: Button.
-// Erweitert BasicBlock um label und variant.
-// Registriert sich am Ende der Datei als Custom-Element <ff-button>.
-// Vorlage: Notiz Woche 2 (KanbanBoard extends BasicComponentForGrid).
+// Lit Web Component fuer den Button-Block.
+// Reine View: haelt nur Render-Properties (label, variant), KEINE Editor-State-Felder.
+// Editor-State (id, layout, type) lebt im Editor als BlockData.
+// HMR-Schutz + Self-Registrierung in blockRegistry am Datei-Ende.
 
-import { html, type TemplateResult } from 'lit'
-import { BasicBlock } from '../../core/blocks/BasicBlock'
-import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { html, LitElement, type TemplateResult } from 'lit'
 import { registerBlockType } from '../../core/blocks/blockRegistry'
 
-export class ButtonBlock extends BasicBlock {
-  protected _label: string = 'Klick mich'
-  protected _variant: 'primary' | 'secondary' = 'primary'
-
-  constructor(id: string = crypto.randomUUID(), width: number = 120, height: number = 40) {
-    super(id, 'button', width, height)
-  }
+export class ButtonBlock extends LitElement {
+  private _label: string = 'Klick mich'
+  private _variant: string = 'primary'
 
   get label(): string {
     return this._label
@@ -26,38 +20,44 @@ export class ButtonBlock extends BasicBlock {
     this.requestUpdate('label', old)
   }
 
-  get variant(): 'primary' | 'secondary' {
+  get variant(): string {
     return this._variant
   }
-  set variant(v: 'primary' | 'secondary') {
+  set variant(v: string) {
     const old = this._variant
     this._variant = v
     this.requestUpdate('variant', old)
   }
 
-  override get customProperties(): PropertyDescription[] {
-    return [
-      {
-        attributeName: 'label',
-        name: 'Beschriftung',
-        description: 'Text auf dem Button',
-        isArray: false,
-        maxLength: 50,
-      },
-      {
-        attributeName: 'variant',
-        name: 'Variante',
-        description: 'Primaer oder Sekundaer',
-        isArray: false,
-        maxLength: 20,
-      },
-    ]
-  }
-
-  override render(): TemplateResult {
+  render(): TemplateResult {
     return html`<button class="${this._variant}">${this._label}</button>`
   }
 }
 
-customElements.define('ff-button', ButtonBlock)
-registerBlockType('button', ButtonBlock)
+// HMR-Schutz: bei Vite-Hot-Reload sonst "name already used"-Error.
+if (!customElements.get('ff-button')) {
+  customElements.define('ff-button', ButtonBlock)
+}
+
+registerBlockType({
+  type: 'button',
+  tagName: 'ff-button',
+  defaultProps: { label: 'Klick mich', variant: 'primary' },
+  defaultLayout: { width: 120, height: 40 },
+  customProperties: [
+    {
+      attributeName: 'label',
+      name: 'Beschriftung',
+      description: 'Text auf dem Button',
+      isArray: false,
+      maxLength: 50,
+    },
+    {
+      attributeName: 'variant',
+      name: 'Variante',
+      description: 'Primaer oder Sekundaer',
+      isArray: false,
+      maxLength: 20,
+    },
+  ],
+})
