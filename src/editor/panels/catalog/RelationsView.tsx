@@ -3,21 +3,28 @@
 // User klebt GET_RELATION[...] / PUT_RELATION[...] / PUTADD_RELATION[...] ein,
 // parseRelationSyntax + addRelation erledigen Rest.
 
-import {
-  ActionIcon,
-  Badge,
-  Button,
-  Group,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-  UnstyledButton,
-} from '@mantine/core'
 import { IconChevronRight, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
 import { catalog } from '../../../softengine/catalog/Catalog'
 import { useCatalog } from '../../../softengine/catalog/useCatalog'
+
+const inputCls =
+  'w-full text-xs px-2 py-1 rounded border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500'
+const labelCls = 'block text-xs font-medium text-slate-700 mb-1'
+const btnCls =
+  'inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+const iconBtnCls =
+  'inline-flex items-center justify-center w-7 h-7 rounded text-red-600 hover:bg-red-50'
+
+function badgeColor(kind: string, variant: 'light' | 'outline' = 'light'): string {
+  if (variant === 'outline') {
+    return 'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-slate-300 text-slate-600'
+  }
+  if (kind === 'GET' || kind === 'variable') {
+    return 'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700'
+  }
+  return 'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-700'
+}
 
 export function RelationsView() {
   const cat = useCatalog()
@@ -45,59 +52,56 @@ export function RelationsView() {
   }
 
   return (
-    <Stack gap="sm" p="md">
+    <div className="flex flex-col gap-3 p-3">
       <div>
-        <Text size="xs" fw={500} mb={4}>Relation per Syntax</Text>
-        <Textarea
-          size="xs"
+        <label className={labelCls}>Relation per Syntax</label>
+        <textarea
+          className={inputCls + ' font-mono'}
+          rows={2}
           placeholder={'GET_RELATION[666!1!2!L!!IDBID0005]\nPUT_RELATION[174!1!2!L!!IDBID0005!STATUS]'}
           value={syntaxInput}
           onChange={(e) => {
             setSyntaxInput(e.currentTarget.value)
             setParseError('')
           }}
-          minRows={2}
-          autosize
         />
-        <Group mt={4} justify="space-between">
-          <Button size="compact-xs" onClick={handleImport} disabled={!syntaxInput.trim()}>
+        <div className="flex items-center justify-between mt-1">
+          <button
+            type="button"
+            className={btnCls}
+            onClick={handleImport}
+            disabled={!syntaxInput.trim()}
+          >
             Importieren
-          </Button>
-          {parseError && (
-            <Text c="red" size="xs">{parseError}</Text>
-          )}
-        </Group>
+          </button>
+          {parseError && <span className="text-xs text-red-600">{parseError}</span>}
+        </div>
       </div>
 
       {cat.relations.length === 0 && (
-        <Text c="dimmed" size="sm">Noch keine Relations.</Text>
+        <p className="text-sm text-slate-500">Noch keine Relations.</p>
       )}
 
       {cat.relations.map((r) => (
-        <UnstyledButton
+        <button
+          type="button"
           key={r.id}
           onClick={() => setEditId(r.id)}
-          style={{
-            padding: '8px 10px',
-            borderRadius: 6,
-            border: '1px solid var(--mantine-color-default-border)',
-          }}
+          className="w-full text-left px-2.5 py-2 rounded-md border border-slate-200 hover:bg-slate-50"
         >
-          <Group justify="space-between" wrap="nowrap">
-            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
-              <Badge size="xs" variant="light" color={r.kind === 'GET' ? 'blue' : 'orange'}>
-                {r.kind}
-              </Badge>
-              <div style={{ minWidth: 0 }}>
-                <Text size="sm" fw={500} truncate>{r.name}</Text>
-                <Text size="xs" c="dimmed" truncate>{r.syntax}</Text>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className={badgeColor(r.kind)}>{r.kind}</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{r.name}</p>
+                <p className="text-xs text-slate-500 truncate">{r.syntax}</p>
               </div>
-            </Group>
-            <IconChevronRight size={14} />
-          </Group>
-        </UnstyledButton>
+            </div>
+            <IconChevronRight size={14} className="shrink-0 text-slate-400" />
+          </div>
+        </button>
       ))}
-    </Stack>
+    </div>
   )
 }
 
@@ -114,70 +118,65 @@ function RelationDetail({ relationId, onBack }: RelationDetailProps) {
   // Vorlage ist read-only bzgl. Syntax. Konkrete Parameter-Werte werden
   // erst bei Nutzung (Aktionsschritt) belegt, nicht hier.
   return (
-    <Stack gap="sm" p="md">
-      <TextInput
-        label="Name"
-        size="xs"
-        value={r.name}
-        onChange={(e) => catalog.updateRelation(relationId, { name: e.currentTarget.value })}
-      />
-
+    <div className="flex flex-col gap-3 p-3">
       <div>
-        <Text size="xs" fw={500} mb={2}>Vorlage-Syntax</Text>
-        <Text
-          size="xs"
-          style={{
-            wordBreak: 'break-all',
-            fontFamily: 'monospace',
-            padding: '6px 8px',
-            background: 'var(--mantine-color-default-hover)',
-            borderRadius: 4,
-          }}
-        >
-          {r.syntax}
-        </Text>
+        <label className={labelCls}>Name</label>
+        <input
+          type="text"
+          className={inputCls}
+          value={r.name}
+          onChange={(e) => catalog.updateRelation(relationId, { name: e.currentTarget.value })}
+        />
       </div>
 
       <div>
-        <Group justify="space-between" mb={2}>
-          <Text size="xs" fw={500}>Platzhalter ({r.syntaxParams.length})</Text>
+        <span className="block text-xs font-medium text-slate-700 mb-0.5">Vorlage-Syntax</span>
+        <p className="text-xs font-mono break-all px-2 py-1.5 bg-slate-100 rounded">{r.syntax}</p>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-xs font-medium text-slate-700">
+            Platzhalter ({r.syntaxParams.length})
+          </span>
           {r.syntaxParams.length === 0 && (
-            <Text size="xs" c="dimmed">keine — Vorlage ohne Variable</Text>
+            <span className="text-xs text-slate-500">keine — Vorlage ohne Variable</span>
           )}
-        </Group>
+        </div>
         {r.syntaxParams.length > 0 && (
-          <Group gap={4}>
+          <div className="flex flex-wrap gap-1">
             {r.syntaxParams.map((p) => (
-              <Badge
+              <span
                 key={p.key}
-                size="xs"
-                variant={p.source === 'variable' ? 'light' : 'outline'}
-                color={p.source === 'variable' ? 'blue' : 'gray'}
+                className={badgeColor(p.source, p.source === 'variable' ? 'light' : 'outline')}
                 title={p.source === 'variable' ? 'wird bei Nutzung belegt' : 'fester Wert in Vorlage'}
               >
                 {p.source === 'variable' ? `{${p.key}}` : p.value}
-              </Badge>
+              </span>
             ))}
-          </Group>
+          </div>
         )}
-        <Text size="xs" c="dimmed" mt={4}>
+        <p className="text-xs text-slate-500 mt-1">
           Platzhalter werden bei Nutzung im Aktionsschritt mit konkreten Werten gefüllt.
-        </Text>
+        </p>
       </div>
 
-      <Textarea
-        label="Beschreibung"
-        size="xs"
-        value={r.description}
-        onChange={(e) => catalog.updateRelation(relationId, { description: e.currentTarget.value })}
-        autosize
-        minRows={2}
-      />
+      <div>
+        <label className={labelCls}>Beschreibung</label>
+        <textarea
+          className={inputCls}
+          rows={2}
+          value={r.description}
+          onChange={(e) =>
+            catalog.updateRelation(relationId, { description: e.currentTarget.value })
+          }
+        />
+      </div>
 
-      <Group justify="space-between" mt="md">
-        <ActionIcon
-          color="red"
-          variant="subtle"
+      <div className="flex items-center justify-between mt-2">
+        <button
+          type="button"
+          className={iconBtnCls}
           onClick={() => {
             catalog.deleteRelation(relationId)
             onBack()
@@ -185,9 +184,11 @@ function RelationDetail({ relationId, onBack }: RelationDetailProps) {
           aria-label="Relation löschen"
         >
           <IconTrash size={14} />
-        </ActionIcon>
-        <Button size="xs" onClick={onBack}>Fertig</Button>
-      </Group>
-    </Stack>
+        </button>
+        <button type="button" className={btnCls} onClick={onBack}>
+          Fertig
+        </button>
+      </div>
+    </div>
   )
 }

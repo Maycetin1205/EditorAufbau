@@ -2,18 +2,6 @@
 // Liste aller Datenquellen + Edit-Formular fuer einen ausgewaehlten Eintrag.
 // Hier passiert die ganze Verwaltung: Typ waehlen, Bezeichnung, Quell-ID, Felder, Freiselekt.
 
-import {
-  ActionIcon,
-  Badge,
-  Button,
-  Checkbox,
-  Group,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-  UnstyledButton,
-} from '@mantine/core'
 import { IconChevronRight, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
 import { catalog } from '../../../softengine/catalog/Catalog'
@@ -27,6 +15,16 @@ import {
   supportsFreiselekt,
   supportsKey,
 } from '../../../softengine/catalog/vorschlaege'
+
+const inputCls =
+  'w-full text-xs px-2 py-1 rounded border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500'
+const labelCls = 'block text-xs font-medium text-slate-700 mb-1'
+const btnCls =
+  'inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+const btnSubtleRedCls =
+  'inline-flex items-center gap-1 text-xs px-2 py-1 rounded text-red-600 hover:bg-red-50'
+const iconBtnCls =
+  'inline-flex items-center justify-center w-6 h-6 rounded text-red-600 hover:bg-red-50'
 
 export function DataSourcesView() {
   const cat = useCatalog()
@@ -43,50 +41,48 @@ export function DataSourcesView() {
   }
 
   return (
-    <Stack gap="xs" p="md">
-      <Button
-        size="xs"
-        leftSection={<IconPlus size={14} />}
+    <div className="flex flex-col gap-2 p-3">
+      <button
+        type="button"
+        className={btnCls + ' self-start'}
         onClick={() => {
           const created = catalog.addEntry('idb')
           setEditId(created.id)
         }}
       >
+        <IconPlus size={14} />
         Neue Datenquelle
-      </Button>
+      </button>
 
       {cat.entries.length === 0 && (
-        <Text c="dimmed" size="sm">
-          Noch keine Datenquellen. Lege eine neue an.
-        </Text>
+        <p className="text-sm text-slate-500">Noch keine Datenquellen. Lege eine neue an.</p>
       )}
 
       {cat.entries.map((e) => (
-        <UnstyledButton
+        <button
+          type="button"
           key={e.id}
           onClick={() => setEditId(e.id)}
-          style={{
-            padding: '8px 10px',
-            borderRadius: 6,
-            border: '1px solid var(--mantine-color-default-border)',
-          }}
+          className="w-full text-left px-2.5 py-2 rounded-md border border-slate-200 hover:bg-slate-50"
         >
-          <Group justify="space-between" wrap="nowrap">
-            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
-              <Badge size="xs" variant="light">{getTypeShortBadge(e.type)}</Badge>
-              <div style={{ minWidth: 0 }}>
-                <Text size="sm" fw={500} truncate>{e.alias || '(ohne Bezeichnung)'}</Text>
-                <Text size="xs" c="dimmed" truncate>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
+                {getTypeShortBadge(e.type)}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{e.alias || '(ohne Bezeichnung)'}</p>
+                <p className="text-xs text-slate-500 truncate">
                   {e.sourceId || '(ohne ID)'} - {e.fields.length} Felder
                   {e.freiselektAktiv ? ' - Filter' : ''}
-                </Text>
+                </p>
               </div>
-            </Group>
-            <IconChevronRight size={14} />
-          </Group>
-        </UnstyledButton>
+            </div>
+            <IconChevronRight size={14} className="shrink-0 text-slate-400" />
+          </div>
+        </button>
       ))}
-    </Stack>
+    </div>
   )
 }
 
@@ -99,8 +95,6 @@ function EntryEditor({ entryId, onBack }: EntryEditorProps) {
   const cat = useCatalog()
   const entry = cat.getEntry(entryId)
   if (!entry) return null
-
-  const typeOptions = ALL_SOURCE_TYPES.map((t) => ({ value: t, label: getTypeLabel(t) }))
 
   const updateField = (idx: number, patch: Partial<SoftEngineFeld>) => {
     const next = entry.fields.map((f, i) => (i === idx ? { ...f, ...patch } : f))
@@ -115,93 +109,110 @@ function EntryEditor({ entryId, onBack }: EntryEditorProps) {
   }
 
   return (
-    <Stack gap="sm" p="md">
-      <TextInput
-        label="Bezeichnung"
-        size="xs"
-        value={entry.alias}
-        onChange={(e) => catalog.updateEntry(entryId, { alias: e.currentTarget.value })}
-      />
+    <div className="flex flex-col gap-3 p-3">
+      <div>
+        <label className={labelCls}>Bezeichnung</label>
+        <input
+          type="text"
+          className={inputCls}
+          value={entry.alias}
+          onChange={(e) => catalog.updateEntry(entryId, { alias: e.currentTarget.value })}
+        />
+      </div>
 
-      <Select
-        label="Typ"
-        size="xs"
-        data={typeOptions}
-        value={entry.type}
-        allowDeselect={false}
-        comboboxProps={{ zIndex: 1500, withinPortal: true }}
-        onChange={(v) => v && catalog.changeEntryType(entryId, v as SourceType)}
-      />
+      <div>
+        <label className={labelCls}>Typ</label>
+        <select
+          className={inputCls}
+          value={entry.type}
+          onChange={(e) => catalog.changeEntryType(entryId, e.currentTarget.value as SourceType)}
+        >
+          {ALL_SOURCE_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {getTypeLabel(t)}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <TextInput
-        label={getSourceIdLabel(entry.type)}
-        size="xs"
-        value={entry.sourceId}
-        onChange={(e) => catalog.updateEntry(entryId, { sourceId: e.currentTarget.value })}
-      />
+      <div>
+        <label className={labelCls}>{getSourceIdLabel(entry.type)}</label>
+        <input
+          type="text"
+          className={inputCls}
+          value={entry.sourceId}
+          onChange={(e) => catalog.updateEntry(entryId, { sourceId: e.currentTarget.value })}
+        />
+      </div>
 
       {supportsKey(entry.type) && (
-        <TextInput
-          label="Key-Feld (POS_LEN)"
-          size="xs"
-          placeholder="z.B. 10_8"
-          value={entry.key}
-          onChange={(e) => catalog.updateEntry(entryId, { key: e.currentTarget.value })}
-        />
+        <div>
+          <label className={labelCls}>Key-Feld (POS_LEN)</label>
+          <input
+            type="text"
+            className={inputCls}
+            placeholder="z.B. 10_8"
+            value={entry.key}
+            onChange={(e) => catalog.updateEntry(entryId, { key: e.currentTarget.value })}
+          />
+        </div>
       )}
 
       <div>
-        <Group justify="space-between" mb={4}>
-          <Text size="xs" fw={500}>Felder ({entry.fields.length})</Text>
-          <Button size="compact-xs" leftSection={<IconPlus size={12} />} onClick={addField}>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-slate-700">Felder ({entry.fields.length})</span>
+          <button type="button" className={btnCls} onClick={addField}>
+            <IconPlus size={12} />
             Feld
-          </Button>
-        </Group>
-        <Stack gap={4}>
+          </button>
+        </div>
+        <div className="flex flex-col gap-1">
           {entry.fields.map((f, i) => (
-            <Group key={i} gap={4} wrap="nowrap" align="flex-end">
-              <TextInput
-                size="xs"
+            <div key={i} className="flex items-end gap-1">
+              <input
+                type="text"
+                className={inputCls + ' flex-1'}
                 placeholder="Name"
                 value={f.name}
                 onChange={(e) => updateField(i, { name: e.currentTarget.value })}
-                style={{ flex: 1 }}
               />
-              <TextInput
-                size="xs"
+              <input
+                type="text"
+                className={inputCls + ' w-24'}
                 placeholder="POS_LEN"
                 value={f.field}
                 onChange={(e) => updateField(i, { field: e.currentTarget.value })}
-                style={{ width: 90 }}
               />
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                color="red"
+              <button
+                type="button"
+                className={iconBtnCls}
                 onClick={() => removeField(i)}
                 aria-label="Feld löschen"
               >
                 <IconTrash size={12} />
-              </ActionIcon>
-            </Group>
+              </button>
+            </div>
           ))}
-        </Stack>
+        </div>
       </div>
 
       {supportsFreiselekt(entry.type) && (
         <div>
-          <Checkbox
-            label="Freiselekt verwenden"
-            size="xs"
-            checked={entry.freiselektAktiv}
-            onChange={(e) =>
-              catalog.updateEntry(entryId, { freiselektAktiv: e.currentTarget.checked })
-            }
-          />
+          <label className="flex items-center gap-2 text-xs text-slate-700">
+            <input
+              type="checkbox"
+              className="w-3.5 h-3.5"
+              checked={entry.freiselektAktiv}
+              onChange={(e) =>
+                catalog.updateEntry(entryId, { freiselektAktiv: e.currentTarget.checked })
+              }
+            />
+            Freiselekt verwenden
+          </label>
           {entry.freiselektAktiv && (
-            <TextInput
-              mt={4}
-              size="xs"
+            <input
+              type="text"
+              className={inputCls + ' mt-1'}
               placeholder="z.B. ADR_0_3='K'"
               value={entry.freiselekt}
               onChange={(e) => catalog.updateEntry(entryId, { freiselekt: e.currentTarget.value })}
@@ -210,22 +221,21 @@ function EntryEditor({ entryId, onBack }: EntryEditorProps) {
         </div>
       )}
 
-      <Group mt="md" justify="space-between">
-        <Button
-          size="xs"
-          color="red"
-          variant="subtle"
+      <div className="flex items-center justify-between mt-2">
+        <button
+          type="button"
+          className={btnSubtleRedCls}
           onClick={() => {
             catalog.deleteEntry(entryId)
             onBack()
           }}
         >
           Löschen
-        </Button>
-        <Button size="xs" onClick={onBack}>
+        </button>
+        <button type="button" className={btnCls} onClick={onBack}>
           Fertig
-        </Button>
-      </Group>
-    </Stack>
+        </button>
+      </div>
+    </div>
   )
 }

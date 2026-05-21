@@ -1,19 +1,27 @@
 // useKeyboardShortcuts
 // Bindet globale Tastatur-Shortcuts an Editor-Aktionen.
-// Nutzt Mantine useHotkeys: ignoriert Eingabe in Input/Textarea/contenteditable
-// automatisch, kein eigenes Event-Handling noetig.
-// Neue Shortcuts hier in das Array haengen.
+// Ignoriert Tasten, wenn Fokus in Input/Textarea/Select/contenteditable liegt.
 
-import { useHotkeys } from '@mantine/hooks'
+import { useEffect } from 'react'
 import { editor } from './Editor'
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true
+  if (target.isContentEditable) return true
+  return false
+}
+
 export function useKeyboardShortcuts() {
-  useHotkeys([
-    [
-      'Delete',
-      () => {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) return
+      if (e.key === 'Delete') {
         if (editor.selectedId) editor.removeBlock(editor.selectedId)
-      },
-    ],
-  ])
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 }

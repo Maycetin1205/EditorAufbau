@@ -3,7 +3,6 @@
 // Position via Pointer-Drag am Header verschiebbar.
 // Drei Ansichten: overview (2 Slots) -> list (Datenquellen / Relations) -> edit (Formular).
 
-import { ActionIcon, Group, Paper, Stack, Text, Title, UnstyledButton } from '@mantine/core'
 import { IconChevronLeft, IconChevronRight, IconGripVertical, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
@@ -26,6 +25,9 @@ type View = 'overview' | 'sources' | 'relations'
 
 const PANEL_WIDTH = 420
 const PANEL_HEIGHT = 560
+
+const iconBtnCls =
+  'inline-flex items-center justify-center w-7 h-7 rounded text-slate-600 hover:bg-slate-200'
 
 export function CatalogPanel({ pos, onPosChange, onClose }: CatalogPanelProps) {
   const cat = useCatalog()
@@ -50,70 +52,54 @@ export function CatalogPanel({ pos, onPosChange, onClose }: CatalogPanelProps) {
     window.addEventListener('pointerup', onUp)
   }
 
-  const headerTitle = view === 'overview' ? 'Datenquellen' : view === 'sources' ? 'Datenquellen' : 'Relations'
+  const headerTitle =
+    view === 'overview' ? 'Datenquellen' : view === 'sources' ? 'Datenquellen' : 'Relations'
 
   return (
-    <Paper
-      withBorder
-      shadow="lg"
-      radius="md"
+    <div
+      className="fixed z-[1000] flex flex-col overflow-hidden rounded-md border border-slate-300 bg-white shadow-lg"
       style={{
-        position: 'fixed',
         left: pos.x,
         top: pos.y,
         width: PANEL_WIDTH,
         height: PANEL_HEIGHT,
-        zIndex: 1000,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        background: 'var(--mantine-color-body)',
       }}
     >
       {/* Header: Drag-Griff + Zurueck-Button + Titel + Schliessen */}
-      <Group
-        justify="space-between"
-        wrap="nowrap"
+      <div
+        className="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 bg-slate-100 select-none cursor-grab"
         onPointerDown={startDrag}
-        style={{
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--mantine-color-default-border)',
-          cursor: 'grab',
-          userSelect: 'none',
-          background: 'var(--mantine-color-default-hover)',
-        }}
       >
-        <Group gap="xs" wrap="nowrap">
-          <IconGripVertical size={16} />
+        <div className="flex items-center gap-2">
+          <IconGripVertical size={16} className="text-slate-500" />
           {view !== 'overview' && (
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="sm"
+            <button
+              type="button"
+              className={iconBtnCls}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setView('overview')}
               aria-label="Zurück zur Übersicht"
             >
               <IconChevronLeft size={14} />
-            </ActionIcon>
+            </button>
           )}
-          <Title order={5}>{headerTitle}</Title>
-        </Group>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
+          <h5 className="text-sm font-semibold text-slate-800">{headerTitle}</h5>
+        </div>
+        <button
+          type="button"
+          className={iconBtnCls}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onClose}
           aria-label="Panel schließen"
         >
           <IconX size={16} />
-        </ActionIcon>
-      </Group>
+        </button>
+      </div>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div className="flex-1 overflow-y-auto">
         {view === 'overview' && (
-          <Stack gap="xs" p="md">
+          <div className="flex flex-col gap-2 p-3">
             <SlotButton
               label="Datenquellen"
               hint="Variable / IDB / Beleg / Stamm / MEMTAB / Frei"
@@ -126,12 +112,12 @@ export function CatalogPanel({ pos, onPosChange, onClose }: CatalogPanelProps) {
               count={cat.relations.length}
               onClick={() => setView('relations')}
             />
-          </Stack>
+          </div>
         )}
         {view === 'sources' && <DataSourcesView />}
         {view === 'relations' && <RelationsView />}
       </div>
-    </Paper>
+    </div>
   )
 }
 
@@ -144,24 +130,23 @@ interface SlotButtonProps {
 
 function SlotButton({ label, hint, count, onClick }: SlotButtonProps) {
   return (
-    <UnstyledButton
+    <button
+      type="button"
       onClick={onClick}
-      style={{
-        padding: '10px 12px',
-        borderRadius: 6,
-        border: '1px solid var(--mantine-color-default-border)',
-      }}
+      className="w-full text-left px-3 py-2.5 rounded-md border border-slate-200 hover:bg-slate-50"
     >
-      <Group justify="space-between" wrap="nowrap">
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <Text size="sm" fw={500}>{label}</Text>
-          <Text size="xs" c="dimmed">{hint}</Text>
+          <p className="text-sm font-medium">{label}</p>
+          <p className="text-xs text-slate-500">{hint}</p>
         </div>
-        <Group gap={4} wrap="nowrap">
-          <Text size="sm" c={count > 0 ? 'blue' : 'dimmed'}>{count}</Text>
-          <IconChevronRight size={14} />
-        </Group>
-      </Group>
-    </UnstyledButton>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className={'text-sm ' + (count > 0 ? 'text-blue-600' : 'text-slate-400')}>
+            {count}
+          </span>
+          <IconChevronRight size={14} className="text-slate-400" />
+        </div>
+      </div>
+    </button>
   )
 }
