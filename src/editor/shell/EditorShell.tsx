@@ -1,8 +1,7 @@
 // EditorShell
 // Erstes echtes Editor-Layout: links Sidebar, Mitte Canvas, rechts Inspector.
-// Mantine AppShell liefert nur den Rahmen; die Editor-Organe bleiben eigene Komponenten.
+// Reines HTML + Tailwind; die Editor-Organe bleiben eigene Komponenten.
 
-import { AppShell, Button, Group, Text, Title } from '@mantine/core'
 import { IconDatabase } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useKeyboardShortcuts } from '../../state/useKeyboardShortcuts'
@@ -41,43 +40,41 @@ export function EditorShell() {
     }
   }, [catalogPos])
   return (
-    <AppShell
-      header={{ height: 56 }}
-      navbar={{ width: 240, breakpoint: 'sm' }}
-      aside={{ width: 340, breakpoint: 'md' }}
-      padding="md"
-    >
-      <AppShell.Header px="md">
-        <Group h="100%" justify="space-between" wrap="nowrap">
-          <Title order={3}>Aufbau Editor</Title>
-          {/* Toolbar-Slot: hier kommen weitere Werkzeug-Buttons rein. */}
-          <Group gap="xs" wrap="nowrap">
-            <Button
-              size="xs"
-              variant={catalogOpen ? 'filled' : 'default'}
-              leftSection={<IconDatabase size={14} />}
-              onClick={() => setCatalogOpen((open) => !open)}
-            >
-              Datenquellen
-            </Button>
-            <Text c="dimmed" size="sm">
-              SoftEngine HTML
-            </Text>
-          </Group>
-        </Group>
-      </AppShell.Header>
+    <div className="flex h-screen w-screen flex-col bg-gray-50 text-gray-900">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4">
+        <h1 className="text-lg font-semibold">Aufbau Editor</h1>
+        {/* Toolbar-Slot: hier kommen weitere Werkzeug-Buttons rein. */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCatalogOpen((open) => !open)}
+            className={
+              'inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition-colors ' +
+              (catalogOpen
+                ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'
+                : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-100')
+            }
+          >
+            <IconDatabase size={14} />
+            Datenquellen
+          </button>
+          <span className="text-sm text-gray-500">SoftEngine HTML</span>
+        </div>
+      </header>
 
-      <AppShell.Navbar p="md">
-        <Sidebar />
-      </AppShell.Navbar>
+      <div className="flex min-h-0 flex-1">
+        <aside className="w-60 shrink-0 overflow-auto border-r border-gray-200 bg-white p-4">
+          <Sidebar />
+        </aside>
 
-      <AppShell.Main>
-        <Canvas />
-      </AppShell.Main>
+        <main className="min-w-0 flex-1 overflow-auto p-4">
+          <Canvas />
+        </main>
 
-      <AppShell.Aside p="md">
-        <Inspector />
-      </AppShell.Aside>
+        <aside className="w-[340px] shrink-0 overflow-auto border-l border-gray-200 bg-white p-4">
+          <Inspector />
+        </aside>
+      </div>
 
       {catalogOpen && (
         <CatalogPanel
@@ -86,6 +83,6 @@ export function EditorShell() {
           onClose={() => setCatalogOpen(false)}
         />
       )}
-    </AppShell>
+    </div>
   )
 }
