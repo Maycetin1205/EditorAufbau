@@ -1,10 +1,10 @@
 // TextControl
 // Inspector-Molekuel fuer Text-Properties.
-// Wraps Mantine TextInput.
+// Wraps src/ui TextInput.
 // Bekommt PropertyDescription (Label/Hilfetext/maxLength) + aktuellen Wert + onChange-Callback.
 
-import { TextInput } from '@mantine/core'
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
+import { TextInput } from '@/ui/text-input'
 
 interface TextControlProps {
   property: PropertyDescription

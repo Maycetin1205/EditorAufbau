@@ -16,12 +16,14 @@ Leitsatz:
 
 ```txt
 React baut die Werkstatt.
-Mantine liefert die einheitliche Editor-UI.
+Tailwind + shadcn/ui auf Radix-Basis liefert die einheitliche Editor-UI.
 Lit/Web Components sind die echten WYSIWYG-Bausteine.
 Eine hand-gebaute Subject-Klasse plus Editor-Singleton bildet das Observer Pattern; React haengt sich via useSyncExternalStore an.
 TypeScript beschreibt die Regeln. Zod nur dort, wo externe Daten in den Editor kommen.
 SoftEngine wird ueber Kataloge, Vertraege und Export-Adapter angebunden.
 ```
+
+UI-Migrations-Hinweis: Die alte verbindliche Strategie war Mantine. Mantine wird schrittweise entfernt, nicht in einem Big Bang. Zielarchitektur ist Tailwind + shadcn/ui + Radix. Der Block-Kern (BlockData, BlockDefinition, blockRegistry, Subject/Editor, BlockHost, Lit-Blocks) bleibt davon unberuehrt.
 
 ## 2. Nicht verhandelbare Regeln
 
@@ -31,7 +33,7 @@ SoftEngine wird ueber Kataloge, Vertraege und Export-Adapter angebunden.
 4. Editor-Chrome und Baustein sind getrennt. Auswahlrahmen, Drag, Resize, Badges und Inspector gehoeren dem Editor, nicht dem Export-Baustein.
 5. Ein Block speichert nur serialisierbare Daten: id, type, layout, props, events, bindings.
 6. Web Components sind die echten visuellen Blocks. React rendert sie ueber einen generischen Host.
-7. Mantine ist die einheitliche React-UI fuer Editor-Werkzeuge. Keine zweite UI-Library ohne bewusste Architektur-Aenderung.
+7. Tailwind + shadcn/ui auf Radix-Basis ist die einheitliche React-UI fuer Editor-Werkzeuge. Keine zweite UI-Library ohne bewusste Architektur-Aenderung. Mantine ist Altlast und wird Schritt fuer Schritt entfernt.
 8. Keine Fake-Mocks fuer ERP-Daten. Im Design-Modus werden echte Katalog-Metadaten und Feld-Platzhalter verwendet.
 9. SoftEngine-Logik kommt spaeter ueber klare Adapter rein. Direkte SoftEngine-Globals leben nur in `softengine/runtime` oder `softengine/export`.
 10. Komponenten reden nicht direkt wild miteinander. Sie melden Events nach oben, Stores/Kanaele benachrichtigen Beobachter.
@@ -44,14 +46,17 @@ SoftEngine wird ueber Kataloge, Vertraege und Export-Adapter angebunden.
 | Ebene | Entscheidung | Rolle |
 | --- | --- | --- |
 | Editor Shell | React + Vite | App, Layout, Canvas, Inspector, Workflow |
-| Editor UI | Mantine | Einheitlicher professioneller Look fuer Panels, Forms, Modals, Tabs, Tabellen |
-| Echte Blocks | Lit/Web Components | WYSIWYG-Bausteine fuer Editor und Export |
+| Editor UI Styling | Tailwind CSS | Utility-Klassen als Styling-Basis, nur innerhalb der UI-Schicht (siehe §18). |
+| Editor UI Komponenten | shadcn/ui (kopiert ins Repo) | Vor-konfigurierte Komponenten unter `src/ui/`, gezielt uebernommen, nicht blind installiert. |
+| Editor UI Primitives | Radix UI | Zugaengliche Headless-Primitives (Dialog, Select, Tabs, Tooltip, Popover, ...). Werden nur ueber shadcn-Wrapper benutzt. |
+| Editor UI Alt (in Migration) | Mantine | Nur noch in noch nicht migrierten Bereichen (CatalogPanel, EditorShell-Layout). Wird Etappenweise abgebaut. |
+| Echte Blocks | Lit/Web Components | WYSIWYG-Bausteine fuer Editor und Export. Beruehrt keine UI-Library. |
 | State | Subject-Klasse + Editor-Singleton (hand-gebaut) | Observer Pattern, React-Bruecke via useSyncExternalStore, keine externe State-Library |
 | Regeln | TypeScript | Statische Typen + Interfaces; Zod nur an Aussengrenzen (XML-/JSON-Import) |
 | Drag/Resize | dnd-kit plus eigene Canvas-Logik | Interaktion im Editor |
-| Icons | Tabler/Mantine oder lucide, aber einheitlich | Werkzeug-Icons |
+| Icons | lucide-react (Editor-Chrome) | Tabler-Icons bleiben in noch nicht migrierten Mantine-Panels uebergangsweise erlaubt. |
 
-Hinweis: HeroUI/Tailwind duerfen im aktiven neuen Aufbau nicht verwendet werden. Zielarchitektur ist Mantine als einziges Editor-UI-System.
+Hinweis (alte Regel aufgehoben): Die frueher verbindliche Mantine-Only-Regel ist ungueltig. Verbindlich ist jetzt Tailwind + shadcn/ui auf Radix-Basis. Mantine darf nur noch in Bereichen stehen, die noch nicht migriert sind, und wird Etappenweise entfernt. HeroUI/Framer/andere UI-Libraries bleiben verboten.
 
 ## 4. Gesamtbild
 
@@ -66,7 +71,7 @@ ProjectState
         geht als Props in
              |
              v
-Editor Shell (React/Mantine)
+Editor Shell (React + Tailwind/shadcn/ui auf Radix)
   Canvas
     BlockHost
       <ff-button>
@@ -96,10 +101,18 @@ Zielstruktur, abgeleitet aus OOP-Klassen-Modell (§6):
 src/
   app/
     App.tsx
-    providers.tsx                MantineProvider und weitere Context-Provider
+    providers.tsx                Context-Provider (uebergangsweise noch MantineProvider, wird Schritt fuer Schritt rausgenommen).
 
-  ui/
-    theme.ts                     Mantine-Theme
+  ui/                            Eigene UI-Schicht des Editor-Chrome.
+    button.tsx                   shadcn-Style Button (cva-Varianten + Tailwind).
+    panel.tsx                    Card/Paper-Ersatz: Rahmen + Padding + Titel-Slot.
+    text-input.tsx               Label + Eingabefeld + optionaler Beschreibungs-/Fehlertext.
+    number-input.tsx             Numerisches Input-Feld, gibt nur number-Werte nach oben.
+    icon-button.tsx              Quadratischer Icon-only Button.
+    (weitere shadcn-Komponenten werden bei Bedarf gezielt hier abgelegt.)
+
+  lib/
+    utils.ts                     cn() Helper (clsx + tailwind-merge) fuer Tailwind-Klassen-Komposition.
 
   state/
     Subject.ts                   generische Observer-Klasse
@@ -139,7 +152,7 @@ src/
       BlockPalette.tsx
     inspector/
       Inspector.tsx              liest BlockDefinition.customProperties aus Registry
-      controls/                  Mantine-Inputs nach Datentyp
+      controls/                  Inputs nach Datentyp; benutzen ausschliesslich src/ui/...
         TextControl.tsx
         NumberControl.tsx
         SelectControl.tsx
@@ -176,7 +189,7 @@ interface BlockData {
   id: string
   type: string                              // 'button', 'text', 'kanban', ...
   layout: { x: number; y: number; width: number; height: number }
-  props: Record<string, unknown>            // blockspezifische Werte: label, variant, content, ...
+  props: Record<string, unknown>            // blockspezifische Werte: label, content, fontSize, ...
 }
 ```
 
@@ -458,7 +471,7 @@ Ziel von Etappe 1:
 ```txt
 Ich kann einen Button aus der Sidebar auf den Canvas setzen.
 Der Button ist eine echte Web Component <ff-button>.
-Der Inspector kann Label und Variante aendern.
+Der Inspector kann Label und weitere Block-Eigenschaften aendern.
 Der Button feuert bei Klick ein Event nach oben.
 Ein HTML-Export Etappe 1 kann dieselbe <ff-button>-Komponente ausgeben.
 Der Code ist klein genug, um ihn zu erklaeren.
@@ -468,8 +481,8 @@ Am Ende ist dokumentiert, was fertig ist, was geprueft wurde und was offen bleib
 
 Konkrete Schritte:
 
-1. Mantine installieren und als einziges Editor-UI-System einrichten.
-2. Architektur-Ordner minimal anlegen (`core/blocks/`, `store/`, `editor/...`).
+1. Tailwind + shadcn/ui auf Radix-Basis installieren und als einziges Ziel-Editor-UI-System einrichten. Mantine bleibt vorlaeufig in unmigrierten Bereichen, wird aber Schritt fuer Schritt entfernt.
+2. Architektur-Ordner minimal anlegen (`core/blocks/`, `store/`, `editor/...`, `ui/`, `lib/`).
 3. Interfaces `BlockComponent` und `PropertyDescription` schreiben (`core/blocks/`).
 4. Basisklasse `BasicBlock extends LitElement implements BlockComponent` schreiben.
 5. `ButtonBlock extends BasicBlock` schreiben als erste Block-Klasse mit `@customElement('ff-button')`.
@@ -602,3 +615,118 @@ Pruefung
   HTML-Export-Benennung auf "HTML-Export Etappe 1" geschaerft.
   Etappe 2 mit `npm.cmd run build` und `npm.cmd run lint` kontrolliert.
 ```
+
+## 18. UI-Schicht (Editor-Chrome)
+
+Die Idee "Atomic Design" bleibt im Geist erhalten: Editor-Code importiert nicht direkt aus UI-Libraries und nicht wild Tailwind-Klassen durchs ganze Projekt. Stattdessen gibt es eine einzige, gewrappte UI-Schicht.
+
+### 18.1 Regeln
+
+- Editor-Chrome (`src/editor/...`) importiert **nie direkt** aus `@radix-ui/*` und **nie direkt** Tailwind-Utility-Klassen-Wildwuchs. Es importiert aus `src/ui/...`.
+- shadcn/ui-Komponenten werden ins Repo kopiert (nicht als npm-Dependency), bei Bedarf angepasst und unter `src/ui/` abgelegt.
+- shadcn/ui wird **nicht blind komplett** installiert. Pro Etappe wird gezielt nur das uebernommen, was gerade gebraucht wird.
+- Tailwind-Klassen sind erlaubt in `src/ui/...` und in der zentralen `src/index.css`. In `src/editor/...` sind Tailwind-Klassen nur fuer Layout (Flex/Gap/Width/Padding) erlaubt; visuelle Variation (Farben, Borders, Radien) gehoert in eine UI-Komponente.
+- Mantine-Imports sind **nur in noch nicht migrierten Bereichen** zulaessig und werden Etappenweise abgebaut. Neuer Code nutzt ausschliesslich `src/ui/...`.
+- Block-Inhalt (Lit Web Component) folgt nicht diesem Schema. Er ist ein eigener Baustein nach §6 und kennt weder Tailwind noch shadcn.
+
+### 18.2 Ordnerstruktur
+
+```txt
+src/
+  ui/                      Eigene UI-Schicht. shadcn-Style. Tailwind erlaubt.
+    button.tsx
+    panel.tsx
+    text-input.tsx
+    number-input.tsx
+    icon-button.tsx
+    (... weitere bei Bedarf, z.B. select.tsx, dialog.tsx, tabs.tsx, tooltip.tsx)
+
+  lib/
+    utils.ts               cn() Helper (clsx + tailwind-merge).
+
+  index.css                Tailwind-Direktiven + CSS-Variablen fuer shadcn-Theme.
+```
+
+Editor-Code (`editor/...`) importiert ausschliesslich aus `ui/` (oder uebergangsweise aus `@mantine/core`, solange ein Bereich noch nicht migriert ist).
+
+### 18.3 Lit vs. React-Entscheidung
+
+- **Editor-Chrome** ist immer React + Tailwind/shadcn/ui auf Radix. Hier ist die UI-Library unbestritten.
+- **Block-Inhalt** ist Lit Web Component (§6). Nicht weil React in SoftEngine nicht laeuft (laeuft erprobt), sondern weil:
+  - SoftEngine setzt DOM-Eigenschaften direkt; Lit-Setter fangen das sauber ab, React-State muesste per Bridge synchronisiert werden.
+  - LitElement passt 1:1 zur OOP-Modellierung aus Notiz Woche 2 (Klasse, Property via getter/setter, Vererbung von Basisklasse).
+  - Export-Groesse bleibt klein.
+  - Tailwind/shadcn ist Editor-Chrome-Sache und hat im exportierten Block-Bundle nichts verloren.
+
+Diese Entscheidung gilt als gepruefte Architekturwahl, nicht als technische Limitierung.
+
+### 18.4 Migrationsplan Mantine -> Tailwind+shadcn
+
+Phasenweise:
+
+```txt
+Phase 0  ARCHITEKTUR.md auf Tailwind+shadcn umgestellt.                 [erledigt mit dieser Aenderung]
+Phase 1  Tailwind + shadcn-Basis im Projekt einrichten.
+         src/ui/{button,panel,text-input,number-input,icon-button} anlegen.
+         Sidebar/BlockPalette und Inspector/TextControl/NumberControl auf src/ui umstellen.
+Phase 2  CatalogPanel (Datenquellen + Relations) auf src/ui umstellen.
+         shadcn dialog/tabs nach Bedarf gezielt einfuegen.
+Phase 3  EditorShell auf Tailwind-Grid (oder shadcn-Layout) umstellen, MantineProvider entfernen.
+         useKeyboardShortcuts vom Mantine-Hook lossagen.
+Phase 4  Mantine-Pakete aus package.json entfernen, npm prune.
+```
+
+Eine Phase ist erst `Fertig`, wenn `npm run build` und `npm run lint` sauber durchlaufen.
+
+## 19. Block-Liste
+
+Die folgende Liste ist verbindlich fuer die Aufbau-Etappen. Jeder Block bekommt einen festen Tag, einen deutschen Anzeigenamen und eine Kategorie. Tag-Praefix `ff-` bleibt.
+
+| Tag | Anzeige | Kategorie | Kurzbeschreibung |
+| --- | --- | --- | --- |
+| `ff-button` | Schaltflaeche | Eingabe | Loest eine Aktion oder Action-Chain aus. |
+| `ff-text` | Textblock | Inhalt | Statischer Text mit Platzhaltern. |
+| `ff-feld` | Formularfeld | Eingabe | Generisches Feld, an IDB-/Beleg-Feld gebunden. |
+| `ff-datum` | Datumsfeld | Eingabe | Datumseingabe mit Picker. |
+| `ff-feldliste` | Feldliste | Inhalt | Mehrere Felder gruppiert dargestellt. |
+| `ff-infobox` | Infobox | Inhalt | Hinweis/Warnung/Erfolg mit Icon. |
+| `ff-tabelle` | Datentabelle | Daten | Liste aus Datenquelle mit Spalten. |
+| `ff-zeitraster` | Zeitraster | Daten | Kalender-/Zeitachsen-Darstellung. |
+| `ff-kanban` | Kanban-Board | Daten | Statusbasierte Spalten mit Karten. |
+| `ff-detailkarte` | Detailkarte | Daten | Einzeldatensatz formularartig. |
+| `ff-rahmen` | Rahmen | Layout | Container fuer beliebige Bloecke. |
+| `ff-aktionsrahmen` | Aktionsrahmen | Layout | Container mit Aktions-/Toolbar-Zone. |
+| `ff-assistent` | Assistent | Layout | Mehrstufiger Wizard mit Schritten. |
+
+Reihenfolge fuer Etappen 3+ nach Lernwert + SoftEngine-Relevanz:
+
+1. `ff-feld` (Bindung an IDB-Feld; Kern jeder Maske)
+2. `ff-tabelle` (DataSource-Vertrag, Spalten, Selection)
+3. `ff-detailkarte` (Feld-Komposition, Datensatz-Edit)
+4. `ff-feldliste` (Layout + Felder)
+5. `ff-rahmen` (Container; Voraussetzung fuer geschachtelte Bloecke)
+6. `ff-datum` (Spezialfall Feld; UI-Library-Wrapping)
+7. `ff-infobox` (einfacher Inhaltsblock; Pause-Block zwischen schweren)
+8. `ff-kanban` (Daten + Drag innerhalb Block)
+9. `ff-zeitraster` (Daten + Zeitachse)
+10. `ff-aktionsrahmen` (Layout + Action-Chain-Anbindung)
+11. `ff-assistent` (Multi-Step, State-Maschine)
+
+Bereits vorhanden: `ff-button`, `ff-text` (Etappen 1/2 abgeschlossen).
+
+## 20. Erweiterbarkeit
+
+Die Architektur ist auf Plugin-Pattern via Registries ausgelegt. Neue Funktionen werden nicht in zentrale Schalter-Listen eingetragen, sondern registrieren sich selbst.
+
+| Erweiterung | Mechanismus | Aufwand |
+| --- | --- | --- |
+| Neuer Block | `registerBlockType` in `blocks/<typ>/<Block>.ts` + Zeile in `blocks/register.ts` | 1-2 Dateien |
+| Neue Inspector-Property | Eintrag in `BlockDefinition.customProperties`, ggf. neues Control in `inspector/controls/` | 0-1 Dateien |
+| Neuer State-Bereich | Eigenes `Subject<T>`-basiertes Modul; eigener `useX`-Hook | 2 Dateien |
+| Neue DataSource (IDB, Relation, Workflow, Lookup, Template) | Importer-Klasse in `softengine/catalog/importers/` | 1 Datei |
+| Neue Action-Chain-Schritte | Eigene Schritt-Registry analog Block-Registry | 1-2 Dateien |
+| Neuer Atom-Wrapper / Library-Wechsel | nur `ui/atoms/<Atom>.tsx` anfassen | 1 Datei pro Atom |
+| Neue Export-Variante | Adapter in `softengine/export/` parallel zur bestehenden | 1 Datei |
+| Neue Persistenz (IndexedDB, Cloud) | Adapter hinter `state/`-Schnittstelle | 1 Datei |
+
+Regel: jede neue Funktion baut auf einer Registry oder einem Adapter. Der Editor-Kern bleibt von konkreten Implementierungen frei.

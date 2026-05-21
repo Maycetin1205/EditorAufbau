@@ -2,7 +2,7 @@
 // Singleton-Klasse mit Editor-State. Speichert ausschliesslich serialisierbare BlockData.
 // Erbt von Subject (Observer-Pattern). React-Bruecke via useSyncExternalStore (siehe useEditor.ts).
 
-import type { BlockData } from '../core/blocks/BlockData'
+import type { BlockData, BlockLayout } from '../core/blocks/BlockData'
 import { createBlockData } from '../core/blocks/blockFactory'
 import { Subject } from './Subject'
 
@@ -36,6 +36,12 @@ export class Editor extends Subject<Editor> {
 
   addBlock(type: string): BlockData {
     const data = createBlockData(type)
+    // Stagger: neuer Block landet versetzt zum letzten, damit Mehrfach-Klick
+    // sichtbar mehrere Blocks ergibt statt einen Stapel auf (0,0).
+    // Modulo 12 vermeidet dass die Position immer weiter aus dem Canvas rutscht.
+    const STEP = 24
+    const slot = this._blocks.length % 12
+    data.layout = { ...data.layout, x: slot * STEP, y: slot * STEP }
     this._blocks = [...this._blocks, data]
     this.notify(this)
     return data
@@ -57,6 +63,15 @@ export class Editor extends Subject<Editor> {
     // Notwendig damit React den BlockData-Wechsel in BlockHost erkennt (Object.is-Vergleich).
     this._blocks = this._blocks.map((b) =>
       b.id === id ? { ...b, props: { ...b.props, [attr]: value } } : b,
+    )
+    this.notify(this)
+  }
+
+  // Setzt einzelne Layout-Felder (x/y/width/height) immutabel.
+  // Drag/Resize ruft das mit den jeweils geaenderten Feldern auf.
+  updateLayout(id: string, patch: Partial<BlockLayout>): void {
+    this._blocks = this._blocks.map((b) =>
+      b.id === id ? { ...b, layout: { ...b.layout, ...patch } } : b,
     )
     this.notify(this)
   }

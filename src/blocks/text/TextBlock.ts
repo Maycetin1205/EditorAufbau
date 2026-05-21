@@ -1,16 +1,28 @@
 // TextBlock
 // Lit Web Component fuer den Text-Block.
-// Reine View: haelt nur Render-Properties (content, fontSize, color, align).
+// Reine View: haelt nur Render-Properties (content, fontSize).
 // Editor-State (id, layout, type) lebt im Editor als BlockData.
 
-import { html, LitElement, type TemplateResult } from 'lit'
+import { css, html, LitElement, type TemplateResult } from 'lit'
 import { registerBlockType } from '../../core/blocks/blockRegistry'
 
 export class TextBlock extends LitElement {
+  // Host fuellt den BlockHost-Rahmen, damit Greifrahmen = sichtbarer Block.
+  static styles = css`
+    :host {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    span {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  `
+
   private _content: string = 'Neuer Text'
   private _fontSize: number = 16
-  private _color: string = '#000000'
-  private _align: string = 'left'
 
   get content(): string {
     return this._content
@@ -30,26 +42,8 @@ export class TextBlock extends LitElement {
     this.requestUpdate('fontSize', old)
   }
 
-  get color(): string {
-    return this._color
-  }
-  set color(v: string) {
-    const old = this._color
-    this._color = v
-    this.requestUpdate('color', old)
-  }
-
-  get align(): string {
-    return this._align
-  }
-  set align(v: string) {
-    const old = this._align
-    this._align = v
-    this.requestUpdate('align', old)
-  }
-
   render(): TemplateResult {
-    const style = `font-size:${this._fontSize}px;color:${this._color};text-align:${this._align};`
+    const style = `font-size:${this._fontSize}px;`
     return html`<span style="${style}">${this._content}</span>`
   }
 }
@@ -64,8 +58,6 @@ registerBlockType({
   defaultProps: {
     content: 'Neuer Text',
     fontSize: 16,
-    color: '#000000',
-    align: 'left',
   },
   defaultLayout: { width: 200, height: 40 },
   customProperties: [
@@ -82,20 +74,6 @@ registerBlockType({
       description: 'Groesse in Pixel',
       isArray: false,
       maxLength: 4,
-    },
-    {
-      attributeName: 'color',
-      name: 'Farbe',
-      description: 'Schriftfarbe als Hex-Code',
-      isArray: false,
-      maxLength: 7,
-    },
-    {
-      attributeName: 'align',
-      name: 'Ausrichtung',
-      description: 'Links, Mitte oder Rechts',
-      isArray: false,
-      maxLength: 6,
     },
   ],
 })

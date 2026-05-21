@@ -1,21 +1,12 @@
 # Aufbau-Editor
 
-Neuer sauberer Aufbau fuer einen WYSIWYG-Editor, der HTML/JSON fuer SoftEngine ueberfluessig machen soll.
+WYSIWYG-Editor fuer SoftEngine-Masken. Canvas zeigt echte Web Components, die genauso exportiert werden (eine Render-Implementierung, kein separater Preview).
 
-Die Canvas ist das Live-Dokument. Sichtbare Inhalte sind echte Web Components, keine separate Vorschau.
+## Wo was steht
 
-Aktueller Stand:
-
-- React + Vite als Editor-Shell
-- Mantine als UI-System fuer Editor-Werkzeuge
-- Zustand als zentraler Editor-State
-- Zod + TypeScript fuer Block-Regeln
-- Lit/Web Components fuer echte WYSIWYG-Blocks
-- Erste Blocks: `ff-button`, `ff-text`
-- Projektzustand wird im Browser lokal gespeichert
-- Ausgewaehlte Blocks koennen im Inspector geloescht werden
-
-Alte vibe-coded Dateien sind entfernt. Alte Projekte duerfen nur als Lesematerial dienen, nicht als Bauplan.
+- **Architektur und Regeln:** `ARCHITEKTUR.md` (verbindlich).
+- **Notizen Woche 1+2:** `C:\Users\mu.aycetin\Desktop\Projekt Lernen\Notizen` (Quelle der Pattern: Observer, OOP-Klassen, Atomic Design).
+- **SoftEngine-Pruefstand:** `goldreferenz-softengine/`.
 
 ## Entwicklung
 
