@@ -1,101 +1,49 @@
 // TextBlock
-// Lit Web Component fuer den Text-Block.
-// Single Source of Truth via textTemplate(props).
+// Lit Web Component fuer den Text-Block. Erbt von BasicBlock.
+// Fachlich nur Text. Typografie/Farbe/Layout gehoeren nicht als rohe
+// Inspector-Felder in den Block, sondern spaeter in ein sauberes Design-System.
 
-import { css, html, LitElement, type TemplateResult } from 'lit'
-import { unsafeHTML } from 'lit/directives/unsafe-html.js'
-import { registerBlockType } from '../../core/blocks/blockRegistry'
-import { escapeHtml, inlineStyle } from '../shared'
+import { css, html, type TemplateResult } from 'lit'
+import { property } from 'lit/decorators.js'
+import { BasicBlock } from '../../core/blocks/BasicBlock'
+import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 
-interface TextProps {
-  content: string
-  fontSize: number
-  fontWeight: 'normal' | 'bold'
-  align: 'left' | 'center' | 'right'
-  color: string
-}
+export class TextBlock extends BasicBlock {
+  static readonly blockType = 'text'
+  static readonly tagName = 'ff-text'
+  static readonly displayName = 'Textblock'
+  static readonly category: BlockCategory = 'anzeige'
+  static readonly defaultProps = {
+    text: 'Neuer Text',
+  }
+  static readonly defaultLayout = { width: 240, height: 40 }
 
-function textTemplate(props: Partial<TextProps>): string {
-  const content = escapeHtml(props.content ?? 'Neuer Text')
-  const style = inlineStyle({
-    'font-size': props.fontSize ? `${props.fontSize}px` : undefined,
-    'font-weight': props.fontWeight,
-    'text-align': props.align,
-    color: props.color,
-  })
-  return `<span style="${style}">${content}</span>`
-}
+  // Keine Inspector-Felder: der Text wird per Doppelklick direkt auf dem Block
+  // bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
+  static override readonly customProperties: PropertyDescription[] = []
 
-export class TextBlock extends LitElement {
-  static styles = css`
-    :host { display: block; width: 100%; height: 100%; }
-    span { display: block; width: 100%; height: 100%; }
-  `
+  static styles = [
+    BasicBlock.styles,
+    css`
+      span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        color: inherit;
+        font: inherit;
+      }
+    `,
+  ]
 
-  private _content: string = 'Neuer Text'
-  private _fontSize: number = 14
-  private _fontWeight: TextProps['fontWeight'] = 'normal'
-  private _align: TextProps['align'] = 'left'
-  private _color: string = ''
-
-  get content(): string { return this._content }
-  set content(v: string) { const o = this._content; this._content = v; this.requestUpdate('content', o) }
-  get fontSize(): number { return this._fontSize }
-  set fontSize(v: number) { const o = this._fontSize; this._fontSize = v; this.requestUpdate('fontSize', o) }
-  get fontWeight(): TextProps['fontWeight'] { return this._fontWeight }
-  set fontWeight(v: TextProps['fontWeight']) { const o = this._fontWeight; this._fontWeight = v; this.requestUpdate('fontWeight', o) }
-  get align(): TextProps['align'] { return this._align }
-  set align(v: TextProps['align']) { const o = this._align; this._align = v; this.requestUpdate('align', o) }
-  get color(): string { return this._color }
-  set color(v: string) { const o = this._color; this._color = v; this.requestUpdate('color', o) }
+  @property() text = 'Neuer Text'
 
   render(): TemplateResult {
-    return html`${unsafeHTML(textTemplate({
-      content: this._content,
-      fontSize: this._fontSize,
-      fontWeight: this._fontWeight,
-      align: this._align,
-      color: this._color,
-    }))}`
+    return html`<span
+      data-ff-editable
+      @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'text')}
+    >${this.text}</span>`
   }
 }
 
-if (!customElements.get('ff-text')) {
-  customElements.define('ff-text', TextBlock)
-}
-
-registerBlockType({
-  type: 'text',
-  tagName: 'ff-text',
-  displayName: 'Textblock',
-  category: 'inhalt',
-  defaultProps: {
-    content: 'Neuer Text',
-    fontSize: 14,
-    fontWeight: 'normal',
-    align: 'left',
-    color: '',
-  },
-  defaultLayout: { width: 240, height: 40 },
-  customProperties: [
-    { attributeName: 'content', name: 'Inhalt', description: 'Text-Inhalt des Blocks', isArray: false, maxLength: 1000, kind: 'textarea' },
-    { attributeName: 'fontSize', name: 'Schriftgroesse', description: 'Groesse in Pixel', isArray: false, maxLength: 4, kind: 'number' },
-    {
-      attributeName: 'fontWeight', name: 'Schriftstaerke', description: '', isArray: false, maxLength: 0, kind: 'select',
-      options: [
-        { value: 'normal', label: 'Normal' },
-        { value: 'bold', label: 'Fett' },
-      ],
-    },
-    {
-      attributeName: 'align', name: 'Ausrichtung', description: '', isArray: false, maxLength: 0, kind: 'select',
-      options: [
-        { value: 'left', label: 'Links' },
-        { value: 'center', label: 'Zentriert' },
-        { value: 'right', label: 'Rechts' },
-      ],
-    },
-    { attributeName: 'color', name: 'Textfarbe', description: 'Hex-Farbe', isArray: false, maxLength: 0, kind: 'color' },
-  ],
-  exportHtml: (props) => textTemplate(props as Partial<TextProps>),
-})
+BasicBlock.defineAndRegister(TextBlock)

@@ -5,8 +5,12 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
+// tsconfigRootDir explizit setzen, weil sonst neben react-app auch
+// react-app/grundlast als Kandidat fuer das Projekt-Root angesehen wird.
+const rootDir = import.meta.dirname
+
 export default defineConfig([
-  globalIgnores(['dist', 'src.vibe-backup-*']),
+  globalIgnores(['dist', 'src.vibe-backup-*', 'grundlast']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -17,6 +21,9 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir: rootDir,
+      },
     },
   },
 ])

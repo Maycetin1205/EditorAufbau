@@ -2,7 +2,7 @@
 // Inspector-Control fuer Properties mit fester Option-Liste (kind 'select').
 
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
-import { Select } from '@/ui/select'
+import { Select } from '@/ui/atoms/select'
 
 interface SelectControlProps {
   property: PropertyDescription

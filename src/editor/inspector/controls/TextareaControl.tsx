@@ -2,7 +2,7 @@
 // Inspector-Control fuer mehrzeilige Text-Properties (kind 'textarea').
 
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
-import { Textarea } from '@/ui/textarea'
+import { Textarea } from '@/ui/atoms/textarea'
 
 interface TextareaControlProps {
   property: PropertyDescription

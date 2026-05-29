@@ -1,69 +1,35 @@
 // EditorShell
-// Erstes echtes Editor-Layout: links Sidebar, Mitte Canvas, rechts Inspector.
-// Reines HTML + Tailwind; die Editor-Organe bleiben eigene Komponenten.
+// Editor-Layout: Top-Header mit Logo + Toolbar, links Sidebar,
+// mittig Canvas, rechts Inspector.
 
-import { IconDatabase } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import { Wand2 } from 'lucide-react'
 import { useKeyboardShortcuts } from '../../state/useKeyboardShortcuts'
 import { Canvas } from '../canvas/Canvas'
 import { Inspector } from '../inspector/Inspector'
-import { CatalogPanel, type PanelPosition } from '../panels/CatalogPanel'
 import { Sidebar } from '../sidebar/Sidebar'
-
-const CATALOG_POS_KEY = 'aufbau_catalog_panel_pos_v1'
-const DEFAULT_CATALOG_POS: PanelPosition = { x: 80, y: 80 }
-
-function loadCatalogPos(): PanelPosition {
-  try {
-    const raw = localStorage.getItem(CATALOG_POS_KEY)
-    if (!raw) return DEFAULT_CATALOG_POS
-    const parsed = JSON.parse(raw) as Partial<PanelPosition>
-    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-      return { x: parsed.x, y: parsed.y }
-    }
-  } catch {
-    // ignore
-  }
-  return DEFAULT_CATALOG_POS
-}
+import { StatusBar } from './StatusBar'
+import { Toolbar } from './Toolbar'
 
 export function EditorShell() {
   useKeyboardShortcuts()
-  const [catalogOpen, setCatalogOpen] = useState(false)
-  // Position lebt im Shell, ueberlebt Close/Open + Page-Refresh via localStorage.
-  const [catalogPos, setCatalogPos] = useState<PanelPosition>(loadCatalogPos)
-  useEffect(() => {
-    try {
-      localStorage.setItem(CATALOG_POS_KEY, JSON.stringify(catalogPos))
-    } catch {
-      // ignore
-    }
-  }, [catalogPos])
+
   return (
-    <div className="flex h-screen w-screen flex-col bg-gray-50 text-gray-900">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4">
-        <h1 className="text-lg font-semibold">Aufbau Editor</h1>
-        {/* Toolbar-Slot: hier kommen weitere Werkzeug-Buttons rein. */}
+    <div className="flex h-screen w-screen flex-col bg-background text-foreground">
+      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-3">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setCatalogOpen((open) => !open)}
-            className={
-              'inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition-colors ' +
-              (catalogOpen
-                ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'
-                : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-100')
-            }
-          >
-            <IconDatabase size={14} />
-            Datenquellen
-          </button>
-          <span className="text-sm text-gray-500">SoftEngine HTML</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Wand2 size={15} />
+          </span>
+          <div className="leading-tight">
+            <h1 className="text-sm font-semibold">Aufbau</h1>
+            <p className="text-[10px] text-muted-foreground">MVP Editor</p>
+          </div>
         </div>
+        <Toolbar />
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="w-60 shrink-0 overflow-auto border-r border-gray-200 bg-white p-4">
+        <aside className="w-60 shrink-0 overflow-hidden border-r border-border bg-card">
           <Sidebar />
         </aside>
 
@@ -71,18 +37,12 @@ export function EditorShell() {
           <Canvas />
         </main>
 
-        <aside className="w-[340px] shrink-0 overflow-auto border-l border-gray-200 bg-white p-4">
+        <aside className="w-[340px] shrink-0 overflow-auto border-l border-border bg-card p-3">
           <Inspector />
         </aside>
       </div>
 
-      {catalogOpen && (
-        <CatalogPanel
-          pos={catalogPos}
-          onPosChange={setCatalogPos}
-          onClose={() => setCatalogOpen(false)}
-        />
-      )}
+      <StatusBar />
     </div>
   )
 }

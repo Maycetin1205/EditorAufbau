@@ -4,7 +4,7 @@
 // Bekommt PropertyDescription (Label/Hilfetext/maxLength) + aktuellen Wert + onChange-Callback.
 
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
-import { TextInput } from '@/ui/text-input'
+import { TextInput } from '@/ui/atoms/text-input'
 
 interface TextControlProps {
   property: PropertyDescription

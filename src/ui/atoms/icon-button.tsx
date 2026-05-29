@@ -3,7 +3,7 @@
 // damit Icon-only-Buttons im Editor barrierefrei bleiben.
 
 import { forwardRef, type ReactNode } from 'react'
-import { Button, type ButtonProps } from '@/ui/button'
+import { Button, type ButtonProps } from '@/ui/atoms/button'
 
 interface IconButtonProps extends Omit<ButtonProps, 'size' | 'children'> {
   'aria-label': string

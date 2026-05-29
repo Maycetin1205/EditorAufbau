@@ -1,9 +1,14 @@
 // blockFactory
 // Erzeugt eine serialisierbare BlockData-Instanz aus Typ-Name + Defaults aus Registry.
 // Editor.addBlock(type) ruft das auf, schiebt das Ergebnis in den State.
+// Wichtig: defaultProps koennen verschachtelte Werte enthalten — diese muessen
+// pro Instanz frisch sein, sonst teilen
+// sich zwei Blocks dasselbe Array. Daher Deep-Clone (structuredClone faellt
+// auf JSON-Clone zurueck, falls die Laufzeit es nicht kennt).
 
 import type { BlockData } from './BlockData'
 import { getBlockDefinition } from './blockRegistry'
+import { deepClone } from '../../lib/deepClone'
 
 const FALLBACK_LAYOUT = { width: 120, height: 40 }
 
@@ -21,6 +26,6 @@ export function createBlockData(type: string, id?: string): BlockData {
       width: def.defaultLayout?.width ?? FALLBACK_LAYOUT.width,
       height: def.defaultLayout?.height ?? FALLBACK_LAYOUT.height,
     },
-    props: { ...def.defaultProps },
+    props: deepClone(def.defaultProps),
   }
 }

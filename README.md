@@ -5,7 +5,7 @@ WYSIWYG-Editor fuer SoftEngine-Masken. Canvas zeigt echte Web Components, die ge
 ## Wo was steht
 
 - **Architektur und Regeln:** `ARCHITEKTUR.md` (verbindlich).
-- **Notizen Woche 1+2:** `C:\Users\mu.aycetin\Desktop\Projekt Lernen\Notizen` (Quelle der Pattern: Observer, OOP-Klassen, Atomic Design).
+- **Notizen Woche 1+2:** `C:\Users\mu.aycetin\Desktop\Projekt Lernen\Notizen` (Quelle der Pattern: Observer, OOP-Klassen, Atomic Design — UI ist nach atoms/molecules/organisms/templates strukturiert, siehe ARCHITEKTUR.md).
 - **SoftEngine-Pruefstand:** `goldreferenz-softengine/`.
 
 ## Entwicklung
