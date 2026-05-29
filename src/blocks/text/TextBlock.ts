@@ -17,7 +17,6 @@ export class TextBlock extends BasicBlock {
   static readonly defaultProps = {
     text: 'Neuer Text',
   }
-  static readonly defaultLayout = { width: 240, height: 40 }
 
   // Keine Inspector-Felder: der Text wird per Doppelklick direkt auf dem Block
   // bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
@@ -28,8 +27,7 @@ export class TextBlock extends BasicBlock {
     css`
       span {
         display: block;
-        width: 100%;
-        height: 100%;
+        min-width: 1ch;
         color: inherit;
         font: inherit;
       }

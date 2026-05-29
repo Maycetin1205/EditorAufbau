@@ -47,7 +47,7 @@ export function BlockPalette() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
-          placeholder="Bloecke suchen..."
+          placeholder="Blöcke suchen…"
           className={cn(
             'h-8 w-full rounded-md border border-input bg-background pl-7 pr-2 text-xs shadow-sm',
             'placeholder:text-muted-foreground',

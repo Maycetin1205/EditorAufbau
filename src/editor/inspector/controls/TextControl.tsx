@@ -1,10 +1,10 @@
 // TextControl
-// Inspector-Molekuel fuer Text-Properties.
-// Wraps src/ui TextInput.
-// Bekommt PropertyDescription (Label/Hilfetext/maxLength) + aktuellen Wert + onChange-Callback.
+// Inspector-Control für Text-Properties (kind 'text').
+// Komponiert Field-Molekül + TextInput-Atom.
 
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
 import { TextInput } from '@/ui/atoms/text-input'
+import { Field } from '@/ui/molecules/field'
 
 interface TextControlProps {
   property: PropertyDescription
@@ -14,12 +14,15 @@ interface TextControlProps {
 
 export function TextControl({ property, value, onChange }: TextControlProps) {
   return (
-    <TextInput
-      label={property.name}
-      description={property.description}
-      maxLength={property.maxLength > 0 ? property.maxLength : undefined}
-      value={value}
-      onChange={(e) => onChange(e.currentTarget.value)}
-    />
+    <Field label={property.name} description={property.description}>
+      {(field) => (
+        <TextInput
+          {...field}
+          value={value}
+          maxLength={property.maxLength > 0 ? property.maxLength : undefined}
+          onChange={(e) => onChange(e.currentTarget.value)}
+        />
+      )}
+    </Field>
   )
 }

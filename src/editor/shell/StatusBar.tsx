@@ -6,14 +6,14 @@ import { useEditor } from '../../state/useEditor'
 
 export function StatusBar() {
   const ed = useEditor()
-  const selected = ed.selectedBlock
+  const selected = ed.selectedNode
   const def = selected ? getBlockDefinition(selected.type) : null
 
   return (
     <footer className="flex h-7 shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-3 text-[11px] text-muted-foreground">
       <div className="flex items-center gap-3">
         <span>
-          Bloecke <strong className="text-foreground">{ed.blocks.length}</strong>
+          Blöcke <strong className="text-foreground">{ed.blockCount}</strong>
         </span>
         {selected && (
           <span>

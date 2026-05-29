@@ -14,6 +14,5 @@ export interface BlockDefinition {
   displayName: string
   category: BlockCategory
   defaultProps: Record<string, unknown>
-  defaultLayout?: { width: number; height: number }
   customProperties: PropertyDescription[]
 }

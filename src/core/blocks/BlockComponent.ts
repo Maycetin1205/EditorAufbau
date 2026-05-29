@@ -1,7 +1,7 @@
 // BlockComponent
 // Vertrag (Interface) fuer jeden Block-Baustein.
 // Statische Klassen-Felder (blockType, tagName, displayName, category,
-// defaultProps, defaultLayout, customProperties) sind ueber
+// defaultProps, customProperties) sind ueber
 // `BlockComponentStatic` typisiert. Sie werden von der Registry ohne
 // Instanzierung gelesen — `customElements.define` darf erst registrieren,
 // bevor irgendjemand `new` auf dem Konstruktor aufruft.
@@ -24,7 +24,6 @@ export interface BlockComponentStatic {
   readonly displayName: string
   readonly category: BlockCategory
   readonly defaultProps: Record<string, unknown>
-  readonly defaultLayout?: { width: number; height: number }
   readonly customProperties: PropertyDescription[]
   new(): BlockComponent
 }

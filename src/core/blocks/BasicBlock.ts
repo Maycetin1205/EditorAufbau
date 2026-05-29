@@ -26,8 +26,10 @@ import type { PropertyDescription } from './PropertyDescription'
 import { registerBlockType } from './blockRegistry'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
+  // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
+  // im Container-Fluss seine natürliche Größe ein.
   static override styles: CSSResultGroup = css`
-    :host { display: block; width: 100%; height: 100%; }
+    :host { display: block; }
     [data-ff-editable] { cursor: text; }
     :host(:not([data-editable])) [data-ff-editable] { cursor: inherit; }
   `
@@ -112,7 +114,6 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       displayName: BlockClass.displayName,
       category: BlockClass.category,
       defaultProps: BlockClass.defaultProps,
-      defaultLayout: BlockClass.defaultLayout,
       customProperties: BlockClass.customProperties,
     })
   }

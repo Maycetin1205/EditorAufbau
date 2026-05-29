@@ -1,18 +1,18 @@
 // blockFactory
-// Erzeugt eine serialisierbare BlockData-Instanz aus Typ-Name + Defaults aus Registry.
-// Editor.addBlock(type) ruft das auf, schiebt das Ergebnis in den State.
-// Wichtig: defaultProps koennen verschachtelte Werte enthalten — diese muessen
-// pro Instanz frisch sein, sonst teilen
-// sich zwei Blocks dasselbe Array. Daher Deep-Clone (structuredClone faellt
-// auf JSON-Clone zurueck, falls die Laufzeit es nicht kennt).
+// Erzeugt einen serialisierbaren BlockNode aus Typ-Name + Defaults aus Registry.
+// Editor.addBlock(type) ruft das auf und hängt den Knoten in den Baum
+// (setzt parentId + childIds). Der Knoten kommt hier zunächst losgelöst
+// (parentId null, keine Kinder).
+//
+// Wichtig: defaultProps können verschachtelte Werte enthalten — diese müssen
+// pro Instanz frisch sein, sonst teilen sich zwei Blocks dasselbe Array.
+// Daher Deep-Clone (structuredClone fällt auf JSON-Clone zurück).
 
-import type { BlockData } from './BlockData'
+import type { BlockNode } from './BlockData'
 import { getBlockDefinition } from './blockRegistry'
 import { deepClone } from '../../lib/deepClone'
 
-const FALLBACK_LAYOUT = { width: 120, height: 40 }
-
-export function createBlockData(type: string, id?: string): BlockData {
+export function createBlockNode(type: string, id?: string): BlockNode {
   const def = getBlockDefinition(type)
   if (!def) {
     throw new Error(`Unbekannter Block-Typ: "${type}". Vorher mit registerBlockType registrieren.`)
@@ -20,12 +20,8 @@ export function createBlockData(type: string, id?: string): BlockData {
   return {
     id: id ?? crypto.randomUUID(),
     type,
-    layout: {
-      x: 0,
-      y: 0,
-      width: def.defaultLayout?.width ?? FALLBACK_LAYOUT.width,
-      height: def.defaultLayout?.height ?? FALLBACK_LAYOUT.height,
-    },
     props: deepClone(def.defaultProps),
+    parentId: null,
+    childIds: [],
   }
 }

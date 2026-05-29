@@ -17,7 +17,6 @@ export class ButtonBlock extends BasicBlock {
   static readonly displayName = 'Schaltfläche'
   static readonly category: BlockCategory = 'eingabe'
   static readonly defaultProps = { label: 'Klick mich' }
-  static readonly defaultLayout = { width: 140, height: 40 }
 
   // Keine Inspector-Felder: die Beschriftung wird per Doppelklick direkt auf dem
   // Button bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
@@ -27,7 +26,7 @@ export class ButtonBlock extends BasicBlock {
     BasicBlock.styles,
     css`
       button {
-        width: 100%; height: 100%; box-sizing: border-box;
+        box-sizing: border-box; padding: 8px 16px;
         cursor: pointer; border-radius: 8px; border: 1px solid hsl(214 32% 91%);
         background: white; color: hsl(222 47% 11%); font-size: 13px; font-weight: 500;
         transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;

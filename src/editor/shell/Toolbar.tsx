@@ -16,8 +16,8 @@ export function Toolbar() {
   const hasSelection = ed.selectedId !== null
 
   const handleClear = () => {
-    if (!ed.blocks.length) return
-    if (!window.confirm(`Alle ${ed.blocks.length} Bloecke loeschen?`)) return
+    if (ed.blockCount === 0) return
+    if (!window.confirm(`Alle ${ed.blockCount} Blöcke löschen?`)) return
     ed.clear()
   }
 
@@ -25,8 +25,8 @@ export function Toolbar() {
     <div className="flex items-center gap-1">
       <ToolGroup>
         <IconButton
-          aria-label="Rueckgaengig (Ctrl+Z)"
-          title="Rueckgaengig"
+          aria-label="Rückgängig (Ctrl+Z)"
+          title="Rückgängig"
           onClick={() => ed.undo()}
           disabled={!ed.canUndo}
         >
@@ -54,18 +54,18 @@ export function Toolbar() {
           <Copy size={15} />
         </IconButton>
         <IconButton
-          aria-label="Loeschen (Entf)"
-          title="Loeschen"
+          aria-label="Löschen (Entf)"
+          title="Löschen"
           onClick={() => ed.selectedId && ed.removeBlock(ed.selectedId)}
           disabled={!hasSelection}
         >
           <Trash size={15} />
         </IconButton>
         <IconButton
-          aria-label="Alle Bloecke loeschen"
-          title="Alle Bloecke loeschen"
+          aria-label="Alle Blöcke löschen"
+          title="Alle Blöcke löschen"
           onClick={handleClear}
-          disabled={ed.blocks.length === 0}
+          disabled={ed.blockCount === 0}
         >
           <Trash2 size={15} />
         </IconButton>

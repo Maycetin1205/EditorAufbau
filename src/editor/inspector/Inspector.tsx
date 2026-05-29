@@ -1,6 +1,6 @@
 // Inspector
-// Property-Editor des selektierten Blocks.
-// Liest die PropertyDescription des Blocks und baut daraus einfache Controls.
+// Property-Editor des selektierten Blocks. Liest die PropertyDescription des
+// Blocks und baut daraus einfache Controls. Nutzt die gemeinsame SidePanel-Hülle.
 
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type {
@@ -8,7 +8,7 @@ import type {
   PropertyKind,
 } from '../../core/blocks/PropertyDescription'
 import { useEditor } from '../../state/useEditor'
-import { Panel } from '@/ui/molecules/panel'
+import { SidePanel } from '@/ui/molecules/side-panel'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
@@ -21,24 +21,24 @@ function resolveKind(property: PropertyDescription, value: unknown): PropertyKin
 
 export function Inspector() {
   const ed = useEditor()
-  const block = ed.selectedBlock
+  const block = ed.selectedNode
 
   if (!block) {
     return (
-      <Panel title="Inspector">
-        <p className="text-sm text-muted-foreground">Kein Block ausgewählt.</p>
-      </Panel>
+      <SidePanel title="Inspector">
+        <p className="text-xs text-muted-foreground">Kein Block ausgewählt.</p>
+      </SidePanel>
     )
   }
 
   const def = getBlockDefinition(block.type)
   if (!def) {
     return (
-      <Panel title="Inspector">
-        <p className="text-sm text-destructive">
+      <SidePanel title="Inspector">
+        <p className="text-xs text-destructive">
           Keine Definition für Block-Typ &quot;{block.type}&quot; gefunden.
         </p>
-      </Panel>
+      </SidePanel>
     )
   }
 
@@ -60,7 +60,7 @@ export function Inspector() {
   }
 
   return (
-    <Panel
+    <SidePanel
       title={def.displayName ?? def.type}
       description={`${def.type} · ${block.id.slice(0, 8)}`}
     >
@@ -71,6 +71,6 @@ export function Inspector() {
           {def.customProperties.map(renderPropControl)}
         </div>
       )}
-    </Panel>
+    </SidePanel>
   )
 }

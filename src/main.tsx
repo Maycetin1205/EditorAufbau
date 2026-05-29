@@ -1,8 +1,7 @@
 // main.tsx
 // Einstiegspunkt der React-App.
 // Built-in-Blocks werden ueber blocks/register importiert (zentrale Side-Effect-Datei).
-// index.css zieht Tailwind + shadcn-CSS-Variablen rein. Wird VOR den Mantine-CSS-Importen
-// (in providers.tsx) ausgewertet, damit Mantine seine Stile uebergangsweise drueberlegen kann.
+// index.css zieht Tailwind + shadcn-CSS-Variablen rein.
 
 import './index.css'
 import './blocks/register'

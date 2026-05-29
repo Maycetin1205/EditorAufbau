@@ -1,6 +1,6 @@
 # Aufbau Editor Architektur
 
-Stand: MVP-Reset.
+Stand: MVP-Reset + Schwenk auf Modell 2 (Container/Flow-Baum statt absolutem x/y).
 
 Dieses Projekt ist jetzt bewusst klein gehalten. Ziel ist nicht, alle alten
 Editor-Ideen sofort zu tragen, sondern die Architektur aus den Notizen lernbar
@@ -36,24 +36,33 @@ Alle alten Erweiterungen ausserhalb dieses MVP-Kerns wurden entfernt. Spaeter
 koennen einzelne Themen wiederkommen, aber erst wenn der kleine Editor
 verstanden und stabil ist.
 
-## Datenmodell
+## Datenmodell — Container/Flow-Baum (Modell 2)
+
+SoftEngine-Masken sind fließendes HTML (Container + Flexbox/Grid). Darum ist der
+Editor-State ein **Baum**, keine Liste mit Koordinaten: Die Lage eines Blocks
+ergibt sich aus **Verschachtelung + Reihenfolge**, nicht aus x/y. Gespeichert als
+flache Map (craft.js-Stil) mit einer impliziten Wurzel.
 
 ```ts
-interface BlockData {
+interface BlockNode {
   id: string
   type: string
-  layout: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }
   props: Record<string, unknown>
+  parentId: string | null // null nur für die Wurzel
+  childIds: string[]       // geordnete Kinder = Flow-Reihenfolge
 }
+
+type BlockTree = Record<string, BlockNode>
 ```
 
-`BlockData` ist die gespeicherte Wahrheit. Es enthaelt keine Lit-Instanz, kein
-React-Element und keine Editor-UI.
+`BlockTree` ist die gespeicherte Wahrheit. Er enthält keine Lit-Instanz, kein
+React-Element und keine Editor-UI. Der Export (Kap. 8) ist ein deterministischer
+Baum-Durchlauf → HTML.
+
+> Historie: Bis zum Schwenk auf Modell 2 nutzte der Editor absolute
+> `layout {x,y,width,height}`. Das war ein unvalidierter MVP-Default und ist
+> überholt. Alte localStorage-Stände werden beim Laden in den Baum migriert
+> (layout wird verworfen).
 
 ## Block-Vertrag
 
@@ -64,17 +73,16 @@ interface BlockComponent {
 ```
 
 Statische Block-Daten wie `blockType`, `tagName`, `displayName`,
-`defaultProps`, `defaultLayout` und `customProperties` werden in der Registry
-gespeichert.
+`defaultProps` und `customProperties` werden in der Registry gespeichert.
 
 ## Datenfluss
 
 ```txt
 Sidebar klick
-  -> editor.addBlock(type)
-  -> BlockData wird erzeugt
-  -> Canvas rendert BlockHost
-  -> BlockHost erstellt das passende <ff-*> Element
+  -> editor.addBlock(type)         (hängt neuen Knoten an die Wurzel)
+  -> BlockNode wird in den Baum eingehängt
+  -> Canvas rendert die Kinder im Fluss (childNodesOf(root)) via BlockHost
+  -> BlockHost erstellt das passende <ff-*> Element (natürliche Größe, kein x/y)
   -> Inspector liest PropertyDescription (nur fuer Bloecke mit customProperties)
   -> Inspector schreibt Aenderungen in editor.updateProperty
   -> Canvas rendert mit neuen Props
@@ -90,11 +98,15 @@ Inline-Edit (Doppelklick auf den Block; z.B. Button/Text):
 Die Editor-UI ist nach Atomic Design geschichtet. Regel: Struktur von Anfang an
 — aber nichts kuenstlich zerlegen, nur weil eine Schublade existiert.
 
-- **atoms** (`src/ui/atoms/`): kleinste Bausteine — Button, IconButton,
-  TextInput, Textarea, Select.
-- **molecules** (`src/ui/molecules/`): kleine Kombinationen — Panel. Die
-  Inspector-Controls (Label+Feld) liegen aus Feature-Gruenden unter
-  `src/editor/inspector/controls/`, sind aber konzeptionell Molecules.
+- **atoms** (`src/ui/atoms/`): kleinste Bausteine — reine Controls ohne Label/
+  Beschreibung: Button, IconButton, TextInput, Textarea, Select
+  (Select = shadcn/Radix-Primitives).
+- **molecules** (`src/ui/molecules/`): kleine Kombinationen — `Field`
+  (Label + Beschreibung + Fehlertext um ein beliebiges Control, inkl.
+  aria-Verdrahtung), `SidePanel` (Header + scrollbarer Body für Sidebar/
+  Inspector), `Panel` (Card mit Rahmen, für spätere komplexe Blöcke). Die
+  Inspector-Controls (`src/editor/inspector/controls/`) komponieren `Field` +
+  Atom und liegen aus Feature-Gründen dort, sind aber konzeptionell Molecules.
 - **organisms** (`src/editor/`): Sidebar, Inspector, Toolbar, Canvas,
   BlockPalette.
 - **templates** (`src/editor/shell/`): EditorShell = das Gesamt-Layout.
