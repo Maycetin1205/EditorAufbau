@@ -1,0 +1,761 @@
+<!--SOFTENGINE-VAR!JWHtmlStart-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--SOFTENGINE-VAR!JWHtmlLadeDatei-->
+  <!--SOFTENGINE-VAR!SeHtmlFrameworkV2_Files-->
+  <title>Tierarztpraxis · Behandlungsübersicht</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #6b7280;
+      --line: #eceef1;
+      --green: #0f8a5f;
+      --green-soft: #e7f6ee;
+
+      /* Spalten-Hintergründe (wie Foto) */
+      --col-unassigned: #ffffff;
+      --col-waiting: #fff8ec;
+      --col-treatment: #eff5ff;
+      --col-billing: #f4effe;
+
+      /* Spalten-Akzente (Icon/Linie) */
+      --acc-unassigned: #64748b;
+      --acc-waiting: #b45309;
+      --acc-treatment: #2563eb;
+      --acc-billing: #7c3aed;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .ic { width: 20px; height: 20px; display: block; flex: 0 0 auto; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 248px 1fr;
+    }
+
+    /* ---------- Sidebar ---------- */
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 4px 8px 24px;
+    }
+
+    .brand-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .brand-icon .ic { width: 26px; height: 26px; }
+
+    .brand strong { display: block; font-size: 17px; line-height: 1.2; }
+    .brand small { color: var(--green); font-size: 13px; font-weight: 600; }
+
+    .nav { display: flex; flex-direction: column; gap: 4px; }
+
+    .nav-item {
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      color: #64748b;
+      font-weight: 500;
+      font-size: 14.5px;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .nav-item:hover { background: #f4f5f7; }
+    .nav-item.active { background: var(--green-soft); color: #0c6e4c; font-weight: 600; }
+    .nav-item.active .ic { color: var(--green); }
+    .nav-item.disabled { cursor: default; }
+    .nav-item.disabled:hover { background: transparent; }
+
+    .user {
+      margin-top: auto;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar-small {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--green-soft);
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 14px;
+      color: var(--green);
+    }
+    .user strong { font-size: 14.5px; }
+    .user small { color: var(--muted); font-size: 13px; }
+    .user .chev { margin-left: auto; color: #9aa3af; }
+    .user .chev .ic { width: 18px; height: 18px; }
+
+    /* ---------- Main ---------- */
+    .main {
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+    h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.6px; }
+
+    .filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: #334155;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .filter-btn .ic { width: 17px; height: 17px; color: #64748b; }
+    .filter-btn:hover { background: #f9fafb; }
+
+    /* ---------- Board ---------- */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .column {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+    .column.col-unassigned { background: var(--col-unassigned); }
+    .column.col-waiting    { background: var(--col-waiting); }
+    .column.col-treatment  { background: var(--col-treatment); }
+    .column.col-billing    { background: var(--col-billing); }
+
+    .col-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 4px 6px 14px;
+    }
+    .col-head .ic { width: 19px; height: 19px; }
+    .col-unassigned .col-head .ic { color: var(--acc-unassigned); }
+    .col-waiting    .col-head .ic { color: var(--acc-waiting); }
+    .col-treatment  .col-head .ic { color: var(--acc-treatment); }
+    .col-billing    .col-head .ic { color: var(--acc-billing); }
+
+    .col-title { font-size: 15.5px; font-weight: 700; }
+    .count {
+      margin-left: auto;
+      min-width: 24px; height: 24px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.06);
+      display: grid; place-items: center;
+      font-size: 13px; font-weight: 700;
+      color: #475467;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: auto;
+      padding: 2px;
+    }
+
+    /* ---------- Karte ---------- */
+    .case-card {
+      background: var(--panel);
+      border: 1px solid #eef0f3;
+      border-radius: 14px;
+      padding: 15px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .card-top { display: flex; align-items: flex-start; gap: 12px; }
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      display: grid; place-items: center;
+      flex: 0 0 auto;
+    }
+    .avatar .ic { width: 24px; height: 24px; }
+
+    .card-id { min-width: 0; flex: 1; }
+    .card-id h3 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.2; }
+    .card-id .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .card-id .owner { color: #475467; font-size: 13px; margin-top: 1px; }
+
+    .kebab {
+      flex: 0 0 auto;
+      border: 0; background: transparent;
+      color: #9aa3af; cursor: pointer;
+      padding: 2px; border-radius: 6px;
+    }
+    .kebab .ic { width: 18px; height: 18px; }
+    .kebab:hover { background: #f1f5f9; }
+
+    .badge {
+      display: inline-block;
+      margin: 12px 0 2px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: #eef2ff; color: #3730a3;
+    }
+    .badge.akut         { background: #fde8e8; color: #c0392b; }
+    .badge.neu          { background: #fde7ec; color: #be123c; }
+    .badge.geplant      { background: #fdf0d5; color: #b45309; }
+    .badge.untersuchung { background: #e3edff; color: #1d4ed8; }
+    .badge.operation    { background: #e3edff; color: #1d4ed8; }
+    .badge.abgeschlossen{ background: #efe7fe; color: #6d28d9; }
+
+    .desc {
+      margin: 12px 0 0;
+      color: #344054;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .foot {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .foot .ic { width: 15px; height: 15px; color: #94a3b8; }
+    .foot .spacer { margin-left: auto; }
+    .foot .billing-link { color: #475467; font-weight: 500; }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      font-style: italic;
+      padding: 8px 6px;
+    }
+
+    @media (max-width: 1180px) {
+      .app { grid-template-columns: 1fr; height: auto; }
+      .sidebar { display: none; }
+      .main { height: auto; overflow: visible; }
+      .board { grid-template-columns: 1fr; }
+      .cards { overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+
+  <!-- ================================================================
+       SoftEngine-Anbindung — Mechanik unverändert.
+       Lädt Terminplaner (IDBID0005) + Kundenhaustiere (IDBID0009).
+       Keine Mock-Daten in SoftEngine — alles aus SEDATA.
+       (Lokaler ?demo-Modus weiter unten greift NUR, wenn SEDATA fehlt.)
+       ================================================================ -->
+  <script>
+    try { selib.Json.InitializeERPConnection(); } catch (e) {
+      try { if (typeof InitialisiereSchnittstelle === 'function') InitialisiereSchnittstelle(); } catch (e2) {}
+    }
+
+    window.__FF_SEFILELOOP = [
+      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0005", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0009", "FELDER": "*" }
+    ];
+    window.__FF_SEVARS = { "SEFILELOOP": window.__FF_SEFILELOOP };
+
+    (function () {
+      var _seJson = JSON.stringify(window.__FF_SEVARS);
+      function _isSEVarUrl(url) { return typeof url === 'string' && url.indexOf('SEvariablen') !== -1; }
+      var _origOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url) {
+        if (_isSEVarUrl(url)) { this.__ffIntercept = true; this.__ffJson = _seJson; }
+        return _origOpen.apply(this, arguments);
+      };
+      var _origSend = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.send = function () {
+        if (this.__ffIntercept) {
+          var self = this;
+          Object.defineProperty(self, 'readyState', { get: function () { return 4; }, configurable: true });
+          Object.defineProperty(self, 'status', { get: function () { return 200; }, configurable: true });
+          Object.defineProperty(self, 'responseText', { get: function () { return self.__ffJson; }, configurable: true });
+          Object.defineProperty(self, 'response', { get: function () { return self.__ffJson; }, configurable: true });
+          setTimeout(function () {
+            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
+            if (typeof self.onload === 'function') self.onload();
+          }, 0);
+          return;
+        }
+        return _origSend.apply(this, arguments);
+      };
+      if (typeof window.fetch === 'function') {
+        var _origFetch = window.fetch.bind(window);
+        window.fetch = function (input, init) {
+          var url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
+          if (_isSEVarUrl(url)) {
+            return Promise.resolve(new Response(_seJson, { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } }));
+          }
+          return _origFetch(input, init);
+        };
+      }
+    })();
+
+    window.__FF_ALIAS_TO_ID = {};
+    (window.__FF_SEFILELOOP || []).forEach(function (e) {
+      if (e.ALIAS && e.ID) window.__FF_ALIAS_TO_ID[e.ALIAS.toLowerCase()] = e.ID;
+    });
+
+    window.Erstellen = function () {
+      try { if (typeof ResetDataBasis === 'function') ResetDataBasis(); } catch (e) {}
+      try { if (typeof InitialisiereDatenBasis === 'function') InitialisiereDatenBasis(); } catch (e) {}
+      if (window.__FF_render) window.__FF_render();
+    };
+    window.initData = window.Erstellen;
+    window.ReloadData = function () { if (window.__FF_render) window.__FF_render(); };
+  </script>
+
+  <script>
+    /* =====================================================================
+       1) ZENTRALE SOFTENGINE-KONFIG  —  HIER GEMEINSAM AUSFÜLLEN
+       ---------------------------------------------------------------------
+       Feldcodes: entweder direkter Property-Name oder "pos_len"
+       (Position_Länge im SATZ, z.B. '48_30'). Werte mit "TODO_..." sind
+       Platzhalter -> liefern leer/"—", bis wir den echten Code eintragen.
+       ===================================================================== */
+    var FELD = {
+      TP: {                          // Tabelle Terminplaner
+        adr:        '10_8',
+        name:       '78_30',         // Fallback, falls Join zu Kundenhaustiere nichts findet
+        tierart:    '18_30',         // Fallback
+        unterart:   '48_30',         // Fallback (Rasse)
+        vorname:    '199_30',
+        nachname:   '229_30',
+        uhrzeit:    '148_5',
+        behandlung: '118_30',
+        status:     '118_30',        // Feld "Behandlung" bestimmt die Spalte (Treffer siehe SPALTEN.match; kein Treffer -> Spalte 1)
+        behandler:  'TODO_behandler',// z.B. "Dr. Weber"  -> echten pos_len eintragen
+        badge:      'TODO_badge'     // Akut/Geplant/Neu/Untersuchung/Operation/… -> echten pos_len eintragen
+      },
+      KH: {                          // Tabelle Kundenhaustiere
+        adr:     '10_8',
+        name:    '18_30',
+        tierart: '48_30',
+        rasse:   '78_30'             // Feld "Unterart" = Rasse (z.B. "Golden Retriever")
+      }
+    };
+
+    /* Spalten-Zuordnung über das Feld "Behandlung" (FELD.TP.status).
+       match: Liste von Suchbegriffen (Klein-/Großschreibung egal, Teiltreffer reicht).
+              Passt der Behandlung-Wert zu einem Begriff -> diese Spalte.
+              Passt er zu KEINER Spalte -> automatisch Spalte 1 (Auffang).
+       footer: 'zeit' (Uhr+Uhrzeit) | 'arzt' (Behandler+Uhrzeit) | 'rechnung' (Aktionslink) */
+    var SPALTEN = [
+      // Spalte 1 = Auffang. match leer lassen — alles Unpassende landet hier.
+      { key: 'unassigned', label: 'Nicht zugewiesen', match: [],                                        icon: 'user',        footer: 'zeit'     },
+      { key: 'waiting',    label: 'Wartesaal',        match: [/* z.B. 'Impfung', 'Kontrolle' */],       icon: 'clock',       footer: 'zeit'     },
+      { key: 'treatment',  label: 'In Behandlung',    match: [/* z.B. 'OP', 'Untersuchung' */],         icon: 'stethoscope', footer: 'arzt'     },
+      { key: 'billing',    label: 'In Abrechnung',    match: [/* z.B. 'Abrechnung', 'abgeschlossen' */],icon: 'file',        footer: 'rechnung' }
+    ];
+
+    var NAV = [
+      { label: 'Behandlungsübersicht', icon: 'dashboard',   active: true  },
+      { label: 'Termine',              icon: 'calendar',    active: false },
+      { label: 'Patienten',            icon: 'paw',         active: false },
+      { label: 'Behandlungen',         icon: 'stethoscope', active: false },
+      { label: 'Abrechnungen',         icon: 'file',        active: false },
+      { label: 'Nachrichten',          icon: 'message',     active: false },
+      { label: 'Aufgaben',             icon: 'checksquare', active: false },
+      { label: 'Einstellungen',        icon: 'settings',    active: false }
+    ];
+
+    /* =====================================================================
+       2) ICONS (inline-SVG, Linien-Stil)
+       ===================================================================== */
+    var PATHS = {
+      // Navigation / Chrome
+      dashboard:  '<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/>',
+      calendar:   '<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 9.5h18"/>',
+      stethoscope:'<path d="M5 3v4.5a4 4 0 0 0 8 0V3"/><path d="M9 15.5a5 5 0 0 0 10 0v-2.5"/><circle cx="19" cy="11" r="2"/>',
+      file:       '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>',
+      message:    '<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3.5 21l1.9-5.2A8.5 8.5 0 1 1 21 11.5z"/>',
+      checksquare:'<path d="M9 11l2.5 2.5L16 8"/><path d="M21 12.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10.5"/>',
+      settings:   '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+      user:       '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+      clock:      '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      filter:     '<path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3z"/>',
+      chevron:    '<path d="M6 9l6 6 6-6"/>',
+      kebab:      '<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>',
+      // Tierarten
+      dog:    '<path d="M5 6 8 4l1.5 2.5h5L16 4l3 2c.8 1.6 1 3.3 1 5 0 4.2-3.5 7-8 7s-8-2.8-8-7c0-1.7.2-3.4 1-5z"/><circle cx="9.5" cy="11.5" r="1"/><circle cx="14.5" cy="11.5" r="1"/><path d="M10.5 14.5h3"/>',
+      cat:    '<path d="M5 5v3M5 5l3.5 1.5M19 5v3M19 5l-3.5 1.5"/><path d="M5 8c0 5.5 3 8.5 7 8.5s7-3 7-8.5"/><circle cx="9.5" cy="10.5" r="1"/><circle cx="14.5" cy="10.5" r="1"/><path d="M12 12.5v1.5M12 14l-1.5 1M12 14l1.5 1"/>',
+      bird:   '<path d="M4 9c0-2 2-3.5 4.5-3.5 3.5 0 5.5 2.5 8.5 2.5l3-.5-1.5 3 1.5 1-3 .5c-.8 3.5-3.5 5.5-7 5.5-3 0-5.5-2-5.5-4.5 0-1 .3-2 1-2.5"/><circle cx="8" cy="9.5" r="0.8"/>',
+      fish:   '<path d="M3 12c3-3.5 7.5-4.5 11-4.5 3 0 5 1.5 6.5 4.5-1.5 3-3.5 4.5-6.5 4.5-3.5 0-8-1-11-4.5z"/><path d="M20.5 7.5 17 12l3.5 4.5"/><circle cx="8" cy="11" r="0.8"/>',
+      rabbit: '<path d="M9.5 10C8.5 8 8 5.5 8.5 4c.4-1.2 1.6-1 2 .2.5 1.5.5 3.8.5 5.8M14.5 10c1-2 1.5-4.5 1-6-.4-1.2-1.6-1-2 .2-.5 1.5-.5 3.8-.5 5.8"/><path d="M7.5 13.5c0-2 2-3.5 4.5-3.5s4.5 1.5 4.5 3.5c0 3-2 5.5-4.5 5.5s-4.5-2.5-4.5-5.5z"/><circle cx="10.5" cy="14.5" r="0.8"/><circle cx="13.5" cy="14.5" r="0.8"/>',
+      paw:    '<circle cx="6.5" cy="11" r="1.7"/><circle cx="9.7" cy="7" r="1.7"/><circle cx="14.3" cy="7" r="1.7"/><circle cx="17.5" cy="11" r="1.7"/><path d="M8.5 15.5c0-1.8 1.6-3 3.5-3s3.5 1.2 3.5 3c0 1.7-1.4 2.7-3.5 2.7s-3.5-1-3.5-2.7z"/>'
+    };
+
+    function ic(name, cls) {
+      var fill = (name === 'kebab');
+      var attrs = fill
+        ? 'fill="currentColor" stroke="none"'
+        : 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+      return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" ' + attrs + '>' + (PATHS[name] || PATHS.paw) + '</svg>';
+    }
+
+    // Tierart-String -> Icon-Key (Reihenfolge: spezifisch vor allgemein)
+    var TIER_MAP = [
+      ['hund', 'dog'], ['welpe', 'dog'],
+      ['katze', 'cat'], ['kater', 'cat'],
+      ['kaninchen', 'rabbit'], ['hase', 'rabbit'],
+      ['wellensittich', 'bird'], ['papagei', 'bird'], ['vogel', 'bird'], ['sittich', 'bird'],
+      ['fisch', 'fish'],
+      ['pferd', 'paw'], ['hamster', 'paw'], ['meerschweinchen', 'paw'],
+      ['maus', 'paw'], ['ratte', 'paw'], ['schildkr', 'paw'], ['schlange', 'paw'], ['eidechse', 'paw']
+    ];
+    function tierIcon(art) {
+      var a = String(art || '').toLowerCase();
+      for (var i = 0; i < TIER_MAP.length; i++) if (a.indexOf(TIER_MAP[i][0]) !== -1) return ic(TIER_MAP[i][1]);
+      return ic('paw');
+    }
+
+    function badgeClass(val) {
+      var v = String(val || '').toLowerCase();
+      if (v.indexOf('akut') !== -1) return 'akut';
+      if (v.indexOf('neu') !== -1) return 'neu';
+      if (v.indexOf('geplant') !== -1) return 'geplant';
+      if (v.indexOf('untersuch') !== -1) return 'untersuchung';
+      if (v.indexOf('operation') !== -1 || v.indexOf('op ') !== -1) return 'operation';
+      if (v.indexOf('abgeschlossen') !== -1 || v.indexOf('fertig') !== -1) return 'abgeschlossen';
+      return '';
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    /* =====================================================================
+       3) SoftEngine-Daten lesen  (Mechanik wie zuvor)
+       ===================================================================== */
+    function loadRows(alias) {
+      // Lokaler Demo-Modus (NUR ohne SEDATA, siehe Block 6)
+      if (window.__FF_DEMO && (typeof SEDATA === 'undefined' || !SEDATA || !SEDATA.Daten)) {
+        return window.__FF_DEMO[alias] || [];
+      }
+      try {
+        if (typeof SEDATA === 'undefined' || !SEDATA || !SEDATA.Daten) return [];
+        var t = String(alias).trim().toLowerCase();
+        var sfl = SEDATA.Daten.SEFileLoop;
+        if (sfl) {
+          var entry = null;
+          if (Array.isArray(sfl)) {
+            for (var i = 0; i < sfl.length; i++) {
+              var s = sfl[i] || {};
+              if (String(s.ALIAS || s.alias || '').trim().toLowerCase() === t) { entry = s; break; }
+            }
+          } else if (typeof sfl === 'object') {
+            entry = sfl[alias];
+            if (!entry) for (var k in sfl) {
+              if (String(k).trim().toLowerCase() === t) { entry = sfl[k]; break; }
+              var e = sfl[k] || {};
+              if (String(e.ALIAS || e.alias || '').trim().toLowerCase() === t) { entry = e; break; }
+            }
+          }
+          if (entry) {
+            var rows = entry.Zeilen != null ? entry.Zeilen : entry.zeilen != null ? entry.zeilen
+              : entry.Saetze != null ? entry.Saetze : entry.saetze != null ? entry.saetze
+              : entry.Rows != null ? entry.Rows : entry.rows != null ? entry.rows
+              : entry.Daten != null ? entry.Daten : entry.daten != null ? entry.daten : [];
+            if (Array.isArray(rows) && rows.length) return rows;
+          }
+        }
+        var tab = SEDATA.Daten.Tabellen;
+        if (tab) {
+          var r = tab[alias] || tab[String(alias).toUpperCase()] || tab[String(alias).toLowerCase()];
+          if (!r) { var id = (window.__FF_ALIAS_TO_ID || {})[t]; if (id) r = tab[id] || tab[id.replace(/^IDB/, '')] || tab[id.replace(/^IDBID/, 'ID')]; }
+          if (!r) for (var kk in tab) if (kk.trim().toLowerCase() === t) { r = tab[kk]; break; }
+          if (r) {
+            var rr = r.Zeilen != null ? r.Zeilen : r.zeilen != null ? r.zeilen
+              : r.Saetze != null ? r.Saetze : r.saetze != null ? r.saetze
+              : r.Rows != null ? r.Rows : r.rows != null ? r.rows
+              : r.Daten != null ? r.Daten : r.daten != null ? r.daten : r;
+            if (typeof rr === 'string') { try { rr = JSON.parse(rr); } catch (e) { return []; } }
+            if (Array.isArray(rr)) return rr;
+          }
+        }
+        return [];
+      } catch (e) { return []; }
+    }
+
+    function getField(row, code) {
+      if (!row || !code) return '';
+      var v = row[code];
+      if (v != null && String(v).trim() !== '') return String(v).trim();
+      var raw = String(row.SATZNEU || row.SATZ || row.satzneu || row.satz || row.RAW || row.raw || '');
+      var m = /^(\d+)_(\d+)$/.exec(code);
+      if (raw && m) {
+        var pos = parseInt(m[1], 10), len = parseInt(m[2], 10);
+        if (!isNaN(pos) && !isNaN(len) && len > 0) { var sub = raw.substring(pos, pos + len).trim(); if (sub) return sub; }
+      }
+      return '';
+    }
+
+    /* =====================================================================
+       4) Chrome aufbauen (Sidebar + Topbar + Spalten)
+       ===================================================================== */
+    function buildApp() {
+      var navHtml = NAV.map(function (n) {
+        return '<div class="nav-item' + (n.active ? ' active' : ' disabled') + '">' + ic(n.icon) + '<span>' + esc(n.label) + '</span></div>';
+      }).join('');
+
+      var colsHtml = SPALTEN.map(function (c) {
+        return '' +
+          '<section class="column col-' + c.key + '" data-footer="' + c.footer + '">' +
+            '<div class="col-head">' + ic(c.icon) +
+              '<span class="col-title">' + esc(c.label) + '</span>' +
+              '<span class="count">0</span>' +
+            '</div>' +
+            '<div class="cards"></div>' +
+          '</section>';
+      }).join('');
+
+      document.getElementById('app').innerHTML = '' +
+        '<aside class="sidebar">' +
+          '<div class="brand">' +
+            '<div class="brand-icon">' + ic('dog') + '</div>' +
+            '<div><strong>Tierarztpraxis</strong><small>Am Stadtpark</small></div>' +
+          '</div>' +
+          '<nav class="nav">' + navHtml + '</nav>' +
+          '<div class="user">' +
+            '<div class="avatar-small">SK</div>' +
+            '<div><strong>Sarah K.</strong><br><small>Empfang</small></div>' +
+            '<span class="chev">' + ic('chevron') + '</span>' +
+          '</div>' +
+        '</aside>' +
+        '<main class="main">' +
+          '<header class="topbar">' +
+            '<h1>Behandlungsübersicht</h1>' +
+            '<button type="button" class="filter-btn" id="btnFilter">' + ic('filter') + '<span>Alle anzeigen</span>' + ic('chevron') + '</button>' +
+          '</header>' +
+          '<div class="board">' + colsHtml + '</div>' +
+        '</main>';
+
+      // "Alle anzeigen" ist vorerst optisch; Klick triggert Refresh (unschädlich).
+      var fb = document.getElementById('btnFilter');
+      if (fb) fb.addEventListener('click', function () { window.ReloadData(); });
+    }
+
+    /* =====================================================================
+       5) Karten rendern
+       ===================================================================== */
+    function cardHTML(termin, pet, footerMode) {
+      var tierart = getField(pet, FELD.KH.tierart) || getField(termin, FELD.TP.tierart);
+      var rasse   = getField(pet, FELD.KH.rasse)   || getField(termin, FELD.TP.unterart);
+      var name    = getField(pet, FELD.KH.name)    || getField(termin, FELD.TP.name);
+      var owner   = (getField(termin, FELD.TP.vorname) + ' ' + getField(termin, FELD.TP.nachname)).trim();
+      var behandlung = getField(termin, FELD.TP.behandlung);
+      var uhrzeit = getField(termin, FELD.TP.uhrzeit);
+      var behandler = getField(termin, FELD.TP.behandler);
+      var badge   = getField(termin, FELD.TP.badge);
+
+      var sub = tierart + (tierart && rasse ? ' · ' : '') + rasse;
+
+      var footer = '';
+      if (footerMode === 'rechnung') {
+        footer = '<div class="foot">' + ic('file') + '<span class="billing-link">Rechnung erstellen</span></div>';
+      } else if (footerMode === 'arzt') {
+        footer = '<div class="foot">' + ic('stethoscope') + '<span>' + (esc(behandler) || '—') + '</span>' +
+                 '<span class="spacer"></span><span>' + esc(uhrzeit) + '</span></div>';
+      } else { // 'zeit'
+        footer = '<div class="foot">' + ic('clock') + '<span>' + (uhrzeit ? 'Heute, ' + esc(uhrzeit) : '—') + '</span></div>';
+      }
+
+      return '' +
+        '<article class="case-card">' +
+          '<div class="card-top">' +
+            '<div class="avatar">' + tierIcon(tierart) + '</div>' +
+            '<div class="card-id">' +
+              '<h3>' + (esc(name) || '—') + '</h3>' +
+              (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') +
+              '<div class="owner">' + (esc(owner) || '—') + '</div>' +
+            '</div>' +
+            '<button type="button" class="kebab">' + ic('kebab') + '</button>' +
+          '</div>' +
+          (badge ? '<span class="badge ' + badgeClass(badge) + '">' + esc(badge) + '</span>' : '') +
+          '<p class="desc">' + (esc(behandlung) || '—') + '</p>' +
+          footer +
+        '</article>';
+    }
+
+    // Termin -> Spalten-Index. Erster match-Treffer gewinnt; sonst Spalte 1 (Index 0).
+    function columnIndexFor(termin) {
+      var val = getField(termin, FELD.TP.status).toLowerCase();
+      for (var i = 0; i < SPALTEN.length; i++) {
+        var m = SPALTEN[i].match || [];
+        for (var j = 0; j < m.length; j++) {
+          if (val.indexOf(String(m[j]).toLowerCase()) !== -1) return i;
+        }
+      }
+      return 0;
+    }
+
+    function render() {
+      var termine = loadRows('Terminplaner');
+      var tiere = loadRows('Kundenhaustiere');
+      var haveData = window.__FF_DEMO || !(typeof SEDATA === 'undefined' || !SEDATA || !SEDATA.Daten);
+
+      function petOf(termin) {
+        var adr = getField(termin, FELD.TP.adr);
+        for (var i = 0; i < tiere.length; i++) if (getField(tiere[i], FELD.KH.adr) === adr) return tiere[i];
+        return {};
+      }
+
+      // Termine in Spalten-Eimer einsortieren (jeder Termin genau einmal).
+      var buckets = SPALTEN.map(function () { return []; });
+      termine.forEach(function (t) { buckets[columnIndexFor(t)].push(t); });
+
+      var cols = document.querySelectorAll('.board .column');
+      for (var c = 0; c < cols.length; c++) {
+        var col = cols[c];
+        var footerMode = col.getAttribute('data-footer');
+        var rows = buckets[c] || [];
+        var cardsEl = col.querySelector('.cards');
+        var countEl = col.querySelector('.count');
+        if (countEl) countEl.textContent = rows.length;
+        if (cardsEl) {
+          cardsEl.innerHTML = rows.length
+            ? rows.map(function (t) { return cardHTML(t, petOf(t), footerMode); }).join('')
+            : '<div class="empty">' + (haveData ? 'Keine Einträge' : 'Warte auf SoftEngine-Daten …') + '</div>';
+        }
+      }
+    }
+    window.__FF_render = render;
+
+    /* =====================================================================
+       6) LOKALER DEMO-MODUS  (greift NUR ohne SEDATA + URL enthält ?demo)
+          Dient der optischen Abnahme. Berührt SoftEngine nie.
+       ===================================================================== */
+    (function () {
+      var demo = (typeof SEDATA === 'undefined') && /[?&]demo\b/.test(location.search);
+      if (!demo) return;
+
+      // Demo: jede Spalte matcht ihren key; Status liegt in einem eigenen Demo-Feld
+      // (in SoftEngine bestimmt stattdessen das Behandlung-Feld die Spalte).
+      SPALTEN.forEach(function (c) { c.match = [c.key]; });
+      FELD.TP.status = '__demoStatus';
+
+      function tp(o) {
+        var r = {};
+        r[FELD.TP.adr] = o.adr; r[FELD.TP.vorname] = o.vn; r[FELD.TP.nachname] = o.nn;
+        r[FELD.TP.uhrzeit] = o.zeit || ''; r[FELD.TP.behandlung] = o.beh || '';
+        r[FELD.TP.status] = o.status; r[FELD.TP.behandler] = o.arzt || ''; r[FELD.TP.badge] = o.badge || '';
+        return r;
+      }
+      function kh(o) {
+        var r = {};
+        r[FELD.KH.adr] = o.adr; r[FELD.KH.name] = o.name; r[FELD.KH.tierart] = o.art; r[FELD.KH.rasse] = o.rasse;
+        return r;
+      }
+      window.__FF_DEMO = {
+        Terminplaner: [
+          tp({ adr: 'K1', vn: 'Max',     nn: 'Mustermann', zeit: '09:15', beh: 'Hustet seit gestern, frisst schlecht.', status: 'unassigned', badge: 'Akut' }),
+          tp({ adr: 'K2', vn: 'Lisa',    nn: 'Wagner',     zeit: '10:30', beh: 'Erbrechen seit heute Morgen.',         status: 'unassigned', badge: 'Neu' }),
+          tp({ adr: 'K3', vn: 'Tom',     nn: 'Becker',     zeit: '11:00', beh: 'Juckreiz am Ohr.',                     status: 'unassigned', badge: 'Neu' }),
+          tp({ adr: 'K4', vn: 'Julia',   nn: 'Schmitt',    zeit: '09:00', beh: 'Impfung jährliche Auffrischung',       status: 'waiting',    badge: 'Geplant' }),
+          tp({ adr: 'K5', vn: 'Andreas', nn: 'Meyer',      zeit: '10:00', beh: 'Allgemeine Untersuchung',              status: 'waiting',    badge: 'Geplant' }),
+          tp({ adr: 'K6', vn: 'Sophie',  nn: 'Lehmann',    zeit: '09:20', beh: 'Lahmheit hinten links',                status: 'treatment',  badge: 'Untersuchung', arzt: 'Dr. Weber' }),
+          tp({ adr: 'K7', vn: 'Felix',   nn: 'Braun',      zeit: '10:10', beh: 'Zahnextraktion',                       status: 'treatment',  badge: 'Operation',    arzt: 'Dr. Weber' }),
+          tp({ adr: 'K8', vn: 'Petra',   nn: 'König',                     beh: 'Ohrenentzündung',                      status: 'billing',    badge: 'Behandlung abgeschlossen' }),
+          tp({ adr: 'K9', vn: 'Daniel',  nn: 'Schäfer',                   beh: 'Kastration',                           status: 'billing',    badge: 'Behandlung abgeschlossen' })
+        ],
+        Kundenhaustiere: [
+          kh({ adr: 'K1', name: 'Buddy',   art: 'Hund',  rasse: 'Golden Retriever' }),
+          kh({ adr: 'K2', name: 'Minka',   art: 'Katze', rasse: 'Hauskatze' }),
+          kh({ adr: 'K3', name: 'Loki',    art: 'Hund',  rasse: 'Mischling' }),
+          kh({ adr: 'K4', name: 'Luna',    art: 'Hund',  rasse: 'Border Collie' }),
+          kh({ adr: 'K5', name: 'Leo',     art: 'Katze', rasse: 'BKH' }),
+          kh({ adr: 'K6', name: 'Rocky',   art: 'Hund',  rasse: 'Labrador' }),
+          kh({ adr: 'K7', name: 'Nala',    art: 'Katze', rasse: 'Maine Coon' }),
+          kh({ adr: 'K8', name: 'Charlie', art: 'Hund',  rasse: 'Malteser' }),
+          kh({ adr: 'K9', name: 'Mia',     art: 'Katze', rasse: 'EKH' })
+        ]
+      };
+    })();
+
+    /* =====================================================================
+       7) Boot: Chrome bauen, rendern, auf SEDATA warten (wie zuvor)
+       ===================================================================== */
+    buildApp();
+    render();
+    (function () {
+      var tries = 0;
+      var poll = setInterval(function () {
+        tries++;
+        if (typeof SEDATA !== 'undefined' && SEDATA && SEDATA.Daten) {
+          clearInterval(poll);
+          try { if (typeof ResetDataBasis === 'function') ResetDataBasis(); } catch (e) {}
+          try { if (typeof InitialisiereDatenBasis === 'function') InitialisiereDatenBasis(); } catch (e) {}
+          render();
+        } else if (tries > 100) { clearInterval(poll); }
+      }, 300);
+    })();
+  </script>
+</body>
+</html>
+<!--SOFTENGINE-VAR!JWHtmlEnde-->
