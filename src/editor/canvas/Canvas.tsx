@@ -83,14 +83,6 @@ export function Canvas() {
       className="relative h-full w-full overflow-auto rounded-lg border border-border bg-card shadow-sm"
       style={{ minHeight: 400 }}
     >
-      {nodes.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
-          <p className="text-sm font-medium text-foreground">Leere Canvas</p>
-          <p className="text-xs text-muted-foreground">
-            Links einen Block wählen, um zu starten.
-          </p>
-        </div>
-      )}
       <div
         className="flex min-h-full flex-col items-start gap-3 p-4"
         onDragOver={onContainerDragOver}

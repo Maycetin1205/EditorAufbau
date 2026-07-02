@@ -115,41 +115,21 @@ export function BlockHost({ block, selected, onSelect, children, hasChildren }: 
         style={{
           pointerEvents: 'auto',
           // Editor-Hilfe für Container: Fläche sichtbar + treffbar machen.
+          // Bewusst OHNE Erklärtext — die gestrichelte Fläche reicht.
           ...(isContainer
             ? {
                 border: '1.5px dashed hsl(220 13% 78%)',
                 borderRadius: 6,
                 padding: 8,
-                minHeight: 56,
+                minHeight: 40,
               }
             : null),
         }}
       >
-        {element && isContainer
-          ? createPortal(
-              hasChildren ? children : <ContainerPlaceholder />,
-              element,
-            )
+        {element && isContainer && hasChildren
+          ? createPortal(children, element)
           : null}
       </div>
-    </div>
-  )
-}
-
-// Platzhalter für leere Container — reine Editor-Hilfe (liegt im Light-DOM,
-// wird also nie Teil des Block-Codes und nie exportiert).
-function ContainerPlaceholder() {
-  return (
-    <div
-      style={{
-        alignSelf: 'stretch',
-        padding: '12px 8px',
-        textAlign: 'center',
-        fontSize: 12,
-        color: 'hsl(220 9% 46%)',
-      }}
-    >
-      Leerer Bereich — Baustein links wählen, um ihn hier einzufügen.
     </div>
   )
 }
