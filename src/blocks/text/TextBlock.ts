@@ -22,14 +22,18 @@ export class TextBlock extends BasicBlock {
   // bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
   static override readonly customProperties: PropertyDescription[] = []
 
+  // Aussehen kommt AUSSCHLIESSLICH aus den Masken-Tokens (--se-*),
+  // siehe src/design/masken-tokens.css. Keine Literale, keine Fallbacks.
   static styles = [
     BasicBlock.styles,
     css`
       span {
         display: block;
         min-width: 1ch;
-        color: inherit;
-        font: inherit;
+        color: var(--se-ink);
+        font-family: var(--se-font);
+        font-size: var(--se-fs);
+        line-height: 1.45;
       }
     `,
   ]

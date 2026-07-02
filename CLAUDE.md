@@ -8,9 +8,11 @@
 ## Was der Editor ist (Nordstern)
 
 Ein visueller Baukasten für **SoftEngine-Masken**: Blöcke (Button, Text, später
-Kanban / DetailCard / DataTable …) auf einen Canvas ziehen, an ERP-Daten
-(IDB-Tabellen) binden und als **fertiges HTML exportieren**, das in SoftEngine
-läuft.
+Kanban / DetailCard / DataTable / Wizard …) auf einen Canvas ziehen, an
+ERP-Daten (IDB-Tabellen) binden und als **fertiges HTML exportieren**, das in
+SoftEngine läuft. Der Nutzer kann NICHT programmieren — der Editor muss ohne
+Programmierkenntnisse bedienbar sein, und diese Datei + die Prüfungen sind
+sein Ersatz dafür, Code lesen zu können.
 
 **Nordstern (oberstes Ziel — alles daran messen):**
 1. **1 Render / WYSIWYG:** Was im Editor zu sehen ist, IST der Export. EINE
@@ -20,30 +22,53 @@ läuft.
    sein, dass niemand mehr von Hand HTML/JSON nachbessern muss. Wenn doch nötig
    → das Tool hat versagt.
 
-Kontext: Es gibt einen ALTEN, „vibe-gecodeten" Editor
-(`C:\Users\mu.aycetin\Desktop\Projekte\Editor\react-app`), der funktioniert
-(inkl. Export in SoftEngine), aber unwartbar ist. **Dieses Projekt baut ihn
-sauber neu** und löst ihn dann ab.
+Kontext: Es gibt einen ALTEN, „vibe-gecodeten" Editor (Repo `react--app`;
+lokal `C:\Users\mu.aycetin\Desktop\Projekte\Editor\react-app`), der
+funktioniert (inkl. Export in SoftEngine), aber unwartbar ist (~29k Zeilen,
+absolutes x/y-Modell, zwei halbfertige Systeme parallel). **Dieses Projekt baut
+ihn sauber neu** und löst ihn dann ab. Außerdem gibt es das Repo
+`behandlung-umbau`: eine echte, dokumentierte SoftEngine-Maske — dort steht in
+`SE-INVENTAR.md`, wie SoftEngine-HTML technisch aufgebaut sein muss
+(NO-TOUCH-Marker, Skript-Blöcke, SE-Schnittstellen). Das ist die Vorlage für
+den Export (Kap. 3).
 
 ## Arbeitsweise (verbindlich)
 
 - **Strangler-Fig-Migration:** Den alten Editor **Kapitel für Kapitel** sauber
   ins Neue umziehen. Alter bleibt nutzbar, neuer wächst bis zur Parität, dann
-  Ablösung. Kein 28k-Zeilen-Big-Bang.
+  Ablösung. Kein 28k-Zeilen-Big-Bang. NIEMALS im alten Editor umbauen — der
+  gescheiterte In-Place-Umbau liegt dort schon als Mahnmal (`src/core/`).
+- **Ein Kapitel wird KOMPLETT fertig (gebaut + geprüft + committed), erst dann
+  beginnt das nächste.** Kein paralleles Anfangen.
 - **Schritt für Schritt, klein.** Ein abgeschlossenes Stück pro Schritt.
 - **Code immer zeigen + besprechen.** Der Nutzer will jeden Schritt sehen (auch
-  wenn er nicht alles versteht) und mitreden.
+  wenn er nicht alles versteht) und mitreden. Ergebnis wenn möglich als
+  Screenshot zeigen.
 - **Erlaubnis vor Code-Änderungen:** erst Plan zeigen, „go" abwarten. Lesen /
   Analysieren ist jederzeit ok.
 - **Nicht mit Mini-Entscheidungen nerven** (Snap-Grid, Farbnuancen): sinnvolle
   Defaults selbst wählen, kurz erwähnen.
 - **Keine Komplimente / kein Cheerleading.** Sachlich, direkt, knapp.
 - **Alter Editor = Referenz/Spec:** bei jedem Kapitel in den alten Editor
-  (`C:\Users\mu.aycetin\Desktop\Projekte\Editor\react-app`) schauen, WAS ein
-  Feature können muss — **Funktion übernehmen, NICHT das Aussehen** (UI/UX wird
-  neu gemacht). Goldreferenz fürs Verhalten/Export = der alte Export.
+  schauen, WAS ein Feature können muss — **Funktion übernehmen, NICHT das
+  Aussehen** (UI/UX wird neu gemacht). Goldreferenz fürs Verhalten = der alte
+  Editor; fürs Export-Format = was SoftEngine konsumiert (`behandlung-umbau`).
 - **Architektur nie opfern** (siehe `ARCHITEKTUR.md`).
-- **Verifizieren nach jeder Änderung:** `npx tsc -b` und `npx eslint src`.
+- **Verifizieren nach jeder Änderung:** `npx tsc -b` und `npx eslint src`
+  (+ Tests, sobald Kap. 2.5 steht).
+- **Leitplanken (nicht verhandelbar):**
+  - **Tests niemals löschen oder abschwächen, um „grün" zu werden.** Wenn ein
+    Test stört: dem Nutzer melden, er entscheidet.
+  - **Jeder neue Baustein wird VOR dem Bau einmal aus Bedienersicht
+    durchgespielt** (Was sieht der Nutzer? Was klickt er? Was passiert?) und
+    kurz mit dem Nutzer abgestimmt.
+  - **Technikwert ≠ Anzeigename.** Rohe Datenbankwerte (Indizes, Quellstrings
+    wie `Behandlungszimmer 2`) erscheinen NIE sichtbar in der Maske; sichtbar
+    ist immer ein frei änderbarer Anzeigename. Der Technikwert arbeitet
+    unsichtbar.
+  - **Roadmap-Schritte sind markiert:** `[kritisch]` = Architekturarbeit, nur
+    mit starkem Modell + genauer Nutzer-Review; `[mechanisch]` = Arbeit nach
+    vorhandenem Muster, auch mit schwächerem Modell (z. B. Opus) machbar.
 - **Prinzipien + Quellen (immer dranhalten):**
   - **DRY** — keine Wiederholung; Gemeinsames rausziehen.
   - **OOP / Vererbung vs. Composition** — Vererbung nur für echte „is-a"-Basis
@@ -54,6 +79,21 @@ sauber neu** und löst ihn dann ab.
   - **Page-Builder-Architektur** — Drag&Drop, serialisierbarer JSON-State.
     Quelle: craft.js.
 
+## Bedienlogik (EINE Logik für alle Bausteine)
+
+1. Baustein aus der Bibliothek auf die Fläche **ziehen** → erscheint sofort
+   mit sinnvollen Beispieldaten (nie ein leeres Gerippe).
+2. **Datenquelle anhängen** (z. B. Kanban → „Terminplaner"). Ab dann bieten
+   alle Stellen im Baustein nur Felder dieser Quelle an.
+3. **Stelle anklicken → Feld wählen** (Feldliste mit Klarnamen wie „Vorname",
+   nie Feldcodes wie `3292_30`; Übersetzung über zentrales Feld-Wörterbuch).
+   Die Stelle zeigt sofort einen Beispielwert + Daten-Markierung.
+4. **Doppelklick auf Text** → direkt umbenennen (Spaltentitel, Beschriftungen).
+5. Strukturelles direkt am Baustein: Plus-Knopf für Spalte/Schritt, Ziehen zum
+   Umsortieren, Kreuzchen zum Entfernen (mit Rückfrage wenn belegt).
+6. Nur was sich nicht zeigen lässt, steht rechts im Inspector — und dort nur
+   Sinnvolles.
+
 ## Roadmap (Strangler-Fig-Kapitel)
 
 - ✅ **Kap. 0 — Fundament:** Block-Modell, Canvas, Verschieben (Drag, mit
@@ -62,43 +102,64 @@ sauber neu** und löst ihn dann ab.
 - ✅ **Aufräumen:** Atomic-Design-Struktur etabliert (`ui/atoms` + `ui/molecules`);
   „Variante" aus ButtonBlock entfernt; Inspector-Felder bei Button/Text raus →
   stattdessen Inline-Edit.
-- ✅ **Kap. 1 — Design-Grundlage:** Design-Tokens überarbeitet (Canvas = abgesetztes
-  Hellgrau, Panels weiß, dezent sichtbare Borders); Inspector an die rahmenlose
-  Sidebar-Struktur angeglichen (kein Box-in-Box mehr); shadcn formal eingerichtet
-  (`components.json`, `@radix-ui/react-select`); natives `<select>` →
-  Radix-/shadcn-Dropdown. Editor ist reines Hell-Design.
-- ⚑ **Architektur-Schwenk (wichtig):** Editor nutzt jetzt ein **Container/Flow-
+- ✅ **Kap. 1 — Design-Grundlage (Editor-UI):** Editor-Chrome hell, klare
+  Kontraste (shadcn-Tokens in `index.css`).
+- ✅ **Kap. 1.5 — Masken-Design-Fundament (2026-07-02):** zentrale Werteliste
+  `src/design/masken-tokens.css` (`--se-*`): kantig (2–4px Rundung), Grün als
+  Hausfarbe, Statusfarben mit fester Bedeutung, dichte Werkzeug-Typografie.
+  Button + Text auf Tokens umgestellt (keine Literale mehr im Block-CSS).
+  Visuelle Referenz: `dashboard/stilprobe.html` (Quelle der Wahrheit für Werte
+  bleibt die Token-Datei).
+- ⚑ **Architektur-Schwenk (wichtig):** Editor nutzt ein **Container/Flow-
   Baum-Modell** (BlockNode mit `parentId`/`childIds`), **nicht** absolutes x/y.
-  Grund: SoftEngine-Masken sind fließendes HTML (Container + Flexbox/Grid).
-  Damit sind „Resize/Snap/Mehrfachauswahl" im absoluten Sinn hinfällig; der alte
-  Editor ist dafür KEINE Referenz. Details: `ARCHITEKTUR.md` (Datenmodell).
-- → **Kap. 2 (LÄUFT) — Container/Flow-Fundament:**
+  Grund: SoftEngine-Masken sind fließendes HTML; das x/y-Modell des alten
+  Editors ist der Grund, warum dessen Export unvorhersehbar sitzt. Der alte
+  Editor ist für Layout KEINE Referenz. Details: `ARCHITEKTUR.md`.
+- → **Kap. 2 (NÄCHSTES) — Container/Flow-Fundament** `[kritisch]`
   - ✅ 2.1 Datenmodell auf Baum (BlockNode-Map + Wurzel, Migration alter Stände,
     Flow-Rendering im Canvas statt Koordinaten).
   - 2.2 ContainerBlock + rekursives Rendering (Slot/Light-DOM).
   - 2.3 Canvas: Drop-Zonen + Einfügen-in-Container + Reordering (Drag).
   - 2.4 Inspector: Flow-Props (direction/gap/padding, width fill/auto/fix).
-- **Kap. 3 — mehr Basis-Blöcke** sauber portieren.
-- **Kap. 4 — Daten-Anbindung:** IDB-Tabellen (z.B. Terminplaner) an Blöcke binden.
-- **Kap. 5 — komplexe Blöcke:** Kanban, DetailCard, DataTable. Hier Atomic Design
-  real ausbauen (Card = Organismus aus atoms/molecules).
-- **Kap. 6 — Verknüpfungen** zwischen Blöcken (Auswahl/Filter, z.B. Kanban →
+- **Kap. 2.5 — Sicherheitsnetz** `[kritisch]`: Vitest einrichten; Tests für
+  Store (move/undo/duplicate), Migration/Sanitize, Token-Regel („kein Literal
+  im Block-CSS"). Ab hier gehören Tests zu jedem Kapitel dazu.
+- **Kap. 3 — Mini-Export nach SoftEngine** `[kritisch]` **(VORGEZOGEN, war
+  Kap. 8 — Begründung: der Nutzer muss so früh wie möglich in SoftEngine
+  prüfen können, ob WYSIWYG real ist):** deterministischer Baum-Durchlauf →
+  Flow-HTML mit SE-Rahmen nach Vorbild `behandlung-umbau` (`SE-INVENTAR.md`:
+  JWHtmlStart/Ende-Marker, Skriptblock-Struktur, ASCII-Regel). Masken-Tokens
+  werden in den Export eingebettet. Erst nur Button/Text/Container. Abnahme:
+  Nutzer öffnet den Export in SoftEngine.
+- **Kap. 4 — Basis-Blöcke portieren** `[mechanisch pro Block, Muster kritisch]`:
+  FormField, Bild, Infobox … — je Block: erst Bedienersicht-Durchspiel, dann
+  Funktionsliste aus dem alten Editor ziehen, Nutzer streicht/behält.
+- **Kap. 5 — Daten-Anbindung** `[kritisch]`: Datenquelle an Block hängen,
+  Feld-Wörterbuch (Startbestand: `FELD`-Map aus der EmpfangPraxis-Maske des
+  Nutzers), Klick-auf-Stelle-Binding, Beispieldaten-Vorschau. Regel
+  Technikwert ≠ Anzeigename gilt überall.
+- **Kap. 6 — komplexe Blöcke** `[Muster kritisch, Ausbau mechanisch]`: Kanban
+  (Spalten aus Statusfeld, Karte ziehen = Wert zurückschreiben), DataTable
+  (Spalte anklicken → Feld, Breite ziehen), DetailCard, Wizard (Schritte als
+  Reiter, Plus/Ziehen/Kreuzchen). Atomic Design real ausbauen.
+- **Kap. 7 — Verknüpfungen** zwischen Blöcken (Auswahl/Filter, z.B. Kanban →
   DetailCard).
-- **Kap. 7 — Events/Aktionen:** Klick→Popup, Drop→Relation usw.
-- **Kap. 8 — 🌟 Export nach SoftEngine:** der Nordstern. Deterministischer
-  Baum-Durchlauf → sauberes Flow-HTML. Maßgeblich ist, was **SoftEngine
-  konsumiert**, NICHT der alte Editor (der ist das unwartbare Altsystem).
-- **Kap. 9 — Umschalten:** alten Editor ablösen.
+- **Kap. 8 — Events/Aktionen** `[kritisch]`: Klick→Popup, Drop→Relation,
+  START_TOOL usw. — Verhaltensreferenz: `runtime/actions.ts` im alten Editor.
+- **Kap. 9 — Umschalten:** alten Editor abloesen.
 
-## Design-Richtung (für Kap. 1)
+## Design (zwei Token-Welten — nie mischen)
 
-Hell: Basis weiß / hellgrau. ABER **kein „Weiß-Matsch"** — kein verwaschenes
-Fast-Weiß, in dem alles ineinanderfließt. Stattdessen:
-- **klare Kontraste** und **sichtbare Trennlinien** zwischen Sidebar / Canvas /
-  Inspector
-- **abgesetzte Flächen-Ebenen** (Canvas vs. Panels erkennbar unterschiedlich hell)
-- **deutliche Rahmen** (keine 2%-Grau-Andeutungen, die man nicht sieht)
-- Vibe: Figma / Linear — ruhig, aber mit klarer, gut lesbarer Struktur
+1. **Editor-UI** (Sidebar/Inspector/Toolbar): shadcn-Variablen in `index.css`.
+   Hell, klare Kontraste, Figma/Linear-Vibe. Fertig (Kap. 1).
+2. **Masken-Design** (die Blöcke = das, was exportiert wird):
+   `src/design/masken-tokens.css` (`--se-*`). Entschieden am 2026-07-02 mit
+   dem Nutzer: **kantig + funktional** („Werkhalle"-Dichte), **Grün** als
+   Hausfarbe, Statusfarben mit fester Bedeutung (Bediener wählt Bedeutung,
+   nie Farbe). Ausdrücklich KEINE weichen KI-Standard-Rundungen. Referenzbild:
+   `dashboard/stilprobe.html`. Blöcke benutzen ausschließlich `var(--se-…)` —
+   keine Hex/HSL-Literale im Block-CSS, keine var()-Fallbacks (Token-Datei ist
+   Pflichtteil jedes Exports).
 
 ## Stack
 
@@ -110,5 +171,8 @@ shadcn-Stil (Editor-UI), eigener Store mit Observer-Pattern.
 - Architektur + Regeln: `ARCHITEKTUR.md`
 - Store: `src/state/Editor.ts` (Observer: `src/state/Subject.ts`)
 - Block-Basisklasse: `src/core/blocks/BasicBlock.ts` · Blöcke: `src/blocks/`
+- Masken-Design-Tokens: `src/design/masken-tokens.css` · Referenz:
+  `dashboard/stilprobe.html`
 - Brücke React ↔ Web Component: `src/editor/canvas/BlockHost.tsx`
+- SoftEngine-Export-Spec: Repo `behandlung-umbau` → `SE-INVENTAR.md`
 - Verifizieren: `npx tsc -b` + `npx eslint src`

@@ -22,17 +22,26 @@ export class ButtonBlock extends BasicBlock {
   // Button bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
   static override readonly customProperties: PropertyDescription[] = []
 
+  // Aussehen kommt AUSSCHLIESSLICH aus den Masken-Tokens (--se-*),
+  // siehe src/design/masken-tokens.css. Keine Literale, keine Fallbacks.
   static styles = [
     BasicBlock.styles,
     css`
       button {
-        box-sizing: border-box; padding: 8px 16px;
-        cursor: pointer; border-radius: 8px; border: 1px solid hsl(214 32% 91%);
-        background: white; color: hsl(222 47% 11%); font-size: 13px; font-weight: 500;
-        transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+        box-sizing: border-box;
+        padding: 7px 16px;
+        cursor: pointer;
+        border-radius: var(--se-r-sm);
+        border: 1px solid var(--se-accent);
+        background: var(--se-accent);
+        color: var(--se-panel);
+        font-family: var(--se-font);
+        font-size: var(--se-fs);
+        font-weight: 600;
+        transition: background-color 120ms ease, border-color 120ms ease;
       }
-      button:hover { background: hsl(210 40% 98%); }
-      button:focus-visible { outline: 2px solid hsl(221 83% 53%); outline-offset: 2px; }
+      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
+      button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
     `,
   ]
 
