@@ -41,9 +41,13 @@ function normalizeProps(type: string, rawProps: Record<string, unknown>): Record
   const def = getBlockDefinition(type)
   if (!def) return {}
   const next = deepClone(def.defaultProps)
-  for (const property of def.customProperties) {
-    if (Object.prototype.hasOwnProperty.call(rawProps, property.attributeName)) {
-      next[property.attributeName] = rawProps[property.attributeName]
+  // Übernommen wird jede Prop, die der Block als defaultProp kennt — nicht nur
+  // Inspector-Felder (customProperties). Blöcke ohne Inspector-Felder (Button,
+  // Text: Inline-Edit per Doppelklick) würden sonst beim Laden jede Änderung
+  // verlieren. Unbekannte Keys werden weiterhin verworfen.
+  for (const key of Object.keys(next)) {
+    if (Object.prototype.hasOwnProperty.call(rawProps, key)) {
+      next[key] = rawProps[key]
     }
   }
   return next
