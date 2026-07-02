@@ -22,9 +22,16 @@ export class ContainerBlock extends BasicBlock {
   static readonly displayName = 'Bereich'
   static readonly category: BlockCategory = 'layout'
   static readonly acceptsChildren = true
-  static readonly defaultProps = { direction: 'column' }
+  // width 'fill': ein Bereich nimmt standardmäßig die volle Breite ein.
+  static readonly defaultProps = {
+    direction: 'column',
+    gap: 'md',
+    padding: 'none',
+    width: 'fill',
+  }
 
-  // Flow-Props (direction/gap/padding) bekommen in Kap. 2.4 Inspector-Felder.
+  // Flow-Props (Richtung/Abstände/Breite) rendert der Inspector als eigene
+  // Layout-Sektion (Kap. 2.4) — keine generischen customProperties nötig.
   static override readonly customProperties: PropertyDescription[] = []
 
   // Aussehen kommt AUSSCHLIESSLICH aus den Masken-Tokens (--se-*),
@@ -34,21 +41,32 @@ export class ContainerBlock extends BasicBlock {
     css`
       .wrap {
         display: flex;
-        gap: var(--se-gap);
         align-items: flex-start;
       }
       .wrap.column { flex-direction: column; }
       .wrap.row { flex-direction: row; flex-wrap: wrap; }
+      .wrap.gap-sm { gap: var(--se-gap-sm); }
+      .wrap.gap-md { gap: var(--se-gap); }
+      .wrap.gap-lg { gap: var(--se-gap-lg); }
+      .wrap.pad-none { padding: 0; }
+      .wrap.pad-sm { padding: var(--se-gap-sm); }
+      .wrap.pad-md { padding: var(--se-gap); }
+      .wrap.pad-lg { padding: var(--se-gap-lg); }
       slot { display: contents; }
     `,
   ]
 
   // 'column' = untereinander (Default), 'row' = nebeneinander.
   @property() direction: 'column' | 'row' = 'column'
+  // Abstand zwischen den Kindern / Innenabstand des Bereichs.
+  @property() gap: 'sm' | 'md' | 'lg' = 'md'
+  @property() padding: 'none' | 'sm' | 'md' | 'lg' = 'none'
 
   render(): TemplateResult {
     const dir = this.direction === 'row' ? 'row' : 'column'
-    return html`<div class="wrap ${dir}"><slot></slot></div>`
+    const gap = ['sm', 'md', 'lg'].includes(this.gap) ? this.gap : 'md'
+    const pad = ['none', 'sm', 'md', 'lg'].includes(this.padding) ? this.padding : 'none'
+    return html`<div class="wrap ${dir} gap-${gap} pad-${pad}"><slot></slot></div>`
   }
 }
 

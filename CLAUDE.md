@@ -115,7 +115,7 @@ den Export (Kap. 3).
   Grund: SoftEngine-Masken sind fließendes HTML; das x/y-Modell des alten
   Editors ist der Grund, warum dessen Export unvorhersehbar sitzt. Der alte
   Editor ist für Layout KEINE Referenz. Details: `ARCHITEKTUR.md`.
-- → **Kap. 2 (LÄUFT) — Container/Flow-Fundament** `[kritisch]`
+- ✅ **Kap. 2 (KOMPLETT 2026-07-02) — Container/Flow-Fundament** `[kritisch]`
   - ✅ 2.1 Datenmodell auf Baum (BlockNode-Map + Wurzel, Migration alter Stände,
     Flow-Rendering im Canvas statt Koordinaten).
   - ✅ 2.2 ContainerBlock + rekursives Rendering (2026-07-02): Baustein
@@ -131,8 +131,13 @@ den Export (Kap. 3).
     (MIME-Typ `application/x-ff-new-block`, kein geteilter State),
     Zyklen-Schutz (Bereich nie in sich selbst). Klick-Einfügen bleibt.
     Browser-getestet (6 Playwright-Fälle inkl. Undo nach Drag).
-  - 2.4 (NÄCHSTES) Inspector: Flow-Props (direction/gap/padding, width
-    fill/auto/fix) + Breite ziehen, wo natürlich.
+  - ✅ 2.4 Flow-Props (2026-07-02): universelle Breiten-Prop
+    (`width: auto|fill|px`) für JEDEN Block, zentrale Logik in
+    `core/blocks/flowLayout.ts` (dieselbe Quelle nutzt später der Export!).
+    Inspector-Sektion „Layout": Breite (alle Blöcke), Richtung/Abstand/
+    Innenabstand (Bereiche). Breite-Zieh-Anfasser am selektierten Block
+    (Blöcke können per `resizableWidth=false` abwählen — Button tut das).
+    Store-Fix: pushHistory respektiert Transaktionen (Ziehen = 1 Undo).
 - **Kap. 2.5 — Sicherheitsnetz** `[kritisch]`: Vitest einrichten; Tests für
   Store (move/undo/duplicate), Migration/Sanitize, Token-Regel („kein Literal
   im Block-CSS"). Ab hier gehören Tests zu jedem Kapitel dazu.

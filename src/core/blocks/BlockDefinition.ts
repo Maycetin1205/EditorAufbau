@@ -16,4 +16,5 @@ export interface BlockDefinition {
   defaultProps: Record<string, unknown>
   customProperties: PropertyDescription[]
   acceptsChildren: boolean
+  resizableWidth: boolean
 }

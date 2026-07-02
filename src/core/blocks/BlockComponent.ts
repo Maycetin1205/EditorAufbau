@@ -27,5 +27,8 @@ export interface BlockComponentStatic {
   readonly customProperties: PropertyDescription[]
   // true = der Block ist ein Container und rendert Kind-Bloecke (Light-DOM/Slot).
   readonly acceptsChildren?: boolean
+  // false = kein Breite-Zieh-Anfasser im Editor (z.B. Button: Breite folgt
+  // der Beschriftung). Default true.
+  readonly resizableWidth?: boolean
   new(): BlockComponent
 }

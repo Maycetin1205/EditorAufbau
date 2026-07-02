@@ -18,11 +18,14 @@ import {
 } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import {
+  flowItemStyle,
+  parseFlowWidth,
+  type FlowDirection,
+} from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
 import { isNewBlockDrag, NEW_BLOCK_MIME } from './dnd'
-
-type FlowDirection = 'column' | 'row'
 
 interface DropTarget {
   parentId: string
@@ -153,7 +156,8 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
       onDragEnd={dnd.reset}
       style={{
         opacity: dnd.dragId === node.id ? 0.4 : 1,
-        alignSelf: isContainer ? 'stretch' : undefined,
+        // Breite im Fluss: dieselbe Logik, die später der Export benutzt.
+        ...flowItemStyle(parseFlowWidth(node.props.width), listDirection),
       }}
     >
       <BlockHost

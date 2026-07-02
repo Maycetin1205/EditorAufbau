@@ -17,6 +17,8 @@ export class ButtonBlock extends BasicBlock {
   static readonly displayName = 'Schaltfläche'
   static readonly category: BlockCategory = 'eingabe'
   static readonly defaultProps = { label: 'Klick mich' }
+  // Kein Breite-Anfasser: ein Button ist so breit wie seine Beschriftung.
+  static readonly resizableWidth = false
 
   // Keine Inspector-Felder: die Beschriftung wird per Doppelklick direkt auf dem
   // Button bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).

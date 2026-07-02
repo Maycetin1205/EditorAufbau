@@ -17,9 +17,10 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import type { MouseEvent as ReactMouseEvent } from 'react'
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { parseFlowWidth } from '../../core/blocks/flowLayout'
 import { editor } from '../../state/Editor'
 
 interface BlockHostProps {
@@ -37,6 +38,7 @@ interface PropChangeDetail {
 
 export function BlockHost({ block, selected, onSelect, children }: BlockHostProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const width = parseFlowWidth(block.props.width)
   // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
   // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
   const elementRef = useRef<HTMLElement | null>(null)
@@ -96,13 +98,37 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     onSelect?.()
   }
 
+  // Breite ziehen (Anfasser rechts): eine Geste = eine Transaktion = 1 Undo.
+  function onResizeStart(e: ReactPointerEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    const host = elementRef.current
+    if (!host) return
+    const startX = e.clientX
+    const startWidth = host.getBoundingClientRect().width
+    editor.beginTransaction()
+    const onMove = (ev: PointerEvent) => {
+      const next = Math.max(40, Math.round(startWidth + ev.clientX - startX))
+      editor.updateProperty(blockRef.current.id, 'width', next)
+    }
+    const onUp = () => {
+      editor.endTransaction()
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  const resizable = def?.resizableWidth ?? true
+
   return (
     <div
       onClick={onClick}
       data-block-id={block.id}
       style={{
-        display: isContainer ? 'block' : 'inline-block',
-        alignSelf: isContainer ? 'stretch' : undefined,
+        display: isContainer || width !== 'auto' ? 'block' : 'inline-block',
+        position: 'relative',
         cursor: selected ? 'default' : 'pointer',
         outline: selected ? '2px solid hsl(221 83% 53%)' : '2px solid transparent',
         outlineOffset: 1,
@@ -130,6 +156,25 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           ? createPortal(children, element)
           : null}
       </div>
+      {selected && resizable && (
+        <div
+          draggable={false}
+          onPointerDown={onResizeStart}
+          onDragStart={(e) => e.preventDefault()}
+          title="Breite ziehen"
+          style={{
+            position: 'absolute',
+            right: -4,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 7,
+            height: 26,
+            borderRadius: 4,
+            background: 'hsl(221 83% 53%)',
+            cursor: 'ew-resize',
+          }}
+        />
+      )}
     </div>
   )
 }

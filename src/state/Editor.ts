@@ -203,6 +203,9 @@ export class Editor extends Subject<Editor> {
   }
 
   private pushHistory(): void {
+    // Innerhalb einer Transaktion (= laufende Geste, z. B. Breite ziehen)
+    // KEINE weiteren Snapshots — beginTransaction hat schon einen gelegt.
+    if (this._txDepth > 0) return
     this._history.push(this.snapshot())
     if (this._history.length > HISTORY_LIMIT) this._history.shift()
     this._future = []
