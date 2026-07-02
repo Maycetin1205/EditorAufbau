@@ -237,20 +237,37 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Hängt einen neuen Block ans Ende des angegebenen Containers (Default: Wurzel).
-  addBlock(type: string, parentId: string = ROOT_ID): BlockNode {
+  // Hängt einen neuen Block in den angegebenen Container (Default: Wurzel,
+  // ans Ende). `index` = Einfüge-Position innerhalb der Kinder (für Drop).
+  addBlock(type: string, parentId: string = ROOT_ID, index?: number): BlockNode {
     this.pushHistory()
     const node = createBlockNode(type)
     const parent = this._tree[parentId] ?? this._tree[ROOT_ID]
     node.parentId = parent.id
+    const childIds = [...parent.childIds]
+    const at = index === undefined
+      ? childIds.length
+      : Math.max(0, Math.min(index, childIds.length))
+    childIds.splice(at, 0, node.id)
     this._tree = {
       ...this._tree,
       [node.id]: node,
-      [parent.id]: { ...parent, childIds: [...parent.childIds, node.id] },
+      [parent.id]: { ...parent, childIds },
     }
     this._selectedId = node.id
     this.notify(this)
     return node
+  }
+
+  // true, wenn `id` im Teilbaum von `ancestorId` liegt (inkl. ancestorId
+  // selbst). Für die UI: ein Container darf nie in sich selbst fallen.
+  isInSubtree(ancestorId: string, id: string): boolean {
+    let cur: string | null | undefined = id
+    while (cur) {
+      if (cur === ancestorId) return true
+      cur = this._tree[cur]?.parentId
+    }
+    return false
   }
 
   removeBlock(id: string): void {

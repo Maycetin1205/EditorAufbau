@@ -5,6 +5,7 @@ import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { getAllBlockDefinitions, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
+import { NEW_BLOCK_MIME } from '../canvas/dnd'
 import { useEditor } from '../../state/useEditor'
 import { cn } from '@/lib/utils'
 
@@ -104,6 +105,12 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
     <button
       type="button"
       onClick={onAdd}
+      draggable
+      onDragStart={(e) => {
+        // Neuer Block reist als MIME-Eintrag zum Canvas (siehe canvas/dnd.ts).
+        e.dataTransfer.setData(NEW_BLOCK_MIME, def.type)
+        e.dataTransfer.effectAllowed = 'copy'
+      }}
       className={cn(
         'group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-left text-xs',
         'transition-colors hover:border-primary/40 hover:bg-accent hover:text-accent-foreground',

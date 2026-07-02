@@ -28,7 +28,6 @@ interface BlockHostProps {
   onSelect?: () => void
   // Kind-Hosts (nur für Container-Blöcke; vom Canvas rekursiv erzeugt).
   children?: ReactNode
-  hasChildren?: boolean
 }
 
 interface PropChangeDetail {
@@ -36,7 +35,7 @@ interface PropChangeDetail {
   value: unknown
 }
 
-export function BlockHost({ block, selected, onSelect, children, hasChildren }: BlockHostProps) {
+export function BlockHost({ block, selected, onSelect, children }: BlockHostProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
   // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
@@ -100,6 +99,7 @@ export function BlockHost({ block, selected, onSelect, children, hasChildren }: 
   return (
     <div
       onClick={onClick}
+      data-block-id={block.id}
       style={{
         display: isContainer ? 'block' : 'inline-block',
         alignSelf: isContainer ? 'stretch' : undefined,
@@ -126,7 +126,7 @@ export function BlockHost({ block, selected, onSelect, children, hasChildren }: 
             : null),
         }}
       >
-        {element && isContainer && hasChildren
+        {element && isContainer && children != null
           ? createPortal(children, element)
           : null}
       </div>

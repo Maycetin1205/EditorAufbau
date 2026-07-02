@@ -124,9 +124,15 @@ den Export (Kap. 3).
     portalt Kind-Hosts ins Element). Editor-Hilfen (gestrichelter Rahmen,
     Platzhalter) liegen im BlockHost, NIE im Baustein (WYSIWYG). Palette
     fügt in den ausgewählten Bereich ein (Brücke bis 2.3).
-  - 2.3 (NÄCHSTES) Canvas: Drop-Zonen + Einfügen-in-Container + Reordering
-    (Drag, auch verschachtelt).
-  - 2.4 Inspector: Flow-Props (direction/gap/padding, width fill/auto/fix).
+  - ✅ 2.3 Drag-and-Drop-Platzierung (2026-07-02): EINE Drag-Logik im Canvas
+    (React-Context) für alle Ebenen — vorhandene Blöcke umsortieren, in
+    Bereiche hinein/heraus (Randzone = davor/dahinter, Mitte = hinein),
+    Einfüge-Linie als Vorschau, Ziehen direkt aus der Bibliothek
+    (MIME-Typ `application/x-ff-new-block`, kein geteilter State),
+    Zyklen-Schutz (Bereich nie in sich selbst). Klick-Einfügen bleibt.
+    Browser-getestet (6 Playwright-Fälle inkl. Undo nach Drag).
+  - 2.4 (NÄCHSTES) Inspector: Flow-Props (direction/gap/padding, width
+    fill/auto/fix) + Breite ziehen, wo natürlich.
 - **Kap. 2.5 — Sicherheitsnetz** `[kritisch]`: Vitest einrichten; Tests für
   Store (move/undo/duplicate), Migration/Sanitize, Token-Regel („kein Literal
   im Block-CSS"). Ab hier gehören Tests zu jedem Kapitel dazu.
