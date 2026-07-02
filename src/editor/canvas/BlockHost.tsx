@@ -130,7 +130,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         display: isContainer || width !== 'auto' ? 'block' : 'inline-block',
         position: 'relative',
         cursor: selected ? 'default' : 'pointer',
-        outline: selected ? '2px solid hsl(221 83% 53%)' : '2px solid transparent',
+        outline: selected ? '2px solid hsl(var(--ring))' : '2px solid transparent',
         outlineOffset: 1,
         borderRadius: 6,
         userSelect: 'none',
@@ -170,7 +170,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
             width: 7,
             height: 26,
             borderRadius: 4,
-            background: 'hsl(221 83% 53%)',
+            background: 'hsl(var(--ring))',
             cursor: 'ew-resize',
           }}
         />

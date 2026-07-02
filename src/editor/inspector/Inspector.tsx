@@ -54,7 +54,16 @@ export function Inspector() {
       case 'textarea':
         return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
       case 'select':
-        return <SelectControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
+        return (
+          <SelectControl
+            key={property.attributeName}
+            label={property.name}
+            description={property.description}
+            options={property.options ?? []}
+            value={String(value ?? '')}
+            onChange={set}
+          />
+        )
       default:
         return null
     }

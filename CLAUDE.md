@@ -54,8 +54,8 @@ den Export (Kap. 3).
   Aussehen** (UI/UX wird neu gemacht). Goldreferenz fürs Verhalten = der alte
   Editor; fürs Export-Format = was SoftEngine konsumiert (`behandlung-umbau`).
 - **Architektur nie opfern** (siehe `ARCHITEKTUR.md`).
-- **Verifizieren nach jeder Änderung:** `npx tsc -b` und `npx eslint src`
-  (+ Tests, sobald Kap. 2.5 steht).
+- **Verifizieren nach jeder Änderung:** `npx tsc -b` + `npx eslint src` +
+  `npm test`.
 - **Leitplanken (nicht verhandelbar):**
   - **Tests niemals löschen oder abschwächen, um „grün" zu werden.** Wenn ein
     Test stört: dem Nutzer melden, er entscheidet.
@@ -138,9 +138,15 @@ den Export (Kap. 3).
     Innenabstand (Bereiche). Breite-Zieh-Anfasser am selektierten Block
     (Blöcke können per `resizableWidth=false` abwählen — Button tut das).
     Store-Fix: pushHistory respektiert Transaktionen (Ziehen = 1 Undo).
-- **Kap. 2.5 — Sicherheitsnetz** `[kritisch]`: Vitest einrichten; Tests für
-  Store (move/undo/duplicate), Migration/Sanitize, Token-Regel („kein Literal
-  im Block-CSS"). Ab hier gehören Tests zu jedem Kapitel dazu.
+- ✅ **Kap. 2.5 — Sicherheitsnetz (2026-07-02)** `[kritisch]`: Vitest steht
+  (`npm test` = `vitest run`, Node-Umgebung, localStorage-Stub in
+  `src/test/setup.ts`, DOM-freie Test-Blöcke in `src/test/testBlocks.ts`).
+  18 Tests: Store (einfügen/verschieben/Zyklen/duplizieren/Undo/Transaktion),
+  Persistenz (sanitize, Migration, Inline-Edit-Werte überleben Reload,
+  Müll-Speicher), Token-Regel (kein Farb-Literal + kein var()-Fallback in
+  `src/blocks/**`, maschinell erzwungen). Aufräumer: Editor-Akzentfarbe nur
+  noch als `--ring`-Token; ein gemeinsames SelectControl statt zwei.
+  **Ab hier gehören Tests zu jedem Kapitel dazu.**
 - **Kap. 3 — Mini-Export nach SoftEngine** `[kritisch]` **(VORGEZOGEN, war
   Kap. 8 — Begründung: der Nutzer muss so früh wie möglich in SoftEngine
   prüfen können, ob WYSIWYG real ist):** deterministischer Baum-Durchlauf →
@@ -202,4 +208,4 @@ shadcn-Stil (Editor-UI), eigener Store mit Observer-Pattern.
   `dashboard/stilprobe.html`
 - Brücke React ↔ Web Component: `src/editor/canvas/BlockHost.tsx`
 - SoftEngine-Export-Spec: Repo `behandlung-umbau` → `SE-INVENTAR.md`
-- Verifizieren: `npx tsc -b` + `npx eslint src`
+- Verifizieren: `npx tsc -b` + `npx eslint src` + `npm test`

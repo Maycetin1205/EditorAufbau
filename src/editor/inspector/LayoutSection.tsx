@@ -9,51 +9,9 @@
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { parseFlowWidth } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/atoms/select'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
-
-interface Option {
-  value: string
-  label: string
-}
-
-function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  options: Option[]
-  onChange: (v: string) => void
-}) {
-  return (
-    <Field label={label}>
-      {(field) => (
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger id={field.id}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-    </Field>
-  )
-}
+import { SelectControl } from './controls/SelectControl'
 
 interface LayoutSectionProps {
   block: BlockNode
@@ -69,7 +27,7 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <SelectField
+      <SelectControl
         label="Breite"
         value={widthMode}
         options={[
@@ -98,7 +56,7 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
 
       {isContainer && (
         <>
-          <SelectField
+          <SelectControl
             label="Richtung"
             value={block.props.direction === 'row' ? 'row' : 'column'}
             options={[
@@ -107,7 +65,7 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
             ]}
             onChange={(v) => set('direction', v)}
           />
-          <SelectField
+          <SelectControl
             label="Abstand"
             value={typeof block.props.gap === 'string' ? (block.props.gap as string) : 'md'}
             options={[
@@ -117,7 +75,7 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
             ]}
             onChange={(v) => set('gap', v)}
           />
-          <SelectField
+          <SelectControl
             label="Innenabstand"
             value={typeof block.props.padding === 'string' ? (block.props.padding as string) : 'none'}
             options={[

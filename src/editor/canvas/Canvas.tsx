@@ -57,7 +57,7 @@ function InsertionLine({ direction }: { direction: FlowDirection }) {
   return (
     <div
       style={{
-        background: 'hsl(221 83% 53%)',
+        background: 'hsl(var(--ring))',
         borderRadius: 2,
         ...(direction === 'column'
           ? { alignSelf: 'stretch', height: 2 }
