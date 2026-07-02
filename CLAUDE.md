@@ -147,13 +147,23 @@ den Export (Kap. 3).
   `src/blocks/**`, maschinell erzwungen). Aufräumer: Editor-Akzentfarbe nur
   noch als `--ring`-Token; ein gemeinsames SelectControl statt zwei.
   **Ab hier gehören Tests zu jedem Kapitel dazu.**
-- **Kap. 3 — Mini-Export nach SoftEngine** `[kritisch]` **(VORGEZOGEN, war
-  Kap. 8 — Begründung: der Nutzer muss so früh wie möglich in SoftEngine
-  prüfen können, ob WYSIWYG real ist):** deterministischer Baum-Durchlauf →
-  Flow-HTML mit SE-Rahmen nach Vorbild `behandlung-umbau` (`SE-INVENTAR.md`:
-  JWHtmlStart/Ende-Marker, Skriptblock-Struktur, ASCII-Regel). Masken-Tokens
-  werden in den Export eingebettet. Erst nur Button/Text/Container. Abnahme:
-  Nutzer öffnet den Export in SoftEngine.
+- ◐ **Kap. 3 — Mini-Export nach SoftEngine (GEBAUT 2026-07-02 — wartet auf
+  SoftEngine-Abnahme durch den Nutzer!)** `[kritisch]` **(VORGEZOGEN, war
+  Kap. 8):** Export-Knopf in der Toolbar → `maske.html` +
+  `maske.SEvariablen.json`. Umsetzung: `src/export/exportMask.ts`
+  (deterministischer Baum-Durchlauf → verschachtelte Custom Elements;
+  Breite via DERSELBEN flowLayout-Logik wie der Canvas; ROOT_FLOW =
+  gemeinsame Wurzel-Fluss-Werte; ASCII-Escaping HTML/JS; Tokens eingebettet,
+  CSS-Kommentare gestrippt), `src/export/validator.ts` (Marker/LF/ASCII/
+  Blockstruktur — läuft VOR jeder Dateiausgabe, bei Rot keine Datei),
+  `src/export/generated/ff-runtime.js` (eingechecktes IIFE-Bündel der
+  Block-Web-Components aus `npm run build:runtime` — EINE Render-Quelle;
+  Test wacht gegen Veralten). Editor-Canvas zeigt jetzt `--se-bg` und
+  Container-Hilfen ohne Padding → Editor und Export nachweislich
+  deckungsgleich (Screenshot-Vergleich). 9 Export-Tests.
+  **OFFEN: Nutzer öffnet den Export in SoftEngine (Abnahme). Falls SE die
+  Kommentar-Platzhalter `JWHtmlLadeDatei`/`SeHtmlFrameworkV2_Files` im
+  <head> verlangt: im Exporter ergänzen (Ein-Zeilen-Änderung).**
   **Export-Grundsätze (entschieden 2026-07-02):** (a) Export = HTML **+**
   SEvariablen-JSON, beide aus DERSELBEN Quelle (Baum + Datenquellen-Modell)
   erzeugt — nie getrennt gepflegt, können nicht auseinanderlaufen. (b) Jeder

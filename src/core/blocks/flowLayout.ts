@@ -13,6 +13,10 @@
 export type FlowDirection = 'column' | 'row'
 export type FlowWidth = 'auto' | 'fill' | number
 
+// Wurzel-Fluss der Maske: IDENTISCHE Werte für Editor-Canvas und Export-Root
+// (sonst säßen Blöcke im Editor anders als in SoftEngine).
+export const ROOT_FLOW = { gap: 12, padding: 16 } as const
+
 // Universelle Flow-Defaults: werden in defineAndRegister unter die
 // defaultProps JEDES Blocks gemischt (damit Persistenz/normalizeProps
 // die Werte kennt und erhält).

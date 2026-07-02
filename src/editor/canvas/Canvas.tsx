@@ -21,6 +21,7 @@ import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import {
   flowItemStyle,
   parseFlowWidth,
+  ROOT_FLOW,
   type FlowDirection,
 } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
@@ -221,7 +222,15 @@ export function Canvas() {
         style={{ minHeight: 400 }}
       >
         <div
-          className="flex min-h-full flex-col items-start gap-3 p-4"
+          // Wurzel-Fluss aus ROOT_FLOW — dieselben Werte benutzt der Export.
+          // Hintergrund = Masken-Grundfarbe (--se-bg), NICHT Editor-Chrome:
+          // die Fläche zeigt die Maske, wie sie exportiert wird (WYSIWYG).
+          className="flex min-h-full flex-col items-start"
+          style={{
+            gap: ROOT_FLOW.gap,
+            padding: ROOT_FLOW.padding,
+            background: 'var(--se-bg)',
+          }}
           onDragOver={onCanvasDragOver}
           onDrop={(e) => {
             e.preventDefault()

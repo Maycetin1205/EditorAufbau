@@ -141,12 +141,12 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         style={{
           pointerEvents: 'auto',
           // Editor-Hilfe für Container: Fläche sichtbar + treffbar machen.
-          // Bewusst OHNE Erklärtext — die gestrichelte Fläche reicht.
+          // Bewusst OHNE Erklärtext und OHNE eigenes Padding — die Kinder
+          // sollen exakt dort sitzen, wo sie im Export sitzen (WYSIWYG).
           ...(isContainer
             ? {
                 border: '1.5px dashed hsl(220 13% 78%)',
-                borderRadius: 6,
-                padding: 8,
+                borderRadius: 4,
                 minHeight: 40,
               }
             : null),
