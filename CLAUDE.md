@@ -137,13 +137,23 @@ den Export (Kap. 3).
   JWHtmlStart/Ende-Marker, Skriptblock-Struktur, ASCII-Regel). Masken-Tokens
   werden in den Export eingebettet. Erst nur Button/Text/Container. Abnahme:
   Nutzer öffnet den Export in SoftEngine.
+  **Export-Grundsätze (entschieden 2026-07-02):** (a) Export = HTML **+**
+  SEvariablen-JSON, beide aus DERSELBEN Quelle (Baum + Datenquellen-Modell)
+  erzeugt — nie getrennt gepflegt, können nicht auseinanderlaufen. (b) Jeder
+  Export wird maschinell gegen die SE-Regeln geprüft (eingebauter Validator
+  nach Vorbild `behandlung-umbau/pruefung.mjs`), bevor er SoftEngine sieht.
+  (c) Determinismus: gleicher Baum → identische Datei (diffbar).
 - **Kap. 4 — Basis-Blöcke portieren** `[mechanisch pro Block, Muster kritisch]`:
   FormField, Bild, Infobox … — je Block: erst Bedienersicht-Durchspiel, dann
   Funktionsliste aus dem alten Editor ziehen, Nutzer streicht/behält.
 - **Kap. 5 — Daten-Anbindung** `[kritisch]`: Datenquelle an Block hängen,
   Feld-Wörterbuch (Startbestand: `FELD`-Map aus der EmpfangPraxis-Maske des
   Nutzers), Klick-auf-Stelle-Binding, Beispieldaten-Vorschau. Regel
-  Technikwert ≠ Anzeigename gilt überall.
+  Technikwert ≠ Anzeigename gilt überall. **Datenquellen sind eigenständige,
+  benannte VORLAGEN** (z. B. „Terminplaner", „Adressstamm"): einmal definiert,
+  in jeder Maske wiederverwendbar, Bibliothek neben der Baustein-Bibliothek;
+  aus ihnen wird die SEvariablen-JSON des Exports erzeugt. Kein JSON-Editieren
+  von Hand.
 - **Kap. 6 — komplexe Blöcke** `[Muster kritisch, Ausbau mechanisch]`: Kanban
   (Spalten aus Statusfeld, Karte ziehen = Wert zurückschreiben), DataTable
   (Spalte anklicken → Feld, Breite ziehen), DetailCard, Wizard (Schritte als
