@@ -115,6 +115,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       category: BlockClass.category,
       defaultProps: BlockClass.defaultProps,
       customProperties: BlockClass.customProperties,
+      acceptsChildren: BlockClass.acceptsChildren ?? false,
     })
   }
 }

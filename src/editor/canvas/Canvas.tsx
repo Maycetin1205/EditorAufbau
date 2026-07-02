@@ -1,11 +1,16 @@
 // Canvas
-// Sichtbare Arbeitsfläche. Rendert die Kinder der Wurzel im FLUSS (Spalte).
-// Platzierung per Drag-and-Drop: Blöcke umsortieren, mit Einfüge-Linie als
-// Vorschau, wo der Block landet. Klick auf leere Stelle = Auswahl aufheben.
-// (Verschachtelte Container folgen im nächsten Schritt.)
+// Sichtbare Arbeitsfläche. Rendert den Block-Baum REKURSIV im Fluss:
+// die Wurzel als Spalte, Container rendern ihre Kinder über BlockHost
+// (Portal → Light-DOM → <slot> des Containers).
+// Platzierung per Drag-and-Drop auf Wurzel-Ebene: Blöcke umsortieren, mit
+// Einfüge-Linie als Vorschau. Klick auf leere Stelle = Auswahl aufheben.
+// (Drop-Zonen zum Ziehen IN Container hinein folgen in Kap. 2.3.)
 
-import { Fragment, useState, type DragEvent } from 'react'
+import { Fragment, useState, type DragEvent, type ReactNode } from 'react'
+import type { BlockNode } from '../../core/blocks/BlockData'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { useEditor } from '../../state/useEditor'
+import type { Editor } from '../../state/Editor'
 import { BlockHost } from './BlockHost'
 
 function InsertionLine() {
@@ -18,6 +23,24 @@ function InsertionLine() {
         background: 'hsl(221 83% 53%)',
       }}
     />
+  )
+}
+
+// Rekursion: ein Knoten → BlockHost; Container bekommen ihre Kinder als
+// React-Kinder mit (BlockHost portalt sie in den <slot> des Elements).
+function renderNode(ed: Editor, node: BlockNode): ReactNode {
+  const def = getBlockDefinition(node.type)
+  const childNodes = def?.acceptsChildren ? ed.childNodesOf(node.id) : []
+  return (
+    <BlockHost
+      key={node.id}
+      block={node}
+      selected={ed.selectedId === node.id}
+      onSelect={() => ed.selectBlock(node.id)}
+      hasChildren={childNodes.length > 0}
+    >
+      {childNodes.map((child) => renderNode(ed, child))}
+    </BlockHost>
   )
 }
 
@@ -84,13 +107,14 @@ export function Canvas() {
               }}
               onDragOver={(e) => onItemDragOver(e, i)}
               onDragEnd={resetDrag}
-              style={{ opacity: dragId === node.id ? 0.4 : 1 }}
+              style={{
+                opacity: dragId === node.id ? 0.4 : 1,
+                alignSelf: getBlockDefinition(node.type)?.acceptsChildren
+                  ? 'stretch'
+                  : undefined,
+              }}
             >
-              <BlockHost
-                block={node}
-                selected={ed.selectedId === node.id}
-                onSelect={() => ed.selectBlock(node.id)}
-              />
+              {renderNode(ed, node)}
             </div>
           </Fragment>
         ))}

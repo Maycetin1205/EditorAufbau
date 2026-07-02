@@ -4,4 +4,5 @@
 // Wer Blocks benutzt, importiert diese eine Datei.
 
 import './button/ButtonBlock'
+import './container/ContainerBlock'
 import './text/TextBlock'

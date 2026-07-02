@@ -3,17 +3,18 @@
 
 import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
+import { getAllBlockDefinitions, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
 import { useEditor } from '../../state/useEditor'
 import { cn } from '@/lib/utils'
 
 const CATEGORY_LABEL: Record<BlockCategory, string> = {
+  layout: 'Layout',
   eingabe: 'Eingabe',
   anzeige: 'Anzeige',
 }
 
-const CATEGORY_ORDER: BlockCategory[] = ['eingabe', 'anzeige']
+const CATEGORY_ORDER: BlockCategory[] = ['layout', 'eingabe', 'anzeige']
 
 export function BlockPalette() {
   const ed = useEditor()
@@ -32,12 +33,19 @@ export function BlockPalette() {
 
   const grouped = useMemo(() => {
     const acc: Record<BlockCategory, BlockDefinition[]> = {
+      layout: [],
       eingabe: [],
       anzeige: [],
     }
     for (const def of filtered) acc[def.category]?.push(def)
     return acc
   }, [filtered])
+
+  // Einfüge-Ziel: ist gerade ein Container ausgewählt, landet der neue Block
+  // in ihm — sonst auf der Wurzel (Canvas). Drag-in-Container folgt in Kap. 2.3.
+  const selectedNode = ed.selectedId ? ed.getNode(ed.selectedId) : null
+  const selectedDef = selectedNode ? getBlockDefinition(selectedNode.type) : null
+  const targetParentId = selectedDef?.acceptsChildren ? selectedNode!.id : undefined
 
   return (
     <div className="flex flex-col gap-3">
@@ -74,7 +82,7 @@ export function BlockPalette() {
                   <PaletteCard
                     key={def.type}
                     def={def}
-                    onAdd={() => ed.addBlock(def.type)}
+                    onAdd={() => ed.addBlock(def.type, targetParentId)}
                   />
                 ))}
               </div>

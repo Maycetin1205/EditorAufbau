@@ -115,11 +115,17 @@ den Export (Kap. 3).
   Grund: SoftEngine-Masken sind fließendes HTML; das x/y-Modell des alten
   Editors ist der Grund, warum dessen Export unvorhersehbar sitzt. Der alte
   Editor ist für Layout KEINE Referenz. Details: `ARCHITEKTUR.md`.
-- → **Kap. 2 (NÄCHSTES) — Container/Flow-Fundament** `[kritisch]`
+- → **Kap. 2 (LÄUFT) — Container/Flow-Fundament** `[kritisch]`
   - ✅ 2.1 Datenmodell auf Baum (BlockNode-Map + Wurzel, Migration alter Stände,
     Flow-Rendering im Canvas statt Koordinaten).
-  - 2.2 ContainerBlock + rekursives Rendering (Slot/Light-DOM).
-  - 2.3 Canvas: Drop-Zonen + Einfügen-in-Container + Reordering (Drag).
+  - ✅ 2.2 ContainerBlock + rekursives Rendering (2026-07-02): Baustein
+    „Bereich" (`ff-container`, Kategorie Layout, `direction` column/row,
+    Kinder via Light-DOM/`<slot>`). Canvas rendert rekursiv (BlockHost
+    portalt Kind-Hosts ins Element). Editor-Hilfen (gestrichelter Rahmen,
+    Platzhalter) liegen im BlockHost, NIE im Baustein (WYSIWYG). Palette
+    fügt in den ausgewählten Bereich ein (Brücke bis 2.3).
+  - 2.3 (NÄCHSTES) Canvas: Drop-Zonen + Einfügen-in-Container + Reordering
+    (Drag, auch verschachtelt).
   - 2.4 Inspector: Flow-Props (direction/gap/padding, width fill/auto/fix).
 - **Kap. 2.5 — Sicherheitsnetz** `[kritisch]`: Vitest einrichten; Tests für
   Store (move/undo/duplicate), Migration/Sanitize, Token-Regel („kein Literal

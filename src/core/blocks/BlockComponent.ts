@@ -8,7 +8,7 @@
 
 import type { PropertyDescription } from './PropertyDescription'
 
-export type BlockCategory = 'eingabe' | 'anzeige'
+export type BlockCategory = 'eingabe' | 'anzeige' | 'layout'
 
 // Instanz-Vertrag: jede Block-View muss customProperties liefern.
 export interface BlockComponent {
@@ -25,5 +25,7 @@ export interface BlockComponentStatic {
   readonly category: BlockCategory
   readonly defaultProps: Record<string, unknown>
   readonly customProperties: PropertyDescription[]
+  // true = der Block ist ein Container und rendert Kind-Bloecke (Light-DOM/Slot).
+  readonly acceptsChildren?: boolean
   new(): BlockComponent
 }

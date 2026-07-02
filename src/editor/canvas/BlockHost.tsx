@@ -8,8 +8,15 @@
 //   - props werden als DOM-Properties gesetzt (Lit-Setter greifen).
 //   - CustomEvent 'ff-prop-change' wird abgefangen und schreibt zurück in den
 //     Editor-Store (Inline-Doppelklick-Edit auf gerenderten Texten).
+//
+// Container (acceptsChildren): React-Kinder werden per Portal als Light-DOM in
+// das Custom Element gelegt — der <slot> des Blocks nimmt sie auf. Damit
+// rendert der Editor rekursiv verschachtelte Bäume, ohne dass der Baustein
+// etwas vom Editor weiß. Gestrichelter Rahmen + Platzhalter sind reine
+// Editor-Hilfen und leben hier, NICHT im Baustein (WYSIWYG).
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
@@ -19,6 +26,9 @@ interface BlockHostProps {
   block: BlockNode
   selected?: boolean
   onSelect?: () => void
+  // Kind-Hosts (nur für Container-Blöcke; vom Canvas rekursiv erzeugt).
+  children?: ReactNode
+  hasChildren?: boolean
 }
 
 interface PropChangeDetail {
@@ -26,9 +36,14 @@ interface PropChangeDetail {
   value: unknown
 }
 
-export function BlockHost({ block, selected, onSelect }: BlockHostProps) {
+export function BlockHost({ block, selected, onSelect, children, hasChildren }: BlockHostProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
+  // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
   const elementRef = useRef<HTMLElement | null>(null)
+  const [element, setElement] = useState<HTMLElement | null>(null)
+  const def = getBlockDefinition(block.type)
+  const isContainer = def?.acceptsChildren ?? false
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte
   // Event-Listener immer mit dem aktuellen Stand laufen.
   const blockRef = useRef<BlockNode>(block)
@@ -45,8 +60,9 @@ export function BlockHost({ block, selected, onSelect }: BlockHostProps) {
     const container = containerRef.current
     if (!container) return
     const el = document.createElement(def.tagName)
-    elementRef.current = el
     container.appendChild(el)
+    elementRef.current = el
+    setElement(el)
 
     // Inline-Doppelklick-Edit: Block emittiert 'ff-prop-change' { attr, value },
     // der Host schreibt das in den Store. Der Baustein bleibt editor-blind.
@@ -62,6 +78,7 @@ export function BlockHost({ block, selected, onSelect }: BlockHostProps) {
       el.removeEventListener('ff-prop-change', onPropChange)
       if (container.contains(el)) container.removeChild(el)
       elementRef.current = null
+      setElement(null)
     }
   }, [block.type])
 
@@ -73,10 +90,10 @@ export function BlockHost({ block, selected, onSelect }: BlockHostProps) {
       elAny[key] = value
     }
     elAny.editable = !!selected
-  }, [block.props, selected])
+  }, [element, block.props, selected])
 
   function onClick(e: ReactMouseEvent<HTMLDivElement>) {
-    e.stopPropagation() // Canvas-Klick (= Auswahl aufheben) nicht auslösen
+    e.stopPropagation() // Klick auf Elternteile / Canvas (= andere Auswahl) nicht auslösen
     onSelect?.()
   }
 
@@ -84,7 +101,8 @@ export function BlockHost({ block, selected, onSelect }: BlockHostProps) {
     <div
       onClick={onClick}
       style={{
-        display: 'inline-block',
+        display: isContainer ? 'block' : 'inline-block',
+        alignSelf: isContainer ? 'stretch' : undefined,
         cursor: selected ? 'default' : 'pointer',
         outline: selected ? '2px solid hsl(221 83% 53%)' : '2px solid transparent',
         outlineOffset: 1,
@@ -92,7 +110,46 @@ export function BlockHost({ block, selected, onSelect }: BlockHostProps) {
         userSelect: 'none',
       }}
     >
-      <div ref={containerRef} style={{ pointerEvents: 'auto' }} />
+      <div
+        ref={containerRef}
+        style={{
+          pointerEvents: 'auto',
+          // Editor-Hilfe für Container: Fläche sichtbar + treffbar machen.
+          ...(isContainer
+            ? {
+                border: '1.5px dashed hsl(220 13% 78%)',
+                borderRadius: 6,
+                padding: 8,
+                minHeight: 56,
+              }
+            : null),
+        }}
+      >
+        {element && isContainer
+          ? createPortal(
+              hasChildren ? children : <ContainerPlaceholder />,
+              element,
+            )
+          : null}
+      </div>
+    </div>
+  )
+}
+
+// Platzhalter für leere Container — reine Editor-Hilfe (liegt im Light-DOM,
+// wird also nie Teil des Block-Codes und nie exportiert).
+function ContainerPlaceholder() {
+  return (
+    <div
+      style={{
+        alignSelf: 'stretch',
+        padding: '12px 8px',
+        textAlign: 'center',
+        fontSize: 12,
+        color: 'hsl(220 9% 46%)',
+      }}
+    >
+      Leerer Bereich — Baustein links wählen, um ihn hier einzufügen.
     </div>
   )
 }

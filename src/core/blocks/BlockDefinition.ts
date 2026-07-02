@@ -15,4 +15,5 @@ export interface BlockDefinition {
   category: BlockCategory
   defaultProps: Record<string, unknown>
   customProperties: PropertyDescription[]
+  acceptsChildren: boolean
 }
