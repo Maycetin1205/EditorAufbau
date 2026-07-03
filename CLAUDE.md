@@ -23,7 +23,8 @@ sein Ersatz dafür, Code lesen zu können.
    → das Tool hat versagt.
 
 Kontext: Es gibt einen ALTEN, „vibe-gecodeten" Editor (Repo `react--app`;
-lokal `C:\Users\mu.aycetin\Desktop\Projekte\Editor\react-app`), der
+lokal `C:\Users\mu.aycetin\Desktop\Projekte\react-app` — NICHT unter
+`Editor\`), der
 funktioniert (inkl. Export in SoftEngine), aber unwartbar ist (~29k Zeilen,
 absolutes x/y-Modell, zwei halbfertige Systeme parallel). **Dieses Projekt baut
 ihn sauber neu** und löst ihn dann ab. Außerdem gibt es das Repo
@@ -41,6 +42,15 @@ den Export (Kap. 3).
 - **Ein Kapitel wird KOMPLETT fertig (gebaut + geprüft + committed), erst dann
   beginnt das nächste.** Kein paralleles Anfangen.
 - **Schritt für Schritt, klein.** Ein abgeschlossenes Stück pro Schritt.
+- **Zielbild-Regel (pro Baustein, entschieden 2026-07-03):** Ein Baustein ist
+  erst fertig, wenn er dem Zielbild FAST KOMPLETT entspricht: finales Design
+  aus Tokens (Abgleich mit `dashboard/stilprobe.html`), Kernfunktionen,
+  Inline-Edit/Inspector, Tests, Export geprüft. KEIN „erstmal grob, später
+  polieren" — erst dann beginnt der nächste Baustein.
+- **Atomic-Pflicht bei komplexen Blöcken (entschieden 2026-07-03):** Kanban,
+  DataTable & Co. werden NIE am Stück gebaut — erst Atome, dann Moleküle,
+  dann der Organismus. Jede Stufe einzeln nach Zielbild-Regel fertig und
+  committed. Design-Zielbild (Stilprobe-Mockup) VOR dem ersten Atom festlegen.
 - **Code immer zeigen + besprechen.** Der Nutzer will jeden Schritt sehen (auch
   wenn er nicht alles versteht) und mitreden. Ergebnis wenn möglich als
   Screenshot zeigen.
@@ -188,7 +198,44 @@ den Export (Kap. 3).
     adversariale 4-Perspektiven-Review bestanden. Offener Design-Punkt:
     „Erfolg" nutzt die grüne Hausfarbe `--se-accent` (kein eigenes grünes
     Status-Token — konventionell, aber Hausfarbe ↔ Status vermischt).
-  - offen: FormField, Bild.
+  - ⏸ **FormField + Bild ZURÜCKGESTELLT (2026-07-03):** fürs Zwischenziel
+    Kanban-Dashboard nicht nötig → jetzt Teil von Kap. 6. Funktionsliste
+    FormField aus dem alten Editor liegt schon vor (nicht neu sichten):
+    Typen Text/Zahl/E-Mail/Passwort/Textarea/Select/Checkbox/Datum;
+    Platzhalter, Pflichtfeld, readOnly; Select-Optionen statisch ODER aus
+    Datenquelle (`selectOptionsSource`/`selectOptionsField`); Feld-Bindung
+    über `field`-Prop; Labels erzeugt SoftEngine SELBST (kein Label-Prop).
+    Quellen: `src/components/blocks/FormFieldBlock.tsx`,
+    `src/render/renderFormField.ts` im alten Editor.
+- ⌖ **ZWISCHENZIEL (entschieden 2026-07-03): ein Kanban-Dashboard.** Es werden
+  NUR die dafür nötigen Bausteine gebaut — streng atomar, jeder Schritt nach
+  Zielbild-Regel. Schon vorhanden: Bereich, Text, Button, Infobox.
+- **Kap. 4K — Kanban-Bausteine (atomar, in dieser Reihenfolge):**
+  - **4K.1 Design-Zielbild Kanban** `[mechanisch; Nutzer nimmt per Screenshot
+    ab]`: `dashboard/stilprobe.html` um ein statisches Kanban-Mockup erweitern
+    (Board → Spalten → Karten → Status-Chips; kantig, dicht, Werkhalle) — nur
+    HTML/CSS mit `--se-*`-Tokens, KEIN Block-Code. Dabei fehlende Tokens in
+    `masken-tokens.css` ergänzen: eigenes Status-Grün `--se-green`/`--se-
+    green-soft` (löst den offenen Punkt „Erfolg = Hausfarbe"; Infobox danach
+    umstellen), Karten-Fläche/-Rahmen. Das abgenommene Mockup ist das
+    VERBINDLICHE Zielbild für 4K.2–4K.4.
+  - **4K.2 Atom: Status-Chip (`ff-badge`)** `[mechanisch, Portier-Muster wie
+    Infobox]`: kleines Etikett mit Status-BEDEUTUNG (Technikwert
+    `info/success/warning/danger`, Bediener wählt Klarnamen — wie Infobox),
+    Text per Inline-Edit, „Art" als Inspector-Select, nur Tokens.
+  - **4K.3 Molekül: Karte (`ff-card`)** `[mechanisch, Portier-Muster]`:
+    Titel + Textzeile + Status-Chip nach Zielbild 4K.1, Inline-Edit für
+    Titel/Text. Karten sind normale Blöcke im Baum — KEINE eigene
+    Drag-Sonderlogik (die Canvas-Drag-Logik aus 2.3 kann sie schon ziehen).
+  - **4K.4 Organismus: Kanban (`ff-kanban` + `ff-kanban-spalte`)**
+    `[kritisch]`: Spalte = spezialisierter Container (Kopf: Titel per
+    Doppelklick + Kartenzähler; Rumpf nimmt NUR Karten auf; Plus-Knopf
+    „Karte"; Kreuzchen mit Rückfrage), Board = Zeile aus Spalten (Plus-Knopf
+    „Spalte", Spalten umsortierbar). Karten ziehen läuft über die VORHANDENE
+    Canvas-Drag-Logik (1 Undo pro Zug). Neu + kritisch: Registry-Konzept
+    **„erlaubte Kind-Typen"** (Spalte akzeptiert nur Karten, Board nur
+    Spalten) — im Kern/Registry lösen, kein `if type===` in der UI.
+    Beispieldaten: 3 Spalten („Offen"/„In Arbeit"/„Fertig") mit Karten.
 - **Kap. 5 — Daten-Anbindung** `[kritisch]`: Datenquelle an Block hängen,
   Feld-Wörterbuch (Startbestand: `FELD`-Map aus der EmpfangPraxis-Maske des
   Nutzers), Klick-auf-Stelle-Binding, Beispieldaten-Vorschau. Regel
@@ -196,11 +243,13 @@ den Export (Kap. 3).
   benannte VORLAGEN** (z. B. „Terminplaner", „Adressstamm"): einmal definiert,
   in jeder Maske wiederverwendbar, Bibliothek neben der Baustein-Bibliothek;
   aus ihnen wird die SEvariablen-JSON des Exports erzeugt. Kein JSON-Editieren
-  von Hand.
-- **Kap. 6 — komplexe Blöcke** `[Muster kritisch, Ausbau mechanisch]`: Kanban
-  (Spalten aus Statusfeld, Karte ziehen = Wert zurückschreiben), DataTable
-  (Spalte anklicken → Feld, Breite ziehen), DetailCard, Wizard (Schritte als
-  Reiter, Plus/Ziehen/Kreuzchen). Atomic Design real ausbauen.
+  von Hand. **Erster Anwendungsfall = das Kanban aus 4K:** Spalten aus
+  Statusfeld, Karte ziehen = Wert zurückschreiben → damit ist das
+  Zwischenziel Kanban-Dashboard erreicht.
+- **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
+  FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
+  Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,
+  Plus/Ziehen/Kreuzchen) — alle streng atomar nach Zielbild-Regel.
 - **Kap. 7 — Verknüpfungen** zwischen Blöcken (Auswahl/Filter, z.B. Kanban →
   DetailCard).
 - **Kap. 8 — Events/Aktionen** `[kritisch]`: Klick→Popup, Drop→Relation,
