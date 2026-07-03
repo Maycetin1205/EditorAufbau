@@ -14,7 +14,10 @@ es ersetzt Urteilsvermögen durch Prüfschritte. Keine Abkürzungen.
    Steht dort [kritisch]: weise den Nutzer darauf hin, dass dieser Schritt
    fuer ein starkes Modell markiert ist, und lass ihn entscheiden.
 5. SPIELE den Schritt erst aus Bedienersicht durch (Was sieht der Nutzer?
-   Was klickt er?) und zeige den Plan. WARTE auf "go" vor Code-Aenderungen.
+   Was klickt er?) und zeige den Plan. Der Plan enthaelt EINE konkrete
+   Empfehlung (sinnvolle Standardwahl, kurz begruendet) — KEINE offenen
+   Auswahlfragen an den Nutzer. Er sagt "go" oder korrigiert.
+   WARTE auf "go" vor Code-Aenderungen.
 6. BAUE klein. Nach JEDER Aenderung: tsc + eslint + npm test.
    Nach Block-Aenderungen zusaetzlich: npm run build:runtime.
 7. VERIFIZIERE im Browser (Screenshot fuer den Nutzer), nicht nur per Tests.

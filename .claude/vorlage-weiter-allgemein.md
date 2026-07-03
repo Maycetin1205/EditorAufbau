@@ -16,7 +16,9 @@ es ersetzt Urteilsvermoegen durch Pruefschritte. Keine Abkuerzungen.
    [kritisch]: weise den Nutzer darauf hin, dass dieser Schritt fuer ein
    starkes Modell markiert ist, und lass ihn entscheiden.
 5. ZEIGE erst den Plan (bei Bedienbarem: aus Nutzersicht durchgespielt).
-   WARTE auf "go" vor Code-Aenderungen.
+   Der Plan enthaelt EINE konkrete Empfehlung (sinnvolle Standardwahl,
+   kurz begruendet) — KEINE offenen Auswahlfragen an den Nutzer.
+   Er sagt "go" oder korrigiert. WARTE auf "go" vor Code-Aenderungen.
 6. BAUE klein. Nach JEDER Aenderung alle Pruefungen laufen lassen.
 7. VERIFIZIERE das Ergebnis real (ausfuehren / Screenshot / Ausgabe zeigen),
    nicht nur per Tests.
