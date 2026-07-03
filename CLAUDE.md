@@ -147,9 +147,9 @@ den Export (Kap. 3).
   `src/blocks/**`, maschinell erzwungen). Aufräumer: Editor-Akzentfarbe nur
   noch als `--ring`-Token; ein gemeinsames SelectControl statt zwei.
   **Ab hier gehören Tests zu jedem Kapitel dazu.**
-- ◐ **Kap. 3 — Mini-Export nach SoftEngine (GEBAUT 2026-07-02 — wartet auf
-  SoftEngine-Abnahme durch den Nutzer!)** `[kritisch]` **(VORGEZOGEN, war
-  Kap. 8):** Export-Knopf in der Toolbar → `maske.html` +
+- ✅ **Kap. 3 — Mini-Export nach SoftEngine (GEBAUT + ABGENOMMEN 2026-07-02:
+  Nutzer hat den Export in SoftEngine getestet — funktioniert!)** `[kritisch]`
+  **(VORGEZOGEN, war Kap. 8):** Export-Knopf in der Toolbar → `maske.html` +
   `maske.SEvariablen.json`. Umsetzung: `src/export/exportMask.ts`
   (deterministischer Baum-Durchlauf → verschachtelte Custom Elements;
   Breite via DERSELBEN flowLayout-Logik wie der Canvas; ROOT_FLOW =
@@ -161,9 +161,9 @@ den Export (Kap. 3).
   Test wacht gegen Veralten). Editor-Canvas zeigt jetzt `--se-bg` und
   Container-Hilfen ohne Padding → Editor und Export nachweislich
   deckungsgleich (Screenshot-Vergleich). 9 Export-Tests.
-  **OFFEN: Nutzer öffnet den Export in SoftEngine (Abnahme). Falls SE die
-  Kommentar-Platzhalter `JWHtmlLadeDatei`/`SeHtmlFrameworkV2_Files` im
-  <head> verlangt: im Exporter ergänzen (Ein-Zeilen-Änderung).**
+  Abnahme erfolgt: Maske läuft in SoftEngine ohne Nachbesserung (die
+  Platzhalter-Kommentare `JWHtmlLadeDatei`/`SeHtmlFrameworkV2_Files`
+  waren NICHT nötig).
   **Export-Grundsätze (entschieden 2026-07-02):** (a) Export = HTML **+**
   SEvariablen-JSON, beide aus DERSELBEN Quelle (Baum + Datenquellen-Modell)
   erzeugt — nie getrennt gepflegt, können nicht auseinanderlaufen. (b) Jeder
