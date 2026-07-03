@@ -13,6 +13,8 @@ es ersetzt Urteilsvermögen durch Prüfschritte. Keine Abkürzungen.
 4. NIMM den nächsten offenen Roadmap-Punkt aus CLAUDE.md. Nur diesen.
    Steht dort [kritisch]: weise den Nutzer darauf hin, dass dieser Schritt
    fuer ein starkes Modell markiert ist, und lass ihn entscheiden.
+   Sollst du trotzdem weitermachen: arbeite den Schritt nach dem
+   /kritisch-Ritual ab (.claude/commands/kritisch.md).
 5. SPIELE den Schritt erst aus Bedienersicht durch (Was sieht der Nutzer?
    Was klickt er?) und zeige den Plan. Der Plan enthaelt EINE konkrete
    Empfehlung (sinnvolle Standardwahl, kurz begruendet) — KEINE offenen

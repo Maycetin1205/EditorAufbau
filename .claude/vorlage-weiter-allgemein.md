@@ -14,7 +14,8 @@ es ersetzt Urteilsvermoegen durch Pruefschritte. Keine Abkuerzungen.
    schlage vor, sie als allererstes Kapitel einzurichten.
 4. NIMM den naechsten offenen Roadmap-Punkt. Nur diesen. Steht dort
    [kritisch]: weise den Nutzer darauf hin, dass dieser Schritt fuer ein
-   starkes Modell markiert ist, und lass ihn entscheiden.
+   starkes Modell markiert ist, und lass ihn entscheiden. Sollst du
+   trotzdem weitermachen: arbeite nach dem /kritisch-Ritual.
 5. ZEIGE erst den Plan (bei Bedienbarem: aus Nutzersicht durchgespielt).
    Der Plan enthaelt EINE konkrete Empfehlung (sinnvolle Standardwahl,
    kurz begruendet) — KEINE offenen Auswahlfragen an den Nutzer.
