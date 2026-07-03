@@ -85,7 +85,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-text', 'ff-container']) {
+    for (const tag of ['ff-button', 'ff-text', 'ff-container', 'ff-infobox']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
   })

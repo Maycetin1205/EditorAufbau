@@ -173,6 +173,22 @@ den Export (Kap. 3).
 - **Kap. 4 — Basis-Blöcke portieren** `[mechanisch pro Block, Muster kritisch]`:
   FormField, Bild, Infobox … — je Block: erst Bedienersicht-Durchspiel, dann
   Funktionsliste aus dem alten Editor ziehen, Nutzer streicht/behält.
+  - ✅ **Infobox (2026-07-03) — Portier-Muster etabliert:** Anzeige-Block
+    `ff-infobox` (`src/blocks/infobox/InfoBoxBlock.ts`) mit 4 Status-Arten
+    (Hinweis/Erfolg/Warnung/Fehler → feste Statusfarben, getönte Fläche +
+    farbiger linker Balken, nur `--se-*`-Tokens). Bediener wählt die BEDEUTUNG
+    (Anzeigename), nie die Farbe (Technikwert `info/success/warning/danger`).
+    Titel/Nachricht per Inline-Edit; „Art" als erstes reales
+    `customProperties`-Select im Inspector. **Muster für Folge-Blöcke:** neue
+    Lit-Klasse nach Vorbild Button/Container → Import in `register.ts` →
+    `npm run build:runtime` → Veralten-Wächter + echter Export-Test. Palette/
+    Inspector/Export nehmen den Block automatisch aus der Registry (kein
+    `if type===`). Real im Browser verifiziert (4 Varianten, Umschalten,
+    Inline-Edit, Persistenz, Export = gültige SE-Maske); 30 Tests grün;
+    adversariale 4-Perspektiven-Review bestanden. Offener Design-Punkt:
+    „Erfolg" nutzt die grüne Hausfarbe `--se-accent` (kein eigenes grünes
+    Status-Token — konventionell, aber Hausfarbe ↔ Status vermischt).
+  - offen: FormField, Bild.
 - **Kap. 5 — Daten-Anbindung** `[kritisch]`: Datenquelle an Block hängen,
   Feld-Wörterbuch (Startbestand: `FELD`-Map aus der EmpfangPraxis-Maske des
   Nutzers), Klick-auf-Stelle-Binding, Beispieldaten-Vorschau. Regel

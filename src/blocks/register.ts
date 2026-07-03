@@ -5,4 +5,5 @@
 
 import './button/ButtonBlock'
 import './container/ContainerBlock'
+import './infobox/InfoBoxBlock'
 import './text/TextBlock'
