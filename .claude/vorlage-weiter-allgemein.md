@@ -31,6 +31,9 @@ VERBOTE (nicht verhandelbar):
   Wenn ein Test stoert: melden, der Nutzer entscheidet.
 - Nicht mehrere Kapitel parallel anfangen.
 - Keine grossen Umbauten "bei der Gelegenheit" — nur der eine Schritt.
+- Keinen fremden Code hereinkopieren (Altprojekte, Internet-Schnipsel).
+  Referenzen liefern Anforderungen (WAS) — gebaut wird nach dem
+  vorhandenen Muster DIESES Projekts (WIE).
 - Projektregeln aus der CLAUDE.md gehen IMMER vor eigenen Vorlieben.
 
 Wenn du unsicher bist: kleiner bauen, frueher fragen, nie raten.

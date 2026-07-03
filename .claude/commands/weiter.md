@@ -31,6 +31,11 @@ VERBOTE (nicht verhandelbar, stehen auch in CLAUDE.md):
 - Keine Farb-/Groessen-Literale in src/blocks/** (Tokens benutzen).
 - Kein `if (type === '...')` ausserhalb des jeweiligen Baustein-Ordners.
 - Nichts am alten Editor (react--app) umbauen. Er ist nur Referenz.
+- Keinen fremden Code hereinkopieren (alter Editor, PageBuilder,
+  Internet-Schnipsel, andere Projekte). Referenzen liefern nur die
+  Funktionsliste (WAS ein Feature koennen muss) — gebaut wird
+  ausschliesslich nach dem Muster der vorhandenen Bloecke
+  (Button/Text/Container) in DIESEM Repo.
 - Nicht mehrere Kapitel parallel anfangen.
 - Keine Erklaertexte/Tutorials in die Editor-Flaeche bauen.
 
