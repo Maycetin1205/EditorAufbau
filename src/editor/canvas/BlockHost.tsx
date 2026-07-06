@@ -67,7 +67,12 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 
     // Inline-Doppelklick-Edit: Block emittiert 'ff-prop-change' { attr, value },
     // der Host schreibt das in den Store. Der Baustein bleibt editor-blind.
+    // 'ff-prop-change' ist bubbles+composed; in verschachtelten Bereichen
+    // erreicht das Event eines Kindes auch die Listener der Eltern-Hosts.
+    // Nur das eigene Element behandeln, sonst schreibt der Bereich die
+    // Prop des Kindes zusätzlich auf sich selbst.
     const onPropChange = (e: Event) => {
+      if (e.target !== el) return
       const ce = e as CustomEvent<PropChangeDetail>
       const detail = ce.detail
       if (!detail || typeof detail.attr !== 'string') return
