@@ -195,9 +195,9 @@ den Export (Kap. 3).
     Inspector/Export nehmen den Block automatisch aus der Registry (kein
     `if type===`). Real im Browser verifiziert (4 Varianten, Umschalten,
     Inline-Edit, Persistenz, Export = gültige SE-Maske); 30 Tests grün;
-    adversariale 4-Perspektiven-Review bestanden. Offener Design-Punkt:
-    „Erfolg" nutzt die grüne Hausfarbe `--se-accent` (kein eigenes grünes
-    Status-Token — konventionell, aber Hausfarbe ↔ Status vermischt).
+    adversariale 4-Perspektiven-Review bestanden. ~~Offener Design-Punkt:
+    „Erfolg" nutzt die grüne Hausfarbe~~ → GELÖST in 4K.1 (2026-07-06):
+    eigenes Status-Grün `--se-green`/`--se-green-soft`, Infobox umgestellt.
   - ⏸ **FormField + Bild ZURÜCKGESTELLT (2026-07-03):** fürs Zwischenziel
     Kanban-Dashboard nicht nötig → jetzt Teil von Kap. 6. Funktionsliste
     FormField aus dem alten Editor liegt schon vor (nicht neu sichten):
@@ -211,14 +211,17 @@ den Export (Kap. 3).
   NUR die dafür nötigen Bausteine gebaut — streng atomar, jeder Schritt nach
   Zielbild-Regel. Schon vorhanden: Bereich, Text, Button, Infobox.
 - **Kap. 4K — Kanban-Bausteine (atomar, in dieser Reihenfolge):**
-  - **4K.1 Design-Zielbild Kanban** `[mechanisch; Nutzer nimmt per Screenshot
-    ab]`: `dashboard/stilprobe.html` um ein statisches Kanban-Mockup erweitern
-    (Board → Spalten → Karten → Status-Chips; kantig, dicht, Werkhalle) — nur
-    HTML/CSS mit `--se-*`-Tokens, KEIN Block-Code. Dabei fehlende Tokens in
-    `masken-tokens.css` ergänzen: eigenes Status-Grün `--se-green`/`--se-
-    green-soft` (löst den offenen Punkt „Erfolg = Hausfarbe"; Infobox danach
-    umstellen), Karten-Fläche/-Rahmen. Das abgenommene Mockup ist das
-    VERBINDLICHE Zielbild für 4K.2–4K.4.
+  - ✅ **4K.1 Design-Zielbild Kanban (ABGENOMMEN 2026-07-06, Nutzer per
+    Screenshot):** `dashboard/stilprobe.html` um die verbindliche
+    Kanban-Sektion erweitert (Board → 3 Spalten mit Status-Oberlinie →
+    Karten Titel/Textzeile/Chip → „+ Karte"/„+ Spalte"/Leer-Drop-Zone) —
+    reines HTML/CSS, AUSSCHLIESSLICH `var(--se-*)`; die echte
+    `masken-tokens.css` ist per `<link>` eingebunden, Mockup und Blöcke
+    können nicht auseinanderlaufen. Tokens ergänzt: `--se-green`/
+    `--se-green-soft` (eigenes Status-Grün ≠ Hausfarbe) + `--se-card-bg`/
+    `--se-card-line`; Infobox „Erfolg" auf `--se-green` umgestellt
+    (build:runtime neu). Dieses Mockup ist das VERBINDLICHE Zielbild für
+    4K.2–4K.4.
   - **4K.2 Atom: Status-Chip (`ff-badge`)** `[mechanisch, Portier-Muster wie
     Infobox]`: kleines Etikett mit Status-BEDEUTUNG (Technikwert
     `info/success/warning/danger`, Bediener wählt Klarnamen — wie Infobox),
