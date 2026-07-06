@@ -48,7 +48,7 @@
         font-size: var(--se-fs);
       }
       .box.v-info { border-left-color: var(--se-blue); background: var(--se-blue-soft); }
-      .box.v-success { border-left-color: var(--se-accent); background: var(--se-accent-soft); }
+      .box.v-success { border-left-color: var(--se-green); background: var(--se-green-soft); }
       .box.v-warning { border-left-color: var(--se-amber); background: var(--se-amber-soft); }
       .box.v-danger { border-left-color: var(--se-red); background: var(--se-red-soft); }
       .heading {

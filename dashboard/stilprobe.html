@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Stilprobe · Baukasten-Design</title>
+<!-- Echte Token-Datei der Bloecke: die Kanban-Zielbild-Sektion (4K.1) unten
+     nutzt AUSSCHLIESSLICH var(--se-*) hieraus — Mockup und Bloecke koennen
+     farblich nicht auseinanderlaufen. -->
+<link rel="stylesheet" href="../src/design/masken-tokens.css">
 <style>
   /* ============ ZENTRALE WERTELISTE (Design-Tokens) ============ */
   :root {
@@ -268,6 +272,96 @@ body { font-size:13.5px; }
       <span class="sep"></span>
       <input class="input" value="Mustermann, Max">
       <span class="time" style="font-family:var(--mono)">10:42 · Nr. 5001</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       KANBAN-ZIELBILD (4K.1) — VERBINDLICH fuer ff-badge / ff-card /
+       ff-kanban. Nur var(--se-*) aus masken-tokens.css; kein einziger
+       Farb-/Radius-Literal. Was hier abgenommen wird, bauen 4K.2-4K.4
+       exakt nach.
+       ============================================================ -->
+  <style>
+    .zb { margin:6px 24px 24px; background:var(--se-panel); border:1px solid var(--se-line); border-radius:var(--se-r-lg); padding:16px 18px; font-family:var(--se-font); font-size:var(--se-fs); color:var(--se-ink); }
+    .zb h2 { margin:0 0 4px; font-size:11px; font-weight:700; letter-spacing:.1em; color:var(--se-faint); text-transform:uppercase; }
+    .zb .zb-sub { margin:0 0 14px; font-size:var(--se-fs-sm); color:var(--se-muted); }
+
+    /* Atom: Status-Chip (ff-badge) — Bediener waehlt BEDEUTUNG, nie Farbe */
+    .zb-chip { display:inline-block; padding:2px 8px; border-radius:var(--se-r-sm); font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+    .zb-chip.art-info    { background:var(--se-blue-soft);  color:var(--se-blue); }
+    .zb-chip.art-erfolg  { background:var(--se-green-soft); color:var(--se-green); }
+    .zb-chip.art-warnung { background:var(--se-amber-soft); color:var(--se-amber); }
+    .zb-chip.art-fehler  { background:var(--se-red-soft);   color:var(--se-red); }
+    .zb-chiprow { display:flex; gap:var(--se-gap); align-items:center; margin-bottom:16px; }
+
+    /* Organismus: Board (ff-kanban) = Zeile aus Spalten */
+    .zb-board { display:flex; gap:var(--se-gap-lg); align-items:flex-start; }
+    .zb-col { flex:0 0 290px; background:var(--se-panel); border:1px solid var(--se-line); border-top:3px solid var(--se-faint); border-radius:var(--se-r-lg); }
+    .zb-col.s-offen   { border-top-color:var(--se-amber); }
+    .zb-col.s-arbeit  { border-top-color:var(--se-blue); }
+    .zb-col.s-fertig  { border-top-color:var(--se-green); }
+    .zb-colhead { display:flex; align-items:center; gap:var(--se-gap-sm); padding:9px 11px; border-bottom:1px solid var(--se-line-soft); }
+    .zb-coltitle { font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
+    .zb-count { margin-left:auto; min-width:22px; height:20px; padding:0 6px; border-radius:var(--se-r-sm); background:var(--se-panel-2); border:1px solid var(--se-line-soft); display:grid; place-items:center; font-family:var(--se-mono); font-size:11.5px; font-weight:600; color:var(--se-muted); }
+    .zb-colbody { padding:11px; display:flex; flex-direction:column; gap:var(--se-gap); min-height:150px; }
+
+    /* Molekuel: Karte (ff-card) = Titel + Textzeile + Chip */
+    .zb-card { background:var(--se-card-bg); border:1px solid var(--se-card-line); border-radius:var(--se-r-md); padding:9px 11px 10px; }
+    .zb-card h3 { margin:0 0 2px; font-size:var(--se-fs); font-weight:600; line-height:1.3; }
+    .zb-card p { margin:0 0 8px; font-size:var(--se-fs-sm); color:var(--se-muted); }
+    .zb-card .zb-chip { display:inline-block; }
+
+    /* Leer-Zustand + strukturelle Aktionen (Plus-Knoepfe) */
+    .zb-drop { border:1.5px dashed var(--se-line); border-radius:var(--se-r-md); color:var(--se-faint); font-size:var(--se-fs-sm); text-align:center; padding:16px 8px; }
+    .zb-add { border:1px solid var(--se-line); border-radius:var(--se-r-sm); background:var(--se-panel); color:var(--se-muted); font-family:var(--se-font); font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:6px 0; width:100%; cursor:pointer; }
+    .zb-add:hover { background:var(--se-panel-2); color:var(--se-ink); }
+    .zb-addcol { flex:0 0 180px; border:1.5px dashed var(--se-line); border-radius:var(--se-r-lg); color:var(--se-faint); font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:center; padding:14px 0; background:transparent; cursor:pointer; font-family:var(--se-font); }
+    .zb-addcol:hover { color:var(--se-muted); border-color:var(--se-faint); }
+    .zb-colfoot { padding:0 11px 11px; }
+  </style>
+
+  <div class="zb">
+    <h2>Kanban-Zielbild (4K.1) · verbindlich für ff-badge / ff-card / ff-kanban</h2>
+    <p class="zb-sub">Alle Werte kommen live aus <code>masken-tokens.css</code> (var(--se-*)) — inkl. neuem Status-Grün, das NICHT die Hausfarbe ist.</p>
+
+    <div class="zb-chiprow">
+      <span class="zb-chip art-info">Hinweis</span>
+      <span class="zb-chip art-erfolg">Erfolg</span>
+      <span class="zb-chip art-warnung">Warnung</span>
+      <span class="zb-chip art-fehler">Fehler</span>
+      <span style="color:var(--se-faint); font-size:11.5px;">← die 4 Arten des Status-Chips (Bediener wählt Bedeutung, nie Farbe)</span>
+    </div>
+
+    <div class="zb-board">
+      <div class="zb-col s-offen">
+        <div class="zb-colhead"><span class="zb-coltitle">Offen</span><span class="zb-count">3</span></div>
+        <div class="zb-colbody">
+          <div class="zb-card"><h3>Rückruf Fr. Wagner</h3><p>Befund Minka besprechen</p><span class="zb-chip art-warnung">Wartet seit 2 Tagen</span></div>
+          <div class="zb-card"><h3>Rechnung Nr. 5012 prüfen</h3><p>Position Narkose fehlt</p><span class="zb-chip art-fehler">Überfällig</span></div>
+          <div class="zb-card"><h3>Impfpass nachtragen</h3><p>Buddy · Golden Retriever</p><span class="zb-chip art-info">Heute</span></div>
+        </div>
+        <div class="zb-colfoot"><button class="zb-add">＋ Karte</button></div>
+      </div>
+
+      <div class="zb-col s-arbeit">
+        <div class="zb-colhead"><span class="zb-coltitle">In Arbeit</span><span class="zb-count">1</span></div>
+        <div class="zb-colbody">
+          <div class="zb-card"><h3>Röntgenbilder anfordern</h3><p>Klinik Dr. Steiner, Fall Rocky</p><span class="zb-chip art-info">Angefragt</span></div>
+          <div class="zb-drop">Karte hierher ziehen</div>
+        </div>
+        <div class="zb-colfoot"><button class="zb-add">＋ Karte</button></div>
+      </div>
+
+      <div class="zb-col s-fertig">
+        <div class="zb-colhead"><span class="zb-coltitle">Fertig</span><span class="zb-count">2</span></div>
+        <div class="zb-colbody">
+          <div class="zb-card"><h3>Laborprobe versendet</h3><p>Nala · Blutbild groß</p><span class="zb-chip art-erfolg">Erledigt</span></div>
+          <div class="zb-card"><h3>Bestellung Verbandsmaterial</h3><p>Lieferung bestätigt für Montag</p><span class="zb-chip art-erfolg">Erledigt</span></div>
+        </div>
+        <div class="zb-colfoot"><button class="zb-add">＋ Karte</button></div>
+      </div>
+
+      <button class="zb-addcol">＋ Spalte</button>
     </div>
   </div>
 
