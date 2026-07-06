@@ -71,6 +71,7 @@
   --se-mono: "IBM Plex Mono", Consolas, monospace; /* Zeiten, Nummern, Codes */
   --se-fs:    13.5px; /* Grundgroesse (dicht, Werkzeug-Charakter) */
   --se-fs-sm: 12px;
+  --se-fs-xs: 10.5px; /* Chips/Etiketten (kleinste Stufe, 4K.1) */
   --se-fs-lg: 15px;
 
   /* Abstaende */

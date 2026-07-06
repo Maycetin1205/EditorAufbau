@@ -222,10 +222,20 @@ den Export (Kap. 3).
     `--se-card-line`; Infobox „Erfolg" auf `--se-green` umgestellt
     (build:runtime neu). Dieses Mockup ist das VERBINDLICHE Zielbild für
     4K.2–4K.4.
-  - **4K.2 Atom: Status-Chip (`ff-badge`)** `[mechanisch, Portier-Muster wie
-    Infobox]`: kleines Etikett mit Status-BEDEUTUNG (Technikwert
-    `info/success/warning/danger`, Bediener wählt Klarnamen — wie Infobox),
-    Text per Inline-Edit, „Art" als Inspector-Select, nur Tokens.
+  - ✅ **4K.2 Atom: Status-Chip (`ff-badge`) (2026-07-06):** Anzeige-Block
+    `ff-badge` (`src/blocks/badge/BadgeBlock.ts`) nach Portier-Muster Infobox —
+    kleines Etikett mit fester Status-BEDEUTUNG (Technikwert
+    `info/success/warning/danger`; Bediener wählt Klarnamen Hinweis/Erfolg/
+    Warnung/Fehler über „Art"-Select, nie die Farbe). Text per Inline-Edit,
+    `resizableWidth=false` (Chip so breit wie sein Text, wie Button); Aussehen
+    exakt nach Zielbild 4K.1 (`.zb-chip`), nur `var(--se-*)` (neuer Token
+    `--se-fs-xs: 10.5px` für die Chip-Schrift). Palette/Inspector/Export nehmen
+    ihn automatisch aus der Registry. Real im Browser verifiziert (4 Arten,
+    Klick-Einfügen mit Default, Inline-Edit persistiert); 34 Tests grün
+    (Veralten-Wächter + echter Export-Test `badge.export.test.ts`). DRY-Notiz:
+    die 4 Status-Optionen sind identisch mit Infobox — bewusst noch NICHT
+    extrahiert (verfrüht, würde die fertige Infobox anfassen); sauber ziehen wenn
+    Kanban-Spalte/Karte (4K.3/4K.4) ein echter dritter Nutzer wird.
   - **4K.3 Molekül: Karte (`ff-card`)** `[mechanisch, Portier-Muster]`:
     Titel + Textzeile + Status-Chip nach Zielbild 4K.1, Inline-Edit für
     Titel/Text. Karten sind normale Blöcke im Baum — KEINE eigene

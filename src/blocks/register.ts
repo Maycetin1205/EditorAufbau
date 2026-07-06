@@ -3,6 +3,7 @@
 // Jeder Import triggert HMR-geschuetztes customElements.define + registerBlockType.
 // Wer Blocks benutzt, importiert diese eine Datei.
 
+import './badge/BadgeBlock'
 import './button/ButtonBlock'
 import './container/ContainerBlock'
 import './infobox/InfoBoxBlock'
