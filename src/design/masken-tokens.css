@@ -51,6 +51,14 @@
   --se-blue-soft:   #e6eef5;
   --se-violet:      #5b5e8f; /* Sonderzustand (z.B. OP) */
   --se-violet-soft: #eaebf5;
+  --se-green:       #47761d; /* erledigt / Erfolg — eigenes Status-Gruen,
+                                NICHT die Hausfarbe (4K.1: Status und
+                                Marke muessen unterscheidbar bleiben) */
+  --se-green-soft:  #ecf3e1;
+
+  /* Karten (Kanban/Listen) — Flaeche + Rahmen (4K.1) */
+  --se-card-bg:     #ffffff;
+  --se-card-line:   #c9d2d9;
 
   /* Rundungen — kantig (Nutzer-Entscheidung: keine weichen KI-Rundungen) */
   --se-r-sm:   2px;  /* Buttons, Eingaben, Chips-Ecken */
