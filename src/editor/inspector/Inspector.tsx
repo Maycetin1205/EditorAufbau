@@ -84,7 +84,10 @@ export function Inspector() {
           <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             Layout
           </h3>
-          <LayoutSection block={block} isContainer={def.acceptsChildren} />
+          <LayoutSection
+            block={block}
+            showFlowControls={def.acceptsChildren && def.childDirection === null}
+          />
         </section>
       </div>
     </SidePanel>

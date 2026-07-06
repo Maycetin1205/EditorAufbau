@@ -22,6 +22,18 @@ export const ROOT_FLOW = { gap: 12, padding: 16 } as const
 // die Werte kennt und erhält).
 export const FLOW_DEFAULTS: Record<string, unknown> = { width: 'auto' }
 
+// Fluss-Richtung der KINDER eines Containers — EINE Quelle für Canvas
+// (Einfüge-Linie, Kind-Rendering) und Export (flowItemStyle der Kinder).
+// Feste Richtung aus der Registry (Board = 'row') gewinnt; sonst entscheidet
+// die direction-Prop des Knotens (Bereich).
+export function childFlowDirection(
+  def: { childDirection: FlowDirection | null } | undefined,
+  props: Record<string, unknown>,
+): FlowDirection {
+  if (def?.childDirection) return def.childDirection
+  return props.direction === 'row' ? 'row' : 'column'
+}
+
 export function parseFlowWidth(value: unknown): FlowWidth {
   if (value === 'fill') return 'fill'
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value

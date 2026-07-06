@@ -4,6 +4,7 @@
 // Sidebar/Factory/Inspector lesen aus dieser Registry.
 
 import type { BlockDefinition } from './BlockDefinition'
+import { ROOT_TYPE } from './BlockData'
 
 const registry = new Map<string, BlockDefinition>()
 
@@ -24,4 +25,18 @@ export function getRegisteredBlockTypes(): string[] {
 
 export function getAllBlockDefinitions(): BlockDefinition[] {
   return Array.from(registry.values())
+}
+
+// DIE eine Regel-Quelle fuer "erlaubte Kind-Typen" (Kap. 4K.4).
+// Store (addBlock/moveNode), Canvas-Drag und Palette fragen alle hier —
+// kein `if type===` in der UI.
+//  - Wurzel: erlaubt alles.
+//  - kein Container: erlaubt nichts.
+//  - Container ohne Liste (Bereich): erlaubt alles.
+//  - Container mit Liste (Kanban-Spalte/Board): NUR diese Typen.
+export function canContain(parentType: string, childType: string): boolean {
+  if (parentType === ROOT_TYPE) return true
+  const def = registry.get(parentType)
+  if (!def || !def.acceptsChildren) return false
+  return def.allowedChildTypes === null || def.allowedChildTypes.includes(childType)
 }

@@ -21,6 +21,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import {
+  childFlowDirection,
   flowItemStyle,
   parseFlowWidth,
   ROOT_FLOW,
@@ -111,7 +112,9 @@ function nodeToHtml(
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }
-  const childDirection: FlowDirection = node.props.direction === 'row' ? 'row' : 'column'
+  // Dieselbe Richtungs-Quelle wie der Canvas (WYSIWYG): feste childDirection
+  // aus der Registry (Board = row) gewinnt, sonst die direction-Prop.
+  const childDirection: FlowDirection = childFlowDirection(def, node.props)
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))

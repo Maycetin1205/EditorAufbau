@@ -251,15 +251,28 @@ den Export (Kap. 3).
     Inline-Edit, Art-Umschalten, Reload-Persistenz, Export; WYSIWYG-
     Screenshots Editor = Export); 38 Tests grün (`card.export.test.ts` neu,
     Veralten-Wächter um `ff-card` verschärft).
-  - **4K.4 Organismus: Kanban (`ff-kanban` + `ff-kanban-spalte`)**
-    `[kritisch]`: Spalte = spezialisierter Container (Kopf: Titel per
-    Doppelklick + Kartenzähler; Rumpf nimmt NUR Karten auf; Plus-Knopf
-    „Karte"; Kreuzchen mit Rückfrage), Board = Zeile aus Spalten (Plus-Knopf
-    „Spalte", Spalten umsortierbar). Karten ziehen läuft über die VORHANDENE
-    Canvas-Drag-Logik (1 Undo pro Zug). Neu + kritisch: Registry-Konzept
-    **„erlaubte Kind-Typen"** (Spalte akzeptiert nur Karten, Board nur
-    Spalten) — im Kern/Registry lösen, kein `if type===` in der UI.
-    Beispieldaten: 3 Spalten („Offen"/„In Arbeit"/„Fertig") mit Karten.
+  - ✅ **4K.4 Organismus: Kanban (`ff-kanban` + `ff-kanban-spalte`)
+    (2026-07-06)** `[kritisch]`: Registry-Konzept **„erlaubte Kind-Typen"**
+    im Kern gelöst — `allowedChildTypes` in der BlockDefinition, EINE
+    Regel-Quelle `canContain()` (blockRegistry): Store (addBlock/moveNode
+    verweigern), Canvas-Drag (keine Einfüge-Linie an verbotenen Zielen;
+    Palette-Drags tragen den Typ als MIME-Marker, weil getData bei dragover
+    gesperrt ist) und Palette fragen alle dieselbe Funktion — kein
+    `if type===` in der UI. Dazu deklarativ in der Registry: `childDirection`
+    (feste Kind-Richtung; Canvas + Export lesen dieselbe Quelle
+    `childFlowDirection`), `defaultChildren` (Beispieldaten-Teilbaum,
+    Einfügen = EIN Undo-Schritt), `paletteHidden` (Spalte entsteht nur über
+    den Plus-Knopf des Boards). Spalte: Kopf mit Titel (Inline-Edit) +
+    automatischem Kartenzähler (slotchange; zählt im Editor wie im Export
+    identisch), Rumpf nimmt NUR Karten, „Art"-Select färbt die Oberlinie,
+    Breite 290px über die vorhandene Flow-Breite. Board: Zeile aus Spalten,
+    scrollt horizontal, Beispieldaten = exakt das 4K.1-Zielbild (3 Spalten,
+    6 Karten). Editor-Hilfen generisch: Plus-Knöpfe aus allowedChildTypes
+    („+ Karte"/„+ Spalte"), Kreuzchen mit Rückfrage an Containern
+    (BlockHost). Karten/Spalten ziehen = vorhandene Canvas-Drag-Logik,
+    1 Undo pro Zug. 48 Unit-Tests + 7 neue Playwright-Fälle
+    (e2e/kanban.spec.ts); WYSIWYG per Screenshot Editor = Export belegt.
+    **Damit ist Kap. 4K komplett — als Nächstes Kap. 5 (Daten-Anbindung).**
 - **Kap. 5 — Daten-Anbindung** `[kritisch]`: Datenquelle an Block hängen,
   Feld-Wörterbuch (Startbestand: `FELD`-Map aus der EmpfangPraxis-Maske des
   Nutzers), Klick-auf-Stelle-Binding, Beispieldaten-Vorschau. Regel

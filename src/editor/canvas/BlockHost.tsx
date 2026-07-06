@@ -45,6 +45,11 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   const [element, setElement] = useState<HTMLElement | null>(null)
   const def = getBlockDefinition(block.type)
   const isContainer = def?.acceptsChildren ?? false
+  // Gestrichelter Rahmen + Mindesthöhe nur für FREIE Container (Bereich):
+  // sie haben kein eigenes Aussehen und wären sonst unsichtbar. Container
+  // mit fester Kind-Typ-Liste (Kanban-Board/-Spalte) bringen ihr Design
+  // selbst mit (WYSIWYG) — keine Editor-Hilfe darüberlegen.
+  const showsContainerFrame = isContainer && def?.allowedChildTypes === null
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte
   // Event-Listener immer mit dem aktuellen Stand laufen.
   const blockRef = useRef<BlockNode>(block)
@@ -127,6 +132,22 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 
   const resizable = def?.resizableWidth ?? true
 
+  // Kreuzchen (Bedienlogik 5): Entfernen direkt am Baustein — mit Rückfrage,
+  // wenn er belegt ist. Nur an Containern; einfache Blöcke laufen über die
+  // Toolbar (dort ohne Rückfrage, Undo reicht als Netz).
+  function onRemove(e: ReactMouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    const count = blockRef.current.childIds.length
+    if (count > 0) {
+      const name = def?.displayName ?? blockRef.current.type
+      const ok = window.confirm(
+        `„${name}" enthält ${count} Element${count === 1 ? '' : 'e'} — wirklich löschen?`,
+      )
+      if (!ok) return
+    }
+    editor.removeBlock(blockRef.current.id)
+  }
+
   return (
     <div
       onClick={onClick}
@@ -145,10 +166,10 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         ref={containerRef}
         style={{
           pointerEvents: 'auto',
-          // Editor-Hilfe für Container: Fläche sichtbar + treffbar machen.
+          // Editor-Hilfe für freie Container: Fläche sichtbar + treffbar machen.
           // Bewusst OHNE Erklärtext und OHNE eigenes Padding — die Kinder
           // sollen exakt dort sitzen, wo sie im Export sitzen (WYSIWYG).
-          ...(isContainer
+          ...(showsContainerFrame
             ? {
                 border: '1.5px dashed hsl(220 13% 78%)',
                 borderRadius: 4,
@@ -161,6 +182,34 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           ? createPortal(children, element)
           : null}
       </div>
+      {selected && isContainer && (
+        <button
+          type="button"
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
+          onClick={onRemove}
+          aria-label="Entfernen"
+          title="Entfernen"
+          style={{
+            position: 'absolute',
+            right: -8,
+            top: -8,
+            width: 18,
+            height: 18,
+            borderRadius: 9,
+            border: 'none',
+            background: 'hsl(var(--destructive))',
+            color: 'hsl(var(--destructive-foreground))',
+            font: '700 11px/1 system-ui, sans-serif',
+            cursor: 'pointer',
+            display: 'grid',
+            placeItems: 'center',
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      )}
       {selected && resizable && (
         <div
           draggable={false}

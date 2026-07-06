@@ -17,8 +17,9 @@ import {
   type DragEvent,
 } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import {
+  childFlowDirection,
   flowItemStyle,
   parseFlowWidth,
   ROOT_FLOW,
@@ -26,7 +27,7 @@ import {
 } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
-import { isNewBlockDrag, NEW_BLOCK_MIME } from './dnd'
+import { isNewBlockDrag, newBlockDragType, NEW_BLOCK_MIME } from './dnd'
 
 interface DropTarget {
   parentId: string
@@ -69,12 +70,17 @@ function InsertionLine({ direction }: { direction: FlowDirection }) {
 }
 
 // Geordnete Kinder eines Containers inkl. Einfüge-Linie an der Vorschau-Stelle.
+// Container mit fester Kind-Typ-Liste (Kanban-Board/-Spalte) bekommen am
+// Listenende Plus-Knöpfe für jeden erlaubten Typ ("+ Karte" / "+ Spalte") —
+// generisch aus der Registry, kein `if type===`.
 function NodeList({ parentId, direction }: { parentId: string; direction: FlowDirection }) {
   const ed = useEditor()
   const dnd = useDnd()
   const nodes = ed.childNodesOf(parentId)
   const lineAt = (i: number) =>
     dnd.dropTarget?.parentId === parentId && dnd.dropTarget.index === i
+  const parentNode = ed.getNode(parentId)
+  const parentDef = parentNode ? getBlockDefinition(parentNode.type) : undefined
   return (
     <>
       {nodes.map((node, i) => (
@@ -84,7 +90,48 @@ function NodeList({ parentId, direction }: { parentId: string; direction: FlowDi
         </Fragment>
       ))}
       {lineAt(nodes.length) && <InsertionLine direction={direction} />}
+      {parentDef?.allowedChildTypes?.map((childType) => (
+        <AddChildButton key={childType} parentId={parentId} childType={childType} direction={direction} />
+      ))}
     </>
+  )
+}
+
+// Editor-Hilfe (nicht Teil des Exports): legt einen neuen erlaubten
+// Kind-Block ans Ende des Containers, Beschriftung aus der Registry.
+function AddChildButton({ parentId, childType, direction }: {
+  parentId: string
+  childType: string
+  direction: FlowDirection
+}) {
+  const ed = useEditor()
+  const def = getBlockDefinition(childType)
+  if (!def) return null
+  return (
+    <button
+      type="button"
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
+      onClick={(e) => {
+        e.stopPropagation()
+        ed.addBlock(childType, parentId)
+      }}
+      style={{
+        border: '1.5px dashed hsl(220 13% 78%)',
+        borderRadius: 4,
+        background: 'transparent',
+        color: 'hsl(215 15% 55%)',
+        font: '700 11px system-ui, sans-serif',
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        ...(direction === 'row'
+          ? { flex: '0 0 140px', padding: '14px 0' } // natürliche Höhe (Zielbild .zb-addcol)
+          : { alignSelf: 'stretch', padding: '6px 0' }),
+      }}
+    >
+      ＋ {def.displayName}
+    </button>
   )
 }
 
@@ -100,11 +147,24 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
   const dnd = useDnd()
   const def = getBlockDefinition(node.type)
   const isContainer = def?.acceptsChildren ?? false
-  const childDirection: FlowDirection = node.props.direction === 'row' ? 'row' : 'column'
+  const childDirection = childFlowDirection(def, node.props)
 
-  // Ziel ungültig, wenn ein Block in seinen eigenen Teilbaum fallen würde.
-  const invalidTarget = (targetParentId: string) =>
-    dnd.dragId !== null && ed.isInSubtree(dnd.dragId, targetParentId)
+  // Typ des gezogenen Blocks: vorhandener Block aus dem Store, Palette-Block
+  // aus dem MIME-Marker (getData ist während dragover gesperrt, siehe dnd.ts).
+  const dragTypeOf = (e: DragEvent): string | null =>
+    dnd.dragId !== null
+      ? ed.getNode(dnd.dragId)?.type ?? null
+      : newBlockDragType(e.dataTransfer)
+
+  // Ziel ungültig, wenn ein Block in seinen eigenen Teilbaum fallen würde
+  // ODER der Ziel-Container den Typ nicht erlaubt (Spalte nimmt nur Karten).
+  const invalidTarget = (targetParentId: string, e: DragEvent): boolean => {
+    if (dnd.dragId !== null && ed.isInSubtree(dnd.dragId, targetParentId)) return true
+    const dragType = dragTypeOf(e)
+    const targetParent = ed.getNode(targetParentId)
+    if (!dragType || !targetParent) return false // unbekannt → Store prüft beim Drop
+    return !canContain(targetParent.type, dragType)
+  }
 
   const onDragStart = (e: DragEvent) => {
     e.stopPropagation()
@@ -120,7 +180,7 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
     if (dnd.dragId === node.id) return dnd.setDropTarget(null)
     const rect = e.currentTarget.getBoundingClientRect()
 
-    if (isContainer && !invalidTarget(node.id)) {
+    if (isContainer && !invalidTarget(node.id, e)) {
       // Randzone → Geschwister-Position, Mitte → hinein ans Ende.
       const before = listDirection === 'row'
         ? e.clientX < rect.left + CONTAINER_EDGE
@@ -132,12 +192,12 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
         dnd.setDropTarget({ parentId: node.id, index: ed.childNodesOf(node.id).length })
         return
       }
-      if (invalidTarget(parentId)) return dnd.setDropTarget(null)
+      if (invalidTarget(parentId, e)) return dnd.setDropTarget(null)
       dnd.setDropTarget({ parentId, index: before ? index : index + 1 })
       return
     }
 
-    if (invalidTarget(parentId)) return dnd.setDropTarget(null)
+    if (invalidTarget(parentId, e)) return dnd.setDropTarget(null)
     const after = listDirection === 'row'
       ? e.clientX > rect.left + rect.width / 2
       : e.clientY > rect.top + rect.height / 2

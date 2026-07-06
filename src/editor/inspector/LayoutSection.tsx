@@ -1,7 +1,10 @@
 // LayoutSection
 // Flow-Eigenschaften des selektierten Blocks im Inspector (Kap. 2.4):
 //   - Breite (jeder Block):  Automatisch / Füllen / Fest (px)
-//   - Bereiche zusätzlich:   Richtung, Abstand der Kinder, Innenabstand
+//   - FREIE Bereiche zusätzlich: Richtung, Abstand der Kinder, Innenabstand.
+//     Container mit festem Design (Kanban-Board/-Spalte, erkennbar an der
+//     festen childDirection) bieten diese Regler NICHT an — ihr Layout ist
+//     Teil des abgenommenen Zielbilds.
 // Schreibt über editor.updateProperty — derselbe Weg wie alle Änderungen.
 // Die Werte sind Bedeutungen (klein/mittel/groß), nie rohe Pixelzahlen —
 // außer bei "Fest", wo die Zahl der Sinn ist (auch per Anfasser ziehbar).
@@ -15,10 +18,11 @@ import { SelectControl } from './controls/SelectControl'
 
 interface LayoutSectionProps {
   block: BlockNode
-  isContainer: boolean
+  // true = freier Container (Bereich): Richtung/Abstand/Innenabstand anbieten.
+  showFlowControls: boolean
 }
 
-export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
+export function LayoutSection({ block, showFlowControls }: LayoutSectionProps) {
   const ed = useEditor()
   const set = (attr: string, value: unknown) => ed.updateProperty(block.id, attr, value)
 
@@ -54,7 +58,7 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
         </Field>
       )}
 
-      {isContainer && (
+      {showFlowControls && (
         <>
           <SelectControl
             label="Richtung"

@@ -7,8 +7,19 @@
 // bevor irgendjemand `new` auf dem Konstruktor aufruft.
 
 import type { PropertyDescription } from './PropertyDescription'
+import type { FlowDirection } from './flowLayout'
 
 export type BlockCategory = 'eingabe' | 'anzeige' | 'layout'
+
+// Beispieldaten-Teilbaum eines Blocks: beschreibt Kinder, die beim Einfügen
+// aus der Bibliothek automatisch mit angelegt werden (Bedienlogik: ein Block
+// erscheint nie als leeres Gerippe). props überschreiben die defaultProps
+// des jeweiligen Kind-Typs.
+export interface DefaultChildSpec {
+  type: string
+  props?: Record<string, unknown>
+  children?: readonly DefaultChildSpec[]
+}
 
 // Instanz-Vertrag: jede Block-View muss customProperties liefern.
 export interface BlockComponent {
@@ -30,5 +41,17 @@ export interface BlockComponentStatic {
   // false = kein Breite-Zieh-Anfasser im Editor (z.B. Button: Breite folgt
   // der Beschriftung). Default true.
   readonly resizableWidth?: boolean
+  // Erlaubte Kind-Typen (Kap. 4K.4): undefined = freier Container (alles
+  // erlaubt, z.B. Bereich); Liste = NUR diese Typen (z.B. Kanban-Spalte nimmt
+  // nur Karten). Regel-Quelle fuer Store/Drag/Palette ist canContain().
+  readonly allowedChildTypes?: readonly string[]
+  // Feste Fluss-Richtung der Kinder fuer Container mit festem Design
+  // (Board = 'row'). undefined = Richtung kommt aus der direction-Prop.
+  readonly childDirection?: FlowDirection
+  // Beispieldaten-Kinder, die beim Einfuegen automatisch entstehen.
+  readonly defaultChildren?: readonly DefaultChildSpec[]
+  // true = nicht in der Bibliothek anbieten (Struktur-Block, entsteht nur
+  // ueber den Plus-Knopf seines Eltern-Blocks, z.B. Kanban-Spalte).
+  readonly paletteHidden?: boolean
   new(): BlockComponent
 }
