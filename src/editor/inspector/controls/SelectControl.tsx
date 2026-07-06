@@ -1,8 +1,10 @@
 // SelectControl
-// Inspector-Control für Properties mit fester Option-Liste (kind 'select').
-// Komponiert Field-Molekül + shadcn/Radix-Select-Primitives.
+// Inspector-Control für Werte mit fester Option-Liste.
+// Generische Props (label/value/options) — wird sowohl von den
+// PropertyDescription-Feldern (Inspector) als auch von der Layout-Sektion
+// benutzt. Komponiert Field-Molekül + shadcn/Radix-Select-Primitives.
 
-import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
+import type { PropertySelectOption } from '../../../core/blocks/PropertyDescription'
 import {
   Select,
   SelectContent,
@@ -13,16 +15,16 @@ import {
 import { Field } from '@/ui/molecules/field'
 
 interface SelectControlProps {
-  property: PropertyDescription
+  label: string
+  description?: string
   value: string
+  options: PropertySelectOption[]
   onChange: (value: string) => void
 }
 
-export function SelectControl({ property, value, onChange }: SelectControlProps) {
-  const options = property.options ?? []
-
+export function SelectControl({ label, description, value, options, onChange }: SelectControlProps) {
   return (
-    <Field label={property.name} description={property.description}>
+    <Field label={label} description={description}>
       {(field) => (
         <Select value={value ?? ''} onValueChange={onChange}>
           <SelectTrigger id={field.id} aria-describedby={field['aria-describedby']}>

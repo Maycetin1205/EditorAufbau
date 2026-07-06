@@ -41,9 +41,13 @@ function normalizeProps(type: string, rawProps: Record<string, unknown>): Record
   const def = getBlockDefinition(type)
   if (!def) return {}
   const next = deepClone(def.defaultProps)
-  for (const property of def.customProperties) {
-    if (Object.prototype.hasOwnProperty.call(rawProps, property.attributeName)) {
-      next[property.attributeName] = rawProps[property.attributeName]
+  // Übernommen wird jede Prop, die der Block als defaultProp kennt — nicht nur
+  // Inspector-Felder (customProperties). Blöcke ohne Inspector-Felder (Button,
+  // Text: Inline-Edit per Doppelklick) würden sonst beim Laden jede Änderung
+  // verlieren. Unbekannte Keys werden weiterhin verworfen.
+  for (const key of Object.keys(next)) {
+    if (Object.prototype.hasOwnProperty.call(rawProps, key)) {
+      next[key] = rawProps[key]
     }
   }
   return next
@@ -199,6 +203,9 @@ export class Editor extends Subject<Editor> {
   }
 
   private pushHistory(): void {
+    // Innerhalb einer Transaktion (= laufende Geste, z. B. Breite ziehen)
+    // KEINE weiteren Snapshots — beginTransaction hat schon einen gelegt.
+    if (this._txDepth > 0) return
     this._history.push(this.snapshot())
     if (this._history.length > HISTORY_LIMIT) this._history.shift()
     this._future = []
@@ -233,20 +240,37 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Hängt einen neuen Block ans Ende des angegebenen Containers (Default: Wurzel).
-  addBlock(type: string, parentId: string = ROOT_ID): BlockNode {
+  // Hängt einen neuen Block in den angegebenen Container (Default: Wurzel,
+  // ans Ende). `index` = Einfüge-Position innerhalb der Kinder (für Drop).
+  addBlock(type: string, parentId: string = ROOT_ID, index?: number): BlockNode {
     this.pushHistory()
     const node = createBlockNode(type)
     const parent = this._tree[parentId] ?? this._tree[ROOT_ID]
     node.parentId = parent.id
+    const childIds = [...parent.childIds]
+    const at = index === undefined
+      ? childIds.length
+      : Math.max(0, Math.min(index, childIds.length))
+    childIds.splice(at, 0, node.id)
     this._tree = {
       ...this._tree,
       [node.id]: node,
-      [parent.id]: { ...parent, childIds: [...parent.childIds, node.id] },
+      [parent.id]: { ...parent, childIds },
     }
     this._selectedId = node.id
     this.notify(this)
     return node
+  }
+
+  // true, wenn `id` im Teilbaum von `ancestorId` liegt (inkl. ancestorId
+  // selbst). Für die UI: ein Container darf nie in sich selbst fallen.
+  isInSubtree(ancestorId: string, id: string): boolean {
+    let cur: string | null | undefined = id
+    while (cur) {
+      if (cur === ancestorId) return true
+      cur = this._tree[cur]?.parentId
+    }
+    return false
   }
 
   removeBlock(id: string): void {

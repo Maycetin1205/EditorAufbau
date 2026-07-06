@@ -1,0 +1,75 @@
+/* Masken-Design-Tokens (--se-*)
+   ================================================================
+   Die EINE Werteliste fuer das Aussehen aller Bloecke — im Editor
+   UND im SoftEngine-Export (Nordstern: 1 Render / WYSIWYG).
+
+   Zwei getrennte Token-Welten in diesem Projekt:
+     - Editor-UI (Sidebar/Inspector/Toolbar): shadcn-Variablen in index.css.
+     - Masken-Design (die Bloecke selbst):    DIESE Datei (--se-*).
+   Die Welten niemals mischen: Editor-Chrome sieht nie nach Maske aus,
+   Bloecke greifen nie auf shadcn-Variablen zu.
+
+   Regeln:
+     - Bloecke nutzen AUSSCHLIESSLICH var(--se-...) — keine Hex-Werte,
+       keine hsl()-Literale im Block-CSS. (CSS Custom Properties erben
+       durch Shadow DOM, deshalb funktioniert :root hier.)
+     - KEINE var()-Fallbacks in Bloecken: diese Datei ist Pflichtteil
+       jedes Exports (Kap. 3 Mini-Export bindet sie ein). Fallbacks
+       wuerden die Werte duplizieren (DRY-Bruch).
+     - Design-Entscheidung (2026-07-02, mit Nutzer): kantig + funktional
+       ("Werkhalle"-Dichte), Gruen als Hausfarbe. Referenzbild:
+       dashboard/stilprobe.html. Statusfarben haben feste Bedeutung.
+   ================================================================ */
+
+:root {
+  /* Flaechen */
+  --se-bg:        #eceff1;  /* Seitengrund der Maske */
+  --se-panel:     #ffffff;  /* Karten / Spalten / Dialoge */
+  --se-panel-2:   #f2f4f6;  /* abgesetzte Innenflaechen (Eingaben, Zimmer-Kaesten) */
+
+  /* Text */
+  --se-ink:       #101c26;  /* Haupttext */
+  --se-muted:     #51606d;  /* Nebentext (Besitzer, Untertitel) */
+  --se-faint:     #8494a1;  /* Hinweise, Platzhalter */
+
+  /* Linien */
+  --se-line:      #c9d2d9;  /* sichtbare Rahmen */
+  --se-line-soft: #e0e6ea;  /* Zeilentrenner, Innenrahmen */
+
+  /* Akzent — EINE Hausfarbe (Gruen), sparsam einsetzen */
+  --se-accent:      #0e7a58;
+  --se-accent-dark: #0b6247; /* Hover/aktiv */
+  --se-accent-soft: #e4f2ec; /* getoente Flaechen (Aktions-Buttons, aktive Chips) */
+
+  /* Statusfarben — feste Bedeutung, nie frei waehlbar
+     (Bediener waehlt "Status: Notfall", nie eine Farbe) */
+  --se-red:         #c0201a; /* Notfall / Fehler */
+  --se-red-soft:    #fbe7e6;
+  --se-amber:       #9a6a00; /* geplant / wartet */
+  --se-amber-soft:  #f8f0dc;
+  --se-blue:        #20527e; /* in Arbeit / Info */
+  --se-blue-soft:   #e6eef5;
+  --se-violet:      #5b5e8f; /* Sonderzustand (z.B. OP) */
+  --se-violet-soft: #eaebf5;
+
+  /* Rundungen — kantig (Nutzer-Entscheidung: keine weichen KI-Rundungen) */
+  --se-r-sm:   2px;  /* Buttons, Eingaben, Chips-Ecken */
+  --se-r-md:   3px;  /* Karten */
+  --se-r-lg:   4px;  /* Spalten / grosse Container */
+  --se-r-pill: 999px;/* Status-Pillen */
+
+  /* Schrift */
+  --se-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --se-mono: "IBM Plex Mono", Consolas, monospace; /* Zeiten, Nummern, Codes */
+  --se-fs:    13.5px; /* Grundgroesse (dicht, Werkzeug-Charakter) */
+  --se-fs-sm: 12px;
+  --se-fs-lg: 15px;
+
+  /* Abstaende */
+  --se-gap-sm: 6px;
+  --se-gap:    10px;
+  --se-gap-lg: 16px;
+
+  /* Schatten — Flaechen leben von Rahmen, nicht von Schatten */
+  --se-shadow: none;
+}

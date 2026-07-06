@@ -24,6 +24,7 @@ import { property } from 'lit/decorators.js'
 import type { BlockComponent, BlockComponentStatic } from './BlockComponent'
 import type { PropertyDescription } from './PropertyDescription'
 import { registerBlockType } from './blockRegistry'
+import { FLOW_DEFAULTS } from './flowLayout'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
   // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
@@ -113,8 +114,12 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       tagName: BlockClass.tagName,
       displayName: BlockClass.displayName,
       category: BlockClass.category,
-      defaultProps: BlockClass.defaultProps,
+      // Universelle Flow-Props (width) liegen unter den Block-Defaults,
+      // damit Persistenz sie kennt; Block-eigene Defaults gewinnen.
+      defaultProps: { ...FLOW_DEFAULTS, ...BlockClass.defaultProps },
       customProperties: BlockClass.customProperties,
+      acceptsChildren: BlockClass.acceptsChildren ?? false,
+      resizableWidth: BlockClass.resizableWidth ?? true,
     })
   }
 }

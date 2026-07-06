@@ -9,6 +9,7 @@ import type {
 } from '../../core/blocks/PropertyDescription'
 import { useEditor } from '../../state/useEditor'
 import { SidePanel } from '@/ui/molecules/side-panel'
+import { LayoutSection } from './LayoutSection'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
@@ -53,7 +54,16 @@ export function Inspector() {
       case 'textarea':
         return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
       case 'select':
-        return <SelectControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
+        return (
+          <SelectControl
+            key={property.attributeName}
+            label={property.name}
+            description={property.description}
+            options={property.options ?? []}
+            value={String(value ?? '')}
+            onChange={set}
+          />
+        )
       default:
         return null
     }
@@ -64,13 +74,19 @@ export function Inspector() {
       title={def.displayName ?? def.type}
       description={`${def.type} · ${block.id.slice(0, 8)}`}
     >
-      {def.customProperties.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Keine Eigenschaften.</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {def.customProperties.map(renderPropControl)}
-        </div>
-      )}
+      <div className="flex flex-col gap-5">
+        {def.customProperties.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {def.customProperties.map(renderPropControl)}
+          </div>
+        )}
+        <section className="flex flex-col gap-3">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Layout
+          </h3>
+          <LayoutSection block={block} isContainer={def.acceptsChildren} />
+        </section>
+      </div>
     </SidePanel>
   )
 }

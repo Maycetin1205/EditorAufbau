@@ -3,17 +3,19 @@
 
 import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
+import { getAllBlockDefinitions, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
+import { NEW_BLOCK_MIME } from '../canvas/dnd'
 import { useEditor } from '../../state/useEditor'
 import { cn } from '@/lib/utils'
 
 const CATEGORY_LABEL: Record<BlockCategory, string> = {
+  layout: 'Layout',
   eingabe: 'Eingabe',
   anzeige: 'Anzeige',
 }
 
-const CATEGORY_ORDER: BlockCategory[] = ['eingabe', 'anzeige']
+const CATEGORY_ORDER: BlockCategory[] = ['layout', 'eingabe', 'anzeige']
 
 export function BlockPalette() {
   const ed = useEditor()
@@ -32,12 +34,19 @@ export function BlockPalette() {
 
   const grouped = useMemo(() => {
     const acc: Record<BlockCategory, BlockDefinition[]> = {
+      layout: [],
       eingabe: [],
       anzeige: [],
     }
     for (const def of filtered) acc[def.category]?.push(def)
     return acc
   }, [filtered])
+
+  // Einfüge-Ziel: ist gerade ein Container ausgewählt, landet der neue Block
+  // in ihm — sonst auf der Wurzel (Canvas). Drag-in-Container folgt in Kap. 2.3.
+  const selectedNode = ed.selectedId ? ed.getNode(ed.selectedId) : null
+  const selectedDef = selectedNode ? getBlockDefinition(selectedNode.type) : null
+  const targetParentId = selectedDef?.acceptsChildren ? selectedNode!.id : undefined
 
   return (
     <div className="flex flex-col gap-3">
@@ -74,7 +83,7 @@ export function BlockPalette() {
                   <PaletteCard
                     key={def.type}
                     def={def}
-                    onAdd={() => ed.addBlock(def.type)}
+                    onAdd={() => ed.addBlock(def.type, targetParentId)}
                   />
                 ))}
               </div>
@@ -96,6 +105,12 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
     <button
       type="button"
       onClick={onAdd}
+      draggable
+      onDragStart={(e) => {
+        // Neuer Block reist als MIME-Eintrag zum Canvas (siehe canvas/dnd.ts).
+        e.dataTransfer.setData(NEW_BLOCK_MIME, def.type)
+        e.dataTransfer.effectAllowed = 'copy'
+      }}
       className={cn(
         'group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-left text-xs',
         'transition-colors hover:border-primary/40 hover:bg-accent hover:text-accent-foreground',

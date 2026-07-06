@@ -6,7 +6,7 @@ import { BlockPalette } from './BlockPalette'
 
 export function Sidebar() {
   return (
-    <SidePanel title="Blöcke" description="Klick fügt einen Block ein.">
+    <SidePanel title="Blöcke">
       <BlockPalette />
     </SidePanel>
   )
