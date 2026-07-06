@@ -2,10 +2,13 @@ Setze die Arbeit am Aufbau-Editor fort. Halte dich EXAKT an dieses Ritual —
 es ersetzt Urteilsvermögen durch Prüfschritte. Keine Abkürzungen.
 
 1. HOLE den aktuellen Stand, BEVOR du irgendetwas liest:
-   git pull origin claude/softengine-page-builder-h4qqv2
-   An diesem Branch arbeiten mehrere Rechner (Laptop + Cloud) — dein lokaler
-   Stand kann veraltet sein, auch CLAUDE.md selbst. Bei Konflikt oder
-   Fehlermeldung: STOPP, dem Nutzer melden.
+   git pull origin main
+   `main` ist die einzige Wahrheit (Beschluss 2026-07-06, nach dem
+   Branch-Chaos mit 4x doppelt gebautem Kap. 2.2). Dein lokaler Stand kann
+   veraltet sein, auch CLAUDE.md selbst. Gearbeitet wird auf dem Branch,
+   den die Session vorgibt (Cloud) bzw. einem frischen Arbeits-Branch von
+   origin/main (lokal). NIEMALS auf dem alten Branch einer fremden Session
+   weiterarbeiten. Bei Konflikt oder Fehlermeldung: STOPP, dem Nutzer melden.
 2. LIES dann CLAUDE.md komplett (verbindliche Wahrheit), dann ARCHITEKTUR.md.
 3. PRÜFE den Ist-Zustand, bevor du irgendetwas änderst:
    npx tsc -b && npx eslint src && npm test
@@ -24,9 +27,12 @@ es ersetzt Urteilsvermögen durch Prüfschritte. Keine Abkürzungen.
    Nach Block-Aenderungen zusaetzlich: npm run build:runtime.
 7. VERIFIZIERE im Browser (Screenshot fuer den Nutzer), nicht nur per Tests.
 8. AKTUALISIERE die Roadmap in CLAUDE.md (Haken + Datum + 2 Saetze was/wie).
-9. COMMITTE das fertige Kapitel mit ausfuehrlicher Message und pushe SOFORT
-   (git push -u origin claude/softengine-page-builder-h4qqv2) — erst mit dem
-   Push sehen die anderen Rechner deinen Stand.
+9. COMMITTE das fertige Kapitel mit ausfuehrlicher Message, pushe SOFORT
+   (git push -u origin <arbeits-branch>) und oeffne/aktualisiere den
+   Pull Request nach main. Der Nutzer merged den PR am Ende der Sitzung —
+   erst dann ist der Stand fuer die naechste Sitzung sichtbar. Ein
+   ungemergter Branch ist verlorene Arbeit (siehe Branch-Chaos 2026-07-05).
+   NIE direkt auf main pushen.
 
 VERBOTE (nicht verhandelbar, stehen auch in CLAUDE.md):
 - Tests niemals loeschen/abschwaechen, um gruen zu werden.
