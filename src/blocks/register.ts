@@ -5,6 +5,7 @@
 
 import './badge/BadgeBlock'
 import './button/ButtonBlock'
+import './card/CardBlock'
 import './container/ContainerBlock'
 import './infobox/InfoBoxBlock'
 import './text/TextBlock'

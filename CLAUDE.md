@@ -236,10 +236,21 @@ den Export (Kap. 3).
     die 4 Status-Optionen sind identisch mit Infobox — bewusst noch NICHT
     extrahiert (verfrüht, würde die fertige Infobox anfassen); sauber ziehen wenn
     Kanban-Spalte/Karte (4K.3/4K.4) ein echter dritter Nutzer wird.
-  - **4K.3 Molekül: Karte (`ff-card`)** `[mechanisch, Portier-Muster]`:
-    Titel + Textzeile + Status-Chip nach Zielbild 4K.1, Inline-Edit für
-    Titel/Text. Karten sind normale Blöcke im Baum — KEINE eigene
-    Drag-Sonderlogik (die Canvas-Drag-Logik aus 2.3 kann sie schon ziehen).
+  - ✅ **4K.3 Molekül: Karte (`ff-card`) (2026-07-06):** Anzeige-Block
+    `src/blocks/card/CardBlock.ts` nach Portier-Muster — Titel + Textzeile +
+    Status-Chip exakt nach Zielbild 4K.1 (`.zb-card`), alle DREI Texte per
+    Inline-Edit (Titel/Textzeile/Chip-Text), Chip-Art als einziges
+    Inspector-Select; Karten sind normale Blöcke im Baum, keine
+    Drag-Sonderlogik. DRY-Schuld aus 4K.2 eingelöst (Karte = dritter Nutzer):
+    neues `src/blocks/shared/statusVariant.ts` bündelt StatusVariant-Typ,
+    „Art"-Select-Factory und Chip-CSS — Infobox + Badge darauf umgestellt,
+    Chip von Badge und Karte haben EINE CSS-Quelle. Bewusst KEIN
+    eingebettetes `<ff-badge>` in der Karte: dessen Inline-Edit-Event würde
+    an der Schattengrenze zur Karte umadressiert und die falsche Prop
+    beschreiben. Browser-verifiziert (Einfügen mit Beispieldaten, 3×
+    Inline-Edit, Art-Umschalten, Reload-Persistenz, Export; WYSIWYG-
+    Screenshots Editor = Export); 38 Tests grün (`card.export.test.ts` neu,
+    Veralten-Wächter um `ff-card` verschärft).
   - **4K.4 Organismus: Kanban (`ff-kanban` + `ff-kanban-spalte`)**
     `[kritisch]`: Spalte = spezialisierter Container (Kopf: Titel per
     Doppelklick + Kartenzähler; Rumpf nimmt NUR Karten auf; Plus-Knopf

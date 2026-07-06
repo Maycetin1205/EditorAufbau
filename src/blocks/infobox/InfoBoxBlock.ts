@@ -16,11 +16,11 @@ import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
-
-// Technikwert (unsichtbar) — der Bediener waehlt den Klarnamen im Inspector.
-type InfoVariant = 'info' | 'success' | 'warning' | 'danger'
-
-const VARIANTS: readonly InfoVariant[] = ['info', 'success', 'warning', 'danger']
+import {
+  coerceStatusVariant,
+  statusVariantProperty,
+  type StatusVariant,
+} from '../shared/statusVariant'
 
 export class InfoBoxBlock extends BasicBlock {
   static readonly blockType = 'infobox'
@@ -36,20 +36,7 @@ export class InfoBoxBlock extends BasicBlock {
   // Einziges Inspector-Feld: die Art (Bedeutung -> Farbe). Titel/Nachricht
   // laufen ueber Inline-Edit, nicht ueber den Inspector.
   static override readonly customProperties: PropertyDescription[] = [
-    {
-      attributeName: 'variant',
-      name: 'Art',
-      description: 'Bedeutung der Box — bestimmt die Farbe.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'select',
-      options: [
-        { value: 'info', label: 'Hinweis' },
-        { value: 'success', label: 'Erfolg' },
-        { value: 'warning', label: 'Warnung' },
-        { value: 'danger', label: 'Fehler' },
-      ],
-    },
+    statusVariantProperty('variant', 'Bedeutung der Box — bestimmt die Farbe.'),
   ]
 
   // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Rahmenbreiten in px
@@ -83,12 +70,12 @@ export class InfoBoxBlock extends BasicBlock {
     `,
   ]
 
-  @property() variant: InfoVariant = 'info'
+  @property() variant: StatusVariant = 'info'
   @property() heading = 'Hinweis'
   @property() message = 'Das ist ein Hinweistext.'
 
   render(): TemplateResult {
-    const v = VARIANTS.includes(this.variant) ? this.variant : 'info'
+    const v = coerceStatusVariant(this.variant)
     return html`<div class="box v-${v}">
       <p
         class="heading"
