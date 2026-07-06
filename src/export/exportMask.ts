@@ -23,6 +23,7 @@ import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import {
   flowItemStyle,
   parseFlowWidth,
+  resolveChildDirection,
   ROOT_FLOW,
   type FlowDirection,
 } from '../core/blocks/flowLayout'
@@ -111,7 +112,8 @@ function nodeToHtml(
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }
-  const childDirection: FlowDirection = node.props.direction === 'row' ? 'row' : 'column'
+  // Kind-Richtung aus DERSELBEN Quelle wie der Canvas (resolveChildDirection).
+  const childDirection = resolveChildDirection(def, node.props)
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))

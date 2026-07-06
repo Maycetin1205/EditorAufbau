@@ -6,6 +6,8 @@
 // Instanzierung gelesen — `customElements.define` darf erst registrieren,
 // bevor irgendjemand `new` auf dem Konstruktor aufruft.
 
+import type { DefaultChildSpec } from './BlockDefinition'
+import type { FlowDirection } from './flowLayout'
 import type { PropertyDescription } from './PropertyDescription'
 
 export type BlockCategory = 'eingabe' | 'anzeige' | 'layout'
@@ -30,5 +32,12 @@ export interface BlockComponentStatic {
   // false = kein Breite-Zieh-Anfasser im Editor (z.B. Button: Breite folgt
   // der Beschriftung). Default true.
   readonly resizableWidth?: boolean
+  // Registry-Konzepte aus Kap. 4K.4 — Bedeutung siehe BlockDefinition.
+  readonly allowedChildTypes?: readonly string[]
+  readonly defaultChildren?: readonly DefaultChildSpec[]
+  readonly childDirection?: FlowDirection
+  readonly showInPalette?: boolean
+  readonly containerHint?: boolean
+  readonly addChildButton?: { label: string; childType: string }
   new(): BlockComponent
 }

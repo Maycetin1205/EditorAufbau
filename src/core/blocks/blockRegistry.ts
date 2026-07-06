@@ -25,3 +25,14 @@ export function getRegisteredBlockTypes(): string[] {
 export function getAllBlockDefinitions(): BlockDefinition[] {
   return Array.from(registry.values())
 }
+
+// Erlaubte-Kind-Typen-Regel (Kap. 4K.4) an EINER Stelle: Store, Drag-Vorschau
+// und Palette fragen alle hier. Unbekannte Elterntypen (z. B. die implizite
+// Wurzel) beschränken nichts; Nicht-Container nehmen nie Kinder auf.
+export function canContain(parentType: string, childType: string): boolean {
+  const def = registry.get(parentType)
+  if (!def) return true
+  if (!def.acceptsChildren) return false
+  if (!def.allowedChildTypes) return true
+  return def.allowedChildTypes.includes(childType)
+}
