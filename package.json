@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "build:runtime": "vite build --config vite.runtime.config.ts"
+    "build:runtime": "vite build --config vite.runtime.config.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.6",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.56.1",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
