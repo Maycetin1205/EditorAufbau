@@ -1,0 +1,79 @@
+// statusVariant (Kap. 4K.3)
+// Geteiltes Status-Vokabular der Anzeige-Bloecke: Infobox, Status-Chip und
+// Karte tragen dieselben 4 Status-Bedeutungen (Regel "Technikwert !=
+// Anzeigename": der Bediener waehlt den Klarnamen Hinweis/Erfolg/Warnung/
+// Fehler, NIE die Farbe — die Farbe ergibt sich fest aus der Bedeutung ueber
+// die Statusfarben-Tokens).
+//
+// In 4K.2 bewusst zurueckgestellt ("sauber ziehen, wenn ein echter dritter
+// Nutzer kommt") — die Karte (ff-card) IST dieser dritte Nutzer, darum liegt
+// das Vokabular jetzt hier an EINER Stelle:
+//  - StatusVariant/coerceStatusVariant: der unsichtbare Technikwert.
+//  - statusVariantProperty: die "Art"-Select-Beschreibung fuer den Inspector.
+//  - chipStyles: das Chip-Aussehen (.zb-chip im Zielbild
+//    dashboard/stilprobe.html) — EINE Quelle fuer ff-badge und den Chip
+//    innerhalb von ff-card, kann nicht auseinanderlaufen.
+
+import { css } from 'lit'
+import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+
+// Technikwert (unsichtbar) — der Bediener waehlt den Klarnamen im Inspector.
+export type StatusVariant = 'info' | 'success' | 'warning' | 'danger'
+
+export const STATUS_VARIANTS: readonly StatusVariant[] = [
+  'info',
+  'success',
+  'warning',
+  'danger',
+]
+
+// Unbekannte/alte Werte fallen sicher auf 'info' zurueck (z. B. Altbestand
+// aus localStorage) — kein Block rendert je eine undefinierte Klasse.
+export function coerceStatusVariant(value: string): StatusVariant {
+  return (STATUS_VARIANTS as readonly string[]).includes(value)
+    ? (value as StatusVariant)
+    : 'info'
+}
+
+// Die "Art"-Property fuer den Inspector. attributeName + Beschreibung stellt
+// jeder Block selbst, die 4 Optionen (Bedeutung -> Farbe) sind fix.
+export function statusVariantProperty(
+  attributeName: string,
+  description: string,
+): PropertyDescription {
+  return {
+    attributeName,
+    name: 'Art',
+    description,
+    isArray: false,
+    maxLength: 0,
+    kind: 'select',
+    options: [
+      { value: 'info', label: 'Hinweis' },
+      { value: 'success', label: 'Erfolg' },
+      { value: 'warning', label: 'Warnung' },
+      { value: 'danger', label: 'Fehler' },
+    ],
+  }
+}
+
+// Chip-Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Strukturelle
+// Groessen (padding, letter-spacing, font-weight) als Literale wie bei
+// Button/Infobox; Farben + Radius + font-size kommen aus Tokens.
+// Verbindliches Zielbild: dashboard/stilprobe.html (.zb-chip).
+export const chipStyles = css`
+  .chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--se-r-sm);
+    font-family: var(--se-font);
+    font-size: var(--se-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .chip.v-info { background: var(--se-blue-soft); color: var(--se-blue); }
+  .chip.v-success { background: var(--se-green-soft); color: var(--se-green); }
+  .chip.v-warning { background: var(--se-amber-soft); color: var(--se-amber); }
+  .chip.v-danger { background: var(--se-red-soft); color: var(--se-red); }
+`
