@@ -35,6 +35,7 @@ describe('Card-Export (echter Block)', () => {
     const def = getBlockDefinition('card')
     expect(def?.defaultProps && Object.keys(def.defaultProps)).toEqual([
       'width', 'chipVariant', 'heading', 'text', 'chipText',
+      'headingField', 'textField', 'chipTextField',
     ])
   })
 
@@ -42,8 +43,28 @@ describe('Card-Export (echter Block)', () => {
     const { html } = exportMask(tree())
     expect(html).toContain(
       '<ff-card chipvariant="warning" heading="R&#xFC;ckruf Fr. Wagner"'
-      + ' text="Befund Minka besprechen" chiptext="&#xDC;berf&#xE4;llig"',
+      + ' text="Befund Minka besprechen" chiptext="&#xDC;berf&#xE4;llig"'
+      + ' headingfield="" textfield="" chiptextfield=""',
     )
+  })
+
+  it('deklariert bindbare Stellen konsistent zu den defaultProps (Kap. 5.2)', () => {
+    const def = getBlockDefinition('card')
+    expect(def?.bindableSpots?.map((s) => s.prop)).toEqual(['heading', 'text', 'chipText'])
+    for (const spot of def?.bindableSpots ?? []) {
+      // Anzeige-Prop und Bindungs-Prop müssen als defaultProps existieren,
+      // sonst überleben sie weder Persistenz noch Export.
+      expect(def?.defaultProps, `Anzeige-Prop ${spot.prop} fehlt`).toHaveProperty(spot.prop)
+      expect(def?.defaultProps, `Bindungs-Prop ${spot.prop}Field fehlt`).toHaveProperty(`${spot.prop}Field`, '')
+      expect(spot.label.trim()).not.toBe('')
+    }
+  })
+
+  it('exportiert eine gesetzte Bindung als Attribut (Feldcode = Technikwert)', () => {
+    const t = tree()
+    t.x.props.headingField = '78_30'
+    const { html } = exportMask(t)
+    expect(html).toContain('headingfield="78_30"')
   })
 
   it('exportiert width=auto NICHT als Attribut (wirkt als Flow-Style)', () => {

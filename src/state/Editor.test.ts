@@ -12,6 +12,7 @@ import {
   TEST_BLOCK,
   TEST_BOARD,
   TEST_BOX,
+  TEST_DATA_BOX,
   TEST_STRICT_BOX,
 } from '../test/testBlocks'
 
@@ -173,5 +174,34 @@ describe('Undo/Redo', () => {
     expect(ed.getNode(a.id)?.props.width).toBe(300)
     ed.undo() // genau EIN Schritt zurück — vor die ganze Geste
     expect(ed.getNode(a.id)?.props.width).toBe('auto')
+  })
+})
+
+describe('dataSourceFor (Kap. 5.2)', () => {
+  it('findet die Quelle des nächsten acceptsDataSource-Vorfahren (inkl. selbst)', () => {
+    const box = add(TEST_DATA_BOX)
+    const child = add(TEST_BLOCK, box.id)
+    ed.updateProperty(box.id, 'source', 'terminplaner')
+    expect(ed.dataSourceFor(child.id)?.name).toBe('Terminplaner')
+    expect(ed.dataSourceFor(box.id)?.name).toBe('Terminplaner')
+  })
+
+  it('liefert nichts ohne Quelle, bei unbekannter Vorlagen-id und außerhalb', () => {
+    const box = add(TEST_DATA_BOX) // source '' = keine Quelle
+    const child = add(TEST_BLOCK, box.id)
+    expect(ed.dataSourceFor(child.id)).toBeUndefined()
+    ed.updateProperty(box.id, 'source', 'geloeschte-vorlage')
+    expect(ed.dataSourceFor(child.id)).toBeUndefined()
+    const draussen = add(TEST_BLOCK)
+    expect(ed.dataSourceFor(draussen.id)).toBeUndefined()
+  })
+
+  it('sucht NICHT über den nächsten acceptsDataSource-Vorfahren hinaus', () => {
+    // Äußerer Datenbereich MIT Quelle, innerer OHNE: der innere bestimmt.
+    const aussen = add(TEST_DATA_BOX)
+    ed.updateProperty(aussen.id, 'source', 'terminplaner')
+    const innen = add(TEST_DATA_BOX, aussen.id)
+    const child = add(TEST_BLOCK, innen.id)
+    expect(ed.dataSourceFor(child.id)).toBeUndefined()
   })
 })

@@ -19,9 +19,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
+import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { resolveChildDirection, type FlowDirection } from '../../core/blocks/flowLayout'
 import { editor } from '../../state/Editor'
+import { FieldPicker } from './FieldPicker'
 
 interface BlockHostProps {
   block: BlockNode
@@ -36,7 +38,19 @@ interface PropChangeDetail {
   value: unknown
 }
 
+// Stabile leere Liste, damit der Props-Effekt nicht bei jedem Render neu
+// läuft, nur weil `?? []` eine frische Referenz erzeugt hätte.
+const KEINE_SPOTS: readonly BindableSpot[] = []
+
+// Gebundener Feldcode einer Stelle ('' = ungebunden) — Bindung liegt per
+// Konvention in der Prop `<prop>Field` (siehe BindableSpot).
+function bindingCode(props: Record<string, unknown>, spot: BindableSpot): string {
+  const code = props[`${spot.prop}Field`]
+  return typeof code === 'string' ? code : ''
+}
+
 export function BlockHost({ block, selected, onSelect, children }: BlockHostProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
   // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
@@ -44,6 +58,11 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   const [element, setElement] = useState<HTMLElement | null>(null)
   const def = getBlockDefinition(block.type)
   const isContainer = def?.acceptsChildren ?? false
+  // Datenquelle in Reichweite (Kap. 5.2) — nur für Blöcke mit bindbaren
+  // Stellen relevant. BlockHost rendert bei jeder Store-Änderung neu (Canvas
+  // abonniert den Store), darum ist der Wert hier immer aktuell.
+  const bindableSpots = def?.bindableSpots ?? KEINE_SPOTS
+  const dataSource = bindableSpots.length > 0 ? editor.dataSourceFor(block.id) : undefined
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte
   // Event-Listener immer mit dem aktuellen Stand laufen.
   const blockRef = useRef<BlockNode>(block)
@@ -60,6 +79,9 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     const container = containerRef.current
     if (!container) return
     const el = document.createElement(def.tagName)
+    // Editor-Kennung (Kap. 5.2): schaltet editor-exklusives Block-CSS frei
+    // (Daten-Markierung gebundener Stellen). Der Export setzt sie nie.
+    el.setAttribute('data-ff-editor', '')
     container.appendChild(el)
     elementRef.current = el
     setElement(el)
@@ -94,12 +116,98 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     for (const [key, value] of Object.entries(block.props)) {
       elAny[key] = value
     }
+    // Beispieldaten-Vorschau (Kap. 5.2): gebundene Stellen zeigen den
+    // Beispielwert ihres Felds statt des statischen Texts — nur die ANZEIGE
+    // (DOM-Properties), der Baum bleibt unberührt. Ist die Bindung nicht
+    // auflösbar (keine Quelle in Reichweite / Feld nicht im Wörterbuch),
+    // zeigt die Stelle ihren statischen Text ohne Markierung; die Bindung
+    // selbst bleibt gespeichert und lebt wieder auf, sobald die Quelle
+    // zurückkommt.
+    for (const spot of bindableSpots) {
+      const code = block.props[`${spot.prop}Field`]
+      if (typeof code !== 'string' || code === '') continue
+      const field = dataSource?.fields.find((f) => f.code === code)
+      if (field) {
+        elAny[spot.prop] = field.sample
+      } else {
+        elAny[`${spot.prop}Field`] = ''
+      }
+    }
     elAny.editable = !!selected
-  }, [element, block.props, selected])
+  }, [element, block.props, selected, bindableSpots, dataSource])
+
+  // ---- Klick-auf-Stelle-Binding (Kap. 5.2, Bedienlogik 3) ----
+  // Klick auf eine bindbare Stelle des SCHON selektierten Blocks öffnet den
+  // Feld-Picker. Verzögert (Timer), damit ein Doppelklick (= Inline-Edit
+  // einer ungebundenen Stelle) den Picker nicht zusätzlich aufreißt.
+  const [picker, setPicker] = useState<{ spot: BindableSpot; top: number; left: number } | null>(null)
+  const pickerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearPickerTimer = () => {
+    if (pickerTimer.current) {
+      clearTimeout(pickerTimer.current)
+      pickerTimer.current = null
+    }
+  }
+
+  useEffect(() => clearPickerTimer, [])
+  // Auswahl weg → Picker weg (State-Anpassung beim Rendern, kein Effect
+  // nötig — react.dev "adjusting state when props change").
+  if (!selected && picker !== null) setPicker(null)
+
+  // Die angeklickte Stelle aus dem composedPath (Stellen liegen im Shadow
+  // DOM des Blocks; der Block annotiert sie mit data-ff-spot=<prop>).
+  function spotAt(e: ReactMouseEvent<HTMLDivElement>): { spot: BindableSpot; el: HTMLElement } | null {
+    if (bindableSpots.length === 0) return null
+    for (const t of e.nativeEvent.composedPath()) {
+      if (t === e.currentTarget) return null
+      if (t instanceof HTMLElement && t.hasAttribute('data-ff-spot')) {
+        const spot = bindableSpots.find((s) => s.prop === t.getAttribute('data-ff-spot'))
+        return spot ? { spot, el: t } : null
+      }
+    }
+    return null
+  }
+
+  // Picker-Position: direkt unter der Stelle, relativ zum Host-Wrapper
+  // (position:relative — der Absolut-Anker).
+  function pickerPos(spotEl: HTMLElement): { top: number; left: number } | null {
+    const rootRect = rootRef.current?.getBoundingClientRect()
+    if (!rootRect) return null
+    const spotRect = spotEl.getBoundingClientRect()
+    return { top: spotRect.bottom - rootRect.top + 4, left: spotRect.left - rootRect.left }
+  }
 
   function onClick(e: ReactMouseEvent<HTMLDivElement>) {
     e.stopPropagation() // Klick auf Elternteile / Canvas (= andere Auswahl) nicht auslösen
     onSelect?.()
+    clearPickerTimer()
+    // Erst selektieren, dann binden: der Picker öffnet nur am Block, der
+    // beim Klick schon selektiert war — und nur mit Quelle in Reichweite.
+    if (!selected || !dataSource) return
+    if (e.detail > 1) return // Teil eines Doppelklicks — der entscheidet.
+    const hit = spotAt(e)
+    if (!hit) return
+    const pos = pickerPos(hit.el)
+    if (!pos) return
+    pickerTimer.current = setTimeout(() => {
+      pickerTimer.current = null
+      if (editor.selectedId === blockRef.current.id) {
+        setPicker({ spot: hit.spot, ...pos })
+      }
+    }, 300)
+  }
+
+  // Doppelklick auf eine GEBUNDENE Stelle: ihr Text kommt aus Daten, Inline-
+  // Edit lässt das Event durch (BasicBlock) — stattdessen sofort den Picker.
+  function onDoubleClick(e: ReactMouseEvent<HTMLDivElement>) {
+    clearPickerTimer()
+    if (!selected || !dataSource) return
+    const hit = spotAt(e)
+    if (!hit || bindingCode(blockRef.current.props, hit.spot) === '') return
+    e.stopPropagation()
+    const pos = pickerPos(hit.el)
+    if (pos) setPicker({ spot: hit.spot, ...pos })
   }
 
   // Breite ziehen (Anfasser rechts): eine Geste = eine Transaktion = 1 Undo.
@@ -143,7 +251,9 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 
   return (
     <div
+      ref={rootRef}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       data-block-id={block.id}
       style={{
         // Immer 'block': das gerenderte Element ist :host{display:block} —
@@ -193,6 +303,21 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
             )
           : null}
       </div>
+      {selected && picker && dataSource && (
+        <FieldPicker
+          spotLabel={picker.spot.label}
+          sourceName={dataSource.name}
+          fields={dataSource.fields}
+          current={bindingCode(block.props, picker.spot)}
+          top={picker.top}
+          left={picker.left}
+          onPick={(code) => {
+            editor.updateProperty(blockRef.current.id, `${picker.spot.prop}Field`, code)
+            setPicker(null)
+          }}
+          onClose={() => setPicker(null)}
+        />
+      )}
       {selected && (
         <button
           type="button"

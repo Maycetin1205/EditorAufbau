@@ -47,6 +47,15 @@ describe('Datenquellen-Vorlagen (Feld-Wörterbuch)', () => {
     }
   })
 
+  it('jedes Feld hat einen Beispielwert, der kein Feldcode ist (Kap. 5.2)', () => {
+    for (const s of DATA_SOURCES) {
+      for (const f of s.fields) {
+        expect(f.sample.trim(), `${s.name}: Feld "${f.label}" ohne Beispielwert`).not.toBe('')
+        expect(FELDCODE.test(f.sample), `${s.name}: Beispielwert "${f.sample}" sieht wie ein Feldcode aus`).toBe(false)
+      }
+    }
+  })
+
   it('getDataSource findet Vorlagen über die id, unbekannte ids nicht', () => {
     expect(getDataSource('terminplaner')?.name).toBe('Terminplaner')
     expect(getDataSource('terminplaner')?.idbId).toBe('IDBID0005')

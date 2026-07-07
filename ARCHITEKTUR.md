@@ -90,6 +90,18 @@ Block-Typen (`if type===` ist verboten):
 - `showInPalette`: false = Baustein entsteht nur in seinem Organismus.
 - `containerHint`: false = keine gestrichelte Editor-Hilfe (eigenes Chrome).
 - `addChildButton`: Editor-Hilfe „Plus-Knopf" im BlockHost („+ Karte").
+- `acceptsDataSource` (Kap. 5.1): an den Block lässt sich eine Datenquelle
+  hängen (`source`-Prop = Vorlagen-id, Inspector-Sektion „Daten", Export
+  erzeugt daraus den SEFILELOOP).
+- `bindableSpots` (Kap. 5.2): bindbare Text-Stellen des Blocks
+  (Anzeige-Prop + Klarname). Die Bindung (Feldcode) liegt in `<prop>Field`
+  (Default '' in den defaultProps). Der Block annotiert die Stelle mit
+  `data-ff-spot` (Klick-Ziel Feld-Picker) und `data-ff-bound` (Daten-
+  Markierung); Markierung + Beispielwert-Vorschau erscheinen NUR im Editor —
+  der BlockHost setzt das Host-Attribut `data-ff-editor` und ersetzt die
+  Anzeige-Properties gebundener Stellen durch die Beispielwerte des
+  Feld-Wörterbuchs (`Editor.dataSourceFor` = Quelle des nächsten
+  acceptsDataSource-Vorfahren). Der Baum bleibt dabei unberührt.
 
 ## Datenfluss
 

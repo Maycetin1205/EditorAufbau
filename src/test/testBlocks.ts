@@ -14,6 +14,8 @@ export const TEST_BOX = 't-box'
 export const TEST_STRICT_BOX = 't-strict-box'
 // Block, der mit Beispieldaten-Teilbaum eingefügt wird (defaultChildren).
 export const TEST_BOARD = 't-board'
+// Container mit Datenquellen-Fähigkeit (acceptsDataSource, Kap. 5.1/5.2).
+export const TEST_DATA_BOX = 't-daten-box'
 
 export function registerTestBlocks(): void {
   if (registered) return
@@ -70,5 +72,16 @@ export function registerTestBlocks(): void {
       },
       { type: TEST_STRICT_BOX, children: [] },
     ],
+  })
+  registerBlockType({
+    type: TEST_DATA_BOX,
+    tagName: 'ff-t-daten-box',
+    displayName: 'Testdatenbereich',
+    category: 'layout',
+    defaultProps: { ...FLOW_DEFAULTS, source: '' },
+    customProperties: [],
+    acceptsChildren: true,
+    resizableWidth: true,
+    acceptsDataSource: true,
   })
 }

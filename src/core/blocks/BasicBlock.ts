@@ -29,10 +29,21 @@ import { FLOW_DEFAULTS } from './flowLayout'
 export abstract class BasicBlock extends LitElement implements BlockComponent {
   // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
   // im Container-Fluss seine natürliche Größe ein.
+  //
+  // Daten-Markierung (Kap. 5.2): gebundene Stellen (data-ff-bound, vom Block
+  // aus seiner Bindungs-Prop gerendert) bekommen eine gepunktete Linie in
+  // der Hausfarbe — aber NUR im Editor: data-ff-editor setzt ausschließlich
+  // der BlockHost (wie data-editable), im Export bleibt die Maske sauber.
   static override styles: CSSResultGroup = css`
     :host { display: block; }
     [data-ff-editable] { cursor: text; }
     :host(:not([data-editable])) [data-ff-editable] { cursor: inherit; }
+    :host([data-ff-editor]) [data-ff-bound] {
+      text-decoration: underline dotted var(--se-accent);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+    :host([data-ff-editor][data-editable]) [data-ff-bound] { cursor: pointer; }
   `
 
   static readonly customProperties: PropertyDescription[] = []
@@ -57,9 +68,19 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
     if (!this.editable) return
     const target = event.currentTarget as HTMLElement | null
     if (!target) return
+    // Gebundene Stellen (Kap. 5.2) zeigen Daten, nicht Text — kein Inline-
+    // Edit. Das Event läuft weiter zum BlockHost, der den Feld-Picker öffnet.
+    if (target.hasAttribute('data-ff-bound')) return
     event.stopPropagation()
     event.preventDefault()
     const original = target.textContent ?? ''
+    // Lit verwaltet die Kindknoten der Stelle (Marker-Kommentare + Text).
+    // Für den Verwerfen-Fall werden die Originalknoten samt Inhalt gesichert:
+    // ein nacktes `textContent = original` würde Lits Marker zerstören, und
+    // die Stelle bekäme danach NIE wieder ein Update (z. B. den Beispielwert
+    // nach einer Bindung, Kap. 5.2).
+    const originalNodes = Array.from(target.childNodes)
+    const originalData = originalNodes.map((n) => n.textContent ?? '')
     target.setAttribute('contenteditable', 'plaintext-only')
     target.focus()
     const selection = window.getSelection()
@@ -85,7 +106,10 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
           }))
         }
       } else {
-        target.textContent = original
+        target.replaceChildren(...originalNodes)
+        originalNodes.forEach((n, i) => {
+          if (n.textContent !== originalData[i]) n.textContent = originalData[i]
+        })
       }
     }
     const onBlur = () => cleanup(true)
@@ -127,6 +151,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       containerHint: BlockClass.containerHint,
       addChildButton: BlockClass.addChildButton,
       acceptsDataSource: BlockClass.acceptsDataSource,
+      bindableSpots: BlockClass.bindableSpots,
     })
   }
 }
