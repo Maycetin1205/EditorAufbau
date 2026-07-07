@@ -10,7 +10,7 @@ es ersetzt Urteilsvermögen durch Prüfschritte. Keine Abkürzungen.
    origin/main (lokal). NIEMALS auf dem alten Branch einer fremden Session
    weiterarbeiten. Bei Konflikt oder Fehlermeldung: STOPP, dem Nutzer melden.
 2. PRÜFE auf parallele Arbeit, BEVOR du ein Kapitel anfängst:
-   git fetch origin && git branch -r --no-merged origin/main
+   git fetch origin --prune && git branch -r --no-merged origin/main
    Listet das (ausser deinem eigenen Arbeits-Branch) Branches mit
    UNGEMERGTEN Commits, laeuft vermutlich eine andere Session oder ein
    fertiger PR wartet auf Merge: STOPP, dem Nutzer melden, er entscheidet.
