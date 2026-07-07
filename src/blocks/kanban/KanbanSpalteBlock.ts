@@ -40,19 +40,34 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly addChildButton = { label: 'Karte', childType: CardBlock.blockType }
   // width 290: feste Spaltenbreite aus dem Zielbild (flex 0 0 290px) —
   // wirkt über die universelle Flow-Breite, bleibt per Anfasser ziehbar.
+  // statusValue (Kap. 5.3): Datenwert dieser Spalte (Technikwert) — Zeilen,
+  // deren Spalten-Feld (statusField am Board) genau diesen Wert hat, landen
+  // im Export hier. Der sichtbare Titel bleibt davon unabhängig (Technikwert
+  // ≠ Anzeigename). Default '' -> überlebt Persistenz, reist als Attribut.
   static readonly defaultProps = {
     variant: 'info',
     heading: 'Neue Spalte',
+    statusValue: '',
     width: 290,
   }
 
-  // Einziges Inspector-Feld: die Bedeutung (-> Farbe der Oberlinie).
-  // Der Titel läuft über Inline-Edit direkt am Spaltenkopf.
+  // Inspector: die Bedeutung (-> Farbe der Oberlinie) + der Datenwert der
+  // Spalte (nur sichtbar mit Datenquelle in Reichweite). Der Titel läuft
+  // über Inline-Edit direkt am Spaltenkopf.
   static override readonly customProperties: PropertyDescription[] = [
     statusVariantProperty(
       'variant',
       'Bedeutung der Spalte — bestimmt die Farbe der Oberlinie.',
     ),
+    {
+      attributeName: 'statusValue',
+      name: 'Datenwert dieser Spalte',
+      description: 'Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.',
+      isArray: false,
+      maxLength: 60,
+      kind: 'text',
+      requiresDataSource: true,
+    },
   ]
 
   // Strukturelle Größen (padding, font-weight, letter-spacing, 3px-Oberlinie,

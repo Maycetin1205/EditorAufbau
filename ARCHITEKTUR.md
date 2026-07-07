@@ -103,6 +103,25 @@ Block-Typen (`if type===` ist verboten):
   Feld-Wörterbuchs (`Editor.dataSourceFor` = Quelle des nächsten
   acceptsDataSource-Vorfahren). Der Baum bleibt dabei unberührt.
 
+Daten-Controls im Inspector (Kap. 5.3, PropertyDescription statt Registry):
+
+- `kind: 'field'`: Auswahl eines Felds der Quelle in Reichweite — Klarnamen
+  sichtbar, gespeichert wird der Feldcode (Technikwert).
+- `requiresDataSource`: Control nur mit Quelle in Reichweite sichtbar
+  (gespeicherte Werte bleiben erhalten und leben mit der Quelle wieder auf).
+- Beide erscheinen in der Inspector-Sektion „Daten" (nicht in der
+  allgemeinen Gruppe). Das Kanban nutzt sie für `statusField` (Board:
+  „Spalten aus Feld") und `statusValue` (Spalte: „Datenwert dieser Spalte").
+
+Datenverhalten der exportierten Maske (Kap. 5.3): liegt beim Block, nicht
+im Export-Generator — `src/blocks/kanban/seRuntime.ts` ist Teil des
+Runtime-Bündels. Das Board meldet sich in `connectedCallback` an; Elemente
+mit `data-ff-editor` (Editor) werden abgewiesen, darum existiert die
+SoftEngine-Mechanik im Editor nicht. Zeilen kommen aus SEDATA (Formen wie
+in `dashboard/praxis-kanban.html`), jede Zeile wird ein Klon der ersten
+gestalteten Karte, gebundene Stellen (`bindableSpots` aus der Registry)
+werden mit Zeilenwerten gefüllt, `statusValue` der Spalten verteilt.
+
 ## Datenfluss
 
 ```txt
