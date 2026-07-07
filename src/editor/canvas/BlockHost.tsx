@@ -15,12 +15,12 @@
 // etwas vom Editor weiß. Gestrichelter Rahmen + Platzhalter sind reine
 // Editor-Hilfen und leben hier, NICHT im Baustein (WYSIWYG).
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { parseFlowWidth } from '../../core/blocks/flowLayout'
+import { resolveChildDirection, type FlowDirection } from '../../core/blocks/flowLayout'
 import { editor } from '../../state/Editor'
 
 interface BlockHostProps {
@@ -38,7 +38,6 @@ interface PropChangeDetail {
 
 export function BlockHost({ block, selected, onSelect, children }: BlockHostProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const width = parseFlowWidth(block.props.width)
   // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
   // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
   const elementRef = useRef<HTMLElement | null>(null)
@@ -127,12 +126,30 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 
   const resizable = def?.resizableWidth ?? true
 
+  // Kreuzchen (Bedienlogik 5): Entfernen direkt am Block, Rückfrage nur wenn
+  // er Inhalte trägt.
+  function onRemoveClick(e: ReactMouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    const node = blockRef.current
+    const n = node.childIds.length
+    if (
+      n > 0
+      && !window.confirm(
+        `„${def?.displayName ?? node.type}" mit ${n} ${n === 1 ? 'Element' : 'Elementen'} darin löschen?`,
+      )
+    ) return
+    editor.removeBlock(node.id)
+  }
+
   return (
     <div
       onClick={onClick}
       data-block-id={block.id}
       style={{
-        display: isContainer || width !== 'auto' ? 'block' : 'inline-block',
+        // Immer 'block': das gerenderte Element ist :host{display:block} —
+        // ein inline-block-Wrapper würde in streckenden Containern
+        // (Kanban-Spalte) schmaler sitzen als der Export (WYSIWYG-Bruch).
+        display: 'block',
         position: 'relative',
         cursor: selected ? 'default' : 'pointer',
         outline: selected ? '2px solid hsl(var(--ring))' : '2px solid transparent',
@@ -148,7 +165,9 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           // Editor-Hilfe für Container: Fläche sichtbar + treffbar machen.
           // Bewusst OHNE Erklärtext und OHNE eigenes Padding — die Kinder
           // sollen exakt dort sitzen, wo sie im Export sitzen (WYSIWYG).
-          ...(isContainer
+          // Blöcke mit eigenem sichtbarem Rahmen (Kanban) schalten die
+          // Hilfe per containerHint=false ab.
+          ...(isContainer && def?.containerHint !== false
             ? {
                 border: '1.5px dashed hsl(220 13% 78%)',
                 borderRadius: 4,
@@ -158,9 +177,51 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         }}
       >
         {element && isContainer && children != null
-          ? createPortal(children, element)
+          ? createPortal(
+              <>
+                {children}
+                {def?.addChildButton && (
+                  <AddChildButton
+                    label={def.addChildButton.label}
+                    childType={def.addChildButton.childType}
+                    direction={resolveChildDirection(def, block.props)}
+                    parentId={block.id}
+                  />
+                )}
+              </>,
+              element,
+            )
           : null}
       </div>
+      {selected && (
+        <button
+          type="button"
+          aria-label="Entfernen"
+          title="Entfernen"
+          onClick={onRemoveClick}
+          onPointerDown={(e) => e.stopPropagation()}
+          onDragStart={(e) => { e.preventDefault(); e.stopPropagation() }}
+          style={{
+            position: 'absolute',
+            top: -9,
+            right: -9,
+            width: 18,
+            height: 18,
+            padding: 0,
+            border: 'none',
+            borderRadius: 9999,
+            background: 'hsl(var(--ring))',
+            color: '#fff',
+            fontSize: 12,
+            lineHeight: '16px',
+            cursor: 'pointer',
+            display: 'grid',
+            placeItems: 'center',
+          }}
+        >
+          ×
+        </button>
+      )}
       {selected && resizable && (
         <div
           draggable={false}
@@ -181,5 +242,63 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         />
       )}
     </div>
+  )
+}
+
+// Editor-Hilfe "Plus-Knopf" (Bedienlogik 5, aus der Registry: addChildButton).
+// Liegt als Light-DOM-Kind im Slot des Containers, ist aber KEIN Block:
+// data-ff-editor-helper hält ihn aus Zählern (Kanban-Spalte) und dem Export
+// heraus. Aussehen nach Zielbild (stilprobe: .zb-add / .zb-addcol) — im
+// Zeilen-Fluss (Board) als gestrichelte Spalten-Kachel, im Spalten-Fluss als
+// flacher Knopf in voller Breite.
+interface AddChildButtonProps {
+  label: string
+  childType: string
+  direction: FlowDirection
+  parentId: string
+}
+
+function AddChildButton({ label, childType, direction, parentId }: AddChildButtonProps) {
+  const row = direction === 'row'
+  const style: CSSProperties = row
+    ? {
+        flex: '0 0 180px',
+        border: '1.5px dashed var(--se-line)',
+        borderRadius: 'var(--se-r-lg)',
+        background: 'transparent',
+        color: 'var(--se-faint)',
+        padding: '14px 0',
+      }
+    : {
+        width: '100%',
+        border: '1px solid var(--se-line)',
+        borderRadius: 'var(--se-r-sm)',
+        background: 'var(--se-panel)',
+        color: 'var(--se-muted)',
+        padding: '6px 0',
+      }
+  return (
+    <button
+      type="button"
+      data-ff-editor-helper
+      draggable={false}
+      onClick={(e) => {
+        e.stopPropagation()
+        editor.addBlock(childType, parentId)
+      }}
+      onDragStart={(e) => { e.preventDefault(); e.stopPropagation() }}
+      style={{
+        ...style,
+        fontFamily: 'var(--se-font)',
+        fontSize: 11.5,
+        fontWeight: 700,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        textAlign: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      ＋ {label}
+    </button>
   )
 }

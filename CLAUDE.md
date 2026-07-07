@@ -251,15 +251,34 @@ den Export (Kap. 3).
     Inline-Edit, Art-Umschalten, Reload-Persistenz, Export; WYSIWYG-
     Screenshots Editor = Export); 38 Tests grün (`card.export.test.ts` neu,
     Veralten-Wächter um `ff-card` verschärft).
-  - **4K.4 Organismus: Kanban (`ff-kanban` + `ff-kanban-spalte`)**
-    `[kritisch]`: Spalte = spezialisierter Container (Kopf: Titel per
-    Doppelklick + Kartenzähler; Rumpf nimmt NUR Karten auf; Plus-Knopf
-    „Karte"; Kreuzchen mit Rückfrage), Board = Zeile aus Spalten (Plus-Knopf
-    „Spalte", Spalten umsortierbar). Karten ziehen läuft über die VORHANDENE
-    Canvas-Drag-Logik (1 Undo pro Zug). Neu + kritisch: Registry-Konzept
-    **„erlaubte Kind-Typen"** (Spalte akzeptiert nur Karten, Board nur
-    Spalten) — im Kern/Registry lösen, kein `if type===` in der UI.
-    Beispieldaten: 3 Spalten („Offen"/„In Arbeit"/„Fertig") mit Karten.
+  - ✅ **4K.4 Organismus: Kanban (`ff-kanban` + `ff-kanban-spalte`)
+    (2026-07-06)** `[kritisch]`: Spalte = spezialisierter Container
+    (`src/blocks/kanban/`, Kopf: Titel per Doppelklick + Kartenzähler via
+    slotchange; Rumpf nimmt NUR Karten; farbige Oberlinie über „Art" aus dem
+    geteilten Status-Vokabular), Board = Zeile aus Spalten. Karten/Spalten
+    ziehen läuft über die VORHANDENE Canvas-Drag-Logik (1 Undo pro Zug).
+    Die kritischen Konzepte liegen im Kern/Registry, kein `if type===` in
+    der UI: **allowedChildTypes** (Spalte nur Karten, Board nur Spalten —
+    durchgesetzt in Store addBlock/moveNode UND Drag-Vorschau; Palette-Drags
+    tragen den Typ dafür im MIME-Namen, da dragover keine Daten lesen darf),
+    **defaultChildren** (Beispieldaten-Teilbaum: 3 Spalten Offen/In Arbeit/
+    Fertig mit den Zielbild-Karten, 1 Undo), **childDirection** (festes
+    row-Layout ohne Richtung-Regler), **showInPalette=false** (Spalte
+    entsteht nur über „+ Spalte"), **containerHint=false** + generische
+    Editor-Hilfen im BlockHost: **addChildButton** („+ Karte"/„+ Spalte",
+    Registry-getrieben, data-ff-editor-helper) und **Kreuzchen** am
+    selektierten Block (Rückfrage nur wenn belegt — gilt jetzt für ALLE
+    Blöcke, Bedienlogik 5). Palette-Klick sucht das Einfügeziel aufwärts
+    (Karte gewählt → neue Karte in dieselbe Spalte). WYSIWYG-Fix: BlockHost-
+    Wrapper immer display:block (inline-block saß in streckenden Containern
+    schmaler als der Export). Browser-verifiziert (6 neue Playwright-Fälle:
+    Einfügen, Karte ziehen + 1 Undo, Titel-Edit, Plus-Knöpfe, verbotener/
+    erlaubter Palette-Drop, Kreuzchen; Screenshots Editor = Export);
+    50 Unit-Tests grün (Store-Guards, defaultChildren, kanban.export,
+    Veralten-Wächter verschärft). Bewusste Grenze: die Wurzel beschränkt
+    Kind-Typen nicht (eine Spalte LIESSE sich auf die Fläche ziehen) —
+    Gegenrichtung „erlaubte Eltern-Typen" erst bauen, wenn ein zweiter
+    Fall sie braucht.
 - **Kap. 5 — Daten-Anbindung** `[kritisch]`: Datenquelle an Block hängen,
   Feld-Wörterbuch (Startbestand: `FELD`-Map aus der EmpfangPraxis-Maske des
   Nutzers), Klick-auf-Stelle-Binding, Beispieldaten-Vorschau. Regel

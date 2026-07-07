@@ -17,16 +17,17 @@ import {
   type DragEvent,
 } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import {
   flowItemStyle,
   parseFlowWidth,
+  resolveChildDirection,
   ROOT_FLOW,
   type FlowDirection,
 } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
-import { isNewBlockDrag, NEW_BLOCK_MIME } from './dnd'
+import { isNewBlockDrag, newBlockDragType, NEW_BLOCK_MIME } from './dnd'
 
 interface DropTarget {
   parentId: string
@@ -57,6 +58,7 @@ const CONTAINER_EDGE = 12
 function InsertionLine({ direction }: { direction: FlowDirection }) {
   return (
     <div
+      data-ff-editor-helper
       style={{
         background: 'hsl(var(--ring))',
         borderRadius: 2,
@@ -100,7 +102,7 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
   const dnd = useDnd()
   const def = getBlockDefinition(node.type)
   const isContainer = def?.acceptsChildren ?? false
-  const childDirection: FlowDirection = node.props.direction === 'row' ? 'row' : 'column'
+  const childDirection = resolveChildDirection(def, node.props)
 
   // Ziel ungültig, wenn ein Block in seinen eigenen Teilbaum fallen würde.
   const invalidTarget = (targetParentId: string) =>
@@ -120,7 +122,18 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
     if (dnd.dragId === node.id) return dnd.setDropTarget(null)
     const rect = e.currentTarget.getBoundingClientRect()
 
-    if (isContainer && !invalidTarget(node.id)) {
+    // Typ des gezogenen Blocks: vorhandener Knoten oder Palette-Drag (Typ
+    // reist im MIME-Namen mit, Daten sind bei dragover nicht lesbar).
+    const draggedType = dnd.dragId !== null
+      ? ed.getNode(dnd.dragId)?.type ?? null
+      : newBlockDragType(e.dataTransfer)
+    // Erlaubte Kind-Typen (Kap. 4K.4): nur dort eine Einfüge-Vorschau
+    // anbieten, wo der Container den Typ auch aufnimmt.
+    const allowedIn = (containerType: string) =>
+      draggedType !== null && canContain(containerType, draggedType)
+    const parentType = ed.getNode(parentId)?.type ?? ''
+
+    if (isContainer && !invalidTarget(node.id) && allowedIn(node.type)) {
       // Randzone → Geschwister-Position, Mitte → hinein ans Ende.
       const before = listDirection === 'row'
         ? e.clientX < rect.left + CONTAINER_EDGE
@@ -132,12 +145,12 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
         dnd.setDropTarget({ parentId: node.id, index: ed.childNodesOf(node.id).length })
         return
       }
-      if (invalidTarget(parentId)) return dnd.setDropTarget(null)
+      if (invalidTarget(parentId) || !allowedIn(parentType)) return dnd.setDropTarget(null)
       dnd.setDropTarget({ parentId, index: before ? index : index + 1 })
       return
     }
 
-    if (invalidTarget(parentId)) return dnd.setDropTarget(null)
+    if (invalidTarget(parentId) || !allowedIn(parentType)) return dnd.setDropTarget(null)
     const after = listDirection === 'row'
       ? e.clientX > rect.left + rect.width / 2
       : e.clientY > rect.top + rect.height / 2

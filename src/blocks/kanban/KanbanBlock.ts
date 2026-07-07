@@ -1,0 +1,85 @@
+// KanbanBlock
+// Organismus (4K.4): das Kanban-Board = Zeile aus Kanban-Spalten. Nimmt
+// AUSSCHLIESSLICH Spalten auf (allowedChildTypes); die feste Zeilen-Richtung
+// liegt als childDirection in der Registry (kein direction-Prop — das Layout
+// des Boards ist nicht verhandelbar, darum auch keine Richtung/Abstand-Regler
+// im Inspector). Karten und Spalten zieht die VORHANDENE Canvas-Drag-Logik.
+//
+// Beim Einfügen erscheint sofort ein gefülltes Board (defaultChildren =
+// Beispieldaten des Zielbilds, nie ein leeres Gerippe): 3 Spalten
+// Offen/In Arbeit/Fertig mit den Karten aus dashboard/stilprobe.html.
+//
+// Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Zielbild: .zb-board.
+
+import { css, html, type TemplateResult } from 'lit'
+import { BasicBlock } from '../../core/blocks/BasicBlock'
+import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
+import type { FlowDirection } from '../../core/blocks/flowLayout'
+import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { CardBlock } from '../card/CardBlock'
+import { KanbanSpalteBlock } from './KanbanSpalteBlock'
+
+const SPALTE = KanbanSpalteBlock.blockType
+const KARTE = CardBlock.blockType
+
+export class KanbanBlock extends BasicBlock {
+  static readonly blockType = 'kanban'
+  static readonly tagName = 'ff-kanban'
+  static readonly displayName = 'Kanban'
+  static readonly category: BlockCategory = 'anzeige'
+  static readonly acceptsChildren = true
+  static readonly allowedChildTypes = [SPALTE]
+  static readonly childDirection: FlowDirection = 'row'
+  static readonly containerHint = false
+  static readonly addChildButton = { label: 'Spalte', childType: SPALTE }
+  static readonly defaultProps = { width: 'fill' }
+  static override readonly customProperties: PropertyDescription[] = []
+
+  // Beispieldaten = die Karten des abgenommenen Zielbilds (4K.1).
+  static readonly defaultChildren: DefaultChildSpec[] = [
+    {
+      type: SPALTE,
+      props: { heading: 'Offen', variant: 'warning' },
+      children: [
+        { type: KARTE, props: { heading: 'Rückruf Fr. Wagner', text: 'Befund Minka besprechen', chipVariant: 'warning', chipText: 'Wartet seit 2 Tagen' } },
+        { type: KARTE, props: { heading: 'Rechnung Nr. 5012 prüfen', text: 'Position Narkose fehlt', chipVariant: 'danger', chipText: 'Überfällig' } },
+        { type: KARTE, props: { heading: 'Impfpass nachtragen', text: 'Buddy · Golden Retriever', chipVariant: 'info', chipText: 'Heute' } },
+      ],
+    },
+    {
+      type: SPALTE,
+      props: { heading: 'In Arbeit', variant: 'info' },
+      children: [
+        { type: KARTE, props: { heading: 'Röntgenbilder anfordern', text: 'Klinik Dr. Steiner, Fall Rocky', chipVariant: 'info', chipText: 'Angefragt' } },
+      ],
+    },
+    {
+      type: SPALTE,
+      props: { heading: 'Fertig', variant: 'success' },
+      children: [
+        { type: KARTE, props: { heading: 'Laborprobe versendet', text: 'Nala · Blutbild groß', chipVariant: 'success', chipText: 'Erledigt' } },
+        { type: KARTE, props: { heading: 'Bestellung Verbandsmaterial', text: 'Lieferung bestätigt für Montag', chipVariant: 'success', chipText: 'Erledigt' } },
+      ],
+    },
+  ]
+
+  static styles = [
+    BasicBlock.styles,
+    css`
+      .board {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: var(--se-gap-lg);
+      }
+      slot { display: contents; }
+    `,
+  ]
+
+  render(): TemplateResult {
+    return html`<div class="board"><slot></slot></div>`
+  }
+}
+
+BasicBlock.defineAndRegister(KanbanBlock)

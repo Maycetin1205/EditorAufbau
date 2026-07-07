@@ -10,6 +10,10 @@ let registered = false
 
 export const TEST_BLOCK = 't-block'
 export const TEST_BOX = 't-box'
+// Container, der NUR t-block aufnimmt (allowedChildTypes, Kap. 4K.4).
+export const TEST_STRICT_BOX = 't-strict-box'
+// Block, der mit Beispieldaten-Teilbaum eingefügt wird (defaultChildren).
+export const TEST_BOARD = 't-board'
 
 export function registerTestBlocks(): void {
   if (registered) return
@@ -33,5 +37,38 @@ export function registerTestBlocks(): void {
     customProperties: [],
     acceptsChildren: true,
     resizableWidth: true,
+  })
+  registerBlockType({
+    type: TEST_STRICT_BOX,
+    tagName: 'ff-t-strict-box',
+    displayName: 'Strenger Testbereich',
+    category: 'layout',
+    defaultProps: { ...FLOW_DEFAULTS },
+    customProperties: [],
+    acceptsChildren: true,
+    resizableWidth: true,
+    allowedChildTypes: [TEST_BLOCK],
+    childDirection: 'row',
+  })
+  registerBlockType({
+    type: TEST_BOARD,
+    tagName: 'ff-t-board',
+    displayName: 'Testboard',
+    category: 'layout',
+    defaultProps: { ...FLOW_DEFAULTS },
+    customProperties: [],
+    acceptsChildren: true,
+    resizableWidth: true,
+    allowedChildTypes: [TEST_STRICT_BOX],
+    defaultChildren: [
+      {
+        type: TEST_STRICT_BOX,
+        children: [
+          { type: TEST_BLOCK, props: { text: 'Karte A' } },
+          { type: TEST_BLOCK, props: { text: 'Karte B' } },
+        ],
+      },
+      { type: TEST_STRICT_BOX, children: [] },
+    ],
   })
 }

@@ -10,8 +10,23 @@
 //             in Spalten: volle Breite)
 //   number  → feste Breite in px
 
+import type { BlockDefinition } from './BlockDefinition'
+
 export type FlowDirection = 'column' | 'row'
 export type FlowWidth = 'auto' | 'fill' | number
+
+// Fluss-Richtung der KINDER eines Containers — EINE Quelle für Canvas und
+// Export. Der generische Bereich steuert sie über seine `direction`-Prop;
+// spezialisierte Container (Kanban-Board = row) legen sie fest in der
+// Registry ab (childDirection), ohne eine Prop anzubieten.
+export function resolveChildDirection(
+  def: Pick<BlockDefinition, 'childDirection'> | undefined,
+  props: Record<string, unknown>,
+): FlowDirection {
+  if (props.direction === 'row') return 'row'
+  if (props.direction === 'column') return 'column'
+  return def?.childDirection ?? 'column'
+}
 
 // Wurzel-Fluss der Maske: IDENTISCHE Werte für Editor-Canvas und Export-Root
 // (sonst säßen Blöcke im Editor anders als in SoftEngine).

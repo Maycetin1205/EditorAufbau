@@ -75,6 +75,22 @@ interface BlockComponent {
 Statische Block-Daten wie `blockType`, `tagName`, `displayName`,
 `defaultProps` und `customProperties` werden in der Registry gespeichert.
 
+Spezialisierte Container (Kap. 4K.4, z. B. Kanban) beschreiben ihr Verhalten
+ebenfalls rein deklarativ über Registry-Felder — die UI kennt keine
+Block-Typen (`if type===` ist verboten):
+
+- `allowedChildTypes`: erlaubte Kind-Typen (Spalte nimmt nur Karten).
+  Durchgesetzt an EINER Stelle (`canContain` in blockRegistry), benutzt vom
+  Store (addBlock/moveNode) und der Drag-Vorschau im Canvas.
+- `defaultChildren`: Beispieldaten-Teilbaum beim Einfügen (nie ein leeres
+  Gerippe); materialisiert von `createBlockSubtree` in der Factory.
+- `childDirection`: feste Fluss-Richtung der Kinder (Board = row) —
+  aufgelöst über `resolveChildDirection` in flowLayout (dieselbe Quelle für
+  Canvas UND Export).
+- `showInPalette`: false = Baustein entsteht nur in seinem Organismus.
+- `containerHint`: false = keine gestrichelte Editor-Hilfe (eigenes Chrome).
+- `addChildButton`: Editor-Hilfe „Plus-Knopf" im BlockHost („+ Karte").
+
 ## Datenfluss
 
 ```txt

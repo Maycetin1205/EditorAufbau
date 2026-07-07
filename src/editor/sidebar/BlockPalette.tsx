@@ -3,9 +3,9 @@
 
 import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { getAllBlockDefinitions, getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { canContain, getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
-import { NEW_BLOCK_MIME } from '../canvas/dnd'
+import { setNewBlockDrag } from '../canvas/dnd'
 import { useEditor } from '../../state/useEditor'
 import { cn } from '@/lib/utils'
 
@@ -20,7 +20,9 @@ const CATEGORY_ORDER: BlockCategory[] = ['layout', 'eingabe', 'anzeige']
 export function BlockPalette() {
   const ed = useEditor()
   const [query, setQuery] = useState('')
-  const definitions = getAllBlockDefinitions()
+  // showInPalette=false versteckt Bausteine, die nur in ihrem Organismus
+  // entstehen (Kanban-Spalte über "+ Spalte" am Board).
+  const definitions = getAllBlockDefinitions().filter((d) => d.showInPalette !== false)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -42,11 +44,18 @@ export function BlockPalette() {
     return acc
   }, [filtered])
 
-  // Einfüge-Ziel: ist gerade ein Container ausgewählt, landet der neue Block
-  // in ihm — sonst auf der Wurzel (Canvas). Drag-in-Container folgt in Kap. 2.3.
-  const selectedNode = ed.selectedId ? ed.getNode(ed.selectedId) : null
-  const selectedDef = selectedNode ? getBlockDefinition(selectedNode.type) : null
-  const targetParentId = selectedDef?.acceptsChildren ? selectedNode!.id : undefined
+  // Einfüge-Ziel beim Klick: vom ausgewählten Block aufwärts der NÄCHSTE
+  // Container, der den Typ aufnimmt (canContain, Kap. 4K.4) — ist eine Karte
+  // in einer Kanban-Spalte gewählt, landet "Karte" in der Spalte; passt
+  // nichts, fällt die Suche auf die Wurzel zurück.
+  const insertParentFor = (type: string): string | undefined => {
+    let cur = ed.selectedId ? ed.getNode(ed.selectedId) : null
+    while (cur) {
+      if (canContain(cur.type, type)) return cur.id
+      cur = cur.parentId ? ed.getNode(cur.parentId) : null
+    }
+    return undefined
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -83,7 +92,7 @@ export function BlockPalette() {
                   <PaletteCard
                     key={def.type}
                     def={def}
-                    onAdd={() => ed.addBlock(def.type, targetParentId)}
+                    onAdd={() => ed.addBlock(def.type, insertParentFor(def.type))}
                   />
                 ))}
               </div>
@@ -108,7 +117,7 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
       draggable
       onDragStart={(e) => {
         // Neuer Block reist als MIME-Eintrag zum Canvas (siehe canvas/dnd.ts).
-        e.dataTransfer.setData(NEW_BLOCK_MIME, def.type)
+        setNewBlockDrag(e.dataTransfer, def.type)
         e.dataTransfer.effectAllowed = 'copy'
       }}
       className={cn(

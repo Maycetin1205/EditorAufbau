@@ -10,8 +10,8 @@ import {
   type BlockNode,
   type BlockTree,
 } from '../core/blocks/BlockData'
-import { createBlockNode } from '../core/blocks/blockFactory'
-import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { createBlockSubtree } from '../core/blocks/blockFactory'
+import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { Subject } from './Subject'
 import { deepClone } from '../lib/deepClone'
 
@@ -242,10 +242,15 @@ export class Editor extends Subject<Editor> {
 
   // Hängt einen neuen Block in den angegebenen Container (Default: Wurzel,
   // ans Ende). `index` = Einfüge-Position innerhalb der Kinder (für Drop).
-  addBlock(type: string, parentId: string = ROOT_ID, index?: number): BlockNode {
-    this.pushHistory()
-    const node = createBlockNode(type)
+  // Beispieldaten (defaultChildren) kommen als kompletter Teilbaum mit —
+  // ein Undo entfernt alles wieder. Verweigert Typen, die der Zielcontainer
+  // nicht aufnimmt (allowedChildTypes) — dann kein History-Eintrag, null.
+  addBlock(type: string, parentId: string = ROOT_ID, index?: number): BlockNode | null {
     const parent = this._tree[parentId] ?? this._tree[ROOT_ID]
+    if (!canContain(parent.type, type)) return null
+    this.pushHistory()
+    const { nodes, rootId } = createBlockSubtree(type)
+    const node = nodes[rootId]
     node.parentId = parent.id
     const childIds = [...parent.childIds]
     const at = index === undefined
@@ -254,7 +259,7 @@ export class Editor extends Subject<Editor> {
     childIds.splice(at, 0, node.id)
     this._tree = {
       ...this._tree,
-      [node.id]: node,
+      ...nodes,
       [parent.id]: { ...parent, childIds },
     }
     this._selectedId = node.id
@@ -348,6 +353,8 @@ export class Editor extends Subject<Editor> {
     if (!node || !newParent || id === ROOT_ID) return
     // Niemals in den eigenen Teilbaum einhängen (Zyklus).
     if (this.collectSubtree(id).includes(newParentId)) return
+    // Ziel muss den Typ aufnehmen (allowedChildTypes, Kap. 4K.4).
+    if (!canContain(newParent.type, node.type)) return
     const oldParentId = node.parentId
     if (!oldParentId) return
     const oldParent = this._tree[oldParentId]
