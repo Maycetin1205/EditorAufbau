@@ -201,11 +201,17 @@
         <slot @slotchange=${this.onSlotChange}></slot>
       </div>
     </div>`}};H([V()],X.prototype,`variant`,void 0),H([V()],X.prototype,`heading`,void 0),H([De()],X.prototype,`_count`,void 0),U.defineAndRegister(X);var Z=X.blockType,Q=q.blockType,Pe=class extends U{static{this.blockType=`kanban`}static{this.tagName=`ff-kanban`}static{this.displayName=`Kanban`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[Z]}static{this.childDirection=`row`}static{this.containerHint=!1}static{this.addChildButton={label:`Spalte`,childType:Z}}static{this.defaultProps={width:`fill`}}static{this.customProperties=[]}static{this.defaultChildren=[{type:Z,props:{heading:`Offen`,variant:`warning`},children:[{type:Q,props:{heading:`Rückruf Fr. Wagner`,text:`Befund Minka besprechen`,chipVariant:`warning`,chipText:`Wartet seit 2 Tagen`}},{type:Q,props:{heading:`Rechnung Nr. 5012 prüfen`,text:`Position Narkose fehlt`,chipVariant:`danger`,chipText:`Überfällig`}},{type:Q,props:{heading:`Impfpass nachtragen`,text:`Buddy · Golden Retriever`,chipVariant:`info`,chipText:`Heute`}}]},{type:Z,props:{heading:`In Arbeit`,variant:`info`},children:[{type:Q,props:{heading:`Röntgenbilder anfordern`,text:`Klinik Dr. Steiner, Fall Rocky`,chipVariant:`info`,chipText:`Angefragt`}}]},{type:Z,props:{heading:`Fertig`,variant:`success`},children:[{type:Q,props:{heading:`Laborprobe versendet`,text:`Nala · Blutbild groß`,chipVariant:`success`,chipText:`Erledigt`}},{type:Q,props:{heading:`Bestellung Verbandsmaterial`,text:`Lieferung bestätigt für Montag`,chipVariant:`success`,chipText:`Erledigt`}}]}]}static{this.styles=[U.styles,o`
+      /* Mehr Spalten als Platz: das Board scrollt IN SICH (Editor und
+         Export identisch, Block-CSS = die eine Render-Quelle), statt die
+         Maske horizontal zu sprengen. min-width:0 erlaubt dem Host, in
+         Zeilen-Bereichen schmaler zu werden als seine Spaltensumme. */
+      :host { min-width: 0; }
       .board {
         display: flex;
         flex-direction: row;
         align-items: flex-start;
         gap: var(--se-gap-lg);
+        overflow-x: auto;
       }
       slot { display: contents; }
     `]}render(){return j`<div class="board"><slot></slot></div>`}};U.defineAndRegister(Pe);var $=class extends U{constructor(...e){super(...e),this.text=`Neuer Text`}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Textblock`}static{this.category=`anzeige`}static{this.defaultProps={text:`Neuer Text`}}static{this.customProperties=[]}static{this.styles=[U.styles,o`
