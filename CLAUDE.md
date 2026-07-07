@@ -383,6 +383,12 @@ den Export (Kap. 3).
     ununterscheidbar über `SEDATA.MessageN` → Warteschlange, immer nur
     eine Abfrage in Flug (Muster `seGetNewIndex`); für reines
     Status-Schreiben nicht nötig (PUT ist fire-and-forget).
+    (d) **Architektur-Regel (Nutzer-Klarstellung 2026-07-07): NR '174'
+    NICHT festverdrahten.** Es gibt >1000 GET/PUT-Relations, je
+    Installation individuell — der Schreibweg wird als DATEN gebaut
+    (Relation-Vorlage, siehe 5.5), nicht als Code. Der Standard-PUT
+    (NR 174, Param-Layout aus (a)) ist nur die MITGELIEFERTE Vorlage,
+    die das Kanban standardmäßig benutzt.
   - **5.4 Datenquellen-Editor** `[kritisch]` (Nutzer-Anforderung
     2026-07-07): Felder sind je SoftEngine-Installation INDIVIDUELL (nur
     wenige Stammfelder wie Adressstamm sind überall gleich) → der Bediener
@@ -396,6 +402,29 @@ den Export (Kap. 3).
     Stammtabellen wie ADR/ART brauchen die explizite pos_len-Liste, siehe
     SEvariablen der behandlung-umbau-Masken). Startbestand
     (Terminplaner/Kundenhaustiere) bleibt als mitgelieferte Vorlage.
+    **Quellen-ARTEN (Nutzer-Klarstellung 2026-07-07):** Es gibt nicht nur
+    IDB-Tabellen — auch Belege, Adressstamm, Artikelstamm (+ später
+    MEMTAB/ERPAPICALL). Jede Quelle trägt eine `kind`; die Art bestimmt
+    die SEvariablen-Form (IDB → SEFILELOOP mit '*', Stammtabellen →
+    explizite FELDER-Liste, ERPAPICALL → eigener JSON-Abschnitt, siehe
+    behandlung-umbau). Modell-Referenz: alter Editor
+    `src/types/index.ts` (DataSourceEntry-Varianten idb/beleg/
+    adressstamm/memtab, `freiselekt` bei Stammquellen).
+  - **5.5 Relation-Vorlagen-Bibliothek** `[kritisch]` (Nutzer-Anforderung
+    2026-07-07): GET/PUT-Relations sind wie Datenquellen BENUTZERDEFINIERTE
+    VORLAGEN — der Bediener gibt Anzeigename, Verb (GET_RELATION /
+    PUT_RELATION / PUTADD_RELATION), NR (freie Eingabe, >1000 möglich) und
+    die Parameter-Syntax ein; die Syntax enthält PLATZHALTER, die zur
+    Laufzeit gefüllt werden: `{PINDEX}`/`{SELKEY}` (Satznummer der
+    Auswahl), `{DROP_PINDEX}` (gezogene Karte), `{VALUE}` (auslösender
+    Wert), `{NOW_DATE}` sowie Feldcodes. Vorlagen persistieren neben den
+    Datenquellen; Aktionen (Kap. 8) und der Kanban-Schreibweg (5.3b)
+    KONSUMIEREN Vorlagen statt eigene Protokolle zu kennen. Standard-PUT
+    (NR 174) wird als Vorlage mitgeliefert. Verhaltensreferenz alter
+    Editor: `src/components/modals/RelationForm.tsx` (Eingabe-UI),
+    `src/types/index.ts` (relations-Modell: relNo/kind/syntax/
+    syntaxParams), `src/runtime/actions.ts` (Platzhalter-Auflösung,
+    pindexMode fixed/selected/drop).
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
   FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
   Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,
