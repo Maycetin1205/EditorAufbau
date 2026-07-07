@@ -69,7 +69,7 @@ test('Stelle anklicken → Klarnamen wählen → Beispielwert + Markierung, Relo
   // ≠ Anzeigename).
   await expect(picker(page)).toContainText('Vorname')
   await expect(picker(page)).toContainText('Lisa')
-  await expect(picker(page)).not.toContainText('199_30')
+  await expect(picker(page)).not.toContainText('193_30')
   await expect(picker(page)).not.toContainText('78_30')
 
   // Feld wählen → Stelle zeigt sofort Beispielwert + Daten-Markierung.

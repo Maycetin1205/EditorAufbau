@@ -48,16 +48,16 @@ async function exportMaskHtml(page: Page): Promise<string> {
 }
 
 // SEDATA-Stub in der Form der Referenzmaske: Zeilen des Terminplaners mit
-// Zimmer (259_8) + Tiername (78_30) als direkte Feld-Properties.
+// Zimmer (253_30) + Tiername (78_30) als direkte Feld-Properties.
 const SEDATA_STUB = {
   Daten: {
     SEFileLoop: [{
       ALIAS: 'Terminplaner',
       Zeilen: [
-        { '259_8': '2', '78_30': 'Minka' },
-        { '259_8': '3', '78_30': 'Buddy' },
-        { '259_8': '2', '78_30': 'Nala' },
-        { '259_8': 'OP', '78_30': 'Rocky' }, // trifft keine Spalte -> Auffang
+        { '253_30': '2', '78_30': 'Minka' },
+        { '253_30': '3', '78_30': 'Buddy' },
+        { '253_30': '2', '78_30': 'Nala' },
+        { '253_30': 'OP', '78_30': 'Rocky' }, // trifft keine Spalte -> Auffang
       ],
     }],
   },
@@ -78,7 +78,7 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   // Spalten-Feld am Board wählen: Klarname "Zimmer", nie der Feldcode.
   await selectBoard(page)
   await page.getByLabel('Spalten aus Feld').click()
-  await expect(page.getByRole('option', { name: '259_8' })).toHaveCount(0)
+  await expect(page.getByRole('option', { name: '253_30' })).toHaveCount(0)
   await page.getByRole('option', { name: 'Zimmer' }).click()
 
   // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt leer = Auffang.
@@ -89,7 +89,7 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
 
   const html = await exportMaskHtml(page)
   // Beide Technikwerte reisen als Attribute in der Maske (Kap. 5.2 + 5.3).
-  expect(html).toContain('statusfield="259_8"')
+  expect(html).toContain('statusfield="253_30"')
   expect(html).toContain('headingfield="78_30"')
   expect(html).toContain('statusvalue="2"')
   expect(html).toContain('statusvalue="3"')

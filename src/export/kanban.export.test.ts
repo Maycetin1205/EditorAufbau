@@ -69,11 +69,11 @@ describe('Kanban-Export (echte Bloecke)', () => {
     const tree = boardTree()
     const board = tree[tree[ROOT_ID].childIds[0]]
     board.props.source = 'terminplaner'
-    board.props.statusField = '259_8'
+    board.props.statusField = '253_30'
     tree[board.childIds[0]].props.statusValue = '1'
     tree[board.childIds[1]].props.statusValue = '2'
     const { html } = exportMask(tree)
-    expect(html).toContain('<ff-kanban source="terminplaner" statusfield="259_8"')
+    expect(html).toContain('<ff-kanban source="terminplaner" statusfield="253_30"')
     expect(html).toContain('heading="Offen" statusvalue="1"')
     expect(html).toContain('heading="In Arbeit" statusvalue="2"')
     expect(html).toContain('heading="Fertig" statusvalue=""')

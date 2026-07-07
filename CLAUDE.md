@@ -346,11 +346,50 @@ den Export (Kap. 3).
     exportierte Maske mit gestelltem SEDATA; Kanban-Export-Assertions
     erweitert); browser-verifiziert mit Screenshots (Editor-Bedienung +
     hydrierte Maske: 4 Zeilen → 4 Karten nach Zimmer verteilt).
-  - **5.3b Karte ziehen = Wert zurückschreiben** (→ Zwischenziel erreicht):
-    BLOCKIERT auf die Schreib-Schnittstelle — beide Referenzmasken in
-    `dashboard/` lesen nur, die Spec liegt in `behandlung-umbau/
-    SE-INVENTAR.md` (nicht in diesem Repo; kein Muster → nicht raten).
-    Nutzer liefert den Schreib-Abschnitt oder hängt das Repo an die Session.
+  - ⚑ **Feld-Wörterbuch korrigiert (2026-07-07):** Startbestand jetzt aus
+    der VERBINDLICHEN Quelle `behandlung-umbau/behandlung/
+    index.basis.source.html` (`var FELD`, live getestet; SE-INVENTAR §6/§11:
+    pos_len-Codes sind echte SE-Kontrakte). Terminplaner = **IDBID0001**
+    (nicht 0005!), Kundenhaustiere = **IDBID0004** (nicht 0009); Codes
+    korrigiert (behandlung 118_60, uhrzeit 178_5, datum 183_10, vorname
+    193_30, nachname 223_30, zimmer 253_30; neu Priorität 319_12,
+    Belegnummer 331_12). Neues Modell-Feld `indexField` je Quelle
+    (Terminplaner '0_10' = Satznummer/pindex, braucht der Schreibweg 5.3b).
+    Die Dashboard-Prototypen in `dashboard/` sind für Feldcodes KEINE
+    Referenz mehr. Beide Original-Repos lassen sich per add_repo an eine
+    Session hängen: `Maycetin1205/behandlung-umbau` (SE-Spec) und
+    `Maycetin1205/react--app` (alter Editor).
+  - **5.3b Karte ziehen = Wert zurückschreiben** `[kritisch]`
+    (→ Zwischenziel erreicht). ENTBLOCKT 2026-07-07 — Schreib-Spec liegt
+    vor, verifiziert aus `behandlung-umbau` (Block "SE-ADAPTER 4/4",
+    `sePut`/`seSend`) + SE-INVENTAR §5 + altem Editor
+    (`src/runtime/renderKanban.ts` Drop-Handler, `actions.ts`):
+    (a) Schreiben = `basisHTML_SND_MSG('PUT_RELATION', { NR: '174',
+    PARAMS: [pos, len, 'L', pindex, idbId, wert] })` — pos/len aus dem
+    Feldcode gesplittet, pindex = Satznummer der Zeile (Feld `indexField`
+    der Quelle, Terminplaner '0_10'), Bridge-Wächter
+    `typeof basisHTML_SND_MSG === 'function'`. (b) Karten-Drag im Export:
+    HTML5-Drag auf Daten-Karten, Drop auf Spalte → Wert der Zielspalte
+    (statusValue) ins Spalten-Feld schreiben, Zeile im Speicher
+    aktualisieren, neu hydrieren (Muster: alter Editor macht exakt das).
+    NUR im Export (seRuntime); der Editor behält seine Canvas-Drag-Logik.
+    (c) Achtung bei GET-Antworten (z. B. neue Satznummer NR '640'): kommen
+    ununterscheidbar über `SEDATA.MessageN` → Warteschlange, immer nur
+    eine Abfrage in Flug (Muster `seGetNewIndex`); für reines
+    Status-Schreiben nicht nötig (PUT ist fire-and-forget).
+  - **5.4 Datenquellen-Editor** `[kritisch]` (Nutzer-Anforderung
+    2026-07-07): Felder sind je SoftEngine-Installation INDIVIDUELL (nur
+    wenige Stammfelder wie Adressstamm sind überall gleich) → der Bediener
+    muss Datenquellen + Felder SELBST anlegen/bearbeiten können: Klarname
+    + Feldposition + Feldlänge eingeben (der Feldcode `pos_len` entsteht
+    daraus unsichtbar), IDB-ID der Tabelle, Beispielwert optional. Die
+    Datenquellen-Bibliothek (Sidebar) bekommt Anlegen/Bearbeiten/Löschen;
+    Vorlagen persistieren (localStorage neben den Bäumen). Der Export
+    erzeugt die SEFILELOOP aus GENAU diesen Definitionen — die
+    FELDER-Liste muss zur Maske passen (IDB-Tabellen: '*' ist zulässig;
+    Stammtabellen wie ADR/ART brauchen die explizite pos_len-Liste, siehe
+    SEvariablen der behandlung-umbau-Masken). Startbestand
+    (Terminplaner/Kundenhaustiere) bleibt als mitgelieferte Vorlage.
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
   FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
   Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,
