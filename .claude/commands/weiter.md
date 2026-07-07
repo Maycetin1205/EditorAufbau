@@ -10,12 +10,13 @@ es ersetzt Urteilsvermögen durch Prüfschritte. Keine Abkürzungen.
    origin/main (lokal). NIEMALS auf dem alten Branch einer fremden Session
    weiterarbeiten. Bei Konflikt oder Fehlermeldung: STOPP, dem Nutzer melden.
 2. PRÜFE auf parallele Arbeit, BEVOR du ein Kapitel anfängst:
-   git ls-remote --heads origin
-   Gibt es dort NEBEN main und deinem eigenen Arbeits-Branch weitere
-   Branches (z. B. claude/weiter-*)? Dann läuft vermutlich eine andere
-   Session oder ein fertiger PR wartet auf Merge: STOPP, dem Nutzer melden,
-   er entscheidet. So wurde Kap. 2.2 viermal und Kap. 4K.4 zweimal gebaut —
-   NIE ein Kapitel anfangen, solange ungemergte Kapitel-Branches existieren.
+   git fetch origin && git branch -r --no-merged origin/main
+   Listet das (ausser deinem eigenen Arbeits-Branch) Branches mit
+   UNGEMERGTEN Commits, laeuft vermutlich eine andere Session oder ein
+   fertiger PR wartet auf Merge: STOPP, dem Nutzer melden, er entscheidet.
+   So wurde Kap. 2.2 viermal und Kap. 4K.4 zweimal gebaut — NIE ein Kapitel
+   anfangen, solange ungemergte Kapitel-Branches existieren. (Branches ohne
+   eigene Commits — Stand identisch mit main — sind harmlose Reste.)
 3. LIES dann CLAUDE.md komplett (verbindliche Wahrheit), dann ARCHITEKTUR.md.
 4. PRÜFE den Ist-Zustand, bevor du irgendetwas änderst:
    npx tsc -b && npx eslint src && npm test
