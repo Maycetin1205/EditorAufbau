@@ -126,6 +126,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       showInPalette: BlockClass.showInPalette,
       containerHint: BlockClass.containerHint,
       addChildButton: BlockClass.addChildButton,
+      acceptsDataSource: BlockClass.acceptsDataSource,
     })
   }
 }

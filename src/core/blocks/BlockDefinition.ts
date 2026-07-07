@@ -47,4 +47,9 @@ export interface BlockDefinition {
   // Editor-Hilfe "Plus-Knopf" am Container: fügt einen Kind-Block dieses
   // Typs ans Ende ein (Kanban: "+ Spalte", Spalte: "+ Karte").
   addChildButton?: { label: string; childType: string }
+  // true = an den Block lässt sich eine Datenquelle hängen (Kap. 5.1,
+  // Bedienlogik 2). Der Block trägt dann eine `source`-Prop (Technikwert =
+  // Vorlagen-id aus core/data/dataSources); der Inspector zeigt die Sektion
+  // "Daten", der Export erzeugt daraus den SEFILELOOP. Kein `if type===`.
+  acceptsDataSource?: boolean
 }

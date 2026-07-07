@@ -9,6 +9,7 @@ import type {
 } from '../../core/blocks/PropertyDescription'
 import { useEditor } from '../../state/useEditor'
 import { SidePanel } from '@/ui/molecules/side-panel'
+import { DataSection } from './DataSection'
 import { LayoutSection } from './LayoutSection'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
@@ -79,6 +80,16 @@ export function Inspector() {
           <div className="flex flex-col gap-3">
             {def.customProperties.map(renderPropControl)}
           </div>
+        )}
+        {/* Datenquelle anhängen (Kap. 5.1) — nur für Blöcke, die das per
+            Registry-Flag können (Kanban). Kein Typ-Check. */}
+        {def.acceptsDataSource && (
+          <section className="flex flex-col gap-3">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Daten
+            </h3>
+            <DataSection block={block} />
+          </section>
         )}
         <section className="flex flex-col gap-3">
           <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

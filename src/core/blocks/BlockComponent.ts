@@ -39,5 +39,7 @@ export interface BlockComponentStatic {
   readonly showInPalette?: boolean
   readonly containerHint?: boolean
   readonly addChildButton?: { label: string; childType: string }
+  // Datenquellen-Fähigkeit aus Kap. 5.1 — Bedeutung siehe BlockDefinition.
+  readonly acceptsDataSource?: boolean
   new(): BlockComponent
 }

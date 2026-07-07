@@ -33,7 +33,11 @@ export class KanbanBlock extends BasicBlock {
   static readonly childDirection: FlowDirection = 'row'
   static readonly containerHint = false
   static readonly addChildButton = { label: 'Spalte', childType: SPALTE }
-  static readonly defaultProps = { width: 'fill' }
+  // Kap. 5.1: an das Board lässt sich eine Datenquelle hängen (Inspector-
+  // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
+  // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
+  static readonly acceptsDataSource = true
+  static readonly defaultProps = { width: 'fill', source: '' }
   static override readonly customProperties: PropertyDescription[] = []
 
   // Beispieldaten = die Karten des abgenommenen Zielbilds (4K.1).
