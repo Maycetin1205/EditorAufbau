@@ -58,7 +58,7 @@ describe('Datenquellen-Vorlagen (Feld-Wörterbuch)', () => {
 
   it('getDataSource findet Vorlagen über die id, unbekannte ids nicht', () => {
     expect(getDataSource('terminplaner')?.name).toBe('Terminplaner')
-    expect(getDataSource('terminplaner')?.idbId).toBe('IDBID0005')
+    expect(getDataSource('terminplaner')?.idbId).toBe('IDBID0001')
     expect(getDataSource('gibt-es-nicht')).toBeUndefined()
   })
 })

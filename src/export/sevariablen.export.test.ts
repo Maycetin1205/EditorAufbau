@@ -53,7 +53,7 @@ describe('SEvariablen aus dem Baum', () => {
   it('angehaengte Quelle wird zum SEFILELOOP-Eintrag (Vorbild praxis-kanban)', () => {
     const { html, sevariablen } = exportMask(boardsTree(['terminplaner']))
     expect(JSON.parse(sevariablen)).toEqual({
-      SEFILELOOP: [{ INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0005', FELDER: '*' }],
+      SEFILELOOP: [{ INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0001', FELDER: '*' }],
       ERPAPICALL: [],
     })
     // Der Technikwert reist als Attribut mit (Runtime braucht ihn ab 5.3).

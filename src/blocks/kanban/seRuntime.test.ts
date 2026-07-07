@@ -37,27 +37,27 @@ describe('rowsFor (SEDATA -> Zeilen einer Quelle)', () => {
       { ALIAS: 'Kundenhaustiere', Zeilen: [{ x: 1 }] },
       { ALIAS: ' terminplaner ', Zeilen: zeilen },
     ] } }
-    expect(rowsFor(seData, 'Terminplaner', 'IDBID0005')).toEqual(zeilen)
+    expect(rowsFor(seData, 'Terminplaner', 'IDBID0001')).toEqual(zeilen)
   })
 
   it('findet den SEFileLoop-Eintrag in der Objekt-Form (Schluessel oder ALIAS)', () => {
     const perKey = { Daten: { SEFileLoop: { Terminplaner: { Saetze: zeilen } } } }
-    expect(rowsFor(perKey, 'Terminplaner', 'IDBID0005')).toEqual(zeilen)
+    expect(rowsFor(perKey, 'Terminplaner', 'IDBID0001')).toEqual(zeilen)
     const perAlias = { Daten: { SEFileLoop: { egal: { alias: 'Terminplaner', rows: zeilen } } } }
-    expect(rowsFor(perAlias, 'Terminplaner', 'IDBID0005')).toEqual(zeilen)
+    expect(rowsFor(perAlias, 'Terminplaner', 'IDBID0001')).toEqual(zeilen)
   })
 
   it('faellt auf Tabellen zurueck (ALIAS- oder IDB-ID-Schluessel, auch als JSON-String)', () => {
     const perAlias = { Daten: { Tabellen: { Terminplaner: { Daten: zeilen } } } }
-    expect(rowsFor(perAlias, 'Terminplaner', 'IDBID0005')).toEqual(zeilen)
-    const perId = { Daten: { Tabellen: { IDBID0005: { Zeilen: JSON.stringify(zeilen) } } } }
-    expect(rowsFor(perId, 'Terminplaner', 'IDBID0005')).toEqual(zeilen)
+    expect(rowsFor(perAlias, 'Terminplaner', 'IDBID0001')).toEqual(zeilen)
+    const perId = { Daten: { Tabellen: { IDBID0001: { Zeilen: JSON.stringify(zeilen) } } } }
+    expect(rowsFor(perId, 'Terminplaner', 'IDBID0001')).toEqual(zeilen)
   })
 
   it('liefert [] ohne SEDATA, ohne Daten oder ohne passenden Eintrag', () => {
-    expect(rowsFor(undefined, 'Terminplaner', 'IDBID0005')).toEqual([])
-    expect(rowsFor({}, 'Terminplaner', 'IDBID0005')).toEqual([])
-    expect(rowsFor({ Daten: { SEFileLoop: [] } }, 'Terminplaner', 'IDBID0005')).toEqual([])
+    expect(rowsFor(undefined, 'Terminplaner', 'IDBID0001')).toEqual([])
+    expect(rowsFor({}, 'Terminplaner', 'IDBID0001')).toEqual([])
+    expect(rowsFor({ Daten: { SEFileLoop: [] } }, 'Terminplaner', 'IDBID0001')).toEqual([])
   })
 })
 
