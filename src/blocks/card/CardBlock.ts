@@ -20,6 +20,7 @@ import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import {
   chipStyles,
@@ -38,7 +39,22 @@ export class CardBlock extends BasicBlock {
     heading: 'Rückruf Fr. Wagner',
     text: 'Befund Minka besprechen',
     chipText: 'Heute',
+    // Bindungen der Stellen (Kap. 5.2): Feldcode der Datenquelle in
+    // Reichweite (Technikwert, unsichtbar) — '' = ungebunden, die Stelle
+    // zeigt ihren statischen Text.
+    headingField: '',
+    textField: '',
+    chipTextField: '',
   }
+
+  // Bindbare Stellen (Kap. 5.2, Bedienlogik 3): Klick auf die Stelle bindet
+  // sie an ein Feld der Datenquelle in Reichweite (Kanban). Klarnamen für
+  // den Feld-Picker; die Bindung liegt in `<prop>Field` (siehe defaultProps).
+  static readonly bindableSpots: BindableSpot[] = [
+    { prop: 'heading', label: 'Titel' },
+    { prop: 'text', label: 'Textzeile' },
+    { prop: 'chipText', label: 'Chip' },
+  ]
 
   // Einziges Inspector-Feld: die Chip-Art (Bedeutung -> Farbe). Titel/Text/
   // Chip-Text laufen ueber Inline-Edit, nicht ueber den Inspector.
@@ -84,23 +100,35 @@ export class CardBlock extends BasicBlock {
   @property() heading = 'Rückruf Fr. Wagner'
   @property() text = 'Befund Minka besprechen'
   @property() chipText = 'Heute'
+  @property() headingField = ''
+  @property() textField = ''
+  @property() chipTextField = ''
 
+  // Stellen tragen data-ff-spot (Klick-Ziel für den Feld-Picker des Editors)
+  // und data-ff-bound, wenn sie gebunden sind (Daten-Markierung — sichtbar
+  // nur im Editor, siehe BasicBlock-CSS; im Export bleibt sie unsichtbar).
   render(): TemplateResult {
     const v = coerceStatusVariant(this.chipVariant)
     return html`<div class="card">
       <p
         class="heading"
         data-ff-editable
+        data-ff-spot="heading"
+        ?data-ff-bound=${this.headingField !== ''}
         @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'heading')}
       >${this.heading}</p>
       <p
         class="text"
         data-ff-editable
+        data-ff-spot="text"
+        ?data-ff-bound=${this.textField !== ''}
         @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'text')}
       >${this.text}</p>
       <span
         class="chip v-${v}"
         data-ff-editable
+        data-ff-spot="chipText"
+        ?data-ff-bound=${this.chipTextField !== ''}
         @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'chipText')}
       >${this.chipText}</span>
     </div>`

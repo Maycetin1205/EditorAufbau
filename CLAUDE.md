@@ -307,8 +307,25 @@ den Export (Kap. 3).
     (`<ff-kanban source="" …>`) — nicht abgeschwächt, plus neue Tests
     (`sevariablen.export.test.ts`). 63 Unit-Tests + 8 E2E grün; browser-
     verifiziert (Anhängen, Reload-Persistenz, Export-JSON, Lösen).
-  - **5.2 Klick-auf-Stelle-Binding + Beispieldaten-Vorschau** (Feldliste mit
-    Klarnamen aus dem Wörterbuch, Stelle zeigt Beispielwert + Markierung).
+  - ✅ **5.2 Klick-auf-Stelle-Binding + Beispieldaten-Vorschau (2026-07-07):**
+    Registry-Konzept **bindableSpots** (Stelle = Anzeige-Prop + Klarname;
+    Bindung = Feldcode in `<prop>Field`, Default '' in defaultProps →
+    überlebt Persistenz, reist im Export als Attribut — Karte deklariert
+    Titel/Textzeile/Chip). Klick auf die Stelle des selektierten Blocks
+    (Quelle in Reichweite via `Editor.dataSourceFor`: der NÄCHSTE
+    acceptsDataSource-Vorfahr) öffnet den Feld-Picker (Klarname +
+    Beispielwert, nie Feldcodes; „— nicht gebunden —" löst). Gebundene
+    Stelle zeigt sofort den Beispielwert (neues `sample` je Feld im
+    Wörterbuch, Werte aus den Demo-Daten der Repo-Referenzmaske) + grün
+    gepunktete Daten-Markierung — beides NUR im Editor (Host-Attribut
+    `data-ff-editor`, Muster data-editable; Export nachweislich ohne
+    Markierung, Substitution nur auf DOM-Properties, Baum unberührt).
+    Doppelklick: ungebunden = Inline-Edit wie bisher, gebunden = Picker.
+    Beifang-Fix: Inline-Edit-Verwerfen (Escape) zerstörte Lits Render-Marker
+    (`textContent=`-Zuweisung) — Stelle bekam danach nie wieder Updates;
+    jetzt Originalknoten sichern/zurücksetzen. 69 Unit-Tests + 12 E2E grün
+    (4 neue Binding-Fälle inkl. Reload/Lösen/Doppelklick); browser-
+    verifiziert mit Screenshots (Picker, gebundene Karte, Export-Maske).
   - **5.3 Kanban-Datenverhalten im Export** (Spalten aus Statusfeld, Karten
     aus Zeilen, Karte ziehen = Wert zurückschreiben → Zwischenziel erreicht).
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:

@@ -18,6 +18,10 @@ export interface DataSourceField {
   code: string
   // Klarname für den Bediener (z. B. 'Vorname').
   label: string
+  // Beispielwert für die Vorschau im Editor (Kap. 5.2): eine gebundene
+  // Stelle zeigt sofort diesen Wert. Quelle: die Demo-Datensätze der
+  // Repo-Referenzmaske dashboard/praxis-kanban.html (Lisa Wagner / Minka).
+  sample: string
 }
 
 export interface DataSource {
@@ -37,17 +41,17 @@ export const DATA_SOURCES: readonly DataSource[] = [
     name: 'Terminplaner',
     idbId: 'IDBID0005',
     fields: [
-      { code: '10_8', label: 'Adressnummer' },
-      { code: '18_30', label: 'Tierart' },
-      { code: '48_30', label: 'Rasse' },
-      { code: '78_30', label: 'Tiername' },
-      { code: '108_10', label: 'Geburtsdatum' },
-      { code: '118_30', label: 'Behandlung' },
-      { code: '148_5', label: 'Uhrzeit' },
-      { code: '153_10', label: 'Datum' },
-      { code: '199_30', label: 'Vorname' },
-      { code: '229_30', label: 'Nachname' },
-      { code: '259_8', label: 'Zimmer' },
+      { code: '10_8', label: 'Adressnummer', sample: 'K2' },
+      { code: '18_30', label: 'Tierart', sample: 'Katze' },
+      { code: '48_30', label: 'Rasse', sample: 'Hauskatze' },
+      { code: '78_30', label: 'Tiername', sample: 'Minka' },
+      { code: '108_10', label: 'Geburtsdatum', sample: '12.03.2021' },
+      { code: '118_30', label: 'Behandlung', sample: 'Erbrechen seit heute Morgen' },
+      { code: '148_5', label: 'Uhrzeit', sample: '10:30' },
+      { code: '153_10', label: 'Datum', sample: '07.07.2026' },
+      { code: '199_30', label: 'Vorname', sample: 'Lisa' },
+      { code: '229_30', label: 'Nachname', sample: 'Wagner' },
+      { code: '259_8', label: 'Zimmer', sample: '2' },
     ],
   },
   {
@@ -55,11 +59,11 @@ export const DATA_SOURCES: readonly DataSource[] = [
     name: 'Kundenhaustiere',
     idbId: 'IDBID0009',
     fields: [
-      { code: '10_8', label: 'Adressnummer' },
-      { code: '18_30', label: 'Tiername' },
-      { code: '48_30', label: 'Tierart' },
-      { code: '78_30', label: 'Rasse' },
-      { code: '108_10', label: 'Geburtsdatum' },
+      { code: '10_8', label: 'Adressnummer', sample: 'K2' },
+      { code: '18_30', label: 'Tiername', sample: 'Minka' },
+      { code: '48_30', label: 'Tierart', sample: 'Katze' },
+      { code: '78_30', label: 'Rasse', sample: 'Hauskatze' },
+      { code: '108_10', label: 'Geburtsdatum', sample: '12.03.2021' },
     ],
   },
 ]

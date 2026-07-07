@@ -19,6 +19,21 @@ export interface DefaultChildSpec {
   children?: readonly DefaultChildSpec[]
 }
 
+// Bindbare Stelle (Kap. 5.2, Bedienlogik 3): eine Text-Stelle des Blocks,
+// die per Klick an ein Feld der Datenquelle in Reichweite gebunden werden
+// kann. `prop` = die Anzeige-Prop der Stelle (z. B. 'heading'); die Bindung
+// selbst (Feldcode = Technikwert) liegt in der Prop `<prop>Field` und muss
+// in den defaultProps des Blocks stehen (Default '' = ungebunden), damit
+// Persistenz sie erhält und der Export sie als Attribut mitnimmt.
+// `label` = Klarname der Stelle für den Feld-Picker (z. B. 'Titel').
+// Der Block markiert das Stellen-Element im Template mit
+// data-ff-spot="<prop>" (Klick-Ziel) und data-ff-bound (Daten-Markierung,
+// sichtbar nur im Editor — gated über data-ff-editor am Host).
+export interface BindableSpot {
+  prop: string
+  label: string
+}
+
 export interface BlockDefinition {
   type: string
   tagName: string
@@ -52,4 +67,6 @@ export interface BlockDefinition {
   // Vorlagen-id aus core/data/dataSources); der Inspector zeigt die Sektion
   // "Daten", der Export erzeugt daraus den SEFILELOOP. Kein `if type===`.
   acceptsDataSource?: boolean
+  // Bindbare Stellen des Blocks (Kap. 5.2) — siehe BindableSpot.
+  bindableSpots?: readonly BindableSpot[]
 }
