@@ -289,6 +289,28 @@ den Export (Kap. 3).
   von Hand. **Erster Anwendungsfall = das Kanban aus 4K:** Spalten aus
   Statusfeld, Karte ziehen = Wert zurückschreiben → damit ist das
   Zwischenziel Kanban-Dashboard erreicht.
+  - ✅ **5.1 Datenquellen-Vorlagen + Anhängen an Block (2026-07-07):**
+    Modell `src/core/data/dataSources.ts` (Vorlage = id/Anzeigename/IDB-ID/
+    Feld-Wörterbuch; Startbestand Terminplaner `IDBID0005` + Kundenhaustiere
+    `IDBID0009` aus den FELD-Maps der Repo-Masken in `dashboard/` — die
+    EmpfangPraxis-Map liegt nicht im Repo, wird ergänzt sobald geliefert;
+    TODO_-Platzhalter bewusst nicht übernommen). Registry-Flag
+    `acceptsDataSource` nach 4K.4-Muster (Kanban trägt `source`-Prop =
+    Technikwert der Vorlage, defaultProp → überlebt Persistenz), Inspector-
+    Sektion „Daten" (Select mit Anzeigenamen), Datenquellen-Bibliothek als
+    zweites Sidebar-Panel (read-only Liste; Anlegen/Bearbeiten später).
+    Export erzeugt SEFILELOOP aus dem Baum (DIESELBE Quelle wie das HTML,
+    Baum-Reihenfolge, dedupliziert, \uXXXX-ASCII-escaped); `source` reist
+    als Attribut mit (Runtime braucht es ab 5.3). Regel Klarname ≠ Feldcode
+    maschinell erzwungen (`dataSources.test.ts`). Bestehende Exakt-Assertion
+    in `kanban.export.test.ts` an die neue Ausgabe angepasst
+    (`<ff-kanban source="" …>`) — nicht abgeschwächt, plus neue Tests
+    (`sevariablen.export.test.ts`). 63 Unit-Tests + 8 E2E grün; browser-
+    verifiziert (Anhängen, Reload-Persistenz, Export-JSON, Lösen).
+  - **5.2 Klick-auf-Stelle-Binding + Beispieldaten-Vorschau** (Feldliste mit
+    Klarnamen aus dem Wörterbuch, Stelle zeigt Beispielwert + Markierung).
+  - **5.3 Kanban-Datenverhalten im Export** (Spalten aus Statusfeld, Karten
+    aus Zeilen, Karte ziehen = Wert zurückschreiben → Zwischenziel erreicht).
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
   FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
   Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,

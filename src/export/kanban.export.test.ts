@@ -58,7 +58,9 @@ describe('Kanban-Export (echte Bloecke)', () => {
 
   it('Board fuellt die Wurzel, Spalten haben feste Flow-Breite 290px', () => {
     const { html } = exportMask(boardTree())
-    expect(html).toContain('<ff-kanban style="align-self:stretch">') // width fill, KEIN direction-Attribut
+    // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
+    // (Kap. 5.1) ohne angehaengte Quelle.
+    expect(html).toContain('<ff-kanban source="" style="align-self:stretch">')
     expect(html).toContain('heading="Offen" style="width:290px;flex-shrink:0"')
   })
 

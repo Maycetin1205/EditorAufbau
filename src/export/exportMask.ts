@@ -20,6 +20,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { getDataSource, type DataSource } from '../core/data/dataSources'
 import {
   flowItemStyle,
   parseFlowWidth,
@@ -122,6 +123,29 @@ function nodeToHtml(
   return `${open}\n${children}\n${pad}</${def.tagName}>`
 }
 
+// ---------- Datenquellen → SEFILELOOP (Kap. 5.1) ----------
+
+// Sammelt die im Baum angehängten Datenquellen (source-Prop von Blöcken mit
+// acceptsDataSource) in Baum-Reihenfolge, dedupliziert — deterministisch.
+// Unbekannte Vorlagen-ids werden übersprungen (Quelle wurde entfernt).
+function collectDataSources(tree: BlockTree): DataSource[] {
+  const seen = new Set<string>()
+  const acc: DataSource[] = []
+  const visit = (node: BlockNode | undefined): void => {
+    if (!node) return
+    if (getBlockDefinition(node.type)?.acceptsDataSource) {
+      const src = typeof node.props.source === 'string' ? getDataSource(node.props.source) : undefined
+      if (src && !seen.has(src.id)) {
+        seen.add(src.id)
+        acc.push(src)
+      }
+    }
+    node.childIds.forEach((id) => visit(tree[id]))
+  }
+  visit(tree[ROOT_ID])
+  return acc
+}
+
 // ---------- Maske zusammensetzen ----------
 
 export function exportMask(tree: BlockTree, title = 'Maske'): MaskExport {
@@ -163,9 +187,20 @@ export function exportMask(tree: BlockTree, title = 'Maske'): MaskExport {
     '<!--SOFTENGINE-VAR!JWHtmlEnde-->',
   ].join('\n')
 
-  // SEvariablen: aus demselben Modell erzeugt. Ohne Datenquellen (bis Kap. 5)
-  // ist das Gerüst leer, aber gültig und diffbar.
-  const sevariablen = JSON.stringify({ SEFILELOOP: [], ERPAPICALL: [] }, null, 2) + '\n'
+  // SEvariablen: aus DEMSELBEN Baum erzeugt wie das HTML (Grundsatz a).
+  // SEFILELOOP-Einträge nach Vorbild der echten Repo-Masken
+  // (dashboard/praxis-kanban.html): INDEX_NR 0, ALIAS = Anzeigename,
+  // ID = IDB-Tabellen-ID, FELDER '*'. Nicht-ASCII wird \uXXXX-escaped
+  // (gültiges JSON, ASCII-Regel wie beim HTML).
+  const sefileloop = collectDataSources(tree).map((s) => ({
+    INDEX_NR: 0,
+    ALIAS: s.name,
+    ID: s.idbId,
+    FELDER: '*',
+  }))
+  const sevariablen = escapeNonAsciiJs(
+    JSON.stringify({ SEFILELOOP: sefileloop, ERPAPICALL: [] }, null, 2),
+  ) + '\n'
 
   return { html, sevariablen }
 }
