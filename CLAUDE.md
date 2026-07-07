@@ -365,10 +365,16 @@ den Export (Kap. 3).
     `sePut`/`seSend`) + SE-INVENTAR §5 + altem Editor
     (`src/runtime/renderKanban.ts` Drop-Handler, `actions.ts`):
     (a) Schreiben = `basisHTML_SND_MSG('PUT_RELATION', { NR: '174',
-    PARAMS: [pos, len, 'L', pindex, idbId, wert] })` — pos/len aus dem
+    PARAMS: [pos, len, 'L', pindex, relId, wert] })` — pos/len aus dem
     Feldcode gesplittet, pindex = Satznummer der Zeile (Feld `indexField`
     der Quelle, Terminplaner '0_10'), Bridge-Wächter
-    `typeof basisHTML_SND_MSG === 'function'`. (b) Karten-Drag im Export:
+    `typeof basisHTML_SND_MSG === 'function'`. ⚠ **relId ≠ SEFILELOOP-ID:
+    der PUT nutzt die Relations-ID OHNE 'IDB'-Präfix — 'ID0001', nicht
+    'IDBID0001'!** Beweis: behandlung-umbau index.basis.source.html
+    Z. 1645/1663 (`sePut('ID0001', pidx, [[FELD.TP.zimmer, ziel]])` —
+    wortwörtlich unser Anwendungsfall Zimmer-Umschreiben); SEvariablen
+    derselben Maske sagen IDBID0001. Ableitung `idbId.replace(/^IDB/, '')`
+    als purer, getesteter Helfer. (b) Karten-Drag im Export:
     HTML5-Drag auf Daten-Karten, Drop auf Spalte → Wert der Zielspalte
     (statusValue) ins Spalten-Feld schreiben, Zeile im Speicher
     aktualisieren, neu hydrieren (Muster: alter Editor macht exakt das).
