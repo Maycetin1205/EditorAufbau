@@ -19,6 +19,7 @@ import type { FlowDirection } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
+import { connectBoard, disconnectBoard } from './seRuntime'
 
 const SPALTE = KanbanSpalteBlock.blockType
 const KARTE = CardBlock.blockType
@@ -37,8 +38,20 @@ export class KanbanBlock extends BasicBlock {
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
   static readonly acceptsDataSource = true
-  static readonly defaultProps = { width: 'fill', source: '' }
-  static override readonly customProperties: PropertyDescription[] = []
+  // statusField (Kap. 5.3): Feldcode des Spalten-Felds (Technikwert,
+  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. Default ''
+  // in den defaultProps -> überlebt Persistenz, reist als Attribut mit.
+  static readonly defaultProps = { width: 'fill', source: '', statusField: '' }
+  static override readonly customProperties: PropertyDescription[] = [
+    {
+      attributeName: 'statusField',
+      name: 'Spalten aus Feld',
+      description: 'Feld der Datenquelle, dessen Wert bestimmt, in welcher Spalte eine Zeile landet.',
+      isArray: false,
+      maxLength: 0,
+      kind: 'field',
+    },
+  ]
 
   // Beispieldaten = die Karten des abgenommenen Zielbilds (4K.1).
   static readonly defaultChildren: DefaultChildSpec[] = [
@@ -89,6 +102,19 @@ export class KanbanBlock extends BasicBlock {
 
   render(): TemplateResult {
     return html`<div class="board"><slot></slot></div>`
+  }
+
+  // Kap. 5.3: in der EXPORTIERTEN Maske meldet sich das Board bei der
+  // SoftEngine-Anbindung an (Zeilen -> Karten, Spalten-Feld -> Spalte).
+  // Editor-Boards tragen data-ff-editor und werden dort sofort abgewiesen.
+  connectedCallback(): void {
+    super.connectedCallback()
+    connectBoard(this)
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    disconnectBoard(this)
   }
 }
 

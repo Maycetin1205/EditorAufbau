@@ -15,6 +15,10 @@ import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
 
+// Radix-Select verbietet '' als Option-Wert — interner Platzhalter für
+// "kein Feld gewählt" (die Prop bleibt dabei der Leer-String).
+const KEIN_FELD = '__keins__'
+
 function resolveKind(property: PropertyDescription, value: unknown): PropertyKind {
   if (property.kind) return property.kind
   if (typeof value === 'string') return 'text'
@@ -44,10 +48,17 @@ export function Inspector() {
     )
   }
 
+  // Datenquelle in Reichweite (Kap. 5.3): steuert die Sichtbarkeit von
+  // requiresDataSource-Controls und liefert die Feldliste für kind 'field'.
+  const sourceInReach = ed.dataSourceFor(block.id)
+
   const renderPropControl = (property: PropertyDescription) => {
     const value = block.props[property.attributeName]
     const kind = resolveKind(property, value)
     const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
+    // Ohne Quelle in Reichweite bleiben Daten-Controls unsichtbar — die
+    // gespeicherten Werte bleiben erhalten und leben mit der Quelle wieder auf.
+    if ((property.requiresDataSource || kind === 'field') && !sourceInReach) return null
 
     switch (kind) {
       case 'text':
@@ -65,10 +76,38 @@ export function Inspector() {
             onChange={set}
           />
         )
+      // Feld der Datenquelle in Reichweite (Kap. 5.3): Klarnamen sichtbar,
+      // Feldcode (Technikwert) wird gespeichert — Muster DataSection/FieldPicker.
+      case 'field':
+        return (
+          <SelectControl
+            key={property.attributeName}
+            label={property.name}
+            description={property.description}
+            options={[
+              { value: KEIN_FELD, label: '— keins —' },
+              ...(sourceInReach?.fields.map((f) => ({ value: f.code, label: f.label })) ?? []),
+            ]}
+            value={value === '' || value == null ? KEIN_FELD : String(value)}
+            onChange={(v) => set(v === KEIN_FELD ? '' : v)}
+          />
+        )
       default:
         return null
     }
   }
+
+  // Daten-Controls (Kap. 5.3) gehören in die Sektion "Daten", nicht in die
+  // allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
+  const dataProps = def.customProperties.filter(
+    (p) => p.requiresDataSource || p.kind === 'field',
+  )
+  const generalProps = def.customProperties.filter((p) => !dataProps.includes(p))
+  // Sektion zeigen, wenn der Block eine Quelle anhängen kann (Kanban) ODER
+  // seine Daten-Controls gerade sichtbar wären (z. B. Spalte unter einem
+  // Board mit Quelle). Kein Typ-Check, alles Registry-Daten.
+  const showDataSection = def.acceptsDataSource
+    || (dataProps.length > 0 && sourceInReach !== undefined)
 
   return (
     <SidePanel
@@ -76,19 +115,20 @@ export function Inspector() {
       description={`${def.type} · ${block.id.slice(0, 8)}`}
     >
       <div className="flex flex-col gap-5">
-        {def.customProperties.length > 0 && (
+        {generalProps.length > 0 && (
           <div className="flex flex-col gap-3">
-            {def.customProperties.map(renderPropControl)}
+            {generalProps.map(renderPropControl)}
           </div>
         )}
-        {/* Datenquelle anhängen (Kap. 5.1) — nur für Blöcke, die das per
-            Registry-Flag können (Kanban). Kein Typ-Check. */}
-        {def.acceptsDataSource && (
+        {/* Datenquelle anhängen (Kap. 5.1) + Daten-Controls (Kap. 5.3) —
+            nur für Blöcke, die das per Registry deklarieren. Kein Typ-Check. */}
+        {showDataSection && (
           <section className="flex flex-col gap-3">
             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Daten
             </h3>
-            <DataSection block={block} />
+            {def.acceptsDataSource && <DataSection block={block} />}
+            {dataProps.map(renderPropControl)}
           </section>
         )}
         <section className="flex flex-col gap-3">

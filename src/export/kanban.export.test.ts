@@ -59,9 +59,24 @@ describe('Kanban-Export (echte Bloecke)', () => {
   it('Board fuellt die Wurzel, Spalten haben feste Flow-Breite 290px', () => {
     const { html } = exportMask(boardTree())
     // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
-    // (Kap. 5.1) ohne angehaengte Quelle.
-    expect(html).toContain('<ff-kanban source="" style="align-self:stretch">')
-    expect(html).toContain('heading="Offen" style="width:290px;flex-shrink:0"')
+    // (Kap. 5.1) ohne angehaengte Quelle; statusfield=""/statusvalue="" =
+    // Daten-Props aus Kap. 5.3 ohne gesetzte Werte.
+    expect(html).toContain('<ff-kanban source="" statusfield="" style="align-self:stretch">')
+    expect(html).toContain('heading="Offen" statusvalue="" style="width:290px;flex-shrink:0"')
+  })
+
+  it('Spalten-Feld + Datenwerte der Spalten reisen als Attribute (Kap. 5.3)', () => {
+    const tree = boardTree()
+    const board = tree[tree[ROOT_ID].childIds[0]]
+    board.props.source = 'terminplaner'
+    board.props.statusField = '259_8'
+    tree[board.childIds[0]].props.statusValue = '1'
+    tree[board.childIds[1]].props.statusValue = '2'
+    const { html } = exportMask(tree)
+    expect(html).toContain('<ff-kanban source="terminplaner" statusfield="259_8"')
+    expect(html).toContain('heading="Offen" statusvalue="1"')
+    expect(html).toContain('heading="In Arbeit" statusvalue="2"')
+    expect(html).toContain('heading="Fertig" statusvalue=""')
   })
 
   it('Spalten tragen Bedeutung + Titel als Attribute (ASCII-escaped)', () => {

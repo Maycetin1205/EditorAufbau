@@ -326,8 +326,31 @@ den Export (Kap. 3).
     jetzt Originalknoten sichern/zurücksetzen. 69 Unit-Tests + 12 E2E grün
     (4 neue Binding-Fälle inkl. Reload/Lösen/Doppelklick); browser-
     verifiziert mit Screenshots (Picker, gebundene Karte, Export-Maske).
-  - **5.3 Kanban-Datenverhalten im Export** (Spalten aus Statusfeld, Karten
-    aus Zeilen, Karte ziehen = Wert zurückschreiben → Zwischenziel erreicht).
+  - ✅ **5.3a Kanban-Datenverhalten im Export — Lesen (2026-07-07):**
+    Board bekommt „Spalten aus Feld" (neues PropertyDescription-Konzept
+    `kind: 'field'`: Klarnamen sichtbar, Feldcode als Technikwert in
+    `statusField`), Spalte bekommt „Datenwert dieser Spalte" (`statusValue`;
+    neues Flag `requiresDataSource` — Daten-Controls erscheinen in der
+    Inspector-Sektion „Daten" und nur mit Quelle in Reichweite). In der
+    exportierten Maske (`src/blocks/kanban/seRuntime.ts`, Teil des
+    Runtime-Bündels): SEDATA lesen nach Funktionsliste der Referenzmaske
+    (SEFileLoop/Tabellen, Feldcode direkt oder pos_len aus dem SATZ), jede
+    Zeile wird eine Karte (Vorlage = erste gestaltete Karte; gebundene
+    Stellen aus 5.2 zeigen Zeilenwerte, ungebundene den statischen Text),
+    exakter Wertevergleich (getrimmt, Groß/klein egal) bestimmt die Spalte,
+    kein Treffer → erste Spalte (Auffang); Erstellen/initData/ReloadData +
+    SEDATA-Poll wie die Referenzmaske. Läuft NUR im Export
+    (data-ff-editor-Wächter, Editor hydriert nie); ohne Spalten-Feld bleibt
+    der Export statisch wie bisher. 80 Unit-Tests + 14 E2E grün (neu:
+    seRuntime.test.ts für die puren Helfer, kanban-data.spec.ts lädt die
+    exportierte Maske mit gestelltem SEDATA; Kanban-Export-Assertions
+    erweitert); browser-verifiziert mit Screenshots (Editor-Bedienung +
+    hydrierte Maske: 4 Zeilen → 4 Karten nach Zimmer verteilt).
+  - **5.3b Karte ziehen = Wert zurückschreiben** (→ Zwischenziel erreicht):
+    BLOCKIERT auf die Schreib-Schnittstelle — beide Referenzmasken in
+    `dashboard/` lesen nur, die Spec liegt in `behandlung-umbau/
+    SE-INVENTAR.md` (nicht in diesem Repo; kein Muster → nicht raten).
+    Nutzer liefert den Schreib-Abschnitt oder hängt das Repo an die Session.
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
   FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
   Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,
