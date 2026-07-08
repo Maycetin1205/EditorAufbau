@@ -120,6 +120,33 @@ export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
   },
 ]
 
+// ---------- Pure Helfer für das Eingabe-Formular (Kap. 5.4b) ----------
+// Regel Technikwert ≠ Anzeigename: der Bediener gibt Klarname + Position +
+// Länge bzw. eine Tabellennummer ein — die Technikwerte ('pos_len',
+// 'IDBIDnnnn') entstehen daraus unsichtbar. Ungültige Eingaben ergeben ''
+// (das Formular zeigt dann einen Fehler, es wird nie geraten).
+
+// Position + Länge -> Feldcode: ('193', '30') -> '193_30'. Position darf 0
+// sein (Satznummer '0_10'), Länge muss mindestens 1 sein.
+export function fieldCode(pos: string, len: string): string {
+  const p = pos.trim()
+  const l = len.trim()
+  if (!/^\d+$/.test(p) || !/^\d+$/.test(l) || Number(l) < 1) return ''
+  return `${p}_${l}`
+}
+
+// Tabellennummer -> IDB-ID: '7' -> 'IDBID0007' (SoftEngine-Format IDBIDnnnn).
+export function idbIdFromNumber(nr: string): string {
+  const n = nr.trim()
+  return /^\d{1,4}$/.test(n) ? `IDBID${n.padStart(4, '0')}` : ''
+}
+
+// Rückweg fürs Bearbeiten: 'IDBID0007' -> '7'; alles andere -> ''.
+export function numberFromIdbId(idbId: string | undefined): string {
+  const m = /^IDBID(\d{4})$/.exec(idbId ?? '')
+  return m ? String(Number(m[1])) : ''
+}
+
 // Baut aus rohen (evtl. kaputten) localStorage-Daten eine saubere
 // Vorlagen-Liste (Muster: sanitizeTree in Editor.ts — strukturell prüfen,
 // Unbrauchbares verwerfen, nie raten). Inhaltliche Regeln (Klarname kein

@@ -11,6 +11,9 @@ import { describe, expect, it } from 'vitest'
 import {
   BUILTIN_DATA_SOURCES,
   felderFor,
+  fieldCode,
+  idbIdFromNumber,
+  numberFromIdbId,
   sanitizeDataSources,
   tableIdFor,
   type DataSource,
@@ -95,6 +98,35 @@ describe('Quellen-Arten → Tabellen-ID + FELDER-Form (Kap. 5.4)', () => {
 
   it('IDB ohne idbId ergibt eine leere Tabellen-ID (Formular erzwingt die Eingabe)', () => {
     expect(tableIdFor({ ...stamm('idb'), idbId: undefined })).toBe('')
+  })
+})
+
+// Kap. 5.4b: der Bediener gibt Klarname + Position + Länge bzw. eine
+// Tabellennummer ein — die Technikwerte entstehen unsichtbar daraus.
+describe('Formular-Helfer (Eingabe -> Technikwert)', () => {
+  it('fieldCode: Position + Länge -> pos_len (Position 0 erlaubt, Länge >= 1)', () => {
+    expect(fieldCode('193', '30')).toBe('193_30')
+    expect(fieldCode(' 0 ', '10')).toBe('0_10')
+    expect(fieldCode('193', '0')).toBe('')
+    expect(fieldCode('a', '30')).toBe('')
+    expect(fieldCode('', '30')).toBe('')
+    expect(fieldCode('1.5', '30')).toBe('')
+  })
+
+  it('idbIdFromNumber: Tabellennummer -> IDBIDnnnn', () => {
+    expect(idbIdFromNumber('7')).toBe('IDBID0007')
+    expect(idbIdFromNumber(' 12 ')).toBe('IDBID0012')
+    expect(idbIdFromNumber('1234')).toBe('IDBID1234')
+    expect(idbIdFromNumber('12345')).toBe('')
+    expect(idbIdFromNumber('x')).toBe('')
+    expect(idbIdFromNumber('')).toBe('')
+  })
+
+  it('numberFromIdbId: Rückweg fürs Bearbeiten', () => {
+    expect(numberFromIdbId('IDBID0007')).toBe('7')
+    expect(numberFromIdbId('IDBID1234')).toBe('1234')
+    expect(numberFromIdbId('ADR')).toBe('')
+    expect(numberFromIdbId(undefined)).toBe('')
   })
 })
 

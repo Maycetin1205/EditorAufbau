@@ -411,8 +411,9 @@ den Export (Kap. 3).
     (Relation-Vorlage, siehe 5.5), nicht als Code. Der Standard-PUT
     (NR 174, Param-Layout aus (a)) ist nur die MITGELIEFERTE Vorlage,
     die das Kanban standardmäßig benutzt.
-  - **5.4 Datenquellen-Editor** `[kritisch]` (Nutzer-Anforderung
-    2026-07-07): Felder sind je SoftEngine-Installation INDIVIDUELL (nur
+  - ✅ **5.4 Datenquellen-Editor (KOMPLETT 2026-07-08)** `[kritisch]`
+    (Nutzer-Anforderung 2026-07-07): Felder sind je
+    SoftEngine-Installation INDIVIDUELL (nur
     wenige Stammfelder wie Adressstamm sind überall gleich) → der Bediener
     muss Datenquellen + Felder SELBST anlegen/bearbeiten können: Klarname
     + Feldposition + Feldlänge eingeben (der Feldcode `pos_len` entsteht
@@ -458,6 +459,27 @@ den Export (Kap. 3).
       findRuntimeDataSource, Stamm-FELDER, FF_DATA_SOURCES-Einbettung inkl.
       ASCII-Escape); browser-verifiziert mit Screenshots (Editor-Bedienung,
       Export mit Einbettung, hydrierte Maske 4 Zeilen → 2/1/1).
+    - ✅ **5.4b Formular-UI: Anlegen/Bearbeiten/Löschen (2026-07-08):**
+      Bibliothek (Sidebar) mit „+ Neue Datenquelle", Stift + Kreuzchen je
+      Eintrag (Rückfrage; deutliche Warnung wenn in der Maske benutzt —
+      Registry-Scan über acceptsDataSource, Block bleibt stehen, Bindung
+      ruht). Formular als neues Modal-Molekül (`ui/molecules/modal.tsx`,
+      handgebaut nach FieldPicker-Muster, keine neue Abhängigkeit):
+      Anzeigename, „Art"-Select mit Klarnamen (IDB-Tabelle/Adressstamm/
+      Artikelstamm/Beleg), bei IDB Tabellennummer (Eingabe „9" →
+      `IDBID0009` entsteht unsichtbar; pure Helfer `idbIdFromNumber`/
+      `numberFromIdbId`/`fieldCode` in dataSources.ts, getestet),
+      Satznummer Position/Länge (bei Neu-IDB vorbelegt 0/10; leer = nur
+      lesen), Felder-Zeilen Klarname+Position+Länge+Beispielwert mit
+      „+ Feld"/Kreuzchen. Validierung erst beim Speichern (Klarname nie
+      leer/nie Feldcode, Zahlen-Pflicht, Duplikat-Codes); Bestandsfelder
+      mit Nicht-pos_len-Code behalten ihren Technikwert, solange
+      Position/Länge leer bleiben. Bearbeiten hält die id stabil →
+      angehängte Blöcke behalten ihre Quelle. 115 Unit-Tests + 19 E2E grün
+      (neu `e2e/datenquellen.spec.ts`: Anlegen→Binden→Export→Reload,
+      Validierung, Umbenennen mit stabiler id, Löschen mit/ohne
+      Benutzt-Warnung); browser-verifiziert mit Screenshots (Formular,
+      Feld-Picker mit eigenen Feldern samt Beispielwert).
   - **5.5 Relation-Vorlagen-Bibliothek** `[kritisch]` (Nutzer-Anforderung
     2026-07-07): GET/PUT-Relations sind wie Datenquellen BENUTZERDEFINIERTE
     VORLAGEN — der Bediener gibt Anzeigename, Verb (GET_RELATION /
