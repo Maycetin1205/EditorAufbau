@@ -432,6 +432,32 @@ den Export (Kap. 3).
     behandlung-umbau). Modell-Referenz: alter Editor
     `src/types/index.ts` (DataSourceEntry-Varianten idb/beleg/
     adressstamm/memtab, `freiselekt` bei Stammquellen).
+    - ✅ **5.4a Fundament: Modell + Store + Export (2026-07-08):**
+      Datenquellen sind jetzt gelebte Nutzerdaten statt Konstanten. Modell
+      (`dataSources.ts`): `kind` (idb/adressstamm/artikelstamm/beleg), pure
+      Helfer `tableIdFor` (IDB-ID bzw. feste ADR/ART/BEL) + `felderFor`
+      ('*' bzw. explizite pos_len-Liste — Formen belegt aus den echten
+      behandlung-umbau-SEvariablen) + `sanitizeDataSources` (struktureller
+      Lader nach sanitizeTree-Muster). Neuer `DataSourceStore`
+      (`src/state/`, Subject + localStorage `aufbau_editor_datenquellen_v1`
+      + entprelltes Speichern wie Editor.ts; Hook `useDataSources`): Seed =
+      BUILTIN_DATA_SOURCES nur beim allerersten Start, danach gehören die
+      Vorlagen dem Bediener (Löschen überlebt Reload, kaputtes JSON → Seed);
+      add vergibt frische ids, update hält die id stabil (angehängte Blöcke
+      behalten ihre Quelle), KEIN Undo (Bibliothek ≠ Canvas-Geste, UI fragt
+      nach). Konsumenten (Editor.dataSourceFor, DataSection, Inspector,
+      DataSourceList, BlockHost) lesen aus dem Store. **Export-Architektur:
+      die Quellen-Definitionen REISEN in der Maske** (`var FF_DATA_SOURCES`
+      mit id/name/tableId/indexField, aus DERSELBEN collectDataSources-
+      Quelle wie die SEFILELOOP — Grundsatz a): seRuntime löste bisher über
+      das STATISCHE Wörterbuch im Bündel auf, mit Nutzer-Quellen bräche das;
+      jetzt `findRuntimeDataSource` übers Global (Bündel enthält nachweislich
+      kein Wörterbuch mehr). exportMask nimmt die Bibliothek als Parameter
+      (Default = Store; Tests stellen feste Listen). SEFILELOOP-Form je Art.
+      112 Unit-Tests + 15 E2E grün (DataSourceStore.test, sanitize-Fälle,
+      findRuntimeDataSource, Stamm-FELDER, FF_DATA_SOURCES-Einbettung inkl.
+      ASCII-Escape); browser-verifiziert mit Screenshots (Editor-Bedienung,
+      Export mit Einbettung, hydrierte Maske 4 Zeilen → 2/1/1).
   - **5.5 Relation-Vorlagen-Bibliothek** `[kritisch]` (Nutzer-Anforderung
     2026-07-07): GET/PUT-Relations sind wie Datenquellen BENUTZERDEFINIERTE
     VORLAGEN — der Bediener gibt Anzeigename, Verb (GET_RELATION /

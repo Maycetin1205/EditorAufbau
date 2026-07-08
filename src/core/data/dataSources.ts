@@ -17,6 +17,26 @@
 // sieht ausschließlich `name` und `label` (maschinell erzwungen in
 // dataSources.test.ts).
 
+// Quellen-ARTEN (Kap. 5.4, Nutzer-Klarstellung 2026-07-07): nicht nur
+// IDB-Tabellen — auch Adressstamm, Artikelstamm, Belege (später MEMTAB/
+// ERPAPICALL). Die Art bestimmt die SEvariablen-Form: IDB → SEFILELOOP mit
+// FELDER '*', Stammtabellen → feste Tabellen-ID (ADR/ART/BEL) + explizite
+// pos_len-Liste. Beleg: behandlung-umbau empfang/index.basis.SEvariablen.json
+// ({ ID: 'ADR', FELDER: '2_8,…' } / { ID: 'BEL', FELDER: '1_1,…' } /
+// { ID: 'IDBID0001', FELDER: '*' }; ART analog in behandlung/).
+export type DataSourceKind = 'idb' | 'adressstamm' | 'artikelstamm' | 'beleg'
+
+export const DATA_SOURCE_KINDS: readonly DataSourceKind[] = [
+  'idb', 'adressstamm', 'artikelstamm', 'beleg',
+]
+
+// Feste SoftEngine-Tabellen-IDs der Stammtabellen (Technikwerte, Beleg s.o.).
+const STAMM_TABLE_IDS: Record<Exclude<DataSourceKind, 'idb'>, string> = {
+  adressstamm: 'ADR',
+  artikelstamm: 'ART',
+  beleg: 'BEL',
+}
+
 export interface DataSourceField {
   // Technikwert: direkter Property-Name im Datensatz ODER 'pos_len'
   // (Position_Länge im SATZ, z. B. '193_30').
@@ -33,8 +53,11 @@ export interface DataSource {
   id: string
   // Anzeigename der Vorlage; wird im Export zum SEFILELOOP-ALIAS.
   name: string
-  // SoftEngine-Tabellen-ID (IDB), z. B. 'IDBID0001'.
-  idbId: string
+  // Art der Quelle (bestimmt Tabellen-ID + FELDER-Form, s. o.).
+  kind: DataSourceKind
+  // SoftEngine-Tabellen-ID, z. B. 'IDBID0001' — NUR bei kind 'idb'
+  // (Stammtabellen haben feste IDs, siehe tableIdFor).
+  idbId?: string
   // Feldcode der Satznummer (pindex) — braucht der Schreibweg (Kap. 5.3b):
   // PUT_RELATION adressiert den Satz über diese Nummer. Kein Anzeige-Feld.
   indexField?: string
@@ -42,10 +65,25 @@ export interface DataSource {
   fields: readonly DataSourceField[]
 }
 
-export const DATA_SOURCES: readonly DataSource[] = [
+// SoftEngine-Tabellen-ID einer Quelle: bei IDB die eingegebene IDB-ID,
+// bei Stammtabellen die feste ID der Art.
+export function tableIdFor(source: DataSource): string {
+  return source.kind === 'idb' ? (source.idbId ?? '') : STAMM_TABLE_IDS[source.kind]
+}
+
+// FELDER-Eintrag der SEFILELOOP: IDB-Tabellen dürfen '*', Stammtabellen
+// brauchen die explizite pos_len-Liste (Reihenfolge = Feld-Wörterbuch).
+export function felderFor(source: DataSource): string {
+  return source.kind === 'idb' ? '*' : source.fields.map((f) => f.code).join(',')
+}
+
+// Mitgelieferter Startbestand (Kap. 5.4: bleibt als Vorlage; ab jetzt nur
+// noch der SEED des DataSourceStore — die gelebte Wahrheit liegt im Store).
+export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
   {
     id: 'terminplaner',
     name: 'Terminplaner',
+    kind: 'idb',
     idbId: 'IDBID0001',
     indexField: '0_10',
     fields: [
@@ -67,6 +105,7 @@ export const DATA_SOURCES: readonly DataSource[] = [
   {
     id: 'kundenhaustiere',
     name: 'Kundenhaustiere',
+    kind: 'idb',
     idbId: 'IDBID0004',
     fields: [
       { code: '10_8', label: 'Adressnummer', sample: 'K2' },
@@ -81,6 +120,38 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
 ]
 
-export function getDataSource(id: string): DataSource | undefined {
-  return DATA_SOURCES.find((s) => s.id === id)
+// Baut aus rohen (evtl. kaputten) localStorage-Daten eine saubere
+// Vorlagen-Liste (Muster: sanitizeTree in Editor.ts — strukturell prüfen,
+// Unbrauchbares verwerfen, nie raten). Inhaltliche Regeln (Klarname kein
+// Feldcode usw.) erzwingt das Eingabe-Formular, nicht der Lader — gespeicherte
+// Nutzerdaten werden hier nicht umgeschrieben.
+export function sanitizeDataSources(raw: unknown): DataSource[] {
+  if (!Array.isArray(raw)) return []
+  const acc: DataSource[] = []
+  const seen = new Set<string>()
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue
+    const e = entry as Record<string, unknown>
+    if (typeof e.id !== 'string' || e.id === '' || seen.has(e.id)) continue
+    if (typeof e.name !== 'string' || e.name.trim() === '') continue
+    if (typeof e.kind !== 'string' || !DATA_SOURCE_KINDS.includes(e.kind as DataSourceKind)) continue
+    const fields: DataSourceField[] = []
+    for (const f of Array.isArray(e.fields) ? e.fields : []) {
+      if (!f || typeof f !== 'object') continue
+      const ff = f as Record<string, unknown>
+      if (typeof ff.code !== 'string' || ff.code === '') continue
+      if (typeof ff.label !== 'string' || ff.label === '') continue
+      fields.push({ code: ff.code, label: ff.label, sample: typeof ff.sample === 'string' ? ff.sample : '' })
+    }
+    seen.add(e.id)
+    acc.push({
+      id: e.id,
+      name: e.name,
+      kind: e.kind as DataSourceKind,
+      ...(typeof e.idbId === 'string' && e.idbId !== '' ? { idbId: e.idbId } : {}),
+      ...(typeof e.indexField === 'string' && e.indexField !== '' ? { indexField: e.indexField } : {}),
+      fields,
+    })
+  }
+  return acc
 }

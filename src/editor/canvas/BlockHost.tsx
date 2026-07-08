@@ -23,6 +23,7 @@ import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { resolveChildDirection, type FlowDirection } from '../../core/blocks/flowLayout'
 import { editor } from '../../state/Editor'
+import { useDataSources } from '../../state/useDataSources'
 import { FieldPicker } from './FieldPicker'
 
 interface BlockHostProps {
@@ -60,7 +61,9 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   const isContainer = def?.acceptsChildren ?? false
   // Datenquelle in Reichweite (Kap. 5.2) — nur für Blöcke mit bindbaren
   // Stellen relevant. BlockHost rendert bei jeder Store-Änderung neu (Canvas
-  // abonniert den Store), darum ist der Wert hier immer aktuell.
+  // abonniert den Store) UND bei Vorlagen-Änderungen (Kap. 5.4: Bibliothek
+  // ist editierbar — Beispielwerte/Klarnamen müssen sofort nachziehen).
+  useDataSources()
   const bindableSpots = def?.bindableSpots ?? KEINE_SPOTS
   const dataSource = bindableSpots.length > 0 ? editor.dataSourceFor(block.id) : undefined
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte

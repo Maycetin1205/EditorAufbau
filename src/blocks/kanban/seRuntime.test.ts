@@ -5,7 +5,34 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-import { columnIndexFor, getField, rowsFor, setField } from './seRuntime'
+import { columnIndexFor, findRuntimeDataSource, getField, rowsFor, setField } from './seRuntime'
+
+// Kap. 5.4: die exportierte Maske traegt ihre Quellen-Definitionen selbst
+// (var FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.
+describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
+  const liste = [
+    { id: 'terminplaner', name: 'Terminplaner', tableId: 'IDBID0001', indexField: '0_10' },
+    { id: 'adressen', name: 'Adressen', tableId: 'ADR', indexField: '' },
+  ]
+
+  it('findet den Eintrag zur source-id', () => {
+    expect(findRuntimeDataSource(liste, 'terminplaner')).toEqual(liste[0])
+    expect(findRuntimeDataSource(liste, 'adressen')).toEqual(liste[1])
+  })
+
+  it('liefert undefined bei unbekannter/leerer id oder fehlender Liste', () => {
+    expect(findRuntimeDataSource(liste, 'gibt-es-nicht')).toBeUndefined()
+    expect(findRuntimeDataSource(liste, '')).toBeUndefined()
+    expect(findRuntimeDataSource(undefined, 'terminplaner')).toBeUndefined()
+    expect(findRuntimeDataSource('quatsch', 'terminplaner')).toBeUndefined()
+  })
+
+  it('ignoriert kaputte Eintraege statt zu raten; fehlendes indexField wird leer', () => {
+    expect(findRuntimeDataSource([{ id: 'x', name: 42, tableId: 'A' }], 'x')).toBeUndefined()
+    expect(findRuntimeDataSource([{ id: 'x', name: 'X', tableId: 'A' }], 'x'))
+      .toEqual({ id: 'x', name: 'X', tableId: 'A', indexField: '' })
+  })
+})
 
 describe('getField (Feldcode -> Wert)', () => {
   it('liest direkte Properties und trimmt', () => {

@@ -6,12 +6,13 @@
 // Technikwerte (IDB-ID, Feldcodes) bleiben unsichtbar.
 
 import { Database } from 'lucide-react'
-import { DATA_SOURCES } from '../../core/data/dataSources'
+import { useDataSources } from '../../state/useDataSources'
 
 export function DataSourceList() {
+  const sources = useDataSources().list
   return (
     <div className="flex flex-col gap-1">
-      {DATA_SOURCES.map((s) => (
+      {sources.map((s) => (
         <div
           key={s.id}
           className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-xs"
