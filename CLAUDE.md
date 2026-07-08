@@ -376,12 +376,12 @@ den Export (Kap. 3).
     15 E2E grün (relations.test.ts, setField-Fälle, kanban-data:
     Drag-Fall mit exakter PARAMS-Assertion
     `['253','30','L','7','ID0001','3']` + No-Op-Drops); Screenshots
-    vor/nach Zug abgegeben. ⚠ OFFEN (bewusst dokumentiert): die
-    PARAMS-TYPEN (alle Strings, wie die Laufzeit sie liefert) sind noch
-    NICHT gegen die echte sePut-Quelle geprüft — add_repo-Freigabe für
-    `behandlung-umbau` kam nicht durch. Falls SoftEngine Zahlen erwartet:
-    Korrektur NUR an der Vorlage in relations.ts (Daten, kein Code) —
-    beim ersten SoftEngine-Test verifizieren!
+    vor/nach Zug abgegeben. ✅ PARAMS-Typen VERIFIZIERT (2026-07-08,
+    Folgesession mit behandlung-umbau-Zugriff): `sePut` in
+    `index.basis.source.html` Z. 878 baut die PARAMS als
+    `[pl[0], pl[1], vart, String(pindex), idbidRel, String(wert)]` —
+    alle sechs Strings, exakt wie unsere Standard-Vorlage. Keine
+    Korrektur nötig; erster SoftEngine-Test bleibt übliche Abnahme.
     Ursprüngliche Spec (bleibt der Kontrakt): ENTBLOCKT 2026-07-07 — Schreib-Spec liegt
     vor, verifiziert aus `behandlung-umbau` (Block "SE-ADAPTER 4/4",
     `sePut`/`seSend`) + SE-INVENTAR §5 + altem Editor
