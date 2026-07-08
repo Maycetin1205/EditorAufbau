@@ -5,7 +5,15 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-import { columnIndexFor, findRuntimeDataSource, getField, rowsFor, setField } from './seRuntime'
+import {
+  columnIndexFor,
+  findRuntimeDataSource,
+  findRuntimeRelation,
+  formatNowDate,
+  getField,
+  rowsFor,
+  setField,
+} from './seRuntime'
 
 // Kap. 5.4: die exportierte Maske traegt ihre Quellen-Definitionen selbst
 // (var FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.
@@ -31,6 +39,39 @@ describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
     expect(findRuntimeDataSource([{ id: 'x', name: 42, tableId: 'A' }], 'x')).toBeUndefined()
     expect(findRuntimeDataSource([{ id: 'x', name: 'X', tableId: 'A' }], 'x'))
       .toEqual({ id: 'x', name: 'X', tableId: 'A', indexField: '' })
+  })
+})
+
+// Kap. 5.5: die exportierte Maske traegt ihre Relation-Vorlagen selbst
+// (var FF_RELATIONS aus exportMask) — hier die pure Aufloesung dazu.
+describe('findRuntimeRelation (FF_RELATIONS -> Vorlage)', () => {
+  const liste = [
+    { id: 'standard-put', verb: 'PUT_RELATION', nr: '174', params: ['{FELD_POS}', 'L'] },
+    { id: 'termin', verb: 'GET_RELATION', nr: '640', params: ['{PINDEX}'] },
+  ]
+
+  it('findet die Vorlage zur id (nur Technikwerte, kein Anzeigename noetig)', () => {
+    expect(findRuntimeRelation(liste, 'standard-put')).toEqual(liste[0])
+    expect(findRuntimeRelation(liste, 'termin')).toEqual(liste[1])
+  })
+
+  it('liefert undefined bei unbekannter/leerer id oder fehlender Liste', () => {
+    expect(findRuntimeRelation(liste, 'gibt-es-nicht')).toBeUndefined()
+    expect(findRuntimeRelation(liste, '')).toBeUndefined()
+    expect(findRuntimeRelation(undefined, 'standard-put')).toBeUndefined()
+  })
+
+  it('ignoriert kaputte Eintraege statt zu raten (unbekanntes Verb, params kein Array)', () => {
+    expect(findRuntimeRelation([{ id: 'x', verb: 'X', nr: '1', params: [] }], 'x')).toBeUndefined()
+    expect(findRuntimeRelation([{ id: 'x', verb: 'PUT_RELATION', nr: '1', params: 'nope' }], 'x')).toBeUndefined()
+    expect(findRuntimeRelation([{ id: 'x', verb: 'PUT_RELATION', nr: '', params: [] }], 'x')).toBeUndefined()
+  })
+})
+
+describe('formatNowDate ({NOW_DATE}-Platzhalter)', () => {
+  it('formatiert deutsches Datum mit fuehrenden Nullen', () => {
+    expect(formatNowDate(new Date(2026, 6, 8))).toBe('08.07.2026')
+    expect(formatNowDate(new Date(2026, 11, 25))).toBe('25.12.2026')
   })
 })
 

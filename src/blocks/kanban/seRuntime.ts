@@ -23,10 +23,12 @@
 
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import {
-  getRelationTemplate,
+  RELATION_VERBS,
   relIdFromIdbId,
   resolveParams,
   splitFieldCode,
+  type RelationTemplate,
+  type RelationVerb,
 } from '../../core/data/relations'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -66,6 +68,34 @@ export function findRuntimeDataSource(list: unknown, id: string): RuntimeDataSou
     }
   }
   return undefined
+}
+
+// Relation-Vorlage in der EXPORTIERTEN Maske (Kap. 5.5): die Vorlagen sind
+// benutzerdefiniert und leben im Editor-localStorage — exportMask bettet die
+// benutzten Vorlagen als `var FF_RELATIONS = […]` ein (Muster
+// FF_DATA_SOURCES). Der Anzeigename reist nicht mit (Laufzeit braucht nur
+// Technikwerte). Kaputte/fremde Einträge werden ignoriert — nie raten.
+export type RuntimeRelation = Pick<RelationTemplate, 'id' | 'verb' | 'nr' | 'params'>
+
+export function findRuntimeRelation(list: unknown, id: string): RuntimeRelation | undefined {
+  if (!Array.isArray(list) || id === '') return undefined
+  for (const entry of list) {
+    if (!isRecord(entry) || entry.id !== id) continue
+    if (typeof entry.verb !== 'string' || !RELATION_VERBS.includes(entry.verb as RelationVerb)) continue
+    if (typeof entry.nr !== 'string' || entry.nr === '') continue
+    if (!Array.isArray(entry.params) || entry.params.some((p) => typeof p !== 'string')) continue
+    return { id, verb: entry.verb as RelationVerb, nr: entry.nr, params: entry.params as string[] }
+  }
+  return undefined
+}
+
+// Deutsches Datum fuer den Platzhalter {NOW_DATE} ('08.07.2026' — dieselbe
+// Form wie die Datums-Felder der Referenzmaske). Pur: der Aufrufer stellt
+// das Datum (sendPut nimmt das echte, Tests ein festes).
+export function formatNowDate(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return `${dd}.${mm}.${d.getFullYear()}`
 }
 
 function asTrimmedString(v: unknown): string {
@@ -340,31 +370,54 @@ function columnOfEvent(board: HTMLElement, e: Event): HTMLElement | null {
   return null
 }
 
-// PUT über die mitgelieferte Standard-Vorlage (relations.ts). Bridge-
-// Wächter: außerhalb von SoftEngine (Vorschau, Tests ohne Stub) wird nur
-// lokal verschoben, nichts gesendet. PUT ist fire-and-forget (Spec (c)).
-function sendPut(board: HTMLElement, fieldCode: string, pindex: string, value: string): void {
+// Der Schreibweg des Boards (Kap. 5.5): die am Board GEWÄHLTE Vorlage +
+// die Datenquelle, beide aufgelöst über die eingebetteten FF_*-Daten.
+// Kein `putrelation` (leer/unbekannt) ODER keine Quelle -> undefined =
+// das Board schreibt nicht (read-only). Der Schreibweg kennt kein Protokoll
+// mehr, nur die Vorlage.
+function writePathFor(board: HTMLElement): { template: RuntimeRelation; relId: string } | undefined {
+  const g = seGlobal()
+  const template = findRuntimeRelation(g.FF_RELATIONS, board.getAttribute('putrelation') ?? '')
+  const source = findRuntimeDataSource(g.FF_DATA_SOURCES, board.getAttribute('source') ?? '')
+  if (!template || !source) return undefined
+  return { template, relId: relIdFromIdbId(source.tableId) }
+}
+
+// PUT über die aufgelöste Vorlage. Bridge-Wächter: außerhalb von SoftEngine
+// (Vorschau, Tests ohne Stub) wird nichts gesendet — der lokale Zug ist dann
+// die Vorschau. PUT ist fire-and-forget (Spec (c)).
+function sendPut(
+  path: { template: RuntimeRelation; relId: string },
+  fieldCode: string,
+  pindex: string,
+  value: string,
+): void {
   const g = seGlobal()
   if (typeof g.basisHTML_SND_MSG !== 'function') return
-  const template = getRelationTemplate('standard-put')
-  const source = findRuntimeDataSource(g.FF_DATA_SOURCES, board.getAttribute('source') ?? '')
   const field = splitFieldCode(fieldCode)
-  if (!template || !source || !field) return
-  g.basisHTML_SND_MSG(template.verb, {
-    NR: template.nr,
-    PARAMS: resolveParams(template, {
+  if (!field) return
+  g.basisHTML_SND_MSG(path.template.verb, {
+    NR: path.template.nr,
+    PARAMS: resolveParams(path.template, {
       FELD_POS: field.pos,
       FELD_LEN: field.len,
       PINDEX: pindex,
-      RELID: relIdFromIdbId(source.tableId),
+      // Beim Kanban-Drop ist die gezogene Karte der betroffene Satz —
+      // {DROP_PINDEX} und {PINDEX} sind hier derselbe Wert. {SELKEY}
+      // (Auswahl) füllt erst Kap. 8.
+      DROP_PINDEX: pindex,
+      RELID: path.relId,
       VALUE: value,
+      NOW_DATE: formatNowDate(new Date()),
     }),
   })
 }
 
 // Drop einer Daten-Karte auf eine Spalte. Spalte ohne Datenwert ist kein
 // Schreibziel; gleicher Wert = kein Zug (derselbe Vergleich wie beim
-// Verteilen: getrimmt, Groß/klein egal).
+// Verteilen: getrimmt, Groß/klein egal). Ohne konfigurierten Schreibweg
+// (keine Vorlage gewählt) bewegt sich NICHTS — ein rein lokaler Zug wäre
+// eine Täuschung (er verschwände beim nächsten ReloadData). WYSIWYG.
 function handleDrop(board: HTMLElement, column: HTMLElement): void {
   if (!dragged || dragged.board !== board) return
   const data = cardData.get(dragged.card)
@@ -374,7 +427,9 @@ function handleDrop(board: HTMLElement, column: HTMLElement): void {
   if (statusField === '' || targetValue.trim() === '') return
   const current = getField(data.row, statusField)
   if (current.trim().toLowerCase() === targetValue.trim().toLowerCase()) return
-  sendPut(board, statusField, data.pindex, targetValue)
+  const path = writePathFor(board)
+  if (!path) return
+  sendPut(path, statusField, data.pindex, targetValue)
   setField(data.row, statusField, targetValue)
   hydrate(board)
 }
