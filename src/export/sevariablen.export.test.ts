@@ -10,6 +10,7 @@ import '../blocks/kanban/KanbanBlock' // Side-Effect: registriert kanban (+ spal
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
+import type { DataSource } from '../core/data/dataSources'
 import { Editor } from '../state/Editor'
 import { exportMask } from './exportMask'
 import { failedChecks, validateMaskHtml } from './validator'
@@ -77,6 +78,56 @@ describe('SEvariablen aus dem Baum', () => {
   it('ist deterministisch: gleicher Baum -> identische JSON', () => {
     const tree = boardsTree(['terminplaner', 'kundenhaustiere'])
     expect(exportMask(tree).sevariablen).toBe(exportMask(tree).sevariablen)
+  })
+
+  it('Stammtabellen-Quelle: feste ID + explizite FELDER-Liste (Kap. 5.4, Vorbild behandlung-umbau)', () => {
+    const adr: DataSource = {
+      id: 'adressen',
+      name: 'Adressen',
+      kind: 'adressstamm',
+      fields: [
+        { code: '2_8', label: 'Nummer', sample: 'K2' },
+        { code: '3292_30', label: 'Vorname', sample: 'Lisa' },
+      ],
+    }
+    const { sevariablen } = exportMask(boardsTree(['adressen']), 'Maske', [adr])
+    expect(JSON.parse(sevariablen)).toEqual({
+      SEFILELOOP: [{ INDEX_NR: 0, ALIAS: 'Adressen', ID: 'ADR', FELDER: '2_8,3292_30' }],
+      ERPAPICALL: [],
+    })
+  })
+})
+
+// Kap. 5.4: die Vorlagen sind benutzerdefiniert (localStorage des Editors) —
+// die exportierte Maske muss ihre Quellen-Definitionen deshalb SELBST tragen
+// (var FF_DATA_SOURCES, gelesen von seRuntime). DIESELBE collectDataSources-
+// Quelle wie die SEFILELOOP (Export-Grundsatz a).
+describe('Quellen-Definitionen reisen in der Maske (FF_DATA_SOURCES)', () => {
+  it('benutzte Quelle wird mit name/tableId/indexField eingebettet', () => {
+    const { html } = exportMask(boardsTree(['terminplaner']))
+    expect(html).toContain(
+      'var FF_DATA_SOURCES = '
+      + '[{"id":"terminplaner","name":"Terminplaner","tableId":"IDBID0001","indexField":"0_10"}];',
+    )
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('ohne angehaengte Quelle ist die Liste leer', () => {
+    const { html } = exportMask(boardsTree(['']))
+    expect(html).toContain('var FF_DATA_SOURCES = [];')
+  })
+
+  it('Nicht-ASCII im Anzeigenamen wird \\uXXXX-escaped (ASCII-Regel)', () => {
+    const quelle: DataSource = {
+      id: 'q',
+      name: 'Gerätestamm',
+      kind: 'idb',
+      idbId: 'IDBID0009',
+      fields: [],
+    }
+    const { html } = exportMask(boardsTree(['q']), 'Maske', [quelle])
+    expect(html).toContain('"name":"Ger\\u00E4testamm"')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })
 

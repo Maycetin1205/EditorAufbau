@@ -5,7 +5,7 @@
 // gespeichert wird der Technikwert (Vorlagen-id) in der source-Prop.
 
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { DATA_SOURCES } from '../../core/data/dataSources'
+import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { SelectControl } from './controls/SelectControl'
 
@@ -19,6 +19,7 @@ interface DataSectionProps {
 
 export function DataSection({ block }: DataSectionProps) {
   const ed = useEditor()
+  const sources = useDataSources().list
   const source = typeof block.props.source === 'string' ? block.props.source : ''
 
   return (
@@ -28,7 +29,7 @@ export function DataSection({ block }: DataSectionProps) {
       value={source === '' ? KEINE : source}
       options={[
         { value: KEINE, label: '— keine —' },
-        ...DATA_SOURCES.map((s) => ({ value: s.id, label: s.name })),
+        ...sources.map((s) => ({ value: s.id, label: s.name })),
       ]}
       onChange={(v) => ed.updateProperty(block.id, 'source', v === KEINE ? '' : v)}
     />

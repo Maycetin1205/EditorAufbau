@@ -12,7 +12,8 @@ import {
 } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
-import { getDataSource, type DataSource } from '../core/data/dataSources'
+import { type DataSource } from '../core/data/dataSources'
+import { dataSourceStore } from './DataSourceStore'
 import { Subject } from './Subject'
 import { deepClone } from '../lib/deepClone'
 
@@ -325,7 +326,7 @@ export class Editor extends Subject<Editor> {
     while (cur) {
       if (getBlockDefinition(cur.type)?.acceptsDataSource) {
         return typeof cur.props.source === 'string'
-          ? getDataSource(cur.props.source)
+          ? dataSourceStore.get(cur.props.source)
           : undefined
       }
       cur = cur.parentId ? this._tree[cur.parentId] : undefined

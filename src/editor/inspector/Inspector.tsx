@@ -7,6 +7,7 @@ import type {
   PropertyDescription,
   PropertyKind,
 } from '../../core/blocks/PropertyDescription'
+import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { DataSection } from './DataSection'
@@ -27,6 +28,9 @@ function resolveKind(property: PropertyDescription, value: unknown): PropertyKin
 
 export function Inspector() {
   const ed = useEditor()
+  // Vorlagen-Änderungen (Kap. 5.4) müssen Feldlisten/Sichtbarkeit sofort
+  // nachziehen — dataSourceFor liest aus dem DataSourceStore.
+  useDataSources()
   const block = ed.selectedNode
 
   if (!block) {

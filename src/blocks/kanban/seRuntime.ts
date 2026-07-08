@@ -22,7 +22,6 @@
 //    Erstellen/initData/ReloadData als Einstiegspunkte anbieten.
 
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
-import { getDataSource } from '../../core/data/dataSources'
 import {
   getRelationTemplate,
   relIdFromIdbId,
@@ -38,6 +37,35 @@ type UnknownRecord = Record<string, unknown>
 
 function isRecord(v: unknown): v is UnknownRecord {
   return typeof v === 'object' && v !== null
+}
+
+// Quellen-Definition in der EXPORTIERTEN Maske (Kap. 5.4): die Vorlagen
+// sind benutzerdefiniert und leben im Editor-localStorage — exportMask
+// bettet die benutzten Definitionen deshalb als `var FF_DATA_SOURCES = […]`
+// in die Maske ein (nur was die Runtime braucht; Feld-Bindungen reisen
+// weiter als Attribute). Hier wird ausschließlich darüber aufgelöst.
+export interface RuntimeDataSource {
+  id: string
+  name: string
+  tableId: string
+  indexField: string
+}
+
+// Eintrag zur source-id aus einer FF_DATA_SOURCES-Liste (pur, testbar).
+// Kaputte/fremde Einträge werden ignoriert — nie raten.
+export function findRuntimeDataSource(list: unknown, id: string): RuntimeDataSource | undefined {
+  if (!Array.isArray(list) || id === '') return undefined
+  for (const entry of list) {
+    if (!isRecord(entry) || entry.id !== id) continue
+    if (typeof entry.name !== 'string' || typeof entry.tableId !== 'string') continue
+    return {
+      id,
+      name: entry.name,
+      tableId: entry.tableId,
+      indexField: typeof entry.indexField === 'string' ? entry.indexField : '',
+    }
+  }
+  return undefined
 }
 
 function asTrimmedString(v: unknown): string {
@@ -240,7 +268,7 @@ function hydrate(board: HTMLElement): void {
   const sourceId = board.getAttribute('source') ?? ''
   const statusField = board.getAttribute('statusfield') ?? ''
   if (sourceId === '' || statusField === '') return // statisch bleiben
-  const source = getDataSource(sourceId)
+  const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, sourceId)
   if (!source) return
 
   const columns = columnsOf(board)
@@ -260,7 +288,7 @@ function hydrate(board: HTMLElement): void {
   }
   if (!template) return // Board ohne einzige Karte: keine Vorlage, nichts tun
 
-  const rows = rowsFor(seGlobal().SEDATA, source.name, source.idbId)
+  const rows = rowsFor(seGlobal().SEDATA, source.name, source.tableId)
   const columnValues = columns.map((c) => c.getAttribute('statusvalue') ?? '')
   const spots = spotsForTag(template.tagName)
 
@@ -280,7 +308,7 @@ function hydrate(board: HTMLElement): void {
     }
     // Schreibweg (5.3b): nur Karten mit Satznummer sind ziehbar. Ohne
     // indexField der Quelle bleibt das Board reines Lesen (wie 5.3a).
-    const pindex = getField(row, source.indexField ?? '')
+    const pindex = getField(row, source.indexField)
     if (pindex !== '') {
       cardData.set(card, { row, pindex })
       card.draggable = true
@@ -319,7 +347,7 @@ function sendPut(board: HTMLElement, fieldCode: string, pindex: string, value: s
   const g = seGlobal()
   if (typeof g.basisHTML_SND_MSG !== 'function') return
   const template = getRelationTemplate('standard-put')
-  const source = getDataSource(board.getAttribute('source') ?? '')
+  const source = findRuntimeDataSource(g.FF_DATA_SOURCES, board.getAttribute('source') ?? '')
   const field = splitFieldCode(fieldCode)
   if (!template || !source || !field) return
   g.basisHTML_SND_MSG(template.verb, {
@@ -328,7 +356,7 @@ function sendPut(board: HTMLElement, fieldCode: string, pindex: string, value: s
       FELD_POS: field.pos,
       FELD_LEN: field.len,
       PINDEX: pindex,
-      RELID: relIdFromIdbId(source.idbId),
+      RELID: relIdFromIdbId(source.tableId),
       VALUE: value,
     }),
   })

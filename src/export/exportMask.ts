@@ -20,7 +20,8 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
-import { getDataSource, type DataSource } from '../core/data/dataSources'
+import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
+import { dataSourceStore } from '../state/DataSourceStore'
 import {
   flowItemStyle,
   parseFlowWidth,
@@ -128,13 +129,15 @@ function nodeToHtml(
 // Sammelt die im Baum angehängten Datenquellen (source-Prop von Blöcken mit
 // acceptsDataSource) in Baum-Reihenfolge, dedupliziert — deterministisch.
 // Unbekannte Vorlagen-ids werden übersprungen (Quelle wurde entfernt).
-function collectDataSources(tree: BlockTree): DataSource[] {
+// `sources` = die Vorlagen-Bibliothek (Kap. 5.4: benutzerdefiniert).
+function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): DataSource[] {
   const seen = new Set<string>()
   const acc: DataSource[] = []
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
     if (getBlockDefinition(node.type)?.acceptsDataSource) {
-      const src = typeof node.props.source === 'string' ? getDataSource(node.props.source) : undefined
+      const id = node.props.source
+      const src = typeof id === 'string' ? sources.find((s) => s.id === id) : undefined
       if (src && !seen.has(src.id)) {
         seen.add(src.id)
         acc.push(src)
@@ -148,7 +151,13 @@ function collectDataSources(tree: BlockTree): DataSource[] {
 
 // ---------- Maske zusammensetzen ----------
 
-export function exportMask(tree: BlockTree, title = 'Maske'): MaskExport {
+export function exportMask(
+  tree: BlockTree,
+  title = 'Maske',
+  // Vorlagen-Bibliothek (Kap. 5.4): standardmäßig der gelebte Bestand des
+  // DataSourceStore; Tests dürfen eine feste Liste stellen (Determinismus).
+  sources: readonly DataSource[] = dataSourceStore.list,
+): MaskExport {
   const root = tree[ROOT_ID]
   const blocks = (root?.childIds ?? [])
     .map((id) => tree[id])
@@ -156,8 +165,24 @@ export function exportMask(tree: BlockTree, title = 'Maske'): MaskExport {
     .map((n) => nodeToHtml(tree, n, 'column', 2))
     .join('\n')
 
+  const used = collectDataSources(tree, sources)
+
   const tokensCss = stripCssComments(tokensCssRaw)
   const runtimeJs = guardScriptContent(escapeNonAsciiJs(runtimeJsRaw.trim()))
+  // Die benutzten Quellen-Definitionen reisen als DATEN mit der Maske
+  // (Kap. 5.4): die Vorlagen liegen im Editor-localStorage, den die
+  // exportierte Maske nie sieht — seRuntime löst source-ids über dieses
+  // Global auf. DIESELBE collectDataSources-Quelle wie die SEFILELOOP
+  // (Export-Grundsatz a); nur was die Runtime braucht (kein Feld-Wörterbuch:
+  // Bindungen reisen längst als Feldcode-Attribute).
+  const sourcesJs = guardScriptContent(escapeNonAsciiJs(
+    'var FF_DATA_SOURCES = ' + JSON.stringify(used.map((s) => ({
+      id: s.id,
+      name: s.name,
+      tableId: tableIdFor(s),
+      indexField: s.indexField ?? '',
+    }))) + ';',
+  ))
 
   const html = [
     '<!--SOFTENGINE-VAR!JWHtmlStart-->',
@@ -180,6 +205,7 @@ export function exportMask(tree: BlockTree, title = 'Maske'): MaskExport {
     blocks,
     '  </div>',
     '<script>',
+    sourcesJs,
     runtimeJs,
     '</script>',
     '</body>',
@@ -188,15 +214,15 @@ export function exportMask(tree: BlockTree, title = 'Maske'): MaskExport {
   ].join('\n')
 
   // SEvariablen: aus DEMSELBEN Baum erzeugt wie das HTML (Grundsatz a).
-  // SEFILELOOP-Einträge nach Vorbild der echten Repo-Masken
-  // (dashboard/praxis-kanban.html): INDEX_NR 0, ALIAS = Anzeigename,
-  // ID = IDB-Tabellen-ID, FELDER '*'. Nicht-ASCII wird \uXXXX-escaped
-  // (gültiges JSON, ASCII-Regel wie beim HTML).
-  const sefileloop = collectDataSources(tree).map((s) => ({
+  // SEFILELOOP-Einträge nach Vorbild der echten behandlung-umbau-Masken:
+  // INDEX_NR 0, ALIAS = Anzeigename, ID/FELDER je Quellen-ART (IDB → eigene
+  // ID + '*', Stammtabellen → feste ID + explizite pos_len-Liste, Kap. 5.4).
+  // Nicht-ASCII wird \uXXXX-escaped (gültiges JSON, ASCII-Regel wie beim HTML).
+  const sefileloop = used.map((s) => ({
     INDEX_NR: 0,
     ALIAS: s.name,
-    ID: s.idbId,
-    FELDER: '*',
+    ID: tableIdFor(s),
+    FELDER: felderFor(s),
   }))
   const sevariablen = escapeNonAsciiJs(
     JSON.stringify({ SEFILELOOP: sefileloop, ERPAPICALL: [] }, null, 2),
