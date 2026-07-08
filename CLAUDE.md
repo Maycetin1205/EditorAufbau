@@ -527,9 +527,33 @@ den Export (Kap. 3).
     — als {PINDEX}/{SELKEY}/{DROP_PINDEX} abgebildet).
     **→ Kap. 5 (Daten-Anbindung) damit KOMPLETT.**
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
-  FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
-  Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,
-  Plus/Ziehen/Kreuzchen) — alle streng atomar nach Zielbild-Regel.
+  DataTable (Spalte anklicken → Feld, Breite ziehen), Wizard (Schritte als
+  Reiter, Plus/Ziehen/Kreuzchen) — alle streng atomar nach Zielbild-Regel.
+  **Zuschnitt-Entscheidung 2026-07-08 (mit Nutzer):** **Bild gestrichen**
+  (ERP-Masken brauchen selten einen Bild-Block; bei Bedarf später).
+  **DetailCard zurückgestellt** — sinnvoll erst mit FormField (Detailfelder
+  sind FormFields) + der Verknüpfungs-Mechanik aus Kap. 7 (Kanban → DetailCard).
+  - ✅ **6.1 FormField v1 — statischer Eingabe-Baustein (2026-07-08)**
+    `[Muster kritisch]`: erster `eingabe`-Baustein. Design-Zielbild in
+    `dashboard/stilprobe.html` (eigene `zb`-Sektion, nur `var(--se-*)`) nach
+    4K.1-Muster VOR dem Bau abgenommen. Block `src/blocks/formfield/
+    FormFieldBlock.ts` nach Portier-Muster (Infobox/Karte): rendert NUR das
+    Steuerelement (die Beschriftung erzeugt SoftEngine selbst — kein
+    Label-Prop), 8 Feldtypen (Text/Zahl/E-Mail/Passwort/Mehrzeilig/Auswahl/
+    Checkbox/Datum; Technikwert `text/number/…`, Bediener wählt Klarnamen).
+    Inspector: Feldtyp-Select, Platzhalter, Optionen (Auswahl, Komma-getrennt),
+    Pflichtfeld + Nur-lesen als Ja/Nein-Select (bewusst kein neues
+    Boolean-Control — DRY, echtes Toggle erst bei zweitem Fall). Aussehen
+    exakt nach Zielbild, nur Tokens; Standardbreite 240px (Breite-Anfasser
+    aktiv). Palette/Inspector/Export nehmen ihn automatisch aus der Registry
+    (kein `if type===`). Browser-verifiziert mit Screenshots (5 Typen im
+    Editor = im Export, WYSIWYG); 141 Unit-Tests grün (`formfield.export.test`
+    inkl. Validator-Gate, Veralten-Wächter um `ff-formfield` verschärft).
+    **Bewusst zurückgestellt (braucht den realen SE-Formularfeld-Kontrakt aus
+    `behandlung-umbau`, NICHT auf Verdacht gebaut — /kritisch Regel 7):**
+    Feld-Bindung (SoftEngine liest/schreibt über `field`-Prop) + Select-
+    Optionen aus einer Datenquelle. Folgeschritt 6.2, sobald `behandlung-umbau`
+    an die Session gehängt ist (wie bei 5.3b).
 - **Kap. 7 — Verknüpfungen** zwischen Blöcken (Auswahl/Filter, z.B. Kanban →
   DetailCard).
 - **Kap. 8 — Events/Aktionen** `[kritisch]`: Klick→Popup, Drop→Relation,
