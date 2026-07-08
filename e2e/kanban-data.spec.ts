@@ -118,6 +118,75 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   await expect(page.locator('ff-card')).toHaveCount(6)
 })
 
+// Schreibweg 5.3b: Zeilen tragen die Satznummer (indexField '0_10' des
+// Terminplaners) — nur damit sind Karten ziehbar.
+const SEDATA_DRAG_STUB = {
+  Daten: {
+    SEFileLoop: [{
+      ALIAS: 'Terminplaner',
+      Zeilen: [
+        { '0_10': '7', '253_30': '2', '78_30': 'Bello' },
+        { '0_10': '8', '253_30': '3', '78_30': 'Rex' },
+        { '0_10': '9', '253_30': '2', '78_30': 'Luna' },
+      ],
+    }],
+  },
+}
+
+test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3b)', async ({ page, context }) => {
+  await freshEditor(page)
+  await insertBoard(page)
+  await attachTerminplaner(page)
+
+  // Titel an "Tiername" binden, damit die Daten-Karten unterscheidbar sind.
+  await page.locator('ff-card .text').first().click()
+  await page.locator('ff-card .heading').first().click()
+  await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
+
+  // Spalten-Feld "Zimmer"; Spalte 2 -> '2', Spalte 3 -> '3', Spalte 1 = Auffang.
+  await selectBoard(page)
+  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByRole('option', { name: 'Zimmer' }).click()
+  await page.locator('ff-kanban-spalte .head').nth(1).click()
+  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.locator('ff-kanban-spalte .head').nth(2).click()
+  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+
+  const html = await exportMaskHtml(page)
+  const mask = await context.newPage()
+  await mask.setContent(html)
+  // SE-Bridge stubben (sammelt Aufrufe), dann SEDATA stellen.
+  await mask.evaluate((sedata) => {
+    const w = window as unknown as Record<string, unknown>
+    w.PUT_CALLS = []
+    w.basisHTML_SND_MSG = (verb: unknown, msg: unknown) => {
+      (w.PUT_CALLS as unknown[]).push([verb, msg])
+    }
+    w.SEDATA = sedata
+  }, SEDATA_DRAG_STUB)
+
+  // Hydriert: Bello+Luna in "In Arbeit" (2), Rex in "Fertig" (3).
+  const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
+  await expect(colCards(1)).toHaveText(['Bello', 'Luna'])
+
+  // Bello nach "Fertig" ziehen: exakt EIN PUT über die Standard-Vorlage —
+  // PARAMS [pos, len, 'L', pindex, relId OHNE IDB-Präfix, Zielwert].
+  await mask.locator('ff-card', { hasText: 'Bello' }).dragTo(mask.locator('ff-kanban-spalte').nth(2))
+  await expect(colCards(1)).toHaveText(['Luna'])
+  await expect(colCards(2)).toHaveText(['Bello', 'Rex']) // Zeilen-Reihenfolge
+  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([
+    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
+  ])
+
+  // Kein Schreibziel = kein PUT: Drop auf die eigene Spalte (gleicher Wert)
+  // und auf die Auffang-Spalte (leerer Datenwert) veraendern nichts.
+  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(1))
+  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(0))
+  await expect(colCards(1)).toHaveText(['Luna'])
+  await expect(colCards(0)).toHaveText([])
+  expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
+})
+
 test('Export ohne Spalten-Feld bleibt statisch — auch wenn SEDATA da ist', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)

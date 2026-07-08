@@ -359,8 +359,30 @@ den Export (Kap. 3).
     Referenz mehr. Beide Original-Repos lassen sich per add_repo an eine
     Session hängen: `Maycetin1205/behandlung-umbau` (SE-Spec) und
     `Maycetin1205/react--app` (alter Editor).
-  - **5.3b Karte ziehen = Wert zurückschreiben** `[kritisch]`
-    (→ Zwischenziel erreicht). ENTBLOCKT 2026-07-07 — Schreib-Spec liegt
+  - ✅ **5.3b Karte ziehen = Wert zurückschreiben (2026-07-08)** `[kritisch]`
+    (→ **ZWISCHENZIEL Kanban-Dashboard ERREICHT**). Umsetzung: neues
+    `src/core/data/relations.ts` — Relation-VORLAGEN als Daten (Vorgriff
+    auf 5.5): Verb/NR/Params-Syntax mit Platzhaltern `{FELD_POS}/{FELD_LEN}/
+    {PINDEX}/{RELID}/{VALUE}`, Standard-PUT (NR 174) mitgeliefert, pure
+    Helfer `relIdFromIdbId` (IDB-Präfix ab) / `splitFieldCode` /
+    `resolveParams`. In `seRuntime.ts`: purer Helfer `setField` (direkte
+    Property + pos_len-Patch im SATZ-Rohstring, exakte Feldlänge), Karten
+    mit Satznummer (indexField der Quelle) sind im Export ziehbar
+    (HTML5-Drag, verdrahtet in connectBoard — Editor-Boards melden sich
+    nie an, Canvas-Drag unberührt); Drop auf Spalte mit Datenwert →
+    Bridge-Wächter `basisHTML_SND_MSG` → PUT über die Vorlage, Zeile per
+    setField aktualisiert, Board neu hydriert; gleicher Wert / leerer
+    statusValue / fehlende Satznummer = kein Schreiben. 94 Unit-Tests +
+    15 E2E grün (relations.test.ts, setField-Fälle, kanban-data:
+    Drag-Fall mit exakter PARAMS-Assertion
+    `['253','30','L','7','ID0001','3']` + No-Op-Drops); Screenshots
+    vor/nach Zug abgegeben. ⚠ OFFEN (bewusst dokumentiert): die
+    PARAMS-TYPEN (alle Strings, wie die Laufzeit sie liefert) sind noch
+    NICHT gegen die echte sePut-Quelle geprüft — add_repo-Freigabe für
+    `behandlung-umbau` kam nicht durch. Falls SoftEngine Zahlen erwartet:
+    Korrektur NUR an der Vorlage in relations.ts (Daten, kein Code) —
+    beim ersten SoftEngine-Test verifizieren!
+    Ursprüngliche Spec (bleibt der Kontrakt): ENTBLOCKT 2026-07-07 — Schreib-Spec liegt
     vor, verifiziert aus `behandlung-umbau` (Block "SE-ADAPTER 4/4",
     `sePut`/`seSend`) + SE-INVENTAR §5 + altem Editor
     (`src/runtime/renderKanban.ts` Drop-Handler, `actions.ts`):

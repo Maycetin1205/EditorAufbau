@@ -23,6 +23,12 @@
 
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { getDataSource } from '../../core/data/dataSources'
+import {
+  getRelationTemplate,
+  relIdFromIdbId,
+  resolveParams,
+  splitFieldCode,
+} from '../../core/data/relations'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
 
@@ -54,6 +60,38 @@ export function getField(row: unknown, code: string): string {
   const len = Number(m[2])
   if (len <= 0) return ''
   return raw.substring(pos, pos + len).trim()
+}
+
+// Wert eines Feldcodes in eine Zeile ZURÜCKschreiben (Schreibweg 5.3b):
+// eine direkte Property wird gesetzt; ein 'pos_len'-Code patcht zusätzlich
+// den SATZ-Rohstring (derselbe Schlüssel, den getField liest), damit jede
+// Neu-Hydrierung den neuen Wert sieht. Feld wird exakt auf Feldlänge
+// gebracht (auffüllen/kürzen), zu kurze Rohstrings bis zur Position
+// verlängert — deterministisch. Rückgabe: wurde etwas geschrieben?
+export function setField(row: unknown, code: string, value: string): boolean {
+  if (!isRecord(row) || code === '') return false
+  let written = false
+  if (Object.prototype.hasOwnProperty.call(row, code)) {
+    row[code] = value
+    written = true
+  }
+  const m = /^(\d+)_(\d+)$/.exec(code)
+  if (m) {
+    const keys = ['SATZNEU', 'SATZ', 'satzneu', 'satz', 'RAW', 'raw'] as const
+    const key = keys.find((k) => typeof row[k] === 'string')
+    if (key) {
+      const raw = row[key] as string
+      const pos = Number(m[1])
+      const len = Number(m[2])
+      if (len > 0) {
+        const field = value.length > len ? value.slice(0, len) : value.padEnd(len, ' ')
+        const padded = raw.length < pos ? raw.padEnd(pos, ' ') : raw
+        row[key] = padded.slice(0, pos) + field + padded.slice(pos + len)
+        written = true
+      }
+    }
+  }
+  return written
 }
 
 // Zeilen-Liste aus einem SEFileLoop-/Tabellen-Eintrag ziehen (SoftEngine
@@ -240,7 +278,105 @@ function hydrate(board: HTMLElement): void {
         (card as unknown as Record<string, unknown>)[spot.prop] = getField(row, code)
       }
     }
+    // Schreibweg (5.3b): nur Karten mit Satznummer sind ziehbar. Ohne
+    // indexField der Quelle bleibt das Board reines Lesen (wie 5.3a).
+    const pindex = getField(row, source.indexField ?? '')
+    if (pindex !== '') {
+      cardData.set(card, { row, pindex })
+      card.draggable = true
+    }
   }
+}
+
+// ---------- Karten-Drag im Export (Schreibweg 5.3b) ----------
+//
+// HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> Wert der Zielspalte
+// (statusValue) über die mitgelieferte Relation-Vorlage ins Spalten-Feld
+// schreiben, Zeile im Speicher aktualisieren, neu hydrieren (Muster alter
+// Editor, CLAUDE.md 5.3b (b)). Läuft NUR im Export: verdrahtet wird in
+// connectBoard, und Editor-Boards (data-ff-editor) melden sich dort nie an —
+// die Canvas-Drag-Logik des Editors bleibt unberührt.
+
+// Zeile + Satznummer je Daten-Karte (WeakMap: lebt und stirbt mit der Karte).
+const cardData = new WeakMap<HTMLElement, { row: unknown; pindex: string }>()
+// Die gerade gezogene Karte — ein Drag zur Zeit (Browser-Modell).
+let dragged: { card: HTMLElement; board: HTMLElement } | null = null
+const wiredBoards = new WeakSet<HTMLElement>()
+
+function columnOfEvent(board: HTMLElement, e: Event): HTMLElement | null {
+  for (const el of e.composedPath()) {
+    if (el instanceof HTMLElement && el.tagName.toLowerCase() === SPALTE_TAG && board.contains(el)) {
+      return el
+    }
+  }
+  return null
+}
+
+// PUT über die mitgelieferte Standard-Vorlage (relations.ts). Bridge-
+// Wächter: außerhalb von SoftEngine (Vorschau, Tests ohne Stub) wird nur
+// lokal verschoben, nichts gesendet. PUT ist fire-and-forget (Spec (c)).
+function sendPut(board: HTMLElement, fieldCode: string, pindex: string, value: string): void {
+  const g = seGlobal()
+  if (typeof g.basisHTML_SND_MSG !== 'function') return
+  const template = getRelationTemplate('standard-put')
+  const source = getDataSource(board.getAttribute('source') ?? '')
+  const field = splitFieldCode(fieldCode)
+  if (!template || !source || !field) return
+  g.basisHTML_SND_MSG(template.verb, {
+    NR: template.nr,
+    PARAMS: resolveParams(template, {
+      FELD_POS: field.pos,
+      FELD_LEN: field.len,
+      PINDEX: pindex,
+      RELID: relIdFromIdbId(source.idbId),
+      VALUE: value,
+    }),
+  })
+}
+
+// Drop einer Daten-Karte auf eine Spalte. Spalte ohne Datenwert ist kein
+// Schreibziel; gleicher Wert = kein Zug (derselbe Vergleich wie beim
+// Verteilen: getrimmt, Groß/klein egal).
+function handleDrop(board: HTMLElement, column: HTMLElement): void {
+  if (!dragged || dragged.board !== board) return
+  const data = cardData.get(dragged.card)
+  if (!data) return
+  const statusField = board.getAttribute('statusfield') ?? ''
+  const targetValue = column.getAttribute('statusvalue') ?? ''
+  if (statusField === '' || targetValue.trim() === '') return
+  const current = getField(data.row, statusField)
+  if (current.trim().toLowerCase() === targetValue.trim().toLowerCase()) return
+  sendPut(board, statusField, data.pindex, targetValue)
+  setField(data.row, statusField, targetValue)
+  hydrate(board)
+}
+
+function wireDrag(board: HTMLElement): void {
+  if (wiredBoards.has(board)) return
+  wiredBoards.add(board)
+  board.addEventListener('dragstart', (e) => {
+    const card = (e.composedPath().find(
+      (el) => el instanceof HTMLElement && cardData.has(el),
+    ) ?? null) as HTMLElement | null
+    if (!card) return
+    dragged = { card, board }
+    e.dataTransfer?.setData('text/plain', cardData.get(card)?.pindex ?? '')
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+  })
+  board.addEventListener('dragend', () => { dragged = null })
+  board.addEventListener('dragover', (e) => {
+    if (dragged?.board === board && columnOfEvent(board, e)) {
+      e.preventDefault()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+    }
+  })
+  board.addEventListener('drop', (e) => {
+    const column = columnOfEvent(board, e)
+    if (!column) return
+    e.preventDefault()
+    handleDrop(board, column)
+    dragged = null
+  })
 }
 
 function hydrateAll(): void {
@@ -277,6 +413,7 @@ function boot(): void {
 export function connectBoard(board: HTMLElement): void {
   if (board.hasAttribute('data-ff-editor')) return
   boards.add(board)
+  wireDrag(board)
   boot()
   if (hasSeData()) hydrate(board)
 }

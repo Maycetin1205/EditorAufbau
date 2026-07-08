@@ -5,7 +5,7 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-import { columnIndexFor, getField, rowsFor } from './seRuntime'
+import { columnIndexFor, getField, rowsFor, setField } from './seRuntime'
 
 describe('getField (Feldcode -> Wert)', () => {
   it('liest direkte Properties und trimmt', () => {
@@ -26,6 +26,54 @@ describe('getField (Feldcode -> Wert)', () => {
     expect(getField({ a: 1 }, '')).toBe('')
     expect(getField(null, '78_30')).toBe('')
     expect(getField('keine zeile', '78_30')).toBe('')
+  })
+})
+
+describe('setField (Schreibweg 5.3b: Wert -> Zeile)', () => {
+  it('setzt eine direkte Property', () => {
+    const row: Record<string, unknown> = { '253_30': '2', name: 'alt' }
+    expect(setField(row, '253_30', '3')).toBe(true)
+    expect(setField(row, 'name', 'neu')).toBe(true)
+    expect(row['253_30']).toBe('3')
+    expect(row.name).toBe('neu')
+  })
+
+  it('patcht pos_len im SATZ-Rohstring: exakte Feldlaenge, Rest unberuehrt', () => {
+    //            0123456789
+    const row = { SATZ: 'K2      Katze                         X' }
+    expect(setField(row, '8_30', 'Hund')).toBe(true)
+    expect(row.SATZ).toBe('K2      Hund                          X')
+    expect(getField(row, '8_30')).toBe('Hund') // liest zurueck, was geschrieben wurde
+    expect(getField(row, '0_8')).toBe('K2')    // Nachbarfeld unveraendert
+  })
+
+  it('kuerzt zu lange Werte auf die Feldlaenge und patcht SATZNEU vor SATZ', () => {
+    const row = { SATZNEU: 'abcdefgh', SATZ: 'unberuehrt' }
+    expect(setField(row, '0_4', 'LANGERWERT')).toBe(true)
+    expect(row.SATZNEU).toBe('LANGefgh')
+    expect(row.SATZ).toBe('unberuehrt')
+  })
+
+  it('verlaengert zu kurze Rohstrings deterministisch bis zur Feldposition', () => {
+    const row = { SATZ: 'K2' }
+    expect(setField(row, '8_4', 'OP')).toBe(true)
+    expect(row.SATZ).toBe('K2      OP  ')
+    expect(getField(row, '8_4')).toBe('OP')
+  })
+
+  it('haelt direkte Property UND Rohstring konsistent, wenn beide existieren', () => {
+    const row: Record<string, unknown> = { '0_4': 'alt', SATZ: 'alt       ' }
+    expect(setField(row, '0_4', 'neu')).toBe(true)
+    expect(row['0_4']).toBe('neu')
+    expect(row.SATZ).toBe('neu       ')
+  })
+
+  it('schreibt nichts bei kaputter Zeile, leerem Code oder unbekanntem Feld', () => {
+    expect(setField(null, '0_4', 'x')).toBe(false)
+    expect(setField({ SATZ: 'abc' }, '', 'x')).toBe(false)
+    const row: Record<string, unknown> = { name: 'bleibt' }
+    expect(setField(row, 'fehlt', 'x')).toBe(false)
+    expect(row).toEqual({ name: 'bleibt' })
   })
 })
 
