@@ -131,6 +131,44 @@ describe('Quellen-Definitionen reisen in der Maske (FF_DATA_SOURCES)', () => {
   })
 })
 
+// Kap. 5.5: die Relation-Vorlagen sind ebenso benutzerdefiniert und reisen
+// als var FF_RELATIONS in der Maske (Muster FF_DATA_SOURCES). Der Kanban-
+// Schreibweg (5.3b) loest putRelation ueber dieses Global auf.
+describe('Relation-Vorlagen reisen in der Maske (FF_RELATIONS, Kap. 5.5)', () => {
+  it('die am Board gewaehlte Vorlage wird mit verb/nr/params eingebettet', () => {
+    // Der Standard-PUT ist Default der putRelation-Prop -> im Seed-Bestand.
+    const { html } = exportMask(boardsTree(['terminplaner']))
+    expect(html).toContain(
+      'var FF_RELATIONS = '
+      + '[{"id":"standard-put","verb":"PUT_RELATION","nr":"174",'
+      + '"params":["{FELD_POS}","{FELD_LEN}","L","{PINDEX}","{RELID}","{VALUE}"]}];',
+    )
+    // Der Anzeigename reist NICHT mit (nur Technikwerte).
+    expect(html).not.toContain('Standard-Schreiben')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('ohne gewaehlte Vorlage (putRelation leer) ist die Liste leer', () => {
+    const tree = boardsTree(['terminplaner'])
+    const board = tree[tree[ROOT_ID].childIds[0]]
+    board.props.putRelation = ''
+    const { html } = exportMask(tree)
+    expect(html).toContain('var FF_RELATIONS = [];')
+  })
+
+  it('unbekannte/geloeschte Vorlagen-id wird uebersprungen', () => {
+    const tree = boardsTree(['terminplaner'])
+    tree[tree[ROOT_ID].childIds[0]].props.putRelation = 'geloescht'
+    const { html } = exportMask(tree, 'Maske', undefined, [])
+    expect(html).toContain('var FF_RELATIONS = [];')
+  })
+
+  it('dedupliziert gleiche Vorlagen ueber mehrere Boards', () => {
+    const { html } = exportMask(boardsTree(['terminplaner', 'kundenhaustiere']))
+    expect(html.match(/"id":"standard-put"/g)).toHaveLength(1)
+  })
+})
+
 describe('source-Prop ueberlebt die Persistenz', () => {
   const KEY = 'aufbau_editor_mvp_v1'
   beforeEach(() => localStorage.clear())

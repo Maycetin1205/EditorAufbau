@@ -39,9 +39,14 @@ export class KanbanBlock extends BasicBlock {
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
   static readonly acceptsDataSource = true
   // statusField (Kap. 5.3): Feldcode des Spalten-Felds (Technikwert,
-  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. Default ''
-  // in den defaultProps -> überlebt Persistenz, reist als Attribut mit.
-  static readonly defaultProps = { width: 'fill', source: '', statusField: '' }
+  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte.
+  // putRelation (Kap. 5.5): id der Relation-Vorlage, über die der
+  // Kanban-Schreibweg (5.3b) Werte zurückschreibt — Default = die
+  // mitgelieferte Standard-PUT-Vorlage. Alle Defaults '' bzw. fester
+  // Technikwert -> überleben Persistenz, reisen als Attribut mit.
+  static readonly defaultProps = {
+    width: 'fill', source: '', statusField: '', putRelation: 'standard-put',
+  }
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'statusField',
@@ -50,6 +55,15 @@ export class KanbanBlock extends BasicBlock {
       isArray: false,
       maxLength: 0,
       kind: 'field',
+    },
+    {
+      attributeName: 'putRelation',
+      name: 'Schreiben über',
+      description: 'Relation-Vorlage, mit der eine gezogene Karte ihren neuen Spaltenwert zurückschreibt.',
+      isArray: false,
+      maxLength: 0,
+      kind: 'relation',
+      requiresDataSource: true,
     },
   ]
 

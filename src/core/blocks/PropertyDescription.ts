@@ -5,6 +5,10 @@
 // `field` (Kap. 5.3): Auswahl eines Felds der Datenquelle in Reichweite
 // (Editor.dataSourceFor) — der Bediener sieht Klarnamen, gespeichert wird
 // der Feldcode (Technikwert). Ohne Quelle in Reichweite unsichtbar.
+// `relation` (Kap. 5.5): Auswahl einer Relation-Vorlage aus der Bibliothek
+// (RelationStore) — der Bediener sieht Anzeigenamen, gespeichert wird die
+// Vorlagen-id (Technikwert). Konsumenten (Kanban-Schreibweg) referenzieren
+// die Vorlage darüber, statt ein Protokoll fest zu verdrahten.
 // `requiresDataSource` (Kap. 5.3): Control nur zeigen, wenn eine Quelle in
 // Reichweite ist (fuer 'field' immer implizit der Fall).
 
@@ -13,6 +17,7 @@ export type PropertyKind =
   | 'textarea'
   | 'select'
   | 'field'
+  | 'relation'
 
 export interface PropertySelectOption {
   value: string

@@ -480,21 +480,52 @@ den Export (Kap. 3).
       Validierung, Umbenennen mit stabiler id, Löschen mit/ohne
       Benutzt-Warnung); browser-verifiziert mit Screenshots (Formular,
       Feld-Picker mit eigenen Feldern samt Beispielwert).
-  - **5.5 Relation-Vorlagen-Bibliothek** `[kritisch]` (Nutzer-Anforderung
-    2026-07-07): GET/PUT-Relations sind wie Datenquellen BENUTZERDEFINIERTE
-    VORLAGEN — der Bediener gibt Anzeigename, Verb (GET_RELATION /
-    PUT_RELATION / PUTADD_RELATION), NR (freie Eingabe, >1000 möglich) und
-    die Parameter-Syntax ein; die Syntax enthält PLATZHALTER, die zur
-    Laufzeit gefüllt werden: `{PINDEX}`/`{SELKEY}` (Satznummer der
-    Auswahl), `{DROP_PINDEX}` (gezogene Karte), `{VALUE}` (auslösender
-    Wert), `{NOW_DATE}` sowie Feldcodes. Vorlagen persistieren neben den
-    Datenquellen; Aktionen (Kap. 8) und der Kanban-Schreibweg (5.3b)
-    KONSUMIEREN Vorlagen statt eigene Protokolle zu kennen. Standard-PUT
-    (NR 174) wird als Vorlage mitgeliefert. Verhaltensreferenz alter
-    Editor: `src/components/modals/RelationForm.tsx` (Eingabe-UI),
-    `src/types/index.ts` (relations-Modell: relNo/kind/syntax/
-    syntaxParams), `src/runtime/actions.ts` (Platzhalter-Auflösung,
-    pindexMode fixed/selected/drop).
+  - ✅ **5.5 Relation-Vorlagen-Bibliothek (KOMPLETT 2026-07-08)** `[kritisch]`
+    (Nutzer-Anforderung 2026-07-07): GET/PUT-Relations sind wie Datenquellen
+    BENUTZERDEFINIERTE VORLAGEN. Umsetzung nach 5.4-Muster:
+    - **Modell** (`core/data/relations.ts`, aus 5.3b ausgebaut): Vorlage =
+      id/name/verb (GET/PUT/PUTADD_RELATION)/nr/params. Das PLATZHALTER-
+      Vokabular ist EINE Konstante `RELATION_PLACEHOLDERS`
+      (`{FELD_POS}/{FELD_LEN}/{PINDEX}/{SELKEY}/{DROP_PINDEX}/{RELID}/{VALUE}/
+      {NOW_DATE}`) — Quelle für Formular-Hilfe, Validierung
+      (`unknownPlaceholders` fängt Tippfehler) und Laufzeit. `resolveParams`
+      wie gehabt; `sanitizeRelationTemplates` (Muster sanitizeDataSources)
+      verwirft Vorlagen mit kaputten params KOMPLETT (Stelligkeit!). Der
+      Standard-PUT (NR 174, PARAMS 2026-07-08 gegen echtes sePut verifiziert)
+      ist jetzt nur noch der SEED `BUILTIN_RELATION_TEMPLATES`.
+    - **Store + Hook** (`state/RelationStore.ts` + `useRelations.ts`): exakt
+      DataSourceStore-Muster (Subject + localStorage
+      `aufbau_editor_relationen_v1` + entprelltes Speichern; Seed nur beim
+      allerersten Start, danach gehören die Vorlagen dem Bediener; add=frische
+      id, update=id stabil; kein Undo).
+    - **Konsum statt Protokoll:** Board trägt neue Prop `putRelation`
+      (Default 'standard-put'), Inspector-Sektion „Daten" bekommt das Control
+      „Schreiben über" (neuer PropertyKind `relation`: Anzeigenamen sichtbar,
+      Vorlagen-id gespeichert, nur mit Quelle in Reichweite). Der Export
+      bettet die BENUTZTEN Vorlagen als `var FF_RELATIONS` ein (registry-
+      getrieben über kind-'relation'-Props, dedupliziert, DIESELBE Quelle wie
+      HTML — Grundsatz a; nur Technikwerte). `seRuntime` löst den Schreibweg
+      über FF_RELATIONS auf (`findRuntimeRelation`), NR 174 nicht mehr
+      festverdrahtet (CLAUDE.md 5.3b (d) erfüllt). WYSIWYG-Schärfung: ohne
+      auflösbare Vorlage ist das Board read-only — Drop bewegt NICHTS (ein
+      rein lokaler Zug verschwände beim nächsten ReloadData = Täuschung).
+    - **Bibliothek** (`sidebar/RelationList.tsx` + `RelationForm.tsx`): dritte
+      Sidebar-Bibliothek „Relationen" neben Datenquellen; Anlegen/Bearbeiten/
+      Löschen (Rückfrage; Benutzt-Warnung per Registry-Scan, kein
+      `if type===`). Formular im Modal-Molekül: Anzeigename, Verb-Select mit
+      Klarnamen (Lesen/Schreiben/Anhängen + Kürzel), NR, Parameter-Zeilen mit
+      Platzhalter-Hinweis; Validierung erst beim Speichern.
+    136 Unit-Tests (`RelationStore.test`, relations-Lader/Platzhalter,
+    findRuntimeRelation, FF_RELATIONS-Einbettung; kanban.export-Assertion an
+    das neue `putrelation`-Attribut angepasst — nicht abgeschwächt) + 24 E2E
+    (neu `e2e/relationen.spec.ts`: Anlegen→Wählen→Export→Drag mit EIGENER NR,
+    read-only ohne Vorlage, Validierung, Umbenennen mit stabiler id, Löschen
+    mit Benutzt-Warnung) grün; browser-verifiziert mit Screenshots (Formular
+    mit Platzhalter-Hinweis, Inspector „Schreiben über", dritte Bibliothek).
+    Verhaltensreferenz alter Editor war: `RelationForm.tsx`, `types/index.ts`
+    (relNo/kind/syntax), `runtime/actions.ts` (pindexMode fixed/selected/drop
+    — als {PINDEX}/{SELKEY}/{DROP_PINDEX} abgebildet).
+    **→ Kap. 5 (Daten-Anbindung) damit KOMPLETT.**
 - **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
   FormField + Bild (zurückgestellt aus Kap. 4), DataTable (Spalte anklicken →
   Feld, Breite ziehen), DetailCard, Wizard (Schritte als Reiter,

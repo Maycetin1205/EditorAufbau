@@ -8,6 +8,7 @@ import type {
   PropertyKind,
 } from '../../core/blocks/PropertyDescription'
 import { useDataSources } from '../../state/useDataSources'
+import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { DataSection } from './DataSection'
@@ -31,6 +32,9 @@ export function Inspector() {
   // Vorlagen-Änderungen (Kap. 5.4) müssen Feldlisten/Sichtbarkeit sofort
   // nachziehen — dataSourceFor liest aus dem DataSourceStore.
   useDataSources()
+  // Relation-Vorlagen (Kap. 5.5): die Auswahl im kind-'relation'-Control muss
+  // neue/umbenannte Vorlagen sofort zeigen — liest aus dem RelationStore.
+  const relations = useRelations()
   const block = ed.selectedNode
 
   if (!block) {
@@ -96,15 +100,34 @@ export function Inspector() {
             onChange={(v) => set(v === KEIN_FELD ? '' : v)}
           />
         )
+      // Relation-Vorlage aus der Bibliothek (Kap. 5.5): Anzeigenamen sichtbar,
+      // Vorlagen-id (Technikwert) wird gespeichert. '— keine —' schaltet den
+      // Schreibweg ab. Gelöschte/unbekannte ids fallen auf '— keine —' zurück.
+      case 'relation':
+        return (
+          <SelectControl
+            key={property.attributeName}
+            label={property.name}
+            description={property.description}
+            options={[
+              { value: KEIN_FELD, label: '— keine —' },
+              ...relations.list.map((r) => ({ value: r.id, label: r.name })),
+            ]}
+            value={
+              typeof value === 'string' && relations.get(value) ? value : KEIN_FELD
+            }
+            onChange={(v) => set(v === KEIN_FELD ? '' : v)}
+          />
+        )
       default:
         return null
     }
   }
 
-  // Daten-Controls (Kap. 5.3) gehören in die Sektion "Daten", nicht in die
-  // allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
+  // Daten-Controls (Kap. 5.3/5.5) gehören in die Sektion "Daten", nicht in
+  // die allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
   const dataProps = def.customProperties.filter(
-    (p) => p.requiresDataSource || p.kind === 'field',
+    (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'relation',
   )
   const generalProps = def.customProperties.filter((p) => !dataProps.includes(p))
   // Sektion zeigen, wenn der Block eine Quelle anhängen kann (Kanban) ODER

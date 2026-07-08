@@ -60,8 +60,9 @@ describe('Kanban-Export (echte Bloecke)', () => {
     const { html } = exportMask(boardTree())
     // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
     // (Kap. 5.1) ohne angehaengte Quelle; statusfield=""/statusvalue="" =
-    // Daten-Props aus Kap. 5.3 ohne gesetzte Werte.
-    expect(html).toContain('<ff-kanban source="" statusfield="" style="align-self:stretch">')
+    // Daten-Props aus Kap. 5.3 ohne gesetzte Werte; putrelation = Default-
+    // Vorlage des Schreibwegs (Kap. 5.5).
+    expect(html).toContain('<ff-kanban source="" statusfield="" putrelation="standard-put" style="align-self:stretch">')
     expect(html).toContain('heading="Offen" statusvalue="" style="width:290px;flex-shrink:0"')
   })
 

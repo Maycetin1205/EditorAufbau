@@ -21,7 +21,9 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
+import type { RelationTemplate } from '../core/data/relations'
 import { dataSourceStore } from '../state/DataSourceStore'
+import { relationStore } from '../state/RelationStore'
 import {
   flowItemStyle,
   parseFlowWidth,
@@ -149,6 +151,36 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
   return acc
 }
 
+// ---------- Relation-Vorlagen → FF_RELATIONS (Kap. 5.5) ----------
+
+// Sammelt die im Baum benutzten Relation-Vorlagen: für jeden Block liest
+// sie die Werte aller customProperties mit kind 'relation' (Technikwert =
+// Vorlagen-id) — registry-getrieben, kein `if type===`. Baum-Reihenfolge,
+// dedupliziert, deterministisch. Unbekannte ids werden übersprungen.
+function collectRelations(
+  tree: BlockTree,
+  relations: readonly RelationTemplate[],
+): RelationTemplate[] {
+  const seen = new Set<string>()
+  const acc: RelationTemplate[] = []
+  const visit = (node: BlockNode | undefined): void => {
+    if (!node) return
+    const def = getBlockDefinition(node.type)
+    for (const prop of def?.customProperties ?? []) {
+      if (prop.kind !== 'relation') continue
+      const id = node.props[prop.attributeName]
+      const rel = typeof id === 'string' ? relations.find((r) => r.id === id) : undefined
+      if (rel && !seen.has(rel.id)) {
+        seen.add(rel.id)
+        acc.push(rel)
+      }
+    }
+    node.childIds.forEach((id) => visit(tree[id]))
+  }
+  visit(tree[ROOT_ID])
+  return acc
+}
+
 // ---------- Maske zusammensetzen ----------
 
 export function exportMask(
@@ -157,6 +189,8 @@ export function exportMask(
   // Vorlagen-Bibliothek (Kap. 5.4): standardmäßig der gelebte Bestand des
   // DataSourceStore; Tests dürfen eine feste Liste stellen (Determinismus).
   sources: readonly DataSource[] = dataSourceStore.list,
+  // Relation-Vorlagen (Kap. 5.5): analog, gelebter Bestand des RelationStore.
+  relations: readonly RelationTemplate[] = relationStore.list,
 ): MaskExport {
   const root = tree[ROOT_ID]
   const blocks = (root?.childIds ?? [])
@@ -166,6 +200,7 @@ export function exportMask(
     .join('\n')
 
   const used = collectDataSources(tree, sources)
+  const usedRelations = collectRelations(tree, relations)
 
   const tokensCss = stripCssComments(tokensCssRaw)
   const runtimeJs = guardScriptContent(escapeNonAsciiJs(runtimeJsRaw.trim()))
@@ -181,6 +216,17 @@ export function exportMask(
       name: s.name,
       tableId: tableIdFor(s),
       indexField: s.indexField ?? '',
+    }))) + ';',
+  ))
+  // Die benutzten Relation-Vorlagen reisen ebenso als DATEN mit (Kap. 5.5):
+  // seRuntime löst putRelation-ids über dieses Global auf. Nur Technikwerte
+  // (Verb/NR/Params) — der Anzeigename bleibt im Editor.
+  const relationsJs = guardScriptContent(escapeNonAsciiJs(
+    'var FF_RELATIONS = ' + JSON.stringify(usedRelations.map((r) => ({
+      id: r.id,
+      verb: r.verb,
+      nr: r.nr,
+      params: r.params,
     }))) + ';',
   ))
 
@@ -206,6 +252,7 @@ export function exportMask(
     '  </div>',
     '<script>',
     sourcesJs,
+    relationsJs,
     runtimeJs,
     '</script>',
     '</body>',
