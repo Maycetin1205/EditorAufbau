@@ -526,7 +526,97 @@ den Export (Kap. 3).
     (relNo/kind/syntax), `runtime/actions.ts` (pindexMode fixed/selected/drop
     — als {PINDEX}/{SELKEY}/{DROP_PINDEX} abgebildet).
     **→ Kap. 5 (Daten-Anbindung) damit KOMPLETT.**
-- **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`:
+- ⚑ **STABILISIERUNG — Architektur- & Bedienkorrektur (vor Kap. 6)**
+  `[kritisch]` (beschlossen 2026-07-09): Vor DataTable/Wizard/weiteren
+  Blöcken kommt eine Korrektur — sonst wächst ein zweiter, nur ordentlicher
+  beschrifteter Spaghetti-Editor. Auslöser: eine unabhängige Zweit-Review
+  (Fable-5-Diagnose) + Nutzer-Entscheidungen; jede Behauptung wurde am Code
+  **verifiziert** (Datei:Zeile unten). **Das Fundament bleibt** (Flow-/
+  Container-Baum, React+Lit, Registry statt `if type===`, deterministischer
+  gemeinsamer HTML/JSON-Export, Tokens, Tests, flache Vererbung) — nur die
+  Architektur-/Bedienfehler werden behoben, nichts ersetzt.
+  Reihenfolge (jeder Punkt atomar KOMPLETT — Plan + „go" + Design-Bild bei
+  Optik + Tests + Export geprüft + committet — bevor der nächste beginnt):
+  - **S1 Export-Preflight hart** `[kritisch]`: Der Validator überspringt
+    heute STILL kaputte Referenzen — Beleg: `exportMask.ts` `collectDataSources`
+    (`if (src && …)`) und `collectRelations` (`if (rel && …)`, Kommentar
+    „Unbekannte ids werden übersprungen"). Ein Block mit gelöschter Quelle
+    exportiert stumm ohne Datenanbindung = tote Maske. Widerspricht dem
+    Nordstern. Neu: Export **blockiert + erklärt verständlich** bei
+    gelöschter/unbekannter Quelle ODER Relation, unvollständigen Technik-IDs,
+    doppelten technischen Aliassen, Kanban mit Bindung aber ohne statusField/
+    statusValue, quellenart-spezifischen Pflichtfeldern, kaputten
+    Relation-Params/Feldcodes, referenzieller Integrität. JSON ebenfalls
+    validieren; HTML+JSON als EIN zusammengehöriges Paket.
+  - **S2 Anzeigename ↔ Technik-Alias trennen** `[kritisch]`: Heute ist der
+    sichtbare Name = technischer SE-`ALIAS` (Beleg `exportMask.ts` `ALIAS:
+    s.name`) — Umbenennen ändert den Datenvertrag, gleichnamige Quellen
+    kollidieren. Verstoß gegen „Technikwert ≠ Anzeigename". Neu: DataSource
+    trägt stabile interne id + frei änderbaren Anzeigenamen + technischen
+    Alias + quellenart-spezifische Konfig; doppelte Aliase verhindert.
+    (Der alte Editor trennte das bereits: `alias` vs. `name`/`label`.)
+  - **S3 Kanban-Modell + Layout korrigieren** `[kritisch]`: Der zentrale
+    Modellfehler — Editor-Knoten (Maskenaufbau), sichtbare Web-Component
+    (Design) und SoftEngine-Laufzeitzeile werden vermischt; die Karte ist
+    gleichzeitig Canvas-Baustein, Vorlage, Beispielkarte und Klonvorlage
+    (darum lässt sie sich rausziehen, 6 Beispielkarten, aber nur die erste
+    zählt im Export). Neu: das Board besitzt **eine** klar erkennbare
+    Kartenvorlage und erzeugt daraus Laufzeitkarten; Karten existieren NUR
+    in zulässigen Kanban-Spalten. Layout (Nutzer-Entscheidung 2026-07-09):
+    Spalten verteilen sich fließend über die Breite mit Mindestbreite, und
+    **UMBRECHEN in die nächste Zeile statt intern zu scrollen** (KEIN
+    horizontaler Scroll). `flowLayout` bekommt dafür eine **opt-in**
+    Mindestbreite für 'fill' (Default unverändert → kein anderer Block
+    betroffen). Zielbild 4K.1 (`.zb-col flex:0 0 290px`) zuerst als Mockup
+    revidieren + Nutzer-Abnahme. Bindung am gewählten Kanban geschlossen
+    sichtbar: 1. Quelle 2. Spaltenfeld 3. Spaltenwerte 4. Kartenstellen→Felder
+    5. Schreibrelation 6. sofort realistische Datenvorschau.
+  - **S4 Datenquellen: Import + erweiterbare Arten** `[Muster kritisch]`
+    (Nutzer-Entscheidungen 2026-07-09): (a) **IDB-Import** — der Bediener
+    exportiert die Tabelle aus SoftEngine und importiert die Datei; ein
+    reiner, testbarer Parser (kein Alt-Code kopiert, XXE-Strip beibehalten)
+    zieht Felder mit Klarname + `pos_len` heraus und füllt das
+    Datenquellen-Formular vor; der Bediener prüft + speichert → **neue
+    Quelle** (nachträgliches „bestehende aktualisieren" optional). Format A
+    (sauberer Export) zuerst, Format B (Fixbreiten-Dump) optional später;
+    vor dem Bau eine echte SE-Datei ansehen statt zu raten. Verhaltens-
+    Referenz alter Editor: `parseIdbXml.ts`, `DataCenter.tsx` (NUR Funktion).
+    (b) **Quellen-Arten erweiterbar**: eine Beschreibung PRO Art an EINER
+    Stelle (Muster Block-Registry, kein `if kind===`) — Anzeigename, nötige
+    Formularfelder, tableId-Abbildung, FELDER-Abbildung, SEvariablen-Form.
+    Neue Art = ein Eintrag. (c) optionales **freiselekt** (Filter, nur
+    Beleg/Stamm) → Export `FREISELEKT`. **Zurückgestellt (nicht auf Verdacht):
+    MEMTAB + ERPAPICALL** — ändern die SEvariablen-FORM; erst bauen, wenn
+    gegen `behandlung-umbau` verifiziert (Repo per add_repo anhängen).
+  - **S5 Relation-Syntax einfügen** `[Muster kritisch]` (Nutzer-Entscheidung
+    2026-07-09): komplette SE-Syntax `(GET|PUT|PUTADD)_RELATION[NR!p1!p2!…]`
+    einfügen → automatisch in Verb/NR/Params zerlegen, strukturierte
+    Vorschau, danach Einzel-Params bearbeitbar; Einzel- + Batch-Import.
+    Fremde `{Platzhalter}` NICHT ablehnen: verbatim übernehmen, der Bediener
+    ordnet jede variable Stelle EINMAL ihrer Bedeutung zu (keine stille
+    Auto-Übersetzung). Das strukturierte Modell darunter (`relations.ts`)
+    bleibt. Referenz alter Editor: `parseRelationSyntax` (NUR Funktion).
+  - **S6 `strict` TypeScript + typisiertes Block-Schema** `[kritisch]`:
+    `tsconfig.app.json` hat kein `strict` (verifiziert) → grüner tsc ist
+    weniger aussagekräftig als er aussieht. Eine Property wird an ~4 Stellen
+    definiert (defaultProps, Lit-`@property`, Inspector-Beschreibung,
+    Export-Attribut), Props sind fast überall `Record<string, unknown>` —
+    man kann eine Stelle vergessen, tsc bleibt grün. Neu: `strict` an, EINE
+    typisierte Property-Wahrheit (diskriminiertes Schema), typsichere
+    Serialisierung + Events (kein freier String als Property-Name im Event).
+    Fleißarbeit, eigener Schritt.
+  - **Leitplanken:** Tests werden NIE gelöscht/abgeschwächt — die grünen
+    Tests, die falsches Verhalten festschreiben (290px-Spalten; „gelöschte
+    Quelle/Relation wird übersprungen"), bekommen ihre Spezifikation bewusst
+    geändert und werden zu STRENGEREN Sicherheitsprüfungen umgebaut (Export
+    MUSS bei kaputter Referenz scheitern). **Bewusst zurückgestellt** (Projekt-
+    Disziplin „erst bauen, wenn ein zweiter Fall es erzwingt", nicht jetzt):
+    Store-Injection/DI + mehrere Masken/Projekte, Render-Performance-
+    Optimierung (jeder Notify rendert alles), vollständiger Composition-Umbau
+    von `BasicBlock`, God-Component-Split von `BlockHost` (nur so weit, wie
+    S1–S6 es brauchen). **→ Erst nach der Stabilisierung Kap. 6.**
+- **Kap. 6 — weitere Blöcke** `[Muster kritisch, Ausbau mechanisch]`
+  (GESPERRT bis STABILISIERUNG fertig):
   DataTable (Spalte anklicken → Feld, Breite ziehen), Wizard (Schritte als
   Reiter, Plus/Ziehen/Kreuzchen) — alle streng atomar nach Zielbild-Regel.
   **Zuschnitt-Entscheidung 2026-07-08 (mit Nutzer):** **Bild gestrichen**
