@@ -130,7 +130,9 @@ function nodeToHtml(
 
 // Sammelt die im Baum angehängten Datenquellen (source-Prop von Blöcken mit
 // acceptsDataSource) in Baum-Reihenfolge, dedupliziert — deterministisch.
-// Unbekannte Vorlagen-ids werden übersprungen (Quelle wurde entfernt).
+// Unbekannte Vorlagen-ids werden hier als Fallback übersprungen; im echten
+// Export-Fluss fängt die Preflight (preflight.ts, S1a) eine gelöschte Quelle
+// jedoch VORHER ab und blockiert den Export (Toolbar).
 // `sources` = die Vorlagen-Bibliothek (Kap. 5.4: benutzerdefiniert).
 function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): DataSource[] {
   const seen = new Set<string>()

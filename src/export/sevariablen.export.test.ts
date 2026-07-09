@@ -13,6 +13,7 @@ import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import type { DataSource } from '../core/data/dataSources'
 import { Editor } from '../state/Editor'
 import { exportMask } from './exportMask'
+import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
 
 // Baum mit n Boards; sources[i] wird als source-Prop des i-ten Boards gesetzt.
@@ -70,9 +71,14 @@ describe('SEvariablen aus dem Baum', () => {
     expect(loop.map((e) => e.ALIAS)).toEqual(['Kundenhaustiere', 'Terminplaner'])
   })
 
-  it('unbekannte Vorlagen-ids werden uebersprungen', () => {
-    const { sevariablen } = exportMask(boardsTree(['geloeschte-quelle']))
-    expect(JSON.parse(sevariablen)).toEqual({ SEFILELOOP: [], ERPAPICALL: [] })
+  it('geloeschte/unbekannte Quellen-id blockiert den Export (Preflight, S1a)', () => {
+    // Spezifikation bewusst geaendert (Stabilisierung S1a, LEITPLANKE: Test
+    // nicht loeschen, sondern verschaerfen): frueher wurde die unbekannte id
+    // still uebersprungen (leerer SEFILELOOP) — jetzt meldet die Preflight sie
+    // als Fehler, der den Export blockiert (Nordstern: keine tote Maske).
+    const failed = failedChecks(preflightMask(boardsTree(['geloeschte-quelle']), []))
+    expect(failed).toHaveLength(1)
+    expect(failed[0].name).toBe('Datenquelle fehlt')
   })
 
   it('ist deterministisch: gleicher Baum -> identische JSON', () => {
