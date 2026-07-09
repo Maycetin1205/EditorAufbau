@@ -104,8 +104,12 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   }, SEDATA_STUB)
 
   // 4 Zeilen -> 4 Karten: Minka+Nala in "In Arbeit" (2), Buddy in "Fertig"
-  // (3), Rocky (Zimmer "OP", kein Treffer) im Auffang "Offen".
-  await expect(mask.locator('ff-card')).toHaveCount(4)
+  // (3), Rocky (Zimmer "OP", kein Treffer) im Auffang "Offen". Die
+  // Musterkarte im (ausgeblendeten) Vorlagen-Kasten zaehlt nicht mit.
+  await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
+  // Der Vorlagen-Kasten ist im hydrierten Board ausgeblendet (Werkzeug,
+  // keine Anzeige — S3).
+  await expect(mask.locator('ff-kanban-vorlage')).toBeHidden()
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(colCards(0)).toHaveText(['Rocky'])
   await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
@@ -115,8 +119,8 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   // Ungebundene Stellen behalten den statischen Text der Vorlagen-Karte.
   await expect(mask.locator('ff-card .text').first()).toHaveText('Befund Minka besprechen')
 
-  // Der EDITOR hydriert nie: dort stehen weiterhin die 6 gestalteten Karten.
-  await expect(page.locator('ff-card')).toHaveCount(6)
+  // Der EDITOR hydriert nie: dort steht weiterhin nur die Musterkarte.
+  await expect(page.locator('ff-card')).toHaveCount(1)
 })
 
 // Schreibweg 5.3b: Zeilen tragen die Satznummer (indexField '0_10' des
@@ -202,9 +206,11 @@ test('Export ohne Spalten-Feld bleibt statisch — auch wenn SEDATA da ist', asy
     (window as unknown as Record<string, unknown>).SEDATA = sedata
   }, SEDATA_STUB)
 
-  // Keine Hydrierung: die 6 gestalteten Beispiel-Karten bleiben stehen
+  // Keine Hydrierung: nur die Musterkarte im SICHTBAREN Vorlagen-Kasten
+  // (ehrlicher Hinweis, dass die Datenanbindung fehlt), Spalten leer
   // (der Poll hätte 300ms-Takte — kurz warten, dann prüfen).
   await mask.waitForTimeout(1000)
-  await expect(mask.locator('ff-card')).toHaveCount(6)
+  await expect(mask.locator('ff-card')).toHaveCount(1)
+  await expect(mask.locator('ff-kanban-vorlage')).toBeVisible()
   await expect(mask.locator('ff-card .heading').first()).toHaveText('Rückruf Fr. Wagner')
 })

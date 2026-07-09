@@ -321,7 +321,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           onClose={() => setPicker(null)}
         />
       )}
-      {selected && (
+      {selected && def?.removable !== false && (
         <button
           type="button"
           aria-label="Entfernen"

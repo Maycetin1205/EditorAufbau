@@ -69,30 +69,34 @@ async function dragCardToColumn(page: Page, cardHeading: string, colHeading: str
   }, colHeading)
 }
 
-test('Einfügen: Board erscheint mit den Beispieldaten des Zielbilds', async ({ page }) => {
+test('Einfügen (S3): Board = Vorlagen-Kasten mit EINER Musterkarte + 3 leere Spalten', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
   await expect(page.locator('ff-kanban-spalte .title')).toHaveText(['OFFEN', 'IN ARBEIT', 'FERTIG'], { ignoreCase: true })
-  await expect.poll(() => counts(page)).toEqual(['3', '1', '2'])
-  await expect(page.locator('ff-card')).toHaveCount(6)
-  // Editor-Hilfen: je Spalte "+ Karte", am Board "+ Spalte".
-  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(3)
+  // Der Vorlagen-Kasten ist sichtbar beschriftet und traegt die Musterkarte.
+  await expect(page.locator('ff-kanban-vorlage')).toHaveCount(1)
+  await expect(page.locator('ff-kanban-vorlage')).toContainText(/Kartenvorlage/i)
+  await expect(page.locator('ff-card')).toHaveCount(1)
+  // Spalten sind LEER (Karten entstehen aus Daten) und sagen das auch.
+  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
+  await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(3)
+  // Editor-Hilfen: "+ Karte" NUR am Vorlagen-Kasten, "+ Spalte" am Board.
+  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(1)
   await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' })).toHaveCount(1)
-  // Die Spalte selbst steht NICHT in der Bibliothek.
+  // Weder Spalte noch Karte stehen in der Bibliothek.
   await expect(page.getByRole('button', { name: 'Kanban-Spalte' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Karte', exact: true })).toHaveCount(0)
 })
 
-test('Karte ziehen: Spalte-zu-Spalte über die vorhandene Drag-Logik, 1 Undo pro Zug', async ({ page }) => {
+test('Musterkarte laesst sich NICHT in eine Spalte ziehen — Karten entstehen aus Daten (S3)', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
-  await dragCardToColumn(page, 'Impfpass nachtragen', 'In Arbeit')
-  await expect.poll(() => counts(page)).toEqual(['2', '2', '2'])
-
-  // EIN Undo stellt den Zug komplett zurück.
-  await page.getByRole('button', { name: 'Rückgängig (Ctrl+Z)' }).click()
-  await expect.poll(() => counts(page)).toEqual(['3', '1', '2'])
+  // Drop auf die Spalte bietet kein Ziel an (canContain) — nichts bewegt sich.
+  await dragCardToColumn(page, 'Rückruf Fr. Wagner', 'In Arbeit')
+  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
+  await expect(page.locator('ff-kanban-vorlage ff-card')).toHaveCount(1)
 })
 
 test('Spaltentitel per Doppelklick umbenennen (persistiert)', async ({ page }) => {
@@ -115,18 +119,21 @@ test('Spaltentitel per Doppelklick umbenennen (persistiert)', async ({ page }) =
   }, STORAGE_KEY)).toBe('EINGANG')
 })
 
-test('Plus-Knöpfe: "+ Karte" füllt die Spalte, "+ Spalte" erweitert das Board', async ({ page }) => {
+test('Plus-Knöpfe (S3): "+ Spalte" erweitert das Board leer; "+ Karte" stellt die Musterkarte wieder her', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
-  await page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' }).first().click()
-  await expect.poll(() => counts(page)).toEqual(['4', '1', '2'])
-
   await page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(4)
-  // Neue Spalte kommt leer (Zähler 0 + Drop-Hinweis), OHNE Beispielkarten.
-  await expect.poll(() => counts(page)).toEqual(['4', '1', '2', '0'])
-  await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(1)
+  await expect.poll(() => counts(page)).toEqual(['0', '0', '0', '0'])
+
+  // Musterkarte löschen (keine Kinder -> keine Rückfrage) …
+  await page.locator('ff-card .heading').click()
+  await page.getByRole('button', { name: 'Entfernen' }).click()
+  await expect(page.locator('ff-card')).toHaveCount(0)
+  // … und über "+ Karte" am Vorlagen-Kasten wiederherstellen.
+  await page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' }).click()
+  await expect(page.locator('ff-kanban-vorlage ff-card')).toHaveCount(1)
 })
 
 test('Erlaubte Kind-Typen: eine Schaltfläche aus der Bibliothek fällt NICHT in die Spalte', async ({ page }) => {
@@ -135,10 +142,10 @@ test('Erlaubte Kind-Typen: eine Schaltfläche aus der Bibliothek fällt NICHT in
 
   // Palette-Drag simulieren: Typ reist im MIME-Namen (dragover darf keine
   // Daten lesen). dragover/drop als getrennte Tasks (React-Flush dazwischen).
-  const paletteDrag = async (type: string) => {
+  const paletteDrag = async (type: string, targetSel: string) => {
     for (const eventName of ['dragover', 'drop'] as const) {
-      await page.evaluate(({ MIME, type, eventName }) => {
-        const col = document.querySelector('ff-kanban-spalte')!
+      await page.evaluate(({ MIME, type, eventName, targetSel }) => {
+        const col = document.querySelector(targetSel)!
         const wrap = col.closest('[draggable="true"]')!
         const dt = new DataTransfer()
         dt.setData(MIME, type)
@@ -148,30 +155,37 @@ test('Erlaubte Kind-Typen: eine Schaltfläche aus der Bibliothek fällt NICHT in
           bubbles: true, cancelable: true, dataTransfer: dt,
           clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
         }))
-      }, { MIME: NEW_BLOCK_MIME, type, eventName })
+      }, { MIME: NEW_BLOCK_MIME, type, eventName, targetSel })
     }
   }
 
   // 'button' ist in der Spalte verboten -> kein Drop-Ziel, nichts passiert.
-  await paletteDrag('button')
+  await paletteDrag('button', 'ff-kanban-spalte')
   await expect(page.locator('ff-button')).toHaveCount(0)
-  await expect.poll(() => counts(page)).toEqual(['3', '1', '2'])
+  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
 
-  // Gegenprobe: eine Karte aus der Bibliothek IST erlaubt.
-  await paletteDrag('card')
-  await expect.poll(() => counts(page)).toEqual(['4', '1', '2'])
+  // Auch eine Karte faellt NICHT mehr in die Spalte (S3: Karten aus Daten) …
+  await paletteDrag('card', 'ff-kanban-spalte')
+  await expect(page.locator('ff-card')).toHaveCount(1)
+  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
+
+  // … aber in den Vorlagen-Kasten (nur die ERSTE Karte ist die Vorlage).
+  await paletteDrag('card', 'ff-kanban-vorlage')
+  await expect(page.locator('ff-kanban-vorlage ff-card')).toHaveCount(2)
 })
 
-test('Kreuzchen: belegte Spalte löst Rückfrage aus und verschwindet mitsamt Karten', async ({ page }) => {
+test('Kreuzchen (S3): leere Spalte geht ohne Rückfrage; der Vorlagen-Kasten hat KEIN Kreuzchen', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
+  // Leere Spalte: Entfernen ohne Dialog (Playwright wuerde einen confirm()
+  // sonst automatisch verwerfen — die Spalte bliebe stehen).
   await page.locator('ff-kanban-spalte .head').first().click() // selektieren
-  page.once('dialog', (dialog) => {
-    expect(dialog.message()).toContain('3 Elementen')
-    void dialog.accept()
-  })
   await page.getByRole('button', { name: 'Entfernen' }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(2)
-  await expect(page.locator('ff-card')).toHaveCount(3)
+
+  // Vorlagen-Kasten: selektierbar, aber ohne Entfernen (removable=false) —
+  // ohne Vorlage koennte das Board keine Karten erzeugen.
+  await page.locator('ff-kanban-vorlage .head').click()
+  await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(0)
 })

@@ -66,6 +66,10 @@ export interface BlockDefinition {
   // false = erscheint nicht in der Bibliothek (Kanban-Spalte entsteht nur
   // über das Board). undefined/true = sichtbar.
   showInPalette?: boolean
+  // false = kein Entfernen-Kreuzchen am Block (S3: der Vorlagen-Kasten des
+  // Kanbans ist Pflichtteil — ohne ihn könnte das Board keine Karten
+  // erzeugen). undefined/true = löschbar wie üblich.
+  removable?: boolean
   // false = keine gestrichelte Editor-Hilfe um den Container (Blöcke mit
   // eigenem sichtbarem Rahmen wie Kanban/Spalte). undefined/true = Hilfe an.
   containerHint?: boolean

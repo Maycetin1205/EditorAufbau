@@ -40,6 +40,7 @@ export interface BlockComponentStatic {
   readonly defaultChildren?: readonly DefaultChildSpec[]
   readonly childDirection?: FlowDirection
   readonly showInPalette?: boolean
+  readonly removable?: boolean
   readonly containerHint?: boolean
   readonly addChildButton?: { label: string; childType: string }
   // Datenquellen-Fähigkeit aus Kap. 5.1 — Bedeutung siehe BlockDefinition.
