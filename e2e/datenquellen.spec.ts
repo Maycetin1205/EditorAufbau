@@ -122,3 +122,36 @@ test('Löschen: Rückfrage warnt, wenn die Quelle benutzt wird; die Maske bleibt
   expect(frage).toContain('löschen?')
   expect(frage).not.toContain('BENUTZT')
 })
+
+// Stabilisierung S1a: zeigt der Block auf eine geloeschte Datenquelle, bricht
+// die Export-Preflight ab (statt still eine tote Maske zu erzeugen, Nordstern).
+test('S1a: geloeschte Datenquelle blockiert den Export mit verstaendlicher Meldung', async ({ page }) => {
+  await freshEditor(page)
+
+  // Kanban einfuegen + Terminplaner anhaengen.
+  await page.getByRole('button', { name: 'Kanban', exact: true }).click()
+  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.getByLabel('Datenquelle').click()
+  await page.getByRole('option', { name: 'Terminplaner' }).click()
+
+  // Alle nativen Dialoge einsammeln (Loesch-Rueckfrage UND Export-Meldung).
+  const dialogMessages: string[] = []
+  page.on('dialog', (d) => {
+    dialogMessages.push(d.message())
+    void d.accept()
+  })
+
+  // Terminplaner aus der Bibliothek loeschen -> das Board zeigt jetzt auf eine
+  // geloeschte Quelle (Bindung ruht, Block bleibt stehen — Kap. 5.4b).
+  await page.getByRole('button', { name: 'Terminplaner löschen' }).click()
+  await expect(page.getByRole('button', { name: 'Terminplaner löschen' })).toHaveCount(0)
+
+  // Export: darf NICHT herunterladen, sondern die Preflight muss abbrechen.
+  const downloads: Download[] = []
+  page.on('download', (d) => downloads.push(d))
+  await page.getByRole('button', { name: 'Als SoftEngine-Maske exportieren' }).click()
+
+  await expect.poll(() => dialogMessages.some((m) => m.includes('Export abgebrochen'))).toBe(true)
+  expect(dialogMessages.some((m) => m.includes('Datenquelle fehlt'))).toBe(true)
+  expect(downloads).toHaveLength(0)
+})

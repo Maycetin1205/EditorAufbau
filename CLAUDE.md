@@ -548,6 +548,21 @@ den Export (Kap. 3).
     statusValue, quellenart-spezifischen Pflichtfeldern, kaputten
     Relation-Params/Feldcodes, referenzieller Integrität. JSON ebenfalls
     validieren; HTML+JSON als EIN zusammengehöriges Paket.
+    - ✅ **S1a (2026-07-09): gelöschte/unbekannte Datenquelle blockiert den
+      Export.** Neue reine Prüfung `src/export/preflight.ts`
+      (`preflightMask(tree, sources)`: Block mit `acceptsDataSource` + nicht-
+      leerer `source`, die nicht in der Bibliothek liegt → roter `CheckResult`;
+      leer = ok). In `Toolbar.tsx` vor dem Download verdrahtet (dieselbe
+      Bibliothek für Preflight + Export, kombiniert mit `validateMaskHtml`,
+      bei Rot `alert` + Abbruch — bestehendes Muster). Muster: `validator.ts`
+      (`CheckResult`/`failedChecks`); kein `if type===` (Registry-Flag).
+      Der Test, der das Skip-Verhalten festschrieb
+      (`sevariablen.export.test.ts`), wurde NICHT gelöscht, sondern zur
+      strengeren Prüfung umgebaut (Preflight meldet den Fehler); Kommentar in
+      `exportMask.ts` präzisiert (Skip = nur Fallback hinter der Preflight).
+      144 Unit-Tests (neu `preflight.test.ts`) + 25 E2E grün (neuer Fall
+      `datenquellen.spec.ts`: Quelle löschen → Export bricht mit Meldung ab,
+      kein Download). **Offen: S1b–S1e.**
   - **S2 Anzeigename ↔ Technik-Alias trennen** `[kritisch]`: Heute ist der
     sichtbare Name = technischer SE-`ALIAS` (Beleg `exportMask.ts` `ALIAS:
     s.name`) — Umbenennen ändert den Datenvertrag, gleichnamige Quellen
