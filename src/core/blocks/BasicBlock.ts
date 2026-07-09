@@ -145,6 +145,8 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       acceptsChildren: BlockClass.acceptsChildren ?? false,
       resizableWidth: BlockClass.resizableWidth ?? true,
       allowedChildTypes: BlockClass.allowedChildTypes,
+      allowedParentTypes: BlockClass.allowedParentTypes,
+      fillMinWidth: BlockClass.fillMinWidth,
       defaultChildren: BlockClass.defaultChildren,
       childDirection: BlockClass.childDirection,
       showInPalette: BlockClass.showInPalette,

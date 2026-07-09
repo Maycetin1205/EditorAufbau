@@ -47,6 +47,16 @@ export interface BlockDefinition {
   // Kanban-Spalte nimmt z. B. NUR Karten. Durchgesetzt im Store (addBlock/
   // moveNode) und in der Drag-Vorschau — nie per `if type===` in der UI.
   allowedChildTypes?: readonly string[]
+  // Gegenrichtung (S3): erlaubte ELTERN-Typen. undefined = überall erlaubt.
+  // Karten existieren NUR in Kanban-Spalten, Spalten NUR in Boards — eine
+  // Karte lässt sich damit nicht mehr aus dem Kanban auf die Fläche ziehen.
+  // Durchgesetzt an derselben EINEN Stelle wie allowedChildTypes (canContain).
+  allowedParentTypes?: readonly string[]
+  // Fließende Breite mit Mindestbreite (S3, opt-in): der Block verteilt sich
+  // im Zeilen-Container immer fließend (mind. fillMinWidth px, Umbruch statt
+  // Scroll) und ignoriert seine width-Prop; Breite-Anfasser/Inspector-Breite
+  // entfallen. undefined = normales width-Verhalten (alle anderen Blöcke).
+  fillMinWidth?: number
   // Teilbaum, mit dem der Block eingefügt wird (Beispieldaten).
   defaultChildren?: readonly DefaultChildSpec[]
   // Feste Fluss-Richtung der Kinder für spezialisierte Container (Kanban-

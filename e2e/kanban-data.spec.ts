@@ -23,10 +23,11 @@ async function insertBoard(page: Page) {
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(3)
 }
 
-// Board selektieren: Klick in die Lücke zwischen Spalte 1 und 2 (Spalten
-// sind 290px breit, Lücke 16px) trifft die Board-Fläche, nicht eine Spalte.
+// Board selektieren: direkter Klick am Board-Element (bubbelt zum BlockHost
+// des Boards, nie durch eine Spalte) — die Spalten sind seit S3 fliessend,
+// eine feste Klick-Position gibt es nicht mehr.
 async function selectBoard(page: Page) {
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await expect(page.getByText('kanban ·')).toBeVisible() // Inspector-Kopf
 }
 

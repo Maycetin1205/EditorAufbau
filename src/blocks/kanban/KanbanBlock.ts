@@ -98,17 +98,19 @@ export class KanbanBlock extends BasicBlock {
   static styles = [
     BasicBlock.styles,
     css`
-      /* Mehr Spalten als Platz: das Board scrollt IN SICH (Editor und
-         Export identisch, Block-CSS = die eine Render-Quelle), statt die
-         Maske horizontal zu sprengen. min-width:0 erlaubt dem Host, in
-         Zeilen-Bereichen schmaler zu werden als seine Spaltensumme. */
+      /* Mehr Spalten als Platz: die Spalten BRECHEN in die nächste Zeile um
+         (S3, Nutzer-Entscheidung: KEIN horizontaler Scroll). Die fließende
+         Spaltenbreite (mind. 260px) kommt aus fillMinWidth der Spalte —
+         Editor und Export identisch, Block-CSS = die eine Render-Quelle.
+         min-width:0 erlaubt dem Host, in Zeilen-Bereichen schmaler zu
+         werden als seine Spaltensumme. */
       :host { min-width: 0; }
       .board {
         display: flex;
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: flex-start;
         gap: var(--se-gap-lg);
-        overflow-x: auto;
       }
       slot { display: contents; }
     `,

@@ -171,7 +171,7 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
       style={{
         opacity: dnd.dragId === node.id ? 0.4 : 1,
         // Breite im Fluss: dieselbe Logik, die später der Export benutzt.
-        ...flowItemStyle(parseFlowWidth(node.props.width), listDirection),
+        ...flowItemStyle(parseFlowWidth(node.props.width), listDirection, def?.fillMinWidth),
       }}
     >
       <BlockHost

@@ -34,6 +34,9 @@ export interface BlockComponentStatic {
   readonly resizableWidth?: boolean
   // Registry-Konzepte aus Kap. 4K.4 — Bedeutung siehe BlockDefinition.
   readonly allowedChildTypes?: readonly string[]
+  // Registry-Konzepte aus S3 — Bedeutung siehe BlockDefinition.
+  readonly allowedParentTypes?: readonly string[]
+  readonly fillMinWidth?: number
   readonly defaultChildren?: readonly DefaultChildSpec[]
   readonly childDirection?: FlowDirection
   readonly showInPalette?: boolean

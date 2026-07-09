@@ -34,6 +34,12 @@ export class CardBlock extends BasicBlock {
   static readonly tagName = 'ff-card'
   static readonly displayName = 'Karte'
   static readonly category: BlockCategory = 'anzeige'
+  // S3: Karten existieren NUR in Kanban-Spalten — nicht auf der freien
+  // Fläche, nicht in Bereichen (Gegenrichtung zu allowedChildTypes; als
+  // Literal, weil ein Import der Spalte einen Import-Zyklus ergäbe). Die
+  // Karte bleibt in der Bibliothek: per Klick/Drag landet sie in der
+  // Spalte des ausgewählten Blocks; ohne erlaubtes Ziel passiert nichts.
+  static readonly allowedParentTypes = ['kanban-spalte']
   static readonly defaultProps = {
     chipVariant: 'info',
     heading: 'Rückruf Fr. Wagner',

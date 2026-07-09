@@ -582,10 +582,32 @@ den Export (Kap. 3).
     **UMBRECHEN in die nächste Zeile statt intern zu scrollen** (KEIN
     horizontaler Scroll). `flowLayout` bekommt dafür eine **opt-in**
     Mindestbreite für 'fill' (Default unverändert → kein anderer Block
-    betroffen). Zielbild 4K.1 (`.zb-col flex:0 0 290px`) zuerst als Mockup
-    revidieren + Nutzer-Abnahme. Bindung am gewählten Kanban geschlossen
+    betroffen). Bindung am gewählten Kanban geschlossen
     sichtbar: 1. Quelle 2. Spaltenfeld 3. Spaltenwerte 4. Kartenstellen→Felder
     5. Schreibrelation 6. sofort realistische Datenvorschau.
+    - ✅ **S3-Layout + S3-Grenzen (2026-07-09, auf direkte Nutzer-Beschwerde;
+      OHNE Mockup-Abnahme — Nutzer wollte ausdrücklich keine Screenshots):**
+      (a) Spalten verteilen sich fließend (mind. 260px) und BRECHEN um:
+      `overflow-x` raus, `flex-wrap` rein (`KanbanBlock`); neues
+      Registry-Konzept `fillMinWidth` (opt-in, dritter Parameter von
+      `flowItemStyle`, Canvas + Export reichen ihn durch). Spalte: `width`
+      aus den defaultProps raus, `resizableWidth=false`, Breite-Controls im
+      Inspector für fließende Blöcke ausgeblendet; alte gespeicherte Spalten
+      mit `width:290` rendern automatisch fließend (width wird ignoriert,
+      keine Migration nötig). (b) Neues Registry-Konzept `allowedParentTypes`
+      (Gegenrichtung zu allowedChildTypes, durchgesetzt in `canContain` →
+      wirkt automatisch in Store, Drag-Vorschau UND Palette): Karte nur in
+      `kanban-spalte`, Spalte nur in `kanban` — nichts lässt sich mehr aus
+      dem Kanban herausziehen. Karte bleibt in der Bibliothek (Klick/Drag
+      landet in der Spalte der Auswahl; ohne erlaubtes Ziel passiert nichts).
+      `stilprobe.html`-Zielbild entsprechend revidiert (`flex:1 1 260px` +
+      wrap). Tests: die 290px-Festschreibung wurde zur STRENGEREN Spec
+      umgebaut (fließend, kein `overflow-x` im Bündel, Gegenrichtungs-Fälle);
+      E2E-Helfer „Board selektieren" von fester Klick-Position (x=298 =
+      alte Spaltenlücke) auf Element-Dispatch umgestellt. 145 Unit + 25 E2E
+      grün. **S3 bleibt OFFEN bei:** EINE klar erkennbare Kartenvorlage
+      statt „erste Karte zählt heimlich im Export" (Modell-Kern, braucht
+      Nutzer-Gespräch) + geschlossene Bindungs-UI (Punkte 1–6).
   - **S4 Datenquellen: Import + erweiterbare Arten** `[Muster kritisch]`
     (Nutzer-Entscheidungen 2026-07-09): (a) **IDB-Import** — der Bediener
     exportiert die Tabelle aus SoftEngine und importiert die Datei; ein

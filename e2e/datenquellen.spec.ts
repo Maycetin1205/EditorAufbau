@@ -43,7 +43,7 @@ test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Expo
   await expect(page.getByText('Geräte', { exact: true })).toBeVisible()
   // … und im Inspector als Datenquelle wählbar (Kanban einfügen + anhängen).
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Geräte' }).click()
 
@@ -85,7 +85,7 @@ test('Validierung: leeres Formular speichert nicht und zeigt Fehler', async ({ p
 test('Bearbeiten: Umbenennen hält die id stabil — angehängte Blöcke behalten ihre Quelle', async ({ page }) => {
   await freshEditor(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 
@@ -95,14 +95,14 @@ test('Bearbeiten: Umbenennen hält die id stabil — angehängte Blöcke behalte
   await dialog.getByRole('button', { name: 'Speichern' }).click()
 
   // Der Block hängt weiter an derselben Quelle (Select zeigt den neuen Namen).
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await expect(page.getByLabel('Datenquelle')).toContainText('Praxisplaner')
 })
 
 test('Löschen: Rückfrage warnt, wenn die Quelle benutzt wird; die Maske bleibt stehen', async ({ page }) => {
   await freshEditor(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 
@@ -130,7 +130,7 @@ test('S1a: geloeschte Datenquelle blockiert den Export mit verstaendlicher Meldu
 
   // Kanban einfuegen + Terminplaner anhaengen.
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 

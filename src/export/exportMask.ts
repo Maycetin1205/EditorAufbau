@@ -84,8 +84,12 @@ function stripCssComments(css: string): string {
 
 // ---------- Baum → Markup ----------
 
-function styleAttr(node: BlockNode, parentDirection: FlowDirection): string {
-  const style = flowItemStyle(parseFlowWidth(node.props.width), parentDirection)
+function styleAttr(
+  node: BlockNode,
+  parentDirection: FlowDirection,
+  fillMinWidth?: number,
+): string {
+  const style = flowItemStyle(parseFlowWidth(node.props.width), parentDirection, fillMinWidth)
   const css = Object.entries(style)
     .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
     .join(';')
@@ -112,7 +116,7 @@ function nodeToHtml(
     })
     .join('')
 
-  const open = `${pad}<${def.tagName}${attrs}${styleAttr(node, parentDirection)}>`
+  const open = `${pad}<${def.tagName}${attrs}${styleAttr(node, parentDirection, def.fillMinWidth)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }

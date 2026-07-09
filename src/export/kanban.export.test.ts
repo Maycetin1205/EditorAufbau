@@ -32,6 +32,18 @@ describe('Kanban-Registry (Kap. 4K.4)', () => {
     expect(canContain('kanban-spalte', 'kanban-spalte')).toBe(false)
   })
 
+  it('Gegenrichtung (S3): Karte und Spalte lassen sich NICHT aus dem Kanban ziehen', () => {
+    // Karte: nur in Kanban-Spalten — nicht auf die Wurzel, nicht in Bereiche.
+    expect(canContain('root', 'card')).toBe(false)
+    expect(canContain('container', 'card')).toBe(false)
+    expect(getBlockDefinition('card')?.allowedParentTypes).toEqual(['kanban-spalte'])
+    // Spalte: nur im Board.
+    expect(canContain('root', 'kanban-spalte')).toBe(false)
+    expect(canContain('container', 'kanban-spalte')).toBe(false)
+    // Board selbst bleibt frei platzierbar.
+    expect(canContain('root', 'kanban')).toBe(true)
+  })
+
   it('Spalte ist nicht in der Bibliothek, Board schon', () => {
     expect(getBlockDefinition('kanban-spalte')?.showInPalette).toBe(false)
     expect(getBlockDefinition('kanban')?.showInPalette).not.toBe(false)
@@ -56,14 +68,20 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Board fuellt die Wurzel, Spalten haben feste Flow-Breite 290px', () => {
+  it('Board fuellt die Wurzel, Spalten verteilen sich fliessend (S3: mind. 260px, Umbruch statt Scroll)', () => {
     const { html } = exportMask(boardTree())
     // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
     // (Kap. 5.1) ohne angehaengte Quelle; statusfield=""/statusvalue="" =
     // Daten-Props aus Kap. 5.3 ohne gesetzte Werte; putrelation = Default-
     // Vorlage des Schreibwegs (Kap. 5.5).
     expect(html).toContain('<ff-kanban source="" statusfield="" putrelation="standard-put" style="align-self:stretch">')
-    expect(html).toContain('heading="Offen" statusvalue="" style="width:290px;flex-shrink:0"')
+    // Spalten: fliessende Breite aus fillMinWidth (flex-grow + flex-basis),
+    // KEIN width-Attribut, KEINE feste Pixelbreite mehr.
+    expect(html).toContain('heading="Offen" statusvalue="" style="flex-grow:1;flex-basis:260px"')
+    expect(html).not.toContain('width:290px')
+    // Das Board bricht um statt zu scrollen: kein overflow-x im Block-CSS
+    // (das Runtime-Buendel traegt das CSS der Web Components).
+    expect(html).not.toContain('overflow-x')
   })
 
   it('Spalten-Feld + Datenwerte der Spalten reisen als Attribute (Kap. 5.3)', () => {

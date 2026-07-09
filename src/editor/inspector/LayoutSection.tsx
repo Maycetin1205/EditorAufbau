@@ -7,6 +7,7 @@
 // außer bei "Fest", wo die Zahl der Sinn ist (auch per Anfasser ziehbar).
 
 import type { BlockNode } from '../../core/blocks/BlockData'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { parseFlowWidth } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
 import { TextInput } from '@/ui/atoms/text-input'
@@ -24,20 +25,25 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
 
   const width = parseFlowWidth(block.props.width)
   const widthMode = typeof width === 'number' ? 'fest' : width
+  // Fließende Blöcke (fillMinWidth, S3: Kanban-Spalte) regeln ihre Breite
+  // selbst — ein Breite-Feld hätte keine Wirkung und wäre eine Täuschung.
+  const fluid = getBlockDefinition(block.type)?.fillMinWidth !== undefined
 
   return (
     <div className="flex flex-col gap-3">
-      <SelectControl
-        label="Breite"
-        value={widthMode}
-        options={[
-          { value: 'auto', label: 'Automatisch' },
-          { value: 'fill', label: 'Füllen' },
-          { value: 'fest', label: 'Fest (px)' },
-        ]}
-        onChange={(v) => set('width', v === 'fest' ? 240 : v)}
-      />
-      {typeof width === 'number' && (
+      {!fluid && (
+        <SelectControl
+          label="Breite"
+          value={widthMode}
+          options={[
+            { value: 'auto', label: 'Automatisch' },
+            { value: 'fill', label: 'Füllen' },
+            { value: 'fest', label: 'Fest (px)' },
+          ]}
+          onChange={(v) => set('width', v === 'fest' ? 240 : v)}
+        />
+      )}
+      {!fluid && typeof width === 'number' && (
         <Field label="Breite in px">
           {(field) => (
             <TextInput
