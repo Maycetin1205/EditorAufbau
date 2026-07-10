@@ -87,8 +87,10 @@ test('Einfügen (P1.1): Board = 3 Spalten, die Musterkarte liegt markiert in der
   await expect(page.locator('ff-card')).toHaveCount(1)
   await expect.poll(() => counts(page)).toEqual(['1', '0', '0'])
   await expect(page.getByText('Muster', { exact: true })).toBeVisible()
-  // Leere Spalten sagen, woher Karten kommen.
-  await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(2)
+  // Leere Spalten sind LEER — kein Hinweis-Text (Altlast "Karten entstehen
+  // aus der Datenquelle" ist mit dem Vorlagen-Kasten-Modell entfernt).
+  await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(0)
+  await expect(page.locator('ff-kanban')).not.toContainText('Datenquelle')
   // Editor-Hilfen (P1.1b): Plus-Anstecker erscheinen NUR an der Auswahl —
   // frisch eingefügt ist das Board selektiert: "+ Spalte" ja, "+ Karte" nein.
   await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' })).toHaveCount(1)

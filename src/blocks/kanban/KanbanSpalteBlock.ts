@@ -149,14 +149,6 @@ export class KanbanSpalteBlock extends BasicBlock {
         min-height: 0;
         overflow-y: auto;
       }
-      .drop {
-        border: 1.5px dashed var(--se-line);
-        border-radius: var(--se-r-md);
-        color: var(--se-faint);
-        font-size: var(--se-fs-sm);
-        text-align: center;
-        padding: 16px 8px;
-      }
       slot { display: contents; }
     `,
   ]
@@ -187,7 +179,6 @@ export class KanbanSpalteBlock extends BasicBlock {
         <span class="count">${this._count}</span>
       </div>
       <div class="body">
-        ${this._count === 0 ? html`<div class="drop">Karten entstehen aus der Datenquelle</div>` : null}
         <slot @slotchange=${this.onSlotChange}></slot>
       </div>
     </div>`
