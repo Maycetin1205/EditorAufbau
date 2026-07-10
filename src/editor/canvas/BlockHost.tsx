@@ -407,7 +407,14 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           draggable={false}
           onPointerDown={(e) => startResize(e, 'height', 120)}
           onDragStart={(e) => e.preventDefault()}
-          title="Höhe ziehen"
+          onDoubleClick={(e) => {
+            // Zurück zu "automatisch" direkt am Anfasser — die Höhe hat
+            // BEWUSST kein Inspector-Feld (Bedienlogik 6: nur was sich
+            // nicht zeigen lässt, steht im Inspector).
+            e.stopPropagation()
+            editor.updateProperty(blockRef.current.id, 'height', 'auto')
+          }}
+          title="Höhe ziehen · Doppelklick: automatisch"
           style={{
             position: 'absolute',
             bottom: -4,

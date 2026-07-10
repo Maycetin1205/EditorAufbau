@@ -749,9 +749,12 @@ den Export (Kap. 3).
     ✅ **P1.3 Board-Höhe (2026-07-10, vorgezogen — Nutzer: „Optik egal,
     Grundgerüst zuerst"):** neues Registry-Konzept **resizableHeight**
     (opt-in, nur Kanban; Block deklariert `height` in defaultProps,
-    Default 'auto') — Inspector „Höhe: Automatisch / Fest (px)" +
-    Zieh-Anfasser an der Unterkante (gemeinsame startResize-Mechanik mit
-    der Breite, 1 Geste = 1 Undo). EINE Quelle für Editor + Export:
+    Default 'auto') — NUR der Zieh-Anfasser an der Unterkante (gemeinsame
+    startResize-Mechanik mit der Breite, 1 Geste = 1 Undo), **Doppelklick
+    auf den Anfasser = zurück zu automatisch. BEWUSST kein Inspector-Feld**
+    (Nutzer-Korrektur 2026-07-10 + Bedienlogik 6: nur was sich nicht
+    zeigen lässt, steht im Inspector — die Höhe zeigt sich am Anfasser).
+    EINE Quelle für Editor + Export:
     `parseFlowHeight`/`flowItemHeightStyle` in flowLayout (Canvas-Wrapper
     UND styleAttr; height reist NIE als Attribut). Feste Höhe → Spalten
     füllen sie, Karten scrollen IM Spaltenrumpf (Empfang-Verhalten).
