@@ -110,6 +110,18 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(html).not.toContain('overflow-x')
   })
 
+  it('P1.3: feste Höhe reist als style (nie als Attribut), Registry-Flag nur am Board', () => {
+    expect(getBlockDefinition('kanban')?.resizableHeight).toBe(true)
+    expect(getBlockDefinition('kanban-spalte')?.resizableHeight).toBe(false)
+    expect(getBlockDefinition('card')?.resizableHeight).toBe(false)
+    const tree = boardTree()
+    const board = tree[tree[ROOT_ID].childIds[0]]
+    board.props.height = 480
+    const { html } = exportMask(tree)
+    expect(html).toContain('<ff-kanban source="" statusfield="" putrelation="standard-put" style="align-self:stretch;height:480px;flex-shrink:0">')
+    expect(html).not.toContain('height="')
+  })
+
   it('K0: Kanban-CSS haelt Entscheidung A ein (kein flex-wrap, Rumpf scrollt senkrecht)', () => {
     // Pruefung direkt an der CSS-Quelle der Bloecke (dasselbe CSS reist im
     // Runtime-Buendel). flex-wrap gibt es im generischen Bereich weiterhin —
@@ -118,6 +130,9 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(boardCss).not.toContain('flex-wrap')
     expect(boardCss).not.toContain('overflow-x')
     expect(boardCss).toContain('align-items: stretch')
+    // P1.3: das Board fuellt eine feste Hoehe aus (Spalten strecken sich,
+    // Karten scrollen im Rumpf).
+    expect(boardCss).toContain('height: 100%')
     const colCss = KanbanSpalteBlock.styles.map(String).join('\n')
     expect(colCss).toContain('overflow-y: auto')
     expect(colCss).toContain('min-height: 0')

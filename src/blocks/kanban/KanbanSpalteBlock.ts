@@ -86,6 +86,11 @@ export class KanbanSpalteBlock extends BasicBlock {
   static styles = [
     BasicBlock.styles,
     css`
+      /* height:100% laesst die Spalte die Board-Hoehe ausfuellen — im
+         Export ist sie direktes Flex-Item (stretch), im Editor reicht der
+         BlockHost-Wrapper die Hoehe per 100%-Kette durch. Ohne feste
+         Board-Hoehe loest sich 100% zu auto auf (stretch wie bisher). */
+      :host { height: 100%; }
       .col {
         box-sizing: border-box;
         display: flex;

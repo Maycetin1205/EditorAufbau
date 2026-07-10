@@ -212,18 +212,24 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     if (pos) setPicker({ spot: hit.spot, ...pos })
   }
 
-  // Breite ziehen (Anfasser rechts): eine Geste = eine Transaktion = 1 Undo.
-  function onResizeStart(e: ReactPointerEvent<HTMLDivElement>) {
+  // Breite/Höhe ziehen (Anfasser rechts bzw. unten): eine Geste = eine
+  // Transaktion = 1 Undo. Gemeinsame Mechanik, nur Achse + Prop wechseln.
+  function startResize(
+    e: ReactPointerEvent<HTMLDivElement>,
+    prop: 'width' | 'height',
+    min: number,
+  ) {
     e.preventDefault()
     e.stopPropagation()
     const host = elementRef.current
     if (!host) return
-    const startX = e.clientX
-    const startWidth = host.getBoundingClientRect().width
+    const startPos = prop === 'width' ? e.clientX : e.clientY
+    const startSize = host.getBoundingClientRect()[prop]
     editor.beginTransaction()
     const onMove = (ev: PointerEvent) => {
-      const next = Math.max(40, Math.round(startWidth + ev.clientX - startX))
-      editor.updateProperty(blockRef.current.id, 'width', next)
+      const pos = prop === 'width' ? ev.clientX : ev.clientY
+      const next = Math.max(min, Math.round(startSize + pos - startPos))
+      editor.updateProperty(blockRef.current.id, prop, next)
     }
     const onUp = () => {
       editor.endTransaction()
@@ -235,6 +241,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   }
 
   const resizable = def?.resizableWidth ?? true
+  const heightResizable = def?.resizableHeight === true
 
   // Musterkarten-Markierung (P1.1): die Laufzeit-Vorlage des Boards
   // (templateChild in der Registry) dezent kennzeichnen — reine
@@ -268,6 +275,10 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         // (Kanban-Spalte) schmaler sitzen als der Export (WYSIWYG-Bruch).
         display: 'block',
         position: 'relative',
+        // height:100% reicht eine feste Höhe (P1.3) vom Canvas-Wrapper bis
+        // zum Element durch (:host{height:100%} beim Kanban). Ohne feste
+        // Höhe löst sich 100% zu auto auf — kein Block ändert sich.
+        height: '100%',
         cursor: selected ? 'default' : 'pointer',
         outline: selected ? '2px solid hsl(var(--ring))' : '2px solid transparent',
         outlineOffset: 1,
@@ -279,6 +290,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         ref={containerRef}
         style={{
           pointerEvents: 'auto',
+          height: '100%',
           // Editor-Hilfe für Container: Fläche sichtbar + treffbar machen.
           // Bewusst OHNE Erklärtext und OHNE eigenes Padding — die Kinder
           // sollen exakt dort sitzen, wo sie im Export sitzen (WYSIWYG).
@@ -374,7 +386,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
       {selected && resizable && (
         <div
           draggable={false}
-          onPointerDown={onResizeStart}
+          onPointerDown={(e) => startResize(e, 'width', 40)}
           onDragStart={(e) => e.preventDefault()}
           title="Breite ziehen"
           style={{
@@ -387,6 +399,25 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
             borderRadius: 4,
             background: 'hsl(var(--ring))',
             cursor: 'ew-resize',
+          }}
+        />
+      )}
+      {selected && heightResizable && (
+        <div
+          draggable={false}
+          onPointerDown={(e) => startResize(e, 'height', 120)}
+          onDragStart={(e) => e.preventDefault()}
+          title="Höhe ziehen"
+          style={{
+            position: 'absolute',
+            bottom: -4,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 26,
+            height: 7,
+            borderRadius: 4,
+            background: 'hsl(var(--ring))',
+            cursor: 'ns-resize',
           }}
         />
       )}

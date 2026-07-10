@@ -43,6 +43,11 @@ export interface BlockDefinition {
   customProperties: PropertyDescription[]
   acceptsChildren: boolean
   resizableWidth: boolean
+  // true = der Block hat eine einstellbare HÖHE (P1.3, opt-in): Inspector
+  // „Höhe: Automatisch / Fest (px)" + Zieh-Anfasser an der Unterkante.
+  // Der Block muss dafür `height` in seinen defaultProps deklarieren
+  // (Kanban: feste Höhe = Karten scrollen im Spaltenrumpf). Default false.
+  resizableHeight: boolean
   // Erlaubte Kind-Typen (Kap. 4K.4): undefined = alle Typen erlaubt.
   // Kanban-Spalte nimmt z. B. NUR Karten. Durchgesetzt im Store (addBlock/
   // moveNode) und in der Drag-Vorschau — nie per `if type===` in der UI.

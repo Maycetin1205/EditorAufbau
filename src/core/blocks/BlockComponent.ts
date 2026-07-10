@@ -32,6 +32,8 @@ export interface BlockComponentStatic {
   // false = kein Breite-Zieh-Anfasser im Editor (z.B. Button: Breite folgt
   // der Beschriftung). Default true.
   readonly resizableWidth?: boolean
+  // true = einstellbare Höhe (P1.3) — Bedeutung siehe BlockDefinition.
+  readonly resizableHeight?: boolean
   // Registry-Konzepte aus Kap. 4K.4 — Bedeutung siehe BlockDefinition.
   readonly allowedChildTypes?: readonly string[]
   // Registry-Konzepte aus S3/K0/P1.1 — Bedeutung siehe BlockDefinition.

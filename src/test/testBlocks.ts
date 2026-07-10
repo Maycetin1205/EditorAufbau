@@ -29,6 +29,7 @@ export function registerTestBlocks(): void {
     customProperties: [],
     acceptsChildren: false,
     resizableWidth: true,
+    resizableHeight: false,
   })
   registerBlockType({
     type: TEST_BOX,
@@ -39,6 +40,7 @@ export function registerTestBlocks(): void {
     customProperties: [],
     acceptsChildren: true,
     resizableWidth: true,
+    resizableHeight: false,
   })
   registerBlockType({
     type: TEST_STRICT_BOX,
@@ -49,6 +51,7 @@ export function registerTestBlocks(): void {
     customProperties: [],
     acceptsChildren: true,
     resizableWidth: true,
+    resizableHeight: false,
     allowedChildTypes: [TEST_BLOCK],
     childDirection: 'row',
   })
@@ -61,6 +64,7 @@ export function registerTestBlocks(): void {
     customProperties: [],
     acceptsChildren: true,
     resizableWidth: true,
+    resizableHeight: false,
     allowedChildTypes: [TEST_STRICT_BOX],
     defaultChildren: [
       {
@@ -82,6 +86,7 @@ export function registerTestBlocks(): void {
     customProperties: [],
     acceptsChildren: true,
     resizableWidth: true,
+    resizableHeight: false,
     acceptsDataSource: true,
   })
 }

@@ -38,6 +38,11 @@ export class KanbanBlock extends BasicBlock {
   // (seRuntime klont sie je Zeile). Der Editor markiert genau diese Karte
   // dezent mit dem Label; im Export ist von der Markierung nichts zu sehen.
   static readonly templateChild = { type: CardBlock.blockType, label: 'Muster' }
+  // P1.3: das Board hat als einziger Block eine einstellbare HÖHE
+  // (Registry-Konzept resizableHeight + height in den defaultProps).
+  // Fest = Karten scrollen senkrecht IM Spaltenrumpf (Empfang-Vorbild),
+  // Automatisch = Board wächst mit der höchsten Spalte.
+  static readonly resizableHeight = true
   // Kap. 5.1: an das Board lässt sich eine Datenquelle hängen (Inspector-
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
@@ -49,7 +54,8 @@ export class KanbanBlock extends BasicBlock {
   // mitgelieferte Standard-PUT-Vorlage. Alle Defaults '' bzw. fester
   // Technikwert -> überleben Persistenz, reisen als Attribut mit.
   static readonly defaultProps = {
-    width: 'fill', source: '', statusField: '', putRelation: 'standard-put',
+    width: 'fill', height: 'auto' as const,
+    source: '', statusField: '', putRelation: 'standard-put',
   }
   static override readonly customProperties: PropertyDescription[] = [
     {
@@ -95,12 +101,19 @@ export class KanbanBlock extends BasicBlock {
          werden gleich hoch (stretch); Karten scrollen senkrecht IM
          Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
          Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
-      :host { min-width: 0; }
+      /* height:100% laesst das Board eine feste Hoehe (P1.3) ausfuellen —
+         im Editor traegt sie der Canvas-Wrapper, im Export das Element
+         selbst (Inline-Style schlaegt die 100%). Ohne feste Hoehe loest
+         sich 100% zu auto auf (Elternhoehe haengt vom Inhalt ab) —
+         Verhalten wie bisher. */
+      :host { min-width: 0; height: 100%; }
       .board {
         display: flex;
         flex-direction: row;
         align-items: stretch;
         gap: var(--se-gap-lg);
+        height: 100%;
+        box-sizing: border-box;
       }
       .board slot { display: contents; }
     `,

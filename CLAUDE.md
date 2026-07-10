@@ -745,17 +745,30 @@ den Export (Kap. 3).
     NUR wenn die Auswahl im Teilbaum des Containers liegt
     (editor.isInSubtree) — unselektiert sieht der Editor exakt aus wie
     der Export. E2E zur strengeren Spec (Anstecker erscheinen/
-    verschwinden mit der Auswahl); live im Browser verifiziert. →
+    verschwinden mit der Auswahl); live im Browser verifiziert.
+    ✅ **P1.3 Board-Höhe (2026-07-10, vorgezogen — Nutzer: „Optik egal,
+    Grundgerüst zuerst"):** neues Registry-Konzept **resizableHeight**
+    (opt-in, nur Kanban; Block deklariert `height` in defaultProps,
+    Default 'auto') — Inspector „Höhe: Automatisch / Fest (px)" +
+    Zieh-Anfasser an der Unterkante (gemeinsame startResize-Mechanik mit
+    der Breite, 1 Geste = 1 Undo). EINE Quelle für Editor + Export:
+    `parseFlowHeight`/`flowItemHeightStyle` in flowLayout (Canvas-Wrapper
+    UND styleAttr; height reist NIE als Attribut). Feste Höhe → Spalten
+    füllen sie, Karten scrollen IM Spaltenrumpf (Empfang-Verhalten).
+    WYSIWYG-Fix dabei: die BlockHost-Zwischen-Divs + Spalten-Host reichen
+    die Höhe jetzt per 100%-Kette durch — vorher streckten sich Spalten
+    nur im Export, nicht im Editor. 157 Unit + 25 E2E grün; live
+    verifiziert (Anfasser-Geste → 501px, Spalten 4×voll, Persistenz).
+    Damit ist das Kanban-GRUNDGERÜST komplett (Spalten/Karten anlegen,
+    umsortieren, löschen, Titel-Edit, Breite, Höhe, Musterkarte). →
     **P1.2 Karte final gestalten (NÄCHSTES PAKET):** Empfang-OPTIK
     (~5 Stellen: Zeit/Name fett/Meta klein/Grund-Textzeile/Chip, Spalten-
     Farbwelten) in `--se-*`-Tokens übersetzt, Zielbild in stilprobe.html
     VORHER abnehmen (Nutzer-Klarstellung 2026-07-10: „die Optik der
     Empfang-Maske will ich — mit neuer Architektur im neuen Editor";
-    KEINE Live-Verknüpfungen (Kap. 7), KEINE Aktions-Knöpfe (Kap. 8)) →
-    P1.3 Spalten-/Board-Bedienung komplett inkl. Höhe (ehem.
-    K0-Höhenteil, neu) + UI/UX-Aufräumen (Nutzer-Ärger im alten Editor:
-    Spalten-Resize, allgemeines Durcheinander). Der K0(a)-Geometrieteil
-    (Spalten immer nebeneinander) ist committed und bleibt.
+    KEINE Live-Verknüpfungen (Kap. 7), KEINE Aktions-Knöpfe (Kap. 8)).
+    Der K0(a)-Geometrieteil (Spalten immer nebeneinander) ist committed
+    und bleibt.
   - **Phase-2-Auftakt steht schon fest (Diagnose 2026-07-10 VERIFIZIERT,
     nicht verlieren!): der SE-Anschluss-Fix.** Unsere exportierte Maske
     POLLT nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten: die Maske

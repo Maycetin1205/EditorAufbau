@@ -8,7 +8,7 @@
 
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { parseFlowWidth } from '../../core/blocks/flowLayout'
+import { parseFlowHeight, parseFlowWidth } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
@@ -25,10 +25,15 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
 
   const width = parseFlowWidth(block.props.width)
   const widthMode = typeof width === 'number' ? 'fest' : width
-  // Blöcke mit festgelegter Breite (lockedWidth, K0: Kanban-Spalte/Vorlagen-
-  // Kasten) regeln ihre Breite selbst — ein Breite-Feld hätte keine Wirkung
-  // und wäre eine Täuschung.
-  const locked = getBlockDefinition(block.type)?.lockedWidth !== undefined
+  const def = getBlockDefinition(block.type)
+  // Blöcke mit festgelegter Breite (lockedWidth, K0: Kanban-Spalte) regeln
+  // ihre Breite selbst — ein Breite-Feld hätte keine Wirkung und wäre eine
+  // Täuschung.
+  const locked = def?.lockedWidth !== undefined
+  // Höhe (P1.3, opt-in per Registry): nur Blöcke mit resizableHeight —
+  // Kanban: feste Höhe lässt die Karten IM Spaltenrumpf scrollen.
+  const heightable = def?.resizableHeight === true
+  const height = parseFlowHeight(block.props.height)
 
   return (
     <div className="flex flex-col gap-3">
@@ -55,6 +60,34 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
               onChange={(e) => {
                 const n = Number(e.currentTarget.value)
                 if (Number.isFinite(n) && n >= 40) set('width', Math.round(n))
+              }}
+            />
+          )}
+        </Field>
+      )}
+
+      {heightable && (
+        <SelectControl
+          label="Höhe"
+          value={typeof height === 'number' ? 'fest' : 'auto'}
+          options={[
+            { value: 'auto', label: 'Automatisch' },
+            { value: 'fest', label: 'Fest (px)' },
+          ]}
+          onChange={(v) => set('height', v === 'fest' ? 480 : 'auto')}
+        />
+      )}
+      {heightable && typeof height === 'number' && (
+        <Field label="Höhe in px">
+          {(field) => (
+            <TextInput
+              id={field.id}
+              type="number"
+              min={120}
+              value={String(height)}
+              onChange={(e) => {
+                const n = Number(e.currentTarget.value)
+                if (Number.isFinite(n) && n >= 120) set('height', Math.round(n))
               }}
             />
           )}

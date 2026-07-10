@@ -6,7 +6,7 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-import { flowItemStyle, parseFlowWidth } from './flowLayout'
+import { flowItemHeightStyle, flowItemStyle, parseFlowHeight, parseFlowWidth } from './flowLayout'
 
 describe('parseFlowWidth', () => {
   it('kennt auto/fill/px und faellt sonst auf auto zurueck', () => {
@@ -35,8 +35,23 @@ describe('flowItemStyle', () => {
     expect(flowItemStyle('auto', 'column', 'fill')).toEqual({ alignSelf: 'stretch' })
   })
 
-  it("lockedWidth 'auto' (Vorlagen-Kasten) ignoriert die width-Prop", () => {
+  it("lockedWidth 'auto' ignoriert die width-Prop", () => {
     expect(flowItemStyle(260, 'row', 'auto')).toEqual({})
     expect(flowItemStyle('fill', 'column', 'auto')).toEqual({})
+  })
+})
+
+describe('Höhe (P1.3, opt-in per resizableHeight)', () => {
+  it('parseFlowHeight kennt nur auto/px und faellt sonst auf auto zurueck', () => {
+    expect(parseFlowHeight(480)).toBe(480)
+    expect(parseFlowHeight('auto')).toBe('auto')
+    expect(parseFlowHeight(-5)).toBe('auto')
+    expect(parseFlowHeight('fill')).toBe('auto') // Höhe kennt kein 'fill'
+    expect(parseFlowHeight(undefined)).toBe('auto')
+  })
+
+  it('flowItemHeightStyle: feste Höhe in px + flex-shrink 0, auto = nichts', () => {
+    expect(flowItemHeightStyle(480)).toEqual({ height: '480px', flexShrink: 0 })
+    expect(flowItemHeightStyle('auto')).toEqual({})
   })
 })

@@ -19,7 +19,9 @@ import {
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import {
+  flowItemHeightStyle,
   flowItemStyle,
+  parseFlowHeight,
   parseFlowWidth,
   resolveChildDirection,
   ROOT_FLOW,
@@ -170,8 +172,9 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
       onDragEnd={dnd.reset}
       style={{
         opacity: dnd.dragId === node.id ? 0.4 : 1,
-        // Breite im Fluss: dieselbe Logik, die später der Export benutzt.
+        // Breite + Höhe im Fluss: dieselbe Logik, die der Export benutzt.
         ...flowItemStyle(parseFlowWidth(node.props.width), listDirection, def?.lockedWidth),
+        ...flowItemHeightStyle(parseFlowHeight(node.props.height)),
       }}
     >
       <BlockHost

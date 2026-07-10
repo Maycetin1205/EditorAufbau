@@ -25,7 +25,9 @@ import type { RelationTemplate } from '../core/data/relations'
 import { dataSourceStore } from '../state/DataSourceStore'
 import { relationStore } from '../state/RelationStore'
 import {
+  flowItemHeightStyle,
   flowItemStyle,
+  parseFlowHeight,
   parseFlowWidth,
   resolveChildDirection,
   ROOT_FLOW,
@@ -90,7 +92,11 @@ function styleAttr(
   parentDirection: FlowDirection,
   lockedWidth?: FlowWidth,
 ): string {
-  const style = flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth)
+  const style = {
+    ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
+    // Feste Höhe (P1.3) — DIESELBE Quelle wie der Canvas-Wrapper.
+    ...flowItemHeightStyle(parseFlowHeight(node.props.height)),
+  }
   const css = Object.entries(style)
     .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
     .join(';')
@@ -108,9 +114,10 @@ function nodeToHtml(
 
   const pad = '  '.repeat(depth)
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
-  // width wird NICHT als Attribut exportiert — sie wirkt als style aufs Flex-Item.
+  // width/height werden NICHT als Attribut exportiert — sie wirken als
+  // style aufs Flex-Item (styleAttr, dieselbe flowLayout-Quelle wie Canvas).
   const attrs = Object.keys(def.defaultProps)
-    .filter((key) => key !== 'width')
+    .filter((key) => key !== 'width' && key !== 'height')
     .map((key) => {
       const value = node.props[key] ?? def.defaultProps[key]
       return ` ${key.toLowerCase()}="${escapeHtmlAttr(String(value ?? ''))}"`
