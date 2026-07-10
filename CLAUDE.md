@@ -736,7 +736,16 @@ den Export (Kap. 3).
     verworfen!); live am echten Nutzer-Stand verifiziert. Tests zur
     strengeren Spec umgebaut (Typ existiert nicht mehr, Export/Bündel
     enthalten NIE ff-kanban-vorlage, Veralten-Wächter verbietet ihn
-    jetzt): 154 Unit + 25 E2E grün, tsc + eslint sauber. →
+    jetzt): 154 Unit + 25 E2E grün, tsc + eslint sauber.
+    **P1.1b Plus-Knöpfe entschlackt (2026-07-10, direkte
+    Nutzer-Beschwerde):** die alte „+ Spalte"-Kachel (180px, saß IM
+    Board-Fluss und stahl den Spalten Breite) und die dauerhaften
+    „+ Karte"-Knöpfe sind ersetzt durch kleine Anstecker am Wrapper-Rand
+    (Muster Kreuzchen, position:absolute = null Platzverbrauch), sichtbar
+    NUR wenn die Auswahl im Teilbaum des Containers liegt
+    (editor.isInSubtree) — unselektiert sieht der Editor exakt aus wie
+    der Export. E2E zur strengeren Spec (Anstecker erscheinen/
+    verschwinden mit der Auswahl); live im Browser verifiziert. →
     **P1.2 Karte final gestalten (NÄCHSTES PAKET):** Empfang-OPTIK
     (~5 Stellen: Zeit/Name fett/Meta klein/Grund-Textzeile/Chip, Spalten-
     Farbwelten) in `--se-*`-Tokens übersetzt, Zielbild in stilprobe.html

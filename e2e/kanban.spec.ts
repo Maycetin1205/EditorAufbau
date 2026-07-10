@@ -89,9 +89,24 @@ test('Einfügen (P1.1): Board = 3 Spalten, die Musterkarte liegt markiert in der
   await expect(page.getByText('Muster', { exact: true })).toBeVisible()
   // Leere Spalten sagen, woher Karten kommen.
   await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(2)
-  // Editor-Hilfen: "+ Karte" an JEDER Spalte, "+ Spalte" am Board.
-  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(3)
+  // Editor-Hilfen (P1.1b): Plus-Anstecker erscheinen NUR an der Auswahl —
+  // frisch eingefügt ist das Board selektiert: "+ Spalte" ja, "+ Karte" nein.
   await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' })).toHaveCount(1)
+  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(0)
+  // Spalte anklicken -> IHR "+ Karte" erscheint (Board-Anstecker bleibt,
+  // die Auswahl liegt weiter im Board).
+  await page.locator('ff-kanban-spalte .head').nth(1).click()
+  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(1)
+  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' })).toHaveCount(1)
+  // Auswahl aufheben: Klick direkt auf der freien Maskenfläche dispatchen
+  // (die Wurzel-Fluss-Fläche trägt --se-bg; kein Block im Event-Pfad, der
+  // Klick erreicht den Abwähl-Handler des Canvas) -> ALLE Anstecker weg,
+  // der Editor zeigt exakt das Export-Bild.
+  await page.evaluate(() => {
+    document.querySelector('main div[style*="--se-bg"]')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+  await expect(page.locator('button[data-ff-editor-helper]')).toHaveCount(0)
   // Weder Spalte noch Karte stehen in der Bibliothek.
   await expect(page.getByRole('button', { name: 'Kanban-Spalte' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Karte', exact: true })).toHaveCount(0)
@@ -144,8 +159,10 @@ test('Plus-Knöpfe (P1.1): "+ Spalte" erweitert leer; "+ Karte" an der Spalte st
   await page.getByRole('button', { name: 'Entfernen' }).click()
   await expect(page.locator('ff-card')).toHaveCount(0)
   await expect(page.getByText('Muster', { exact: true })).toHaveCount(0)
-  // … und über "+ Karte" an der ersten Spalte wiederherstellen.
-  await page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' }).first().click()
+  // … und über "+ Karte" wiederherstellen: erst die erste Spalte
+  // selektieren (P1.1b: Anstecker erscheinen nur an der Auswahl).
+  await page.locator('ff-kanban-spalte .head').first().click()
+  await page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' }).click()
   await expect(page.locator('ff-card')).toHaveCount(1)
   await expect.poll(() => counts(page)).toEqual(['1', '0', '0', '0'])
   await expect(page.getByText('Muster', { exact: true })).toBeVisible()

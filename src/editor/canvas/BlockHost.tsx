@@ -15,13 +15,12 @@
 // etwas vom Editor weiß. Gestrichelter Rahmen + Platzhalter sind reine
 // Editor-Hilfen und leben hier, NICHT im Baustein (WYSIWYG).
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { resolveChildDirection, type FlowDirection } from '../../core/blocks/flowLayout'
 import { editor } from '../../state/Editor'
 import { useDataSources } from '../../state/useDataSources'
 import { FieldPicker } from './FieldPicker'
@@ -295,20 +294,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
         }}
       >
         {element && isContainer && children != null
-          ? createPortal(
-              <>
-                {children}
-                {def?.addChildButton && (
-                  <AddChildButton
-                    label={def.addChildButton.label}
-                    childType={def.addChildButton.childType}
-                    direction={resolveChildDirection(def, block.props)}
-                    parentId={block.id}
-                  />
-                )}
-              </>,
-              element,
-            )
+          ? createPortal(children, element)
           : null}
       </div>
       {selected && picker && dataSource && (
@@ -324,6 +310,15 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
             setPicker(null)
           }}
           onClose={() => setPicker(null)}
+        />
+      )}
+      {def?.addChildButton
+        && editor.selectedId !== null
+        && editor.isInSubtree(block.id, editor.selectedId) && (
+        <AddChildButton
+          label={def.addChildButton.label}
+          childType={def.addChildButton.childType}
+          parentId={block.id}
         />
       )}
       {templateMark && (
@@ -400,37 +395,18 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 }
 
 // Editor-Hilfe "Plus-Knopf" (Bedienlogik 5, aus der Registry: addChildButton).
-// Liegt als Light-DOM-Kind im Slot des Containers, ist aber KEIN Block:
-// data-ff-editor-helper hält ihn aus Zählern (Kanban-Spalte) und dem Export
-// heraus. Aussehen nach Zielbild (stilprobe: .zb-add / .zb-addcol) — im
-// Zeilen-Fluss (Board) als gestrichelte Spalten-Kachel, im Spalten-Fluss als
-// flacher Knopf in voller Breite.
+// P1.1b (Nutzer-Beschwerde 2026-07-10): kein Platzfresser mehr IM Baustein
+// (die alte 180px-Kachel stahl den Kanban-Spalten Breite — WYSIWYG-Bruch).
+// Jetzt ein kleiner Anstecker am Wrapper-Rand (Muster Kreuzchen), sichtbar
+// NUR wenn die Auswahl im Teilbaum des Containers liegt — ein unselektierter
+// Baustein sieht im Editor exakt aus wie im Export.
 interface AddChildButtonProps {
   label: string
   childType: string
-  direction: FlowDirection
   parentId: string
 }
 
-function AddChildButton({ label, childType, direction, parentId }: AddChildButtonProps) {
-  const row = direction === 'row'
-  const style: CSSProperties = row
-    ? {
-        flex: '0 0 180px',
-        border: '1.5px dashed var(--se-line)',
-        borderRadius: 'var(--se-r-lg)',
-        background: 'transparent',
-        color: 'var(--se-faint)',
-        padding: '14px 0',
-      }
-    : {
-        width: '100%',
-        border: '1px solid var(--se-line)',
-        borderRadius: 'var(--se-r-sm)',
-        background: 'var(--se-panel)',
-        color: 'var(--se-muted)',
-        padding: '6px 0',
-      }
+function AddChildButton({ label, childType, parentId }: AddChildButtonProps) {
   return (
     <button
       type="button"
@@ -440,15 +416,23 @@ function AddChildButton({ label, childType, direction, parentId }: AddChildButto
         e.stopPropagation()
         editor.addBlock(childType, parentId)
       }}
+      onPointerDown={(e) => e.stopPropagation()}
       onDragStart={(e) => { e.preventDefault(); e.stopPropagation() }}
       style={{
-        ...style,
-        fontFamily: 'var(--se-font)',
-        fontSize: 11.5,
+        position: 'absolute',
+        top: -9,
+        right: 14,
+        height: 18,
+        padding: '0 8px',
+        border: 'none',
+        borderRadius: 9999,
+        background: 'hsl(var(--ring))',
+        color: '#fff',
+        fontSize: 10,
         fontWeight: 700,
+        lineHeight: '18px',
         letterSpacing: '0.05em',
         textTransform: 'uppercase',
-        textAlign: 'center',
         cursor: 'pointer',
       }}
     >
