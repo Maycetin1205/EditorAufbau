@@ -34,6 +34,18 @@ export class CardBlock extends BasicBlock {
   static readonly tagName = 'ff-card'
   static readonly displayName = 'Karte'
   static readonly category: BlockCategory = 'anzeige'
+  // S3-Musterkarte (Nutzer-Entscheidung 2026-07-09): Das Kanban ist immer
+  // datengebunden — Karten werden nicht mehr von Hand in Spalten gepflegt,
+  // gestaltet wird NUR die Musterkarte im Vorlagen-Kasten des Boards.
+  // Die Karte lebt deshalb ausschließlich dort (Gegenrichtung zu
+  // allowedChildTypes; Literal, weil ein Import einen Zyklus ergäbe) und
+  // steht nicht mehr in der Bibliothek: sie entsteht mit dem Board bzw.
+  // über "+ Karte" am Vorlagen-Kasten. Karten in Spalten ALTER
+  // gespeicherter Masken rendern weiter (Rendern prüft keine Regeln) und
+  // lassen sich in den Vorlagen-Kasten ziehen oder löschen — nur neu
+  // einfügen/verschieben in Spalten geht nicht mehr.
+  static readonly allowedParentTypes = ['kanban-vorlage']
+  static readonly showInPalette = false
   static readonly defaultProps = {
     chipVariant: 'info',
     heading: 'Rückruf Fr. Wagner',

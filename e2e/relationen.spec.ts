@@ -31,14 +31,10 @@ async function boardMitDaten(page: Page) {
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(3)
   const selectBoard = async () => {
-    // Das Board scrollt horizontal, sobald eine hintere Spalte selektiert war
-    // (der Browser holt sie ins Bild) — den Innen-Scroll zurücksetzen, damit
-    // der feste Klick-Offset wieder in die Lücke zwischen Spalte 1 und 2
-    // trifft (reine UI-Aktion, kein State-Eingriff).
-    await page.locator('ff-kanban').evaluate((el) => {
-      el.shadowRoot?.querySelector('.board')?.scrollTo({ left: 0 })
-    })
-    await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+    // Direkter Klick am Board-Element (bubbelt zum BlockHost des Boards,
+    // nie durch eine Spalte) — Spalten sind seit S3 fliessend, das Board
+    // scrollt nicht mehr; eine feste Klick-Position gibt es nicht.
+    await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
     await expect(page.getByText('kanban ·')).toBeVisible()
   }
   await selectBoard()
@@ -179,7 +175,7 @@ test('Bearbeiten: Umbenennen hält die id stabil — das Board behält seine Vor
   await freshEditor(page)
   // Board an eine Quelle hängen, damit "Schreiben über" sichtbar ist.
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
   // Default ist die mitgelieferte Standard-Vorlage.
@@ -191,14 +187,14 @@ test('Bearbeiten: Umbenennen hält die id stabil — das Board behält seine Vor
   await dialog.getByRole('button', { name: 'Speichern' }).click()
 
   // Der Block hängt weiter an derselben Vorlage (Select zeigt den neuen Namen).
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await expect(page.getByLabel('Schreiben über')).toContainText('Haus-PUT')
 })
 
 test('Löschen: Rückfrage warnt, wenn die Vorlage benutzt wird', async ({ page }) => {
   await freshEditor(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
-  await page.locator('ff-kanban').click({ position: { x: 298, y: 8 } })
+  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 

@@ -158,18 +158,23 @@ export function Inspector() {
             {dataProps.map(renderPropControl)}
           </section>
         )}
-        <section className="flex flex-col gap-3">
-          <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Layout
-          </h3>
-          {/* Richtung/Abstände nur für Container, die diese Props auch
-              deklarieren — spezialisierte Container (Kanban) haben festes
-              Layout und bieten sie nicht an (kein Typ-Check, Registry-Daten). */}
-          <LayoutSection
-            block={block}
-            isContainer={def.acceptsChildren && 'direction' in def.defaultProps}
-          />
-        </section>
+        {/* Fließende Blöcke ohne Richtungs-Props (Kanban-Spalte, S3) haben
+            keine Layout-Einstellungen — Sektion ganz weg statt leer. */}
+        {(def.fillMinWidth === undefined
+          || (def.acceptsChildren && 'direction' in def.defaultProps)) && (
+          <section className="flex flex-col gap-3">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Layout
+            </h3>
+            {/* Richtung/Abstände nur für Container, die diese Props auch
+                deklarieren — spezialisierte Container (Kanban) haben festes
+                Layout und bieten sie nicht an (kein Typ-Check, Registry-Daten). */}
+            <LayoutSection
+              block={block}
+              isContainer={def.acceptsChildren && 'direction' in def.defaultProps}
+            />
+          </section>
+        )}
       </div>
     </SidePanel>
   )

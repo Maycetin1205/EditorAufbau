@@ -294,9 +294,12 @@ body { font-size:13.5px; }
     .zb-chip.art-fehler  { background:var(--se-red-soft);   color:var(--se-red); }
     .zb-chiprow { display:flex; gap:var(--se-gap); align-items:center; margin-bottom:16px; }
 
-    /* Organismus: Board (ff-kanban) = Zeile aus Spalten */
-    .zb-board { display:flex; gap:var(--se-gap-lg); align-items:flex-start; }
-    .zb-col { flex:0 0 290px; background:var(--se-panel); border:1px solid var(--se-line); border-top:3px solid var(--se-faint); border-radius:var(--se-r-lg); }
+    /* Organismus: Board (ff-kanban) = Zeile aus Spalten.
+       S3-Revision (2026-07-09): Spalten verteilen sich fliessend ueber die
+       Breite (mind. 260px) und BRECHEN in die naechste Zeile um — KEIN
+       horizontaler Scroll (Nutzer-Entscheidung; vorher flex:0 0 290px). */
+    .zb-board { display:flex; flex-wrap:wrap; gap:var(--se-gap-lg); align-items:flex-start; }
+    .zb-col { flex:1 1 260px; background:var(--se-panel); border:1px solid var(--se-line); border-top:3px solid var(--se-faint); border-radius:var(--se-r-lg); }
     .zb-col.s-offen   { border-top-color:var(--se-amber); }
     .zb-col.s-arbeit  { border-top-color:var(--se-blue); }
     .zb-col.s-fertig  { border-top-color:var(--se-green); }

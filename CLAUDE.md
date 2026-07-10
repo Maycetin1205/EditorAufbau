@@ -582,10 +582,55 @@ den Export (Kap. 3).
     **UMBRECHEN in die nächste Zeile statt intern zu scrollen** (KEIN
     horizontaler Scroll). `flowLayout` bekommt dafür eine **opt-in**
     Mindestbreite für 'fill' (Default unverändert → kein anderer Block
-    betroffen). Zielbild 4K.1 (`.zb-col flex:0 0 290px`) zuerst als Mockup
-    revidieren + Nutzer-Abnahme. Bindung am gewählten Kanban geschlossen
+    betroffen). Bindung am gewählten Kanban geschlossen
     sichtbar: 1. Quelle 2. Spaltenfeld 3. Spaltenwerte 4. Kartenstellen→Felder
     5. Schreibrelation 6. sofort realistische Datenvorschau.
+    - ✅ **S3-Layout + S3-Grenzen (2026-07-09, auf direkte Nutzer-Beschwerde;
+      OHNE Mockup-Abnahme — Nutzer wollte ausdrücklich keine Screenshots):**
+      (a) Spalten verteilen sich fließend (mind. 260px) und BRECHEN um:
+      `overflow-x` raus, `flex-wrap` rein (`KanbanBlock`); neues
+      Registry-Konzept `fillMinWidth` (opt-in, dritter Parameter von
+      `flowItemStyle`, Canvas + Export reichen ihn durch). Spalte: `width`
+      aus den defaultProps raus, `resizableWidth=false`, Breite-Controls im
+      Inspector für fließende Blöcke ausgeblendet; alte gespeicherte Spalten
+      mit `width:290` rendern automatisch fließend (width wird ignoriert,
+      keine Migration nötig). (b) Neues Registry-Konzept `allowedParentTypes`
+      (Gegenrichtung zu allowedChildTypes, durchgesetzt in `canContain` →
+      wirkt automatisch in Store, Drag-Vorschau UND Palette): Karte nur in
+      `kanban-spalte`, Spalte nur in `kanban` — nichts lässt sich mehr aus
+      dem Kanban herausziehen. Karte bleibt in der Bibliothek (Klick/Drag
+      landet in der Spalte der Auswahl; ohne erlaubtes Ziel passiert nichts).
+      `stilprobe.html`-Zielbild entsprechend revidiert (`flex:1 1 260px` +
+      wrap). Tests: die 290px-Festschreibung wurde zur STRENGEREN Spec
+      umgebaut (fließend, kein `overflow-x` im Bündel, Gegenrichtungs-Fälle);
+      E2E-Helfer „Board selektieren" von fester Klick-Position (x=298 =
+      alte Spaltenlücke) auf Element-Dispatch umgestellt. 145 Unit + 25 E2E
+      grün.
+    - ✅ **S3-Musterkarte (2026-07-09, Nutzer-Entscheidungen per Fragebogen:
+      Kanban IMMER datengebunden / eigener Vorlagen-Kasten / sofort
+      Vorschau):** Neuer Block `kanban-vorlage` (`ff-kanban-vorlage`,
+      `src/blocks/kanban/KanbanVorlageBlock.ts`) = sichtbar beschrifteter
+      Kasten „Kartenvorlage" am Board mit DER EINEN Musterkarte; frisches
+      Board = Vorlagen-Kasten + 3 LEERE Spalten (keine 6 handgepflegten
+      Beispielkarten mehr, nichts zählt „heimlich"). Registry-getrieben:
+      Karte lebt NUR im Vorlagen-Kasten (`allowedParentTypes`), raus aus
+      der Bibliothek (entsteht mit dem Board / „+ Karte" am Kasten);
+      Spalten nehmen NICHTS mehr auf (`allowedChildTypes: []`, kein
+      „+ Karte"-Knopf, Leer-Hinweis „Karten entstehen aus der
+      Datenquelle"); neues Registry-Konzept **removable=false** (Kasten
+      ohne Kreuzchen — ohne Vorlage keine Karten; die Karte darin bleibt
+      löschbar, „+ Karte" stellt her). `seRuntime` klont die Musterkarte
+      aus dem Kasten (Fallback alte Masken: erste Spalten-Karte) und
+      blendet den Kasten im hydrierten Board aus (Werkzeug, keine
+      Anzeige; ohne Datenanbindung sichtbar = ehrlicher Hinweis). Alte
+      gespeicherte Karten in Spalten rendern weiter (nur einfügen/
+      verschieben gesperrt). Tests zur neuen Spec umgebaut + neue Fälle
+      (canContain-Matrix, unlöschbarer Kasten, Musterkarte-Drag wirkungslos,
+      Vorlagen-Kasten hidden/visible im Export); 146 Unit + 25 E2E grün.
+      **S3 bleibt OFFEN bei:** Spalten-VORSCHAU im Editor (generierte
+      Vorschau-Karten aus Beispieldaten, sobald Quelle + Spaltenfeld da —
+      Nutzer-Idee: Feld-Klarnamen als Beispieltexte) + geschlossene
+      Bindungs-UI (Punkte 1–6).
   - **S4 Datenquellen: Import + erweiterbare Arten** `[Muster kritisch]`
     (Nutzer-Entscheidungen 2026-07-09): (a) **IDB-Import** — der Bediener
     exportiert die Tabelle aus SoftEngine und importiert die Datei; ein

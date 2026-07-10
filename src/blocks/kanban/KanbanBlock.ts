@@ -17,12 +17,12 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
 import type { FlowDirection } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
-import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
+import { KanbanVorlageBlock } from './KanbanVorlageBlock'
 import { connectBoard, disconnectBoard } from './seRuntime'
 
 const SPALTE = KanbanSpalteBlock.blockType
-const KARTE = CardBlock.blockType
+const VORLAGE = KanbanVorlageBlock.blockType
 
 export class KanbanBlock extends BasicBlock {
   static readonly blockType = 'kanban'
@@ -30,7 +30,7 @@ export class KanbanBlock extends BasicBlock {
   static readonly displayName = 'Kanban'
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsChildren = true
-  static readonly allowedChildTypes = [SPALTE]
+  static readonly allowedChildTypes = [SPALTE, VORLAGE]
   static readonly childDirection: FlowDirection = 'row'
   static readonly containerHint = false
   static readonly addChildButton = { label: 'Spalte', childType: SPALTE }
@@ -67,48 +67,33 @@ export class KanbanBlock extends BasicBlock {
     },
   ]
 
-  // Beispieldaten = die Karten des abgenommenen Zielbilds (4K.1).
+  // S3-Musterkarte: Ein frisches Board = Vorlagen-Kasten mit DER EINEN
+  // Musterkarte (bringt seine Beispiel-Karte selbst mit, defaultChildren
+  // des Vorlagen-Blocks) + 3 leere Spalten. Die Spalten füllt die Laufzeit
+  // aus der Datenquelle — keine handgepflegten Beispielkarten mehr.
   static readonly defaultChildren: DefaultChildSpec[] = [
-    {
-      type: SPALTE,
-      props: { heading: 'Offen', variant: 'warning' },
-      children: [
-        { type: KARTE, props: { heading: 'Rückruf Fr. Wagner', text: 'Befund Minka besprechen', chipVariant: 'warning', chipText: 'Wartet seit 2 Tagen' } },
-        { type: KARTE, props: { heading: 'Rechnung Nr. 5012 prüfen', text: 'Position Narkose fehlt', chipVariant: 'danger', chipText: 'Überfällig' } },
-        { type: KARTE, props: { heading: 'Impfpass nachtragen', text: 'Buddy · Golden Retriever', chipVariant: 'info', chipText: 'Heute' } },
-      ],
-    },
-    {
-      type: SPALTE,
-      props: { heading: 'In Arbeit', variant: 'info' },
-      children: [
-        { type: KARTE, props: { heading: 'Röntgenbilder anfordern', text: 'Klinik Dr. Steiner, Fall Rocky', chipVariant: 'info', chipText: 'Angefragt' } },
-      ],
-    },
-    {
-      type: SPALTE,
-      props: { heading: 'Fertig', variant: 'success' },
-      children: [
-        { type: KARTE, props: { heading: 'Laborprobe versendet', text: 'Nala · Blutbild groß', chipVariant: 'success', chipText: 'Erledigt' } },
-        { type: KARTE, props: { heading: 'Bestellung Verbandsmaterial', text: 'Lieferung bestätigt für Montag', chipVariant: 'success', chipText: 'Erledigt' } },
-      ],
-    },
+    { type: VORLAGE },
+    { type: SPALTE, props: { heading: 'Offen', variant: 'warning' } },
+    { type: SPALTE, props: { heading: 'In Arbeit', variant: 'info' } },
+    { type: SPALTE, props: { heading: 'Fertig', variant: 'success' } },
   ]
 
   static styles = [
     BasicBlock.styles,
     css`
-      /* Mehr Spalten als Platz: das Board scrollt IN SICH (Editor und
-         Export identisch, Block-CSS = die eine Render-Quelle), statt die
-         Maske horizontal zu sprengen. min-width:0 erlaubt dem Host, in
-         Zeilen-Bereichen schmaler zu werden als seine Spaltensumme. */
+      /* Mehr Spalten als Platz: die Spalten BRECHEN in die nächste Zeile um
+         (S3, Nutzer-Entscheidung: KEIN horizontaler Scroll). Die fließende
+         Spaltenbreite (mind. 260px) kommt aus fillMinWidth der Spalte —
+         Editor und Export identisch, Block-CSS = die eine Render-Quelle.
+         min-width:0 erlaubt dem Host, in Zeilen-Bereichen schmaler zu
+         werden als seine Spaltensumme. */
       :host { min-width: 0; }
       .board {
         display: flex;
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: flex-start;
         gap: var(--se-gap-lg);
-        overflow-x: auto;
       }
       slot { display: contents; }
     `,

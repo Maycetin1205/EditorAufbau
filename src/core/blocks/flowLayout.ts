@@ -46,10 +46,23 @@ export function parseFlowWidth(value: unknown): FlowWidth {
 // CSS für das Flex-Item (im Editor der Wrapper um den Block, im Export das
 // Block-Element selbst). camelCase-Schlüssel; der Export wandelt in
 // kebab-case um.
+//
+// fillMinWidth (S3, opt-in per Registry): Blöcke wie die Kanban-Spalte
+// verteilen sich IMMER fließend über die Breite des Zeilen-Containers —
+// mindestens fillMinWidth px, Umbruch in die nächste Zeile statt Scrollen
+// (der Container bricht per flex-wrap um). Die width-Prop des Knotens wird
+// dann ignoriert (die Spalte hat keine einstellbare Breite). Ohne
+// fillMinWidth bleibt das Verhalten aller anderen Blöcke exakt wie bisher.
 export function flowItemStyle(
   width: FlowWidth,
   parentDirection: FlowDirection,
+  fillMinWidth?: number,
 ): Record<string, string | number> {
+  if (fillMinWidth !== undefined) {
+    return parentDirection === 'row'
+      ? { flexGrow: 1, flexBasis: `${fillMinWidth}px` }
+      : { alignSelf: 'stretch' }
+  }
   if (width === 'fill') {
     return parentDirection === 'row'
       ? { flexGrow: 1, flexBasis: 0, minWidth: 0 }

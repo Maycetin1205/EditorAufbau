@@ -20,7 +20,6 @@ import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { FlowDirection } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
-import { CardBlock } from '../card/CardBlock'
 import {
   coerceStatusVariant,
   statusVariantProperty,
@@ -33,13 +32,23 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly displayName = 'Kanban-Spalte'
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsChildren = true
-  static readonly allowedChildTypes = [CardBlock.blockType]
+  // S3-Musterkarte: Spalten nehmen KEINE Blöcke mehr auf — ihre Karten
+  // erzeugt die Laufzeit aus der Musterkarte im Vorlagen-Kasten des Boards.
+  // acceptsChildren bleibt true, damit Karten alter gespeicherter Masken
+  // weiter rendern (Slot); nur Einfügen/Verschieben hinein ist gesperrt.
+  // Kein "+ Karte"-Knopf mehr — Karten entstehen aus Daten.
+  static readonly allowedChildTypes: string[] = []
   static readonly childDirection: FlowDirection = 'column'
   static readonly showInPalette = false
   static readonly containerHint = false
-  static readonly addChildButton = { label: 'Karte', childType: CardBlock.blockType }
-  // width 290: feste Spaltenbreite aus dem Zielbild (flex 0 0 290px) —
-  // wirkt über die universelle Flow-Breite, bleibt per Anfasser ziehbar.
+  // S3: Spalten leben NUR im Board (Gegenrichtung zu allowedChildTypes; als
+  // Literal, weil ein Import von KanbanBlock einen Import-Zyklus ergäbe) und
+  // haben KEINE einstellbare Breite mehr — sie verteilen sich fließend über
+  // die Board-Breite (mind. 260px) und brechen in die nächste Zeile um,
+  // statt horizontal zu scrollen (fillMinWidth, siehe flowLayout).
+  static readonly allowedParentTypes = ['kanban']
+  static readonly fillMinWidth = 260
+  static readonly resizableWidth = false
   // statusValue (Kap. 5.3): Datenwert dieser Spalte (Technikwert) — Zeilen,
   // deren Spalten-Feld (statusField am Board) genau diesen Wert hat, landen
   // im Export hier. Der sichtbare Titel bleibt davon unabhängig (Technikwert
@@ -48,7 +57,6 @@ export class KanbanSpalteBlock extends BasicBlock {
     variant: 'info',
     heading: 'Neue Spalte',
     statusValue: '',
-    width: 290,
   }
 
   // Inspector: die Bedeutung (-> Farbe der Oberlinie) + der Datenwert der
@@ -163,7 +171,7 @@ export class KanbanSpalteBlock extends BasicBlock {
         <span class="count">${this._count}</span>
       </div>
       <div class="body">
-        ${this._count === 0 ? html`<div class="drop">Karte hierher ziehen</div>` : null}
+        ${this._count === 0 ? html`<div class="drop">Karten entstehen aus der Datenquelle</div>` : null}
         <slot @slotchange=${this.onSlotChange}></slot>
       </div>
     </div>`
