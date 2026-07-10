@@ -718,13 +718,35 @@ den Export (Kap. 3).
     verifiziert grün (tsc + eslint + 151 Unit-Tests). Höhe wird in Phase 1
     sauber NEU gebaut, nicht aus dem Stash gefischt.
   - **Phase-1-Pakete** (jedes einzeln: Plan → „go" → bauen → Tests →
-    committen): **P1.1 Vorlagen-Kasten abschaffen (NÄCHSTES PAKET)** →
-    P1.2 Karte final gestalten (~5 Stellen nach Empfang-Vorbild, Zielbild
-    vorher abnehmen; ehem. K5) → P1.3 Spalten-/Board-Bedienung komplett
-    inkl. Höhe (ehem. K0-Höhenteil, neu) + UI/UX-Aufräumen (Nutzer-Ärger
-    im alten Editor: Spalten-Resize, allgemeines Durcheinander). Der
-    K0(a)-Geometrieteil (Spalten immer nebeneinander) ist committed und
-    bleibt.
+    committen): ✅ **P1.1 Vorlagen-Kasten abgeschafft (2026-07-10):**
+    Block `kanban-vorlage` KOMPLETT entfernt (Datei, Registry, Runtime,
+    Export, Zielbild-Mockup) samt der nur für ihn gebauten Konzepte
+    `slotName` + `removable` (Altlasten). Neu: Registry-Konzept
+    **templateChild** am Board (`{ type:'card', label:'Muster' }`) — die
+    ERSTE Karte des Boards in Baumreihenfolge ist die Musterkarte;
+    `Editor.templateMarkFor` (DFS, dieselbe Definition wie
+    `seRuntime`-Klonquelle `board.querySelector('ff-card')`) steuert die
+    dezente „Muster"-Markierung als BlockHost-Editor-Hilfe (nie im
+    Export). Frisches Board = 3 Spalten, Musterkarte in der ersten;
+    Spalten nehmen wieder Karten (`allowedChildTypes`, „+ Karte" je
+    Spalte), Karte lebt in `kanban-spalte` (allowedParentTypes).
+    **Lade-Migration** in sanitizeTree (`migrateKanbanVorlage`): Karten
+    aus dem Kasten wandern an den ANFANG der ersten Spalte (sonst hätte
+    der Sanitizer die gestaltete Musterkarte mit dem unbekannten Typ
+    verworfen!); live am echten Nutzer-Stand verifiziert. Tests zur
+    strengeren Spec umgebaut (Typ existiert nicht mehr, Export/Bündel
+    enthalten NIE ff-kanban-vorlage, Veralten-Wächter verbietet ihn
+    jetzt): 154 Unit + 25 E2E grün, tsc + eslint sauber. →
+    **P1.2 Karte final gestalten (NÄCHSTES PAKET):** Empfang-OPTIK
+    (~5 Stellen: Zeit/Name fett/Meta klein/Grund-Textzeile/Chip, Spalten-
+    Farbwelten) in `--se-*`-Tokens übersetzt, Zielbild in stilprobe.html
+    VORHER abnehmen (Nutzer-Klarstellung 2026-07-10: „die Optik der
+    Empfang-Maske will ich — mit neuer Architektur im neuen Editor";
+    KEINE Live-Verknüpfungen (Kap. 7), KEINE Aktions-Knöpfe (Kap. 8)) →
+    P1.3 Spalten-/Board-Bedienung komplett inkl. Höhe (ehem.
+    K0-Höhenteil, neu) + UI/UX-Aufräumen (Nutzer-Ärger im alten Editor:
+    Spalten-Resize, allgemeines Durcheinander). Der K0(a)-Geometrieteil
+    (Spalten immer nebeneinander) ist committed und bleibt.
   - **Phase-2-Auftakt steht schon fest (Diagnose 2026-07-10 VERIFIZIERT,
     nicht verlieren!): der SE-Anschluss-Fix.** Unsere exportierte Maske
     POLLT nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten: die Maske

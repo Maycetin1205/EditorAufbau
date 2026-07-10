@@ -5,9 +5,9 @@
 // des Boards ist nicht verhandelbar, darum auch keine Richtung/Abstand-Regler
 // im Inspector). Karten und Spalten zieht die VORHANDENE Canvas-Drag-Logik.
 //
-// Beim Einfügen erscheint sofort ein gefülltes Board (defaultChildren =
-// Beispieldaten des Zielbilds, nie ein leeres Gerippe): 3 Spalten
-// Offen/In Arbeit/Fertig mit den Karten aus dashboard/stilprobe.html.
+// Beim Einfügen erscheint sofort ein bespieltes Board (defaultChildren,
+// nie ein leeres Gerippe): 3 Spalten Offen/In Arbeit/Fertig, die erste
+// mit der Musterkarte (templateChild — erste Karte = Laufzeit-Vorlage).
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Zielbild: .zb-board.
 
@@ -17,12 +17,11 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
 import type { FlowDirection } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
-import { KanbanVorlageBlock } from './KanbanVorlageBlock'
 import { connectBoard, disconnectBoard } from './seRuntime'
 
 const SPALTE = KanbanSpalteBlock.blockType
-const VORLAGE = KanbanVorlageBlock.blockType
 
 export class KanbanBlock extends BasicBlock {
   static readonly blockType = 'kanban'
@@ -30,10 +29,15 @@ export class KanbanBlock extends BasicBlock {
   static readonly displayName = 'Kanban'
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsChildren = true
-  static readonly allowedChildTypes = [SPALTE, VORLAGE]
+  static readonly allowedChildTypes = [SPALTE]
   static readonly childDirection: FlowDirection = 'row'
   static readonly containerHint = false
   static readonly addChildButton = { label: 'Spalte', childType: SPALTE }
+  // P1.1 (ersetzt den Vorlagen-Kasten aus S3): die ERSTE Karte des Boards
+  // ist die Musterkarte — aus ihr erzeugt die Laufzeit die Datenkarten
+  // (seRuntime klont sie je Zeile). Der Editor markiert genau diese Karte
+  // dezent mit dem Label; im Export ist von der Markierung nichts zu sehen.
+  static readonly templateChild = { type: CardBlock.blockType, label: 'Muster' }
   // Kap. 5.1: an das Board lässt sich eine Datenquelle hängen (Inspector-
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
@@ -67,13 +71,16 @@ export class KanbanBlock extends BasicBlock {
     },
   ]
 
-  // S3-Musterkarte: Ein frisches Board = Vorlagen-Kasten mit DER EINEN
-  // Musterkarte (bringt seine Beispiel-Karte selbst mit, defaultChildren
-  // des Vorlagen-Blocks) + 3 leere Spalten. Die Spalten füllt die Laufzeit
-  // aus der Datenquelle — keine handgepflegten Beispielkarten mehr.
+  // P1.1: Ein frisches Board = 3 Spalten, die erste trägt DIE EINE
+  // Musterkarte (erste Karte des Boards, s. templateChild) — wie im
+  // Empfang-Vorbild liegt die Karte ganz normal in der Spalte, es gibt
+  // keinen separaten Vorlagen-Kasten mehr.
   static readonly defaultChildren: DefaultChildSpec[] = [
-    { type: VORLAGE },
-    { type: SPALTE, props: { heading: 'Offen', variant: 'warning' } },
+    {
+      type: SPALTE,
+      props: { heading: 'Offen', variant: 'warning' },
+      children: [{ type: CardBlock.blockType }],
+    },
     { type: SPALTE, props: { heading: 'In Arbeit', variant: 'info' } },
     { type: SPALTE, props: { heading: 'Fertig', variant: 'success' } },
   ]
@@ -89,14 +96,6 @@ export class KanbanBlock extends BasicBlock {
          Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
          Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
       :host { min-width: 0; }
-      .wrap { display: flex; flex-direction: column; }
-      /* Vorlagen-Kasten: eigene volle Zeile ÜBER den Spalten (benannter
-         Slot aus der Registry, slotName='vorlage') — stiehlt ihnen nie
-         Breite. Der Abstand hängt als Margin am geslotteten Kasten:
-         blendet die Laufzeit ihn aus (display:none), verschwindet der
-         Abstand mit. */
-      slot[name='vorlage'] { display: block; }
-      slot[name='vorlage']::slotted(*) { margin-bottom: var(--se-gap-lg); }
       .board {
         display: flex;
         flex-direction: row;
@@ -108,10 +107,7 @@ export class KanbanBlock extends BasicBlock {
   ]
 
   render(): TemplateResult {
-    return html`<div class="wrap">
-      <slot name="vorlage"></slot>
-      <div class="board"><slot></slot></div>
-    </div>`
+    return html`<div class="board"><slot></slot></div>`
   }
 
   // Kap. 5.3: in der EXPORTIERTEN Maske meldet sich das Board bei der

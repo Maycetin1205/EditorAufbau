@@ -1,7 +1,14 @@
 // E2E-Prüfung Kap. 4K.4 (Kanban-Organismus) im echten Browser.
 // Nur hier real abbildbar: Shadow-DOM/<slot> (Kartenzähler via slotchange),
 // HTML5-Drag mit DataTransfer-Typenliste (erlaubte Kind-Typen in der
-// Drag-Vorschau) und die Editor-Hilfen im Light-DOM (Plus-Knopf, Kreuzchen).
+// Drag-Vorschau) und die Editor-Hilfen im Light-DOM (Plus-Knopf, Kreuzchen,
+// "Muster"-Markierung).
+//
+// P1.1 (2026-07-10): der Vorlagen-Kasten ist ABGESCHAFFT — die Musterkarte
+// liegt als normale Karte in der ersten Spalte (erste Karte des Boards =
+// Laufzeit-Vorlage, dezent markiert). Die Spec hier wurde entsprechend
+// umgebaut, nicht abgeschwächt: ff-kanban-vorlage darf NIRGENDS mehr
+// auftauchen.
 //
 // Drag-Simulation: dragstart/dragover/drop werden als getrennte evaluate-
 // Aufrufe gefeuert (getrennte Tasks), damit React den Drag-State zwischen
@@ -69,34 +76,39 @@ async function dragCardToColumn(page: Page, cardHeading: string, colHeading: str
   }, colHeading)
 }
 
-test('Einfügen (S3): Board = Vorlagen-Kasten mit EINER Musterkarte + 3 leere Spalten', async ({ page }) => {
+test('Einfügen (P1.1): Board = 3 Spalten, die Musterkarte liegt markiert in der ersten', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
   await expect(page.locator('ff-kanban-spalte .title')).toHaveText(['OFFEN', 'IN ARBEIT', 'FERTIG'], { ignoreCase: true })
-  // Der Vorlagen-Kasten ist sichtbar beschriftet und traegt die Musterkarte.
-  await expect(page.locator('ff-kanban-vorlage')).toHaveCount(1)
-  await expect(page.locator('ff-kanban-vorlage')).toContainText(/Kartenvorlage/i)
+  // KEIN Vorlagen-Kasten mehr — nirgends.
+  await expect(page.locator('ff-kanban-vorlage')).toHaveCount(0)
+  // Die eine Musterkarte liegt in der ersten Spalte und ist dezent markiert.
   await expect(page.locator('ff-card')).toHaveCount(1)
-  // Spalten sind LEER (Karten entstehen aus Daten) und sagen das auch.
-  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
-  await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(3)
-  // Editor-Hilfen: "+ Karte" NUR am Vorlagen-Kasten, "+ Spalte" am Board.
-  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(1)
+  await expect.poll(() => counts(page)).toEqual(['1', '0', '0'])
+  await expect(page.getByText('Muster', { exact: true })).toBeVisible()
+  // Leere Spalten sagen, woher Karten kommen.
+  await expect(page.locator('ff-kanban-spalte .drop')).toHaveCount(2)
+  // Editor-Hilfen: "+ Karte" an JEDER Spalte, "+ Spalte" am Board.
+  await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' })).toHaveCount(3)
   await expect(page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' })).toHaveCount(1)
   // Weder Spalte noch Karte stehen in der Bibliothek.
   await expect(page.getByRole('button', { name: 'Kanban-Spalte' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Karte', exact: true })).toHaveCount(0)
 })
 
-test('Musterkarte laesst sich NICHT in eine Spalte ziehen — Karten entstehen aus Daten (S3)', async ({ page }) => {
+test('Karte zwischen Spalten ziehen = 1 Undo; die Markierung folgt der ersten Karte', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
-  // Drop auf die Spalte bietet kein Ziel an (canContain) — nichts bewegt sich.
   await dragCardToColumn(page, 'Rückruf Fr. Wagner', 'In Arbeit')
-  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
-  await expect(page.locator('ff-kanban-vorlage ff-card')).toHaveCount(1)
+  await expect.poll(() => counts(page)).toEqual(['0', '1', '0'])
+  // Die Karte bleibt die ERSTE Karte des Boards -> weiterhin markiert.
+  await expect(page.getByText('Muster', { exact: true })).toBeVisible()
+
+  // Ein Zug = ein Undo.
+  await page.getByRole('button', { name: /Rückgängig/ }).click()
+  await expect.poll(() => counts(page)).toEqual(['1', '0', '0'])
 })
 
 test('Spaltentitel per Doppelklick umbenennen (persistiert)', async ({ page }) => {
@@ -119,24 +131,27 @@ test('Spaltentitel per Doppelklick umbenennen (persistiert)', async ({ page }) =
   }, STORAGE_KEY)).toBe('EINGANG')
 })
 
-test('Plus-Knöpfe (S3): "+ Spalte" erweitert das Board leer; "+ Karte" stellt die Musterkarte wieder her', async ({ page }) => {
+test('Plus-Knöpfe (P1.1): "+ Spalte" erweitert leer; "+ Karte" an der Spalte stellt die Musterkarte wieder her', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
   await page.locator('button[data-ff-editor-helper]', { hasText: 'Spalte' }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(4)
-  await expect.poll(() => counts(page)).toEqual(['0', '0', '0', '0'])
+  await expect.poll(() => counts(page)).toEqual(['1', '0', '0', '0'])
 
   // Musterkarte löschen (keine Kinder -> keine Rückfrage) …
   await page.locator('ff-card .heading').click()
   await page.getByRole('button', { name: 'Entfernen' }).click()
   await expect(page.locator('ff-card')).toHaveCount(0)
-  // … und über "+ Karte" am Vorlagen-Kasten wiederherstellen.
-  await page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' }).click()
-  await expect(page.locator('ff-kanban-vorlage ff-card')).toHaveCount(1)
+  await expect(page.getByText('Muster', { exact: true })).toHaveCount(0)
+  // … und über "+ Karte" an der ersten Spalte wiederherstellen.
+  await page.locator('button[data-ff-editor-helper]', { hasText: 'Karte' }).first().click()
+  await expect(page.locator('ff-card')).toHaveCount(1)
+  await expect.poll(() => counts(page)).toEqual(['1', '0', '0', '0'])
+  await expect(page.getByText('Muster', { exact: true })).toBeVisible()
 })
 
-test('Erlaubte Kind-Typen: eine Schaltfläche aus der Bibliothek fällt NICHT in die Spalte', async ({ page }) => {
+test('Erlaubte Kind-Typen: Schaltfläche fällt NICHT in die Spalte, eine Karte schon', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
@@ -162,30 +177,28 @@ test('Erlaubte Kind-Typen: eine Schaltfläche aus der Bibliothek fällt NICHT in
   // 'button' ist in der Spalte verboten -> kein Drop-Ziel, nichts passiert.
   await paletteDrag('button', 'ff-kanban-spalte')
   await expect(page.locator('ff-button')).toHaveCount(0)
-  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
+  await expect.poll(() => counts(page)).toEqual(['1', '0', '0'])
 
-  // Auch eine Karte faellt NICHT mehr in die Spalte (S3: Karten aus Daten) …
+  // Eine Karte fällt in die Spalte (P1.1: Spalten nehmen wieder Karten).
   await paletteDrag('card', 'ff-kanban-spalte')
-  await expect(page.locator('ff-card')).toHaveCount(1)
-  await expect.poll(() => counts(page)).toEqual(['0', '0', '0'])
-
-  // … aber in den Vorlagen-Kasten (nur die ERSTE Karte ist die Vorlage).
-  await paletteDrag('card', 'ff-kanban-vorlage')
-  await expect(page.locator('ff-kanban-vorlage ff-card')).toHaveCount(2)
+  await expect(page.locator('ff-card')).toHaveCount(2)
+  await expect.poll(() => counts(page)).toEqual(['2', '0', '0'])
 })
 
-test('Kreuzchen (S3): leere Spalte geht ohne Rückfrage; der Vorlagen-Kasten hat KEIN Kreuzchen', async ({ page }) => {
+test('Kreuzchen: leere Spalte ohne Rückfrage; belegte Spalte fragt nach (Dialog verworfen = bleibt)', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
 
-  // Leere Spalte: Entfernen ohne Dialog (Playwright wuerde einen confirm()
-  // sonst automatisch verwerfen — die Spalte bliebe stehen).
-  await page.locator('ff-kanban-spalte .head').first().click() // selektieren
+  // Leere Spalte (zweite): Entfernen ohne Dialog (Playwright würde einen
+  // confirm() sonst automatisch verwerfen — die Spalte bliebe stehen).
+  await page.locator('ff-kanban-spalte .head').nth(1).click() // selektieren
   await page.getByRole('button', { name: 'Entfernen' }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(2)
 
-  // Vorlagen-Kasten: selektierbar, aber ohne Entfernen (removable=false) —
-  // ohne Vorlage koennte das Board keine Karten erzeugen.
-  await page.locator('ff-kanban-vorlage .head').click()
-  await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(0)
+  // Belegte Spalte (trägt die Musterkarte): confirm() erscheint und wird von
+  // Playwright automatisch VERWORFEN -> Spalte + Karte bleiben stehen.
+  await page.locator('ff-kanban-spalte .head').first().click()
+  await page.getByRole('button', { name: 'Entfernen' }).click()
+  await expect(page.locator('ff-kanban-spalte')).toHaveCount(2)
+  await expect(page.locator('ff-card')).toHaveCount(1)
 })

@@ -105,11 +105,11 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
 
   // 4 Zeilen -> 4 Karten: Minka+Nala in "In Arbeit" (2), Buddy in "Fertig"
   // (3), Rocky (Zimmer "OP", kein Treffer) im Auffang "Offen". Die
-  // Musterkarte im (ausgeblendeten) Vorlagen-Kasten zaehlt nicht mit.
+  // Musterkarte (erste Karte des Boards) wird beim Hydrieren durch die
+  // Daten-Karten ERSETZT — sie zaehlt nicht doppelt.
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
-  // Der Vorlagen-Kasten ist im hydrierten Board ausgeblendet (Werkzeug,
-  // keine Anzeige — S3).
-  await expect(mask.locator('ff-kanban-vorlage')).toBeHidden()
+  // P1.1: einen Vorlagen-Kasten gibt es nicht mehr — nirgends in der Maske.
+  await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(colCards(0)).toHaveText(['Rocky'])
   await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
@@ -206,11 +206,12 @@ test('Export ohne Spalten-Feld bleibt statisch — auch wenn SEDATA da ist', asy
     (window as unknown as Record<string, unknown>).SEDATA = sedata
   }, SEDATA_STUB)
 
-  // Keine Hydrierung: nur die Musterkarte im SICHTBAREN Vorlagen-Kasten
-  // (ehrlicher Hinweis, dass die Datenanbindung fehlt), Spalten leer
+  // Keine Hydrierung: die Maske bleibt statisch = WYSIWYG — die Musterkarte
+  // liegt sichtbar in der ersten Spalte, kein Vorlagen-Kasten (P1.1)
   // (der Poll hätte 300ms-Takte — kurz warten, dann prüfen).
   await mask.waitForTimeout(1000)
   await expect(mask.locator('ff-card')).toHaveCount(1)
-  await expect(mask.locator('ff-kanban-vorlage')).toBeVisible()
+  await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
+  await expect(mask.locator('ff-kanban-spalte').first().locator('ff-card')).toHaveCount(1)
   await expect(mask.locator('ff-card .heading').first()).toHaveText('Rückruf Fr. Wagner')
 })

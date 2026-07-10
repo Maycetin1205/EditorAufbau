@@ -237,6 +237,11 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 
   const resizable = def?.resizableWidth ?? true
 
+  // Musterkarten-Markierung (P1.1): die Laufzeit-Vorlage des Boards
+  // (templateChild in der Registry) dezent kennzeichnen — reine
+  // Editor-Hilfe im Wrapper, taucht im Export nie auf.
+  const templateMark = editor.templateMarkFor(block.id)
+
   // Kreuzchen (Bedienlogik 5): Entfernen direkt am Block, Rückfrage nur wenn
   // er Inhalte trägt.
   function onRemoveClick(e: ReactMouseEvent<HTMLButtonElement>) {
@@ -321,7 +326,28 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           onClose={() => setPicker(null)}
         />
       )}
-      {selected && def?.removable !== false && (
+      {templateMark && (
+        <div
+          style={{
+            position: 'absolute',
+            top: -8,
+            left: 8,
+            padding: '0 6px',
+            borderRadius: 4,
+            background: 'hsl(var(--ring))',
+            color: '#fff',
+            fontSize: 9.5,
+            fontWeight: 700,
+            lineHeight: '15px',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            pointerEvents: 'none',
+          }}
+        >
+          {templateMark}
+        </div>
+      )}
+      {selected && (
         <button
           type="button"
           aria-label="Entfernen"

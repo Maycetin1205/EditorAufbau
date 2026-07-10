@@ -5,6 +5,9 @@
 // LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
 
 import { beforeEach, describe, expect, it } from 'vitest'
+// Side-Effect-Import: registriert die echten Kanban-Blöcke (kanban,
+// kanban-spalte, card) für die P1.1-Migrationstests.
+import '../blocks/kanban/KanbanBlock'
 import { Editor } from './Editor'
 import { registerTestBlocks, TEST_BLOCK, TEST_BOX } from '../test/testBlocks'
 
@@ -82,6 +85,45 @@ describe('sanitizeTree (Laden verteidigt sich)', () => {
     localStorage.setItem(KEY, '{{{kein json')
     const ed = new Editor()
     expect(ed.blockCount).toBe(0) // leerer, benutzbarer Editor
+  })
+})
+
+describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
+  it('zieht die Musterkarte aus dem Kasten an den ANFANG der ersten Spalte, der Kasten verschwindet', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['kasten', 's1', 's2'] },
+        kasten: { id: 'kasten', type: 'kanban-vorlage', props: {}, parentId: 'board', childIds: ['muster'] },
+        muster: { id: 'muster', type: 'card', props: { heading: 'Meine Musterkarte' }, parentId: 'kasten', childIds: [] },
+        s1: { id: 's1', type: 'kanban-spalte', props: { heading: 'Offen' }, parentId: 'board', childIds: ['alt'] },
+        alt: { id: 'alt', type: 'card', props: { heading: 'Alte Karte' }, parentId: 's1', childIds: [] },
+        s2: { id: 's2', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('kasten')).toBeUndefined()
+    expect(ed.getNode('board')?.childIds).toEqual(['s1', 's2'])
+    // Musterkarte VOR den Bestandskarten — die ERSTE Karte des Boards
+    // bleibt damit die gestaltete Vorlage (templateChild/seRuntime).
+    expect(ed.getNode('s1')?.childIds).toEqual(['muster', 'alt'])
+    expect(ed.getNode('muster')?.props.heading).toBe('Meine Musterkarte')
+    expect(ed.getNode('muster')?.parentId).toBe('s1')
+  })
+
+  it('Board ohne Spalte (degeneriert): Kasten samt Karten entfällt, nichts bricht', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['kasten'] },
+        kasten: { id: 'kasten', type: 'kanban-vorlage', props: {}, parentId: 'board', childIds: ['muster'] },
+        muster: { id: 'muster', type: 'card', props: {}, parentId: 'kasten', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('kasten')).toBeUndefined()
+    expect(ed.getNode('muster')).toBeUndefined()
+    expect(ed.getNode('board')?.childIds).toEqual([])
   })
 })
 

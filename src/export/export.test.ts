@@ -85,8 +85,11 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-text', 'ff-container', 'ff-infobox', 'ff-badge', 'ff-card', 'ff-kanban', 'ff-kanban-spalte', 'ff-kanban-vorlage', 'ff-formfield']) {
+    for (const tag of ['ff-button', 'ff-text', 'ff-container', 'ff-infobox', 'ff-badge', 'ff-card', 'ff-kanban', 'ff-kanban-spalte', 'ff-formfield']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
+    // P1.1: der Vorlagen-Kasten ist abgeschafft — ein Bündel, das ihn noch
+    // trägt, ist veraltet.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — ff-kanban-vorlage ist abgeschafft').not.toContain('ff-kanban-vorlage')
   })
 })

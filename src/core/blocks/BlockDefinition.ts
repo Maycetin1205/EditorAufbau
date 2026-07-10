@@ -59,11 +59,6 @@ export interface BlockDefinition {
   // Entscheidung A), Vorlagen-Kasten: 'auto' (volle Breite in der eigenen
   // Slot-Zeile). undefined = normales width-Verhalten (alle anderen Blöcke).
   lockedWidth?: FlowWidth
-  // Benannter Slot im Eltern-Element (K0): Canvas-Wrapper und Export setzen
-  // slot="<name>" am Kind — der Container kann Kinder damit in eine eigene
-  // Zeile legen (Kanban: Vorlagen-Kasten ÜBER den Spalten, stiehlt ihnen
-  // nie Breite). undefined = Standard-Slot.
-  slotName?: string
   // Teilbaum, mit dem der Block eingefügt wird (Beispieldaten).
   defaultChildren?: readonly DefaultChildSpec[]
   // Feste Fluss-Richtung der Kinder für spezialisierte Container (Kanban-
@@ -73,10 +68,11 @@ export interface BlockDefinition {
   // false = erscheint nicht in der Bibliothek (Kanban-Spalte entsteht nur
   // über das Board). undefined/true = sichtbar.
   showInPalette?: boolean
-  // false = kein Entfernen-Kreuzchen am Block (S3: der Vorlagen-Kasten des
-  // Kanbans ist Pflichtteil — ohne ihn könnte das Board keine Karten
-  // erzeugen). undefined/true = löschbar wie üblich.
-  removable?: boolean
+  // Laufzeit-Vorlage (P1.1): der Container erzeugt seine Laufzeit-Kinder
+  // aus der ERSTEN Nachfahren-Karte dieses Typs (Baumreihenfolge; seRuntime
+  // klont sie je Datenzeile). Der Editor markiert genau diese Karte dezent
+  // mit dem Label (Editor-Hilfe im BlockHost, nie im Export).
+  templateChild?: { type: string; label: string }
   // false = keine gestrichelte Editor-Hilfe um den Container (Blöcke mit
   // eigenem sichtbarem Rahmen wie Kanban/Spalte). undefined/true = Hilfe an.
   containerHint?: boolean

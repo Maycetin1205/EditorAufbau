@@ -32,7 +32,6 @@ import {
 } from '../../core/data/relations'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
-import { KanbanVorlageBlock } from './KanbanVorlageBlock'
 
 // ---------- Pure Helfer (Node-testbar, kein DOM) ----------
 
@@ -268,8 +267,9 @@ function refreshDataBasis(): void {
 const boards = new Set<HTMLElement>()
 // Musterkarte je Board: VOR dem ersten Befuellen geklont, damit jede
 // Neu-Hydrierung (ReloadData) wieder von der gestalteten Karte ausgeht.
-// Quelle = die Karte im Vorlagen-Kasten (S3); Fallback fuer ALTE Masken
-// ohne Kasten = erste gestaltete Karte einer Spalte (Verhalten bis 5.3).
+// Quelle = die ERSTE Karte des Boards in Dokumentreihenfolge (P1.1,
+// templateChild in der Registry — dieselbe Definition wie die dezente
+// "Muster"-Markierung des Editors).
 const templates = new WeakMap<HTMLElement, HTMLElement>()
 let booted = false
 
@@ -277,7 +277,6 @@ let booted = false
 // keine duplizierten String-Literale).
 const SPALTE_TAG = KanbanSpalteBlock.tagName
 const CARD_TAG = CardBlock.tagName
-const VORLAGE_TAG = KanbanVorlageBlock.tagName
 
 function columnsOf(board: HTMLElement): HTMLElement[] {
   return Array.from(board.children).filter(
@@ -308,34 +307,18 @@ function hydrate(board: HTMLElement): void {
   const columns = columnsOf(board)
   if (columns.length === 0) return
 
-  // Musterkarte einmalig sichern: die (erste) Karte im Vorlagen-Kasten.
-  // Alte Masken ohne Kasten: erste gestaltete Karte in Board-Reihenfolge.
-  const vorlage = Array.from(board.children).find(
-    (el): el is HTMLElement => el.tagName.toLowerCase() === VORLAGE_TAG,
-  )
+  // Musterkarte einmalig sichern: die ERSTE Karte des Boards in
+  // Dokumentreihenfolge (= Baumreihenfolge; deckt auch ALTE Masken mit
+  // Vorlagen-Kasten ab — dessen Karte stand ebenfalls vorn).
   let template = templates.get(board)
   if (!template) {
-    const vorlageCard = vorlage?.querySelector(CARD_TAG) as HTMLElement | null
-    if (vorlageCard) {
-      template = vorlageCard.cloneNode(true) as HTMLElement
+    const first = board.querySelector(CARD_TAG) as HTMLElement | null
+    if (first) {
+      template = first.cloneNode(true) as HTMLElement
       templates.set(board, template)
-    } else {
-      for (const col of columns) {
-        const first = cardsOf(col)[0]
-        if (first) {
-          template = first.cloneNode(true) as HTMLElement
-          templates.set(board, template)
-          break
-        }
-      }
     }
   }
   if (!template) return // keine Musterkarte, nirgends: nichts tun
-
-  // Sobald das Board aus Daten hydriert, ist der Vorlagen-Kasten Werkzeug,
-  // keine Anzeige — ausblenden (nur hier, also nur mit Quelle + Spalten-
-  // Feld; eine Maske ohne Datenanbindung zeigt ihn als ehrlichen Hinweis).
-  if (vorlage) vorlage.style.display = 'none'
 
   const rows = rowsFor(seGlobal().SEDATA, source.name, source.tableId)
   const columnValues = columns.map((c) => c.getAttribute('statusvalue') ?? '')

@@ -55,12 +55,39 @@ function normalizeProps(type: string, rawProps: Record<string, unknown>): Record
   return next
 }
 
+// Migration alter Stände (P1.1): der Vorlagen-Kasten (kanban-vorlage) ist
+// abgeschafft — seine Karten wandern an den ANFANG der ersten Spalte des
+// Boards (die erste Karte des Boards ist jetzt die Musterkarte), der Kasten
+// selbst verschwindet. Ohne den Umzug würde sanitizeTree den unbekannten
+// Typ SAMT der gestalteten Musterkarte verwerfen. Board ohne Spalte
+// (degeneriert): die Karten entfallen mit dem Kasten.
+function migrateKanbanVorlage(
+  src: Record<string, { type?: unknown; childIds?: unknown }>,
+): void {
+  for (const [id, node] of Object.entries(src)) {
+    if (!node || typeof node !== 'object' || node.type !== 'kanban-vorlage') continue
+    const parent = Object.values(src).find(
+      (p) => p && typeof p === 'object' && Array.isArray(p.childIds) && p.childIds.includes(id),
+    )
+    if (!parent || !Array.isArray(parent.childIds)) continue
+    const spalte = parent.childIds
+      .map((cid) => (typeof cid === 'string' ? src[cid] : undefined))
+      .find((n) => n && typeof n === 'object' && n.type === 'kanban-spalte')
+    const cards = Array.isArray(node.childIds) ? node.childIds : []
+    if (spalte) {
+      spalte.childIds = [...cards, ...(Array.isArray(spalte.childIds) ? spalte.childIds : [])]
+    }
+    parent.childIds = parent.childIds.filter((cid) => cid !== id)
+  }
+}
+
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
 // Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
 // Props, repariert parentId und verwirft Waisen/Zyklen.
 function sanitizeTree(raw: Record<string, unknown>): BlockTree {
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown }>
+  migrateKanbanVorlage(src)
 
   const addChild = (parentId: string, childId: unknown): void => {
     if (typeof childId !== 'string' || tree[childId]) return
@@ -330,6 +357,36 @@ export class Editor extends Subject<Editor> {
           : undefined
       }
       cur = cur.parentId ? this._tree[cur.parentId] : undefined
+    }
+    return undefined
+  }
+
+  // Musterkarten-Markierung (P1.1, templateChild in der Registry): liefert
+  // das Label, wenn der Block die ERSTE Nachfahren-Karte des deklarierten
+  // Typs unter dem nächsten passenden Vorfahren ist — die Laufzeit klont
+  // exakt diese Karte (seRuntime: erste Karte in Dokumentreihenfolge,
+  // dieselbe Definition). Registry-getrieben, kein `if type===`.
+  templateMarkFor(id: string): string | undefined {
+    const node = this._tree[id]
+    if (!node) return undefined
+    let cur: BlockNode | undefined = node.parentId ? this._tree[node.parentId] : undefined
+    while (cur) {
+      const tc = getBlockDefinition(cur.type)?.templateChild
+      if (tc && tc.type === node.type) {
+        return this.firstDescendantOfType(cur.id, tc.type) === id ? tc.label : undefined
+      }
+      cur = cur.parentId ? this._tree[cur.parentId] : undefined
+    }
+    return undefined
+  }
+
+  private firstDescendantOfType(rootId: string, type: string): string | undefined {
+    for (const cid of this._tree[rootId]?.childIds ?? []) {
+      const child = this._tree[cid]
+      if (!child) continue
+      if (child.type === type) return cid
+      const found = this.firstDescendantOfType(cid, type)
+      if (found) return found
     }
     return undefined
   }

@@ -20,6 +20,7 @@ import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { CardBlock } from '../card/CardBlock'
 import {
   coerceStatusVariant,
   statusVariantProperty,
@@ -32,15 +33,15 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly displayName = 'Kanban-Spalte'
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsChildren = true
-  // S3-Musterkarte: Spalten nehmen KEINE Blöcke mehr auf — ihre Karten
-  // erzeugt die Laufzeit aus der Musterkarte im Vorlagen-Kasten des Boards.
-  // acceptsChildren bleibt true, damit Karten alter gespeicherter Masken
-  // weiter rendern (Slot); nur Einfügen/Verschieben hinein ist gesperrt.
-  // Kein "+ Karte"-Knopf mehr — Karten entstehen aus Daten.
-  static readonly allowedChildTypes: string[] = []
+  // P1.1 (Vorlagen-Kasten abgeschafft): Spalten nehmen wieder Karten auf —
+  // die ERSTE Karte des Boards ist die Musterkarte (templateChild am Board),
+  // dezent markiert im Editor. "+ Karte" stellt sie nach dem Löschen wieder
+  // her bzw. legt weitere Gestaltungs-Karten an.
+  static readonly allowedChildTypes: string[] = [CardBlock.blockType]
   static readonly childDirection: FlowDirection = 'column'
   static readonly showInPalette = false
   static readonly containerHint = false
+  static readonly addChildButton = { label: 'Karte', childType: CardBlock.blockType }
   // S3: Spalten leben NUR im Board (Gegenrichtung zu allowedChildTypes; als
   // Literal, weil ein Import von KanbanBlock einen Import-Zyklus ergäbe).
   // K0/Entscheidung A: Spalten haben KEINE einstellbare Breite — sie teilen

@@ -117,11 +117,7 @@ function nodeToHtml(
     })
     .join('')
 
-  // Benannter Slot aus der Registry (K0) — DIESELBE Quelle wie der Canvas-
-  // Wrapper (slotName): der Vorlagen-Kasten landet in der eigenen Zeile
-  // des Boards.
-  const slotAttr = def.slotName ? ` slot="${escapeHtmlAttr(def.slotName)}"` : ''
-  const open = `${pad}<${def.tagName}${slotAttr}${attrs}${styleAttr(node, parentDirection, def.lockedWidth)}>`
+  const open = `${pad}<${def.tagName}${attrs}${styleAttr(node, parentDirection, def.lockedWidth)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }
