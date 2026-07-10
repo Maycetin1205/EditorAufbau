@@ -697,11 +697,10 @@ den Export (Kap. 3).
   spätere (Patch, ~Z. 382) überschreibt die frühere per Kaskade.
   `C:\Users\mu.aycetin\Desktop\Projekte\Editor\REFERENZ` = nur Information,
   nicht anfassen.
-  - **K0 Geometrie** [läuft bei Codex — Diff VOR allem Weiteren adversarial
-    gegen diese Spec reviewen. Checkliste: kein overflow-x, keine
-    Mindestbreite, Registry-Konzept statt Kanban-Sonderprop, Vorlagen-Kasten
-    eigene Zeile, Tests umgeschrieben statt gelöscht]: Spalten IMMER alle
-    sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`, KEIN flex-wrap,
+  - **K0 Geometrie (NÄCHSTES BAUPAKET; Korrektur 2026-07-10: Codex hat NIE
+    angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
+    Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,
+    KEIN flex-wrap,
     KEIN overflow-x (**Entscheidung A** — Mindestbreite/horizontaler Scroll
     sind ABGELEHNT, auch wenn die Empfang-Maske selbst scrollt; ersetzt die
     Umbruch-Entscheidung vom 2026-07-09). Karten scrollen senkrecht IN der
@@ -711,7 +710,8 @@ den Export (Kap. 3).
     Zieh-Anfasser an der Unterkante (1 Geste = 1 Undo). Vorlagen-Kasten auf
     eigene volle Zeile über den Spalten (darf den Spalten nie Breite
     stehlen). fillMinWidth-Konzept ersetzen, betroffene Tests zur strengeren
-    Spec umschreiben.
+    Spec umschreiben. Anlass: das exportierte 3-Spalten-Board brach im
+    SE-Fenster in die zweite Zeile um (fillMinWidth 260 + flex-wrap).
   - **K1 Beispielzeilen an der Datenquelle** `[kritisch]`: Quelle trägt
     Beispiel-ZEILEN (kleine Tabelle, im Datenquellen-Formular pflegbar)
     statt nur einem Beispielwert je Feld. Fundament für K2–K4.
