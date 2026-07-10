@@ -785,19 +785,26 @@ den Export (Kap. 3).
     sanitize verwirft sample aus Altbeständen. Tests zur strengeren Spec.
     Der K0(a)-Geometrieteil (Spalten immer nebeneinander) ist committed
     und bleibt.
-    **⚑ OFFENE Nutzer-Entscheidungen vom 2026-07-10 (Konzept VOR Bau
-    besprechen, Nutzer will reden):** (a) **Demo wird GAR NICHT erst
-    exportiert** — beim ersten SE-Start blitzte die Beispielansicht auf
-    („fake Demo-Daten"), Ausblenden zur Laufzeit ist ABGELEHNT; Konzept-
-    Kandidat: Musterkarte reist als inertes `<template>`-Element (rendert
-    nie, Klonquelle der Laufzeit), sichtbare Beispielkarten stehen NIE in
-    der Maske. (b) **„+ Karte"-Anstecker abgeschafft** („wozu? NEIN") —
-    offene Folgefrage: Wiederherstellungsweg, wenn die Musterkarte
-    gelöscht wird (Kandidat: Musterkarte nicht löschbar). (c) GEPARKT
-    (Nutzer: „kommt der Reihe nach"): SE-Echttest zeigt 4 Karten =
-    Zeilenzahl STIMMT (Daten kommen an!), aber Stellen ohne Inhalt —
-    Feldwert-Auflösung (pos_len gegen echtes SEDATA) ist der nächste
-    Datenpfad-Punkt in Phase 2.
+    ✅ **Demo NIE im Export + Karten nie von Hand (2026-07-10, umgesetzt
+    nach Nutzer-Entscheidung; alter Editor als Beleg gesichtet: dort ist
+    das Board EIN Block, Karte = tileFields-Feldliste, ein Karten-X kann
+    dort gar nicht existieren):** (a) Die Musterkarte reist im Export als
+    inertes `<template data-ff-template>` — der Browser rendert sie NIE
+    (kein Demo-Blitzen beim SE-Start), Karten-Altbestände in Spalten
+    werden nie exportiert, Spalten bleiben leer bis echte Daten kommen;
+    seRuntime klont aus dem template (Fallback alte Masken: erste
+    sichtbare Karte). (b) „+ Karte" ABGESCHAFFT — eine Zeile = eine Karte,
+    die Anzahl bestimmen allein die Daten; „+ Spalte" bleibt. (c) Die
+    Musterkarte ist UNLÖSCHBAR (kein Kreuzchen; Store-Schutz
+    `isRemoveProtected` schützt auch die Spalte, die sie enthält — das
+    ganze Board löschen bleibt erlaubt). EINE Musterkarten-Definition für
+    Editor-Markierung/Löschschutz/Export/Laufzeit:
+    `treeQuery.firstDescendantOfType`. 159 Unit + 25 E2E grün;
+    SE-Echttest durch den Nutzer steht aus (Blitzen weg?).
+    **GEPARKT** (Nutzer: „kommt der Reihe nach"): SE-Echttest zeigt
+    4 Karten = Zeilenzahl STIMMT (Daten kommen an!), aber Stellen ohne
+    Inhalt — Feldwert-Auflösung (pos_len gegen echtes SEDATA) ist der
+    nächste Datenpfad-Punkt in Phase 2.
   - **Phase-2-Auftakt steht schon fest (Diagnose 2026-07-10 VERIFIZIERT,
     nicht verlieren!): der SE-Anschluss-Fix.** Unsere exportierte Maske
     POLLT nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten: die Maske
