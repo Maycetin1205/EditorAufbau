@@ -1,5 +1,8 @@
 # Aufbau-Editor — Hier weitermachen
 
+> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-10).** CLAUDE.md ist
+> das Original — jede Änderung immer in BEIDE Dateien ziehen.
+
 > **Für KI-Chats:** Diese Datei zuerst lesen. Sie ist die verbindliche Wahrheit
 > für Ziel + Arbeitsweise + Stand. Architektur-Details: `ARCHITEKTUR.md`.
 > Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
