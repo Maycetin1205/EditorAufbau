@@ -763,15 +763,41 @@ den Export (Kap. 3).
     nur im Export, nicht im Editor. 157 Unit + 25 E2E grün; live
     verifiziert (Anfasser-Geste → 501px, Spalten 4×voll, Persistenz).
     Damit ist das Kanban-GRUNDGERÜST komplett (Spalten/Karten anlegen,
-    umsortieren, löschen, Titel-Edit, Breite, Höhe, Musterkarte). →
-    **P1.2 Karte final gestalten (NÄCHSTES PAKET):** Empfang-OPTIK
-    (~5 Stellen: Zeit/Name fett/Meta klein/Grund-Textzeile/Chip, Spalten-
-    Farbwelten) in `--se-*`-Tokens übersetzt, Zielbild in stilprobe.html
-    VORHER abnehmen (Nutzer-Klarstellung 2026-07-10: „die Optik der
-    Empfang-Maske will ich — mit neuer Architektur im neuen Editor";
-    KEINE Live-Verknüpfungen (Kap. 7), KEINE Aktions-Knöpfe (Kap. 8)).
+    umsortieren, löschen, Titel-Edit, Breite, Höhe, Musterkarte).
+    ✅ **P1.2 Karte final (2026-07-10, Zielbild per Screenshot abgenommen):**
+    Karte = 5 Stellen (Titel fett + Zeit mono rechts in Zeile 1, Meta klein
+    in Zeile 2, Textzeile, Status-Chip) — alle 5 Inline-Edit + bindableSpots
+    (Muster 5.2, seRuntime konsumiert sie registry-getrieben ohne Änderung).
+    Spalten-FARBWELTEN statt nur Oberlinie (Empfang-Vorbild .vspalte):
+    „Art" tönt Kopf (--se-X-soft), Fläche (neu --se-X-shell) und Rahmen
+    (neu --se-X-line), Titel + Punkt + Zähler kräftig; 8 neue Tokens.
+    BEWUSSTE Abweichung vom Empfang-Original (im Mockup begründet): Meta in
+    EIGENER Zeile statt neben dem Titel — Entscheidung A erlaubt schmale
+    Spalten, die Einzeile schnitt den Titel an. Beifang-WYSIWYG-Fix eines
+    P1.3-Fehlers: Spalten-Host height:100% verhinderte im Export das
+    Flex-stretch (leere Spalten blieben kurz) → Host height auto +
+    min-height:100% + Host als Flex-Spalte, .col flex:1; alle 4 Fälle
+    (Editor/Export × auto/fest) nachgemessen gleich. 157 Unit + 25 E2E.
+    ✅ **Beispielwerte ABGESCHAFFT (2026-07-10, wütende Nutzer-Korrektur):**
+    der KLARNAME ist die Vorschau — gebundene Stelle + Feld-Picker zeigen
+    den Klarnamen des Felds, NIE erfundene Werte; sample raus aus Modell/
+    Formular/Builtins (Formular je Feld nur Klarname+Position+Länge),
+    sanitize verwirft sample aus Altbeständen. Tests zur strengeren Spec.
     Der K0(a)-Geometrieteil (Spalten immer nebeneinander) ist committed
     und bleibt.
+    **⚑ OFFENE Nutzer-Entscheidungen vom 2026-07-10 (Konzept VOR Bau
+    besprechen, Nutzer will reden):** (a) **Demo wird GAR NICHT erst
+    exportiert** — beim ersten SE-Start blitzte die Beispielansicht auf
+    („fake Demo-Daten"), Ausblenden zur Laufzeit ist ABGELEHNT; Konzept-
+    Kandidat: Musterkarte reist als inertes `<template>`-Element (rendert
+    nie, Klonquelle der Laufzeit), sichtbare Beispielkarten stehen NIE in
+    der Maske. (b) **„+ Karte"-Anstecker abgeschafft** („wozu? NEIN") —
+    offene Folgefrage: Wiederherstellungsweg, wenn die Musterkarte
+    gelöscht wird (Kandidat: Musterkarte nicht löschbar). (c) GEPARKT
+    (Nutzer: „kommt der Reihe nach"): SE-Echttest zeigt 4 Karten =
+    Zeilenzahl STIMMT (Daten kommen an!), aber Stellen ohne Inhalt —
+    Feldwert-Auflösung (pos_len gegen echtes SEDATA) ist der nächste
+    Datenpfad-Punkt in Phase 2.
   - **Phase-2-Auftakt steht schon fest (Diagnose 2026-07-10 VERIFIZIERT,
     nicht verlieren!): der SE-Anschluss-Fix.** Unsere exportierte Maske
     POLLT nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten: die Maske
