@@ -23,10 +23,13 @@ sein Ersatz dafür, Code lesen zu können.
    → das Tool hat versagt.
 
 Kontext: Es gibt einen ALTEN, „vibe-gecodeten" Editor (Repo `react--app`;
-lokal `C:\Users\mu.aycetin\Desktop\Projekte\react-app` — NICHT unter
-`Editor\`), der
-funktioniert (inkl. Export in SoftEngine), aber unwartbar ist (~29k Zeilen,
-absolutes x/y-Modell, zwei halbfertige Systeme parallel). **Dieses Projekt baut
+lokal `C:\Users\mu.aycetin\Desktop\Projekte\Editor\react-app` — Pfad
+verifiziert 2026-07-10, die frühere Angabe `Projekte\react-app` war falsch),
+der funktioniert (inkl. Export in SoftEngine), aber unwartbar ist (~29k Zeilen,
+absolutes x/y-Modell, zwei halbfertige Systeme parallel). Daneben liegt
+`C:\Users\mu.aycetin\Desktop\Projekte\Editor\REFERENZ NUR INFORMATIONEN`
+mit den ECHTEN SoftEngine-Framework-Dateien (SEHTMLV2_WebUi_Include,
+SeHtmlFrameworkV2_* …) — nur Information, nicht anfassen. **Dieses Projekt baut
 ihn sauber neu** und löst ihn dann ab. Außerdem gibt es das Repo
 `behandlung-umbau`: eine echte, dokumentierte SoftEngine-Maske — dort steht in
 `SE-INVENTAR.md`, wie SoftEngine-HTML technisch aufgebaut sein muss
@@ -694,7 +697,53 @@ den Export (Kap. 3).
   spätere (Patch, ~Z. 382) überschreibt die frühere per Kaskade.
   `C:\Users\mu.aycetin\Desktop\Projekte\Editor\REFERENZ` = nur Information,
   nicht anfassen.
-  - **K0 Geometrie (NÄCHSTES BAUPAKET; Korrektur 2026-07-10: Codex hat NIE
+  **⚑ KURSKORREKTUR (2026-07-10, Nutzer — ERSETZT die K-Reihenfolge unten):**
+  Anlass: erster ECHTER SoftEngine-Test des Datenpfads ist DURCHGEFALLEN
+  (exportiertes Kanban zeigte dauerhaft die Beispielansicht samt sichtbarem
+  Vorlagen-Kasten; kurzes Aufblitzen der Rohansicht davor). Der Nutzer stand
+  kurz davor, das Projekt zu löschen. Entscheidungen:
+  - **Reihenfolge neu: Phase 1 = der Kanban-BAUSTEIN selbst komplett**
+    (Optik/Bedienung, OHNE Daten), **Phase 2 = Datenbindung + SE-Laufzeit.**
+    Keine Daten-Arbeit, bevor Phase 1 abgenommen ist. Maßstab bleibt: „wie
+    der alte Editor, nur besser" — alter Editor ist reine FUNKTIONS-
+    Checkliste, gebaut wird alles in der neuen Architektur.
+  - **Kartenvorlage-Kasten ABGESCHAFFT** (Nutzer lehnt das Konzept ab; der
+    alte Editor kennt so etwas nicht — Karte dort = Feldliste am Board,
+    `tileFields` in `renderKanban.ts`). Neu: Musterkarte liegt als normale,
+    dezent markierte Karte in der ersten Spalte (Markierung NUR im Editor);
+    im Export ist NIE ein Editor-Werkzeug sichtbar.
+  - **Altlast entsorgt:** die halbfertigen Reste der abgebrochenen Session
+    (K0-Höhenkonzept, 13 Dateien uncommitted) auf Nutzeranweisung verworfen
+    (git stash „Altlast abgebrochene Session"); Basis = Commit 3c8002c,
+    verifiziert grün (tsc + eslint + 151 Unit-Tests). Höhe wird in Phase 1
+    sauber NEU gebaut, nicht aus dem Stash gefischt.
+  - **Phase-1-Pakete** (jedes einzeln: Plan → „go" → bauen → Tests →
+    committen): **P1.1 Vorlagen-Kasten abschaffen (NÄCHSTES PAKET)** →
+    P1.2 Karte final gestalten (~5 Stellen nach Empfang-Vorbild, Zielbild
+    vorher abnehmen; ehem. K5) → P1.3 Spalten-/Board-Bedienung komplett
+    inkl. Höhe (ehem. K0-Höhenteil, neu) + UI/UX-Aufräumen (Nutzer-Ärger
+    im alten Editor: Spalten-Resize, allgemeines Durcheinander). Der
+    K0(a)-Geometrieteil (Spalten immer nebeneinander) ist committed und
+    bleibt.
+  - **Phase-2-Auftakt steht schon fest (Diagnose 2026-07-10 VERIFIZIERT,
+    nicht verlieren!): der SE-Anschluss-Fix.** Unsere exportierte Maske
+    POLLT nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten: die Maske
+    muss sich per `basisHTML_REGISTER(callback, titel, version)` anmelden
+    (Retry-Schleife, 25ms × 400) bzw. per `message`-Event empfangen und
+    `window.SEDATA.Daten` SELBST setzen. Belege: behandlung-umbau
+    `empfang/index.basis.source.html` BLOCK 1/9 (`regSE` + `__seConsume`,
+    Z. 679–708) und alter Editor `src/runtime/boot.ts` (message-Listener
+    setzt `SEDATA.Daten`). Dort auch: SEvariablen-XHR/fetch-Interception
+    (Framework fragt die Konfig per Request ab — Notwendigkeit in Phase 2
+    prüfen). `dashboard/praxis-kanban.html` ist auch für den DATEN-TRANSPORT
+    keine Referenz (wie schon für Feldcodes). Nebenbefunde aus der echten
+    Nutzer-Maske: Bindung war korrekt eingebettet (source/statusfield/
+    FF_DATA_SOURCES ok), aber alle Spalten hatten `statusvalue=""` und das
+    Board feste `width:1001px` — Bindungs-UX + Preflight müssen das in
+    Phase 2 abfangen. Danach: SOFORTIGER Echttest in SoftEngine (neue
+    Regel: jedes Paket, das den Export berührt, wird direkt in SE
+    getestet), dann erst K1–K4, K5b, K6, K7, K8 in neu geplantem Zuschnitt.
+  - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,
     KEIN flex-wrap,
