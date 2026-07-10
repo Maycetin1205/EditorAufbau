@@ -157,8 +157,12 @@ describe('Kanban-Export (echte Bloecke)', () => {
   it('Spalten + Musterkarte tragen ihre Werte als Attribute (ASCII-escaped)', () => {
     const { html } = exportMask(boardTree())
     expect(html).toContain('<ff-kanban-spalte variant="warning" heading="Offen"')
-    // Die eine Musterkarte in der ersten Spalte (Karten-Defaults).
+    // Die eine Musterkarte in der ersten Spalte (Karten-Defaults) — P1.2:
+    // alle FUENF Stellen reisen als Attribute.
     expect(html).toContain('heading="R&#xFC;ckruf Fr. Wagner"')
+    expect(html).toContain('time="09:15"')
+    expect(html).toContain('meta="Katze &#xB7; EKH"')
+    expect(html).toContain('text="Befund Minka besprechen"')
     expect(html).toContain('chiptext="Heute"')
   })
 

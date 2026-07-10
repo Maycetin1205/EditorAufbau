@@ -47,35 +47,81 @@
     `]}render(){return E`<button
       data-ff-editable
       @dblclick=${e=>this.inlineEdit(e,`label`)}
-    >${this.label}</button>`}};L([I()],Be.prototype,`label`,void 0),R.defineAndRegister(Be);var V=class extends R{constructor(...e){super(...e),this.chipVariant=`info`,this.heading=`Rückruf Fr. Wagner`,this.text=`Befund Minka besprechen`,this.chipText=`Heute`,this.headingField=``,this.textField=``,this.chipTextField=``}static{this.blockType=`card`}static{this.tagName=`ff-card`}static{this.displayName=`Karte`}static{this.category=`anzeige`}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.showInPalette=!1}static{this.defaultProps={chipVariant:`info`,heading:`Rückruf Fr. Wagner`,text:`Befund Minka besprechen`,chipText:`Heute`,headingField:``,textField:``,chipTextField:``}}static{this.bindableSpots=[{prop:`heading`,label:`Titel`},{prop:`text`,label:`Textzeile`},{prop:`chipText`,label:`Chip`}]}static{this.customProperties=[B(`chipVariant`,`Bedeutung des Chips auf der Karte — bestimmt die Chip-Farbe.`)]}static{this.styles=[R.styles,Re,o`
+    >${this.label}</button>`}};L([I()],Be.prototype,`label`,void 0),R.defineAndRegister(Be);var V=class extends R{constructor(...e){super(...e),this.chipVariant=`info`,this.heading=`Rückruf Fr. Wagner`,this.time=`09:15`,this.meta=`Katze · EKH`,this.text=`Befund Minka besprechen`,this.chipText=`Heute`,this.headingField=``,this.timeField=``,this.metaField=``,this.textField=``,this.chipTextField=``}static{this.blockType=`card`}static{this.tagName=`ff-card`}static{this.displayName=`Karte`}static{this.category=`anzeige`}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.showInPalette=!1}static{this.defaultProps={chipVariant:`info`,heading:`Rückruf Fr. Wagner`,time:`09:15`,meta:`Katze · EKH`,text:`Befund Minka besprechen`,chipText:`Heute`,headingField:``,timeField:``,metaField:``,textField:``,chipTextField:``}}static{this.bindableSpots=[{prop:`heading`,label:`Titel`},{prop:`time`,label:`Zeit`},{prop:`meta`,label:`Meta-Zeile`},{prop:`text`,label:`Textzeile`},{prop:`chipText`,label:`Chip`}]}static{this.customProperties=[B(`chipVariant`,`Bedeutung des Chips auf der Karte — bestimmt die Chip-Farbe.`)]}static{this.styles=[R.styles,Re,o`
       .card {
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
         background: var(--se-card-bg);
         border: 1px solid var(--se-card-line);
         border-radius: var(--se-r-md);
-        padding: 9px 11px 10px;
+        padding: 8px 10px 9px;
         font-family: var(--se-font);
       }
-      .heading {
-        margin: 0 0 2px;
-        color: var(--se-ink);
-        font-size: var(--se-fs);
-        font-weight: 600;
-        line-height: 1.3;
+      .row {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        min-width: 0;
       }
-      .text {
-        margin: 0 0 8px;
+      .heading {
+        color: var(--se-ink);
+        font-size: var(--se-fs-lg);
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .time {
+        margin-left: auto;
+        flex: none;
         color: var(--se-muted);
+        font-family: var(--se-mono);
         font-size: var(--se-fs-sm);
       }
+      .meta {
+        margin: -3px 0 0;
+        color: var(--se-faint);
+        font-size: var(--se-fs-sm);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .text {
+        margin: 0;
+        color: var(--se-muted);
+        font-size: var(--se-fs);
+        line-height: 1.35;
+      }
+      .card .chip {
+        align-self: flex-start;
+      }
     `]}render(){let e=z(this.chipVariant);return E`<div class="card">
+      <div class="row">
+        <span
+          class="heading"
+          data-ff-editable
+          data-ff-spot="heading"
+          ?data-ff-bound=${this.headingField!==``}
+          @dblclick=${e=>this.inlineEdit(e,`heading`)}
+        >${this.heading}</span>
+        <span
+          class="time"
+          data-ff-editable
+          data-ff-spot="time"
+          ?data-ff-bound=${this.timeField!==``}
+          @dblclick=${e=>this.inlineEdit(e,`time`)}
+        >${this.time}</span>
+      </div>
       <p
-        class="heading"
+        class="meta"
         data-ff-editable
-        data-ff-spot="heading"
-        ?data-ff-bound=${this.headingField!==``}
-        @dblclick=${e=>this.inlineEdit(e,`heading`)}
-      >${this.heading}</p>
+        data-ff-spot="meta"
+        ?data-ff-bound=${this.metaField!==``}
+        @dblclick=${e=>this.inlineEdit(e,`meta`)}
+      >${this.meta}</p>
       <p
         class="text"
         data-ff-editable
@@ -90,7 +136,7 @@
         ?data-ff-bound=${this.chipTextField!==``}
         @dblclick=${e=>this.inlineEdit(e,`chipText`)}
       >${this.chipText}</span>
-    </div>`}};L([I()],V.prototype,`chipVariant`,void 0),L([I()],V.prototype,`heading`,void 0),L([I()],V.prototype,`text`,void 0),L([I()],V.prototype,`chipText`,void 0),L([I()],V.prototype,`headingField`,void 0),L([I()],V.prototype,`textField`,void 0),L([I()],V.prototype,`chipTextField`,void 0),R.defineAndRegister(V);var H=class extends R{constructor(...e){super(...e),this.direction=`column`,this.gap=`md`,this.padding=`none`}static{this.blockType=`container`}static{this.tagName=`ff-container`}static{this.displayName=`Bereich`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.defaultProps={direction:`column`,gap:`md`,padding:`none`,width:`fill`}}static{this.customProperties=[]}static{this.styles=[R.styles,o`
+    </div>`}};L([I()],V.prototype,`chipVariant`,void 0),L([I()],V.prototype,`heading`,void 0),L([I()],V.prototype,`time`,void 0),L([I()],V.prototype,`meta`,void 0),L([I()],V.prototype,`text`,void 0),L([I()],V.prototype,`chipText`,void 0),L([I()],V.prototype,`headingField`,void 0),L([I()],V.prototype,`timeField`,void 0),L([I()],V.prototype,`metaField`,void 0),L([I()],V.prototype,`textField`,void 0),L([I()],V.prototype,`chipTextField`,void 0),R.defineAndRegister(V);var H=class extends R{constructor(...e){super(...e),this.direction=`column`,this.gap=`md`,this.padding=`none`}static{this.blockType=`container`}static{this.tagName=`ff-container`}static{this.displayName=`Bereich`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.defaultProps={direction:`column`,gap:`md`,padding:`none`,width:`fill`}}static{this.customProperties=[]}static{this.styles=[R.styles,o`
       .wrap {
         display: flex;
         align-items: flex-start;
@@ -192,66 +238,85 @@
         data-ff-editable
         @dblclick=${e=>this.inlineEdit(e,`message`)}
       >${this.message}</p>
-    </div>`}};L([I()],W.prototype,`variant`,void 0),L([I()],W.prototype,`heading`,void 0),L([I()],W.prototype,`message`,void 0),R.defineAndRegister(W);var G=class extends R{constructor(...e){super(...e),this.variant=`info`,this.heading=`Neue Spalte`,this._count=0}static{this.blockType=`kanban-spalte`}static{this.tagName=`ff-kanban-spalte`}static{this.displayName=`Kanban-Spalte`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[V.blockType]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.addChildButton={label:`Karte`,childType:V.blockType}}static{this.allowedParentTypes=[`kanban`]}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={variant:`info`,heading:`Neue Spalte`,statusValue:``}}static{this.customProperties=[B(`variant`,`Bedeutung der Spalte — bestimmt die Farbe der Oberlinie.`),{attributeName:`statusValue`,name:`Datenwert dieser Spalte`,description:`Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.`,isArray:!1,maxLength:60,kind:`text`,requiresDataSource:!0}]}static{this.styles=[R.styles,o`
-      /* height:100% laesst die Spalte die Board-Hoehe ausfuellen — im
-         Export ist sie direktes Flex-Item (stretch), im Editor reicht der
-         BlockHost-Wrapper die Hoehe per 100%-Kette durch. Ohne feste
-         Board-Hoehe loest sich 100% zu auto auf (stretch wie bisher). */
-      :host { height: 100%; }
+    </div>`}};L([I()],W.prototype,`variant`,void 0),L([I()],W.prototype,`heading`,void 0),L([I()],W.prototype,`message`,void 0),R.defineAndRegister(W);var G=class extends R{constructor(...e){super(...e),this.variant=`info`,this.heading=`Neue Spalte`,this._count=0}static{this.blockType=`kanban-spalte`}static{this.tagName=`ff-kanban-spalte`}static{this.displayName=`Kanban-Spalte`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[V.blockType]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.addChildButton={label:`Karte`,childType:V.blockType}}static{this.allowedParentTypes=[`kanban`]}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={variant:`info`,heading:`Neue Spalte`,statusValue:``}}static{this.customProperties=[B(`variant`,`Bedeutung der Spalte — bestimmt ihre Farbwelt (Kopf, Fläche, Rahmen).`),{attributeName:`statusValue`,name:`Datenwert dieser Spalte`,description:`Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.`,isArray:!1,maxLength:60,kind:`text`,requiresDataSource:!0}]}static{this.styles=[R.styles,o`
+      /* Die Spalte fuellt die Board-Hoehe in BEIDEN Welten (P1.2-Fix eines
+         P1.3-Fehlers): die Host-HOEHE bleibt auto — nur so greift im Export
+         das align-items:stretch des Boards (eine Prozent-Hoehe zaehlt fuer
+         stretch nicht als auto und loeste sich gegen die unbestimmte
+         Board-Hoehe zur Inhaltshoehe auf -> leere Spalten blieben kurz).
+         min-height:100% deckt den Editor ab (BlockHost-Wrapper = Flex-Item,
+         reicht feste Hoehen per 100%-Kette durch); der Host ist selbst
+         Flex-Spalte, damit .col die Host-Box IMMER fuellt (flex:1 statt
+         height:100% — Prozent braeuchte eine bestimmte Elternhoehe). */
+      :host {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+      }
+      /* P1.2: overflow:hidden schneidet die getoente Kopfzeile an den
+         runden Spaltenecken sauber ab (Empfang-Vorbild). */
       .col {
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        height: 100%;
-        background: var(--se-panel);
-        border: 1px solid var(--se-line);
-        border-top: 3px solid var(--se-faint);
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--col-shell);
+        border: 1px solid var(--col-line);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
       }
-      .col.v-info { border-top-color: var(--se-blue); }
-      .col.v-success { border-top-color: var(--se-green); }
-      .col.v-warning { border-top-color: var(--se-amber); }
-      .col.v-danger { border-top-color: var(--se-red); }
+      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
+      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
+      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-shell: var(--se-amber-shell); --col-line: var(--se-amber-line); }
+      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-shell: var(--se-red-shell); --col-line: var(--se-red-line); }
       .head {
         flex: none;
         display: flex;
         align-items: center;
         gap: var(--se-gap-sm);
-        padding: 9px 11px;
-        border-bottom: 1px solid var(--se-line-soft);
+        padding: 10px 12px;
+        background: var(--col-soft);
+        border-bottom: 1px solid var(--col-line);
+      }
+      .dot {
+        flex: none;
+        width: 9px;
+        height: 9px;
+        border-radius: var(--se-r-pill);
+        background: var(--col-strong);
       }
       .title {
-        color: var(--se-ink);
-        font-size: var(--se-fs-sm);
-        font-weight: 700;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
+        color: var(--col-strong);
+        font-size: var(--se-fs);
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .count {
         margin-left: auto;
         min-width: 22px;
-        height: 20px;
-        padding: 0 6px;
+        padding: 1px 8px;
         border-radius: var(--se-r-sm);
-        background: var(--se-panel-2);
-        border: 1px solid var(--se-line-soft);
-        display: grid;
-        place-items: center;
+        background: var(--se-panel);
+        border: 1px solid var(--col-line);
+        text-align: center;
         font-family: var(--se-mono);
-        font-size: 11.5px;
+        font-size: var(--se-fs-sm);
         font-weight: 600;
-        color: var(--se-muted);
+        color: var(--col-strong);
       }
       /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
          min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
          als sein Inhalt — der Leer-Hinweis hält leere Spalten offen. */
       .body {
-        padding: 11px;
+        padding: 10px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: var(--se-gap);
+        gap: var(--se-gap-sm);
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
@@ -259,6 +324,7 @@
       slot { display: contents; }
     `]}onSlotChange(e){let t=e.target;this._count=t.assignedElements().filter(e=>!e.hasAttribute(`data-ff-editor-helper`)).length}render(){return E`<div class="col v-${z(this.variant)}">
       <div class="head">
+        <span class="dot"></span>
         <span
           class="title"
           data-ff-editable

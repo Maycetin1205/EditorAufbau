@@ -31,11 +31,11 @@ function tree(): BlockTree {
 }
 
 describe('Card-Export (echter Block)', () => {
-  it('registriert sich mit erwarteter defaultProps-Reihenfolge', () => {
+  it('registriert sich mit erwarteter defaultProps-Reihenfolge (P1.2: 5 Stellen)', () => {
     const def = getBlockDefinition('card')
     expect(def?.defaultProps && Object.keys(def.defaultProps)).toEqual([
-      'width', 'chipVariant', 'heading', 'text', 'chipText',
-      'headingField', 'textField', 'chipTextField',
+      'width', 'chipVariant', 'heading', 'time', 'meta', 'text', 'chipText',
+      'headingField', 'timeField', 'metaField', 'textField', 'chipTextField',
     ])
   })
 
@@ -43,14 +43,15 @@ describe('Card-Export (echter Block)', () => {
     const { html } = exportMask(tree())
     expect(html).toContain(
       '<ff-card chipvariant="warning" heading="R&#xFC;ckruf Fr. Wagner"'
+      + ' time="09:15" meta="Katze &#xB7; EKH"'
       + ' text="Befund Minka besprechen" chiptext="&#xDC;berf&#xE4;llig"'
-      + ' headingfield="" textfield="" chiptextfield=""',
+      + ' headingfield="" timefield="" metafield="" textfield="" chiptextfield=""',
     )
   })
 
   it('deklariert bindbare Stellen konsistent zu den defaultProps (Kap. 5.2)', () => {
     const def = getBlockDefinition('card')
-    expect(def?.bindableSpots?.map((s) => s.prop)).toEqual(['heading', 'text', 'chipText'])
+    expect(def?.bindableSpots?.map((s) => s.prop)).toEqual(['heading', 'time', 'meta', 'text', 'chipText'])
     for (const spot of def?.bindableSpots ?? []) {
       // Anzeige-Prop und Bindungs-Prop müssen als defaultProps existieren,
       // sonst überleben sie weder Persistenz noch Export.

@@ -1,20 +1,26 @@
 // CardBlock
-// Molekuel (4K.3): Karte = Titel + Textzeile + Status-Chip, das Kartenformat
-// fuer die spaeteren Kanban-Spalten (4K.4). Karten sind NORMALE Bloecke im
-// Baum — keine eigene Drag-Sonderlogik, die Canvas-Drag-Logik aus 2.3 zieht
-// sie wie jeden anderen Block.
+// Molekuel (4K.3, erweitert P1.2): Karte mit FUENF Stellen nach dem
+// Empfang-Vorbild — Zeile 1 = Titel (fett) + Zeit (Mono, rechts), Zeile 2 =
+// Meta (klein), darunter Textzeile, darunter Status-Chip. Karten sind
+// NORMALE Bloecke im Baum — keine eigene Drag-Sonderlogik, die Canvas-
+// Drag-Logik aus 2.3 zieht sie wie jeden anderen Block.
 //
-// Titel, Textzeile und Chip-Text werden per Doppelklick direkt auf dem Block
-// bearbeitet (Inline-Edit, WYSIWYG); einziges Inspector-Feld ist die Chip-Art
-// (Bedeutung -> Farbe, Regel "Technikwert != Anzeigename"). Status-Vokabular
-// + Chip-Aussehen kommen aus dem geteilten Modul shared/statusVariant — der
-// Chip der Karte und der freistehende Status-Chip (ff-badge) koennen nicht
-// auseinanderlaufen. Bewusst KEIN eingebettetes <ff-badge>-Element: dessen
-// Inline-Edit-Event wuerde an der Schattengrenze zur Karte umadressiert und
-// die falsche Prop beschreiben.
+// Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
+// (Inline-Edit, WYSIWYG) und sind bindbare Stellen (Kap. 5.2); einziges
+// Inspector-Feld ist die Chip-Art (Bedeutung -> Farbe, Regel "Technikwert
+// != Anzeigename"). Status-Vokabular + Chip-Aussehen kommen aus dem
+// geteilten Modul shared/statusVariant — der Chip der Karte und der
+// freistehende Status-Chip (ff-badge) koennen nicht auseinanderlaufen.
+// Bewusst KEIN eingebettetes <ff-badge>-Element: dessen Inline-Edit-Event
+// wuerde an der Schattengrenze zur Karte umadressiert und die falsche Prop
+// beschreiben. KEINE Aktions-Knoepfe (Kap. 8), KEINE Verknuepfungs-Stellen
+// wie Besitzer/Avatar (Kap. 7).
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Literale, keine
-// Fallbacks. Verbindliches Zielbild: dashboard/stilprobe.html (.zb-card).
+// Fallbacks. Verbindliches Zielbild: dashboard/stilprobe.html (.zb-card,
+// P1.2-Revision — Abweichung vom Empfang-Original dort begruendet: Meta in
+// eigener Zeile statt neben dem Titel, weil Entscheidung A schmale Spalten
+// erlaubt und die Einzeile den Titel anschneiden wuerde).
 
 import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
@@ -46,12 +52,16 @@ export class CardBlock extends BasicBlock {
   static readonly defaultProps = {
     chipVariant: 'info',
     heading: 'Rückruf Fr. Wagner',
+    time: '09:15',
+    meta: 'Katze · EKH',
     text: 'Befund Minka besprechen',
     chipText: 'Heute',
     // Bindungen der Stellen (Kap. 5.2): Feldcode der Datenquelle in
     // Reichweite (Technikwert, unsichtbar) — '' = ungebunden, die Stelle
     // zeigt ihren statischen Text.
     headingField: '',
+    timeField: '',
+    metaField: '',
     textField: '',
     chipTextField: '',
   }
@@ -61,6 +71,8 @@ export class CardBlock extends BasicBlock {
   // den Feld-Picker; die Bindung liegt in `<prop>Field` (siehe defaultProps).
   static readonly bindableSpots: BindableSpot[] = [
     { prop: 'heading', label: 'Titel' },
+    { prop: 'time', label: 'Zeit' },
+    { prop: 'meta', label: 'Meta-Zeile' },
     { prop: 'text', label: 'Textzeile' },
     { prop: 'chipText', label: 'Chip' },
   ]
@@ -77,39 +89,75 @@ export class CardBlock extends BasicBlock {
   // Strukturelle Groessen (padding, margins, line-height, font-weight) als
   // Literale wie bei Button/Infobox; Farben + Radius + Schriftgroessen aus
   // Tokens. .heading setzt --se-ink explizit (Shadow DOM erbt sonst je nach
-  // Umgebung unterschiedlich — WYSIWYG).
+  // Umgebung unterschiedlich — WYSIWYG). Titel/Meta bleiben einzeilig
+  // (ellipsis); die Meta rueckt per negativem margin an den Titel heran
+  // (Zielbild .zb-cardmeta).
   static styles = [
     BasicBlock.styles,
     chipStyles,
     css`
       .card {
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
         background: var(--se-card-bg);
         border: 1px solid var(--se-card-line);
         border-radius: var(--se-r-md);
-        padding: 9px 11px 10px;
+        padding: 8px 10px 9px;
         font-family: var(--se-font);
       }
+      .row {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        min-width: 0;
+      }
       .heading {
-        margin: 0 0 2px;
         color: var(--se-ink);
-        font-size: var(--se-fs);
+        font-size: var(--se-fs-lg);
         font-weight: 600;
-        line-height: 1.3;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .time {
+        margin-left: auto;
+        flex: none;
+        color: var(--se-muted);
+        font-family: var(--se-mono);
+        font-size: var(--se-fs-sm);
+      }
+      .meta {
+        margin: -3px 0 0;
+        color: var(--se-faint);
+        font-size: var(--se-fs-sm);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .text {
-        margin: 0 0 8px;
+        margin: 0;
         color: var(--se-muted);
-        font-size: var(--se-fs-sm);
+        font-size: var(--se-fs);
+        line-height: 1.35;
+      }
+      .card .chip {
+        align-self: flex-start;
       }
     `,
   ]
 
   @property() chipVariant: StatusVariant = 'info'
   @property() heading = 'Rückruf Fr. Wagner'
+  @property() time = '09:15'
+  @property() meta = 'Katze · EKH'
   @property() text = 'Befund Minka besprechen'
   @property() chipText = 'Heute'
   @property() headingField = ''
+  @property() timeField = ''
+  @property() metaField = ''
   @property() textField = ''
   @property() chipTextField = ''
 
@@ -119,13 +167,29 @@ export class CardBlock extends BasicBlock {
   render(): TemplateResult {
     const v = coerceStatusVariant(this.chipVariant)
     return html`<div class="card">
+      <div class="row">
+        <span
+          class="heading"
+          data-ff-editable
+          data-ff-spot="heading"
+          ?data-ff-bound=${this.headingField !== ''}
+          @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'heading')}
+        >${this.heading}</span>
+        <span
+          class="time"
+          data-ff-editable
+          data-ff-spot="time"
+          ?data-ff-bound=${this.timeField !== ''}
+          @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'time')}
+        >${this.time}</span>
+      </div>
       <p
-        class="heading"
+        class="meta"
         data-ff-editable
-        data-ff-spot="heading"
-        ?data-ff-bound=${this.headingField !== ''}
-        @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'heading')}
-      >${this.heading}</p>
+        data-ff-spot="meta"
+        ?data-ff-bound=${this.metaField !== ''}
+        @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'meta')}
+      >${this.meta}</p>
       <p
         class="text"
         data-ff-editable

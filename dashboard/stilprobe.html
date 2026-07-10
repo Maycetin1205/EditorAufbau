@@ -301,22 +301,43 @@ body { font-size:13.5px; }
        (stretch), Karten scrollen senkrecht im Spaltenrumpf.
        P1.1-Revision (2026-07-10): der Vorlagen-Kasten ist ABGESCHAFFT
        (Empfang-Vorbild kennt keinen) — die ERSTE Karte des Boards ist
-       die Musterkarte, im Editor dezent markiert, im Export unsichtbar. */
+       die Musterkarte, im Editor dezent markiert, im Export unsichtbar.
+       P1.2-Revision (2026-07-10, Empfang-Vorbild .vspalte/.vkarte):
+       Spalten-FARBWELT statt nur Oberlinie — die "Art" der Spalte toent
+       Kopf (--se-X-soft), Flaeche (--se-X-shell) und Rahmen (--se-X-line);
+       Titel + Punkt + Zaehler in der kraeftigen Statusfarbe (--se-X).
+       Lokale --zw-* Variablen buendeln die Welt nur im Mockup, jede
+       loest auf var(--se-*) auf. */
     .zb-board { display:flex; gap:var(--se-gap-lg); align-items:stretch; }
-    .zb-col { flex:1 1 0; min-width:0; display:flex; flex-direction:column; background:var(--se-panel); border:1px solid var(--se-line); border-top:3px solid var(--se-faint); border-radius:var(--se-r-lg); }
-    .zb-col.s-offen   { border-top-color:var(--se-amber); }
-    .zb-col.s-arbeit  { border-top-color:var(--se-blue); }
-    .zb-col.s-fertig  { border-top-color:var(--se-green); }
-    .zb-colhead { display:flex; align-items:center; gap:var(--se-gap-sm); padding:9px 11px; border-bottom:1px solid var(--se-line-soft); }
-    .zb-coltitle { font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
-    .zb-count { margin-left:auto; min-width:22px; height:20px; padding:0 6px; border-radius:var(--se-r-sm); background:var(--se-panel-2); border:1px solid var(--se-line-soft); display:grid; place-items:center; font-family:var(--se-mono); font-size:11.5px; font-weight:600; color:var(--se-muted); }
-    .zb-colbody { padding:11px; display:flex; flex-direction:column; gap:var(--se-gap); flex:1 1 auto; min-height:0; overflow-y:auto; }
+    .zb-col { flex:1 1 0; min-width:0; display:flex; flex-direction:column; background:var(--zw-shell); border:1px solid var(--zw-line); border-radius:var(--se-r-lg); overflow:hidden; }
+    .zb-col.s-offen   { --zw-strong:var(--se-amber); --zw-soft:var(--se-amber-soft); --zw-shell:var(--se-amber-shell); --zw-line:var(--se-amber-line); }
+    .zb-col.s-arbeit  { --zw-strong:var(--se-blue);  --zw-soft:var(--se-blue-soft);  --zw-shell:var(--se-blue-shell);  --zw-line:var(--se-blue-line); }
+    .zb-col.s-fertig  { --zw-strong:var(--se-green); --zw-soft:var(--se-green-soft); --zw-shell:var(--se-green-shell); --zw-line:var(--se-green-line); }
+    .zb-colhead { display:flex; align-items:center; gap:var(--se-gap-sm); padding:10px 12px; background:var(--zw-soft); border-bottom:1px solid var(--zw-line); }
+    .zb-coldot { width:9px; height:9px; border-radius:var(--se-r-pill); background:var(--zw-strong); flex:none; }
+    .zb-coltitle { font-size:var(--se-fs); font-weight:600; color:var(--zw-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .zb-count { margin-left:auto; min-width:22px; padding:1px 8px; border-radius:var(--se-r-sm); background:var(--se-panel); border:1px solid var(--zw-line); text-align:center; font-family:var(--se-mono); font-size:var(--se-fs-sm); font-weight:600; color:var(--zw-strong); }
+    .zb-colbody { padding:10px; display:flex; flex-direction:column; gap:var(--se-gap-sm); flex:1 1 auto; min-height:0; overflow-y:auto; }
 
-    /* Molekuel: Karte (ff-card) = Titel + Textzeile + Chip */
-    .zb-card { background:var(--se-card-bg); border:1px solid var(--se-card-line); border-radius:var(--se-r-md); padding:9px 11px 10px; }
-    .zb-card h3 { margin:0 0 2px; font-size:var(--se-fs); font-weight:600; line-height:1.3; }
-    .zb-card p { margin:0 0 8px; font-size:var(--se-fs-sm); color:var(--se-muted); }
-    .zb-card .zb-chip { display:inline-block; }
+    /* Molekuel: Karte (ff-card), P1.2 = 5 Stellen nach Empfang-Vorbild
+       (.vkarte): Zeile 1 = Name (fett) + Zeit (mono, rechts), Zeile 2 =
+       Meta (klein), darunter Grund-Textzeile, darunter Status-Chip.
+       ABWEICHUNG vom Empfang-Vorbild (dort Name+Meta in EINER Zeile):
+       Empfang sichert sich 232px Mindest-Spaltenbreite per horizontalem
+       Scroll — den verbietet Entscheidung A. Bei unseren schmaleren
+       Spalten wuerde die Einzeile den Namen anschneiden, darum steht die
+       Meta in der eigenen Zeile (dort sass bei Empfang der Besitzer —
+       eine Kap.-7-Verknuepfung, die hier bewusst fehlt).
+       Karte bleibt weiss mit sichtbarem Rahmen (kantig, Werkhalle) —
+       KEINE Aktions-Knoepfe (Kap. 8), KEINE Verknuepfungs-Stellen wie
+       Besitzer/Avatar (Kap. 7). */
+    .zb-card { background:var(--se-card-bg); border:1px solid var(--se-card-line); border-radius:var(--se-r-md); padding:8px 10px 9px; display:flex; flex-direction:column; gap:5px; }
+    .zb-cardrow { display:flex; align-items:baseline; gap:7px; min-width:0; }
+    .zb-cardname { font-size:var(--se-fs-lg); font-weight:600; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .zb-cardmeta { margin-top:-3px; font-size:var(--se-fs-sm); color:var(--se-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .zb-cardtime { margin-left:auto; font-family:var(--se-mono); font-size:var(--se-fs-sm); color:var(--se-muted); flex:none; }
+    .zb-cardline { font-size:var(--se-fs); color:var(--se-muted); line-height:1.35; }
+    .zb-card .zb-chip { align-self:flex-start; }
 
     /* Editor-Hilfen (Plus-Anstecker, Muster-Markierung) sind seit P1.1b
        KEIN Teil des Masken-Bilds mehr — sie erscheinen nur im Editor an
@@ -324,8 +345,8 @@ body { font-size:13.5px; }
   </style>
 
   <div class="zb">
-    <h2>Kanban-Zielbild (4K.1) · verbindlich für ff-badge / ff-card / ff-kanban</h2>
-    <p class="zb-sub">Alle Werte kommen live aus <code>masken-tokens.css</code> (var(--se-*)) — inkl. neuem Status-Grün, das NICHT die Hausfarbe ist.</p>
+    <h2>Kanban-Zielbild (4K.1, revidiert P1.2) · verbindlich für ff-badge / ff-card / ff-kanban</h2>
+    <p class="zb-sub">Alle Werte kommen live aus <code>masken-tokens.css</code> (var(--se-*)). Karte = 5 Stellen (Name fett · Meta klein · Zeit rechts · Grund-Textzeile · Status-Chip), Spalten tragen die Farbwelt ihrer „Art" (Empfang-Vorbild).</p>
 
     <div class="zb-chiprow">
       <span class="zb-chip art-info">Hinweis</span>
@@ -337,26 +358,56 @@ body { font-size:13.5px; }
 
     <div class="zb-board">
       <div class="zb-col s-offen">
-        <div class="zb-colhead"><span class="zb-coltitle">Offen</span><span class="zb-count">3</span></div>
+        <div class="zb-colhead"><span class="zb-coldot"></span><span class="zb-coltitle">Offen</span><span class="zb-count">3</span></div>
         <div class="zb-colbody">
-          <div class="zb-card"><h3>Rückruf Fr. Wagner</h3><p>Befund Minka besprechen</p><span class="zb-chip art-warnung">Wartet seit 2 Tagen</span></div>
-          <div class="zb-card"><h3>Rechnung Nr. 5012 prüfen</h3><p>Position Narkose fehlt</p><span class="zb-chip art-fehler">Überfällig</span></div>
-          <div class="zb-card"><h3>Impfpass nachtragen</h3><p>Buddy · Golden Retriever</p><span class="zb-chip art-info">Heute</span></div>
+          <div class="zb-card">
+            <div class="zb-cardrow"><span class="zb-cardname">Minka Berger</span><span class="zb-cardtime">09:15</span></div>
+            <div class="zb-cardmeta">Katze · EKH</div>
+            <div class="zb-cardline">Befund besprechen, Blutwerte nachreichen</div>
+            <span class="zb-chip art-info">Termin</span>
+          </div>
+          <div class="zb-card">
+            <div class="zb-cardrow"><span class="zb-cardname">Rocky Steiner</span><span class="zb-cardtime">09:40</span></div>
+            <div class="zb-cardmeta">Hund · Boxer</div>
+            <div class="zb-cardline">Nachkontrolle Röntgen, Fäden ziehen</div>
+            <span class="zb-chip art-warnung">OP</span>
+          </div>
+          <div class="zb-card">
+            <div class="zb-cardrow"><span class="zb-cardname">Nala Huber</span><span class="zb-cardtime">10:05</span></div>
+            <div class="zb-cardmeta">Katze · Maine Coon</div>
+            <div class="zb-cardline">Akute Lahmheit hinten links</div>
+            <span class="zb-chip art-fehler">Notfall</span>
+          </div>
         </div>
       </div>
 
       <div class="zb-col s-arbeit">
-        <div class="zb-colhead"><span class="zb-coltitle">In Arbeit</span><span class="zb-count">1</span></div>
+        <div class="zb-colhead"><span class="zb-coldot"></span><span class="zb-coltitle">In Arbeit</span><span class="zb-count">1</span></div>
         <div class="zb-colbody">
-          <div class="zb-card"><h3>Röntgenbilder anfordern</h3><p>Klinik Dr. Steiner, Fall Rocky</p><span class="zb-chip art-info">Angefragt</span></div>
+          <div class="zb-card">
+            <div class="zb-cardrow"><span class="zb-cardname">Buddy Krause</span><span class="zb-cardtime">08:50</span></div>
+            <div class="zb-cardmeta">Hund · Labrador</div>
+            <div class="zb-cardline">Zahnsanierung unter Narkose</div>
+            <span class="zb-chip art-warnung">OP</span>
+          </div>
         </div>
       </div>
 
       <div class="zb-col s-fertig">
-        <div class="zb-colhead"><span class="zb-coltitle">Fertig</span><span class="zb-count">2</span></div>
+        <div class="zb-colhead"><span class="zb-coldot"></span><span class="zb-coltitle">Fertig</span><span class="zb-count">2</span></div>
         <div class="zb-colbody">
-          <div class="zb-card"><h3>Laborprobe versendet</h3><p>Nala · Blutbild groß</p><span class="zb-chip art-erfolg">Erledigt</span></div>
-          <div class="zb-card"><h3>Bestellung Verbandsmaterial</h3><p>Lieferung bestätigt für Montag</p><span class="zb-chip art-erfolg">Erledigt</span></div>
+          <div class="zb-card">
+            <div class="zb-cardrow"><span class="zb-cardname">Luna Schmid</span><span class="zb-cardtime">08:15</span></div>
+            <div class="zb-cardmeta">Kaninchen · Zwergwidder</div>
+            <div class="zb-cardline">Krallen schneiden, Gewichtskontrolle</div>
+            <span class="zb-chip art-erfolg">Erledigt</span>
+          </div>
+          <div class="zb-card">
+            <div class="zb-cardrow"><span class="zb-cardname">Max Vogel</span><span class="zb-cardtime">08:30</span></div>
+            <div class="zb-cardmeta">Hund · Dackel</div>
+            <div class="zb-cardline">Impfung aufgefrischt, Pass nachgetragen</div>
+            <span class="zb-chip art-erfolg">Erledigt</span>
+          </div>
         </div>
       </div>
 

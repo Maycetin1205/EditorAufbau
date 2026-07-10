@@ -56,6 +56,16 @@
                                 Marke muessen unterscheidbar bleiben) */
   --se-green-soft:  #ecf3e1;
 
+  /* Spalten-Farbwelten (P1.2, Empfang-Vorbild): eine Kanban-Spalte traegt
+     die GANZE Farbwelt ihres Status — kraeftig (--se-X) fuer Titel + Punkt,
+     Toenung (--se-X-soft) fuer den Spaltenkopf, dazu je Status eine
+     fast-weisse Spaltenflaeche (-shell) und eine getoente Rahmenlinie
+     (-line). Bedeutung bleibt fix, der Bediener waehlt nie eine Farbe. */
+  --se-red-shell:   #fdf5f4;  --se-red-line:   #eecfcd;
+  --se-amber-shell: #fcf9ef;  --se-amber-line: #e9dcbd;
+  --se-blue-shell:  #f6f9fc;  --se-blue-line:  #cfdde9;
+  --se-green-shell: #f7faf0;  --se-green-line: #d9e4c4;
+
   /* Karten (Kanban/Listen) — Flaeche + Rahmen (4K.1) */
   --se-card-bg:     #ffffff;
   --se-card-line:   #c9d2d9;
