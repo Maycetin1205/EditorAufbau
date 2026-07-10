@@ -9,7 +9,7 @@
       text-underline-offset: 3px;
     }
     :host([data-ff-editor][data-editable]) [data-ff-bound] { cursor: pointer; }
-  `}static{this.customProperties=[]}get customProperties(){return this.constructor.customProperties}inlineEdit(e,t){if(!this.editable)return;let n=e.currentTarget;if(!n||n.hasAttribute(`data-ff-bound`))return;e.stopPropagation(),e.preventDefault();let r=n.textContent??``,i=Array.from(n.childNodes),a=i.map(e=>e.textContent??``);n.setAttribute(`contenteditable`,`plaintext-only`),n.focus();let o=window.getSelection(),s=document.createRange();s.selectNodeContents(n),o?.removeAllRanges(),o?.addRange(s);let c=!1,l=e=>{if(!c)if(c=!0,n.removeAttribute(`contenteditable`),n.removeEventListener(`blur`,u),n.removeEventListener(`keydown`,d),e){let e=(n.textContent??``).trim();e!==r&&this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:t,value:e},bubbles:!0,composed:!0}))}else n.replaceChildren(...i),i.forEach((e,t)=>{e.textContent!==a[t]&&(e.textContent=a[t])})},u=()=>l(!0),d=e=>{e.key===`Enter`?(e.preventDefault(),n.blur()):e.key===`Escape`&&(e.preventDefault(),l(!1))};n.addEventListener(`blur`,u),n.addEventListener(`keydown`,d)}static defineAndRegister(e){customElements.get(e.tagName)||customElements.define(e.tagName,e),Ie({type:e.blockType,tagName:e.tagName,displayName:e.displayName,category:e.category,defaultProps:{...Re,...e.defaultProps},customProperties:e.customProperties,acceptsChildren:e.acceptsChildren??!1,resizableWidth:e.resizableWidth??!0,allowedChildTypes:e.allowedChildTypes,allowedParentTypes:e.allowedParentTypes,fillMinWidth:e.fillMinWidth,defaultChildren:e.defaultChildren,childDirection:e.childDirection,showInPalette:e.showInPalette,removable:e.removable,containerHint:e.containerHint,addChildButton:e.addChildButton,acceptsDataSource:e.acceptsDataSource,bindableSpots:e.bindableSpots})}};F([P({type:Boolean,reflect:!0,attribute:`data-editable`})],I.prototype,`editable`,void 0);var ze=[`info`,`success`,`warning`,`danger`];function L(e){return ze.includes(e)?e:`info`}function R(e,t){return{attributeName:e,name:`Art`,description:t,isArray:!1,maxLength:0,kind:`select`,options:[{value:`info`,label:`Hinweis`},{value:`success`,label:`Erfolg`},{value:`warning`,label:`Warnung`},{value:`danger`,label:`Fehler`}]}}var Be=o`
+  `}static{this.customProperties=[]}get customProperties(){return this.constructor.customProperties}inlineEdit(e,t){if(!this.editable)return;let n=e.currentTarget;if(!n||n.hasAttribute(`data-ff-bound`))return;e.stopPropagation(),e.preventDefault();let r=n.textContent??``,i=Array.from(n.childNodes),a=i.map(e=>e.textContent??``);n.setAttribute(`contenteditable`,`plaintext-only`),n.focus();let o=window.getSelection(),s=document.createRange();s.selectNodeContents(n),o?.removeAllRanges(),o?.addRange(s);let c=!1,l=e=>{if(!c)if(c=!0,n.removeAttribute(`contenteditable`),n.removeEventListener(`blur`,u),n.removeEventListener(`keydown`,d),e){let e=(n.textContent??``).trim();e!==r&&this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:t,value:e},bubbles:!0,composed:!0}))}else n.replaceChildren(...i),i.forEach((e,t)=>{e.textContent!==a[t]&&(e.textContent=a[t])})},u=()=>l(!0),d=e=>{e.key===`Enter`?(e.preventDefault(),n.blur()):e.key===`Escape`&&(e.preventDefault(),l(!1))};n.addEventListener(`blur`,u),n.addEventListener(`keydown`,d)}static defineAndRegister(e){customElements.get(e.tagName)||customElements.define(e.tagName,e),Ie({type:e.blockType,tagName:e.tagName,displayName:e.displayName,category:e.category,defaultProps:{...Re,...e.defaultProps},customProperties:e.customProperties,acceptsChildren:e.acceptsChildren??!1,resizableWidth:e.resizableWidth??!0,allowedChildTypes:e.allowedChildTypes,allowedParentTypes:e.allowedParentTypes,lockedWidth:e.lockedWidth,slotName:e.slotName,defaultChildren:e.defaultChildren,childDirection:e.childDirection,showInPalette:e.showInPalette,removable:e.removable,containerHint:e.containerHint,addChildButton:e.addChildButton,acceptsDataSource:e.acceptsDataSource,bindableSpots:e.bindableSpots})}};F([P({type:Boolean,reflect:!0,attribute:`data-editable`})],I.prototype,`editable`,void 0);var ze=[`info`,`success`,`warning`,`danger`];function L(e){return ze.includes(e)?e:`info`}function R(e,t){return{attributeName:e,name:`Art`,description:t,isArray:!1,maxLength:0,kind:`select`,options:[{value:`info`,label:`Hinweis`},{value:`success`,label:`Erfolg`},{value:`warning`,label:`Warnung`},{value:`danger`,label:`Fehler`}]}}var Be=o`
   .chip {
     display: inline-block;
     padding: 2px 8px;
@@ -192,9 +192,12 @@
         data-ff-editable
         @dblclick=${e=>this.inlineEdit(e,`message`)}
       >${this.message}</p>
-    </div>`}};F([P()],H.prototype,`variant`,void 0),F([P()],H.prototype,`heading`,void 0),F([P()],H.prototype,`message`,void 0),I.defineAndRegister(H);var U=class extends I{constructor(...e){super(...e),this.variant=`info`,this.heading=`Neue Spalte`,this._count=0}static{this.blockType=`kanban-spalte`}static{this.tagName=`ff-kanban-spalte`}static{this.displayName=`Kanban-Spalte`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.allowedParentTypes=[`kanban`]}static{this.fillMinWidth=260}static{this.resizableWidth=!1}static{this.defaultProps={variant:`info`,heading:`Neue Spalte`,statusValue:``}}static{this.customProperties=[R(`variant`,`Bedeutung der Spalte — bestimmt die Farbe der Oberlinie.`),{attributeName:`statusValue`,name:`Datenwert dieser Spalte`,description:`Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.`,isArray:!1,maxLength:60,kind:`text`,requiresDataSource:!0}]}static{this.styles=[I.styles,o`
+    </div>`}};F([P()],H.prototype,`variant`,void 0),F([P()],H.prototype,`heading`,void 0),F([P()],H.prototype,`message`,void 0),I.defineAndRegister(H);var U=class extends I{constructor(...e){super(...e),this.variant=`info`,this.heading=`Neue Spalte`,this._count=0}static{this.blockType=`kanban-spalte`}static{this.tagName=`ff-kanban-spalte`}static{this.displayName=`Kanban-Spalte`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.allowedParentTypes=[`kanban`]}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={variant:`info`,heading:`Neue Spalte`,statusValue:``}}static{this.customProperties=[R(`variant`,`Bedeutung der Spalte — bestimmt die Farbe der Oberlinie.`),{attributeName:`statusValue`,name:`Datenwert dieser Spalte`,description:`Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.`,isArray:!1,maxLength:60,kind:`text`,requiresDataSource:!0}]}static{this.styles=[I.styles,o`
       .col {
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
         background: var(--se-panel);
         border: 1px solid var(--se-line);
         border-top: 3px solid var(--se-faint);
@@ -206,6 +209,7 @@
       .col.v-warning { border-top-color: var(--se-amber); }
       .col.v-danger { border-top-color: var(--se-red); }
       .head {
+        flex: none;
         display: flex;
         align-items: center;
         gap: var(--se-gap-sm);
@@ -234,13 +238,18 @@
         font-weight: 600;
         color: var(--se-muted);
       }
+      /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
+         min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
+         als sein Inhalt — der Leer-Hinweis hält leere Spalten offen. */
       .body {
         padding: 11px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
         gap: var(--se-gap);
-        min-height: 150px;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
       }
       .drop {
         border: 1.5px dashed var(--se-line);
@@ -264,7 +273,7 @@
         ${this._count===0?w`<div class="drop">Karten entstehen aus der Datenquelle</div>`:null}
         <slot @slotchange=${this.onSlotChange}></slot>
       </div>
-    </div>`}};F([P()],U.prototype,`variant`,void 0),F([P()],U.prototype,`heading`,void 0),F([Pe()],U.prototype,`_count`,void 0),I.defineAndRegister(U);var Ke=class extends I{static{this.blockType=`kanban-vorlage`}static{this.tagName=`ff-kanban-vorlage`}static{this.displayName=`Kartenvorlage`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[z.blockType]}static{this.allowedParentTypes=[`kanban`]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.removable=!1}static{this.addChildButton={label:`Karte`,childType:z.blockType}}static{this.resizableWidth=!1}static{this.defaultProps={width:260}}static{this.defaultChildren=[{type:z.blockType}]}static{this.styles=[I.styles,o`
+    </div>`}};F([P()],U.prototype,`variant`,void 0),F([P()],U.prototype,`heading`,void 0),F([Pe()],U.prototype,`_count`,void 0),I.defineAndRegister(U);var Ke=class extends I{static{this.blockType=`kanban-vorlage`}static{this.tagName=`ff-kanban-vorlage`}static{this.displayName=`Kartenvorlage`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[z.blockType]}static{this.allowedParentTypes=[`kanban`]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.removable=!1}static{this.addChildButton={label:`Karte`,childType:z.blockType}}static{this.resizableWidth=!1}static{this.slotName=`vorlage`}static{this.lockedWidth=`auto`}static{this.defaultProps={}}static{this.defaultChildren=[{type:z.blockType}]}static{this.styles=[I.styles,o`
       .vorlage {
         box-sizing: border-box;
         background: var(--se-panel);
@@ -296,22 +305,33 @@
       <div class="head">Kartenvorlage</div>
       <div class="body"><slot></slot></div>
     </div>`}};I.defineAndRegister(Ke);var qe=[`GET_RELATION`,`PUT_RELATION`,`PUTADD_RELATION`];function Je(e){return e.replace(/^IDB/,``)}function Ye(e){let t=/^(\d+)_(\d+)$/.exec(e);return t?{pos:t[1],len:t[2]}:null}function Xe(e,t){return e.params.map(e=>e.replace(/\{([A-Z_]+)\}/g,(e,n)=>String(t[n]??``)))}function W(e){return typeof e==`object`&&!!e}function Ze(e,t){if(!(!Array.isArray(e)||t===``)){for(let n of e)if(!(!W(n)||n.id!==t)&&!(typeof n.name!=`string`||typeof n.tableId!=`string`))return{id:t,name:n.name,tableId:n.tableId,indexField:typeof n.indexField==`string`?n.indexField:``}}}function Qe(e,t){if(!(!Array.isArray(e)||t===``)){for(let n of e)if(!(!W(n)||n.id!==t)&&!(typeof n.verb!=`string`||!qe.includes(n.verb))&&!(typeof n.nr!=`string`||n.nr===``)&&!(!Array.isArray(n.params)||n.params.some(e=>typeof e!=`string`)))return{id:t,verb:n.verb,nr:n.nr,params:n.params}}}function $e(e){return`${String(e.getDate()).padStart(2,`0`)}.${String(e.getMonth()+1).padStart(2,`0`)}.${e.getFullYear()}`}function et(e){return e==null?``:String(e).trim()}function G(e,t){if(!W(e)||t===``)return``;let n=et(e[t]);if(n!==``)return n;let r=/^(\d+)_(\d+)$/.exec(t);if(!r)return``;let i=et(e.SATZNEU??e.SATZ??e.satzneu??e.satz??e.RAW??e.raw);if(i===``)return``;let a=Number(r[1]),o=Number(r[2]);return o<=0?``:i.substring(a,a+o).trim()}function tt(e,t,n){if(!W(e)||t===``)return!1;let r=!1;Object.prototype.hasOwnProperty.call(e,t)&&(e[t]=n,r=!0);let i=/^(\d+)_(\d+)$/.exec(t);if(i){let t=[`SATZNEU`,`SATZ`,`satzneu`,`satz`,`RAW`,`raw`].find(t=>typeof e[t]==`string`);if(t){let a=e[t],o=Number(i[1]),s=Number(i[2]);if(s>0){let i=n.length>s?n.slice(0,s):n.padEnd(s,` `),c=a.length<o?a.padEnd(o,` `):a;e[t]=c.slice(0,o)+i+c.slice(o+s),r=!0}}}return r}function K(e){if(!W(e))return Array.isArray(e)?e:[];let t=[e.Zeilen,e.zeilen,e.Saetze,e.saetze,e.Rows,e.rows,e.Daten,e.daten];for(let e of t){if(Array.isArray(e))return e;if(typeof e==`string`)try{let t=JSON.parse(e);if(Array.isArray(t))return t}catch{}}return[]}function q(e,t){return et(e).toLowerCase()===t.trim().toLowerCase()}function nt(e,t,n){if(!W(e)||!W(e.Daten))return[];let r=e.Daten,i=r.SEFileLoop;if(Array.isArray(i)){for(let e of i)if(W(e)&&(q(e.ALIAS,t)||q(e.alias,t))){let t=K(e);if(t.length>0)return t}}else if(W(i))for(let e of Object.keys(i)){let n=i[e];if(q(e,t)||W(n)&&(q(n.ALIAS,t)||q(n.alias,t))){let e=K(n);if(e.length>0)return e}}let a=r.Tabellen;if(W(a)){let e=[t,t.toUpperCase(),t.toLowerCase(),n];for(let t of e)if(t!==``&&t in a){let e=K(a[t]);if(e.length>0)return e}for(let e of Object.keys(a))if(q(e,t)){let t=K(a[e]);if(t.length>0)return t}}return[]}function rt(e,t){let n=e.trim().toLowerCase();if(n!==``)for(let e=0;e<t.length;e++){let r=t[e].trim().toLowerCase();if(r!==``&&r===n)return e}return 0}function J(){return globalThis}function it(){let e=J();return W(e.SEDATA)&&W(e.SEDATA.Daten)}function at(){let e=J();try{e.selib?.Json?.InitializeERPConnection?.()}catch{}try{typeof e.InitialisiereSchnittstelle==`function`&&e.InitialisiereSchnittstelle()}catch{}}function ot(){let e=J();try{typeof e.ResetDataBasis==`function`&&e.ResetDataBasis()}catch{}try{typeof e.InitialisiereDatenBasis==`function`&&e.InitialisiereDatenBasis()}catch{}}var st=new Set,ct=new WeakMap,lt=!1,ut=U.tagName,dt=z.tagName,ft=Ke.tagName;function pt(e){return Array.from(e.children).filter(e=>e.tagName.toLowerCase()===ut)}function mt(e){return Array.from(e.children).filter(e=>e.tagName.toLowerCase()===dt)}function ht(e){return Le().find(t=>t.tagName===e.toLowerCase())?.bindableSpots??[]}function Y(e){let t=e.getAttribute(`source`)??``,n=e.getAttribute(`statusfield`)??``;if(t===``||n===``)return;let r=Ze(J().FF_DATA_SOURCES,t);if(!r)return;let i=pt(e);if(i.length===0)return;let a=Array.from(e.children).find(e=>e.tagName.toLowerCase()===ft),o=ct.get(e);if(!o){let t=a?.querySelector(dt);if(t)o=t.cloneNode(!0),ct.set(e,o);else for(let t of i){let n=mt(t)[0];if(n){o=n.cloneNode(!0),ct.set(e,o);break}}}if(!o)return;a&&(a.style.display=`none`);let s=nt(J().SEDATA,r.name,r.tableId),c=i.map(e=>e.getAttribute(`statusvalue`)??``),l=ht(o.tagName);for(let e of i)mt(e).forEach(e=>e.remove());for(let e of s){let t=o.cloneNode(!0);i[rt(G(e,n),c)].appendChild(t);for(let n of l){let r=t.getAttribute(`${n.prop.toLowerCase()}field`)??``;r!==``&&(t[n.prop]=G(e,r))}let a=G(e,r.indexField);a!==``&&(X.set(t,{row:e,pindex:a}),t.draggable=!0)}}var X=new WeakMap,Z=null,gt=new WeakSet;function _t(e,t){for(let n of t.composedPath())if(n instanceof HTMLElement&&n.tagName.toLowerCase()===ut&&e.contains(n))return n;return null}function vt(e){let t=J(),n=Qe(t.FF_RELATIONS,e.getAttribute(`putrelation`)??``),r=Ze(t.FF_DATA_SOURCES,e.getAttribute(`source`)??``);if(!(!n||!r))return{template:n,relId:Je(r.tableId)}}function yt(e,t,n,r){let i=J();if(typeof i.basisHTML_SND_MSG!=`function`)return;let a=Ye(t);a&&i.basisHTML_SND_MSG(e.template.verb,{NR:e.template.nr,PARAMS:Xe(e.template,{FELD_POS:a.pos,FELD_LEN:a.len,PINDEX:n,DROP_PINDEX:n,RELID:e.relId,VALUE:r,NOW_DATE:$e(new Date)})})}function bt(e,t){if(!Z||Z.board!==e)return;let n=X.get(Z.card);if(!n)return;let r=e.getAttribute(`statusfield`)??``,i=t.getAttribute(`statusvalue`)??``;if(r===``||i.trim()===``||G(n.row,r).trim().toLowerCase()===i.trim().toLowerCase())return;let a=vt(e);a&&(yt(a,r,n.pindex,i),tt(n.row,r,i),Y(e))}function xt(e){gt.has(e)||(gt.add(e),e.addEventListener(`dragstart`,t=>{let n=t.composedPath().find(e=>e instanceof HTMLElement&&X.has(e))??null;n&&(Z={card:n,board:e},t.dataTransfer?.setData(`text/plain`,X.get(n)?.pindex??``),t.dataTransfer&&(t.dataTransfer.effectAllowed=`move`))}),e.addEventListener(`dragend`,()=>{Z=null}),e.addEventListener(`dragover`,t=>{Z?.board===e&&_t(e,t)&&(t.preventDefault(),t.dataTransfer&&(t.dataTransfer.dropEffect=`move`))}),e.addEventListener(`drop`,t=>{let n=_t(e,t);n&&(t.preventDefault(),bt(e,n),Z=null)}))}function Q(){it()&&st.forEach(Y)}function St(){if(lt)return;lt=!0,at();let e=J();e.Erstellen=()=>{ot(),Q()},e.initData=e.Erstellen,e.ReloadData=()=>Q();let t=0,n=setInterval(()=>{t+=1,it()?(clearInterval(n),ot(),Q()):t>100&&clearInterval(n)},300)}function Ct(e){e.hasAttribute(`data-ff-editor`)||(st.add(e),xt(e),St(),it()&&Y(e))}function wt(e){st.delete(e)}var $=U.blockType,Tt=Ke.blockType,Et=class extends I{static{this.blockType=`kanban`}static{this.tagName=`ff-kanban`}static{this.displayName=`Kanban`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[$,Tt]}static{this.childDirection=`row`}static{this.containerHint=!1}static{this.addChildButton={label:`Spalte`,childType:$}}static{this.acceptsDataSource=!0}static{this.defaultProps={width:`fill`,source:``,statusField:``,putRelation:`standard-put`}}static{this.customProperties=[{attributeName:`statusField`,name:`Spalten aus Feld`,description:`Feld der Datenquelle, dessen Wert bestimmt, in welcher Spalte eine Zeile landet.`,isArray:!1,maxLength:0,kind:`field`},{attributeName:`putRelation`,name:`Schreiben über`,description:`Relation-Vorlage, mit der eine gezogene Karte ihren neuen Spaltenwert zurückschreibt.`,isArray:!1,maxLength:0,kind:`relation`,requiresDataSource:!0}]}static{this.defaultChildren=[{type:Tt},{type:$,props:{heading:`Offen`,variant:`warning`}},{type:$,props:{heading:`In Arbeit`,variant:`info`}},{type:$,props:{heading:`Fertig`,variant:`success`}}]}static{this.styles=[I.styles,o`
-      /* Mehr Spalten als Platz: die Spalten BRECHEN in die nächste Zeile um
-         (S3, Nutzer-Entscheidung: KEIN horizontaler Scroll). Die fließende
-         Spaltenbreite (mind. 260px) kommt aus fillMinWidth der Spalte —
-         Editor und Export identisch, Block-CSS = die eine Render-Quelle.
-         min-width:0 erlaubt dem Host, in Zeilen-Bereichen schmaler zu
-         werden als seine Spaltensumme. */
+      /* K0/Entscheidung A: ALLE Spalten sind IMMER nebeneinander sichtbar —
+         kein Umbruch in die naechste Zeile, kein horizontaler Scroll,
+         keine Mindestbreite. Die Spalten teilen sich die Zeile gleichmäßig
+         (lockedWidth 'fill' der Spalte: flex-basis 0 + min-width 0) und
+         werden gleich hoch (stretch); Karten scrollen senkrecht IM
+         Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
+         Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
       :host { min-width: 0; }
+      .wrap { display: flex; flex-direction: column; }
+      /* Vorlagen-Kasten: eigene volle Zeile ÜBER den Spalten (benannter
+         Slot aus der Registry, slotName='vorlage') — stiehlt ihnen nie
+         Breite. Der Abstand hängt als Margin am geslotteten Kasten:
+         blendet die Laufzeit ihn aus (display:none), verschwindet der
+         Abstand mit. */
+      slot[name='vorlage'] { display: block; }
+      slot[name='vorlage']::slotted(*) { margin-bottom: var(--se-gap-lg); }
       .board {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
-        align-items: flex-start;
+        align-items: stretch;
         gap: var(--se-gap-lg);
       }
-      slot { display: contents; }
-    `]}render(){return w`<div class="board"><slot></slot></div>`}connectedCallback(){super.connectedCallback(),Ct(this)}disconnectedCallback(){super.disconnectedCallback(),wt(this)}};I.defineAndRegister(Et);var Dt=class extends I{constructor(...e){super(...e),this.text=`Neuer Text`}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Textblock`}static{this.category=`anzeige`}static{this.defaultProps={text:`Neuer Text`}}static{this.customProperties=[]}static{this.styles=[I.styles,o`
+      .board slot { display: contents; }
+    `]}render(){return w`<div class="wrap">
+      <slot name="vorlage"></slot>
+      <div class="board"><slot></slot></div>
+    </div>`}connectedCallback(){super.connectedCallback(),Ct(this)}disconnectedCallback(){super.disconnectedCallback(),wt(this)}};I.defineAndRegister(Et);var Dt=class extends I{constructor(...e){super(...e),this.text=`Neuer Text`}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Textblock`}static{this.category=`anzeige`}static{this.defaultProps={text:`Neuer Text`}}static{this.customProperties=[]}static{this.styles=[I.styles,o`
       span {
         display: block;
         min-width: 1ch;

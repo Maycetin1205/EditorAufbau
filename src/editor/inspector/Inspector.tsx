@@ -158,9 +158,10 @@ export function Inspector() {
             {dataProps.map(renderPropControl)}
           </section>
         )}
-        {/* Fließende Blöcke ohne Richtungs-Props (Kanban-Spalte, S3) haben
-            keine Layout-Einstellungen — Sektion ganz weg statt leer. */}
-        {(def.fillMinWidth === undefined
+        {/* Blöcke mit festgelegter Breite und ohne Richtungs-Props (Kanban-
+            Spalte/Vorlagen-Kasten, K0) haben keine Layout-Einstellungen —
+            Sektion ganz weg statt leer. */}
+        {(def.lockedWidth === undefined
           || (def.acceptsChildren && 'direction' in def.defaultProps)) && (
           <section className="flex flex-col gap-3">
             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

@@ -47,29 +47,27 @@ export function parseFlowWidth(value: unknown): FlowWidth {
 // Block-Element selbst). camelCase-Schlüssel; der Export wandelt in
 // kebab-case um.
 //
-// fillMinWidth (S3, opt-in per Registry): Blöcke wie die Kanban-Spalte
-// verteilen sich IMMER fließend über die Breite des Zeilen-Containers —
-// mindestens fillMinWidth px, Umbruch in die nächste Zeile statt Scrollen
-// (der Container bricht per flex-wrap um). Die width-Prop des Knotens wird
-// dann ignoriert (die Spalte hat keine einstellbare Breite). Ohne
-// fillMinWidth bleibt das Verhalten aller anderen Blöcke exakt wie bisher.
+// lockedWidth (K0, opt-in per Registry — ersetzt fillMinWidth): die Registry
+// legt das Breitenverhalten des Blocks FEST, die width-Prop des Knotens wird
+// ignoriert (kein Breite-Anfasser, keine Inspector-Breite). Kanban-Spalte:
+// 'fill' → alle Spalten teilen sich die Zeile IMMER gleichmäßig
+// (Entscheidung A: flex-basis 0 + min-width 0 — keine Mindestbreite, kein
+// Umbruch, kein horizontaler Scroll). Vorlagen-Kasten: 'auto' → natürliche
+// volle Breite in seiner eigenen Slot-Zeile. Ohne lockedWidth bleibt das
+// Verhalten aller anderen Blöcke exakt wie bisher.
 export function flowItemStyle(
   width: FlowWidth,
   parentDirection: FlowDirection,
-  fillMinWidth?: number,
+  lockedWidth?: FlowWidth,
 ): Record<string, string | number> {
-  if (fillMinWidth !== undefined) {
-    return parentDirection === 'row'
-      ? { flexGrow: 1, flexBasis: `${fillMinWidth}px` }
-      : { alignSelf: 'stretch' }
-  }
-  if (width === 'fill') {
+  const effective = lockedWidth ?? width
+  if (effective === 'fill') {
     return parentDirection === 'row'
       ? { flexGrow: 1, flexBasis: 0, minWidth: 0 }
       : { alignSelf: 'stretch' }
   }
-  if (typeof width === 'number') {
-    return { width: `${width}px`, flexShrink: 0 }
+  if (typeof effective === 'number') {
+    return { width: `${effective}px`, flexShrink: 0 }
   }
   return {}
 }

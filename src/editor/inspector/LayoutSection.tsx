@@ -25,13 +25,14 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
 
   const width = parseFlowWidth(block.props.width)
   const widthMode = typeof width === 'number' ? 'fest' : width
-  // Fließende Blöcke (fillMinWidth, S3: Kanban-Spalte) regeln ihre Breite
-  // selbst — ein Breite-Feld hätte keine Wirkung und wäre eine Täuschung.
-  const fluid = getBlockDefinition(block.type)?.fillMinWidth !== undefined
+  // Blöcke mit festgelegter Breite (lockedWidth, K0: Kanban-Spalte/Vorlagen-
+  // Kasten) regeln ihre Breite selbst — ein Breite-Feld hätte keine Wirkung
+  // und wäre eine Täuschung.
+  const locked = getBlockDefinition(block.type)?.lockedWidth !== undefined
 
   return (
     <div className="flex flex-col gap-3">
-      {!fluid && (
+      {!locked && (
         <SelectControl
           label="Breite"
           value={widthMode}
@@ -43,7 +44,7 @@ export function LayoutSection({ block, isContainer }: LayoutSectionProps) {
           onChange={(v) => set('width', v === 'fest' ? 240 : v)}
         />
       )}
-      {!fluid && typeof width === 'number' && (
+      {!locked && typeof width === 'number' && (
         <Field label="Breite in px">
           {(field) => (
             <TextInput

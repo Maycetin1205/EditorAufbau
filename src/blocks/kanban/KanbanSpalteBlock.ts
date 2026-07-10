@@ -18,7 +18,7 @@ import { css, html, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { FlowDirection } from '../../core/blocks/flowLayout'
+import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import {
   coerceStatusVariant,
@@ -42,12 +42,13 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly showInPalette = false
   static readonly containerHint = false
   // S3: Spalten leben NUR im Board (Gegenrichtung zu allowedChildTypes; als
-  // Literal, weil ein Import von KanbanBlock einen Import-Zyklus ergäbe) und
-  // haben KEINE einstellbare Breite mehr — sie verteilen sich fließend über
-  // die Board-Breite (mind. 260px) und brechen in die nächste Zeile um,
-  // statt horizontal zu scrollen (fillMinWidth, siehe flowLayout).
+  // Literal, weil ein Import von KanbanBlock einen Import-Zyklus ergäbe).
+  // K0/Entscheidung A: Spalten haben KEINE einstellbare Breite — sie teilen
+  // sich die Board-Zeile IMMER gleichmäßig (lockedWidth 'fill' → flex-basis
+  // 0 + min-width 0): keine Mindestbreite, kein Umbruch, kein horizontaler
+  // Scroll. Karten scrollen senkrecht IM Spaltenrumpf (.body).
   static readonly allowedParentTypes = ['kanban']
-  static readonly fillMinWidth = 260
+  static readonly lockedWidth: FlowWidth = 'fill'
   static readonly resizableWidth = false
   // statusValue (Kap. 5.3): Datenwert dieser Spalte (Technikwert) — Zeilen,
   // deren Spalten-Feld (statusField am Board) genau diesen Wert hat, landen
@@ -86,6 +87,9 @@ export class KanbanSpalteBlock extends BasicBlock {
     css`
       .col {
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
         background: var(--se-panel);
         border: 1px solid var(--se-line);
         border-top: 3px solid var(--se-faint);
@@ -97,6 +101,7 @@ export class KanbanSpalteBlock extends BasicBlock {
       .col.v-warning { border-top-color: var(--se-amber); }
       .col.v-danger { border-top-color: var(--se-red); }
       .head {
+        flex: none;
         display: flex;
         align-items: center;
         gap: var(--se-gap-sm);
@@ -125,13 +130,18 @@ export class KanbanSpalteBlock extends BasicBlock {
         font-weight: 600;
         color: var(--se-muted);
       }
+      /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
+         min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
+         als sein Inhalt — der Leer-Hinweis hält leere Spalten offen. */
       .body {
         padding: 11px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
         gap: var(--se-gap);
-        min-height: 150px;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
       }
       .drop {
         border: 1.5px dashed var(--se-line);

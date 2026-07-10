@@ -168,10 +168,13 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
         commitDrop(e, ed, dnd)
       }}
       onDragEnd={dnd.reset}
+      // Benannter Slot aus der Registry (K0): legt z. B. den Vorlagen-Kasten
+      // in die eigene Zeile des Boards — Editor und Export identisch.
+      slot={def?.slotName}
       style={{
         opacity: dnd.dragId === node.id ? 0.4 : 1,
         // Breite im Fluss: dieselbe Logik, die später der Export benutzt.
-        ...flowItemStyle(parseFlowWidth(node.props.width), listDirection, def?.fillMinWidth),
+        ...flowItemStyle(parseFlowWidth(node.props.width), listDirection, def?.lockedWidth),
       }}
     >
       <BlockHost

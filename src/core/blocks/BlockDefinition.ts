@@ -4,7 +4,7 @@
 // Block-Klasse abgeleitet (siehe BasicBlock.defineAndRegister).
 
 import type { BlockCategory } from './BlockComponent'
-import type { FlowDirection } from './flowLayout'
+import type { FlowDirection, FlowWidth } from './flowLayout'
 import type { PropertyDescription } from './PropertyDescription'
 
 export type { BlockCategory }
@@ -52,11 +52,18 @@ export interface BlockDefinition {
   // Karte lässt sich damit nicht mehr aus dem Kanban auf die Fläche ziehen.
   // Durchgesetzt an derselben EINEN Stelle wie allowedChildTypes (canContain).
   allowedParentTypes?: readonly string[]
-  // Fließende Breite mit Mindestbreite (S3, opt-in): der Block verteilt sich
-  // im Zeilen-Container immer fließend (mind. fillMinWidth px, Umbruch statt
-  // Scroll) und ignoriert seine width-Prop; Breite-Anfasser/Inspector-Breite
-  // entfallen. undefined = normales width-Verhalten (alle anderen Blöcke).
-  fillMinWidth?: number
+  // Festgelegtes Breitenverhalten (K0, opt-in — ersetzt fillMinWidth): die
+  // Registry pinnt die Fluss-Breite, die width-Prop des Knotens wird
+  // ignoriert; Breite-Anfasser/Inspector-Breite entfallen. Kanban-Spalte:
+  // 'fill' (alle Spalten teilen sich die Zeile IMMER gleichmäßig,
+  // Entscheidung A), Vorlagen-Kasten: 'auto' (volle Breite in der eigenen
+  // Slot-Zeile). undefined = normales width-Verhalten (alle anderen Blöcke).
+  lockedWidth?: FlowWidth
+  // Benannter Slot im Eltern-Element (K0): Canvas-Wrapper und Export setzen
+  // slot="<name>" am Kind — der Container kann Kinder damit in eine eigene
+  // Zeile legen (Kanban: Vorlagen-Kasten ÜBER den Spalten, stiehlt ihnen
+  // nie Breite). undefined = Standard-Slot.
+  slotName?: string
   // Teilbaum, mit dem der Block eingefügt wird (Beispieldaten).
   defaultChildren?: readonly DefaultChildSpec[]
   // Feste Fluss-Richtung der Kinder für spezialisierte Container (Kanban-

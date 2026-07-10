@@ -6,7 +6,9 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-import '../blocks/kanban/KanbanBlock' // Side-Effect: registriert kanban + kanban-spalte + card
+// Import registriert als Side-Effect kanban + kanban-spalte + vorlage + card.
+import { KanbanBlock } from '../blocks/kanban/KanbanBlock'
+import { KanbanSpalteBlock } from '../blocks/kanban/KanbanSpalteBlock'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
@@ -88,20 +90,41 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Board fuellt die Wurzel, Spalten verteilen sich fliessend (S3: mind. 260px, Umbruch statt Scroll)', () => {
+  it('K0/Entscheidung A: Spalten teilen sich die Zeile IMMER gleichmaessig, Vorlagen-Kasten in eigener Slot-Zeile', () => {
     const { html } = exportMask(boardTree())
     // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
     // (Kap. 5.1) ohne angehaengte Quelle; statusfield=""/statusvalue="" =
     // Daten-Props aus Kap. 5.3 ohne gesetzte Werte; putrelation = Default-
     // Vorlage des Schreibwegs (Kap. 5.5).
     expect(html).toContain('<ff-kanban source="" statusfield="" putrelation="standard-put" style="align-self:stretch">')
-    // Spalten: fliessende Breite aus fillMinWidth (flex-grow + flex-basis),
-    // KEIN width-Attribut, KEINE feste Pixelbreite mehr.
-    expect(html).toContain('heading="Offen" statusvalue="" style="flex-grow:1;flex-basis:260px"')
+    // Spalten: festgelegtes Breitenverhalten (lockedWidth 'fill') ->
+    // flex-basis 0 + min-width 0. KEINE Mindestbreite, KEIN width-Attribut,
+    // keine feste Pixelbreite (260px-Mindestbreite ist ABGELEHNT).
+    expect(html).toContain('heading="Offen" statusvalue="" style="flex-grow:1;flex-basis:0;min-width:0"')
+    expect(html).not.toContain('flex-basis:260px')
     expect(html).not.toContain('width:290px')
-    // Das Board bricht um statt zu scrollen: kein overflow-x im Block-CSS
+    // Vorlagen-Kasten: benannter Slot (eigene volle Zeile UEBER den
+    // Spalten), keine feste Breite mehr, keine Attribute.
+    expect(html).toContain('<ff-kanban-vorlage slot="vorlage">')
+    expect(html).not.toContain('width:260px')
+    // Entscheidung A: kein horizontaler Scroll — nirgends in der Maske
     // (das Runtime-Buendel traegt das CSS der Web Components).
     expect(html).not.toContain('overflow-x')
+  })
+
+  it('K0: Kanban-CSS haelt Entscheidung A ein (kein flex-wrap, Rumpf scrollt senkrecht)', () => {
+    // Pruefung direkt an der CSS-Quelle der Bloecke (dasselbe CSS reist im
+    // Runtime-Buendel). flex-wrap gibt es im generischen Bereich weiterhin —
+    // deshalb hier gezielt Board- und Spalten-CSS statt des ganzen Buendels.
+    const boardCss = KanbanBlock.styles.map(String).join('\n')
+    expect(boardCss).not.toContain('flex-wrap')
+    expect(boardCss).not.toContain('overflow-x')
+    expect(boardCss).toContain('align-items: stretch')
+    const colCss = KanbanSpalteBlock.styles.map(String).join('\n')
+    expect(colCss).toContain('overflow-y: auto')
+    expect(colCss).toContain('min-height: 0')
+    expect(colCss).not.toContain('overflow-x')
+    expect(colCss).not.toContain('min-height: 150px')
   })
 
   it('Spalten-Feld + Datenwerte der Spalten reisen als Attribute (Kap. 5.3)', () => {

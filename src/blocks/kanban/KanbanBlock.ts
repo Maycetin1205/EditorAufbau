@@ -81,26 +81,37 @@ export class KanbanBlock extends BasicBlock {
   static styles = [
     BasicBlock.styles,
     css`
-      /* Mehr Spalten als Platz: die Spalten BRECHEN in die nächste Zeile um
-         (S3, Nutzer-Entscheidung: KEIN horizontaler Scroll). Die fließende
-         Spaltenbreite (mind. 260px) kommt aus fillMinWidth der Spalte —
-         Editor und Export identisch, Block-CSS = die eine Render-Quelle.
-         min-width:0 erlaubt dem Host, in Zeilen-Bereichen schmaler zu
-         werden als seine Spaltensumme. */
+      /* K0/Entscheidung A: ALLE Spalten sind IMMER nebeneinander sichtbar —
+         kein Umbruch in die naechste Zeile, kein horizontaler Scroll,
+         keine Mindestbreite. Die Spalten teilen sich die Zeile gleichmäßig
+         (lockedWidth 'fill' der Spalte: flex-basis 0 + min-width 0) und
+         werden gleich hoch (stretch); Karten scrollen senkrecht IM
+         Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
+         Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
       :host { min-width: 0; }
+      .wrap { display: flex; flex-direction: column; }
+      /* Vorlagen-Kasten: eigene volle Zeile ÜBER den Spalten (benannter
+         Slot aus der Registry, slotName='vorlage') — stiehlt ihnen nie
+         Breite. Der Abstand hängt als Margin am geslotteten Kasten:
+         blendet die Laufzeit ihn aus (display:none), verschwindet der
+         Abstand mit. */
+      slot[name='vorlage'] { display: block; }
+      slot[name='vorlage']::slotted(*) { margin-bottom: var(--se-gap-lg); }
       .board {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
-        align-items: flex-start;
+        align-items: stretch;
         gap: var(--se-gap-lg);
       }
-      slot { display: contents; }
+      .board slot { display: contents; }
     `,
   ]
 
   render(): TemplateResult {
-    return html`<div class="board"><slot></slot></div>`
+    return html`<div class="wrap">
+      <slot name="vorlage"></slot>
+      <div class="board"><slot></slot></div>
+    </div>`
   }
 
   // Kap. 5.3: in der EXPORTIERTEN Maske meldet sich das Board bei der

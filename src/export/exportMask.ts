@@ -30,6 +30,7 @@ import {
   resolveChildDirection,
   ROOT_FLOW,
   type FlowDirection,
+  type FlowWidth,
 } from '../core/blocks/flowLayout'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
@@ -87,9 +88,9 @@ function stripCssComments(css: string): string {
 function styleAttr(
   node: BlockNode,
   parentDirection: FlowDirection,
-  fillMinWidth?: number,
+  lockedWidth?: FlowWidth,
 ): string {
-  const style = flowItemStyle(parseFlowWidth(node.props.width), parentDirection, fillMinWidth)
+  const style = flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth)
   const css = Object.entries(style)
     .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
     .join(';')
@@ -116,7 +117,11 @@ function nodeToHtml(
     })
     .join('')
 
-  const open = `${pad}<${def.tagName}${attrs}${styleAttr(node, parentDirection, def.fillMinWidth)}>`
+  // Benannter Slot aus der Registry (K0) — DIESELBE Quelle wie der Canvas-
+  // Wrapper (slotName): der Vorlagen-Kasten landet in der eigenen Zeile
+  // des Boards.
+  const slotAttr = def.slotName ? ` slot="${escapeHtmlAttr(def.slotName)}"` : ''
+  const open = `${pad}<${def.tagName}${slotAttr}${attrs}${styleAttr(node, parentDirection, def.lockedWidth)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }

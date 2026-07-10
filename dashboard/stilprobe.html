@@ -295,18 +295,24 @@ body { font-size:13.5px; }
     .zb-chiprow { display:flex; gap:var(--se-gap); align-items:center; margin-bottom:16px; }
 
     /* Organismus: Board (ff-kanban) = Zeile aus Spalten.
-       S3-Revision (2026-07-09): Spalten verteilen sich fliessend ueber die
-       Breite (mind. 260px) und BRECHEN in die naechste Zeile um — KEIN
-       horizontaler Scroll (Nutzer-Entscheidung; vorher flex:0 0 290px). */
-    .zb-board { display:flex; flex-wrap:wrap; gap:var(--se-gap-lg); align-items:flex-start; }
-    .zb-col { flex:1 1 260px; background:var(--se-panel); border:1px solid var(--se-line); border-top:3px solid var(--se-faint); border-radius:var(--se-r-lg); }
+       K0-Revision (2026-07-10, Entscheidung A): ALLE Spalten IMMER
+       nebeneinander sichtbar — KEIN flex-wrap, KEIN overflow-x, KEINE
+       Mindestbreite (flex:1 1 0 + min-width:0); Spalten gleich hoch
+       (stretch), Karten scrollen senkrecht im Spaltenrumpf. Der
+       Vorlagen-Kasten (ff-kanban-vorlage) liegt in einer eigenen vollen
+       Zeile UEBER den Spalten. (Vorher: fliessend mind. 260px + Umbruch.) */
+    .zb-vorlage { border:1.5px dashed var(--se-line); border-radius:var(--se-r-lg); background:var(--se-panel); margin-bottom:var(--se-gap-lg); font-family:var(--se-font); }
+    .zb-vorlage-head { padding:9px 11px; border-bottom:1px solid var(--se-line-soft); color:var(--se-faint); font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
+    .zb-vorlage-body { padding:11px; }
+    .zb-board { display:flex; gap:var(--se-gap-lg); align-items:stretch; }
+    .zb-col { flex:1 1 0; min-width:0; display:flex; flex-direction:column; background:var(--se-panel); border:1px solid var(--se-line); border-top:3px solid var(--se-faint); border-radius:var(--se-r-lg); }
     .zb-col.s-offen   { border-top-color:var(--se-amber); }
     .zb-col.s-arbeit  { border-top-color:var(--se-blue); }
     .zb-col.s-fertig  { border-top-color:var(--se-green); }
     .zb-colhead { display:flex; align-items:center; gap:var(--se-gap-sm); padding:9px 11px; border-bottom:1px solid var(--se-line-soft); }
     .zb-coltitle { font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
     .zb-count { margin-left:auto; min-width:22px; height:20px; padding:0 6px; border-radius:var(--se-r-sm); background:var(--se-panel-2); border:1px solid var(--se-line-soft); display:grid; place-items:center; font-family:var(--se-mono); font-size:11.5px; font-weight:600; color:var(--se-muted); }
-    .zb-colbody { padding:11px; display:flex; flex-direction:column; gap:var(--se-gap); min-height:150px; }
+    .zb-colbody { padding:11px; display:flex; flex-direction:column; gap:var(--se-gap); flex:1 1 auto; min-height:0; overflow-y:auto; }
 
     /* Molekuel: Karte (ff-card) = Titel + Textzeile + Chip */
     .zb-card { background:var(--se-card-bg); border:1px solid var(--se-card-line); border-radius:var(--se-r-md); padding:9px 11px 10px; }
@@ -333,6 +339,13 @@ body { font-size:13.5px; }
       <span class="zb-chip art-warnung">Warnung</span>
       <span class="zb-chip art-fehler">Fehler</span>
       <span style="color:var(--se-faint); font-size:11.5px;">← die 4 Arten des Status-Chips (Bediener wählt Bedeutung, nie Farbe)</span>
+    </div>
+
+    <div class="zb-vorlage">
+      <div class="zb-vorlage-head">Kartenvorlage</div>
+      <div class="zb-vorlage-body">
+        <div class="zb-card"><h3>Rückruf Fr. Wagner</h3><p>Befund Minka besprechen</p><span class="zb-chip art-info">Heute</span></div>
+      </div>
     </div>
 
     <div class="zb-board">

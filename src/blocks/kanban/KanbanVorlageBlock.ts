@@ -27,7 +27,7 @@ import { css, html, type TemplateResult } from 'lit'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
-import type { FlowDirection } from '../../core/blocks/flowLayout'
+import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import { CardBlock } from '../card/CardBlock'
 
 export class KanbanVorlageBlock extends BasicBlock {
@@ -45,9 +45,13 @@ export class KanbanVorlageBlock extends BasicBlock {
   static readonly removable = false
   static readonly addChildButton = { label: 'Karte', childType: CardBlock.blockType }
   static readonly resizableWidth = false
-  // Feste Kastenbreite = Mindest-Spaltenbreite, damit die Musterkarte so
-  // sitzt wie später in der Spalte.
-  static readonly defaultProps = { width: 260 }
+  // K0: der Kasten liegt im benannten Slot 'vorlage' des Boards — eigene
+  // volle Zeile ÜBER den Spalten, stiehlt ihnen nie Breite. lockedWidth
+  // 'auto' = natürliche volle Breite; eine alte feste width (260) aus
+  // gespeicherten Masken wird dadurch ignoriert (keine Migration nötig).
+  static readonly slotName = 'vorlage'
+  static readonly lockedWidth: FlowWidth = 'auto'
+  static readonly defaultProps = {}
   static readonly defaultChildren: DefaultChildSpec[] = [{ type: CardBlock.blockType }]
 
   static styles = [
