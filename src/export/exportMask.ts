@@ -20,6 +20,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { firstDescendantOfType } from '../core/blocks/treeQuery'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import { dataSourceStore } from '../state/DataSourceStore'
@@ -103,16 +104,35 @@ function styleAttr(
   return css ? ` style="${escapeHtmlAttr(css)}"` : ''
 }
 
+// Musterkarten-Kontext: unterhalb eines Blocks mit templateChild erscheinen
+// Instanzen dieses Typs NIE sichtbar in der Maske (Nutzer-Entscheidung
+// 2026-07-10: „Demo wird gar nicht erst exportiert"). Die EINE Musterkarte
+// (dieselbe Definition wie Editor-Markierung/Löschschutz: treeQuery) reist
+// als inertes <template data-ff-template> — der Browser rendert sie nie,
+// die Laufzeit klont daraus die Datenkarten. Alle weiteren Instanzen
+// (Altbestände) werden ausgelassen.
+interface TemplateCtx {
+  type: string
+  id: string | undefined
+}
+
 function nodeToHtml(
   tree: BlockTree,
   node: BlockNode,
   parentDirection: FlowDirection,
   depth: number,
+  templateCtx?: TemplateCtx,
 ): string {
   const def = getBlockDefinition(node.type)
   if (!def) return '' // unbekannte Typen exportieren wir nicht (sanitize verhindert das ohnehin)
 
   const pad = '  '.repeat(depth)
+  if (templateCtx && node.type === templateCtx.type) {
+    if (node.id !== templateCtx.id) return '' // Demo-Karte: nie exportieren
+    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, undefined)
+    return `${pad}<template data-ff-template>\n${inner}\n${pad}</template>`
+  }
+
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
   // width/height werden NICHT als Attribut exportiert — sie wirken als
   // style aufs Flex-Item (styleAttr, dieselbe flowLayout-Quelle wie Canvas).
@@ -130,12 +150,20 @@ function nodeToHtml(
   }
   // Kind-Richtung aus DERSELBEN Quelle wie der Canvas (resolveChildDirection).
   const childDirection = resolveChildDirection(def, node.props)
+  // Ein templateChild-Block eröffnet den Musterkarten-Kontext für seinen
+  // Teilbaum; sonst reist der äußere Kontext weiter.
+  const childCtx: TemplateCtx | undefined = def.templateChild
+    ? { type: def.templateChild.type, id: firstDescendantOfType(tree, node.id, def.templateChild.type) }
+    : templateCtx
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))
-    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1))
+    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, childCtx))
+    .filter((html) => html !== '')
     .join('\n')
-  return `${open}\n${children}\n${pad}</${def.tagName}>`
+  return children === ''
+    ? `${open}</${def.tagName}>`
+    : `${open}\n${children}\n${pad}</${def.tagName}>`
 }
 
 // ---------- Datenquellen → SEFILELOOP (Kap. 5.1) ----------

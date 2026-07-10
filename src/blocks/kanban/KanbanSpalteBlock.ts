@@ -37,15 +37,15 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly displayName = 'Kanban-Spalte'
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsChildren = true
-  // P1.1 (Vorlagen-Kasten abgeschafft): Spalten nehmen wieder Karten auf —
-  // die ERSTE Karte des Boards ist die Musterkarte (templateChild am Board),
-  // dezent markiert im Editor. "+ Karte" stellt sie nach dem Löschen wieder
-  // her bzw. legt weitere Gestaltungs-Karten an.
+  // Nutzer-Entscheidung 2026-07-10: KEIN "+ Karte" — eine Zeile aus
+  // SoftEngine = eine Karte, die Anzahl bestimmen allein die Daten. Die
+  // EINE Musterkarte (templateChild am Board) ist das Gestaltungsobjekt;
+  // sie lässt sich zwischen Spalten ziehen (allowedChildTypes), aber nie
+  // löschen und nie vermehren.
   static readonly allowedChildTypes: string[] = [CardBlock.blockType]
   static readonly childDirection: FlowDirection = 'column'
   static readonly showInPalette = false
   static readonly containerHint = false
-  static readonly addChildButton = { label: 'Karte', childType: CardBlock.blockType }
   // S3: Spalten leben NUR im Board (Gegenrichtung zu allowedChildTypes; als
   // Literal, weil ein Import von KanbanBlock einen Import-Zyklus ergäbe).
   // K0/Entscheidung A: Spalten haben KEINE einstellbare Breite — sie teilen
@@ -185,7 +185,10 @@ export class KanbanSpalteBlock extends BasicBlock {
     const slot = e.target as HTMLSlotElement
     this._count = slot
       .assignedElements()
-      .filter((el) => !el.hasAttribute('data-ff-editor-helper'))
+      // Editor-Hilfen zählen nicht; <template> ebenso wenig (im Export
+      // reist die Musterkarte als inertes template-Element mit, sie ist
+      // keine sichtbare Karte).
+      .filter((el) => !el.hasAttribute('data-ff-editor-helper') && el.tagName.toLowerCase() !== 'template')
       .length
   }
 

@@ -12,6 +12,7 @@ import {
 } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
+import { firstDescendantOfType } from '../core/blocks/treeQuery'
 import { type DataSource } from '../core/data/dataSources'
 import { dataSourceStore } from './DataSourceStore'
 import { Subject } from './Subject'
@@ -310,6 +311,11 @@ export class Editor extends Subject<Editor> {
   removeBlock(id: string): void {
     const node = this._tree[id]
     if (!node || id === ROOT_ID) return
+    // Löschschutz (Nutzer-Entscheidung 2026-07-10): die Musterkarte ist
+    // nicht löschbar — ohne sie kann das Board keine Datenkarten erzeugen,
+    // und es gibt bewusst keinen "+ Karte"-Weg zurück. Gilt auch für
+    // Teilbäume (Spalte), die sie enthalten, solange ihr Board überlebt.
+    if (this.isRemoveProtected(id)) return
     this.pushHistory()
     const remove = new Set(this.collectSubtree(id))
     const next: BlockTree = {}
@@ -363,32 +369,41 @@ export class Editor extends Subject<Editor> {
 
   // Musterkarten-Markierung (P1.1, templateChild in der Registry): liefert
   // das Label, wenn der Block die ERSTE Nachfahren-Karte des deklarierten
-  // Typs unter dem nächsten passenden Vorfahren ist — die Laufzeit klont
-  // exakt diese Karte (seRuntime: erste Karte in Dokumentreihenfolge,
-  // dieselbe Definition). Registry-getrieben, kein `if type===`.
+  // Typs unter dem nächsten passenden Vorfahren ist — Export (<template>)
+  // und Laufzeit (seRuntime) nutzen DIESELBE Definition (treeQuery).
+  // Registry-getrieben, kein `if type===`.
   templateMarkFor(id: string): string | undefined {
+    const boardId = this.owningTemplateBoardId(id)
+    return boardId
+      ? getBlockDefinition(this._tree[boardId].type)?.templateChild?.label
+      : undefined
+  }
+
+  // Der Block, dessen templateChild-Deklaration diesen Knoten zur
+  // Musterkarte macht (undefined = keine Musterkarte).
+  private owningTemplateBoardId(id: string): string | undefined {
     const node = this._tree[id]
     if (!node) return undefined
     let cur: BlockNode | undefined = node.parentId ? this._tree[node.parentId] : undefined
     while (cur) {
       const tc = getBlockDefinition(cur.type)?.templateChild
       if (tc && tc.type === node.type) {
-        return this.firstDescendantOfType(cur.id, tc.type) === id ? tc.label : undefined
+        return firstDescendantOfType(this._tree, cur.id, tc.type) === id ? cur.id : undefined
       }
       cur = cur.parentId ? this._tree[cur.parentId] : undefined
     }
     return undefined
   }
 
-  private firstDescendantOfType(rootId: string, type: string): string | undefined {
-    for (const cid of this._tree[rootId]?.childIds ?? []) {
-      const child = this._tree[cid]
-      if (!child) continue
-      if (child.type === type) return cid
-      const found = this.firstDescendantOfType(cid, type)
-      if (found) return found
+  // Löschschutz: true, wenn der Teilbaum eine Musterkarte enthält, deren
+  // Board NICHT mit gelöscht wird (das ganze Board löschen bleibt erlaubt).
+  isRemoveProtected(id: string): boolean {
+    const remove = new Set(this.collectSubtree(id))
+    for (const nid of remove) {
+      const boardId = this.owningTemplateBoardId(nid)
+      if (boardId && !remove.has(boardId)) return true
     }
-    return undefined
+    return false
   }
 
   updateProperty(id: string, attr: string, value: unknown): void {

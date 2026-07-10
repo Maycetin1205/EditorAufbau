@@ -192,7 +192,7 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
 })
 
-test('Export ohne Spalten-Feld bleibt statisch — auch wenn SEDATA da ist', async ({ page, context }) => {
+test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)
   await attachTerminplaner(page)
@@ -206,12 +206,12 @@ test('Export ohne Spalten-Feld bleibt statisch — auch wenn SEDATA da ist', asy
     (window as unknown as Record<string, unknown>).SEDATA = sedata
   }, SEDATA_STUB)
 
-  // Keine Hydrierung: die Maske bleibt statisch = WYSIWYG — die Musterkarte
-  // liegt sichtbar in der ersten Spalte, kein Vorlagen-Kasten (P1.1)
-  // (der Poll hätte 300ms-Takte — kurz warten, dann prüfen).
+  // Keine Hydrierung — und seit 2026-07-10 gibt es NIE sichtbare
+  // Demo-Karten in der Maske: die Musterkarte reist nur als inertes
+  // <template data-ff-template>, die Spalten bleiben leer, bis echte
+  // Daten kommen (der Poll hätte 300ms-Takte — kurz warten, dann prüfen).
   await mask.waitForTimeout(1000)
-  await expect(mask.locator('ff-card')).toHaveCount(1)
+  await expect(mask.locator('ff-card')).toHaveCount(0)
+  await expect(mask.locator('template[data-ff-template]')).toHaveCount(1)
   await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
-  await expect(mask.locator('ff-kanban-spalte').first().locator('ff-card')).toHaveCount(1)
-  await expect(mask.locator('ff-card .heading').first()).toHaveText('Rückruf Fr. Wagner')
 })

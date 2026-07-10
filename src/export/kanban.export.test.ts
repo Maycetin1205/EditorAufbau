@@ -16,6 +16,7 @@ import { KanbanSpalteBlock } from '../blocks/kanban/KanbanSpalteBlock'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
+import { Editor } from '../state/Editor'
 import { exportMask } from './exportMask'
 import { failedChecks, validateMaskHtml } from './validator'
 
@@ -55,10 +56,12 @@ describe('Kanban-Registry (Kap. 4K.4 / P1.1)', () => {
     expect(canContain('root', 'kanban')).toBe(true)
   })
 
-  it('Musterkarte (P1.1): erste Karte des Boards = Laufzeit-Vorlage (templateChild), "+ Karte" an der Spalte', () => {
+  it('Musterkarte (P1.1/2026-07-10): erste Karte des Boards = Laufzeit-Vorlage, KEIN "+ Karte" (Anzahl bestimmen die Daten)', () => {
     expect(getBlockDefinition('card')?.showInPalette).toBe(false)
     expect(getBlockDefinition('kanban')?.templateChild).toEqual({ type: 'card', label: 'Muster' })
-    expect(getBlockDefinition('kanban-spalte')?.addChildButton?.childType).toBe('card')
+    // Nutzer-Entscheidung 2026-07-10: eine Zeile = eine Karte — Karten
+    // lassen sich NIE von Hand anlegen; "+ Spalte" am Board bleibt.
+    expect(getBlockDefinition('kanban-spalte')?.addChildButton).toBeUndefined()
     expect(getBlockDefinition('kanban')?.addChildButton?.childType).toBe('kanban-spalte')
   })
 
@@ -81,14 +84,54 @@ describe('Kanban-Registry (Kap. 4K.4 / P1.1)', () => {
 })
 
 describe('Kanban-Export (echte Bloecke)', () => {
-  it('serialisiert Board > Spalten (Musterkarte in der ersten) und besteht die SE-Pruefung', () => {
+  it('serialisiert Board > Spalten, Musterkarte NUR als inertes <template> — und besteht die SE-Pruefung', () => {
     const { html } = exportMask(boardTree())
     expect(html).toMatch(/<ff-kanban[^>]*>\n\s+<ff-kanban-spalte/)
-    expect(html).toMatch(/<ff-kanban-spalte[^>]*heading="Offen"[^>]*>\n\s+<ff-card/)
+    // Nutzer-Entscheidung 2026-07-10: Demo wird GAR NICHT erst exportiert —
+    // keine sichtbare Karte in der Maske, die Musterkarte reist als
+    // <template data-ff-template> (Browser rendert sie nie) und liegt in
+    // ihrer Spalte.
+    expect(html).toMatch(/<ff-kanban-spalte[^>]*heading="Offen"[^>]*>\n\s+<template data-ff-template>\n\s+<ff-card/)
+    expect(html).not.toMatch(/<ff-kanban-spalte[^>]*>\n\s+<ff-card/)
     // P1.1: NIE ein Vorlagen-Kasten im Export — kein Editor-Werkzeug in der Maske.
     expect(html).not.toContain('ff-kanban-vorlage')
     expect(html).not.toContain('slot=')
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Demo-Altbestand: weitere Karten in Spalten erscheinen NIE im Export', () => {
+    const tree = boardTree()
+    const board = tree[tree[ROOT_ID].childIds[0]]
+    const zweiteSpalte = tree[board.childIds[1]]
+    tree.extra = {
+      id: 'extra',
+      type: 'card',
+      props: { heading: 'Demo-Altbestand' },
+      parentId: zweiteSpalte.id,
+      childIds: [],
+    }
+    tree[zweiteSpalte.id] = { ...zweiteSpalte, childIds: ['extra'] }
+    const { html } = exportMask(tree)
+    expect(html).not.toContain('Demo-Altbestand')
+    expect((html.match(/<ff-card/g) ?? []).length).toBe(1) // nur die Musterkarte im <template>
+  })
+
+  it('Musterkarte ist nicht löschbar; Spalte mit Musterkarte auch nicht; das ganze Board schon', () => {
+    const ed = new Editor()
+    const board = ed.addBlock('kanban')
+    if (!board) throw new Error('Board nicht eingefügt')
+    const spalten = ed.childNodesOf(board.id)
+    const muster = ed.childNodesOf(spalten[0].id)[0]
+    expect(ed.isRemoveProtected(muster.id)).toBe(true)
+    expect(ed.isRemoveProtected(spalten[0].id)).toBe(true)
+    expect(ed.isRemoveProtected(spalten[1].id)).toBe(false)
+    expect(ed.isRemoveProtected(board.id)).toBe(false)
+    ed.removeBlock(muster.id)
+    expect(ed.getNode(muster.id)).toBeTruthy() // Store verweigert
+    ed.removeBlock(spalten[0].id)
+    expect(ed.getNode(spalten[0].id)).toBeTruthy()
+    ed.removeBlock(board.id)
+    expect(ed.getNode(board.id)).toBeUndefined() // Board löschen bleibt erlaubt
   })
 
   it('K0/Entscheidung A: Spalten teilen sich die Zeile IMMER gleichmaessig', () => {

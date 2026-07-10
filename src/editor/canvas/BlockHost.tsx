@@ -249,10 +249,18 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   const templateMark = editor.templateMarkFor(block.id)
 
   // Kreuzchen (Bedienlogik 5): Entfernen direkt am Block, Rückfrage nur wenn
-  // er Inhalte trägt.
+  // er Inhalte trägt. Die Musterkarte selbst zeigt gar kein Kreuzchen (s. u.);
+  // ein Teilbaum, der sie enthält (Spalte), erklärt den Schutz statt still
+  // nichts zu tun — der Store erzwingt ihn zusätzlich (removeBlock).
   function onRemoveClick(e: ReactMouseEvent<HTMLButtonElement>) {
     e.stopPropagation()
     const node = blockRef.current
+    if (editor.isRemoveProtected(node.id)) {
+      window.alert(
+        'Hier liegt die Musterkarte — aus ihr entstehen die Datenkarten, sie kann nicht gelöscht werden. Ziehe sie erst in eine andere Spalte.',
+      )
+      return
+    }
     const n = node.childIds.length
     if (
       n > 0
@@ -354,7 +362,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           {templateMark}
         </div>
       )}
-      {selected && (
+      {selected && !templateMark && (
         <button
           type="button"
           aria-label="Entfernen"

@@ -307,14 +307,17 @@ function hydrate(board: HTMLElement): void {
   const columns = columnsOf(board)
   if (columns.length === 0) return
 
-  // Musterkarte einmalig sichern: die ERSTE Karte des Boards in
-  // Dokumentreihenfolge (= Baumreihenfolge; deckt auch ALTE Masken mit
+  // Musterkarte einmalig sichern. Seit 2026-07-10 reist sie als inertes
+  // <template data-ff-template> mit (der Browser rendert sie NIE — kein
+  // Demo-Blitzen beim SE-Start). Fallback für ALTE Masken: die erste
+  // sichtbare Karte in Dokumentreihenfolge (deckt auch den einstigen
   // Vorlagen-Kasten ab — dessen Karte stand ebenfalls vorn).
   let template = templates.get(board)
   if (!template) {
-    const first = board.querySelector(CARD_TAG) as HTMLElement | null
-    if (first) {
-      template = first.cloneNode(true) as HTMLElement
+    const tpl = board.querySelector('template[data-ff-template]') as HTMLTemplateElement | null
+    const source = tpl?.content.firstElementChild ?? board.querySelector(CARD_TAG)
+    if (source) {
+      template = source.cloneNode(true) as HTMLElement
       templates.set(board, template)
     }
   }
