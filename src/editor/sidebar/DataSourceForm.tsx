@@ -45,7 +45,6 @@ interface FeldZeile {
   label: string
   pos: string
   len: string
-  sample: string
   rawCode: string
 }
 
@@ -55,12 +54,11 @@ function zeileFromField(f: DataSourceField): FeldZeile {
     label: f.label,
     pos: pl?.pos ?? '',
     len: pl?.len ?? '',
-    sample: f.sample,
     rawCode: pl ? '' : f.code,
   }
 }
 
-const LEERE_ZEILE: FeldZeile = { label: '', pos: '', len: '', sample: '', rawCode: '' }
+const LEERE_ZEILE: FeldZeile = { label: '', pos: '', len: '', rawCode: '' }
 
 // Feldcode einer Zeile ('' = ungültig): Eingaben gewinnen, sonst rawCode.
 function zeilenCode(z: FeldZeile): string {
@@ -134,7 +132,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       fields: zeilen.map((z) => ({
         code: zeilenCode(z),
         label: z.label.trim(),
-        sample: z.sample.trim(),
       })),
     }
     if (source) store.update(source.id, daten)
@@ -218,16 +215,15 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
               <Plus size={14} /> Feld
             </Button>
           </div>
-          <div className="grid grid-cols-[minmax(0,1.2fr)_72px_72px_minmax(0,1fr)_auto] items-center gap-x-2 text-[11px] text-muted-foreground">
+          <div className="grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2 text-[11px] text-muted-foreground">
             <span>Klarname</span>
             <span>Position</span>
             <span>Länge</span>
-            <span>Beispielwert</span>
             <span />
           </div>
           {zeilen.map((z, i) => (
             <div key={i} className="flex flex-col gap-1">
-              <div className="grid grid-cols-[minmax(0,1.2fr)_72px_72px_minmax(0,1fr)_auto] items-center gap-x-2">
+              <div className="grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2">
                 <TextInput
                   aria-label={`Feld ${i + 1}: Klarname`}
                   value={z.label}
@@ -245,12 +241,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
                   value={z.len}
                   placeholder={z.rawCode !== '' ? '—' : '30'}
                   onChange={(e) => setZeile(i, { len: e.target.value })}
-                />
-                <TextInput
-                  aria-label={`Feld ${i + 1}: Beispielwert`}
-                  value={z.sample}
-                  placeholder="optional"
-                  onChange={(e) => setZeile(i, { sample: e.target.value })}
                 />
                 <IconButton
                   aria-label={`Feld ${i + 1} entfernen`}

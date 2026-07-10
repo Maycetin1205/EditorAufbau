@@ -1,9 +1,9 @@
 // FieldPicker
 // Kap. 5.2 (Bedienlogik 3): "Stelle anklicken → Feld wählen". Kleines
 // Auswahlfeld direkt an der angeklickten Stelle — zeigt AUSSCHLIESSLICH
-// Klarnamen aus dem Feld-Wörterbuch (nie Feldcodes) plus den Beispielwert;
-// der Feldcode (Technikwert) wird unsichtbar in die Bindungs-Prop
-// geschrieben. "— nicht gebunden —" löst die Bindung wieder.
+// Klarnamen aus dem Feld-Wörterbuch (nie Feldcodes, keine erfundenen
+// Beispielwerte); der Feldcode (Technikwert) wird unsichtbar in die
+// Bindungs-Prop geschrieben. "— nicht gebunden —" löst die Bindung wieder.
 //
 // Reine Editor-Hilfe (Editor-UI-Tokens/Tailwind, KEIN Masken-Design):
 // lebt im BlockHost über der Maske und erscheint nie im Export.
@@ -56,7 +56,7 @@ export function FieldPicker({
     }
   }, [onClose])
 
-  const eintrag = (code: string, name: string, sample?: string) => (
+  const eintrag = (code: string, name: string) => (
     <button
       key={code === '' ? '__keine__' : code}
       type="button"
@@ -64,14 +64,11 @@ export function FieldPicker({
         e.stopPropagation()
         onPick(code)
       }}
-      className={`flex w-full items-baseline justify-between gap-3 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground ${
+      className={`flex w-full items-baseline gap-3 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground ${
         code === current ? 'font-semibold' : ''
       }`}
     >
       <span>{code === current ? '✓ ' : ''}{name}</span>
-      {sample !== undefined && (
-        <span className="shrink-0 text-muted-foreground">{sample}</span>
-      )}
     </button>
   )
 
@@ -95,7 +92,7 @@ export function FieldPicker({
         {spotLabel} · Feld aus {sourceName}
       </p>
       {eintrag('', '— nicht gebunden —')}
-      {fields.map((f) => eintrag(f.code, f.label, f.sample))}
+      {fields.map((f) => eintrag(f.code, f.label))}
     </div>
   )
 }

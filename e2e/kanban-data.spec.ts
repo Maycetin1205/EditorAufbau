@@ -74,7 +74,7 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   await page.locator('ff-card .heading').first().click()
   const picker = page.getByRole('dialog', { name: /Feld für/ })
   await picker.getByRole('button', { name: /Tiername/ }).click()
-  await expect(page.locator('ff-card .heading').first()).toHaveText('Minka')
+  await expect(page.locator('ff-card .heading').first()).toHaveText('Tiername')
 
   // Spalten-Feld am Board wählen: Klarname "Zimmer", nie der Feldcode.
   await selectBoard(page)

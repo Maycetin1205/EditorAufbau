@@ -61,7 +61,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   // Datenquelle in Reichweite (Kap. 5.2) — nur für Blöcke mit bindbaren
   // Stellen relevant. BlockHost rendert bei jeder Store-Änderung neu (Canvas
   // abonniert den Store) UND bei Vorlagen-Änderungen (Kap. 5.4: Bibliothek
-  // ist editierbar — Beispielwerte/Klarnamen müssen sofort nachziehen).
+  // ist editierbar — die Klarnamen-Vorschau muss sofort nachziehen).
   useDataSources()
   const bindableSpots = def?.bindableSpots ?? KEINE_SPOTS
   const dataSource = bindableSpots.length > 0 ? editor.dataSourceFor(block.id) : undefined
@@ -118,19 +118,19 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     for (const [key, value] of Object.entries(block.props)) {
       elAny[key] = value
     }
-    // Beispieldaten-Vorschau (Kap. 5.2): gebundene Stellen zeigen den
-    // Beispielwert ihres Felds statt des statischen Texts — nur die ANZEIGE
-    // (DOM-Properties), der Baum bleibt unberührt. Ist die Bindung nicht
-    // auflösbar (keine Quelle in Reichweite / Feld nicht im Wörterbuch),
-    // zeigt die Stelle ihren statischen Text ohne Markierung; die Bindung
-    // selbst bleibt gespeichert und lebt wieder auf, sobald die Quelle
-    // zurückkommt.
+    // Bindungs-Vorschau (Kap. 5.2, revidiert 2026-07-10): gebundene Stellen
+    // zeigen den KLARNAMEN ihres Felds statt des statischen Texts — keine
+    // erfundenen Beispielwerte. Nur die ANZEIGE (DOM-Properties), der Baum
+    // bleibt unberührt. Ist die Bindung nicht auflösbar (keine Quelle in
+    // Reichweite / Feld nicht im Wörterbuch), zeigt die Stelle ihren
+    // statischen Text ohne Markierung; die Bindung selbst bleibt gespeichert
+    // und lebt wieder auf, sobald die Quelle zurückkommt.
     for (const spot of bindableSpots) {
       const code = block.props[`${spot.prop}Field`]
       if (typeof code !== 'string' || code === '') continue
       const field = dataSource?.fields.find((f) => f.code === code)
       if (field) {
-        elAny[spot.prop] = field.sample
+        elAny[spot.prop] = field.label
       } else {
         elAny[`${spot.prop}Field`] = ''
       }

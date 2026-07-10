@@ -77,8 +77,8 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
     // Lit verwaltet die Kindknoten der Stelle (Marker-Kommentare + Text).
     // Für den Verwerfen-Fall werden die Originalknoten samt Inhalt gesichert:
     // ein nacktes `textContent = original` würde Lits Marker zerstören, und
-    // die Stelle bekäme danach NIE wieder ein Update (z. B. den Beispielwert
-    // nach einer Bindung, Kap. 5.2).
+    // die Stelle bekäme danach NIE wieder ein Update (z. B. die Klarnamen-
+    // Vorschau nach einer Bindung, Kap. 5.2).
     const originalNodes = Array.from(target.childNodes)
     const originalData = originalNodes.map((n) => n.textContent ?? '')
     target.setAttribute('contenteditable', 'plaintext-only')

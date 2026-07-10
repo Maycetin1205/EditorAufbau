@@ -16,7 +16,7 @@ const eigene: Omit<DataSource, 'id'> = {
   kind: 'idb',
   idbId: 'IDBID0007',
   indexField: '0_10',
-  fields: [{ code: '10_8', label: 'Nummer', sample: 'A1' }],
+  fields: [{ code: '10_8', label: 'Nummer' }],
 }
 
 beforeEach(() => {

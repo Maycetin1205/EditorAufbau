@@ -92,8 +92,8 @@ describe('SEvariablen aus dem Baum', () => {
       name: 'Adressen',
       kind: 'adressstamm',
       fields: [
-        { code: '2_8', label: 'Nummer', sample: 'K2' },
-        { code: '3292_30', label: 'Vorname', sample: 'Lisa' },
+        { code: '2_8', label: 'Nummer' },
+        { code: '3292_30', label: 'Vorname' },
       ],
     }
     const { sevariablen } = exportMask(boardsTree(['adressen']), 'Maske', [adr])

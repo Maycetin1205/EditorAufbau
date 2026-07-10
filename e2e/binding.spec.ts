@@ -1,11 +1,12 @@
-// E2E-Prüfung Kap. 5.2 (Klick-auf-Stelle-Binding + Beispieldaten-Vorschau)
+// E2E-Prüfung Kap. 5.2 (Klick-auf-Stelle-Binding + Klarnamen-Vorschau)
 // im echten Browser. Nur hier real abbildbar: die Stellen liegen im Shadow
 // DOM der Karte (composedPath-Treffer im BlockHost), der Feld-Picker ist
 // eine Editor-Hilfe im Light-DOM, und die Daten-Markierung hängt am
 // data-ff-editor/data-ff-bound-Zusammenspiel.
 //
-// Bedienlogik 3: Stelle anklicken → Feldliste mit KLARNAMEN (nie Feldcodes)
-// → Stelle zeigt sofort Beispielwert + Markierung. Lösen stellt den
+// Bedienlogik 3: Stelle anklicken → Feldliste mit KLARNAMEN (nie Feldcodes,
+// keine erfundenen Beispielwerte — Nutzer-Entscheidung 2026-07-10) → die
+// Stelle zeigt sofort den KLARNAMEN + Markierung. Lösen stellt den
 // statischen Text wieder her. Alles überlebt den Reload.
 
 import { test, expect, type Page } from '@playwright/test'
@@ -55,7 +56,7 @@ test('ohne Datenquelle öffnet Klick auf eine Stelle keinen Feld-Picker', async 
   await expect(picker(page)).toHaveCount(0)
 })
 
-test('Stelle anklicken → Klarnamen wählen → Beispielwert + Markierung, Reload überlebt, Lösen stellt Text wieder her', async ({ page }) => {
+test('Stelle anklicken → Klarnamen wählen → Klarnamen-Vorschau + Markierung, Reload überlebt, Lösen stellt Text wieder her', async ({ page }) => {
   await freshEditor(page)
   await insertBoard(page)
   await attachTerminplaner(page)
@@ -66,23 +67,23 @@ test('Stelle anklicken → Klarnamen wählen → Beispielwert + Markierung, Relo
   await heading(page).click()
   await expect(picker(page)).toBeVisible()
 
-  // Feldliste zeigt Klarnamen + Beispielwerte, NIE Feldcodes (Technikwert
-  // ≠ Anzeigename).
+  // Feldliste zeigt NUR Klarnamen — NIE Feldcodes (Technikwert ≠
+  // Anzeigename) und KEINE erfundenen Beispielwerte.
   await expect(picker(page)).toContainText('Vorname')
-  await expect(picker(page)).toContainText('Lisa')
+  await expect(picker(page)).not.toContainText('Lisa')
   await expect(picker(page)).not.toContainText('193_30')
   await expect(picker(page)).not.toContainText('78_30')
 
-  // Feld wählen → Stelle zeigt sofort Beispielwert + Daten-Markierung.
+  // Feld wählen → Stelle zeigt sofort den Klarnamen + Daten-Markierung.
   await picker(page).getByRole('button', { name: /Tiername/ }).click()
   await expect(picker(page)).toHaveCount(0)
-  await expect(heading(page)).toHaveText('Minka')
+  await expect(heading(page)).toHaveText('Tiername')
   await expect(heading(page)).toHaveAttribute('data-ff-bound', '')
 
   // Reload: Bindung + Vorschau bleiben (localStorage-Debounce abwarten).
   await page.waitForTimeout(700)
   await page.reload()
-  await expect(heading(page)).toHaveText('Minka')
+  await expect(heading(page)).toHaveText('Tiername')
 
   // Gebundene Stelle wieder anklicken: aktuelles Feld ist markiert; Lösen
   // stellt den statischen Text wieder her.
@@ -102,7 +103,7 @@ test('Quelle lösen nimmt Vorschau + Markierung zurück, Wieder-Anhängen bringt
   await selectFirstCard(page)
   await heading(page).click()
   await picker(page).getByRole('button', { name: /Tiername/ }).click()
-  await expect(heading(page)).toHaveText('Minka')
+  await expect(heading(page)).toHaveText('Tiername')
 
   // Quelle vom Board lösen → statischer Text, keine Markierung; die
   // gespeicherte Bindung bleibt und lebt mit der Quelle wieder auf.
@@ -114,7 +115,7 @@ test('Quelle lösen nimmt Vorschau + Markierung zurück, Wieder-Anhängen bringt
 
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
-  await expect(heading(page)).toHaveText('Minka')
+  await expect(heading(page)).toHaveText('Tiername')
   await expect(heading(page)).toHaveAttribute('data-ff-bound', '')
 })
 
@@ -133,7 +134,7 @@ test('Doppelklick: ungebundene Stelle bleibt Inline-Edit, gebundene öffnet den 
   // Binden, dann Doppelklick: kein contenteditable, stattdessen der Picker.
   await heading(page).click()
   await picker(page).getByRole('button', { name: /Tiername/ }).click()
-  await expect(heading(page)).toHaveText('Minka')
+  await expect(heading(page)).toHaveText('Tiername')
   await heading(page).dblclick()
   await expect(picker(page)).toBeVisible()
   await expect(heading(page)).not.toHaveAttribute('contenteditable', 'plaintext-only')

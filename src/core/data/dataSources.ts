@@ -41,11 +41,11 @@ export interface DataSourceField {
   // Technikwert: direkter Property-Name im Datensatz ODER 'pos_len'
   // (Position_Länge im SATZ, z. B. '193_30').
   code: string
-  // Klarname für den Bediener (z. B. 'Vorname').
+  // Klarname für den Bediener (z. B. 'Vorname'). Er ist zugleich die
+  // Vorschau des Editors: eine gebundene Stelle zeigt den Klarnamen —
+  // erfundene Beispielwerte gibt es NICHT (Nutzer-Entscheidung 2026-07-10,
+  // ersetzt das sample-Feld aus Kap. 5.2).
   label: string
-  // Beispielwert für die Vorschau im Editor (Kap. 5.2): eine gebundene
-  // Stelle zeigt sofort diesen Wert.
-  sample: string
 }
 
 export interface DataSource {
@@ -87,19 +87,19 @@ export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
     idbId: 'IDBID0001',
     indexField: '0_10',
     fields: [
-      { code: '10_8', label: 'Adressnummer', sample: 'K2' },
-      { code: '18_30', label: 'Tierart', sample: 'Katze' },
-      { code: '48_30', label: 'Rasse', sample: 'Hauskatze' },
-      { code: '78_30', label: 'Tiername', sample: 'Minka' },
-      { code: '108_10', label: 'Geburtsdatum', sample: '12.03.2021' },
-      { code: '118_60', label: 'Behandlung', sample: 'Erbrechen seit heute Morgen' },
-      { code: '178_5', label: 'Uhrzeit', sample: '10:30' },
-      { code: '183_10', label: 'Datum', sample: '07.07.2026' },
-      { code: '193_30', label: 'Vorname', sample: 'Lisa' },
-      { code: '223_30', label: 'Nachname', sample: 'Wagner' },
-      { code: '253_30', label: 'Zimmer', sample: 'Zimmer 2' },
-      { code: '319_12', label: 'Priorität', sample: 'Notfall' },
-      { code: '331_12', label: 'Belegnummer', sample: 'B-5012' },
+      { code: '10_8', label: 'Adressnummer' },
+      { code: '18_30', label: 'Tierart' },
+      { code: '48_30', label: 'Rasse' },
+      { code: '78_30', label: 'Tiername' },
+      { code: '108_10', label: 'Geburtsdatum' },
+      { code: '118_60', label: 'Behandlung' },
+      { code: '178_5', label: 'Uhrzeit' },
+      { code: '183_10', label: 'Datum' },
+      { code: '193_30', label: 'Vorname' },
+      { code: '223_30', label: 'Nachname' },
+      { code: '253_30', label: 'Zimmer' },
+      { code: '319_12', label: 'Priorität' },
+      { code: '331_12', label: 'Belegnummer' },
     ],
   },
   {
@@ -108,14 +108,14 @@ export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
     kind: 'idb',
     idbId: 'IDBID0004',
     fields: [
-      { code: '10_8', label: 'Adressnummer', sample: 'K2' },
-      { code: '18_30', label: 'Tiername', sample: 'Minka' },
-      { code: '48_30', label: 'Tierart', sample: 'Katze' },
-      { code: '78_30', label: 'Rasse', sample: 'Hauskatze' },
-      { code: '108_10', label: 'Geburtsdatum', sample: '12.03.2021' },
-      { code: '118_10', label: 'Termindatum', sample: '07.07.2026' },
-      { code: '128_350', label: 'Notiz', sample: 'Frisst schlecht seit gestern' },
-      { code: '524_60', label: 'Behandlung', sample: 'Erbrechen seit heute Morgen' },
+      { code: '10_8', label: 'Adressnummer' },
+      { code: '18_30', label: 'Tiername' },
+      { code: '48_30', label: 'Tierart' },
+      { code: '78_30', label: 'Rasse' },
+      { code: '108_10', label: 'Geburtsdatum' },
+      { code: '118_10', label: 'Termindatum' },
+      { code: '128_350', label: 'Notiz' },
+      { code: '524_60', label: 'Behandlung' },
     ],
   },
 ]
@@ -168,7 +168,9 @@ export function sanitizeDataSources(raw: unknown): DataSource[] {
       const ff = f as Record<string, unknown>
       if (typeof ff.code !== 'string' || ff.code === '') continue
       if (typeof ff.label !== 'string' || ff.label === '') continue
-      fields.push({ code: ff.code, label: ff.label, sample: typeof ff.sample === 'string' ? ff.sample : '' })
+      // Nur code + label — ein `sample` aus Altbeständen (bis 2026-07-10)
+      // wird bewusst verworfen: Beispielwerte gibt es nicht mehr.
+      fields.push({ code: ff.code, label: ff.label })
     }
     seen.add(e.id)
     acc.push({

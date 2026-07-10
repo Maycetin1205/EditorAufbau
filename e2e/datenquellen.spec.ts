@@ -35,7 +35,9 @@ test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Expo
   await dialog.getByLabel('Feld 1: Klarname').fill('Gerätename')
   await dialog.getByLabel('Feld 1: Position').fill('10')
   await dialog.getByLabel('Feld 1: Länge').fill('30')
-  await dialog.getByLabel('Feld 1: Beispielwert').fill('Ultraschall')
+  // Ein "Beispielwert"-Eingabefeld gibt es NICHT (Nutzer-Entscheidung
+  // 2026-07-10: der Klarname ist die Vorschau).
+  await expect(dialog.getByLabel('Feld 1: Beispielwert')).toHaveCount(0)
   await dialog.getByRole('button', { name: 'Speichern' }).click()
   await expect(dialog).toHaveCount(0)
 
@@ -48,13 +50,13 @@ test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Expo
   await page.getByRole('option', { name: 'Geräte' }).click()
 
   // Titel-Stelle binden: Karte erst selektieren, dann die Stelle anklicken —
-  // der Feld-Picker zeigt Klarname + Beispielwert.
+  // der Feld-Picker zeigt NUR den Klarnamen, die gebundene Stelle danach
+  // ebenfalls (der Klarname IST die Vorschau).
   await page.locator('ff-card .text').first().click()
   await page.locator('ff-card .heading').first().click()
   const picker = page.getByRole('dialog', { name: /Feld für/ })
-  await expect(picker.getByRole('button', { name: /Gerätename/ })).toContainText('Ultraschall')
   await picker.getByRole('button', { name: /Gerätename/ }).click()
-  await expect(page.locator('ff-card .heading').first()).toHaveText('Ultraschall')
+  await expect(page.locator('ff-card .heading').first()).toHaveText('Gerätename')
 
   // Export: SEvariablen-Eintrag + eingebettete Definition aus DERSELBEN Quelle.
   const html = await exportMaskHtml(page)

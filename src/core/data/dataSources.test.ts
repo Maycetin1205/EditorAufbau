@@ -60,11 +60,11 @@ describe('Mitgelieferte Datenquellen-Vorlagen (Feld-Wörterbuch)', () => {
     }
   })
 
-  it('jedes Feld hat einen Beispielwert, der kein Feldcode ist (Kap. 5.2)', () => {
+  it('Felder bestehen NUR aus code + label — keine erfundenen Beispielwerte (Nutzer-Entscheidung 2026-07-10)', () => {
     for (const s of BUILTIN_DATA_SOURCES) {
       for (const f of s.fields) {
-        expect(f.sample.trim(), `${s.name}: Feld "${f.label}" ohne Beispielwert`).not.toBe('')
-        expect(FELDCODE.test(f.sample), `${s.name}: Beispielwert "${f.sample}" sieht wie ein Feldcode aus`).toBe(false)
+        expect(Object.keys(f).sort(), `${s.name}: Feld "${f.label}" trägt fremde Schlüssel`).toEqual(['code', 'label'])
+        expect(FELDCODE.test(f.label), `${s.name}: Klarname "${f.label}" sieht wie ein Feldcode aus`).toBe(false)
       }
     }
   })
@@ -78,8 +78,8 @@ describe('Quellen-Arten → Tabellen-ID + FELDER-Form (Kap. 5.4)', () => {
     name: 'X',
     kind,
     fields: [
-      { code: '2_8', label: 'Nummer', sample: 'K2' },
-      { code: '3292_30', label: 'Vorname', sample: 'Lisa' },
+      { code: '2_8', label: 'Nummer' },
+      { code: '3292_30', label: 'Vorname' },
     ],
   })
 
@@ -138,7 +138,7 @@ describe('sanitizeDataSources (Lader für benutzerdefinierte Vorlagen)', () => {
       kind: 'idb',
       idbId: 'IDBID0007',
       indexField: '0_10',
-      fields: [{ code: '10_8', label: 'Nummer', sample: 'A1' }],
+      fields: [{ code: '10_8', label: 'Nummer' }],
     }]
     expect(sanitizeDataSources(roh)).toEqual(roh)
   })
@@ -159,14 +159,16 @@ describe('sanitizeDataSources (Lader für benutzerdefinierte Vorlagen)', () => {
     ])
   })
 
-  it('repariert Felder: kaputte fliegen raus, fehlender Beispielwert wird leer', () => {
+  it('repariert Felder: kaputte fliegen raus, sample aus Altbeständen wird verworfen', () => {
     const roh = [{
       id: 'a',
       name: 'A',
       kind: 'idb',
       idbId: 'IDBID0001',
       fields: [
-        { code: '10_8', label: 'Nummer' },
+        // Altbestand (bis 2026-07-10): gespeicherte Felder trugen sample —
+        // der Lader wirft den Beispielwert weg, das Feld bleibt.
+        { code: '10_8', label: 'Nummer', sample: 'A1' },
         { code: '', label: 'Ohne Code' },
         { code: '18_30', label: '' },
         'quatsch',
@@ -177,7 +179,7 @@ describe('sanitizeDataSources (Lader für benutzerdefinierte Vorlagen)', () => {
       name: 'A',
       kind: 'idb',
       idbId: 'IDBID0001',
-      fields: [{ code: '10_8', label: 'Nummer', sample: '' }],
+      fields: [{ code: '10_8', label: 'Nummer' }],
     }])
   })
 })
