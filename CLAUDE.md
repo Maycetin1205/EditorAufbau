@@ -805,24 +805,46 @@ den Export (Kap. 3).
     4 Karten = Zeilenzahl STIMMT (Daten kommen an!), aber Stellen ohne
     Inhalt — Feldwert-Auflösung (pos_len gegen echtes SEDATA) ist der
     nächste Datenpfad-Punkt in Phase 2.
-  - **Phase-2-Auftakt steht schon fest (Diagnose 2026-07-10 VERIFIZIERT,
-    nicht verlieren!): der SE-Anschluss-Fix.** Unsere exportierte Maske
-    POLLT nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten: die Maske
-    muss sich per `basisHTML_REGISTER(callback, titel, version)` anmelden
-    (Retry-Schleife, 25ms × 400) bzw. per `message`-Event empfangen und
-    `window.SEDATA.Daten` SELBST setzen. Belege: behandlung-umbau
-    `empfang/index.basis.source.html` BLOCK 1/9 (`regSE` + `__seConsume`,
-    Z. 679–708) und alter Editor `src/runtime/boot.ts` (message-Listener
-    setzt `SEDATA.Daten`). Dort auch: SEvariablen-XHR/fetch-Interception
-    (Framework fragt die Konfig per Request ab — Notwendigkeit in Phase 2
-    prüfen). `dashboard/praxis-kanban.html` ist auch für den DATEN-TRANSPORT
-    keine Referenz (wie schon für Feldcodes). Nebenbefunde aus der echten
-    Nutzer-Maske: Bindung war korrekt eingebettet (source/statusfield/
-    FF_DATA_SOURCES ok), aber alle Spalten hatten `statusvalue=""` und das
-    Board feste `width:1001px` — Bindungs-UX + Preflight müssen das in
-    Phase 2 abfangen. Danach: SOFORTIGER Echttest in SoftEngine (neue
-    Regel: jedes Paket, das den Export berührt, wird direkt in SE
-    getestet), dann erst K1–K4, K5b, K6, K7, K8 in neu geplantem Zuschnitt.
+  - ✅ **Phase-2-Auftakt: SE-Anschluss-Fix (GEBAUT 2026-07-11; Diagnose
+    2026-07-10 war VERIFIZIERT).** Problem: unsere exportierte Maske
+    POLLTE nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten. Umsetzung
+    in `seRuntime.ts`, exakt nach der Referenz (behandlung-umbau
+    `empfang/index.basis.source.html` BLOCK 1/9, `regSE` + `__seConsume`,
+    Commit 45a8027 Z. 680–709 — der dortige WORKTREE ist verändert +
+    Doku-Dateien gelöscht, Referenz darum aus dem Commit gelesen; Klärung
+    Arbeitsstand vs. Commit steht aus) + altem Editor (`runtime/boot.ts`,
+    installMessageHook): (a) Anmeldung `basisHTML_REGISTER(cb,
+    document.title, '1.0')` mit Retry-Schleife 25ms × 400 +
+    `basisHTML_SetConsoleLog(true,true)`; (b) `seConsume` setzt
+    `SEDATA.Daten` SELBST, ruft ResetDataBasis/InitialisiereDatenBasis und
+    hydriert ALLE Boards bei JEDEM Push neu (Live-Weg; der Poll feuerte
+    nur einmal); (c) message-Fallback `{ MSG: { DATA } }` NUR ohne Bridge
+    (capture, wie Referenz); (d) Poll bleibt als Fallback für direkt
+    gestelltes SEDATA. Pure, Node-getestete Helfer `payloadDaten`
+    (String ODER Objekt; akzeptiert nur belegte Formen
+    SEFileLoop/Tabellen/ErpApiCall) + `messagePayload`. **Diagnose-Beifang
+    fürs geparkte „Stellen leer"-Problem:** das ERSTE angenommene Paket
+    liegt roh in einer versteckten Textarea `#ff-se-diagnose`,
+    **Strg+Alt+D** blendet sie ein — Bediener kann ohne Konsole kopieren
+    (Werkzeug für Phase 2, fliegt danach raus). 165 Unit-Tests (6 neue) +
+    26 E2E grün (neuer Push-Fall: Anmeldung genau 1× mit Version '1.0',
+    Bridge erscheint NACH dem Laden, String-Paket hydriert, zweiter Push
+    aktualisiert live, Diagnose-Toggle, message-Fallback verteilt korrekt).
+    **→ SE-ECHTTEST DURCH DEN NUTZER STEHT AUS** (Regel: jedes Paket, das
+    den Export berührt, direkt in SE testen). Sind die Kartenstellen dann
+    noch leer: Strg+Alt+D → Inhalt kopieren → wird Test-Fixture für den
+    Feldauflösungs-Fix (nächstes Paket). Offen aus der Diagnose:
+    SEvariablen-XHR/fetch-Interception (Framework fragt die Konfig per
+    Request ab — Notwendigkeit prüfen). `dashboard/praxis-kanban.html` ist
+    auch für den DATEN-TRANSPORT keine Referenz (wie schon für Feldcodes).
+    Nebenbefunde aus der echten Nutzer-Maske: Bindung war korrekt
+    eingebettet (source/statusfield/FF_DATA_SOURCES ok), aber alle Spalten
+    hatten `statusvalue=""` und das Board feste `width:1001px` —
+    Bindungs-UX + Preflight müssen das in Phase 2 abfangen (K2/K6/K7;
+    dort auch: „Schreiben über" bietet bisher AUCH GET-Vorlagen an —
+    Verb-Filter nachziehen, Fund der Zweit-Review 2026-07-11,
+    Inspector.tsx Z. 114). Danach K1–K4, K5b, K6, K7, K8 in neu
+    geplantem Zuschnitt.
   - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,

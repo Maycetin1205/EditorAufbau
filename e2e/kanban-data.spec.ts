@@ -192,6 +192,100 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
 })
 
+// SE-Push (Phase 2): SoftEngine SCHIEBT die Daten — die Maske meldet sich
+// per basisHTML_REGISTER an (Referenz regSE) bzw. empfaengt das
+// message-Event { MSG: { DATA } } und setzt SEDATA.Daten SELBST. Beide
+// Wege hier gegen dieselbe exportierte Maske geprueft; der Register-Weg
+// zusaetzlich mit String-Paket (SE liefert auch JSON-Strings), Live-Update
+// beim zweiten Push und der Diagnose-Textarea (Strg+Alt+D).
+test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback hydrieren', async ({ page, context }) => {
+  await freshEditor(page)
+  await insertBoard(page)
+  await attachTerminplaner(page)
+
+  // Titel an "Tiername" binden; Spalten-Feld "Zimmer"; Spalte 2 -> '2',
+  // Spalte 3 -> '3' (dieselbe Strecke wie oben).
+  await page.locator('ff-card .text').first().click()
+  await page.locator('ff-card .heading').first().click()
+  await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
+  await selectBoard(page)
+  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByRole('option', { name: 'Zimmer' }).click()
+  await page.locator('ff-kanban-spalte .head').nth(1).click()
+  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.locator('ff-kanban-spalte .head').nth(2).click()
+  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+
+  const html = await exportMaskHtml(page)
+
+  // --- Weg 1: basisHTML_REGISTER ---
+  // SE injiziert seine Bridge erst NACH dem Laden der Maske — genau dafuer
+  // existiert die Anmelde-Schleife (25ms-Takte): sie findet die Bridge beim
+  // naechsten Versuch.
+  const mask = await context.newPage()
+  await mask.setContent(html)
+  await mask.evaluate(() => {
+    const w = window as unknown as Record<string, unknown>
+    w.REG_CALLS = []
+    w.basisHTML_REGISTER = (cb: (d: unknown) => void, titel: unknown, version: unknown) => {
+      w.__seCb = cb
+      ;(w.REG_CALLS as unknown[]).push([titel, version])
+    }
+  })
+
+  // Die Maske meldet sich genau EINMAL an (Version '1.0' wie die Referenz).
+  await expect.poll(() => mask.evaluate(() =>
+    ((window as unknown as Record<string, unknown>).REG_CALLS as unknown[]).length,
+  )).toBe(1)
+  expect(await mask.evaluate(() =>
+    ((window as unknown as Record<string, unknown>).REG_CALLS as unknown[][])[0][1],
+  )).toBe('1.0')
+  // Vor dem Push: keine Karten, kein SEDATA.
+  await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(0)
+
+  // SE schiebt als STRING -> Maske setzt SEDATA selbst und hydriert.
+  await mask.evaluate((sedata) => {
+    const w = window as unknown as Record<string, unknown>
+    ;(w.__seCb as (d: unknown) => void)(JSON.stringify(sedata))
+  }, SEDATA_STUB)
+  const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
+  await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
+  await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
+  expect(await mask.evaluate(() => {
+    const sedata = (window as unknown as Record<string, unknown>).SEDATA
+    return typeof sedata === 'object' && sedata !== null && 'Daten' in sedata
+  })).toBe(true)
+
+  // Zweiter Push = Live-Update: Board zeigt NUR noch die neue Zeile.
+  await mask.evaluate(() => {
+    const w = window as unknown as Record<string, unknown>
+    ;(w.__seCb as (d: unknown) => void)({
+      Daten: { SEFileLoop: [{ ALIAS: 'Terminplaner', Zeilen: [{ '253_30': '3', '78_30': 'Momo' }] }] },
+    })
+  })
+  await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(1)
+  await expect(colCards(2)).toHaveText(['Momo'])
+
+  // Diagnose (Beifang Phase 2): erstes Paket liegt versteckt bereit,
+  // Strg+Alt+D blendet es ein — Kopier-Weg ohne Konsole.
+  await expect(mask.locator('#ff-se-diagnose')).toBeHidden()
+  await mask.keyboard.press('Control+Alt+d')
+  await expect(mask.locator('#ff-se-diagnose')).toBeVisible()
+  expect(await mask.locator('#ff-se-diagnose').inputValue()).toContain('Minka')
+
+  // --- Weg 2: message-Fallback (keine Bridge vorhanden) ---
+  const mask2 = await context.newPage()
+  await mask2.setContent(html)
+  await mask2.evaluate((sedata) => {
+    window.postMessage({ MSG: { DATA: { Daten: sedata.Daten } } }, '*')
+  }, SEDATA_STUB)
+  const col2Cards = (i: number) => mask2.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
+  await expect(mask2.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
+  await expect(col2Cards(0)).toHaveText(['Rocky'])
+  await expect(col2Cards(1)).toHaveText(['Minka', 'Nala'])
+  await expect(col2Cards(2)).toHaveText(['Buddy'])
+})
+
 test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)

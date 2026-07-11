@@ -11,6 +11,8 @@ import {
   findRuntimeRelation,
   formatNowDate,
   getField,
+  messagePayload,
+  payloadDaten,
   rowsFor,
   setField,
 } from './seRuntime'
@@ -142,6 +144,47 @@ describe('setField (Schreibweg 5.3b: Wert -> Zeile)', () => {
     const row: Record<string, unknown> = { name: 'bleibt' }
     expect(setField(row, 'fehlt', 'x')).toBe(false)
     expect(row).toEqual({ name: 'bleibt' })
+  })
+})
+
+// SE-Push (Phase 2): SoftEngine schiebt die Daten an den REGISTER-Callback
+// (String oder Objekt) bzw. als message-Event { MSG: { DATA } } — Formen
+// exakt nach Referenz behandlung-umbau Block 1/9 (__seConsume/regSE) und
+// altem Editor (installMessageHook).
+describe('payloadDaten (geschobenes SE-Paket -> Daten)', () => {
+  const daten = { SEFileLoop: [{ ALIAS: 'Terminplaner', Zeilen: [] }] }
+
+  it('nimmt ein Objekt-Paket mit Daten.SEFileLoop an', () => {
+    expect(payloadDaten({ Daten: daten })).toEqual(daten)
+  })
+
+  it('nimmt ein String-Paket an (SE liefert auch JSON-Strings)', () => {
+    expect(payloadDaten(JSON.stringify({ Daten: daten }))).toEqual(daten)
+  })
+
+  it('nimmt die belegten Formen Tabellen (alter Editor) und ErpApiCall (Referenz) an', () => {
+    expect(payloadDaten({ Daten: { Tabellen: { IDBID0001: {} } } })).toEqual({ Tabellen: { IDBID0001: {} } })
+    expect(payloadDaten({ Daten: { ErpApiCall: {} } })).toEqual({ ErpApiCall: {} })
+  })
+
+  it('weist alles andere ab: kaputtes JSON, kein Daten, unbekannte Form, GET-Antworten', () => {
+    expect(payloadDaten('kein json')).toBeUndefined()
+    expect(payloadDaten(undefined)).toBeUndefined()
+    expect(payloadDaten({ MessageN: 'GET-Antwort' })).toBeUndefined()
+    expect(payloadDaten({ Daten: { Irgendwas: 1 } })).toBeUndefined()
+  })
+})
+
+describe('messagePayload (message-Event -> Nutzlast)', () => {
+  it('zieht MSG.DATA aus Objekt- und String-Events', () => {
+    expect(messagePayload({ MSG: { DATA: { Daten: {} } } })).toEqual({ Daten: {} })
+    expect(messagePayload(JSON.stringify({ MSG: { DATA: 'roh' } }))).toBe('roh')
+  })
+
+  it('ignoriert fremde Events (kein MSG, kaputtes JSON, kein Objekt)', () => {
+    expect(messagePayload({ source: 'react-devtools' })).toBeUndefined()
+    expect(messagePayload('kein json')).toBeUndefined()
+    expect(messagePayload(42)).toBeUndefined()
   })
 })
 
