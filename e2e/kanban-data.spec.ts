@@ -193,12 +193,39 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
 })
 
+// SEDATA in der ECHTEN SoftEngine-Form (belegt durch den SE-Echttest des
+// Nutzers 2026-07-11, DATA-RECV-Log): SEFileLoop ist ein OBJEKT je Alias,
+// der Eintrag traegt SAT (Tabellen-id) + TFELD (Feld-Schema) + Zeilen, und
+// die Zeilen-Properties tragen das Tabellen-PRAEFIX (IDBID0001_253_30) —
+// die Endungs-Regel von getField loest die gebundenen Codes dagegen auf.
+const SEDATA_SE_FORM = {
+  Daten: {
+    SEFileLoop: {
+      Terminplaner: {
+        SAT: 'IDBID0001',
+        TFELD: [
+          { Beschreibung: 'Index', Name: 'IDBID0001_0_10', Pos: '0', Len: '10' },
+          { Beschreibung: 'HaustierName', Name: 'IDBID0001_78_30', Pos: '78', Len: '30' },
+          { Beschreibung: 'Behandlungszimmer', Name: 'IDBID0001_253_30', Pos: '253', Len: '30' },
+        ],
+        Zeilen: [
+          { IDBID0001_0_10: '1', IDBID0001_253_30: '2', IDBID0001_78_30: 'Minka' },
+          { IDBID0001_0_10: '2', IDBID0001_253_30: '3', IDBID0001_78_30: 'Buddy' },
+          { IDBID0001_0_10: '3', IDBID0001_253_30: '2', IDBID0001_78_30: 'Nala' },
+          { IDBID0001_0_10: '4', IDBID0001_253_30: 'OP', IDBID0001_78_30: 'Rocky' },
+        ],
+      },
+    },
+  },
+}
+
 // SE-Push (Phase 2): SoftEngine SCHIEBT die Daten — die Maske meldet sich
 // per basisHTML_REGISTER an (Referenz regSE) bzw. empfaengt das
 // message-Event { MSG: { DATA } } und setzt SEDATA.Daten SELBST. Beide
 // Wege hier gegen dieselbe exportierte Maske geprueft; der Register-Weg
 // zusaetzlich mit String-Paket (SE liefert auch JSON-Strings), Live-Update
-// beim zweiten Push und der Diagnose-Textarea (Strg+Alt+D).
+// beim zweiten Push und der Diagnose-Textarea (Strg+Alt+D). Daten in der
+// ECHTEN SE-Form (s. SEDATA_SE_FORM) — deckt den Echttest-Befund ab.
 test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback hydrieren', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)
@@ -248,7 +275,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await mask.evaluate((sedata) => {
     const w = window as unknown as Record<string, unknown>
     ;(w.__seCb as (d: unknown) => void)(JSON.stringify(sedata))
-  }, SEDATA_STUB)
+  }, SEDATA_SE_FORM)
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
   await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
@@ -279,7 +306,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await mask2.setContent(html)
   await mask2.evaluate((sedata) => {
     window.postMessage({ MSG: { DATA: { Daten: sedata.Daten } } }, '*')
-  }, SEDATA_STUB)
+  }, SEDATA_SE_FORM)
   const col2Cards = (i: number) => mask2.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(mask2.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
   await expect(col2Cards(0)).toHaveText(['Rocky'])

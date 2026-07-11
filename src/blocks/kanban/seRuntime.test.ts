@@ -97,6 +97,18 @@ describe('getField (Feldcode -> Wert)', () => {
     expect(getField(null, '78_30')).toBe('')
     expect(getField('keine zeile', '78_30')).toBe('')
   })
+
+  // SE-Echttest 2026-07-11: SoftEngine liefert Zeilen-Properties MIT
+  // Tabellen-Praefix (TFELD.Name = 'IDBID0001_253_30') — die Endungs-Regel
+  // der Referenz (getField Z. 729) loest den Code '253_30' dagegen auf.
+  it('findet praefixierte Schluessel (Endung _code, echte SE-Form)', () => {
+    expect(getField({ IDBID0001_253_30: ' 2 ' }, '253_30')).toBe('2')
+    expect(getField({ IDBID0001_78_30: 'Minka' }, '78_30')).toBe('Minka')
+    // Leere direkte Property blockiert den Scan nicht (Regel der Referenz).
+    expect(getField({ '253_30': ' ', IDBID0001_253_30: '2' }, '253_30')).toBe('2')
+    // Praefix-Regel (code_...) der Referenz ebenfalls abgedeckt.
+    expect(getField({ '10_8_zusatz': 'X' }, '10_8')).toBe('X')
+  })
 })
 
 describe('setField (Schreibweg 5.3b: Wert -> Zeile)', () => {
@@ -144,6 +156,17 @@ describe('setField (Schreibweg 5.3b: Wert -> Zeile)', () => {
     const row: Record<string, unknown> = { name: 'bleibt' }
     expect(setField(row, 'fehlt', 'x')).toBe(false)
     expect(row).toEqual({ name: 'bleibt' })
+  })
+
+  // SE-Echttest 2026-07-11: der Schreibweg muss dieselben praefixierten
+  // Schluessel aktualisieren, die getField liest — sonst spraenge die
+  // gezogene Karte bei der Neu-Hydrierung zurueck.
+  it('patcht praefixierte Schluessel (echte SE-Form) und liest sie zurueck', () => {
+    const row: Record<string, unknown> = { IDBID0001_253_30: '2', IDBID0001_78_30: 'Minka' }
+    expect(setField(row, '253_30', '3')).toBe(true)
+    expect(row.IDBID0001_253_30).toBe('3')
+    expect(row.IDBID0001_78_30).toBe('Minka') // Nachbarfeld unberuehrt
+    expect(getField(row, '253_30')).toBe('3')
   })
 })
 

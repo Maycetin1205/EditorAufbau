@@ -804,10 +804,9 @@ den Export (Kap. 3).
     Editor-Markierung/Löschschutz/Export/Laufzeit:
     `treeQuery.firstDescendantOfType`. 159 Unit + 25 E2E grün;
     SE-Echttest durch den Nutzer steht aus (Blitzen weg?).
-    **GEPARKT** (Nutzer: „kommt der Reihe nach"): SE-Echttest zeigt
-    4 Karten = Zeilenzahl STIMMT (Daten kommen an!), aber Stellen ohne
-    Inhalt — Feldwert-Auflösung (pos_len gegen echtes SEDATA) ist der
-    nächste Datenpfad-Punkt in Phase 2.
+    ~~GEPARKT~~ → **GELÖST 2026-07-11** (s. Phase 2 „Feldauflösung-Fix"
+    unten): SE-Echttest zeigte 4 Karten = Zeilenzahl STIMMT, aber Stellen
+    ohne Inhalt — Ursache waren SE-Präfix-Schlüssel, nicht pos_len.
   - ✅ **Phase-2-Auftakt: SE-Anschluss-Fix (GEBAUT 2026-07-11; Diagnose
     2026-07-10 war VERIFIZIERT).** Problem: unsere exportierte Maske
     POLLTE nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten. Umsetzung
@@ -848,6 +847,23 @@ den Export (Kap. 3).
     Verb-Filter nachziehen, Fund der Zweit-Review 2026-07-11,
     Inspector.tsx Z. 114). Danach K1–K4, K5b, K6, K7, K8 in neu
     geplantem Zuschnitt.
+  - ✅ **Phase 2: Feldauflösung-Fix (2026-07-11).** Echttest-Befund des
+    Nutzers (DATA-RECV-Konsolenlog): der SE-Anschluss STEHT (Anmeldung +
+    Push ok, 4 Zeilen → 4 Karten), aber alle Stellen leer. Ursache:
+    SoftEngine liefert Zeilen-Properties MIT Tabellen-Präfix
+    (`IDBID0001_253_30`, belegt durch TFELD.Name im Log) — unser getField
+    suchte nur `253_30` direkt bzw. den SATZ-Ausschnitt. Fix: die
+    Schlüssel-Scan-Regel der Referenz übernommen (empfang BLOCK 2/9,
+    getField Commit 45a8027 Z. 727–733: gleich / Präfix `code_` / Endung
+    `_code`) — in `getField` UND `setField` (der Schreibweg muss dieselben
+    Schlüssel patchen, sonst springt die gezogene Karte bei der
+    Neu-Hydrierung zurück). Die ECHTE SE-Datenform ist jetzt E2E-Fixture
+    (`SEDATA_SE_FORM` in kanban-data.spec.ts: SEFileLoop als OBJEKT je
+    Alias, Eintrag mit SAT/TFELD/Zeilen, Präfix-Properties — der Push-Test
+    fährt damit; die Direktform-Stubs bleiben daneben bestehen). 167 Unit
+    (2 neue) + 26 E2E grün. **→ ERNEUTER SE-ECHTTEST STEHT AUS**
+    (Erwartung: Karten MIT Inhalt, Verteilung nach Spaltenwerten, Karte
+    ziehen schreibt zurück und bleibt liegen).
   - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,

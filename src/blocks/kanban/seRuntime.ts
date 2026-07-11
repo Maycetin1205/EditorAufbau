@@ -111,13 +111,26 @@ function asTrimmedString(v: unknown): string {
   return v == null ? '' : String(v).trim()
 }
 
-// Wert eines Feldcodes aus einer Zeile: direkter Property-Name, sonst
-// 'pos_len'-Ausschnitt aus dem SATZ-Rohstring (SATZNEU vor SATZ vor RAW).
+// Wert eines Feldcodes aus einer Zeile — Aufloesung EXAKT wie getField der
+// Referenzmaske (BLOCK 2/9, Commit 45a8027 Z. 722-741):
+//  1. direkte Property,
+//  2. Schluessel-Scan: gleich, Praefix `code_` ODER Endung `_code` —
+//     SoftEngine liefert Zeilen-Properties MIT Tabellen-Praefix
+//     (`IDBID0001_253_30` fuer Code `253_30`; belegt durch den
+//     SE-Echttest des Nutzers 2026-07-11, TFELD.Name),
+//  3. 'pos_len'-Ausschnitt aus dem SATZ-Rohstring (SATZNEU vor SATZ).
 export function getField(row: unknown, code: string): string {
   if (!isRecord(row) || code === '') return ''
-  const direct = asTrimmedString(row[code])
+  const key = code.trim()
+  const direct = asTrimmedString(row[key])
   if (direct !== '') return direct
-  const m = /^(\d+)_(\d+)$/.exec(code)
+  for (const rk of Object.keys(row)) {
+    if (rk === key || rk.startsWith(`${key}_`) || rk.endsWith(`_${key}`)) {
+      const v = asTrimmedString(row[rk])
+      if (v !== '') return v
+    }
+  }
+  const m = /^(\d+)_(\d+)$/.exec(key)
   if (!m) return ''
   const raw = asTrimmedString(
     row.SATZNEU ?? row.SATZ ?? row.satzneu ?? row.satz ?? row.RAW ?? row.raw,
@@ -137,23 +150,30 @@ export function getField(row: unknown, code: string): string {
 // verlängert — deterministisch. Rückgabe: wurde etwas geschrieben?
 export function setField(row: unknown, code: string, value: string): boolean {
   if (!isRecord(row) || code === '') return false
+  const key = code.trim()
   let written = false
-  if (Object.prototype.hasOwnProperty.call(row, code)) {
-    row[code] = value
-    written = true
+  // ALLE Darstellungen aktualisieren, die getField lesen wuerde: direkte
+  // Property UND praefixierte Schluessel (`IDBID0001_253_30`, dieselbe
+  // Scan-Regel wie getField) ...
+  for (const rk of Object.keys(row)) {
+    if (rk === key || rk.startsWith(`${key}_`) || rk.endsWith(`_${key}`)) {
+      row[rk] = value
+      written = true
+    }
   }
-  const m = /^(\d+)_(\d+)$/.exec(code)
+  // ... und der pos_len-Patch im SATZ-Rohstring.
+  const m = /^(\d+)_(\d+)$/.exec(key)
   if (m) {
-    const keys = ['SATZNEU', 'SATZ', 'satzneu', 'satz', 'RAW', 'raw'] as const
-    const key = keys.find((k) => typeof row[k] === 'string')
-    if (key) {
-      const raw = row[key] as string
+    const rawKeys = ['SATZNEU', 'SATZ', 'satzneu', 'satz', 'RAW', 'raw'] as const
+    const rawKey = rawKeys.find((k) => typeof row[k] === 'string')
+    if (rawKey) {
+      const raw = row[rawKey] as string
       const pos = Number(m[1])
       const len = Number(m[2])
       if (len > 0) {
         const field = value.length > len ? value.slice(0, len) : value.padEnd(len, ' ')
         const padded = raw.length < pos ? raw.padEnd(pos, ' ') : raw
-        row[key] = padded.slice(0, pos) + field + padded.slice(pos + len)
+        row[rawKey] = padded.slice(0, pos) + field + padded.slice(pos + len)
         written = true
       }
     }
