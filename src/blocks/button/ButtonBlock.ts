@@ -19,6 +19,9 @@ export class ButtonBlock extends BasicBlock {
   static readonly defaultProps = { label: 'Klick mich' }
   // Kein Breite-Anfasser: ein Button ist so breit wie seine Beschriftung.
   static readonly resizableWidth = false
+  // Ereignis der Schaltfläche (Kommandozentrale Z1): „Klick" — Technikwert
+  // onClick wie im alten Editor; Aktionsketten hängen ab Z2 daran.
+  static readonly blockEvents = [{ key: 'onClick', name: 'Klick' }]
 
   // Keine Inspector-Felder: die Beschriftung wird per Doppelklick direkt auf dem
   // Button bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).

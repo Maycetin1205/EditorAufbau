@@ -17,7 +17,13 @@ interface ModalProps {
 export function Modal({ title, onClose, children }: ModalProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      // stopPropagation: das Modal ist die oberste Schicht — sein Escape
+      // darf einen darunterliegenden Träger (z. B. die Kommandozentrale,
+      // Bubble-Listener) nicht mitschließen.
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onClose()
+      }
     }
     document.addEventListener('keydown', onKeyDown, true)
     return () => document.removeEventListener('keydown', onKeyDown, true)

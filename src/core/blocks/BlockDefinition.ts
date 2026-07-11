@@ -34,6 +34,16 @@ export interface BindableSpot {
   label: string
 }
 
+// Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff Kap. 8): was bei
+// diesem Baustein passieren kann. `name` = Klarname für den Bediener
+// („Karte angeklickt"), `key` = Technikwert — das Vokabular des alten
+// Editors (onClick/onCardClick/onCardDrop), an dem ab Z2 die
+// Aktionsketten hängen. Der Bediener sieht NIE den key.
+export interface BlockEventSpec {
+  key: string
+  name: string
+}
+
 export interface BlockDefinition {
   type: string
   tagName: string
@@ -91,4 +101,7 @@ export interface BlockDefinition {
   acceptsDataSource?: boolean
   // Bindbare Stellen des Blocks (Kap. 5.2) — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
+  // Ereignisse des Blocks (Z1) — siehe BlockEventSpec. undefined = der
+  // Baustein löst keine Ereignisse aus (erscheint nicht in der Zentrale).
+  blockEvents?: readonly BlockEventSpec[]
 }

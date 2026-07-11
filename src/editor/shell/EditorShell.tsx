@@ -2,16 +2,20 @@
 // Editor-Layout: Top-Header mit Logo + Toolbar, links Sidebar,
 // mittig Canvas, rechts Inspector.
 
+import { useState } from 'react'
 import { Wand2 } from 'lucide-react'
 import { useKeyboardShortcuts } from '../../state/useKeyboardShortcuts'
 import { Canvas } from '../canvas/Canvas'
 import { Inspector } from '../inspector/Inspector'
 import { Sidebar } from '../sidebar/Sidebar'
+import { Kommandozentrale } from '../zentrale/Kommandozentrale'
 import { StatusBar } from './StatusBar'
 import { Toolbar } from './Toolbar'
 
 export function EditorShell() {
   useKeyboardShortcuts()
+  // Kommandozentrale (Z1): öffnet über den Toolbar-Knopf „Steuerung".
+  const [steuerungOffen, setSteuerungOffen] = useState(false)
 
   return (
     <div className="flex h-screen w-screen flex-col bg-background text-foreground">
@@ -25,8 +29,10 @@ export function EditorShell() {
             <p className="text-[10px] text-muted-foreground">MVP Editor</p>
           </div>
         </div>
-        <Toolbar />
+        <Toolbar onSteuerung={() => setSteuerungOffen(true)} />
       </header>
+
+      {steuerungOffen && <Kommandozentrale onClose={() => setSteuerungOffen(false)} />}
 
       <div className="flex min-h-0 flex-1">
         <aside className="w-60 shrink-0 overflow-hidden border-r border-border bg-card">

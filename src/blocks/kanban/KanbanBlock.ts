@@ -47,6 +47,13 @@ export class KanbanBlock extends BasicBlock {
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
   static readonly acceptsDataSource = true
+  // Ereignisse des Boards (Kommandozentrale Z1): Klarnamen für die
+  // Aktions-Übersicht; die keys sind das Technikwert-Vokabular des alten
+  // Editors (onCardClick/onCardDrop) — Aktionsketten hängen ab Z2 daran.
+  static readonly blockEvents = [
+    { key: 'onCardClick', name: 'Karte angeklickt' },
+    { key: 'onCardDrop', name: 'Karte verschoben' },
+  ]
   // statusField (Kap. 5.3): Feldcode des Spalten-Felds (Technikwert,
   // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte.
   // putRelation (Kap. 5.5): id der Relation-Vorlage, über die der

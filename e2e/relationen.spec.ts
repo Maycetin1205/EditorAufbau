@@ -24,6 +24,16 @@ async function exportMaskHtml(page: Page): Promise<string> {
   return await readFile(await maske.path(), 'utf8')
 }
 
+// Z1: die Bibliotheken wohnen in der Kommandozentrale (Toolbar „Steuerung").
+async function openSteuerung(page: Page) {
+  await page.getByRole('button', { name: 'Steuerung' }).click()
+  await page.getByRole('dialog', { name: 'Steuerung' }).getByRole('button', { name: 'Relationen' }).click()
+}
+
+async function closeSteuerung(page: Page) {
+  await page.getByRole('dialog', { name: 'Steuerung' }).getByRole('button', { name: 'Schließen' }).click()
+}
+
 // Board mit Terminplaner, Titel an Tiername gebunden, Spalten-Feld Zimmer,
 // Datenwerte 2/3 auf den Spalten 2/3 — die gemeinsame Basis der Schreibweg-
 // Prüfungen (wie in kanban-data.spec.ts).
@@ -64,6 +74,7 @@ const SEDATA_DRAG_STUB = {
 
 test('Anlegen: eigene Vorlage erscheint überall, der Schreibweg konsumiert ihre NR', async ({ page, context }) => {
   await freshEditor(page)
+  await openSteuerung(page)
 
   // Vorlage anlegen — nur Anzeigename + Verb + NR + Parameter, keine Codezeile.
   await page.getByRole('button', { name: 'Neue Relation' }).click()
@@ -83,6 +94,7 @@ test('Anlegen: eigene Vorlage erscheint überall, der Schreibweg konsumiert ihre
 
   // In der Bibliothek sichtbar (Anzeigename, nie Rohwerte).
   await expect(page.getByText('Zimmer wechseln', { exact: true })).toBeVisible()
+  await closeSteuerung(page)
 
   // Board aufbauen und die eigene Vorlage im Inspector wählen.
   const selectBoard = await boardMitDaten(page)
@@ -117,6 +129,7 @@ test('Anlegen: eigene Vorlage erscheint überall, der Schreibweg konsumiert ihre
   // dann in der Bibliothek UND im Inspector-Select des Boards — die Bibliothek
   // ist der Nachweis der Persistenz (erste Fundstelle, Sidebar vor Inspector).
   await page.reload()
+  await openSteuerung(page)
   await expect(page.getByText('Zimmer wechseln', { exact: true }).first()).toBeVisible()
 })
 
@@ -154,6 +167,7 @@ test('Ohne Vorlage („— keine —"): Board ist read-only — Karte ziehen bew
 
 test('Validierung: Pflichtfelder und unbekannte Platzhalter blocken das Speichern', async ({ page }) => {
   await freshEditor(page)
+  await openSteuerung(page)
   await page.getByRole('button', { name: 'Neue Relation' }).click()
   const dialog = page.getByRole('dialog', { name: 'Neue Relation' })
   await dialog.getByRole('button', { name: 'Speichern' }).click()
@@ -181,10 +195,12 @@ test('Bearbeiten: Umbenennen hält die id stabil — das Board behält seine Vor
   // Default ist die mitgelieferte Standard-Vorlage.
   await expect(page.getByLabel('Schreiben über')).toContainText('Standard-Schreiben')
 
+  await openSteuerung(page)
   await page.getByRole('button', { name: 'Standard-Schreiben (PUT) bearbeiten' }).click()
   const dialog = page.getByRole('dialog', { name: 'Relation bearbeiten' })
   await dialog.getByLabel('Anzeigename').fill('Haus-PUT')
   await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await closeSteuerung(page)
 
   // Der Block hängt weiter an derselben Vorlage (Select zeigt den neuen Namen).
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
@@ -203,6 +219,7 @@ test('Löschen: Rückfrage warnt, wenn die Vorlage benutzt wird', async ({ page 
     frage = d.message()
     void d.accept()
   })
+  await openSteuerung(page)
   await page.getByRole('button', { name: 'Standard-Schreiben (PUT) löschen' }).click()
   expect(frage).toContain('BENUTZT')
   await expect(page.getByRole('button', { name: 'Standard-Schreiben (PUT) löschen' })).toHaveCount(0)

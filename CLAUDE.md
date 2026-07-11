@@ -864,6 +864,55 @@ den Export (Kap. 3).
     (2 neue) + 26 E2E grün. **→ ERNEUTER SE-ECHTTEST STEHT AUS**
     (Erwartung: Karten MIT Inhalt, Verteilung nach Spaltenwerten, Karte
     ziehen schreibt zurück und bleibt liegen).
+  - ⌖ **Z-PROGRAMM (Nutzer-Entscheidung 2026-07-11): Kommandozentrale +
+    Aktionen (Z1–Z4) — VOR dem K-Rest (K1–K5b).** Anlass: der Bediener
+    braucht EINEN übersichtlichen Ort, an dem er Aktionen anlegt (zieht den
+    Kap.-8-Kern vor; Konzept mit Bediener-Durchspiel am 2026-07-11
+    abgenommen). Verhaltensreferenz = alter Editor (NUR Funktion, Optik
+    ausdrücklich NICHT): `runtime/actions.ts` (executeSteps + Schritt-
+    Typen), `store/actionsStore.ts` (BLOCK_EVENT_MAP/STEP_TYPES),
+    `StudioActionsTab.tsx` (Reihenfolge/Duplizieren/Löschen),
+    `DataCenter.tsx` (Übersicht). **Nutzer-Kernanforderung
+    ZWISCHENSPEICHER:** ein Lese-Schritt legt sein Ergebnis unter einem
+    NAMEN ab (z. B. neue Satznummer), ALLE folgenden Schritte der Kette
+    nutzen es per Platzhalter (Muster `seGetNewIndex` der Empfang-Referenz;
+    immer nur EINE Leseanfrage in Flug, Antwort abwarten). Schritt-Typen
+    v1: Relation ausführen / Werkzeug starten (START_TOOL) / Wert setzen /
+    Daten neu laden. BEWUSST NICHT v1: Bedingungen (der alte Editor hat
+    sie selbst aus dem Angebot entfernt), Popups/Lookup (brauchen
+    Seiten-Vorlagen), Rollback. Aktionsketten leben AM BAUSTEIN je
+    Ereignis (wie alter Editor) — die Zentrale ist die Übersicht, kein
+    vierter Speicherort.
+    - ✅ **Z1 Kommandozentrale (2026-07-11):** Toolbar-Knopf „Steuerung"
+      öffnet die Zentrale (`src/editor/zentrale/Kommandozentrale.tsx`,
+      Editor-UI-Tokens): Bereiche **Aktionen | Datenquellen | Relationen**.
+      Die zwei Bibliotheken sind aus der Sidebar UMGEZOGEN (Sidebar = nur
+      noch Bausteine, kein zweiter Pflegeort). Neues Registry-Konzept
+      **blockEvents** (Klarname sichtbar, key = Technikwert im Vokabular
+      des alten Editors): Kanban „Karte angeklickt"(onCardClick) /
+      „Karte verschoben"(onCardDrop), Schaltfläche „Klick"(onClick).
+      Aktionen-Bereich listet die Bausteine der Maske in Baumreihenfolge;
+      Canvas-Auswahl markiert den Eintrag (data-ausgewaehlt) + scrollt
+      hin; Ketten zeigen „Noch keine Schritte" (anlegen = Z2).
+      Escape-Schichtung: Formular-Modal (capture + stopPropagation) fängt
+      sein Escape VOR der Zentrale (bubble) — ein Escape schließt immer
+      nur die oberste Schicht. 171 Unit (blockEvents.test neu) + 28 E2E
+      grün (zentrale.spec neu: Umzug/Klarnamen/Sprung/Escape-Schichtung;
+      datenquellen- + relationen.spec auf den neuen Ort umgebaut, nicht
+      abgeschwächt); live im Browser verifiziert.
+    - **Z2 Aktionen anlegen:** Datenmodell Kette am Baustein (jeder
+      Schritt mit optionalem Ergebnis-Namen — der Zwischenspeicher steckt
+      ab Tag 1 im Modell), Ketten-Editor in der Zentrale (+ Schritt,
+      Reihenfolge, duplizieren, löschen), erster Schritt-Typ „Werkzeug
+      starten" KOMPLETT bis in den Export (Karte → Karteikarte 3003),
+      danach sofort SE-Echttest.
+    - **Z3 „Relation ausführen":** Antwort-Warteschlange
+      (seGetNewIndex-Muster) + Zwischenspeicher-Ausführung
+      ({name}-Platzhalter in Folgeschritten), dann „Wert setzen" +
+      „Daten neu laden".
+    - **Z4 Ampeln:** Vollständigkeits-Anzeige in der Zentrale + Sprung
+      zur Stelle (Vorstufe zu K6/K7).
+    Danach geht es mit K1–K5b, K6–K8 und dem Stabilisierungs-Rest weiter.
   - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,

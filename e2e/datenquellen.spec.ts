@@ -24,8 +24,19 @@ async function exportMaskHtml(page: Page): Promise<string> {
   return await readFile(await maske.path(), 'utf8')
 }
 
+// Z1: die Bibliotheken wohnen in der Kommandozentrale (Toolbar „Steuerung").
+async function openSteuerung(page: Page, bereich: 'Datenquellen' | 'Relationen') {
+  await page.getByRole('button', { name: 'Steuerung' }).click()
+  await page.getByRole('dialog', { name: 'Steuerung' }).getByRole('button', { name: bereich }).click()
+}
+
+async function closeSteuerung(page: Page) {
+  await page.getByRole('dialog', { name: 'Steuerung' }).getByRole('button', { name: 'Schließen' }).click()
+}
+
 test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Export', async ({ page }) => {
   await freshEditor(page)
+  await openSteuerung(page, 'Datenquellen')
 
   // Formular öffnen und ausfüllen — nur Klarnamen + Zahlen, nie Technikwerte.
   await page.getByRole('button', { name: 'Neue Datenquelle' }).click()
@@ -44,6 +55,7 @@ test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Expo
   // In der Bibliothek sichtbar …
   await expect(page.getByText('Geräte', { exact: true })).toBeVisible()
   // … und im Inspector als Datenquelle wählbar (Kanban einfügen + anhängen).
+  await closeSteuerung(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
@@ -66,11 +78,13 @@ test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Expo
 
   // Reload: Vorlage überlebt (localStorage neben den Bäumen).
   await page.reload()
+  await openSteuerung(page, 'Datenquellen')
   await expect(page.getByText('Geräte', { exact: true })).toBeVisible()
 })
 
 test('Validierung: leeres Formular speichert nicht und zeigt Fehler', async ({ page }) => {
   await freshEditor(page)
+  await openSteuerung(page, 'Datenquellen')
   await page.getByRole('button', { name: 'Neue Datenquelle' }).click()
   const dialog = page.getByRole('dialog', { name: 'Neue Datenquelle' })
   await dialog.getByRole('button', { name: 'Speichern' }).click()
@@ -91,10 +105,12 @@ test('Bearbeiten: Umbenennen hält die id stabil — angehängte Blöcke behalte
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 
+  await openSteuerung(page, 'Datenquellen')
   await page.getByRole('button', { name: 'Terminplaner bearbeiten' }).click()
   const dialog = page.getByRole('dialog', { name: 'Datenquelle bearbeiten' })
   await dialog.getByLabel('Anzeigename').fill('Praxisplaner')
   await dialog.getByRole('button', { name: 'Speichern' }).click()
+  await closeSteuerung(page)
 
   // Der Block hängt weiter an derselben Quelle (Select zeigt den neuen Namen).
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
@@ -113,6 +129,7 @@ test('Löschen: Rückfrage warnt, wenn die Quelle benutzt wird; die Maske bleibt
     frage = d.message()
     void d.accept()
   })
+  await openSteuerung(page, 'Datenquellen')
   await page.getByRole('button', { name: 'Terminplaner löschen' }).click()
   expect(frage).toContain('BENUTZT')
   await expect(page.getByRole('button', { name: 'Terminplaner löschen' })).toHaveCount(0)
@@ -145,8 +162,10 @@ test('S1a: geloeschte Datenquelle blockiert den Export mit verstaendlicher Meldu
 
   // Terminplaner aus der Bibliothek loeschen -> das Board zeigt jetzt auf eine
   // geloeschte Quelle (Bindung ruht, Block bleibt stehen — Kap. 5.4b).
+  await openSteuerung(page, 'Datenquellen')
   await page.getByRole('button', { name: 'Terminplaner löschen' }).click()
   await expect(page.getByRole('button', { name: 'Terminplaner löschen' })).toHaveCount(0)
+  await closeSteuerung(page)
 
   // Export: darf NICHT herunterladen, sondern die Preflight muss abbrechen.
   const downloads: Download[] = []

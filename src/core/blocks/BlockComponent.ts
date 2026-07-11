@@ -6,7 +6,7 @@
 // Instanzierung gelesen — `customElements.define` darf erst registrieren,
 // bevor irgendjemand `new` auf dem Konstruktor aufruft.
 
-import type { BindableSpot, DefaultChildSpec } from './BlockDefinition'
+import type { BindableSpot, BlockEventSpec, DefaultChildSpec } from './BlockDefinition'
 import type { FlowDirection, FlowWidth } from './flowLayout'
 import type { PropertyDescription } from './PropertyDescription'
 
@@ -49,5 +49,7 @@ export interface BlockComponentStatic {
   readonly acceptsDataSource?: boolean
   // Bindbare Stellen aus Kap. 5.2 — Bedeutung siehe BlockDefinition.
   readonly bindableSpots?: readonly BindableSpot[]
+  // Ereignisse des Blocks (Z1) — Bedeutung siehe BlockDefinition.
+  readonly blockEvents?: readonly BlockEventSpec[]
   new(): BlockComponent
 }

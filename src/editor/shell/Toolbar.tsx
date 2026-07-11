@@ -5,6 +5,7 @@ import {
   Copy,
   Download,
   Redo2,
+  SlidersHorizontal,
   Trash,
   Trash2,
   Undo2,
@@ -14,6 +15,7 @@ import { preflightMask } from '../../export/preflight'
 import { failedChecks, validateMaskHtml } from '../../export/validator'
 import { dataSourceStore } from '../../state/DataSourceStore'
 import { useEditor } from '../../state/useEditor'
+import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 
 function downloadFile(name: string, content: string, type: string): void {
@@ -25,7 +27,8 @@ function downloadFile(name: string, content: string, type: string): void {
   URL.revokeObjectURL(url)
 }
 
-export function Toolbar() {
+// onSteuerung: öffnet die Kommandozentrale (Z1) — Zustand hält die Shell.
+export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
   const ed = useEditor()
   const hasSelection = ed.selectedId !== null
 
@@ -110,6 +113,19 @@ export function Toolbar() {
         >
           <Trash2 size={15} />
         </IconButton>
+      </ToolGroup>
+
+      <Divider />
+
+      <ToolGroup>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSteuerung}
+          title="Steuerung — Aktionen, Datenquellen und Relationen der Maske"
+        >
+          <SlidersHorizontal size={14} /> Steuerung
+        </Button>
       </ToolGroup>
 
       <Divider />
