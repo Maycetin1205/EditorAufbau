@@ -1,6 +1,6 @@
 # Aufbau-Editor — Hier weitermachen
 
-> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-10).** CLAUDE.md ist
+> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-11).** CLAUDE.md ist
 > das Original — jede Änderung immer in BEIDE Dateien ziehen.
 
 > **Für KI-Chats:** Diese Datei zuerst lesen. Sie ist die verbindliche Wahrheit
@@ -26,10 +26,13 @@ sein Ersatz dafür, Code lesen zu können.
    → das Tool hat versagt.
 
 Kontext: Es gibt einen ALTEN, „vibe-gecodeten" Editor (Repo `react--app`;
-lokal `C:\Users\mu.aycetin\Desktop\Projekte\react-app` — NICHT unter
-`Editor\`), der
-funktioniert (inkl. Export in SoftEngine), aber unwartbar ist (~29k Zeilen,
-absolutes x/y-Modell, zwei halbfertige Systeme parallel). **Dieses Projekt baut
+lokal `C:\Users\mu.aycetin\Desktop\Projekte\Editor\react-app` — Pfad
+verifiziert 2026-07-10, die frühere Angabe `Projekte\react-app` war falsch),
+der funktioniert (inkl. Export in SoftEngine), aber unwartbar ist (~29k Zeilen,
+absolutes x/y-Modell, zwei halbfertige Systeme parallel). Daneben liegt
+`C:\Users\mu.aycetin\Desktop\Projekte\Editor\REFERENZ NUR INFORMATIONEN`
+mit den ECHTEN SoftEngine-Framework-Dateien (SEHTMLV2_WebUi_Include,
+SeHtmlFrameworkV2_* …) — nur Information, nicht anfassen. **Dieses Projekt baut
 ihn sauber neu** und löst ihn dann ab. Außerdem gibt es das Repo
 `behandlung-umbau`: eine echte, dokumentierte SoftEngine-Maske — dort steht in
 `SE-INVENTAR.md`, wie SoftEngine-HTML technisch aufgebaut sein muss
@@ -163,7 +166,10 @@ den Export (Kap. 3).
 - ✅ **Kap. 3 — Mini-Export nach SoftEngine (GEBAUT + ABGENOMMEN 2026-07-02:
   Nutzer hat den Export in SoftEngine getestet — funktioniert!)** `[kritisch]`
   **(VORGEZOGEN, war Kap. 8):** Export-Knopf in der Toolbar → `maske.html` +
-  `maske.SEvariablen.json`. Umsetzung: `src/export/exportMask.ts`
+  `maske.SEvariablen.json` *(seit 2026-07-11 nach SE-Namenskonvention:
+  `index.basis.source.html` + `index.basis.SEvariablen.json` — belegt durch
+  alle 124 Referenzmasken + behandlung-umbau; kein Umbenennen von Hand
+  mehr)*. Umsetzung: `src/export/exportMask.ts`
   (deterministischer Baum-Durchlauf → verschachtelte Custom Elements;
   Breite via DERSELBEN flowLayout-Logik wie der Canvas; ROOT_FLOW =
   gemeinsame Wurzel-Fluss-Werte; ASCII-Escaping HTML/JS; Tokens eingebettet,
@@ -697,7 +703,155 @@ den Export (Kap. 3).
   spätere (Patch, ~Z. 382) überschreibt die frühere per Kaskade.
   `C:\Users\mu.aycetin\Desktop\Projekte\Editor\REFERENZ` = nur Information,
   nicht anfassen.
-  - **K0 Geometrie (NÄCHSTES BAUPAKET; Korrektur 2026-07-10: Codex hat NIE
+  **⚑ KURSKORREKTUR (2026-07-10, Nutzer — ERSETZT die K-Reihenfolge unten):**
+  Anlass: erster ECHTER SoftEngine-Test des Datenpfads ist DURCHGEFALLEN
+  (exportiertes Kanban zeigte dauerhaft die Beispielansicht samt sichtbarem
+  Vorlagen-Kasten; kurzes Aufblitzen der Rohansicht davor). Der Nutzer stand
+  kurz davor, das Projekt zu löschen. Entscheidungen:
+  - **Reihenfolge neu: Phase 1 = der Kanban-BAUSTEIN selbst komplett**
+    (Optik/Bedienung, OHNE Daten), **Phase 2 = Datenbindung + SE-Laufzeit.**
+    Keine Daten-Arbeit, bevor Phase 1 abgenommen ist. Maßstab bleibt: „wie
+    der alte Editor, nur besser" — alter Editor ist reine FUNKTIONS-
+    Checkliste, gebaut wird alles in der neuen Architektur.
+  - **Kartenvorlage-Kasten ABGESCHAFFT** (Nutzer lehnt das Konzept ab; der
+    alte Editor kennt so etwas nicht — Karte dort = Feldliste am Board,
+    `tileFields` in `renderKanban.ts`). Neu: Musterkarte liegt als normale,
+    dezent markierte Karte in der ersten Spalte (Markierung NUR im Editor);
+    im Export ist NIE ein Editor-Werkzeug sichtbar.
+  - **Altlast entsorgt:** die halbfertigen Reste der abgebrochenen Session
+    (K0-Höhenkonzept, 13 Dateien uncommitted) auf Nutzeranweisung verworfen
+    (git stash „Altlast abgebrochene Session"); Basis = Commit 3c8002c,
+    verifiziert grün (tsc + eslint + 151 Unit-Tests). Höhe wird in Phase 1
+    sauber NEU gebaut, nicht aus dem Stash gefischt.
+  - **Phase-1-Pakete** (jedes einzeln: Plan → „go" → bauen → Tests →
+    committen): ✅ **P1.1 Vorlagen-Kasten abgeschafft (2026-07-10):**
+    Block `kanban-vorlage` KOMPLETT entfernt (Datei, Registry, Runtime,
+    Export, Zielbild-Mockup) samt der nur für ihn gebauten Konzepte
+    `slotName` + `removable` (Altlasten). Neu: Registry-Konzept
+    **templateChild** am Board (`{ type:'card', label:'Muster' }`) — die
+    ERSTE Karte des Boards in Baumreihenfolge ist die Musterkarte;
+    `Editor.templateMarkFor` (DFS, dieselbe Definition wie
+    `seRuntime`-Klonquelle `board.querySelector('ff-card')`) steuert die
+    dezente „Muster"-Markierung als BlockHost-Editor-Hilfe (nie im
+    Export). Frisches Board = 3 Spalten, Musterkarte in der ersten;
+    Spalten nehmen wieder Karten (`allowedChildTypes`, „+ Karte" je
+    Spalte), Karte lebt in `kanban-spalte` (allowedParentTypes).
+    **Lade-Migration** in sanitizeTree (`migrateKanbanVorlage`): Karten
+    aus dem Kasten wandern an den ANFANG der ersten Spalte (sonst hätte
+    der Sanitizer die gestaltete Musterkarte mit dem unbekannten Typ
+    verworfen!); live am echten Nutzer-Stand verifiziert. Tests zur
+    strengeren Spec umgebaut (Typ existiert nicht mehr, Export/Bündel
+    enthalten NIE ff-kanban-vorlage, Veralten-Wächter verbietet ihn
+    jetzt): 154 Unit + 25 E2E grün, tsc + eslint sauber.
+    **P1.1b Plus-Knöpfe entschlackt (2026-07-10, direkte
+    Nutzer-Beschwerde):** die alte „+ Spalte"-Kachel (180px, saß IM
+    Board-Fluss und stahl den Spalten Breite) und die dauerhaften
+    „+ Karte"-Knöpfe sind ersetzt durch kleine Anstecker am Wrapper-Rand
+    (Muster Kreuzchen, position:absolute = null Platzverbrauch), sichtbar
+    NUR wenn die Auswahl im Teilbaum des Containers liegt
+    (editor.isInSubtree) — unselektiert sieht der Editor exakt aus wie
+    der Export. E2E zur strengeren Spec (Anstecker erscheinen/
+    verschwinden mit der Auswahl); live im Browser verifiziert.
+    ✅ **P1.3 Board-Höhe (2026-07-10, vorgezogen — Nutzer: „Optik egal,
+    Grundgerüst zuerst"):** neues Registry-Konzept **resizableHeight**
+    (opt-in, nur Kanban; Block deklariert `height` in defaultProps,
+    Default 'auto') — NUR der Zieh-Anfasser an der Unterkante (gemeinsame
+    startResize-Mechanik mit der Breite, 1 Geste = 1 Undo), **Doppelklick
+    auf den Anfasser = zurück zu automatisch. BEWUSST kein Inspector-Feld**
+    (Nutzer-Korrektur 2026-07-10 + Bedienlogik 6: nur was sich nicht
+    zeigen lässt, steht im Inspector — die Höhe zeigt sich am Anfasser).
+    EINE Quelle für Editor + Export:
+    `parseFlowHeight`/`flowItemHeightStyle` in flowLayout (Canvas-Wrapper
+    UND styleAttr; height reist NIE als Attribut). Feste Höhe → Spalten
+    füllen sie, Karten scrollen IM Spaltenrumpf (Empfang-Verhalten).
+    WYSIWYG-Fix dabei: die BlockHost-Zwischen-Divs + Spalten-Host reichen
+    die Höhe jetzt per 100%-Kette durch — vorher streckten sich Spalten
+    nur im Export, nicht im Editor. 157 Unit + 25 E2E grün; live
+    verifiziert (Anfasser-Geste → 501px, Spalten 4×voll, Persistenz).
+    Damit ist das Kanban-GRUNDGERÜST komplett (Spalten/Karten anlegen,
+    umsortieren, löschen, Titel-Edit, Breite, Höhe, Musterkarte).
+    ✅ **P1.2 Karte final (2026-07-10, Zielbild per Screenshot abgenommen):**
+    Karte = 5 Stellen (Titel fett + Zeit mono rechts in Zeile 1, Meta klein
+    in Zeile 2, Textzeile, Status-Chip) — alle 5 Inline-Edit + bindableSpots
+    (Muster 5.2, seRuntime konsumiert sie registry-getrieben ohne Änderung).
+    Spalten-FARBWELTEN statt nur Oberlinie (Empfang-Vorbild .vspalte):
+    „Art" tönt Kopf (--se-X-soft), Fläche (neu --se-X-shell) und Rahmen
+    (neu --se-X-line), Titel + Punkt + Zähler kräftig; 8 neue Tokens.
+    BEWUSSTE Abweichung vom Empfang-Original (im Mockup begründet): Meta in
+    EIGENER Zeile statt neben dem Titel — Entscheidung A erlaubt schmale
+    Spalten, die Einzeile schnitt den Titel an. Beifang-WYSIWYG-Fix eines
+    P1.3-Fehlers: Spalten-Host height:100% verhinderte im Export das
+    Flex-stretch (leere Spalten blieben kurz) → Host height auto +
+    min-height:100% + Host als Flex-Spalte, .col flex:1; alle 4 Fälle
+    (Editor/Export × auto/fest) nachgemessen gleich. 157 Unit + 25 E2E.
+    ✅ **Beispielwerte ABGESCHAFFT (2026-07-10, wütende Nutzer-Korrektur):**
+    der KLARNAME ist die Vorschau — gebundene Stelle + Feld-Picker zeigen
+    den Klarnamen des Felds, NIE erfundene Werte; sample raus aus Modell/
+    Formular/Builtins (Formular je Feld nur Klarname+Position+Länge),
+    sanitize verwirft sample aus Altbeständen. Tests zur strengeren Spec.
+    Der K0(a)-Geometrieteil (Spalten immer nebeneinander) ist committed
+    und bleibt.
+    ✅ **Demo NIE im Export + Karten nie von Hand (2026-07-10, umgesetzt
+    nach Nutzer-Entscheidung; alter Editor als Beleg gesichtet: dort ist
+    das Board EIN Block, Karte = tileFields-Feldliste, ein Karten-X kann
+    dort gar nicht existieren):** (a) Die Musterkarte reist im Export als
+    inertes `<template data-ff-template>` — der Browser rendert sie NIE
+    (kein Demo-Blitzen beim SE-Start), Karten-Altbestände in Spalten
+    werden nie exportiert, Spalten bleiben leer bis echte Daten kommen;
+    seRuntime klont aus dem template (Fallback alte Masken: erste
+    sichtbare Karte). (b) „+ Karte" ABGESCHAFFT — eine Zeile = eine Karte,
+    die Anzahl bestimmen allein die Daten; „+ Spalte" bleibt. (c) Die
+    Musterkarte ist UNLÖSCHBAR (kein Kreuzchen; Store-Schutz
+    `isRemoveProtected` schützt auch die Spalte, die sie enthält — das
+    ganze Board löschen bleibt erlaubt). EINE Musterkarten-Definition für
+    Editor-Markierung/Löschschutz/Export/Laufzeit:
+    `treeQuery.firstDescendantOfType`. 159 Unit + 25 E2E grün;
+    SE-Echttest durch den Nutzer steht aus (Blitzen weg?).
+    **GEPARKT** (Nutzer: „kommt der Reihe nach"): SE-Echttest zeigt
+    4 Karten = Zeilenzahl STIMMT (Daten kommen an!), aber Stellen ohne
+    Inhalt — Feldwert-Auflösung (pos_len gegen echtes SEDATA) ist der
+    nächste Datenpfad-Punkt in Phase 2.
+  - ✅ **Phase-2-Auftakt: SE-Anschluss-Fix (GEBAUT 2026-07-11; Diagnose
+    2026-07-10 war VERIFIZIERT).** Problem: unsere exportierte Maske
+    POLLTE nur auf `SEDATA` — aber SoftEngine SCHIEBT die Daten. Umsetzung
+    in `seRuntime.ts`, exakt nach der Referenz (behandlung-umbau
+    `empfang/index.basis.source.html` BLOCK 1/9, `regSE` + `__seConsume`,
+    Commit 45a8027 Z. 680–709 — der dortige WORKTREE ist verändert +
+    Doku-Dateien gelöscht, Referenz darum aus dem Commit gelesen; Klärung
+    Arbeitsstand vs. Commit steht aus) + altem Editor (`runtime/boot.ts`,
+    installMessageHook): (a) Anmeldung `basisHTML_REGISTER(cb,
+    document.title, '1.0')` mit Retry-Schleife 25ms × 400 +
+    `basisHTML_SetConsoleLog(true,true)`; (b) `seConsume` setzt
+    `SEDATA.Daten` SELBST, ruft ResetDataBasis/InitialisiereDatenBasis und
+    hydriert ALLE Boards bei JEDEM Push neu (Live-Weg; der Poll feuerte
+    nur einmal); (c) message-Fallback `{ MSG: { DATA } }` NUR ohne Bridge
+    (capture, wie Referenz); (d) Poll bleibt als Fallback für direkt
+    gestelltes SEDATA. Pure, Node-getestete Helfer `payloadDaten`
+    (String ODER Objekt; akzeptiert nur belegte Formen
+    SEFileLoop/Tabellen/ErpApiCall) + `messagePayload`. **Diagnose-Beifang
+    fürs geparkte „Stellen leer"-Problem:** das ERSTE angenommene Paket
+    liegt roh in einer versteckten Textarea `#ff-se-diagnose`,
+    **Strg+Alt+D** blendet sie ein — Bediener kann ohne Konsole kopieren
+    (Werkzeug für Phase 2, fliegt danach raus). 165 Unit-Tests (6 neue) +
+    26 E2E grün (neuer Push-Fall: Anmeldung genau 1× mit Version '1.0',
+    Bridge erscheint NACH dem Laden, String-Paket hydriert, zweiter Push
+    aktualisiert live, Diagnose-Toggle, message-Fallback verteilt korrekt).
+    **→ SE-ECHTTEST DURCH DEN NUTZER STEHT AUS** (Regel: jedes Paket, das
+    den Export berührt, direkt in SE testen). Sind die Kartenstellen dann
+    noch leer: Strg+Alt+D → Inhalt kopieren → wird Test-Fixture für den
+    Feldauflösungs-Fix (nächstes Paket). Offen aus der Diagnose:
+    SEvariablen-XHR/fetch-Interception (Framework fragt die Konfig per
+    Request ab — Notwendigkeit prüfen). `dashboard/praxis-kanban.html` ist
+    auch für den DATEN-TRANSPORT keine Referenz (wie schon für Feldcodes).
+    Nebenbefunde aus der echten Nutzer-Maske: Bindung war korrekt
+    eingebettet (source/statusfield/FF_DATA_SOURCES ok), aber alle Spalten
+    hatten `statusvalue=""` und das Board feste `width:1001px` —
+    Bindungs-UX + Preflight müssen das in Phase 2 abfangen (K2/K6/K7;
+    dort auch: „Schreiben über" bietet bisher AUCH GET-Vorlagen an —
+    Verb-Filter nachziehen, Fund der Zweit-Review 2026-07-11,
+    Inspector.tsx Z. 114). Danach K1–K4, K5b, K6, K7, K8 in neu
+    geplantem Zuschnitt.
+  - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,
     KEIN flex-wrap,

@@ -55,8 +55,11 @@ export function Toolbar() {
       )
       return
     }
-    downloadFile('maske.html', html, 'text/html')
-    downloadFile('maske.SEvariablen.json', sevariablen, 'application/json')
+    // SE-Namenskonvention (2026-07-11): eine Maske = ein Ordner mit
+    // index.basis.source.html + index.basis.SEvariablen.json — belegt durch
+    // ALLE 124 Referenzmasken + behandlung-umbau. Kein Umbenennen von Hand.
+    downloadFile('index.basis.source.html', html, 'text/html')
+    downloadFile('index.basis.SEvariablen.json', sevariablen, 'application/json')
   }
 
   return (

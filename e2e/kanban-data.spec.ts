@@ -37,14 +37,15 @@ async function attachTerminplaner(page: Page) {
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 }
 
-// Toolbar-Export anstoßen und den Inhalt der maske.html einsammeln.
+// Toolbar-Export anstoßen und den HTML-Inhalt einsammeln (Dateinamen nach
+// SE-Konvention: index.basis.source.html + index.basis.SEvariablen.json).
 async function exportMaskHtml(page: Page): Promise<string> {
   const downloads: Download[] = []
   page.on('download', (d) => downloads.push(d))
   await page.getByRole('button', { name: 'Als SoftEngine-Maske exportieren' }).click()
   await expect.poll(() => downloads.length).toBe(2)
-  const maske = downloads.find((d) => d.suggestedFilename() === 'maske.html')
-  if (!maske) throw new Error('maske.html wurde nicht heruntergeladen')
+  const maske = downloads.find((d) => d.suggestedFilename() === 'index.basis.source.html')
+  if (!maske) throw new Error('index.basis.source.html wurde nicht heruntergeladen')
   return await readFile(await maske.path(), 'utf8')
 }
 

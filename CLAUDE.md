@@ -163,7 +163,10 @@ den Export (Kap. 3).
 - ✅ **Kap. 3 — Mini-Export nach SoftEngine (GEBAUT + ABGENOMMEN 2026-07-02:
   Nutzer hat den Export in SoftEngine getestet — funktioniert!)** `[kritisch]`
   **(VORGEZOGEN, war Kap. 8):** Export-Knopf in der Toolbar → `maske.html` +
-  `maske.SEvariablen.json`. Umsetzung: `src/export/exportMask.ts`
+  `maske.SEvariablen.json` *(seit 2026-07-11 nach SE-Namenskonvention:
+  `index.basis.source.html` + `index.basis.SEvariablen.json` — belegt durch
+  alle 124 Referenzmasken + behandlung-umbau; kein Umbenennen von Hand
+  mehr)*. Umsetzung: `src/export/exportMask.ts`
   (deterministischer Baum-Durchlauf → verschachtelte Custom Elements;
   Breite via DERSELBEN flowLayout-Logik wie der Canvas; ROOT_FLOW =
   gemeinsame Wurzel-Fluss-Werte; ASCII-Escaping HTML/JS; Tokens eingebettet,
