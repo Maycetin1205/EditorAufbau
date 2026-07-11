@@ -23,18 +23,19 @@ Ein Block ist eine Komponente mit eigener Klasse:
 
 ## Aktiver Umfang
 
-Aktiv sind nur:
+Der Umfang waechst kapitelweise — der VERBINDLICHE Stand steht in der
+CLAUDE.md-Roadmap. Aktuell (2026-07-11) aktiv:
 
-- Button-Block
-- Text-Block
-- Sidebar zum Hinzufuegen
-- Canvas zum Anzeigen und Auswaehlen
-- Inspector zum Bearbeiten
-- zentraler Editor-Store mit Undo/Redo/Duplizieren/Loeschen
-
-Alle alten Erweiterungen ausserhalb dieses MVP-Kerns wurden entfernt. Spaeter
-koennen einzelne Themen wiederkommen, aber erst wenn der kleine Editor
-verstanden und stabil ist.
+- Bloecke: Bereich, Schaltflaeche, Eingabefeld (FormField v1), Status-Chip,
+  Infobox, Karte, Kanban (+ Spalte), Textblock
+- Sidebar = nur die Baustein-Palette; Canvas (Flow + Drag&Drop);
+  Inspector (Inhalt/Layout/Daten)
+- Kommandozentrale (Toolbar „Steuerung", Z1): Aktionen-Uebersicht +
+  Datenquellen- + Relationen-Bibliothek (aus der Sidebar umgezogen)
+- Stores: Editor (Undo/Redo/Transaktionen), DataSourceStore, RelationStore
+- Export nach SoftEngine (index.basis.source.html +
+  index.basis.SEvariablen.json) mit Validator + Preflight; SE-Laufzeit des
+  Kanbans (Push-Empfang, Hydrierung, Schreibweg)
 
 ## Datenmodell — Container/Flow-Baum (Modell 2)
 
@@ -93,6 +94,10 @@ Block-Typen (`if type===` ist verboten):
 - `acceptsDataSource` (Kap. 5.1): an den Block lässt sich eine Datenquelle
   hängen (`source`-Prop = Vorlagen-id, Inspector-Sektion „Daten", Export
   erzeugt daraus den SEFILELOOP).
+- `blockEvents` (Z1, Vorgriff Kap. 8): Ereignisse des Blocks mit Klarnamen
+  (Kanban: „Karte angeklickt"/„Karte verschoben"; key = Technikwert im
+  Vokabular des alten Editors, z. B. onCardClick). Die Kommandozentrale
+  listet sie; ab Z2 haengen die Aktionsketten daran.
 - `bindableSpots` (Kap. 5.2): bindbare Text-Stellen des Blocks
   (Anzeige-Prop + Klarname). Die Bindung (Feldcode) liegt in `<prop>Field`
   (Default '' in den defaultProps). Der Block annotiert die Stelle mit
@@ -155,7 +160,7 @@ Die Editor-UI ist nach Atomic Design geschichtet. Regel: Struktur von Anfang an
   Inspector-Controls (`src/editor/inspector/controls/`) komponieren `Field` +
   Atom und liegen aus Feature-Gründen dort, sind aber konzeptionell Molecules.
 - **organisms** (`src/editor/`): Sidebar, Inspector, Toolbar, Canvas,
-  BlockPalette.
+  BlockPalette, Kommandozentrale (`src/editor/zentrale/`).
 - **templates** (`src/editor/shell/`): EditorShell = das Gesamt-Layout.
 - **Bloecke** (`src/blocks/`): eigene Achse (Export-Inhalte). Ein einfacher
   Block (Button/Text) ist ein Organismus; bei komplexen Bloecken (spaeter
@@ -176,4 +181,5 @@ Die Editor-UI ist nach Atomic Design geschichtet. Regel: Struktur von Anfang an
 - `src/editor/canvas/BlockHost.tsx`
 - `src/editor/inspector/Inspector.tsx`
 - `src/editor/sidebar/BlockPalette.tsx`
+- `src/editor/zentrale/Kommandozentrale.tsx`
 - `src/editor/shell/EditorShell.tsx`

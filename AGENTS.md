@@ -7,6 +7,15 @@
 > für Ziel + Arbeitsweise + Stand. Architektur-Details: `ARCHITEKTUR.md`.
 > Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
 > der Roadmap nehmen.
+>
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-11): Z2 — Aktionen anlegen**
+> (Z-Programm, siehe Roadmap-Abschnitt „Z-PROGRAMM": Datenmodell
+> Aktionskette am Baustein inkl. Zwischenspeicher/Ergebnis-Name,
+> Ketten-Editor in der Kommandozentrale, erster Schritt-Typ „Werkzeug
+> starten" bis in den Export, dann SE-Echttest). Der Kanban-DATENPFAD ist
+> KOMPLETT und vom Nutzer in SoftEngine bestätigt (2026-07-11: Anmeldung,
+> Karten mit Inhalt). Danach: Z3, Z4, dann K-Rest (K1–K5b, K6–K8), dann
+> Stabilisierungs-Rest.
 
 ## Was der Editor ist (Nordstern)
 
