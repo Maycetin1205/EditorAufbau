@@ -1,22 +1,44 @@
 # Aufbau-Editor — Hier weitermachen
 
-> **Für KI-Chats:** Diese Datei zuerst lesen. Sie ist die verbindliche Wahrheit
-> für Ziel + Arbeitsweise + Stand. Architektur-Details: `ARCHITEKTUR.md`.
-> Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
-> der Roadmap nehmen.
+> **Für KI-Chats:** Diese Datei zuerst lesen — sie ist das NOTIZBUCH für
+> Ziel + Arbeitsweise + Stand. **Nutzer-Korrektur 2026-07-13: NICHT mehr
+> als „reine Wahrheit" behandeln** — aktuelle Aussagen des Nutzers und der
+> Code schlagen diese Datei; bei Widerspruch nachfragen statt der Datei
+> glauben. Architektur-Details: `ARCHITEKTUR.md`. Wenn der Nutzer „wir
+> machen weiter" sagt → hier den nächsten offenen Punkt nehmen.
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13): V2 — geführte
-> Bindungsstrecke (K6 vorgezogen, siehe „EINSCHUB V-PROGRAMM" im
-> Z-Programm): klickbares Mockup dem Nutzer zur Abnahme vorlegen, ERST
-> nach Abnahme bauen.** Parallel offen: SE-Echttest Z2 (Kette „Werkzeug
-> starten (START_TOOL)" an „Karte angeklickt" mit einer ECHTEN
-> Werkzeug-Nummer der Installation anlegen — ⚠ Nummern sind je
-> Installation individuell, 3003 ist in der Empfang-Referenz das
-> REFRESH-Werkzeug —, exportieren, in SoftEngine Karte anklicken).
-> Danach: Z3 („Relation ausführen" mit Antwort-Warteschlange +
-> Zwischenspeicher-Ausführung, dann „Wert setzen"/„Daten neu laden"),
-> Z4, dann K-Rest, dann Stabilisierungs-Rest. Der Kanban-DATENPFAD ist
-> KOMPLETT und vom Nutzer in SoftEngine bestätigt (2026-07-11).
+> **⚑ ARBEITSWEISE-KORREKTUR (Nutzer, 2026-07-13, verbindlich):
+> Prüfungen (tsc/eslint/Tests) NIE mehr zwischendurch laufen lassen —
+> EINMAL gebündelt, im Hintergrund, unmittelbar vor einem Commit. Der
+> Nutzer wartet nie auf Testläufe.**
+>
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13 nachmittags):
+> Kanban-Anschließen neu (V2/K6). Der Nutzer hat den Mockup-Bau
+> GESTOPPT — erste Frage im neuen Chat: Absegnungs-Form klären (Konzept
+> in Worten im Chat durchsprechen ODER klickbare Probeseite), vorher
+> NICHTS bauen.** Inhalt der Strecke (Nutzer-Beschwerden 2026-07-13;
+> Merkzettel liegt auch im KI-Gedächtnis
+> `memory/offene-ux-punkte-bindung.md`): EIN Ort statt springendem
+> Inspector (die Quellen-ZUWEISUNG gehört in die Strecke, die Bibliothek
+> bleibt in der Steuerung — heute wirken „Datenquellen" wie doppelt);
+> geführte Reihenfolge Quelle → Einsortieren-Feld → Spalten →
+> Kartenstellen → Zurückschreiben; Spaltenwert: Standard = Spaltentitel,
+> abweichend nur per Klick-Auswahl vorhandener Werte, NIE Freitext;
+> Board zeigt sichtbar „noch nicht angeschlossen" (heute stellt es sich
+> stumm tot); Export blockt mit Klartext statt tote Maske auszugeben.
+> Danach: Bauen nach Abnahme → Optik-Runde Steuerung/Inspector
+> (Nutzer: „potthässlich") → SE-Echttest Z2 (Kette „Werkzeug starten"
+> mit ECHTER Werkzeug-Nummer der Installation; ⚠ Nummern sind je
+> Installation individuell, 3003 = REFRESH-Werkzeug der
+> Empfang-Referenz) → Z3 („Relation ausführen" mit Antwort-Warteschlange
+> + Zwischenspeicher — der Nutzer-Echtlauf `testlauf.txt` zeigt exakt
+> diese Kette live: PUT → GET 640 holt neue Satznummer → PUT auf die
+> neue Nummer) → Z4 → K-Rest → Stabilisierungs-Rest. Heute erledigt:
+> Aufräum-Runde committed (cd822f1 Wortlaut „Farbe"/„Einsortieren
+> nach"/ⓘ statt Dauertext; 463f674 Aktionen-Liste unterscheidbare
+> Namen). Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer in SoftEngine
+> bestätigt (2026-07-11); das GET_RELATION-Dauerfeuer in Logs ist eine
+> GEWOLLTE Refresh-IDB der Installation, kein Fehler.
 
 ## Was der Editor ist (Nordstern)
 
