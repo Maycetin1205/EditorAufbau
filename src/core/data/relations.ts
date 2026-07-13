@@ -78,6 +78,17 @@ export function relIdFromIdbId(idbId: string): string {
   return idbId.replace(/^IDB/, '')
 }
 
+// Deutsches Datum für den Platzhalter {NOW_DATE} ('08.07.2026' — dieselbe
+// Form wie die Datums-Felder der Referenzmaske). Pur: der Aufrufer stellt
+// das Datum (Laufzeit das echte, Tests ein festes). Hierher gezogen aus
+// seRuntime (Z2): das Vokabular {NOW_DATE} gehört diesem Modul, und mit
+// seAktionen gibt es den zweiten Konsumenten.
+export function formatNowDate(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return `${dd}.${mm}.${d.getFullYear()}`
+}
+
 // Feldcode 'pos_len' zerlegen ('253_30' -> pos '253', len '30').
 // Kein pos_len-Code -> null (direkte Property-Namen haben keine Position).
 export function splitFieldCode(code: string): { pos: string; len: string } | null {
@@ -100,10 +111,15 @@ export function resolveParams(
 
 // Unbekannte {PLATZHALTER} eines Param-Strings (für die Formular-Validierung
 // in 5.5b: Tippfehler wie {PINDX} würden sonst stumm zu '' aufgelöst).
-export function unknownPlaceholders(param: string): string[] {
+// `known` erlaubt engere Vokabulare (Z2: Werkzeug-Parameter kennen nur eine
+// Teilmenge, AKTIONS_PLATZHALTER) — Default bleibt das Relations-Vokabular.
+export function unknownPlaceholders(
+  param: string,
+  known: readonly string[] = RELATION_PLACEHOLDERS,
+): string[] {
   const acc: string[] = []
   for (const m of param.matchAll(/\{([A-Z_]+)\}/g)) {
-    if (!(RELATION_PLACEHOLDERS as readonly string[]).includes(m[1])) acc.push(m[1])
+    if (!known.includes(m[1])) acc.push(m[1])
   }
   return acc
 }

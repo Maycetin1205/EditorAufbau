@@ -21,6 +21,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { firstDescendantOfType } from '../core/blocks/treeQuery'
+import { serializeBlockEvents } from '../core/data/aktionen'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import { dataSourceStore } from '../state/DataSourceStore'
@@ -144,7 +145,15 @@ function nodeToHtml(
     })
     .join('')
 
-  const open = `${pad}<${def.tagName}${attrs}${styleAttr(node, parentDirection, def.lockedWidth)}>`
+  // Aktionsketten (Z2) reisen als EIN data-Attribut mit dem Element — der
+  // Export kennt keine Block-ids, ein FF_-Global (Muster FF_RELATIONS)
+  // schiede damit aus. Deterministisch: Ereignis-Reihenfolge = Registry
+  // (blockEvents), Editor-ids reisen nicht mit (serializeBlockEvents).
+  // Die Laufzeit (seAktionen) liest das Attribut zurück.
+  const aktionen = serializeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key))
+  const aktionenAttr = aktionen ? ` data-ff-aktionen="${escapeHtmlAttr(aktionen)}"` : ''
+
+  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${styleAttr(node, parentDirection, def.lockedWidth)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }

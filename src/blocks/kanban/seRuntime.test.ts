@@ -5,11 +5,13 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
+// formatNowDate ist mit Z2 nach core/data/relations gezogen (zweiter
+// Konsument seAktionen) — der Testfall selbst ist unveraendert.
+import { formatNowDate } from '../../core/data/relations'
 import {
   columnIndexFor,
   findRuntimeDataSource,
   findRuntimeRelation,
-  formatNowDate,
   getField,
   messagePayload,
   payloadDaten,

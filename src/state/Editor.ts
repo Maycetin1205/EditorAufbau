@@ -13,6 +13,7 @@ import {
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { firstDescendantOfType } from '../core/blocks/treeQuery'
+import { sanitizeBlockEvents, type BlockEventsMap } from '../core/data/aktionen'
 import { type DataSource } from '../core/data/dataSources'
 import { dataSourceStore } from './DataSourceStore'
 import { Subject } from './Subject'
@@ -87,18 +88,24 @@ function migrateKanbanVorlage(
 // Props, repariert parentId und verwirft Waisen/Zyklen.
 function sanitizeTree(raw: Record<string, unknown>): BlockTree {
   const tree = createEmptyTree()
-  const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown }>
+  const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   migrateKanbanVorlage(src)
 
   const addChild = (parentId: string, childId: unknown): void => {
     if (typeof childId !== 'string' || tree[childId]) return
     const node = src[childId]
     if (!node || typeof node !== 'object') return
-    if (typeof node.type !== 'string' || !getBlockDefinition(node.type)) return
+    if (typeof node.type !== 'string') return
+    const def = getBlockDefinition(node.type)
+    if (!def) return
+    // Aktionsketten (Z2) laufen durch den eigenen strengen Lader — nur
+    // Ereignis-Keys, die der Typ in der Registry deklariert.
+    const events = sanitizeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key))
     tree[childId] = {
       id: childId,
       type: node.type,
       props: normalizeProps(node.type, node.props && typeof node.props === 'object' ? node.props as Record<string, unknown> : {}),
+      ...(events ? { events } : {}),
       parentId,
       childIds: [],
     }
@@ -168,7 +175,15 @@ function cloneSubtree(
     const src = tree[srcId]
     const newId = crypto.randomUUID()
     const childIds = src.childIds.map((c) => cloneRec(c, newId))
-    nodes[newId] = { id: newId, type: src.type, props: deepClone(src.props), parentId, childIds }
+    nodes[newId] = {
+      id: newId,
+      type: src.type,
+      props: deepClone(src.props),
+      // Aktionsketten (Z2) gehören zum Baustein — die Kopie behält sie.
+      ...(src.events ? { events: deepClone(src.events) } : {}),
+      parentId,
+      childIds,
+    }
     return newId
   }
   const rootId = cloneRec(id, tree[id].parentId)
@@ -414,6 +429,26 @@ export class Editor extends Subject<Editor> {
       ...this._tree,
       [id]: { ...node, props: { ...node.props, [attr]: value } },
     }
+    this.notify(this)
+  }
+
+  // Aktionsketten eines Bausteins ersetzen (Z2): Ereignis-Key → Schritte.
+  // Leere Ketten werden abgeräumt; ganz ohne Ketten entfällt das Feld.
+  // Ein Aufruf = EIN History-Eintrag (die Zentrale schreibt pro
+  // Bedienschritt, Muster updateProperty) — Ctrl+Z gilt damit auch für
+  // Aktions-Änderungen.
+  updateBlockEvents(id: string, events: BlockEventsMap): void {
+    const node = this._tree[id]
+    if (!node || id === ROOT_ID) return
+    this.pushHistory()
+    const clean: BlockEventsMap = {}
+    for (const [key, steps] of Object.entries(events)) {
+      if (steps.length > 0) clean[key] = steps
+    }
+    const next: BlockNode = { ...node }
+    if (Object.keys(clean).length > 0) next.events = clean
+    else delete next.events
+    this._tree = { ...this._tree, [id]: next }
     this.notify(this)
   }
 

@@ -16,6 +16,8 @@ export const TEST_STRICT_BOX = 't-strict-box'
 export const TEST_BOARD = 't-board'
 // Container mit Datenquellen-Fähigkeit (acceptsDataSource, Kap. 5.1/5.2).
 export const TEST_DATA_BOX = 't-daten-box'
+// Block mit Ereignissen (blockEvents, Z1/Z2) — für Aktionsketten-Tests.
+export const TEST_EVENT_BLOCK = 't-event-block'
 
 export function registerTestBlocks(): void {
   if (registered) return
@@ -88,5 +90,20 @@ export function registerTestBlocks(): void {
     resizableWidth: true,
     resizableHeight: false,
     acceptsDataSource: true,
+  })
+  registerBlockType({
+    type: TEST_EVENT_BLOCK,
+    tagName: 'ff-t-event-block',
+    displayName: 'Testereignisblock',
+    category: 'anzeige',
+    defaultProps: { ...FLOW_DEFAULTS },
+    customProperties: [],
+    acceptsChildren: false,
+    resizableWidth: true,
+    resizableHeight: false,
+    blockEvents: [
+      { key: 'onClick', name: 'Klick' },
+      { key: 'onPing', name: 'Angepingt' },
+    ],
   })
 }

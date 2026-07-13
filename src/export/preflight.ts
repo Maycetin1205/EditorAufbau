@@ -11,6 +11,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { stepProblem } from '../core/data/aktionen'
 import type { DataSource } from '../core/data/dataSources'
 import type { CheckResult } from './validator'
 
@@ -35,6 +36,23 @@ export function preflightMask(
           ok: false,
           detail: `Baustein "${def.displayName ?? def.type}" verweist auf eine geloeschte oder unbekannte Datenquelle.`,
         })
+      }
+    }
+    // Z2: Aktionsketten mit nicht exportfaehigen Schritten (z. B. "Werkzeug
+    // starten" ohne Werkzeug-Nummer) taeten in der Maske stumm nichts —
+    // tote Aktion, darum blockieren. Das Typ-Wissen liegt im Modell
+    // (stepProblem); hier nur Baustein + Ereignis als Klarnamen dazu.
+    for (const [eventKey, steps] of Object.entries(node.events ?? {})) {
+      const eventName = def?.blockEvents?.find((e) => e.key === eventKey)?.name ?? eventKey
+      for (const step of steps) {
+        const problem = stepProblem(step)
+        if (problem) {
+          results.push({
+            name: 'Aktion unvollstaendig',
+            ok: false,
+            detail: `Baustein "${def?.displayName ?? node.type}", Ereignis "${eventName}": ${problem}`,
+          })
+        }
       }
     }
     node.childIds.forEach((childId) => visit(tree[childId]))

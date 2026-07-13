@@ -10,6 +10,7 @@ import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { connectClickAktionen } from '../shared/seAktionen'
 
 export class ButtonBlock extends BasicBlock {
   static readonly blockType = 'button'
@@ -57,6 +58,14 @@ export class ButtonBlock extends BasicBlock {
       data-ff-editable
       @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'label')}
     >${this.label}</button>`
+  }
+
+  // Z2: in der EXPORTIERTEN Maske führt der Klick die Aktionskette aus
+  // (data-ff-aktionen-Attribut). Editor-Buttons tragen data-ff-editor und
+  // verdrahten nie — Muster connectBoard des Kanbans.
+  connectedCallback(): void {
+    super.connectedCallback()
+    connectClickAktionen(this, 'onClick')
   }
 }
 

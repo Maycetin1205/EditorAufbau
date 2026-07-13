@@ -9,7 +9,12 @@ import { beforeEach, describe, expect, it } from 'vitest'
 // kanban-spalte, card) für die P1.1-Migrationstests.
 import '../blocks/kanban/KanbanBlock'
 import { Editor } from './Editor'
-import { registerTestBlocks, TEST_BLOCK, TEST_BOX } from '../test/testBlocks'
+import {
+  registerTestBlocks,
+  TEST_BLOCK,
+  TEST_BOX,
+  TEST_EVENT_BLOCK,
+} from '../test/testBlocks'
 
 registerTestBlocks()
 
@@ -85,6 +90,39 @@ describe('sanitizeTree (Laden verteidigt sich)', () => {
     localStorage.setItem(KEY, '{{{kein json')
     const ed = new Editor()
     expect(ed.blockCount).toBe(0) // leerer, benutzbarer Editor
+  })
+})
+
+describe('Aktionsketten (Z2) im Speicher', () => {
+  const schritt = { id: 's1', type: 'START_TOOL', resultKey: '', toolNr: '3003', toolParams: ['{PINDEX}'] }
+
+  it('Ketten überleben das Neuladen', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+        a: { id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [], events: { onClick: [schritt] } },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('a')?.events).toEqual({ onClick: [schritt] })
+  })
+
+  it('verwirft Ketten an nicht deklarierten Ereignissen und kaputte Schritte', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'b', 'c'] },
+        // onFremd deklariert der Typ nicht -> fliegt; onClick bleibt.
+        a: { id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [], events: { onClick: [schritt], onFremd: [schritt] } },
+        // kaputter Schritt (toolNr als Zahl) -> ganze Kette weg, Feld entfällt.
+        b: { id: 'b', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [], events: { onClick: [{ ...schritt, toolNr: 7 }] } },
+        // Block ohne blockEvents: events-Müll wird nie übernommen.
+        c: { id: 'c', type: TEST_BLOCK, props: {}, parentId: 'root', childIds: [], events: { onClick: [schritt] } },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('a')?.events).toEqual({ onClick: [schritt] })
+    expect(ed.getNode('b')?.events).toBeUndefined()
+    expect(ed.getNode('c')?.events).toBeUndefined()
   })
 })
 

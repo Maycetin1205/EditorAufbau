@@ -14,14 +14,27 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Database, Link2, ListChecks, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Copy,
+  Database,
+  Link2,
+  ListChecks,
+  Pencil,
+  Plus,
+  X,
+} from 'lucide-react'
+import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { ROOT_ID } from '../../core/blocks/BlockData'
 import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { stepTypeName, type ActionStep } from '../../core/data/aktionen'
 import { useEditor } from '../../state/useEditor'
 import { DataSourceList } from '../sidebar/DataSourceList'
 import { RelationList } from '../sidebar/RelationList'
+import { StepForm } from './StepForm'
 
 type Bereich = 'aktionen' | 'datenquellen' | 'relationen'
 
@@ -95,13 +108,18 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
   )
 }
 
-// Aktionen-Übersicht (Z1): Bausteine der Maske mit ihren Ereignissen
-// (Registry: blockEvents, nur Klarnamen) in Baumreihenfolge. Ist im Canvas
-// gerade ein Baustein ausgewählt, ist sein Eintrag markiert und die Liste
-// scrollt zu ihm. Die Schrittketten entstehen im nächsten Paket (Z2) genau
-// hier.
+// Aktionen-Übersicht + Ketten-Editor (Z1/Z2): Bausteine der Maske mit ihren
+// Ereignissen (Registry: blockEvents, nur Klarnamen) in Baumreihenfolge.
+// Ist im Canvas gerade ein Baustein ausgewählt, ist sein Eintrag markiert
+// und die Liste scrollt zu ihm. Je Ereignis lassen sich Schritte anlegen
+// („+ Schritt" → StepForm), umsortieren (↑/↓), bearbeiten, duplizieren und
+// löschen. Alle Änderungen laufen über editor.updateBlockEvents — ein
+// Bedienschritt = EIN Undo-Eintrag, Ctrl+Z gilt auch hier.
 function AktionenBereich() {
   const ed = useEditor()
+  // Offenes Schritt-Formular: an welchem Baustein/Ereignis, ggf. welcher
+  // Schritt (bearbeiten). null = kein Formular offen.
+  const [form, setForm] = useState<{ blockId: string; eventKey: string; step?: ActionStep } | null>(null)
 
   const eintraege: Array<{ id: string; name: string; events: readonly BlockEventSpec[] }> = []
   const walk = (id: string): void => {
@@ -116,6 +134,27 @@ function AktionenBereich() {
     }
   }
   walk(ROOT_ID)
+
+  // Kette eines Ereignisses ersetzen (alle Mutationen laufen hierüber).
+  const setChain = (blockId: string, eventKey: string, steps: ActionStep[]): void => {
+    const node = ed.tree[blockId]
+    if (!node) return
+    ed.updateBlockEvents(blockId, { ...(node.events ?? {}), [eventKey]: steps })
+  }
+
+  const moveStep = (blockId: string, eventKey: string, steps: ActionStep[], from: number, to: number): void => {
+    const next = [...steps]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    setChain(blockId, eventKey, next)
+  }
+
+  const duplicateStep = (blockId: string, eventKey: string, steps: ActionStep[], at: number): void => {
+    const copy: ActionStep = { ...steps[at], toolParams: [...steps[at].toolParams], id: crypto.randomUUID() }
+    const next = [...steps]
+    next.splice(at + 1, 0, copy)
+    setChain(blockId, eventKey, next)
+  }
 
   // Liegt die Canvas-Auswahl im Teilbaum dieses Eintrags?
   const inSubtree = (id: string): boolean => {
@@ -153,19 +192,94 @@ function AktionenBereich() {
           }`}
         >
           <h3 className="text-xs font-semibold">{e.name}</h3>
-          <ul className="mt-1.5 flex flex-col gap-1">
-            {e.events.map((ev) => (
-              <li key={ev.key} className="flex items-baseline justify-between gap-2 text-xs">
-                <span>{ev.name}</span>
-                <span className="text-muted-foreground">Noch keine Schritte</span>
-              </li>
-            ))}
+          <ul className="mt-1.5 flex flex-col gap-2">
+            {e.events.map((ev) => {
+              const steps = ed.tree[e.id]?.events?.[ev.key] ?? []
+              return (
+                <li key={ev.key} className="flex flex-col gap-1 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{ev.name}</span>
+                    <div className="flex items-center gap-2">
+                      {steps.length === 0 && (
+                        <span className="text-muted-foreground">Noch keine Schritte</span>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setForm({ blockId: e.id, eventKey: ev.key })}
+                      >
+                        <Plus size={12} /> Schritt
+                      </Button>
+                    </div>
+                  </div>
+                  {steps.length > 0 && (
+                    <ol className="flex flex-col gap-1">
+                      {steps.map((s, i) => (
+                        <li
+                          key={s.id}
+                          className="flex items-center gap-1 rounded-md border border-border bg-secondary/40 px-2 py-1"
+                        >
+                          <span className="w-4 shrink-0 text-right text-muted-foreground">{i + 1}.</span>
+                          <span className="min-w-0 flex-1 truncate">
+                            {stepTypeName(s.type)}
+                            {s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
+                            {s.toolParams.length > 0 ? ` (${s.toolParams.join(', ')})` : ''}
+                          </span>
+                          <IconButton
+                            aria-label={`Schritt ${i + 1} nach oben`}
+                            disabled={i === 0}
+                            onClick={() => moveStep(e.id, ev.key, steps, i, i - 1)}
+                          >
+                            <ArrowUp size={12} />
+                          </IconButton>
+                          <IconButton
+                            aria-label={`Schritt ${i + 1} nach unten`}
+                            disabled={i === steps.length - 1}
+                            onClick={() => moveStep(e.id, ev.key, steps, i, i + 1)}
+                          >
+                            <ArrowDown size={12} />
+                          </IconButton>
+                          <IconButton
+                            aria-label={`Schritt ${i + 1} bearbeiten`}
+                            onClick={() => setForm({ blockId: e.id, eventKey: ev.key, step: s })}
+                          >
+                            <Pencil size={12} />
+                          </IconButton>
+                          <IconButton
+                            aria-label={`Schritt ${i + 1} duplizieren`}
+                            onClick={() => duplicateStep(e.id, ev.key, steps, i)}
+                          >
+                            <Copy size={12} />
+                          </IconButton>
+                          <IconButton
+                            aria-label={`Schritt ${i + 1} löschen`}
+                            onClick={() => setChain(e.id, ev.key, steps.filter((x) => x.id !== s.id))}
+                          >
+                            <X size={12} />
+                          </IconButton>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">
-        Schrittketten anlegen folgt als nächstes Paket.
-      </p>
+      {form && (
+        <StepForm
+          step={form.step}
+          onClose={() => setForm(null)}
+          onSave={(step) => {
+            const steps = ed.tree[form.blockId]?.events?.[form.eventKey] ?? []
+            const next = form.step
+              ? steps.map((s) => (s.id === step.id ? step : s))
+              : [...steps, step]
+            setChain(form.blockId, form.eventKey, next)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -6,6 +6,7 @@
 // werden — Fehlschlag dem Nutzer melden, er entscheidet.
 
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { ActionStep } from '../core/data/aktionen'
 import { Editor } from './Editor'
 import {
   registerTestBlocks,
@@ -13,6 +14,7 @@ import {
   TEST_BOARD,
   TEST_BOX,
   TEST_DATA_BOX,
+  TEST_EVENT_BLOCK,
   TEST_STRICT_BOX,
 } from '../test/testBlocks'
 
@@ -174,6 +176,49 @@ describe('Undo/Redo', () => {
     expect(ed.getNode(a.id)?.props.width).toBe(300)
     ed.undo() // genau EIN Schritt zurück — vor die ganze Geste
     expect(ed.getNode(a.id)?.props.width).toBe('auto')
+  })
+})
+
+describe('updateBlockEvents (Aktionsketten, Z2)', () => {
+  const schritt = (over: Partial<ActionStep> = {}): ActionStep => ({
+    id: 's1', type: 'START_TOOL', resultKey: '', toolNr: '3003', toolParams: [], ...over,
+  })
+
+  it('setzt Ketten am Baustein und räumt leere Ketten/das Feld ab', () => {
+    const a = add(TEST_EVENT_BLOCK)
+    ed.updateBlockEvents(a.id, { onClick: [schritt()], onPing: [] })
+    expect(ed.getNode(a.id)?.events).toEqual({ onClick: [schritt()] })
+    ed.updateBlockEvents(a.id, { onClick: [] })
+    expect(ed.getNode(a.id)?.events).toBeUndefined()
+  })
+
+  it('ein Aufruf = EIN Undo-Schritt (Ctrl+Z gilt auch für Aktionen)', () => {
+    const a = add(TEST_EVENT_BLOCK)
+    ed.updateBlockEvents(a.id, { onClick: [schritt()] })
+    ed.updateBlockEvents(a.id, { onClick: [schritt(), schritt({ id: 's2', toolNr: '7' })] })
+    ed.undo()
+    expect(ed.getNode(a.id)?.events).toEqual({ onClick: [schritt()] })
+    ed.undo()
+    expect(ed.getNode(a.id)?.events).toBeUndefined()
+    ed.redo()
+    expect(ed.getNode(a.id)?.events).toEqual({ onClick: [schritt()] })
+  })
+
+  it('duplicateBlock kopiert die Ketten mit', () => {
+    const a = add(TEST_EVENT_BLOCK)
+    ed.updateBlockEvents(a.id, { onClick: [schritt({ toolParams: ['{PINDEX}'] })] })
+    const copy = ed.duplicateBlock(a.id)
+    expect(copy?.events).toEqual({ onClick: [schritt({ toolParams: ['{PINDEX}'] })] })
+    // Kopie ist unabhängig: Original ändern lässt die Kopie unberührt.
+    ed.updateBlockEvents(a.id, { onClick: [] })
+    expect(ed.getNode(copy!.id)?.events).toEqual({ onClick: [schritt({ toolParams: ['{PINDEX}'] })] })
+  })
+
+  it('ignoriert unbekannte Knoten und die Wurzel', () => {
+    ed.updateBlockEvents('gibt-es-nicht', { onClick: [schritt()] })
+    ed.updateBlockEvents(ed.rootId, { onClick: [schritt()] })
+    expect(ed.canUndo).toBe(false)
+    expect(ed.getNode(ed.rootId)?.events).toBeUndefined()
   })
 })
 

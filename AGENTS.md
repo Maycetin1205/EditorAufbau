@@ -1,6 +1,6 @@
 # Aufbau-Editor — Hier weitermachen
 
-> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-11).** CLAUDE.md ist
+> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-13).** CLAUDE.md ist
 > das Original — jede Änderung immer in BEIDE Dateien ziehen.
 
 > **Für KI-Chats:** Diese Datei zuerst lesen. Sie ist die verbindliche Wahrheit
@@ -8,14 +8,17 @@
 > Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
 > der Roadmap nehmen.
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-11): Z2 — Aktionen anlegen**
-> (Z-Programm, siehe Roadmap-Abschnitt „Z-PROGRAMM": Datenmodell
-> Aktionskette am Baustein inkl. Zwischenspeicher/Ergebnis-Name,
-> Ketten-Editor in der Kommandozentrale, erster Schritt-Typ „Werkzeug
-> starten" bis in den Export, dann SE-Echttest). Der Kanban-DATENPFAD ist
-> KOMPLETT und vom Nutzer in SoftEngine bestätigt (2026-07-11: Anmeldung,
-> Karten mit Inhalt). Danach: Z3, Z4, dann K-Rest (K1–K5b, K6–K8), dann
-> Stabilisierungs-Rest.
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13): SE-Echttest Z2 durch den
+> Nutzer.** Z2 (Aktionen anlegen) ist GEBAUT + verifiziert (202 Unit +
+> 30 E2E, live belegt) — Echttest: Kette „Werkzeug starten" an „Karte
+> angeklickt" mit einer ECHTEN Werkzeug-Nummer der Installation anlegen
+> (Steuerung → Aktionen; ⚠ Nummern sind je Installation individuell,
+> 3003 ist in der Empfang-Referenz das REFRESH-Werkzeug), exportieren,
+> in SoftEngine Karte anklicken. Danach: Z3 („Relation ausführen" mit
+> Antwort-Warteschlange + Zwischenspeicher-Ausführung, dann „Wert
+> setzen"/„Daten neu laden"), Z4, dann K-Rest (K1–K5b, K6–K8), dann
+> Stabilisierungs-Rest. Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer
+> in SoftEngine bestätigt (2026-07-11).
 
 ## Was der Editor ist (Nordstern)
 
@@ -912,12 +915,48 @@ den Export (Kap. 3).
       grün (zentrale.spec neu: Umzug/Klarnamen/Sprung/Escape-Schichtung;
       datenquellen- + relationen.spec auf den neuen Ort umgebaut, nicht
       abgeschwächt); live im Browser verifiziert.
-    - **Z2 Aktionen anlegen:** Datenmodell Kette am Baustein (jeder
-      Schritt mit optionalem Ergebnis-Namen — der Zwischenspeicher steckt
-      ab Tag 1 im Modell), Ketten-Editor in der Zentrale (+ Schritt,
-      Reihenfolge, duplizieren, löschen), erster Schritt-Typ „Werkzeug
-      starten" KOMPLETT bis in den Export (Karte → Karteikarte 3003),
-      danach sofort SE-Echttest.
+    - ✅ **Z2 Aktionen anlegen (GEBAUT 2026-07-13; SE-ECHTTEST DURCH DEN
+      NUTZER STEHT AUS):** Modell `src/core/data/aktionen.ts` nach
+      relations.ts-Muster — Ketten liegen als neues optionales Feld
+      `events` am BlockNode (Ereignis-Key aus der Registry → Schritte;
+      bewusst NICHT in props, die speisen Export-Attribute/Lit-Properties;
+      wie block.events im alten Editor). Jeder Schritt trägt den
+      optionalen Ergebnis-Namen `resultKey` (Zwischenspeicher ab Tag 1 im
+      MODELL; gefüllt/angezeigt erst mit Z3 „Relation ausführen").
+      Schritt-Typen als Registry STEP_TYPES (Z2: nur „Werkzeug
+      starten"/START_TOOL, Klarname sichtbar); strenger Lader
+      `sanitizeBlockEvents` (nur registry-deklarierte Ereignisse; EIN
+      kaputter Schritt verwirft die GANZE Kette — Reihenfolge-Semantik).
+      Ketten-Editor im Aktionen-Bereich der Zentrale: „+ Schritt" →
+      StepForm-Modal (RelationForm-Muster, Validierung beim Speichern:
+      Nummer als Zahl, Platzhalter-Teilmenge {PINDEX}/{VALUE}/{NOW_DATE});
+      ↑/↓, bearbeiten, duplizieren, löschen; 1 Bedienschritt = 1 Undo
+      (neues `editor.updateBlockEvents`; duplicateBlock + Persistenz
+      nehmen events mit). Export: Ketten reisen als EIN Attribut
+      `data-ff-aktionen` (deterministisch in Registry-Reihenfolge, ohne
+      Editor-ids — der Export kennt keine Block-ids, darum kein
+      FF_-Global); Preflight blockiert „Werkzeug starten" ohne Nummer
+      (stepProblem im Modell). Laufzeit `src/blocks/shared/seAktionen.ts`:
+      seStartTool EXAKT nach Referenz (empfang Z. 861–882:
+      `sendBWLinkIntern('0,START_TOOL,<nr>[,params URL-kodiert]')`,
+      Fallback `basisHTML_SND_MSG('START_TOOL',{NR,PARAMS})`). ⚠
+      Werkzeug-Nummern sind je Installation INDIVIDUELL — 3003 ist in der
+      Empfang-Referenz das REFRESH-Werkzeug, nicht zwingend eine
+      Karteikarte; darum freie Eingabe, nichts festverdrahtet (dieselbe
+      Regel wie Relations-NRs). Ausführung mit Ketten-Sperre je
+      Element+Ereignis (Muster __FF_CHAIN_LOCK alter Editor; bewusst KEIN
+      Zeit-Debounce — eine Kette darf zwei Werkzeuge nacheinander
+      starten). Verdrahtet: Schaltfläche „Klick" (connectedCallback,
+      data-ff-editor-Wächter wie connectBoard), Kanban „Karte angeklickt"
+      (delegierter Klick, nur Datenkarten MIT Satznummer — dieselbe Regel
+      wie Ziehen) und „Karte verschoben" NACH erfolgreichem
+      Zurückschreiben ({VALUE} = neuer Spaltenwert). formatNowDate nach
+      relations.ts gezogen (zweiter Konsument). 202 Unit (aktionen.test
+      neu; Editor-/persistence-/preflight-/Export-Tests erweitert) +
+      30 E2E grün (aktionen.spec neu: Formular-Validierung, alle
+      Ketten-Operationen, Undo, Klick → `0,START_TOOL,3003,7`, Drop →
+      erst PUT, dann `0,START_TOOL,4000,3`); live verifiziert mit
+      Screenshots (dashboard/z2-*.png).
     - **Z3 „Relation ausführen":** Antwort-Warteschlange
       (seGetNewIndex-Muster) + Zwischenspeicher-Ausführung
       ({name}-Platzhalter in Folgeschritten), dann „Wert setzen" +
@@ -988,6 +1027,15 @@ den Export (Kap. 3).
   - **K8 Abnahme:** Empfangs-Board MIT Zimmer-Unterbereichen im Editor
     nachbauen, Export in SoftEngine testen, Screenshots Editor vs. Maske.
     Erst nach Nutzer-Abnahme ist Kanban „fertig".
+  - **Merkliste K-Rest (2026-07-13, verwertbare Punkte aus einer
+    Codex-Zweitmeinung — vom Nutzer zur Aufnahme freigegeben, NICHT jetzt
+    bauen):** (a) Avatar/Symbol-Bereich in der Musterkarte: generische
+    Wert→Symbol-Zuordnung (z. B. Tierart→Tiersymbol, unbekannt→neutral),
+    klein (~30px), Tokens, KEIN eigener Palette-Baustein → gehört zu K5;
+    (b) Spalte duplizieren; (c) Leer-Zustands-Text je Spalte einstellbar;
+    (d) Dichte kompakt/normal fürs Board (mit Zielbild-Abnahme). Die
+    übrigen Codex-Vorschläge (Kartenvorlage-Kasten, lose Beispieldaten,
+    „+ Karte") widersprechen getroffenen Entscheidungen und sind verworfen.
   **Bewusste Grenzen (K-Programm):** keine Karteikarte/DetailCard, keine
   Navigation, kein Terminkalender, keine Aktionen (Kap. 8); Spalte
   abtrennen + mehrere Quellen pro Board nur, wenn eine echte Maske es

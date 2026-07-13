@@ -46,3 +46,36 @@ describe('preflightMask — S1a: geloeschte Datenquelle blockiert den Export', (
     expect(failed[0].name).toBe('Datenquelle fehlt')
   })
 })
+
+describe('preflightMask — Z2: unvollstaendige Aktionsschritte blockieren den Export', () => {
+  // Kette am Board-Knoten anbringen (Ereignis onCardClick aus der Registry).
+  function boardTreeMitKette(toolNr: string): BlockTree {
+    const tree = boardTree('terminplaner')
+    const boardId = tree[ROOT_ID].childIds[0]
+    tree[boardId] = {
+      ...tree[boardId],
+      events: {
+        onCardClick: [
+          { id: 's1', type: 'START_TOOL', resultKey: '', toolNr, toolParams: [] },
+        ],
+      },
+    }
+    return tree
+  }
+
+  it('vollstaendiger Schritt ist kein Fehler', () => {
+    expect(failedChecks(preflightMask(boardTreeMitKette('3003'), LIB))).toEqual([])
+  })
+
+  it('"Werkzeug starten" ohne Nummer blockiert mit verstaendlicher Meldung (Klarnamen)', () => {
+    const failed = failedChecks(preflightMask(boardTreeMitKette(''), LIB))
+    expect(failed).toHaveLength(1)
+    expect(failed[0].name).toBe('Aktion unvollstaendig')
+    expect(failed[0].detail).toContain('Kanban')
+    expect(failed[0].detail).toContain('Karte angeklickt')
+    expect(failed[0].detail).toContain('Werkzeug-Nummer')
+    // Technikwerte erscheinen NICHT in der Meldung.
+    expect(failed[0].detail).not.toContain('onCardClick')
+    expect(failed[0].detail).not.toContain('START_TOOL')
+  })
+})

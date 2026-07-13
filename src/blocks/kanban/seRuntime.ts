@@ -32,6 +32,7 @@
 
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import {
+  formatNowDate,
   RELATION_VERBS,
   relIdFromIdbId,
   resolveParams,
@@ -39,6 +40,7 @@ import {
   type RelationTemplate,
   type RelationVerb,
 } from '../../core/data/relations'
+import { runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
 
@@ -96,15 +98,6 @@ export function findRuntimeRelation(list: unknown, id: string): RuntimeRelation 
     return { id, verb: entry.verb as RelationVerb, nr: entry.nr, params: entry.params as string[] }
   }
   return undefined
-}
-
-// Deutsches Datum fuer den Platzhalter {NOW_DATE} ('08.07.2026' — dieselbe
-// Form wie die Datums-Felder der Referenzmaske). Pur: der Aufrufer stellt
-// das Datum (sendPut nimmt das echte, Tests ein festes).
-export function formatNowDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  return `${dd}.${mm}.${d.getFullYear()}`
 }
 
 function asTrimmedString(v: unknown): string {
@@ -495,11 +488,24 @@ function handleDrop(board: HTMLElement, column: HTMLElement): void {
   sendPut(path, statusField, data.pindex, targetValue)
   setField(data.row, statusField, targetValue)
   hydrate(board)
+  // Z2: Aktionskette „Karte verschoben" NACH dem erfolgreichen
+  // Zurueckschreiben — {PINDEX} = Satznummer der gezogenen Karte,
+  // {VALUE} = der neue Spaltenwert.
+  runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
 }
 
 function wireDrag(board: HTMLElement): void {
   if (wiredBoards.has(board)) return
   wiredBoards.add(board)
+  // Z2: Aktionskette „Karte angeklickt" — nur echte Datenkarten mit
+  // Satznummer loesen aus (dieselbe Regel wie das Ziehen: cardData).
+  board.addEventListener('click', (e) => {
+    const card = (e.composedPath().find(
+      (el) => el instanceof HTMLElement && cardData.has(el),
+    ) ?? null) as HTMLElement | null
+    if (!card) return
+    runEvent(board, 'onCardClick', { PINDEX: cardData.get(card)?.pindex ?? '' })
+  })
   board.addEventListener('dragstart', (e) => {
     const card = (e.composedPath().find(
       (el) => el instanceof HTMLElement && cardData.has(el),

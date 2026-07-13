@@ -30,7 +30,8 @@ CLAUDE.md-Roadmap. Aktuell (2026-07-11) aktiv:
   Infobox, Karte, Kanban (+ Spalte), Textblock
 - Sidebar = nur die Baustein-Palette; Canvas (Flow + Drag&Drop);
   Inspector (Inhalt/Layout/Daten)
-- Kommandozentrale (Toolbar „Steuerung", Z1): Aktionen-Uebersicht +
+- Kommandozentrale (Toolbar „Steuerung", Z1/Z2): Aktions-Ketten-Editor je
+  Baustein-Ereignis (StepForm; Z2: Schritt-Typ „Werkzeug starten") +
   Datenquellen- + Relationen-Bibliothek (aus der Sidebar umgezogen)
 - Stores: Editor (Undo/Redo/Transaktionen), DataSourceStore, RelationStore
 - Export nach SoftEngine (index.basis.source.html +
@@ -49,12 +50,19 @@ interface BlockNode {
   id: string
   type: string
   props: Record<string, unknown>
+  events?: Record<string, ActionStep[]> // Aktionsketten je Ereignis (Z2)
   parentId: string | null // null nur für die Wurzel
   childIds: string[]       // geordnete Kinder = Flow-Reihenfolge
 }
 
 type BlockTree = Record<string, BlockNode>
 ```
+
+`events` (Z2) liegt bewusst NEBEN `props`: props speisen Export-Attribute
+und Lit-Properties, Ketten nicht (Modell: `src/core/data/aktionen.ts`,
+wie `block.events` im alten Editor). Sie reisen im Export als EIN
+`data-ff-aktionen`-Attribut; die Ausfuehrung in der Maske uebernimmt
+`src/blocks/shared/seAktionen.ts` (nur im Export — data-ff-editor-Waechter).
 
 `BlockTree` ist die gespeicherte Wahrheit. Er enthält keine Lit-Instanz, kein
 React-Element und keine Editor-UI. Der Export (Kap. 8) ist ein deterministischer
@@ -97,7 +105,9 @@ Block-Typen (`if type===` ist verboten):
 - `blockEvents` (Z1, Vorgriff Kap. 8): Ereignisse des Blocks mit Klarnamen
   (Kanban: „Karte angeklickt"/„Karte verschoben"; key = Technikwert im
   Vokabular des alten Editors, z. B. onCardClick). Die Kommandozentrale
-  listet sie; ab Z2 haengen die Aktionsketten daran.
+  listet sie; seit Z2 haengen die Aktionsketten daran (`BlockNode.events`,
+  s. Datenmodell — Ketten-Editor in der Zentrale, Schritt-Typen-Registry
+  STEP_TYPES in `src/core/data/aktionen.ts`).
 - `bindableSpots` (Kap. 5.2): bindbare Text-Stellen des Blocks
   (Anzeige-Prop + Klarname). Die Bindung (Feldcode) liegt in `<prop>Field`
   (Default '' in den defaultProps). Der Block annotiert die Stelle mit
