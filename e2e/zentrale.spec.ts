@@ -42,6 +42,24 @@ test('Steuerung: drei Bereiche, Bibliotheken umgezogen, Aktionen zeigen Klarname
   await expect(page.getByRole('button', { name: 'Neue Relation' })).toHaveCount(0)
 })
 
+test('Aktionen: gleichartige Bausteine bekommen unterscheidbare Namen + Regel-Hinweis (P8)', async ({ page }) => {
+  await freshEditor(page)
+  // Zwei Schaltflächen (beide Default-Label „Klick mich") — dürfen in der
+  // Liste NICHT ununterscheidbar „Schaltfläche" heißen (Merkzettel-Punkt 8).
+  await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()
+  await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()
+
+  await page.getByRole('button', { name: 'Steuerung' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Steuerung' })
+
+  // Regel-Hinweis erklärt, WAS hier auftaucht (und dass Text/Bereich fehlen).
+  await expect(dialog.getByText(/tauchen bewusst nicht auf/)).toBeVisible()
+
+  // Beide Einträge tragen Eigentext + laufende Nummer, sind also eindeutig.
+  await expect(dialog.getByRole('heading', { name: 'Schaltfläche — Klick mich (1)' })).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Schaltfläche — Klick mich (2)' })).toBeVisible()
+})
+
 test('Steuerung springt zum ausgewählten Baustein; Escape schließt (Formular zuerst)', async ({ page }) => {
   await freshEditor(page)
   await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()
