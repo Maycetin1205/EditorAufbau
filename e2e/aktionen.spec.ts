@@ -58,8 +58,8 @@ test('Schaltfläche: Kette anlegen/umsortieren/duplizieren/löschen/bearbeiten +
   // Zweiter Schritt, dann die Ketten-Werkzeuge der Zentrale durchspielen.
   await addStep(page, eventLi, '2000')
   await expect(stepRows).toHaveCount(2)
-  await expect(stepRows.nth(0)).toContainText('Werkzeug starten — Nr. 1951')
-  await expect(stepRows.nth(1)).toContainText('Werkzeug starten — Nr. 2000')
+  await expect(stepRows.nth(0)).toContainText('Werkzeug starten (START_TOOL) — Nr. 1951')
+  await expect(stepRows.nth(1)).toContainText('Werkzeug starten (START_TOOL) — Nr. 2000')
 
   await eventLi.getByRole('button', { name: 'Schritt 2 nach oben' }).click()
   await expect(stepRows.nth(0)).toContainText('Nr. 2000')
@@ -137,12 +137,12 @@ test('Kanban: „Karte angeklickt" liefert {PINDEX}, „Karte verschoben" feuert
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByLabel('Einsortieren nach').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
   await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await page.getByLabel('Wert dieser Spalte').fill('3')
 
   // Ketten an beiden Kanban-Ereignissen anlegen.
   await page.getByRole('button', { name: 'Steuerung' }).click()

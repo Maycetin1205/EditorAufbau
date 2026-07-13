@@ -25,11 +25,27 @@ export function Field({ label, description, error, className, children }: FieldP
   const descriptionId = description && !error ? `${id}-description` : undefined
   const errorId = error ? `${id}-error` : undefined
 
+  // Beschreibungen sind KEIN Dauertext mehr (Nutzer-Korrektur 2026-07-13,
+  // V1b): neben dem Label sitzt ein dezentes ⓘ — der Text erscheint nur
+  // beim Daraufzeigen (title). Fuer Screenreader bleibt er als sr-only-
+  // Absatz verdrahtet (aria-describedby unveraendert). Felder OHNE Label
+  // zeigen die Beschreibung weiterhin sichtbar (das ⓘ haette keinen Anker).
+  const beschreibungAlsHinweis = Boolean(label) && typeof description === 'string'
+
   return (
     <div className={cn('flex min-w-0 flex-col gap-1', className)}>
       {label && (
         <label htmlFor={id} className="text-xs font-medium text-foreground">
           {label}
+          {beschreibungAlsHinweis && !error && (
+            <span
+              title={description as string}
+              aria-hidden="true"
+              className="ml-1 cursor-help font-normal text-muted-foreground"
+            >
+              ⓘ
+            </span>
+          )}
         </label>
       )}
       {children({
@@ -38,7 +54,14 @@ export function Field({ label, description, error, className, children }: FieldP
         'aria-invalid': error ? true : undefined,
       })}
       {description && !error && (
-        <p id={descriptionId} className="min-w-0 break-words text-xs text-muted-foreground">
+        <p
+          id={descriptionId}
+          className={
+            beschreibungAlsHinweis
+              ? 'sr-only'
+              : 'min-w-0 break-words text-xs text-muted-foreground'
+          }
+        >
           {description}
         </p>
       )}

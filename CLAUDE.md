@@ -5,17 +5,18 @@
 > Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
 > der Roadmap nehmen.
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13): SE-Echttest Z2 durch den
-> Nutzer.** Z2 (Aktionen anlegen) ist GEBAUT + verifiziert (202 Unit +
-> 30 E2E, live belegt) — Echttest: Kette „Werkzeug starten" an „Karte
-> angeklickt" mit einer ECHTEN Werkzeug-Nummer der Installation anlegen
-> (Steuerung → Aktionen; ⚠ Nummern sind je Installation individuell,
-> 3003 ist in der Empfang-Referenz das REFRESH-Werkzeug), exportieren,
-> in SoftEngine Karte anklicken. Danach: Z3 („Relation ausführen" mit
-> Antwort-Warteschlange + Zwischenspeicher-Ausführung, dann „Wert
-> setzen"/„Daten neu laden"), Z4, dann K-Rest (K1–K5b, K6–K8), dann
-> Stabilisierungs-Rest. Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer
-> in SoftEngine bestätigt (2026-07-11).
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13): V2 — geführte
+> Bindungsstrecke (K6 vorgezogen, siehe „EINSCHUB V-PROGRAMM" im
+> Z-Programm): klickbares Mockup dem Nutzer zur Abnahme vorlegen, ERST
+> nach Abnahme bauen.** Parallel offen: SE-Echttest Z2 (Kette „Werkzeug
+> starten (START_TOOL)" an „Karte angeklickt" mit einer ECHTEN
+> Werkzeug-Nummer der Installation anlegen — ⚠ Nummern sind je
+> Installation individuell, 3003 ist in der Empfang-Referenz das
+> REFRESH-Werkzeug —, exportieren, in SoftEngine Karte anklicken).
+> Danach: Z3 („Relation ausführen" mit Antwort-Warteschlange +
+> Zwischenspeicher-Ausführung, dann „Wert setzen"/„Daten neu laden"),
+> Z4, dann K-Rest, dann Stabilisierungs-Rest. Der Kanban-DATENPFAD ist
+> KOMPLETT und vom Nutzer in SoftEngine bestätigt (2026-07-11).
 
 ## Was der Editor ist (Nordstern)
 

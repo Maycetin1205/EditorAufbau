@@ -79,15 +79,15 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
 
   // Spalten-Feld am Board wählen: Klarname "Zimmer", nie der Feldcode.
   await selectBoard(page)
-  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByLabel('Einsortieren nach').click()
   await expect(page.getByRole('option', { name: '253_30' })).toHaveCount(0)
   await page.getByRole('option', { name: 'Zimmer' }).click()
 
   // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt leer = Auffang.
   await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await page.getByLabel('Wert dieser Spalte').fill('3')
 
   const html = await exportMaskHtml(page)
   // Beide Technikwerte reisen als Attribute in der Maske (Kap. 5.2 + 5.3).
@@ -151,12 +151,12 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
 
   // Spalten-Feld "Zimmer"; Spalte 2 -> '2', Spalte 3 -> '3', Spalte 1 = Auffang.
   await selectBoard(page)
-  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByLabel('Einsortieren nach').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
   await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await page.getByLabel('Wert dieser Spalte').fill('3')
 
   const html = await exportMaskHtml(page)
   const mask = await context.newPage()
@@ -237,12 +237,12 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await selectBoard(page)
-  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByLabel('Einsortieren nach').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
   await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await page.getByLabel('Wert dieser Spalte').fill('3')
 
   const html = await exportMaskHtml(page)
 

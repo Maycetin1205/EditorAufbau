@@ -35,15 +35,18 @@ export function coerceStatusVariant(value: string): StatusVariant {
     : 'info'
 }
 
-// Die "Art"-Property fuer den Inspector. attributeName + Beschreibung stellt
-// jeder Block selbst, die 4 Optionen (Bedeutung -> Farbe) sind fix.
+// Die Status-Property fuer den Inspector. attributeName + Beschreibung
+// stellt jeder Block selbst, die 4 Optionen (Bedeutung -> Farbe) sind fix.
+// Label "Farbe" (Wortlaut-Runde V1b, 2026-07-13: "Art" sagte dem Bediener
+// nichts) — gewaehlt wird weiterhin die BEDEUTUNG (Klarname), nie ein
+// Farbwert; die Farbe ergibt sich fest aus der Bedeutung (Tokens).
 export function statusVariantProperty(
   attributeName: string,
   description: string,
 ): PropertyDescription {
   return {
     attributeName,
-    name: 'Art',
+    name: 'Farbe',
     description,
     isArray: false,
     maxLength: 0,

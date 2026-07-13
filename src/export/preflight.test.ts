@@ -74,8 +74,10 @@ describe('preflightMask — Z2: unvollstaendige Aktionsschritte blockieren den E
     expect(failed[0].detail).toContain('Kanban')
     expect(failed[0].detail).toContain('Karte angeklickt')
     expect(failed[0].detail).toContain('Werkzeug-Nummer')
-    // Technikwerte erscheinen NICHT in der Meldung.
+    // Ereignis-Technikwerte erscheinen NICHT in der Meldung; der Schritt
+    // erscheint mit vollem Klarnamen (SE-Kürzel in Klammern gehört seit der
+    // Wortlaut-Runde V1 BEWUSST dazu, Muster „Lesen (GET)").
     expect(failed[0].detail).not.toContain('onCardClick')
-    expect(failed[0].detail).not.toContain('START_TOOL')
+    expect(failed[0].detail).toContain('Werkzeug starten (START_TOOL)')
   })
 })

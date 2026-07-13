@@ -54,12 +54,12 @@ async function boardMitDaten(page: Page) {
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await selectBoard()
-  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByLabel('Einsortieren nach').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
   await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
+  await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await page.getByLabel('Wert dieser Spalte').fill('3')
   return selectBoard
 }
 
@@ -99,7 +99,7 @@ test('Anlegen: eigene Vorlage erscheint überall, der Schreibweg konsumiert ihre
   // Board aufbauen und die eigene Vorlage im Inspector wählen.
   const selectBoard = await boardMitDaten(page)
   await selectBoard()
-  await page.getByLabel('Schreiben über').click()
+  await page.getByLabel('Beim Verschieben zurückschreiben über').click()
   await page.getByRole('option', { name: 'Zimmer wechseln' }).click()
 
   // Export: die eigene Vorlage reist als Technikwert-Datensatz mit.
@@ -138,7 +138,7 @@ test('Ohne Vorlage („— keine —"): Board ist read-only — Karte ziehen bew
   const selectBoard = await boardMitDaten(page)
   await selectBoard()
   // Schreibweg abschalten.
-  await page.getByLabel('Schreiben über').click()
+  await page.getByLabel('Beim Verschieben zurückschreiben über').click()
   await page.getByRole('option', { name: '— keine —' }).click()
 
   const html = await exportMaskHtml(page)
@@ -193,7 +193,7 @@ test('Bearbeiten: Umbenennen hält die id stabil — das Board behält seine Vor
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
   // Default ist die mitgelieferte Standard-Vorlage.
-  await expect(page.getByLabel('Schreiben über')).toContainText('Standard-Schreiben')
+  await expect(page.getByLabel('Beim Verschieben zurückschreiben über')).toContainText('Standard-Schreiben')
 
   await openSteuerung(page)
   await page.getByRole('button', { name: 'Standard-Schreiben (PUT) bearbeiten' }).click()
@@ -204,7 +204,7 @@ test('Bearbeiten: Umbenennen hält die id stabil — das Board behält seine Vor
 
   // Der Block hängt weiter an derselben Vorlage (Select zeigt den neuen Namen).
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await expect(page.getByLabel('Schreiben über')).toContainText('Haus-PUT')
+  await expect(page.getByLabel('Beim Verschieben zurückschreiben über')).toContainText('Haus-PUT')
 })
 
 test('Löschen: Rückfrage warnt, wenn die Vorlage benutzt wird', async ({ page }) => {

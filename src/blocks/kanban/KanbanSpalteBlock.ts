@@ -75,8 +75,10 @@ export class KanbanSpalteBlock extends BasicBlock {
     ),
     {
       attributeName: 'statusValue',
-      name: 'Datenwert dieser Spalte',
-      description: 'Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.',
+      // Wortlaut-Runde V1 (2026-07-13, Nutzer): das ist das `zimmer:`-Feld
+      // seiner Referenzmaske — Titel (sichtbar) und Wert (Technik) getrennt.
+      name: 'Wert dieser Spalte',
+      description: 'Einträge, bei denen genau dieser Wert im Sortier-Feld steht, landen hier; beim Ablegen einer Karte wird er zurückgeschrieben. Passt ein Eintrag nirgends, landet er in der ersten Spalte; eine Spalte ohne Wert ist kein Ablage-Ziel. Der sichtbare Titel bleibt unabhängig davon.',
       isArray: false,
       maxLength: 60,
       kind: 'text',

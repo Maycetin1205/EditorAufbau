@@ -34,8 +34,11 @@ export interface StepTypeSpec {
   name: string
 }
 
+// Klarname mit SE-Kürzel in Klammern (Muster VERB_LABELS 'Lesen (GET)' —
+// Nutzer-Entscheidung 2026-07-13: der SE-Begriff START_TOOL soll fuer
+// SE-erfahrene Bediener wiedererkennbar sein).
 export const STEP_TYPES: readonly StepTypeSpec[] = [
-  { key: 'START_TOOL', name: 'Werkzeug starten' },
+  { key: 'START_TOOL', name: 'Werkzeug starten (START_TOOL)' },
 ]
 
 export function stepTypeName(typeKey: string): string {
@@ -197,7 +200,7 @@ export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep
 // null. Das Typ-Wissen bleibt hier im Modell; die Preflight bleibt generisch.
 export function stepProblem(step: Pick<ActionStep, 'type' | 'toolNr'>): string | null {
   if (step.type === 'START_TOOL' && step.toolNr.trim() === '') {
-    return 'Schritt "Werkzeug starten" hat keine Werkzeug-Nummer.'
+    return `Schritt "${stepTypeName(step.type)}" hat keine Werkzeug-Nummer.`
   }
   return null
 }
