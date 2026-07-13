@@ -33,7 +33,8 @@
 > `memory/offene-ux-punkte-bindung.md` war FALSCH — die Datei hat nie
 > existiert; die Strecken-Inhalte stehen im V2-Abschnitt.
 > Danach: B4–B6 → Optik-Runde Steuerung/Inspector
-> (Nutzer: „potthässlich") → SE-Echttest Z2 (Kette „Werkzeug starten"
+> (Nutzer: „potthässlich"; VORLAGE liegt seit 2026-07-13 vor — die
+> Codex-Schale, s. Abschnitt OPTIK-RUNDE STEUERUNG unten) → SE-Echttest Z2 (Kette „Werkzeug starten"
 > mit ECHTER Werkzeug-Nummer der Installation; ⚠ Nummern sind je
 > Installation individuell, 3003 = REFRESH-Werkzeug der
 > Empfang-Referenz) → Z3 („Relation ausführen" mit Antwort-Warteschlange
@@ -874,9 +875,18 @@ den Export (Kap. 3).
     **→ SE-ECHTTEST DURCH DEN NUTZER STEHT AUS** (Regel: jedes Paket, das
     den Export berührt, direkt in SE testen). Sind die Kartenstellen dann
     noch leer: Strg+Alt+D → Inhalt kopieren → wird Test-Fixture für den
-    Feldauflösungs-Fix (nächstes Paket). Offen aus der Diagnose:
+    Feldauflösungs-Fix (nächstes Paket). ~~Offen aus der Diagnose:
     SEvariablen-XHR/fetch-Interception (Framework fragt die Konfig per
-    Request ab — Notwendigkeit prüfen). `dashboard/praxis-kanban.html` ist
+    Request ab — Notwendigkeit prüfen)~~ → GEKLÄRT 2026-07-13 durch
+    Analyse der ORIGINALQUELLEN (`basis.html.interface.js`,
+    `SEJSONProcessing.js`, JWHtml*-Hüllen im REFERENZ-Ordner): die
+    Framework-Hüllen laden die SEvariablen selbst per XHR; unser Export
+    liefert die echte JSON-Datei daneben = der Normalweg. Die
+    Interception der Empfang-Maske ist nur eine Ein-Datei-Optimierung —
+    NICHTS zu bauen. Verifizierte SE-Fakten (Callback-EINZELSLOT der
+    Brücke — letzter Registrierer gewinnt; GET-Antworten landen offiziell
+    in SEDATA.Message<N>-Slots; Nachrichten-Umschlag) stehen in
+    `memory/se-kontrakt-quellen.md`. `dashboard/praxis-kanban.html` ist
     auch für den DATEN-TRANSPORT keine Referenz (wie schon für Feldcodes).
     Nebenbefunde aus der echten Nutzer-Maske: Bindung war korrekt
     eingebettet (source/statusfield/FF_DATA_SOURCES ok), aber alle Spalten
@@ -1072,6 +1082,37 @@ den Export (Kap. 3).
       Live-Abnahme von B3–B5): Quelle ohne Einsortieren-Feld,
       Schreib-Vorlage fehlt/kein Schreib-Verb, >1 Auffangspalte →
       Preflight bricht verständlich ab.
+  - ⌖ **OPTIK-RUNDE STEUERUNG — Vorlage festgelegt (2026-07-13, noch
+    NICHT bauen; dran nach B3–B6):** Die Codex-Demo („FormForge",
+    `kommandozentrale-geruest.html` unter
+    `C:\Users\mu.aycetin\.codex\visualizations\2026\07\13\`) ist die
+    verbindliche BEDIEN-/LAYOUT-Vorlage für die Optik-Runde der
+    Kommandozentrale. ÜBERNEHMEN: Master-Detail (Liste links mit
+    Verwendungs-Zähler, Steckbrief rechts), Anlegen/Bearbeiten INLINE im
+    Detailbereich (kein Formular-Modal im Zentrale-Modal mehr), Abschnitt
+    „Verwendung in dieser Maske" je Vorlage, Status-Badges
+    („Angeschlossen"/„Offen"/„unvollständig" — deckt Z4 teilweise ab),
+    Leerzustände mit Klartext + Anlegen-Knopf, Anlege-Wege sichtbar im
+    Formular (Manuell / IDB-Datei importieren = S4a / Syntax einfügen =
+    S5). In die EDITOR-Token-Welt übersetzen — die Demo mischt
+    Masken-Grün in die Editor-UI, Regel „zwei Token-Welten" gilt.
+    AUSDRÜCKLICH VERWORFEN (widerspricht Entscheidungen): „Abläufe" als
+    vierte Bibliothek + „Zuweisungen" als Verweis-Objekte (Z2: Ketten
+    leben AM Baustein je Ereignis; die Demo hat keine Antwort auf
+    Löschen/Umbenennen referenzierter Abläufe und KEINEN einzigen
+    Löschen-Knopf), „Neue Zuweisung anlegen" (Ereignisse kommen aus der
+    Registry, man legt sie nicht an), stilles Verwerfen offener
+    Formulare beim Bereichswechsel (Auflage: keine stillen Verluste).
+    Merkliste dazu: (a) Starttools als BENANNTE Vorlagen (Klarname wie
+    „Patientenkartei öffnen" statt nackter Nummer je Schritt, Muster
+    Relation-Vorlagen), (b) Verwendungs-Zähler in den Bibliotheken.
+    ⚠ Das Codex-BRIEFING (`REFERENZ NUR INFORMATIONEN\Neuer Ordner
+    (2)\BRIEFING.md`) enthält drei SE-FEHLER (PUT-PARAMS
+    „[alias, field, value]" falsch — richtig ist das 6-Parameter-Layout
+    aus 5.3b; START_TOOL „{TOOL:…}" unbelegt — richtig ist
+    sendBWLinkIntern/SND_MSG mit NR; „GET-Antworten via console.log" =
+    nur das Debug-Protokoll der Brücke) — von FormForge NIE den
+    Datenpfad übernehmen, nur Optik-/Bedienideen.
   - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,
