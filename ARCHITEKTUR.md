@@ -126,7 +126,11 @@ Daten-Controls im Inspector (Kap. 5.3, PropertyDescription statt Registry):
   (gespeicherte Werte bleiben erhalten und leben mit der Quelle wieder auf).
 - Beide erscheinen in der Inspector-Sektion „Daten" (nicht in der
   allgemeinen Gruppe). Das Kanban nutzt sie für `statusField` (Board:
-  „Spalten aus Feld") und `statusValue` (Spalte: „Datenwert dieser Spalte").
+  „Einsortieren nach") und `statusValues` (Spalte: „Wert dieser Spalte" —
+  seit V2/B1 eine LISTE von Werten; leere Liste = der Spaltentitel zählt
+  als Wert. Listen-Props reisen im Export als JSON-Attribut, `exportMask`
+  serialisiert Arrays generisch; der Lader migriert alte `statusValue`-
+  Einzelwerte zur Ein-Element-Liste, `Editor.ts` migrateStatusWertListe).
 
 Datenverhalten der exportierten Maske (Kap. 5.3): liegt beim Block, nicht
 im Export-Generator — `src/blocks/kanban/seRuntime.ts` ist Teil des
@@ -135,7 +139,9 @@ mit `data-ff-editor` (Editor) werden abgewiesen, darum existiert die
 SoftEngine-Mechanik im Editor nicht. Zeilen kommen aus SEDATA (Formen wie
 in `dashboard/praxis-kanban.html`), jede Zeile wird ein Klon der ersten
 gestalteten Karte, gebundene Stellen (`bindableSpots` aus der Registry)
-werden mit Zeilenwerten gefüllt, `statusValue` der Spalten verteilt.
+werden mit Zeilenwerten gefüllt, die `statusValues`-Listen der Spalten
+verteilen (jeder Listenwert trifft; leere Liste = Titel; Drop schreibt
+den ERSTEN Wert zurück).
 
 ## Datenfluss
 

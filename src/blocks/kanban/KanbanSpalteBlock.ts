@@ -55,14 +55,18 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly allowedParentTypes = ['kanban']
   static readonly lockedWidth: FlowWidth = 'fill'
   static readonly resizableWidth = false
-  // statusValue (Kap. 5.3): Datenwert dieser Spalte (Technikwert) — Zeilen,
-  // deren Spalten-Feld (statusField am Board) genau diesen Wert hat, landen
-  // im Export hier. Der sichtbare Titel bleibt davon unabhängig (Technikwert
-  // ≠ Anzeigename). Default '' -> überlebt Persistenz, reist als Attribut.
+  // statusValues (V2/B1, ersetzt statusValue): die Datenwerte dieser Spalte
+  // als LISTE (Technikwerte) — Zeilen, deren Spalten-Feld (statusField am
+  // Board) einen dieser Werte hat, landen im Export hier; beim Ablegen wird
+  // der ERSTE Wert zurückgeschrieben. Standard-Regel (freigegebene Strecke):
+  // LEERE Liste = der Spaltentitel zählt als Wert. Die Listenform trägt schon
+  // K5b (Unterbereiche = je Wert eine Drop-Zone). Alte Stände mit statusValue
+  // migriert der Lader (Editor.ts). Default [] -> überlebt Persistenz, reist
+  // als JSON-Attribut.
   static readonly defaultProps = {
     variant: 'info',
     heading: 'Neue Spalte',
-    statusValue: '',
+    statusValues: [] as string[],
   }
 
   // Inspector: die Bedeutung (-> Farbwelt der Spalte) + der Datenwert der
@@ -74,12 +78,15 @@ export class KanbanSpalteBlock extends BasicBlock {
       'Bedeutung der Spalte — bestimmt ihre Farbwelt (Kopf, Fläche, Rahmen).',
     ),
     {
-      attributeName: 'statusValue',
+      attributeName: 'statusValues',
       // Wortlaut-Runde V1 (2026-07-13, Nutzer): das ist das `zimmer:`-Feld
       // seiner Referenzmaske — Titel (sichtbar) und Wert (Technik) getrennt.
+      // B1-Brücke: das Textfeld pflegt den ERSTEN Listenwert; die volle
+      // Werte-Liste per Klick-Auswahl kommt mit der Strecke (B3), dann
+      // fliegt dieses Inspector-Feld raus.
       name: 'Wert dieser Spalte',
-      description: 'Einträge, bei denen genau dieser Wert im Sortier-Feld steht, landen hier; beim Ablegen einer Karte wird er zurückgeschrieben. Passt ein Eintrag nirgends, landet er in der ersten Spalte; eine Spalte ohne Wert ist kein Ablage-Ziel. Der sichtbare Titel bleibt unabhängig davon.',
-      isArray: false,
+      description: 'Einträge, bei denen dieser Wert im Sortier-Feld steht, landen hier; beim Ablegen einer Karte wird er zurückgeschrieben. Leer = der Spaltentitel zählt als Wert. Passt ein Eintrag nirgends, landet er in der ersten Spalte.',
+      isArray: true,
       maxLength: 60,
       kind: 'text',
       requiresDataSource: true,

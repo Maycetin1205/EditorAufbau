@@ -15,31 +15,28 @@
 > EINMAL gebündelt, im Hintergrund, unmittelbar vor einem Commit. Der
 > Nutzer wartet nie auf Testläufe.**
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13 nachmittags):
-> Kanban-Anschließen neu (V2/K6). Der Nutzer hat den Mockup-Bau
-> GESTOPPT — erste Frage im neuen Chat: Absegnungs-Form klären (Konzept
-> in Worten im Chat durchsprechen ODER klickbare Probeseite), vorher
-> NICHTS bauen.** Inhalt der Strecke (Nutzer-Beschwerden 2026-07-13;
-> Merkzettel liegt auch im KI-Gedächtnis
-> `memory/offene-ux-punkte-bindung.md`): EIN Ort statt springendem
-> Inspector (die Quellen-ZUWEISUNG gehört in die Strecke, die Bibliothek
-> bleibt in der Steuerung — heute wirken „Datenquellen" wie doppelt);
-> geführte Reihenfolge Quelle → Einsortieren-Feld → Spalten →
-> Kartenstellen → Zurückschreiben; Spaltenwert: Standard = Spaltentitel,
-> abweichend nur per Klick-Auswahl vorhandener Werte, NIE Freitext;
-> Board zeigt sichtbar „noch nicht angeschlossen" (heute stellt es sich
-> stumm tot); Export blockt mit Klartext statt tote Maske auszugeben.
-> Danach: Bauen nach Abnahme → Optik-Runde Steuerung/Inspector
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13 abends): V2-Programm
+> Paket B2 (Auffang-Modell + „Nicht zugeordnet"). Die Bindungsstrecke
+> ist vom Nutzer FREIGEGEBEN (2026-07-13, in Worten im Chat), der
+> Bau-Plan B1–B6 ist abgesegnet — Details im V2-PROGRAMM-Abschnitt
+> unten. B1 (Spaltenwert wird Liste + Lade-Migration) ist GEBAUT +
+> committed.** Zwei Nutzer-Auflagen aus der Freigabe: (1) Zeilen ohne
+> Treffer dürfen NIE still verschwinden — ohne gewählte Auffangspalte
+> erzeugt die Maske zur Laufzeit eine eigene Spalte „Nicht zugeordnet"
+> (erscheint nur bei Bedarf, kein Ablage-Ziel, Karten herausziehen =
+> Reparaturweg); (2) Migrationsschritte sind immer ein EIGENER,
+> sichtbarer Punkt im Bau-Plan. ⚠ Korrektur: der frühere Verweis auf
+> `memory/offene-ux-punkte-bindung.md` war FALSCH — die Datei hat nie
+> existiert; die Strecken-Inhalte stehen im V2-Abschnitt.
+> Danach: B3–B6 → Optik-Runde Steuerung/Inspector
 > (Nutzer: „potthässlich") → SE-Echttest Z2 (Kette „Werkzeug starten"
 > mit ECHTER Werkzeug-Nummer der Installation; ⚠ Nummern sind je
 > Installation individuell, 3003 = REFRESH-Werkzeug der
 > Empfang-Referenz) → Z3 („Relation ausführen" mit Antwort-Warteschlange
 > + Zwischenspeicher — der Nutzer-Echtlauf `testlauf.txt` zeigt exakt
 > diese Kette live: PUT → GET 640 holt neue Satznummer → PUT auf die
-> neue Nummer) → Z4 → K-Rest → Stabilisierungs-Rest. Heute erledigt:
-> Aufräum-Runde committed (cd822f1 Wortlaut „Farbe"/„Einsortieren
-> nach"/ⓘ statt Dauertext; 463f674 Aktionen-Liste unterscheidbare
-> Namen). Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer in SoftEngine
+> neue Nummer) → Z4 → K-Rest → Stabilisierungs-Rest.
+> Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer in SoftEngine
 > bestätigt (2026-07-11); das GET_RELATION-Dauerfeuer in Logs ist eine
 > GEWOLLTE Refresh-IDB der Installation, kein Fehler.
 
@@ -987,6 +984,70 @@ den Export (Kap. 3).
     - **Z4 Ampeln:** Vollständigkeits-Anzeige in der Zentrale + Sprung
       zur Stelle (Vorstufe zu K6/K7).
     Danach geht es mit K1–K5b, K6–K8 und dem Stabilisierungs-Rest weiter.
+  - ⌖ **V2-PROGRAMM (2026-07-13, Strecke vom Nutzer in Worten im Chat
+    FREIGEGEBEN — ersetzt den K6-Zuschnitt; B6 = der Kanban-Teil von
+    K7): geführte Bindungsstrecke am Board.** Die Strecke: EIN Ort am
+    selektierten Board (Modal nach Molekül-Muster, Schrittliste mit
+    Haken), Reihenfolge Quelle → Einsortieren-Feld → Spalten (Titel +
+    Werte + Auffangspalte) → Kartenstellen → Zurückschreiben; die
+    Quellen-ZUWEISUNG zieht aus dem Inspector in die Strecke (Bibliothek
+    bleibt in der Steuerung); Spaltenwert-Standard = SPALTENTITEL,
+    abweichend nur per Klick-Auswahl (Titel + im Board vergebene Werte +
+    beschrifteter Ausnahme-Dialog „Anderen Wert eintragen…"), NIE ein
+    offenes Freitextfeld; Board zeigt sichtbar „noch nicht
+    angeschlossen"; Export blockt mit Klartext. Nutzer-Auflagen: Zeilen
+    ohne Treffer verschwinden NIE still; Migrationen = eigene sichtbare
+    Bau-Punkte. Pakete (jedes einzeln: bauen → Prüfungen gebündelt →
+    committen):
+    - ✅ **B1 Spaltenwert wird LISTE + Lade-Migration (2026-07-13):**
+      `statusValues` (string[]) ersetzt `statusValue` an der Spalte.
+      NEUE Standard-Regel (freigegeben): leere Liste = der SPALTENTITEL
+      zählt als Wert — der tote Zustand „alle Spalten ohne Wert" der
+      echten Nutzer-Maske ist strukturell abgeschafft. BEWUSSTE, vom
+      Nutzer abgesegnete Verhaltensänderung: Drop auf eine Spalte ohne
+      eigene Werte schreibt jetzt ihren TITEL zurück (früher stilles
+      Nichts). Lade-Migration `migrateStatusWertListe` in sanitizeTree
+      (Einzelwert → Ein-Element-Liste; ohne sie würde normalizeProps
+      den alten Key still verwerfen — genau das verbietet Auflage 2);
+      normalizeProps verteidigt Listen-Props (nur Strings überleben).
+      Export serialisiert Array-Props generisch als JSON-Attribut
+      (`statusvalues="[&quot;2&quot;]"`); Laufzeit: pure Helfer
+      `parseStatusValues` + `effectiveColumnValues` (leer = Titel),
+      JEDER Listenwert trifft beim Verteilen, Drop schreibt den ERSTEN
+      Wert, „Zeile passt schon in die Zielspalte (irgendein Listenwert)"
+      = kein Zug; Datenform trägt K5b (Unterbereiche) ohne Umbau.
+      Inspector-Feld „Wert dieser Spalte" bleibt als BRÜCKE (pflegt den
+      ersten Listenwert; sechs E2E-Bedienflüsse hängen daran) und fliegt
+      in B3 raus. Bereits exportierte Masken bleiben unberührt (jede
+      trägt ihre eigene Runtime); ein Neu-Export erzeugt die neue Form.
+      Veralten-Wächter verschärft (Bündel muss statusvalues tragen).
+      213 Unit + 31 E2E grün.
+    - **B2 Auffang-Modell + „Nicht zugeordnet":** Spalten-Kennzeichen
+      „Auffangspalte" (höchstens eine je Board; Setzen löscht es auf der
+      anderen, 1 Undo). Laufzeit: Treffer → Spalte; kein Treffer →
+      Auffangspalte; keine gewählt → automatische Laufzeit-Spalte
+      „Nicht zugeordnet" (neutral, nur sichtbar wenn es solche Zeilen
+      gibt, kein Ablage-Ziel, Karten herausziehen in echte Spalten =
+      Reparaturweg). Die stille „erste Spalte"-Regel fliegt raus (Tests
+      zur strengeren Spec umbauen, nicht löschen). Preflight: mehr als
+      eine Auffangspalte = Fehler.
+    - **B3 Strecke, Schritte 1–3** (Quelle → Einsortieren-Feld →
+      Spalten samt Werte-Klick-Auswahl + Auffang-Wahl mit
+      Klartext-Hinweis auf „Nicht zugeordnet"; das rohe Wert-Textfeld
+      verschwindet aus dem Inspector, E2E-Flüsse auf die Strecke
+      umbauen).
+    - **B4 Strecke, Schritte 4–5** (Kartenstellen als Liste mit
+      Feld-Picker; „Schreiben über" nur mit Schreib-Verben PUT/PUTADD —
+      behebt den bekannten Befund, dass auch GET-Vorlagen angeboten
+      werden, Inspector.tsx).
+    - **B5 „Noch nicht angeschlossen" sichtbar am Board** (BlockHost-
+      Editor-Hilfe, nie im Export; gespeist aus EINER puren
+      Vollständigkeitsprüfung — dieselbe wie B6; Klick öffnet die
+      Strecke).
+    - **B6 Export blockt mit Klartext** (K7-Kanban-Teil; erst nach
+      Live-Abnahme von B3–B5): Quelle ohne Einsortieren-Feld,
+      Schreib-Vorlage fehlt/kein Schreib-Verb, >1 Auffangspalte →
+      Preflight bricht verständlich ab.
   - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,

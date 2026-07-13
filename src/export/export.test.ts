@@ -91,5 +91,9 @@ describe('Runtime-Bündel', () => {
     // P1.1: der Vorlagen-Kasten ist abgeschafft — ein Bündel, das ihn noch
     // trägt, ist veraltet.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — ff-kanban-vorlage ist abgeschafft').not.toContain('ff-kanban-vorlage')
+    // B1 (V2/K6): der Spaltenwert ist eine LISTE (statusvalues-Attribut) —
+    // ein Bündel ohne die Listen-Auflösung verteilte exportierte Masken
+    // stumm nicht mehr.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — statusvalues (B1) fehlt').toContain('statusvalues')
   })
 })

@@ -137,11 +137,15 @@ function nodeToHtml(
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
   // width/height werden NICHT als Attribut exportiert — sie wirken als
   // style aufs Flex-Item (styleAttr, dieselbe flowLayout-Quelle wie Canvas).
+  // Listen-Props (B1: statusValues) reisen als JSON im Attribut — String()
+  // wäre verlustig (Komma-Verkettung, nicht rückparsbar); die Laufzeit
+  // (seRuntime parseStatusValues) liest exakt diese Form zurück.
   const attrs = Object.keys(def.defaultProps)
     .filter((key) => key !== 'width' && key !== 'height')
     .map((key) => {
       const value = node.props[key] ?? def.defaultProps[key]
-      return ` ${key.toLowerCase()}="${escapeHtmlAttr(String(value ?? ''))}"`
+      const text = Array.isArray(value) ? JSON.stringify(value) : String(value ?? '')
+      return ` ${key.toLowerCase()}="${escapeHtmlAttr(text)}"`
     })
     .join('')
 

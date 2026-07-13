@@ -51,7 +51,15 @@ function normalizeProps(type: string, rawProps: Record<string, unknown>): Record
   // verlieren. Unbekannte Keys werden weiterhin verworfen.
   for (const key of Object.keys(next)) {
     if (Object.prototype.hasOwnProperty.call(rawProps, key)) {
-      next[key] = rawProps[key]
+      // Listen-Props (B1: statusValues) verteidigen sich wie der Rest des
+      // Laders: nur ein Array wird angenommen, und daraus nur die Strings —
+      // Müll im Speicher darf nie als Nicht-Liste in der Prop landen.
+      if (Array.isArray(next[key])) {
+        const raw = rawProps[key]
+        next[key] = Array.isArray(raw) ? raw.filter((v): v is string => typeof v === 'string') : next[key]
+      } else {
+        next[key] = rawProps[key]
+      }
     }
   }
   return next
@@ -83,6 +91,26 @@ function migrateKanbanVorlage(
   }
 }
 
+// Migration alter Stände (B1, V2/K6): der Spaltenwert der Kanban-Spalte war
+// EIN String (statusValue), jetzt ist er eine LISTE (statusValues). Ein
+// gespeicherter Wert wird zur Ein-Element-Liste — OHNE diesen Umzug würde
+// normalizeProps den alten Key stillschweigend verwerfen und die Maske
+// verlöre ihre Spaltenwerte beim Laden. Leerer alter Wert = leere Liste
+// (der Default), da greift die neue Standard-Regel „Titel zählt als Wert".
+function migrateStatusWertListe(
+  src: Record<string, { type?: unknown; props?: unknown }>,
+): void {
+  for (const node of Object.values(src)) {
+    if (!node || typeof node !== 'object' || node.type !== 'kanban-spalte') continue
+    if (!node.props || typeof node.props !== 'object') continue
+    const props = node.props as Record<string, unknown>
+    if (Array.isArray(props.statusValues)) continue // schon neue Form
+    if (typeof props.statusValue === 'string' && props.statusValue !== '') {
+      props.statusValues = [props.statusValue]
+    }
+  }
+}
+
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
 // Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
 // Props, repariert parentId und verwirft Waisen/Zyklen.
@@ -90,6 +118,7 @@ function sanitizeTree(raw: Record<string, unknown>): BlockTree {
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   migrateKanbanVorlage(src)
+  migrateStatusWertListe(src)
 
   const addChild = (parentId: string, childId: unknown): void => {
     if (typeof childId !== 'string' || tree[childId]) return

@@ -3,9 +3,11 @@
 // jede Zeile der Datenquelle wird eine Karte (Aussehen = die ERSTE gestaltete
 // Karte des Boards als Vorlage, gebundene Stellen aus Kap. 5.2 zeigen die
 // Zeilenwerte), und der Wert des Spalten-Felds (statusField am Board)
-// bestimmt die Spalte: exakter Vergleich (getrimmt, Gross/klein egal) mit dem
-// Datenwert der Spalte (statusValue); kein Treffer -> erste Spalte (Auffang,
-// wie die Referenzmaske dashboard/praxis-kanban.html).
+// bestimmt die Spalte: exakter Vergleich (getrimmt, Gross/klein egal) mit den
+// Datenwerten der Spalte (statusValues, LISTE seit V2/B1; leere Liste = der
+// Spaltentitel zaehlt als Wert — freigegebene Standard-Regel der Strecke);
+// kein Treffer -> erste Spalte (Auffang; wird mit B2 durch die waehlbare
+// Auffangspalte + automatische "Nicht zugeordnet"-Spalte ersetzt).
 //
 // Laeuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle
@@ -271,15 +273,43 @@ export function messagePayload(eventData: unknown): unknown {
   return d.MSG.DATA
 }
 
-// Ziel-Spalte einer Zeile: erster exakter Treffer (getrimmt, Gross/klein
-// egal); leere Spalten-Datenwerte treffen nie; kein Treffer -> Spalte 0
-// (Auffang, wie SPALTEN[0] der Referenzmaske).
-export function columnIndexFor(value: string, columnValues: readonly string[]): number {
+// Spaltenwert-LISTE aus dem statusvalues-Attribut (B1: reist als JSON aus
+// exportMask). Strikt: nur ein JSON-Array, daraus nur die Strings — alles
+// andere (fehlend, kaputt, Fremdform) -> leere Liste, nie raten.
+export function parseStatusValues(attr: string | null | undefined): string[] {
+  if (typeof attr !== 'string' || attr === '') return []
+  try {
+    const parsed: unknown = JSON.parse(attr)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((v): v is string => typeof v === 'string')
+  } catch {
+    return []
+  }
+}
+
+// Wirksame Datenwerte einer Spalte (Standard-Regel der freigegebenen
+// Strecke, B1): explizite Liste, wenn sie belegt ist — sonst zaehlt der
+// SPALTENTITEL als der eine Wert. Ohne beides (Titel leer) hat die Spalte
+// keine Werte: sie faengt nichts und ist kein Ablage-Ziel.
+export function effectiveColumnValues(
+  statusValuesAttr: string | null | undefined,
+  heading: string | null | undefined,
+): string[] {
+  const values = parseStatusValues(statusValuesAttr).filter((v) => v.trim() !== '')
+  if (values.length > 0) return values
+  const title = (heading ?? '').trim()
+  return title === '' ? [] : [title]
+}
+
+// Ziel-Spalte einer Zeile: erste Spalte, deren Werte-Liste den Zeilenwert
+// enthaelt (getrimmt, Gross/klein egal); leere Listen treffen nie; kein
+// Treffer -> Spalte 0 (Auffang, wie SPALTEN[0] der Referenzmaske — B2
+// ersetzt das durch Auffangspalte/"Nicht zugeordnet").
+export function columnIndexFor(value: string, columnValues: readonly (readonly string[])[]): number {
   const v = value.trim().toLowerCase()
   if (v !== '') {
     for (let i = 0; i < columnValues.length; i++) {
-      const cv = columnValues[i].trim().toLowerCase()
-      if (cv !== '' && cv === v) return i
+      if (columnValues[i].some((cv) => cv.trim().toLowerCase() === v)) return i
     }
   }
   return 0
@@ -375,7 +405,10 @@ function hydrate(board: HTMLElement): void {
   if (!template) return // keine Musterkarte, nirgends: nichts tun
 
   const rows = rowsFor(seGlobal().SEDATA, source.name, source.tableId)
-  const columnValues = columns.map((c) => c.getAttribute('statusvalue') ?? '')
+  // B1: Werte-LISTE je Spalte (statusvalues als JSON-Attribut); leere Liste
+  // -> der Spaltentitel zaehlt (effectiveColumnValues, Standard-Regel).
+  const columnValues = columns.map((c) =>
+    effectiveColumnValues(c.getAttribute('statusvalues'), c.getAttribute('heading')))
   const spots = spotsForTag(template.tagName)
 
   // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
@@ -405,7 +438,8 @@ function hydrate(board: HTMLElement): void {
 // ---------- Karten-Drag im Export (Schreibweg 5.3b) ----------
 //
 // HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> Wert der Zielspalte
-// (statusValue) über die mitgelieferte Relation-Vorlage ins Spalten-Feld
+// (erster Wert der statusValues-Liste; leer = Titel) über die
+// mitgelieferte Relation-Vorlage ins Spalten-Feld
 // schreiben, Zeile im Speicher aktualisieren, neu hydrieren (Muster alter
 // Editor, CLAUDE.md 5.3b (b)). Läuft NUR im Export: verdrahtet wird in
 // connectBoard, und Editor-Boards (data-ff-editor) melden sich dort nie an —
@@ -469,20 +503,24 @@ function sendPut(
   })
 }
 
-// Drop einer Daten-Karte auf eine Spalte. Spalte ohne Datenwert ist kein
-// Schreibziel; gleicher Wert = kein Zug (derselbe Vergleich wie beim
-// Verteilen: getrimmt, Groß/klein egal). Ohne konfigurierten Schreibweg
-// (keine Vorlage gewählt) bewegt sich NICHTS — ein rein lokaler Zug wäre
-// eine Täuschung (er verschwände beim nächsten ReloadData). WYSIWYG.
+// Drop einer Daten-Karte auf eine Spalte. Geschrieben wird der ERSTE
+// wirksame Wert der Zielspalte (B1: Werte-Liste; leere Liste -> der Titel,
+// Standard-Regel). Spalte ohne wirksame Werte (Titel leer) ist kein
+// Schreibziel; Zeile passt schon in die Zielspalte (irgendein Listenwert,
+// derselbe Vergleich wie beim Verteilen) = kein Zug. Ohne konfigurierten
+// Schreibweg (keine Vorlage gewählt) bewegt sich NICHTS — ein rein lokaler
+// Zug wäre eine Täuschung (er verschwände beim nächsten ReloadData). WYSIWYG.
 function handleDrop(board: HTMLElement, column: HTMLElement): void {
   if (!dragged || dragged.board !== board) return
   const data = cardData.get(dragged.card)
   if (!data) return
   const statusField = board.getAttribute('statusfield') ?? ''
-  const targetValue = column.getAttribute('statusvalue') ?? ''
+  const targetValues = effectiveColumnValues(
+    column.getAttribute('statusvalues'), column.getAttribute('heading'))
+  const targetValue = targetValues[0] ?? ''
   if (statusField === '' || targetValue.trim() === '') return
-  const current = getField(data.row, statusField)
-  if (current.trim().toLowerCase() === targetValue.trim().toLowerCase()) return
+  const current = getField(data.row, statusField).trim().toLowerCase()
+  if (targetValues.some((v) => v.trim().toLowerCase() === current)) return
   const path = writePathFor(board)
   if (!path) return
   sendPut(path, statusField, data.pindex, targetValue)

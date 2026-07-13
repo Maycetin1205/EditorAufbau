@@ -10,10 +10,12 @@ import { describe, expect, it } from 'vitest'
 import { formatNowDate } from '../../core/data/relations'
 import {
   columnIndexFor,
+  effectiveColumnValues,
   findRuntimeDataSource,
   findRuntimeRelation,
   getField,
   messagePayload,
+  parseStatusValues,
   payloadDaten,
   rowsFor,
   setField,
@@ -245,23 +247,71 @@ describe('rowsFor (SEDATA -> Zeilen einer Quelle)', () => {
   })
 })
 
-describe('columnIndexFor (Zeilenwert -> Spalte)', () => {
-  const values = ['', '2', 'Fertig']
-
-  it('trifft exakt (getrimmt, Gross/klein egal)', () => {
-    expect(columnIndexFor('2', values)).toBe(1)
-    expect(columnIndexFor(' fertig ', values)).toBe(2)
+// B1 (V2/K6): der Spaltenwert ist eine LISTE — statusvalues reist als JSON-
+// Attribut (exportMask), parseStatusValues liest strikt zurueck, und die
+// Standard-Regel der freigegebenen Strecke gilt: leere Liste = der
+// SPALTENTITEL zaehlt als Wert (effectiveColumnValues).
+describe('parseStatusValues (statusvalues-Attribut -> Liste)', () => {
+  it('liest das JSON-Array aus exportMask zurueck', () => {
+    expect(parseStatusValues('["2"]')).toEqual(['2'])
+    expect(parseStatusValues('["Zimmer 1","Zimmer 2"]')).toEqual(['Zimmer 1', 'Zimmer 2'])
+    expect(parseStatusValues('[]')).toEqual([])
   })
 
-  it('kein Treffer oder leerer Wert -> erste Spalte (Auffang)', () => {
+  it('weist alles andere strikt ab: fehlend, kaputt, kein Array, Nicht-Strings', () => {
+    expect(parseStatusValues(null)).toEqual([])
+    expect(parseStatusValues(undefined)).toEqual([])
+    expect(parseStatusValues('')).toEqual([])
+    expect(parseStatusValues('kein json')).toEqual([])
+    expect(parseStatusValues('"nur-ein-string"')).toEqual([])
+    expect(parseStatusValues('{"a":1}')).toEqual([])
+    expect(parseStatusValues('[1,"ok",null]')).toEqual(['ok'])
+  })
+})
+
+describe('effectiveColumnValues (Standard-Regel: leer = Titel)', () => {
+  it('belegte Liste gewinnt — der Titel spielt dann keine Rolle', () => {
+    expect(effectiveColumnValues('["2","3"]', 'Offen')).toEqual(['2', '3'])
+  })
+
+  it('leere Liste -> der Spaltentitel zaehlt als der eine Wert (getrimmt)', () => {
+    expect(effectiveColumnValues('[]', 'Offen')).toEqual(['Offen'])
+    expect(effectiveColumnValues(null, ' In Arbeit ')).toEqual(['In Arbeit'])
+  })
+
+  it('nur Leerraum-Werte zaehlen nicht als belegt -> Titel-Regel greift', () => {
+    expect(effectiveColumnValues('["  ",""]', 'Offen')).toEqual(['Offen'])
+  })
+
+  it('ohne Liste UND ohne Titel hat die Spalte keine Werte (faengt nichts, kein Ablage-Ziel)', () => {
+    expect(effectiveColumnValues('[]', '')).toEqual([])
+    expect(effectiveColumnValues(null, '   ')).toEqual([])
+    expect(effectiveColumnValues(null, null)).toEqual([])
+  })
+})
+
+describe('columnIndexFor (Zeilenwert -> Spalte, Werte-Listen)', () => {
+  const values = [[], ['2'], ['Fertig', 'Erledigt']]
+
+  it('trifft exakt (getrimmt, Gross/klein egal) — JEDER Listenwert zaehlt', () => {
+    expect(columnIndexFor('2', values)).toBe(1)
+    expect(columnIndexFor(' fertig ', values)).toBe(2)
+    expect(columnIndexFor('ERLEDIGT', values)).toBe(2)
+  })
+
+  it('erster Treffer in Spalten-Reihenfolge gewinnt', () => {
+    expect(columnIndexFor('x', [['a'], ['x'], ['x']])).toBe(1)
+  })
+
+  it('kein Treffer oder leerer Wert -> erste Spalte (Auffang, bis B2)', () => {
     expect(columnIndexFor('3', values)).toBe(0)
     expect(columnIndexFor('', values)).toBe(0)
   })
 
-  it('leere Spalten-Datenwerte treffen nie (nur als Auffang erreichbar)', () => {
+  it('leere Listen treffen nie (nur als Auffang erreichbar)', () => {
     // Zeilenwert '' darf NICHT auf die leere Spalte 1 "matchen", sondern
     // faellt in den Auffang (hier ebenfalls 0 — aber ueber die Auffang-Regel).
-    expect(columnIndexFor('', ['x', '', 'y'])).toBe(0)
-    expect(columnIndexFor('unbekannt', ['x', '', 'y'])).toBe(0)
+    expect(columnIndexFor('', [['x'], [], ['y']])).toBe(0)
+    expect(columnIndexFor('unbekannt', [['x'], [], ['y']])).toBe(0)
   })
 })

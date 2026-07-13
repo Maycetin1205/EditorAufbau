@@ -83,18 +83,21 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   await expect(page.getByRole('option', { name: '253_30' })).toHaveCount(0)
   await page.getByRole('option', { name: 'Zimmer' }).click()
 
-  // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt leer = Auffang.
+  // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt ohne eigenen Wert
+  // (B1-Standard: ihr Titel "Offen" zaehlt — den trifft keine Zeile, sie
+  // bleibt hier reiner Auffang).
   await page.locator('ff-kanban-spalte .head').nth(1).click()
   await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
   await page.getByLabel('Wert dieser Spalte').fill('3')
 
   const html = await exportMaskHtml(page)
-  // Beide Technikwerte reisen als Attribute in der Maske (Kap. 5.2 + 5.3).
+  // Beide Technikwerte reisen als Attribute in der Maske (Kap. 5.2 + 5.3);
+  // Spaltenwerte seit B1 als Werte-LISTE (JSON, Anfuehrungszeichen escaped).
   expect(html).toContain('statusfield="253_30"')
   expect(html).toContain('headingfield="78_30"')
-  expect(html).toContain('statusvalue="2"')
-  expect(html).toContain('statusvalue="3"')
+  expect(html).toContain('statusvalues="[&quot;2&quot;]"')
+  expect(html).toContain('statusvalues="[&quot;3&quot;]"')
 
   // Maske laden; SEDATA kommt NACH dem Boot (wie in SoftEngine — die Maske
   // wartet darauf, Poll wie die Referenzmaske).
@@ -184,13 +187,21 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
     ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
   ])
 
-  // Kein Schreibziel = kein PUT: Drop auf die eigene Spalte (gleicher Wert)
-  // und auf die Auffang-Spalte (leerer Datenwert) veraendern nichts.
+  // Zeile passt schon in die Zielspalte (gleicher Wert) = kein PUT.
   await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(1))
-  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(0))
   await expect(colCards(1)).toHaveText(['Luna'])
-  await expect(colCards(0)).toHaveText([])
   expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
+
+  // B1-Standard-Regel (freigegebene Strecke): eine Spalte OHNE eigene Werte
+  // schreibt ihren TITEL zurueck — Drop auf "Offen" ist damit ein echter
+  // Zug (frueher stilles Nichts, das ist ABGESCHAFFT).
+  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(0))
+  await expect(colCards(0)).toHaveText(['Luna'])
+  await expect(colCards(1)).toHaveText([])
+  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([
+    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
+    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '9', 'ID0001', 'Offen'] }],
+  ])
 })
 
 // SEDATA in der ECHTEN SoftEngine-Form (belegt durch den SE-Echttest des

@@ -70,6 +70,22 @@ export function Inspector() {
 
     switch (kind) {
       case 'text':
+        // Listen-Props (isArray, B1: statusValues der Kanban-Spalte): das
+        // Textfeld ist die BRÜCKE bis zur Strecke (B3) und pflegt den ERSTEN
+        // Listenwert; leer = leere Liste (Standard: der Spaltentitel zählt).
+        // Mehrwertige Listen entstehen erst in der Strecke — dieses Feld
+        // fliegt dort raus.
+        if (property.isArray) {
+          const list = Array.isArray(value) ? (value as unknown[]).filter((v): v is string => typeof v === 'string') : []
+          return (
+            <TextControl
+              key={property.attributeName}
+              property={property}
+              value={list[0] ?? ''}
+              onChange={(v) => set(v === '' ? [] : [v, ...list.slice(1)])}
+            />
+          )
+        }
         return <TextControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
       case 'textarea':
         return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />

@@ -137,14 +137,15 @@ describe('Kanban-Export (echte Bloecke)', () => {
   it('K0/Entscheidung A: Spalten teilen sich die Zeile IMMER gleichmaessig', () => {
     const { html } = exportMask(boardTree())
     // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
-    // (Kap. 5.1) ohne angehaengte Quelle; statusfield=""/statusvalue="" =
-    // Daten-Props aus Kap. 5.3 ohne gesetzte Werte; putrelation = Default-
-    // Vorlage des Schreibwegs (Kap. 5.5).
+    // (Kap. 5.1) ohne angehaengte Quelle; statusfield="" = Daten-Prop aus
+    // Kap. 5.3 ohne gesetzten Wert; statusvalues="[]" = leere Werte-LISTE
+    // (B1 — zur Laufzeit zaehlt dann der Spaltentitel); putrelation =
+    // Default-Vorlage des Schreibwegs (Kap. 5.5).
     expect(html).toContain('<ff-kanban source="" statusfield="" putrelation="standard-put" style="align-self:stretch">')
     // Spalten: festgelegtes Breitenverhalten (lockedWidth 'fill') ->
     // flex-basis 0 + min-width 0. KEINE Mindestbreite, KEIN width-Attribut,
     // keine feste Pixelbreite (260px-Mindestbreite ist ABGELEHNT).
-    expect(html).toContain('heading="Offen" statusvalue="" style="flex-grow:1;flex-basis:0;min-width:0"')
+    expect(html).toContain('heading="Offen" statusvalues="[]" style="flex-grow:1;flex-basis:0;min-width:0"')
     expect(html).not.toContain('flex-basis:260px')
     expect(html).not.toContain('width:290px')
     expect(html).not.toContain('width:260px')
@@ -183,18 +184,22 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(colCss).not.toContain('min-height: 150px')
   })
 
-  it('Spalten-Feld + Datenwerte der Spalten reisen als Attribute (Kap. 5.3)', () => {
+  it('Spalten-Feld + Werte-Listen der Spalten reisen als Attribute (Kap. 5.3 / B1)', () => {
     const tree = boardTree()
     const board = tree[tree[ROOT_ID].childIds[0]]
     board.props.source = 'terminplaner'
     board.props.statusField = '253_30'
-    tree[board.childIds[0]].props.statusValue = '1'
-    tree[board.childIds[1]].props.statusValue = '2'
+    tree[board.childIds[0]].props.statusValues = ['1']
+    // B1: eine Spalte kann MEHRERE Werte fangen (traegt schon K5b) —
+    // die Liste reist als JSON, Anfuehrungszeichen HTML-escaped.
+    tree[board.childIds[1]].props.statusValues = ['2', 'Zimmer 2']
     const { html } = exportMask(tree)
     expect(html).toContain('<ff-kanban source="terminplaner" statusfield="253_30"')
-    expect(html).toContain('heading="Offen" statusvalue="1"')
-    expect(html).toContain('heading="In Arbeit" statusvalue="2"')
-    expect(html).toContain('heading="Fertig" statusvalue=""')
+    expect(html).toContain('heading="Offen" statusvalues="[&quot;1&quot;]"')
+    expect(html).toContain('heading="In Arbeit" statusvalues="[&quot;2&quot;,&quot;Zimmer 2&quot;]"')
+    expect(html).toContain('heading="Fertig" statusvalues="[]"')
+    // Die alte Einzelwert-Form existiert nicht mehr — nirgends in der Maske.
+    expect(html).not.toContain('statusvalue="')
   })
 
   it('Spalten + Musterkarte tragen ihre Werte als Attribute (ASCII-escaped)', () => {

@@ -165,6 +165,45 @@ describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
   })
 })
 
+describe('Migration (B1: Spaltenwert wird Liste)', () => {
+  // V2/K6-Vorarbeit: statusValue (EIN String) -> statusValues (LISTE).
+  // Der Nutzer-Auftrag dazu (2026-07-13): gespeicherte Masken UND ihr
+  // Export muessen den Umbau AUTOMATISCH ueberleben — Werte duerfen beim
+  // Laden nie stillschweigend verlorengehen.
+  function spalte(props: Record<string, unknown>) {
+    return {
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+        s1: { id: 's1', type: 'kanban-spalte', props, parentId: 'board', childIds: [] },
+      },
+      selectedId: null,
+    }
+  }
+
+  it('alter Einzelwert wird zur Ein-Element-Liste', () => {
+    const ed = load(spalte({ heading: 'Zimmer 2', statusValue: '2' }))
+    expect(ed.getNode('s1')?.props.statusValues).toEqual(['2'])
+    expect(ed.getNode('s1')?.props.statusValue).toBeUndefined() // alter Key ist weg
+    expect(ed.getNode('s1')?.props.heading).toBe('Zimmer 2')
+  })
+
+  it('leerer alter Wert wird zur leeren Liste (Standard: Titel zaehlt)', () => {
+    const ed = load(spalte({ statusValue: '' }))
+    expect(ed.getNode('s1')?.props.statusValues).toEqual([])
+  })
+
+  it('neue Form bleibt unangetastet (idempotent), auch wenn der alte Key noch daneben steht', () => {
+    const ed = load(spalte({ statusValues: ['2', '3'], statusValue: 'veraltet' }))
+    expect(ed.getNode('s1')?.props.statusValues).toEqual(['2', '3'])
+  })
+
+  it('Muell in der Liste wird verteidigt: nur Strings ueberleben, Nicht-Arrays fallen auf den Default', () => {
+    expect(load(spalte({ statusValues: [1, '2', null, 'x'] })).getNode('s1')?.props.statusValues).toEqual(['2', 'x'])
+    expect(load(spalte({ statusValues: 'kein-array' })).getNode('s1')?.props.statusValues).toEqual([])
+  })
+})
+
 describe('Migration (altes Flach-Format)', () => {
   it('übernimmt Blöcke aus dem alten Listen-Format, Layout wird verworfen', () => {
     const ed = load({
