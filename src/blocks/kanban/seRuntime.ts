@@ -5,9 +5,14 @@
 // Zeilenwerte), und der Wert des Spalten-Felds (statusField am Board)
 // bestimmt die Spalte: exakter Vergleich (getrimmt, Gross/klein egal) mit den
 // Datenwerten der Spalte (statusValues, LISTE seit V2/B1; leere Liste = der
-// Spaltentitel zaehlt als Wert — freigegebene Standard-Regel der Strecke);
-// kein Treffer -> erste Spalte (Auffang; wird mit B2 durch die waehlbare
-// Auffangspalte + automatische "Nicht zugeordnet"-Spalte ersetzt).
+// Spaltentitel zaehlt als Wert — freigegebene Standard-Regel der Strecke).
+// Kein Treffer (V2/B2): die Zeile landet in der gewaehlten AUFFANGSPALTE
+// (auffang="ja" an der Spalte); ist keine gewaehlt, erzeugt die Maske zur
+// Laufzeit die eigene Spalte "Nicht zugeordnet" — neutral, nur sichtbar
+// wenn es solche Zeilen gibt, KEIN Ablage-Ziel; ihre Karten lassen sich in
+// echte Spalten ziehen (Reparaturweg). Zeilen verschwinden NIE still
+// (Nutzer-Auflage der freigegebenen Strecke); die stille "erste
+// Spalte"-Regel ist abgeschafft.
 //
 // Laeuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle
@@ -302,9 +307,10 @@ export function effectiveColumnValues(
 }
 
 // Ziel-Spalte einer Zeile: erste Spalte, deren Werte-Liste den Zeilenwert
-// enthaelt (getrimmt, Gross/klein egal); leere Listen treffen nie; kein
-// Treffer -> Spalte 0 (Auffang, wie SPALTEN[0] der Referenzmaske — B2
-// ersetzt das durch Auffangspalte/"Nicht zugeordnet").
+// enthaelt (getrimmt, Gross/klein egal); leere Listen treffen nie. Kein
+// Treffer oder leerer Wert -> -1 (B2: der Aufrufer entscheidet —
+// Auffangspalte oder "Nicht zugeordnet"; die stille "Spalte 0"-Regel der
+// Referenzmaske ist abgeschafft, Zeilen verschwinden nie still).
 export function columnIndexFor(value: string, columnValues: readonly (readonly string[])[]): number {
   const v = value.trim().toLowerCase()
   if (v !== '') {
@@ -312,7 +318,15 @@ export function columnIndexFor(value: string, columnValues: readonly (readonly s
       if (columnValues[i].some((cv) => cv.trim().toLowerCase() === v)) return i
     }
   }
-  return 0
+  return -1
+}
+
+// Auffangspalte eines Boards (B2): der Index der ERSTEN Spalte mit dem
+// Kennzeichen 'ja' (hoechstens eine ist zulaessig — der Store erzwingt das
+// beim Bedienen, die Preflight beim Export; ein manipulierter Altbestand
+// faellt deterministisch auf die erste). Keine gewaehlt -> -1.
+export function catchColumnIndex(auffangFlags: readonly (string | null | undefined)[]): number {
+  return auffangFlags.findIndex((f) => (f ?? '').trim() === 'ja')
 }
 
 // ---------- SoftEngine-Anbindung (nur im Export aktiv) ----------
@@ -359,9 +373,17 @@ let booted = false
 const SPALTE_TAG = KanbanSpalteBlock.tagName
 const CARD_TAG = CardBlock.tagName
 
+// Die Laufzeit-Spalte "Nicht zugeordnet" (B2) traegt dieses Marker-Attribut:
+// die Spalten-Optik wird darueber neutral (KanbanSpalteBlock-CSS), das
+// Ziehen weist sie als Ablage-Ziel ab, und columnsOf zaehlt sie nie zu den
+// echten Spalten (ihr Titel darf nichts "matchen").
+const AUTO_COLUMN_ATTR = 'data-ff-nicht-zugeordnet'
+const AUTO_COLUMN_TITLE = 'Nicht zugeordnet'
+
 function columnsOf(board: HTMLElement): HTMLElement[] {
   return Array.from(board.children).filter(
-    (el): el is HTMLElement => el.tagName.toLowerCase() === SPALTE_TAG,
+    (el): el is HTMLElement =>
+      el.tagName.toLowerCase() === SPALTE_TAG && !el.hasAttribute(AUTO_COLUMN_ATTR),
   )
 }
 
@@ -409,13 +431,39 @@ function hydrate(board: HTMLElement): void {
   // -> der Spaltentitel zaehlt (effectiveColumnValues, Standard-Regel).
   const columnValues = columns.map((c) =>
     effectiveColumnValues(c.getAttribute('statusvalues'), c.getAttribute('heading')))
+  // B2: Zeilen ohne Treffer faengt die gewaehlte Auffangspalte; ohne sie
+  // entsteht unten bei Bedarf die Laufzeit-Spalte "Nicht zugeordnet".
+  const catchIdx = catchColumnIndex(columns.map((c) => c.getAttribute('auffang')))
   const spots = spotsForTag(template.tagName)
 
-  // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
+  // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent). Die
+  // "Nicht zugeordnet"-Spalte der letzten Hydrierung verschwindet IMMER —
+  // sie entsteht nur neu, wenn es wieder Zeilen ohne Treffer gibt (nur
+  // sichtbar bei Bedarf).
+  board.querySelectorAll(`[${AUTO_COLUMN_ATTR}]`).forEach((el) => el.remove())
   for (const col of columns) cardsOf(col).forEach((card) => card.remove())
+  // Laufzeit-Spalte erst beim ERSTEN Treffer-losen Satz erzeugen (lazy):
+  // Layout wie die echten Spalten (style der ersten kopieren — dieselben
+  // Fluss-Werte, die exportMask allen Spalten gibt; Fallback = der
+  // lockedWidth-'fill'-Ausdruck), Titel als Klartext, Marker-Attribut fuer
+  // Optik/Drop-Sperre.
+  let autoColumn: HTMLElement | null = null
+  const ensureAutoColumn = (): HTMLElement => {
+    if (!autoColumn) {
+      autoColumn = document.createElement(SPALTE_TAG)
+      autoColumn.setAttribute('heading', AUTO_COLUMN_TITLE)
+      autoColumn.setAttribute(AUTO_COLUMN_ATTR, '')
+      autoColumn.setAttribute('style',
+        columns[0].getAttribute('style') ?? 'flex-grow:1;flex-basis:0;min-width:0')
+      board.appendChild(autoColumn)
+    }
+    return autoColumn
+  }
   for (const row of rows) {
     const card = template.cloneNode(true) as HTMLElement
-    columns[columnIndexFor(getField(row, statusField), columnValues)].appendChild(card)
+    const idx = columnIndexFor(getField(row, statusField), columnValues)
+    const target = idx >= 0 ? columns[idx] : catchIdx >= 0 ? columns[catchIdx] : ensureAutoColumn()
+    target.appendChild(card)
     // Gebundene Stellen mit den Zeilenwerten fuellen — ungebundene behalten
     // den statischen Text der Vorlage. Property-Zuweisung NACH dem Einhaengen
     // (Element ist dann sicher upgegradet, Lit uebernimmt das Rendern).
@@ -554,15 +602,20 @@ function wireDrag(board: HTMLElement): void {
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
   })
   board.addEventListener('dragend', () => { dragged = null })
+  // B2: die Laufzeit-Spalte "Nicht zugeordnet" ist KEIN Ablage-Ziel — ohne
+  // preventDefault zeigt der Browser "verboten" und feuert kein drop. Ihre
+  // Karten HERAUSziehen in echte Spalten bleibt der Reparaturweg (normale
+  // Datenkarten, derselbe Schreibweg wie jeder Zug).
   board.addEventListener('dragover', (e) => {
-    if (dragged?.board === board && columnOfEvent(board, e)) {
+    const column = columnOfEvent(board, e)
+    if (dragged?.board === board && column && !column.hasAttribute(AUTO_COLUMN_ATTR)) {
       e.preventDefault()
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
     }
   })
   board.addEventListener('drop', (e) => {
     const column = columnOfEvent(board, e)
-    if (!column) return
+    if (!column || column.hasAttribute(AUTO_COLUMN_ATTR)) return
     e.preventDefault()
     handleDrop(board, column)
     dragged = null

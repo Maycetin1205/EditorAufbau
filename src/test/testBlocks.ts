@@ -18,6 +18,9 @@ export const TEST_BOARD = 't-board'
 export const TEST_DATA_BOX = 't-daten-box'
 // Block mit Ereignissen (blockEvents, Z1/Z2) — für Aktionsketten-Tests.
 export const TEST_EVENT_BLOCK = 't-event-block'
+// Block mit exklusivem Geschwister-Kennzeichen (exclusiveAmongSiblings,
+// V2/B2 — z. B. Auffangspalte): höchstens ein Geschwister trägt 'ja'.
+export const TEST_FLAG_BLOCK = 't-flag-block'
 
 export function registerTestBlocks(): void {
   if (registered) return
@@ -105,5 +108,30 @@ export function registerTestBlocks(): void {
       { key: 'onClick', name: 'Klick' },
       { key: 'onPing', name: 'Angepingt' },
     ],
+  })
+  registerBlockType({
+    type: TEST_FLAG_BLOCK,
+    tagName: 'ff-t-flag-block',
+    displayName: 'Testkennzeichenblock',
+    category: 'anzeige',
+    defaultProps: { ...FLOW_DEFAULTS, aktiv: 'nein', notiz: '' },
+    customProperties: [
+      {
+        attributeName: 'aktiv',
+        name: 'Aktiv',
+        description: 'Exklusives Testkennzeichen.',
+        isArray: false,
+        maxLength: 0,
+        kind: 'select',
+        options: [
+          { value: 'nein', label: 'Nein' },
+          { value: 'ja', label: 'Ja' },
+        ],
+        exclusiveAmongSiblings: true,
+      },
+    ],
+    acceptsChildren: false,
+    resizableWidth: true,
+    resizableHeight: false,
   })
 }

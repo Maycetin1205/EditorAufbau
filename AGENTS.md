@@ -15,20 +15,24 @@
 > EINMAL gebündelt, im Hintergrund, unmittelbar vor einem Commit. Der
 > Nutzer wartet nie auf Testläufe.**
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13 abends): V2-Programm
-> Paket B2 (Auffang-Modell + „Nicht zugeordnet"). Die Bindungsstrecke
-> ist vom Nutzer FREIGEGEBEN (2026-07-13, in Worten im Chat), der
-> Bau-Plan B1–B6 ist abgesegnet — Details im V2-PROGRAMM-Abschnitt
-> unten. B1 (Spaltenwert wird Liste + Lade-Migration) ist GEBAUT +
-> committed.** Zwei Nutzer-Auflagen aus der Freigabe: (1) Zeilen ohne
-> Treffer dürfen NIE still verschwinden — ohne gewählte Auffangspalte
-> erzeugt die Maske zur Laufzeit eine eigene Spalte „Nicht zugeordnet"
-> (erscheint nur bei Bedarf, kein Ablage-Ziel, Karten herausziehen =
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13 spät): V2-Programm
+> Paket B3 (Strecke, Schritte 1–3: Quelle → Einsortieren-Feld → Spalten
+> samt Werte-Klick-Auswahl + Auffang-Wahl mit Klartext-Hinweis; das rohe
+> Wert-Textfeld UND das Auffang-Ja/Nein fliegen dann aus dem Inspector,
+> E2E-Flüsse auf die Strecke umbauen). Die Bindungsstrecke ist vom
+> Nutzer FREIGEGEBEN (2026-07-13, in Worten im Chat), der Bau-Plan
+> B1–B6 ist abgesegnet — Details im V2-PROGRAMM-Abschnitt unten.
+> B1 (Spaltenwert wird Liste) und B2 (Auffang-Modell + „Nicht
+> zugeordnet") sind GEBAUT + committed.** Zwei Nutzer-Auflagen aus der
+> Freigabe: (1) Zeilen ohne Treffer dürfen NIE still verschwinden —
+> seit B2 strukturell erledigt: ohne gewählte Auffangspalte erzeugt die
+> Maske zur Laufzeit eine eigene Spalte „Nicht zugeordnet" (erscheint
+> nur bei Bedarf, kein Ablage-Ziel, Karten herausziehen =
 > Reparaturweg); (2) Migrationsschritte sind immer ein EIGENER,
 > sichtbarer Punkt im Bau-Plan. ⚠ Korrektur: der frühere Verweis auf
 > `memory/offene-ux-punkte-bindung.md` war FALSCH — die Datei hat nie
 > existiert; die Strecken-Inhalte stehen im V2-Abschnitt.
-> Danach: B3–B6 → Optik-Runde Steuerung/Inspector
+> Danach: B4–B6 → Optik-Runde Steuerung/Inspector
 > (Nutzer: „potthässlich") → SE-Echttest Z2 (Kette „Werkzeug starten"
 > mit ECHTER Werkzeug-Nummer der Installation; ⚠ Nummern sind je
 > Installation individuell, 3003 = REFRESH-Werkzeug der
@@ -1022,15 +1026,35 @@ den Export (Kap. 3).
       trägt ihre eigene Runtime); ein Neu-Export erzeugt die neue Form.
       Veralten-Wächter verschärft (Bündel muss statusvalues tragen).
       213 Unit + 31 E2E grün.
-    - **B2 Auffang-Modell + „Nicht zugeordnet":** Spalten-Kennzeichen
-      „Auffangspalte" (höchstens eine je Board; Setzen löscht es auf der
-      anderen, 1 Undo). Laufzeit: Treffer → Spalte; kein Treffer →
-      Auffangspalte; keine gewählt → automatische Laufzeit-Spalte
-      „Nicht zugeordnet" (neutral, nur sichtbar wenn es solche Zeilen
-      gibt, kein Ablage-Ziel, Karten herausziehen in echte Spalten =
-      Reparaturweg). Die stille „erste Spalte"-Regel fliegt raus (Tests
-      zur strengeren Spec umbauen, nicht löschen). Preflight: mehr als
-      eine Auffangspalte = Fehler.
+    - ✅ **B2 Auffang-Modell + „Nicht zugeordnet" (2026-07-13):**
+      Spalten-Kennzeichen `auffang` ('ja'/'nein', Ja/Nein-Select nach
+      FormField-Muster — `jaNeinProperty` dafür nach
+      `src/blocks/shared/` gezogen, zweiter Nutzer). Höchstens eine je
+      Board über das NEUE PropertyDescription-Konzept
+      **exclusiveAmongSiblings** (kein `if type===`):
+      `Editor.updateProperty` räumt beim Setzen auf 'ja' die
+      gleichartigen Geschwister im SELBEN History-Eintrag ab (1 Undo
+      stellt beides zurück); die Preflight blockiert ein doppeltes 'ja'
+      aus Altbeständen/manipuliertem Speicher mit Klartext („Kennzeichen
+      mehrfach vergeben", generisch übers Konzept — Laden bleibt
+      tolerant, kein stiller Eingriff). Laufzeit (seRuntime): Treffer →
+      Spalte; kein Treffer → Auffangspalte (`catchColumnIndex`); keine
+      gewählt → automatische Laufzeit-Spalte „Nicht zugeordnet" am
+      Board-Ende (Marker `data-ff-nicht-zugeordnet`, neutral getönt aus
+      Grund-Tokens, nur sichtbar wenn es solche Zeilen gibt — jede
+      Neu-Hydrierung räumt sie ab und erzeugt sie bei Bedarf neu). Sie
+      ist KEIN Ablage-Ziel (dragover ohne preventDefault → Browser
+      zeigt „verboten", kein Drop, kein PUT); ihre Karten sind normale
+      Datenkarten — Herausziehen in echte Spalten schreibt zurück =
+      Reparaturweg. Die stille „erste Spalte"-Regel ist ABGESCHAFFT
+      (`columnIndexFor` liefert -1 statt 0; Tests zur strengeren Spec
+      umgebaut, nicht gelöscht — inkl. E2E: Rocky/„OP" landet sichtbar
+      in „Nicht zugeordnet" statt still in „Offen"). Das
+      Auffang-Ja/Nein im Inspector ist eine BRÜCKE wie das Wert-Feld
+      (fliegt in B3 mit der Strecke raus); sichtbar am Board wird der
+      Auffang-Zustand mit B3/B5. build:runtime neu, Veralten-Wächter
+      verschärft (Bündel muss auffang + data-ff-nicht-zugeordnet
+      tragen). 222 Unit + 33 E2E grün, tsc + eslint sauber.
     - **B3 Strecke, Schritte 1–3** (Quelle → Einsortieren-Feld →
       Spalten samt Werte-Klick-Auswahl + Auffang-Wahl mit
       Klartext-Hinweis auf „Nicht zugeordnet"; das rohe Wert-Textfeld

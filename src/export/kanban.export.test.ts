@@ -145,7 +145,7 @@ describe('Kanban-Export (echte Bloecke)', () => {
     // Spalten: festgelegtes Breitenverhalten (lockedWidth 'fill') ->
     // flex-basis 0 + min-width 0. KEINE Mindestbreite, KEIN width-Attribut,
     // keine feste Pixelbreite (260px-Mindestbreite ist ABGELEHNT).
-    expect(html).toContain('heading="Offen" statusvalues="[]" style="flex-grow:1;flex-basis:0;min-width:0"')
+    expect(html).toContain('heading="Offen" statusvalues="[]" auffang="nein" style="flex-grow:1;flex-basis:0;min-width:0"')
     expect(html).not.toContain('flex-basis:260px')
     expect(html).not.toContain('width:290px')
     expect(html).not.toContain('width:260px')
@@ -184,7 +184,7 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(colCss).not.toContain('min-height: 150px')
   })
 
-  it('Spalten-Feld + Werte-Listen der Spalten reisen als Attribute (Kap. 5.3 / B1)', () => {
+  it('Spalten-Feld + Werte-Listen + Auffang-Kennzeichen der Spalten reisen als Attribute (Kap. 5.3 / B1 / B2)', () => {
     const tree = boardTree()
     const board = tree[tree[ROOT_ID].childIds[0]]
     board.props.source = 'terminplaner'
@@ -193,11 +193,14 @@ describe('Kanban-Export (echte Bloecke)', () => {
     // B1: eine Spalte kann MEHRERE Werte fangen (traegt schon K5b) —
     // die Liste reist als JSON, Anfuehrungszeichen HTML-escaped.
     tree[board.childIds[1]].props.statusValues = ['2', 'Zimmer 2']
+    // B2: das Auffang-Kennzeichen reist als eigener Technikwert mit —
+    // die Laufzeit liest exakt dieses Attribut (catchColumnIndex).
+    tree[board.childIds[2]].props.auffang = 'ja'
     const { html } = exportMask(tree)
     expect(html).toContain('<ff-kanban source="terminplaner" statusfield="253_30"')
-    expect(html).toContain('heading="Offen" statusvalues="[&quot;1&quot;]"')
-    expect(html).toContain('heading="In Arbeit" statusvalues="[&quot;2&quot;,&quot;Zimmer 2&quot;]"')
-    expect(html).toContain('heading="Fertig" statusvalues="[]"')
+    expect(html).toContain('heading="Offen" statusvalues="[&quot;1&quot;]" auffang="nein"')
+    expect(html).toContain('heading="In Arbeit" statusvalues="[&quot;2&quot;,&quot;Zimmer 2&quot;]" auffang="nein"')
+    expect(html).toContain('heading="Fertig" statusvalues="[]" auffang="ja"')
     // Die alte Einzelwert-Form existiert nicht mehr — nirgends in der Maske.
     expect(html).not.toContain('statusvalue="')
   })

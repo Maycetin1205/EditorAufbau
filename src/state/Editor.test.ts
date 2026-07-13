@@ -15,6 +15,7 @@ import {
   TEST_BOX,
   TEST_DATA_BOX,
   TEST_EVENT_BLOCK,
+  TEST_FLAG_BLOCK,
   TEST_STRICT_BOX,
 } from '../test/testBlocks'
 
@@ -219,6 +220,53 @@ describe('updateBlockEvents (Aktionsketten, Z2)', () => {
     ed.updateBlockEvents(ed.rootId, { onClick: [schritt()] })
     expect(ed.canUndo).toBe(false)
     expect(ed.getNode(ed.rootId)?.events).toBeUndefined()
+  })
+})
+
+describe('updateProperty — exklusive Geschwister-Kennzeichen (V2/B2)', () => {
+  it('Setzen auf "ja" räumt das Kennzeichen bei gleichartigen Geschwistern ab', () => {
+    const box = add(TEST_BOX)
+    const a = add(TEST_FLAG_BLOCK, box.id)
+    const b = add(TEST_FLAG_BLOCK, box.id)
+    ed.updateProperty(a.id, 'aktiv', 'ja')
+    ed.updateProperty(b.id, 'aktiv', 'ja')
+    expect(ed.getNode(a.id)?.props.aktiv).toBe('nein')
+    expect(ed.getNode(b.id)?.props.aktiv).toBe('ja')
+  })
+
+  it('Abräumen + Setzen sind EIN Undo-Schritt', () => {
+    const box = add(TEST_BOX)
+    const a = add(TEST_FLAG_BLOCK, box.id)
+    const b = add(TEST_FLAG_BLOCK, box.id)
+    ed.updateProperty(a.id, 'aktiv', 'ja')
+    ed.updateProperty(b.id, 'aktiv', 'ja')
+    ed.undo() // genau EIN Schritt: beides zurück
+    expect(ed.getNode(a.id)?.props.aktiv).toBe('ja')
+    expect(ed.getNode(b.id)?.props.aktiv).toBe('nein')
+  })
+
+  it('Setzen auf "nein" und fremde Container bleiben ohne Fernwirkung', () => {
+    const box = add(TEST_BOX)
+    const a = add(TEST_FLAG_BLOCK, box.id)
+    const andereBox = add(TEST_BOX)
+    const c = add(TEST_FLAG_BLOCK, andereBox.id)
+    ed.updateProperty(a.id, 'aktiv', 'ja')
+    // Anderer Container: das Kennzeichen dort bleibt unberührt.
+    ed.updateProperty(c.id, 'aktiv', 'ja')
+    expect(ed.getNode(a.id)?.props.aktiv).toBe('ja')
+    // Zurück auf "nein" räumt nichts ab (kein zweites 'ja' entsteht dadurch).
+    ed.updateProperty(c.id, 'aktiv', 'nein')
+    expect(ed.getNode(a.id)?.props.aktiv).toBe('ja')
+    expect(ed.getNode(c.id)?.props.aktiv).toBe('nein')
+  })
+
+  it('nicht-exklusive Props von Geschwistern bleiben unberührt', () => {
+    const box = add(TEST_BOX)
+    const a = add(TEST_FLAG_BLOCK, box.id)
+    const b = add(TEST_FLAG_BLOCK, box.id)
+    ed.updateProperty(a.id, 'notiz', 'bleibt')
+    ed.updateProperty(b.id, 'aktiv', 'ja')
+    expect(ed.getNode(a.id)?.props.notiz).toBe('bleibt')
   })
 })
 

@@ -25,6 +25,7 @@ import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { jaNeinProperty } from '../shared/jaNeinProperty'
 
 // Technikwert (unsichtbar) — der Bediener waehlt den Klarnamen im Inspector.
 export type FieldType =
@@ -54,29 +55,6 @@ export function coerceFieldType(value: string): FieldType {
   return (FIELD_TYPES as readonly string[]).includes(value)
     ? (value as FieldType)
     : 'text'
-}
-
-// Kleiner Ja/Nein-Select fuer boolesche Eigenschaften (Pflicht, Nur-lesen).
-// Bewusst als Select statt eigenem Boolean-Control: kein neues Inspector-Infra
-// fuer v1 (DRY); ein echtes Toggle kann spaeter folgen, wenn ein zweiter Fall
-// es braucht (vgl. statusVariant-Extraktion erst beim dritten Nutzer).
-function jaNeinProperty(
-  attributeName: string,
-  name: string,
-  description: string,
-): PropertyDescription {
-  return {
-    attributeName,
-    name,
-    description,
-    isArray: false,
-    maxLength: 0,
-    kind: 'select',
-    options: [
-      { value: 'nein', label: 'Nein' },
-      { value: 'ja', label: 'Ja' },
-    ],
-  }
 }
 
 export class FormFieldBlock extends BasicBlock {

@@ -124,6 +124,13 @@ Daten-Controls im Inspector (Kap. 5.3, PropertyDescription statt Registry):
   sichtbar, gespeichert wird der Feldcode (Technikwert).
 - `requiresDataSource`: Control nur mit Quelle in Reichweite sichtbar
   (gespeicherte Werte bleiben erhalten und leben mit der Quelle wieder auf).
+- `exclusiveAmongSiblings` (V2/B2): Ja/Nein-Kennzeichen, das höchstens EIN
+  Geschwister gleichen Typs tragen darf (Kanban-Spalte: `auffang` =
+  „Auffangspalte"). `Editor.updateProperty` räumt beim Setzen auf 'ja' die
+  gleichartigen Geschwister im SELBEN History-Eintrag ab (1 Undo); die
+  Export-Preflight blockiert ein doppeltes 'ja' aus Altbeständen mit
+  Klartext. Ja/Nein-Selects kommen aus `src/blocks/shared/jaNeinProperty.ts`
+  (aus dem FormField gezogen, als die Spalte der zweite Nutzer wurde).
 - Beide erscheinen in der Inspector-Sektion „Daten" (nicht in der
   allgemeinen Gruppe). Das Kanban nutzt sie für `statusField` (Board:
   „Einsortieren nach") und `statusValues` (Spalte: „Wert dieser Spalte" —
@@ -141,7 +148,14 @@ in `dashboard/praxis-kanban.html`), jede Zeile wird ein Klon der ersten
 gestalteten Karte, gebundene Stellen (`bindableSpots` aus der Registry)
 werden mit Zeilenwerten gefüllt, die `statusValues`-Listen der Spalten
 verteilen (jeder Listenwert trifft; leere Liste = Titel; Drop schreibt
-den ERSTEN Wert zurück).
+den ERSTEN Wert zurück). Zeilen ohne Treffer (V2/B2): sie landen in der
+gewählten Auffangspalte (`auffang="ja"`); ist keine gewählt, erzeugt die
+Laufzeit die eigene Spalte „Nicht zugeordnet" am Board-Ende
+(Marker-Attribut `data-ff-nicht-zugeordnet`, neutrale Töne aus
+Grund-Tokens) — nur sichtbar, wenn es solche Zeilen gibt, KEIN Ablage-Ziel
+(dragover/drop weisen sie ab), Karten herausziehen in echte Spalten ist
+der Reparaturweg. Die stille „erste Spalte"-Regel ist abgeschafft
+(`columnIndexFor` liefert -1 statt 0); Zeilen verschwinden NIE still.
 
 ## Datenfluss
 

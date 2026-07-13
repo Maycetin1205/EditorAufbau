@@ -47,6 +47,36 @@ describe('preflightMask — S1a: geloeschte Datenquelle blockiert den Export', (
   })
 })
 
+describe('preflightMask — B2: mehr als eine Auffangspalte blockiert den Export', () => {
+  // Auffang-Kennzeichen direkt am Baum setzen: so saehe ein geladener
+  // Altbestand/manipulierter Speicher aus. Beim BEDIENEN laesst der Store
+  // nie zwei 'ja' entstehen (exclusiveAmongSiblings, s. Editor-Test) —
+  // die Preflight ist das Sicherheitsnetz dahinter.
+  function boardTreeMitAuffang(jaCount: number): BlockTree {
+    const tree = boardTree('terminplaner')
+    const boardId = tree[ROOT_ID].childIds[0]
+    const spalten = tree[boardId].childIds.filter((id) => tree[id].type === 'kanban-spalte')
+    for (const id of spalten.slice(0, jaCount)) {
+      tree[id] = { ...tree[id], props: { ...tree[id].props, auffang: 'ja' } }
+    }
+    return tree
+  }
+
+  it('keine oder genau eine Auffangspalte ist kein Fehler', () => {
+    expect(failedChecks(preflightMask(boardTreeMitAuffang(0), LIB))).toEqual([])
+    expect(failedChecks(preflightMask(boardTreeMitAuffang(1), LIB))).toEqual([])
+  })
+
+  it('zwei Auffangspalten sind genau ein Fehler mit Klartext (Klarnamen, kein Technikwert)', () => {
+    const failed = failedChecks(preflightMask(boardTreeMitAuffang(2), LIB))
+    expect(failed).toHaveLength(1)
+    expect(failed[0].name).toBe('Kennzeichen mehrfach vergeben')
+    expect(failed[0].detail).toContain('Auffangspalte')
+    expect(failed[0].detail).toContain('Kanban-Spalte')
+    expect(failed[0].detail).not.toContain('auffang')
+  })
+})
+
 describe('preflightMask — Z2: unvollstaendige Aktionsschritte blockieren den Export', () => {
   // Kette am Board-Knoten anbringen (Ereignis onCardClick aus der Registry).
   function boardTreeMitKette(toolNr: string): BlockTree {

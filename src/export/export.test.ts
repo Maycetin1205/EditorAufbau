@@ -95,5 +95,10 @@ describe('Runtime-Bündel', () => {
     // ein Bündel ohne die Listen-Auflösung verteilte exportierte Masken
     // stumm nicht mehr.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — statusvalues (B1) fehlt').toContain('statusvalues')
+    // B2 (V2/K6): Zeilen ohne Treffer verschwinden NIE still — ein Bündel
+    // ohne Auffang-Kennzeichen + "Nicht zugeordnet"-Laufzeitspalte hätte
+    // wieder die abgeschaffte stille "erste Spalte"-Regel.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Auffang-Kennzeichen (B2) fehlt').toContain('auffang')
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" (B2) fehlt').toContain('data-ff-nicht-zugeordnet')
   })
 })

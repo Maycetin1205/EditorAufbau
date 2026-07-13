@@ -25,6 +25,7 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
+import { jaNeinProperty } from '../shared/jaNeinProperty'
 import {
   coerceStatusVariant,
   statusVariantProperty,
@@ -63,10 +64,17 @@ export class KanbanSpalteBlock extends BasicBlock {
   // K5b (Unterbereiche = je Wert eine Drop-Zone). Alte Stände mit statusValue
   // migriert der Lader (Editor.ts). Default [] -> überlebt Persistenz, reist
   // als JSON-Attribut.
+  // auffang (V2/B2): Ja/Nein-Kennzeichen "Auffangspalte" — Zeilen, deren
+  // Sortier-Feld KEINE Spalte trifft, landen zur Laufzeit hier. Hoechstens
+  // eine je Board (exclusiveAmongSiblings, durchgesetzt im Store + in der
+  // Preflight). Ohne gewaehlte Auffangspalte erzeugt die Maske zur Laufzeit
+  // die eigene Spalte "Nicht zugeordnet" (seRuntime) — Zeilen verschwinden
+  // NIE still (Nutzer-Auflage der freigegebenen Strecke).
   static readonly defaultProps = {
     variant: 'info',
     heading: 'Neue Spalte',
     statusValues: [] as string[],
+    auffang: 'nein',
   }
 
   // Inspector: die Bedeutung (-> Farbwelt der Spalte) + der Datenwert der
@@ -91,6 +99,15 @@ export class KanbanSpalteBlock extends BasicBlock {
       kind: 'text',
       requiresDataSource: true,
     },
+    // B2-Bruecke wie das Wert-Feld darueber: die sichtbare Auffang-Wahl an
+    // EINEM Ort kommt mit der Strecke (B3); bis dahin steht das Kennzeichen
+    // hier im Inspector der Spalte.
+    jaNeinProperty(
+      'auffang',
+      'Auffangspalte',
+      'Einträge, die in keine Spalte passen, landen hier. Ohne Auffangspalte zeigt die Maske sie in einer eigenen Spalte "Nicht zugeordnet". Höchstens eine Spalte je Board.',
+      { requiresDataSource: true, exclusiveAmongSiblings: true },
+    ),
   ]
 
   // Strukturelle Größen (padding, font-weight, 9px-Punkt, 22px-Zähler) als
@@ -130,6 +147,18 @@ export class KanbanSpalteBlock extends BasicBlock {
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
       .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-shell: var(--se-amber-shell); --col-line: var(--se-amber-line); }
       .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-shell: var(--se-red-shell); --col-line: var(--se-red-line); }
+      /* B2: die Laufzeit-Spalte "Nicht zugeordnet" (seRuntime setzt das
+         Attribut data-ff-nicht-zugeordnet) ist bewusst NEUTRAL grau — sie
+         traegt keine Bedeutung aus dem Status-Vokabular, sondern ist der
+         sichtbare Reparaturweg fuer Zeilen ohne Treffer. Nur vorhandene
+         Grund-Tokens, keine neue Farbwelt; schlaegt die v-Klasse
+         (drei einfache Selektoren gegen zwei). */
+      :host([data-ff-nicht-zugeordnet]) .col {
+        --col-strong: var(--se-muted);
+        --col-soft: var(--se-bg);
+        --col-shell: var(--se-panel);
+        --col-line: var(--se-line);
+      }
       .head {
         flex: none;
         display: flex;

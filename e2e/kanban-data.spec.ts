@@ -59,13 +59,13 @@ const SEDATA_STUB = {
         { '253_30': '2', '78_30': 'Minka' },
         { '253_30': '3', '78_30': 'Buddy' },
         { '253_30': '2', '78_30': 'Nala' },
-        { '253_30': 'OP', '78_30': 'Rocky' }, // trifft keine Spalte -> Auffang
+        { '253_30': 'OP', '78_30': 'Rocky' }, // trifft keine Spalte -> "Nicht zugeordnet" (B2)
       ],
     }],
   },
 }
 
-test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer fällt in Spalte 1', async ({ page, context }) => {
+test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer landet sichtbar in "Nicht zugeordnet"', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)
   await attachTerminplaner(page)
@@ -84,8 +84,8 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   await page.getByRole('option', { name: 'Zimmer' }).click()
 
   // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt ohne eigenen Wert
-  // (B1-Standard: ihr Titel "Offen" zaehlt — den trifft keine Zeile, sie
-  // bleibt hier reiner Auffang).
+  // (B1-Standard: ihr Titel "Offen" zaehlt — den trifft keine Zeile; seit
+  // B2 ist sie damit KEIN stiller Auffang mehr).
   await page.locator('ff-kanban-spalte .head').nth(1).click()
   await page.getByLabel('Wert dieser Spalte').fill('2')
   await page.locator('ff-kanban-spalte .head').nth(2).click()
@@ -108,18 +108,25 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   }, SEDATA_STUB)
 
   // 4 Zeilen -> 4 Karten: Minka+Nala in "In Arbeit" (2), Buddy in "Fertig"
-  // (3), Rocky (Zimmer "OP", kein Treffer) im Auffang "Offen". Die
-  // Musterkarte (erste Karte des Boards) wird beim Hydrieren durch die
+  // (3). Rocky (Zimmer "OP", kein Treffer) landet NICHT mehr still in
+  // "Offen" (B2: die Regel ist abgeschafft) — ohne gewaehlte Auffangspalte
+  // erzeugt die Maske die eigene Spalte "Nicht zugeordnet" am Board-Ende.
+  // Die Musterkarte (erste Karte des Boards) wird beim Hydrieren durch die
   // Daten-Karten ERSETZT — sie zaehlt nicht doppelt.
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
   // P1.1: einen Vorlagen-Kasten gibt es nicht mehr — nirgends in der Maske.
   await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
+  await expect(mask.locator('ff-kanban-spalte')).toHaveCount(4) // 3 echte + "Nicht zugeordnet"
+  const autoSpalte = mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]')
+  await expect(autoSpalte).toHaveCount(1)
+  await expect(autoSpalte.locator('.title')).toHaveText('Nicht zugeordnet')
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
-  await expect(colCards(0)).toHaveText(['Rocky'])
+  await expect(colCards(0)).toHaveText([])
   await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
   await expect(colCards(2)).toHaveText(['Buddy'])
+  await expect(colCards(3)).toHaveText(['Rocky'])
   // Kartenzähler laufen mit (slotchange, dieselbe Logik wie im Editor).
-  await expect(mask.locator('ff-kanban-spalte .count')).toHaveText(['1', '2', '1'])
+  await expect(mask.locator('ff-kanban-spalte .count')).toHaveText(['0', '2', '1', '1'])
   // Ungebundene Stellen behalten den statischen Text der Vorlagen-Karte.
   await expect(mask.locator('ff-card .text').first()).toHaveText('Befund Minka besprechen')
 
@@ -202,6 +209,116 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
     ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
     ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '9', 'ID0001', 'Offen'] }],
   ])
+})
+
+// B2: eine Zeile ohne Treffer (Zimmer "OP") zwischen normalen Zeilen — MIT
+// Satznummern, damit auch die Karten in "Nicht zugeordnet" ziehbar sind
+// (Reparaturweg).
+const SEDATA_AUFFANG_STUB = {
+  Daten: {
+    SEFileLoop: [{
+      ALIAS: 'Terminplaner',
+      Zeilen: [
+        { '0_10': '7', '253_30': '2', '78_30': 'Bello' },
+        { '0_10': '8', '253_30': '3', '78_30': 'Rex' },
+        { '0_10': '5', '253_30': 'OP', '78_30': 'Kira' },
+      ],
+    }],
+  },
+}
+
+// Gemeinsame Editor-Strecke der B2-Faelle: Board + Quelle + Titel-Bindung +
+// Spalten-Feld "Zimmer" + Werte '2'/'3' fuer die Spalten 2/3.
+async function buildBoundBoard(page: Page) {
+  await freshEditor(page)
+  await insertBoard(page)
+  await attachTerminplaner(page)
+  await page.locator('ff-card .text').first().click()
+  await page.locator('ff-card .heading').first().click()
+  await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
+  await selectBoard(page)
+  await page.getByLabel('Einsortieren nach').click()
+  await page.getByRole('option', { name: 'Zimmer' }).click()
+  await page.locator('ff-kanban-spalte .head').nth(1).click()
+  await page.getByLabel('Wert dieser Spalte').fill('2')
+  await page.locator('ff-kanban-spalte .head').nth(2).click()
+  await page.getByLabel('Wert dieser Spalte').fill('3')
+}
+
+test('B2: "Nicht zugeordnet" ist kein Ablage-Ziel — Herausziehen schreibt zurück und räumt die Spalte ab', async ({ page, context }) => {
+  await buildBoundBoard(page)
+
+  const html = await exportMaskHtml(page)
+  const mask = await context.newPage()
+  await mask.setContent(html)
+  await mask.evaluate((sedata) => {
+    const w = window as unknown as Record<string, unknown>
+    w.PUT_CALLS = []
+    w.basisHTML_SND_MSG = (verb: unknown, msg: unknown) => {
+      (w.PUT_CALLS as unknown[]).push([verb, msg])
+    }
+    w.SEDATA = sedata
+  }, SEDATA_AUFFANG_STUB)
+
+  // Kira (Zimmer "OP") liegt sichtbar in "Nicht zugeordnet".
+  const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
+  await expect(mask.locator('ff-kanban-spalte')).toHaveCount(4)
+  await expect(colCards(3)).toHaveText(['Kira'])
+
+  // HINEIN geht nichts: Drop auf "Nicht zugeordnet" bewegt nichts und
+  // schreibt nichts (die Spalte ist kein Ablage-Ziel, nur Reparaturweg).
+  await mask.locator('ff-card', { hasText: 'Bello' })
+    .dragTo(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]'))
+  await expect(colCards(1)).toHaveText(['Bello'])
+  await expect(colCards(3)).toHaveText(['Kira'])
+  expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(0)
+
+  // HERAUS repariert: Kira nach "Fertig" ziehen schreibt den Spaltenwert
+  // zurueck (Satznummer 5), und "Nicht zugeordnet" verschwindet — es gibt
+  // keine Zeile ohne Treffer mehr.
+  await mask.locator('ff-card', { hasText: 'Kira' }).dragTo(mask.locator('ff-kanban-spalte').nth(2))
+  await expect(colCards(2)).toHaveText(['Rex', 'Kira'])
+  await expect(mask.locator('ff-kanban-spalte')).toHaveCount(3)
+  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([
+    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '5', 'ID0001', '3'] }],
+  ])
+})
+
+test('B2: gewählte Auffangspalte fängt Zeilen ohne Treffer; Setzen räumt das Kennzeichen der anderen Spalte ab', async ({ page, context }) => {
+  await buildBoundBoard(page)
+
+  // Erst "In Arbeit" als Auffang waehlen, dann "Offen" — das Setzen raeumt
+  // das Kennzeichen der anderen Spalte ab (hoechstens eine je Board).
+  await page.locator('ff-kanban-spalte .head').nth(1).click()
+  await page.getByLabel('Auffangspalte').click()
+  await page.getByRole('option', { name: 'Ja' }).click()
+  await page.locator('ff-kanban-spalte .head').nth(0).click()
+  await page.getByLabel('Auffangspalte').click()
+  await page.getByRole('option', { name: 'Ja' }).click()
+
+  const html = await exportMaskHtml(page)
+  // Genau EIN auffang="ja" in der Maske — auf "Offen"; "In Arbeit" wurde
+  // beim Umsetzen abgeraeumt.
+  expect(html).toContain('heading="Offen" statusvalues="[]" auffang="ja"')
+  expect(html).toContain('heading="In Arbeit" statusvalues="[&quot;2&quot;]" auffang="nein"')
+  expect((html.match(/auffang="ja"/g) ?? []).length).toBe(1)
+
+  const mask = await context.newPage()
+  await mask.setContent(html)
+  await mask.evaluate((sedata) => {
+    (window as unknown as Record<string, unknown>).SEDATA = sedata
+  }, SEDATA_AUFFANG_STUB)
+
+  // Kira (kein Treffer) landet in der GEWAEHLTEN Auffangspalte "Offen" —
+  // und weil es keine Zeile ohne Ziel gibt, erscheint KEIN "Nicht
+  // zugeordnet" (nur sichtbar bei Bedarf).
+  const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
+  await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(3)
+  await expect(mask.locator('ff-kanban-spalte')).toHaveCount(3)
+  await expect(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]')).toHaveCount(0)
+  await expect(colCards(0)).toHaveText(['Kira'])
+  await expect(colCards(1)).toHaveText(['Bello'])
+  await expect(colCards(2)).toHaveText(['Rex'])
 })
 
 // SEDATA in der ECHTEN SoftEngine-Form (belegt durch den SE-Echttest des
@@ -295,7 +412,10 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
     return typeof sedata === 'object' && sedata !== null && 'Daten' in sedata
   })).toBe(true)
 
-  // Zweiter Push = Live-Update: Board zeigt NUR noch die neue Zeile.
+  // Zweiter Push = Live-Update: Board zeigt NUR noch die neue Zeile — und
+  // die "Nicht zugeordnet"-Spalte des ersten Pushs (Rocky, Zimmer "OP")
+  // verschwindet wieder (B2: nur sichtbar, wenn es solche Zeilen gibt).
+  await expect(mask.locator('ff-kanban-spalte')).toHaveCount(4)
   await mask.evaluate(() => {
     const w = window as unknown as Record<string, unknown>
     ;(w.__seCb as (d: unknown) => void)({
@@ -303,6 +423,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
     })
   })
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(1)
+  await expect(mask.locator('ff-kanban-spalte')).toHaveCount(3)
   await expect(colCards(2)).toHaveText(['Momo'])
 
   // Diagnose (Beifang Phase 2): erstes Paket liegt versteckt bereit,
@@ -320,9 +441,10 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   }, SEDATA_SE_FORM)
   const col2Cards = (i: number) => mask2.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(mask2.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
-  await expect(col2Cards(0)).toHaveText(['Rocky'])
+  await expect(col2Cards(0)).toHaveText([]) // B2: "Offen" ist kein stiller Auffang mehr
   await expect(col2Cards(1)).toHaveText(['Minka', 'Nala'])
   await expect(col2Cards(2)).toHaveText(['Buddy'])
+  await expect(col2Cards(3)).toHaveText(['Rocky']) // "Nicht zugeordnet"
 })
 
 test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', async ({ page, context }) => {

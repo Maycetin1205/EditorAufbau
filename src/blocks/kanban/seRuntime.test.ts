@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 // Konsument seAktionen) — der Testfall selbst ist unveraendert.
 import { formatNowDate } from '../../core/data/relations'
 import {
+  catchColumnIndex,
   columnIndexFor,
   effectiveColumnValues,
   findRuntimeDataSource,
@@ -303,15 +304,34 @@ describe('columnIndexFor (Zeilenwert -> Spalte, Werte-Listen)', () => {
     expect(columnIndexFor('x', [['a'], ['x'], ['x']])).toBe(1)
   })
 
-  it('kein Treffer oder leerer Wert -> erste Spalte (Auffang, bis B2)', () => {
-    expect(columnIndexFor('3', values)).toBe(0)
-    expect(columnIndexFor('', values)).toBe(0)
+  it('kein Treffer oder leerer Wert -> -1 (B2: der Aufrufer entscheidet, NIE still Spalte 0)', () => {
+    // Strengere Spec seit B2: die stille "erste Spalte"-Regel ist
+    // abgeschafft — kein Treffer heisst Auffangspalte oder die
+    // Laufzeit-Spalte "Nicht zugeordnet", nie ein heimlicher Default.
+    expect(columnIndexFor('3', values)).toBe(-1)
+    expect(columnIndexFor('', values)).toBe(-1)
   })
 
-  it('leere Listen treffen nie (nur als Auffang erreichbar)', () => {
-    // Zeilenwert '' darf NICHT auf die leere Spalte 1 "matchen", sondern
-    // faellt in den Auffang (hier ebenfalls 0 — aber ueber die Auffang-Regel).
-    expect(columnIndexFor('', [['x'], [], ['y']])).toBe(0)
-    expect(columnIndexFor('unbekannt', [['x'], [], ['y']])).toBe(0)
+  it('leere Listen treffen nie', () => {
+    // Zeilenwert '' darf NICHT auf die leere Spalte 1 "matchen" — er ist
+    // schlicht ohne Treffer (-1).
+    expect(columnIndexFor('', [['x'], [], ['y']])).toBe(-1)
+    expect(columnIndexFor('unbekannt', [['x'], [], ['y']])).toBe(-1)
+  })
+})
+
+describe('catchColumnIndex (B2: gewaehlte Auffangspalte)', () => {
+  it('findet die erste Spalte mit auffang="ja" (getrimmt)', () => {
+    expect(catchColumnIndex(['nein', 'ja', 'nein'])).toBe(1)
+    expect(catchColumnIndex([null, ' ja ', 'ja'])).toBe(1)
+  })
+
+  it('keine gewaehlt -> -1 (dann erzeugt die Laufzeit "Nicht zugeordnet")', () => {
+    expect(catchColumnIndex(['nein', '', null, undefined])).toBe(-1)
+    expect(catchColumnIndex([])).toBe(-1)
+  })
+
+  it('nur der Technikwert "ja" zaehlt — kein Raten bei Muell', () => {
+    expect(catchColumnIndex(['true', 'JA', 'yes'])).toBe(-1)
   })
 })
