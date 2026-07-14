@@ -68,6 +68,11 @@
   .modus-editor thead th .pfeil { color: var(--se-faint); font-size: 10px; }
   .modus-editor thead th:hover .pfeil { color: var(--se-accent-dark); }
 
+  /* Laufzeit: Kopf-Klick sortiert (Windows-Verhalten) */
+  .modus-maske thead th { cursor: pointer; }
+  .modus-maske thead th:hover { background: var(--se-accent-soft); color: var(--se-accent-dark); }
+  .sort-pfeil { font-size: 9px; color: var(--se-accent-dark); }
+
   /* Laufzeit: Zeilen waehlbar (Windows-Markierung) */
   .modus-maske tbody tr { cursor: default; }
   .modus-maske tbody tr:hover td { background: var(--se-panel-2); }
@@ -209,18 +214,47 @@ const zustand = {
   seite: 1,
   suche: '',
   auswahl: null,         /* Satznummer der gewaehlten Zeile */
+  sortier: null,         /* { code, richtung: 1|-1 } — nur in der Maske */
   picker: null,          /* { spalte, x, y } */
-  zieht: null,           /* { spalte, startX, startBreite } */
+  zieht: null,           /* { spalte, startX, startBreite, bewegt } */
+  klickNachZug: false,
 };
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const $ = (sel) => document.querySelector(sel);
 
-/* ── Gefilterte Zeilen (Suche laeuft ueber ALLE Felder, nicht nur Spalten) ── */
+/* ── Gefilterte Zeilen (Suche laeuft ueber ALLE Zeilen und ALLE Felder —
+      auch Treffer, die erst auf Seite 50 laegen) ── */
 function gefiltert() {
   const s = zustand.suche.trim().toLowerCase();
   if (!s) return ZEILEN;
   return ZEILEN.filter((z) => FELDER.some((f) => String(z[f.code]).toLowerCase().includes(s)));
+}
+
+/* ── Sortieren wie Windows: Zahl als Zahl, Datum als Datum, sonst ABC.
+      Der Typ wird aus den Werten der Spalte erkannt, nie geraten-fest. ── */
+const typCache = {};
+function spaltenTyp(code) {
+  if (typCache[code]) return typCache[code];
+  const proben = ZEILEN.slice(0, 60).map((z) => String(z[code]));
+  let typ = 'text';
+  if (proben.every((w) => /^\d+$/.test(w))) typ = 'zahl';
+  else if (proben.every((w) => /^\d{2}\.\d{2}\.\d{4}$/.test(w))) typ = 'datum';
+  typCache[code] = typ;
+  return typ;
+}
+function sortiert(zeilen) {
+  if (!zustand.sortier) return zeilen;
+  const { code, richtung } = zustand.sortier;
+  const typ = spaltenTyp(code);
+  const schluessel = (w) => typ === 'zahl' ? Number(w)
+    : typ === 'datum' ? w.split('.').reverse().join('')
+    : String(w);
+  return zeilen.slice().sort((a, b) => {
+    const x = schluessel(a[code]); const y = schluessel(b[code]);
+    const v = typ === 'zahl' ? x - y : String(x).localeCompare(String(y), 'de', { numeric: true, sensitivity: 'base' });
+    return v * richtung;
+  });
 }
 
 /* ── Rendern ── */
@@ -231,12 +265,18 @@ function malColgroup() {
 
 function malKopfzeile() {
   const editor = zustand.ansicht === 'editor';
-  return '<thead><tr>' + zustand.spalten.map((sp, i) =>
-    '<th ' + (editor ? 'data-spalten-kopf="' + i + '" title="Klicken: Feld für diese Spalte wählen"' : '') + '>'
-    + '<span class="kopf-inhalt">' + esc(klarname(sp.code)) + (editor ? ' <span class="pfeil">▾</span>' : '') + '</span>'
-    + '<span class="griff" data-griff="' + i + '"' + (zustand.zieht && zustand.zieht.spalte === i ? ' data-zieht="ja"' : '') + '></span>'
-    + '</th>'
-  ).join('') + (editor ? '<th class="plus" data-plus title="Spalte hinzufügen">+</th>' : '') + '</tr></thead>';
+  return '<thead><tr>' + zustand.spalten.map((sp, i) => {
+    const sortiertHier = !editor && zustand.sortier && zustand.sortier.code === sp.code;
+    return '<th ' + (editor
+        ? 'data-spalten-kopf="' + i + '" title="Klicken: Feld für diese Spalte wählen"'
+        : 'data-sortier-kopf="' + i + '" title="Klicken: nach ' + esc(klarname(sp.code)) + ' sortieren"') + '>'
+      + '<span class="kopf-inhalt">' + esc(klarname(sp.code))
+      + (editor ? ' <span class="pfeil">▾</span>' : '')
+      + (sortiertHier ? ' <span class="sort-pfeil">' + (zustand.sortier.richtung === 1 ? '▲' : '▼') + '</span>' : '')
+      + '</span>'
+      + '<span class="griff" data-griff="' + i + '"' + (zustand.zieht && zustand.zieht.spalte === i ? ' data-zieht="ja"' : '') + '></span>'
+      + '</th>';
+  }).join('') + (editor ? '<th class="plus" data-plus title="Spalte hinzufügen">+</th>' : '') + '</tr></thead>';
 }
 
 const STRICH_BREITEN = [72, 45, 84, 58, 66, 50];
@@ -296,7 +336,7 @@ function malAlles() {
       + '</div>';
     $('#fussnote').textContent = 'Der Editor erfindet keine Daten: Zeilen sind Striche, bis SoftEngine echte Zeilen liefert.';
   } else {
-    const alle = gefiltert();
+    const alle = sortiert(gefiltert());
     const seiten = Math.max(1, Math.ceil(alle.length / zustand.seitenGroesse));
     if (zustand.seite > seiten) zustand.seite = seiten;
     const von = (zustand.seite - 1) * zustand.seitenGroesse;
@@ -308,7 +348,7 @@ function malAlles() {
       + '<div class="block modus-maske">'
       + '<div class="werkzeugzeile"><span class="suche"><span class="lupe">⌕</span>'
       + '<input type="text" id="suchfeld" placeholder="Suchen in ' + ZEILEN.length.toLocaleString('de-DE') + ' Zeilen…" value="' + esc(zustand.suche) + '"></span>'
-      + '<span class="treffer">' + (zustand.suche ? alle.length.toLocaleString('de-DE') + ' Treffer' : '') + '</span></div>'
+      + '<span class="treffer">' + (zustand.suche ? alle.length.toLocaleString('de-DE') + ' Treffer — alle Zeilen durchsucht' : '') + '</span></div>'
       + '<div class="scroller"><table class="se">' + malColgroup() + malKopfzeile() + malMaskenRumpf(seiteZeilen) + '</table></div>'
       + '<div class="fuss"><span>Zeilen je Seite: <select data-seiten-groesse>'
       + [20, 50, 100].map((n) => '<option' + (zustand.seitenGroesse === n ? ' selected' : '') + '>' + n + '</option>').join('')
@@ -321,7 +361,7 @@ function malAlles() {
           ? 'Gewählte Zeile: <b>' + esc(gewaehlte['78_30']) + ' (' + esc(gewaehlte['193_30']) + ' ' + esc(gewaehlte['223_30']) + ')</b> · Satz-Nr. <code>' + esc(gewaehlte.satz) + '</code> — diese Auswahl füttert Aktionen („Zeile angeklickt") und Verknüpfungen (z. B. „zeige nur die Haustiere dieses Kunden"). Nochmal klicken hebt die Auswahl auf.'
           : 'Noch keine Zeile gewählt — Zeile anklicken markiert sie (wie eine Datei im Windows-Explorer).')
       + '</div>';
-    $('#fussnote').textContent = 'Alle 1.000 Zeilen bleiben im Speicher — gerendert wird nur die angezeigte Seite. Die Suche durchsucht alles.';
+    $('#fussnote').textContent = 'Alle 1.000 Zeilen bleiben im Speicher — gerendert wird nur die angezeigte Seite. Suche durchsucht alles; Kopf-Klick sortiert (Zahl als Zahl, Datum als Datum, Text nach ABC). Spaltenbreiten merkt sich die echte Maske dauerhaft.';
   }
 
   /* Feld-Picker als Ueberlagerung */
@@ -351,7 +391,12 @@ function malAlles() {
 
 /* ── Ereignisse ── */
 document.addEventListener('click', (ev) => {
-  const el = ev.target.closest('[data-ansicht],[data-spalten-kopf],[data-plus],[data-seite],[data-zeile],[data-waehle-feld],[data-spalte-weg]');
+  /* Klick direkt nach einer Breiten-Zieh-Geste oder auf den Griff selbst
+     darf nicht sortieren / den Picker oeffnen */
+  if (zustand.klickNachZug) { zustand.klickNachZug = false; return; }
+  if (ev.target.closest('[data-griff]')) return;
+
+  const el = ev.target.closest('[data-ansicht],[data-spalten-kopf],[data-sortier-kopf],[data-plus],[data-seite],[data-zeile],[data-waehle-feld],[data-spalte-weg]');
 
   /* Klick neben den Picker schliesst ihn */
   if (zustand.picker && !ev.target.closest('.picker') && !(el && el.dataset.spaltenKopf !== undefined)) {
@@ -365,8 +410,17 @@ document.addEventListener('click', (ev) => {
     const r = el.getBoundingClientRect();
     zustand.picker = { spalte: +d.spaltenKopf, x: r.left + window.scrollX, y: r.bottom + window.scrollY + 3 };
   }
+  if (d.sortierKopf !== undefined) {
+    const code = zustand.spalten[+d.sortierKopf].code;
+    zustand.sortier = (zustand.sortier && zustand.sortier.code === code)
+      ? { code, richtung: -zustand.sortier.richtung }
+      : { code, richtung: 1 };
+    zustand.seite = 1;
+  }
   if (d.waehleFeld) { zustand.spalten[zustand.picker.spalte].code = d.waehleFeld; zustand.picker = null; }
   if (d.spalteWeg !== undefined) { zustand.spalten.splice(zustand.picker.spalte, 1); zustand.picker = null; }
+  /* Sortierung verwerfen, wenn ihre Spalte nicht mehr existiert */
+  if (zustand.sortier && !zustand.spalten.some((s) => s.code === zustand.sortier.code)) zustand.sortier = null;
   if (d.plus !== undefined) {
     const frei = FELDER.find((f) => !zustand.spalten.some((s) => s.code === f.code));
     zustand.spalten.push({ code: (frei || FELDER[0]).code, breite: 150 });
@@ -396,19 +450,22 @@ document.addEventListener('pointerdown', (ev) => {
   if (!griff) return;
   ev.preventDefault();
   const i = +griff.dataset.griff;
-  zustand.zieht = { spalte: i, startX: ev.clientX, startBreite: zustand.spalten[i].breite };
+  zustand.zieht = { spalte: i, startX: ev.clientX, startBreite: zustand.spalten[i].breite, bewegt: false };
   griff.setPointerCapture(ev.pointerId);
 });
 document.addEventListener('pointermove', (ev) => {
   if (!zustand.zieht) return;
   const z = zustand.zieht;
+  if (Math.abs(ev.clientX - z.startX) > 2) z.bewegt = true;
   zustand.spalten[z.spalte].breite = Math.max(60, z.startBreite + (ev.clientX - z.startX));
   /* Nur die Breiten anfassen — kein Voll-Render waehrend der Geste */
   document.querySelectorAll('table.se col').forEach((col, idx) => {
     if (idx === z.spalte) col.style.width = zustand.spalten[z.spalte].breite + 'px';
   });
 });
-document.addEventListener('pointerup', () => { if (zustand.zieht) { zustand.zieht = null; malAlles(); } });
+document.addEventListener('pointerup', () => {
+  if (zustand.zieht) { zustand.klickNachZug = zustand.zieht.bewegt; zustand.zieht = null; malAlles(); }
+});
 
 malAlles();
 </script>
