@@ -1,0 +1,414 @@
+<title>Tabelle — Klickmodell</title>
+<style>
+  /* ── Masken-Design-Tokens (Kopie aus src/design/masken-tokens.css) ──
+     Die Tabelle ist ein MASKEN-Baustein: sie nutzt ausschliesslich die
+     --se-* Werte — kantig, Gruen als Hausfarbe, dichte Typografie. */
+  :root, :root[data-theme="light"], :root[data-theme="dark"] {
+    --se-bg: #eceff1; --se-panel: #ffffff; --se-panel-2: #f2f4f6;
+    --se-ink: #101c26; --se-muted: #51606d; --se-faint: #8494a1;
+    --se-line: #c9d2d9; --se-line-soft: #e0e6ea;
+    --se-accent: #0e7a58; --se-accent-dark: #0b6247; --se-accent-soft: #e4f2ec;
+    --se-red: #c0201a; --se-red-soft: #fbe7e6;
+    --se-amber: #9a6a00; --se-amber-soft: #f8f0dc;
+    --se-r-sm: 2px; --se-r-md: 3px; --se-r-lg: 4px;
+    --se-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --se-mono: "IBM Plex Mono", Consolas, monospace;
+    --se-fs: 13.5px; --se-fs-sm: 12px; --se-fs-xs: 10.5px; --se-fs-lg: 15px;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--se-bg); color: var(--se-ink); font-family: var(--se-font); font-size: var(--se-fs); line-height: 1.45; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  /* ── Seiten-Chrome (nur Demo-Rahmen, gehoert nicht zum Baustein) ── */
+  .kopf { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .kopf h1 { font-size: 17px; font-weight: 650; margin: 0; }
+  .kopf .demo-badge { margin-left: auto; font-size: var(--se-fs-xs); letter-spacing: .05em; text-transform: uppercase; color: var(--se-amber); background: var(--se-amber-soft); padding: 3px 9px; border-radius: 999px; font-weight: 600; }
+  .erklaer { color: var(--se-muted); font-size: var(--se-fs-sm); margin: 0 0 14px; }
+
+  .umschalter { display: inline-flex; border: 1px solid var(--se-line); border-radius: var(--se-r-sm); overflow: hidden; margin-bottom: 14px; background: var(--se-panel); }
+  .umschalter button { font: inherit; font-weight: 600; border: none; background: none; color: var(--se-muted); padding: 7px 16px; cursor: pointer; }
+  .umschalter button + button { border-left: 1px solid var(--se-line); }
+  .umschalter button[data-aktiv="ja"] { background: var(--se-accent); color: #fff; }
+  .umschalter button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
+
+  /* Editor-Hilfen-Leiste (im echten Editor: BlockHost-Hilfen, NIE im Export) */
+  .editor-leiste { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px dashed var(--se-line); border-bottom: none; border-radius: var(--se-r-lg) var(--se-r-lg) 0 0; background: var(--se-panel-2); padding: 7px 12px; font-size: var(--se-fs-sm); color: var(--se-muted); }
+  .editor-leiste .etikett { font-size: var(--se-fs-xs); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--se-faint); }
+  .editor-leiste select { font: inherit; font-size: var(--se-fs-sm); border: 1px solid var(--se-line); border-radius: var(--se-r-sm); background: var(--se-panel); color: var(--se-ink); padding: 3px 6px; }
+  .editor-leiste .knopf { font: inherit; font-size: var(--se-fs-sm); font-weight: 600; border: 1px solid var(--se-line); border-radius: var(--se-r-sm); background: var(--se-panel); color: var(--se-ink); padding: 3px 10px; cursor: pointer; }
+  .editor-leiste .knopf:hover { border-color: var(--se-accent); color: var(--se-accent); }
+
+  .sim-hinweis { border: 1px solid var(--se-line); border-bottom: none; border-radius: var(--se-r-lg) var(--se-r-lg) 0 0; background: var(--se-amber-soft); color: var(--se-amber); padding: 7px 12px; font-size: var(--se-fs-sm); font-weight: 600; }
+
+  /* ── Der Baustein: Tabelle (Masken-Welt) ── */
+  .block { border: 1px solid var(--se-line); border-radius: 0 0 var(--se-r-lg) var(--se-r-lg); background: var(--se-panel); }
+
+  .werkzeugzeile { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--se-line-soft); }
+  .suche { flex: 1; max-width: 340px; position: relative; }
+  .suche input { width: 100%; font: inherit; font-size: var(--se-fs-sm); color: var(--se-ink); background: var(--se-panel-2); border: 1px solid var(--se-line); border-radius: var(--se-r-sm); padding: 5px 9px 5px 28px; }
+  .suche input:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -1px; }
+  .suche .lupe { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--se-faint); pointer-events: none; font-size: 12px; }
+  .treffer { color: var(--se-muted); font-size: var(--se-fs-sm); font-variant-numeric: tabular-nums; }
+
+  .scroller { overflow-x: auto; }
+  table.se { border-collapse: collapse; table-layout: fixed; }
+  table.se th, table.se td { padding: 6px 10px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table.se thead th {
+    position: relative; background: var(--se-panel-2); font-size: var(--se-fs-sm); font-weight: 650;
+    border-bottom: 1px solid var(--se-line); user-select: none;
+  }
+  table.se thead th .kopf-inhalt { display: flex; align-items: center; gap: 6px; }
+  table.se tbody td { border-bottom: 1px solid var(--se-line-soft); font-variant-numeric: tabular-nums; }
+  table.se tbody tr:last-child td { border-bottom: none; }
+
+  /* Editor: Kopf ist klickbar (Feld waehlen) */
+  .modus-editor thead th { cursor: pointer; }
+  .modus-editor thead th:hover { color: var(--se-accent-dark); background: var(--se-accent-soft); }
+  .modus-editor thead th .pfeil { color: var(--se-faint); font-size: 10px; }
+  .modus-editor thead th:hover .pfeil { color: var(--se-accent-dark); }
+
+  /* Laufzeit: Zeilen waehlbar (Windows-Markierung) */
+  .modus-maske tbody tr { cursor: default; }
+  .modus-maske tbody tr:hover td { background: var(--se-panel-2); }
+  .modus-maske tbody tr[data-gewaehlt="ja"] td { background: var(--se-accent-soft); box-shadow: inset 0 1px 0 var(--se-accent), inset 0 -1px 0 var(--se-accent); }
+  .modus-maske tbody tr[data-gewaehlt="ja"] td:first-child { box-shadow: inset 0 1px 0 var(--se-accent), inset 0 -1px 0 var(--se-accent), inset 2px 0 0 var(--se-accent); }
+
+  /* Striche statt Daten (Editor) */
+  .strich { display: inline-block; height: 8px; border-radius: var(--se-r-sm); background: var(--se-line-soft); vertical-align: middle; }
+
+  /* Spaltenbreiten-Griff */
+  .griff { position: absolute; top: 0; right: -4px; width: 9px; height: 100%; cursor: col-resize; z-index: 2; }
+  .griff::after { content: ""; position: absolute; left: 4px; top: 20%; height: 60%; width: 1px; background: var(--se-line); }
+  .griff:hover::after, .griff[data-zieht="ja"]::after { background: var(--se-accent); width: 2px; }
+
+  /* Neue-Spalte-Knopf am Tabellenende (Editor) */
+  th.plus { width: 44px; text-align: center; cursor: pointer; color: var(--se-faint); font-weight: 400; }
+  th.plus:hover { color: var(--se-accent-dark); }
+
+  /* Fusszeile: Seitengroesse + Zaehler + Blaettern */
+  .fuss { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 7px 10px; border-top: 1px solid var(--se-line-soft); font-size: var(--se-fs-sm); color: var(--se-muted); }
+  .fuss select { font: inherit; font-size: var(--se-fs-sm); border: 1px solid var(--se-line); border-radius: var(--se-r-sm); background: var(--se-panel); color: var(--se-ink); padding: 3px 6px; }
+  .fuss .zaehler { font-variant-numeric: tabular-nums; }
+  .blaettern { margin-left: auto; display: flex; gap: 3px; }
+  .blaettern button {
+    font: inherit; font-size: var(--se-fs-sm); font-variant-numeric: tabular-nums; min-width: 26px;
+    border: 1px solid var(--se-line); border-radius: var(--se-r-sm); background: var(--se-panel);
+    color: var(--se-ink); padding: 3px 7px; cursor: pointer;
+  }
+  .blaettern button:hover:not([disabled]) { border-color: var(--se-accent); color: var(--se-accent-dark); }
+  .blaettern button[data-aktiv="ja"] { background: var(--se-accent); border-color: var(--se-accent); color: #fff; }
+  .blaettern button[disabled] { opacity: .4; cursor: default; }
+  .blaettern .punkte { align-self: center; color: var(--se-faint); padding: 0 2px; }
+
+  /* Auswahl-Statuszeile (zeigt, was die Auswahl fuer Aktionen/Verknuepfungen bedeutet) */
+  .auswahl-info { margin-top: 10px; border: 1px solid var(--se-line); border-radius: var(--se-r-md); background: var(--se-panel); padding: 8px 12px; font-size: var(--se-fs-sm); color: var(--se-muted); }
+  .auswahl-info b { color: var(--se-ink); }
+  .auswahl-info code { font-family: var(--se-mono); font-size: 11.5px; background: var(--se-panel-2); padding: 1px 5px; border-radius: var(--se-r-sm); }
+
+  /* Feld-Picker (Editor) */
+  .picker { position: absolute; z-index: 10; min-width: 210px; background: var(--se-panel); border: 1px solid var(--se-line); border-radius: var(--se-r-md); box-shadow: 0 6px 20px rgba(16,28,38,.14); padding: 4px; }
+  .picker .titel { font-size: var(--se-fs-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--se-faint); font-weight: 700; padding: 5px 9px 3px; }
+  .picker button { display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; font: inherit; font-size: var(--se-fs-sm); border: none; background: none; color: var(--se-ink); padding: 5px 9px; border-radius: var(--se-r-sm); cursor: pointer; }
+  .picker button:hover { background: var(--se-accent-soft); }
+  .picker button .haken { width: 14px; color: var(--se-accent); flex: none; }
+  .picker button .woanders { margin-left: auto; color: var(--se-faint); font-size: var(--se-fs-xs); }
+  .picker .trenner { border-top: 1px solid var(--se-line-soft); margin: 4px 0; }
+  .picker button.entfernen { color: var(--se-red); }
+  .picker button.entfernen:hover { background: var(--se-red-soft); }
+
+  .fussnote { color: var(--se-faint); font-size: var(--se-fs-sm); margin-top: 16px; text-align: center; }
+
+  @media (max-width: 700px) {
+    .werkzeugzeile { flex-wrap: wrap; }
+    .suche { max-width: none; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="kopf">
+    <h1>Baustein „Tabelle"</h1>
+    <span class="demo-badge">Klickmodell · speichert nichts</span>
+  </div>
+  <p class="erklaer">
+    Datenquelle „Terminplaner" ist angehängt. Dieselbe Tabelle in beiden Zuständen — was im Editor zu sehen ist, IST der Export (nur die Striche werden zu echten Daten).
+  </p>
+
+  <div class="umschalter" role="tablist">
+    <button data-ansicht="editor" data-aktiv="ja">Im Editor</button>
+    <button data-ansicht="maske" data-aktiv="nein">In der Maske (SoftEngine)</button>
+  </div>
+
+  <div id="buehne"></div>
+
+  <p class="fussnote" id="fussnote"></p>
+</div>
+
+<script>
+'use strict';
+
+/* ── Feld-Woerterbuch der Quelle „Terminplaner" (Klarname + Feldcode) ── */
+const FELDER = [
+  { code: '10_8',   klar: 'Adressnummer' },
+  { code: '18_30',  klar: 'Tierart' },
+  { code: '48_30',  klar: 'Rasse' },
+  { code: '78_30',  klar: 'Tiername' },
+  { code: '108_10', klar: 'Geburtsdatum' },
+  { code: '118_60', klar: 'Behandlung' },
+  { code: '178_5',  klar: 'Uhrzeit' },
+  { code: '183_10', klar: 'Datum' },
+  { code: '193_30', klar: 'Vorname' },
+  { code: '223_30', klar: 'Nachname' },
+  { code: '253_30', klar: 'Zimmer' },
+];
+const klarname = (code) => (FELDER.find((f) => f.code === code) || { klar: code }).klar;
+
+/* ── Simulierte SoftEngine-Zeilen (NUR fuer die Masken-Ansicht dieser Demo;
+      der echte Editor erfindet nie Daten — dort kommen die Zeilen von
+      SoftEngine, im Editor stehen Striche) ── */
+const POOLS = {
+  tierart: ['Hund', 'Katze', 'Kaninchen', 'Wellensittich', 'Meerschweinchen', 'Schildkröte'],
+  rasse: ['Labrador', 'EKH', 'Maine Coon', 'Zwergwidder', 'Mischling', 'Perser', 'Dackel', 'Bartagame'],
+  tiername: ['Rocky', 'Minka', 'Luna', 'Felix', 'Bubi', 'Bello', 'Nala', 'Simba', 'Coco', 'Kira', 'Max', 'Emma'],
+  behandlung: ['Impfung', 'Kontrolle', 'Zahnreinigung', 'OP-Nachsorge', 'Erstuntersuchung', 'Krallen schneiden', 'Blutabnahme', 'Röntgen'],
+  vorname: ['Sabine', 'Murat', 'Jonas', 'Elif', 'Petra', 'Karl', 'Aylin', 'Thomas', 'Julia', 'Hans'],
+  nachname: ['Berger', 'Kaya', 'Lehmann', 'Schmidt', 'Öztürk', 'Weber', 'Fischer', 'Wagner', 'Becker', 'Hoffmann'],
+  zimmer: ['Behandlungszimmer 1', 'Behandlungszimmer 2', 'Behandlungszimmer 3', 'OP', 'Labor'],
+};
+const p2 = (n) => String(n).padStart(2, '0');
+const ZEILEN = [];
+for (let i = 0; i < 1000; i++) {
+  const min = (8 * 60 + (i * 7) % 540);
+  ZEILEN.push({
+    satz: String(i + 1),
+    '10_8': String(10000 + ((i * 37) % 900)),
+    '18_30': POOLS.tierart[i % POOLS.tierart.length],
+    '48_30': POOLS.rasse[(i * 3) % POOLS.rasse.length],
+    '78_30': POOLS.tiername[(i * 5) % POOLS.tiername.length],
+    '108_10': p2(1 + (i % 28)) + '.' + p2(1 + (i % 12)) + '.' + (2012 + (i % 13)),
+    '118_60': POOLS.behandlung[(i * 7) % POOLS.behandlung.length],
+    '178_5': p2(Math.floor(min / 60)) + ':' + p2(min % 60),
+    '183_10': p2(1 + (i % 30)) + '.07.2026',
+    '193_30': POOLS.vorname[(i * 11) % POOLS.vorname.length],
+    '223_30': POOLS.nachname[(i * 13) % POOLS.nachname.length],
+    '253_30': POOLS.zimmer[(i * 17) % POOLS.zimmer.length],
+  });
+}
+
+/* ── Zustand ── */
+const zustand = {
+  ansicht: 'editor',
+  /* Beim Anhaengen der Quelle: die ERSTEN DREI Felder werden die Spalten. */
+  spalten: [
+    { code: '10_8', breite: 120 },
+    { code: '18_30', breite: 150 },
+    { code: '48_30', breite: 170 },
+  ],
+  standardGroesse: 20,   /* legt der Bediener im Editor fest */
+  seitenGroesse: 20,     /* kann der Endnutzer in der Maske umstellen */
+  seite: 1,
+  suche: '',
+  auswahl: null,         /* Satznummer der gewaehlten Zeile */
+  picker: null,          /* { spalte, x, y } */
+  zieht: null,           /* { spalte, startX, startBreite } */
+};
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const $ = (sel) => document.querySelector(sel);
+
+/* ── Gefilterte Zeilen (Suche laeuft ueber ALLE Felder, nicht nur Spalten) ── */
+function gefiltert() {
+  const s = zustand.suche.trim().toLowerCase();
+  if (!s) return ZEILEN;
+  return ZEILEN.filter((z) => FELDER.some((f) => String(z[f.code]).toLowerCase().includes(s)));
+}
+
+/* ── Rendern ── */
+function malColgroup() {
+  return '<colgroup>' + zustand.spalten.map((sp) => '<col style="width:' + sp.breite + 'px">').join('')
+    + (zustand.ansicht === 'editor' ? '<col style="width:44px">' : '') + '</colgroup>';
+}
+
+function malKopfzeile() {
+  const editor = zustand.ansicht === 'editor';
+  return '<thead><tr>' + zustand.spalten.map((sp, i) =>
+    '<th ' + (editor ? 'data-spalten-kopf="' + i + '" title="Klicken: Feld für diese Spalte wählen"' : '') + '>'
+    + '<span class="kopf-inhalt">' + esc(klarname(sp.code)) + (editor ? ' <span class="pfeil">▾</span>' : '') + '</span>'
+    + '<span class="griff" data-griff="' + i + '"' + (zustand.zieht && zustand.zieht.spalte === i ? ' data-zieht="ja"' : '') + '></span>'
+    + '</th>'
+  ).join('') + (editor ? '<th class="plus" data-plus title="Spalte hinzufügen">+</th>' : '') + '</tr></thead>';
+}
+
+const STRICH_BREITEN = [72, 45, 84, 58, 66, 50];
+function malEditorRumpf() {
+  let html = '<tbody>';
+  for (let z = 0; z < 6; z++) {
+    html += '<tr>' + zustand.spalten.map((sp, i) =>
+      '<td><span class="strich" style="width:' + STRICH_BREITEN[(z + i * 2) % STRICH_BREITEN.length] + '%"></span></td>'
+    ).join('') + '<td></td></tr>';
+  }
+  return html + '</tbody>';
+}
+
+function malMaskenRumpf(seiteZeilen) {
+  return '<tbody>' + seiteZeilen.map((z) =>
+    '<tr data-zeile="' + z.satz + '" data-gewaehlt="' + (zustand.auswahl === z.satz ? 'ja' : 'nein') + '">'
+    + zustand.spalten.map((sp) => '<td>' + esc(z[sp.code]) + '</td>').join('')
+    + '</tr>'
+  ).join('') + '</tbody>';
+}
+
+function malBlaettern(seiten) {
+  const s = zustand.seite;
+  const knoepfe = [];
+  const fuege = (n) => knoepfe.push('<button data-seite="' + n + '" data-aktiv="' + (n === s ? 'ja' : 'nein') + '">' + n + '</button>');
+  knoepfe.push('<button data-seite="' + (s - 1) + '"' + (s <= 1 ? ' disabled' : '') + ' title="Vorherige Seite">‹</button>');
+  if (seiten <= 9) { for (let n = 1; n <= seiten; n++) fuege(n); }
+  else {
+    fuege(1);
+    if (s > 4) knoepfe.push('<span class="punkte">…</span>');
+    for (let n = Math.max(2, s - 2); n <= Math.min(seiten - 1, s + 2); n++) fuege(n);
+    if (s < seiten - 3) knoepfe.push('<span class="punkte">…</span>');
+    fuege(seiten);
+  }
+  knoepfe.push('<button data-seite="' + (s + 1) + '"' + (s >= seiten ? ' disabled' : '') + ' title="Nächste Seite">›</button>');
+  return '<span class="blaettern">' + knoepfe.join('') + '</span>';
+}
+
+function malAlles() {
+  document.querySelectorAll('[data-ansicht]').forEach((b) => { b.dataset.aktiv = b.dataset.ansicht === zustand.ansicht ? 'ja' : 'nein'; });
+
+  if (zustand.ansicht === 'editor') {
+    $('#buehne').innerHTML =
+      '<div class="editor-leiste"><span class="etikett">Editor-Hilfen — nie im Export</span>'
+      + '<span>Datenquelle: <b style="color:var(--se-ink)">Terminplaner</b></span>'
+      + '<span>Zeilen je Seite (Standard): <select data-standard-groesse>'
+      + [20, 50, 100].map((n) => '<option' + (zustand.standardGroesse === n ? ' selected' : '') + '>' + n + '</option>').join('')
+      + '</select></span>'
+      + '<span style="margin-left:auto">Spaltenkopf anklicken = Feld wählen · Rand ziehen = Breite</span></div>'
+      + '<div class="block modus-editor">'
+      + '<div class="werkzeugzeile"><span class="suche"><span class="lupe">⌕</span><input type="text" placeholder="Suchen…" disabled></span>'
+      + '<span class="treffer">Suche &amp; Blättern arbeiten erst in der Maske</span></div>'
+      + '<div class="scroller"><table class="se">' + malColgroup() + malKopfzeile() + malEditorRumpf() + '</table></div>'
+      + '<div class="fuss"><span>Zeilen je Seite: <b>' + zustand.standardGroesse + '</b></span>'
+      + '<span class="zaehler">Zeilen — von — (Daten kommen aus SoftEngine)</span>'
+      + '<span class="blaettern"><button disabled>‹</button><button data-aktiv="ja">1</button><button disabled>›</button></span></div>'
+      + '</div>';
+    $('#fussnote').textContent = 'Der Editor erfindet keine Daten: Zeilen sind Striche, bis SoftEngine echte Zeilen liefert.';
+  } else {
+    const alle = gefiltert();
+    const seiten = Math.max(1, Math.ceil(alle.length / zustand.seitenGroesse));
+    if (zustand.seite > seiten) zustand.seite = seiten;
+    const von = (zustand.seite - 1) * zustand.seitenGroesse;
+    const seiteZeilen = alle.slice(von, von + zustand.seitenGroesse);
+    const gewaehlte = zustand.auswahl ? ZEILEN.find((z) => z.satz === zustand.auswahl) : null;
+
+    $('#buehne').innerHTML =
+      '<div class="sim-hinweis">Simulation: 1.000 Zeilen, wie SoftEngine sie liefern würde. In der echten Maske kommen die Daten per SE-Anschluss.</div>'
+      + '<div class="block modus-maske">'
+      + '<div class="werkzeugzeile"><span class="suche"><span class="lupe">⌕</span>'
+      + '<input type="text" id="suchfeld" placeholder="Suchen in ' + ZEILEN.length.toLocaleString('de-DE') + ' Zeilen…" value="' + esc(zustand.suche) + '"></span>'
+      + '<span class="treffer">' + (zustand.suche ? alle.length.toLocaleString('de-DE') + ' Treffer' : '') + '</span></div>'
+      + '<div class="scroller"><table class="se">' + malColgroup() + malKopfzeile() + malMaskenRumpf(seiteZeilen) + '</table></div>'
+      + '<div class="fuss"><span>Zeilen je Seite: <select data-seiten-groesse>'
+      + [20, 50, 100].map((n) => '<option' + (zustand.seitenGroesse === n ? ' selected' : '') + '>' + n + '</option>').join('')
+      + '</select></span>'
+      + '<span class="zaehler">Zeilen ' + (alle.length ? (von + 1).toLocaleString('de-DE') + '–' + Math.min(von + zustand.seitenGroesse, alle.length).toLocaleString('de-DE') : '0')
+      + ' von ' + alle.length.toLocaleString('de-DE') + '</span>'
+      + malBlaettern(seiten)
+      + '</div></div>'
+      + '<div class="auswahl-info">' + (gewaehlte
+          ? 'Gewählte Zeile: <b>' + esc(gewaehlte['78_30']) + ' (' + esc(gewaehlte['193_30']) + ' ' + esc(gewaehlte['223_30']) + ')</b> · Satz-Nr. <code>' + esc(gewaehlte.satz) + '</code> — diese Auswahl füttert Aktionen („Zeile angeklickt") und Verknüpfungen (z. B. „zeige nur die Haustiere dieses Kunden"). Nochmal klicken hebt die Auswahl auf.'
+          : 'Noch keine Zeile gewählt — Zeile anklicken markiert sie (wie eine Datei im Windows-Explorer).')
+      + '</div>';
+    $('#fussnote').textContent = 'Alle 1.000 Zeilen bleiben im Speicher — gerendert wird nur die angezeigte Seite. Die Suche durchsucht alles.';
+  }
+
+  /* Feld-Picker als Ueberlagerung */
+  const alt = $('.picker'); if (alt) alt.remove();
+  if (zustand.picker) {
+    const sp = zustand.spalten[zustand.picker.spalte];
+    const belegt = (code) => zustand.spalten.findIndex((x) => x.code === code);
+    const div = document.createElement('div');
+    div.className = 'picker';
+    div.style.left = zustand.picker.x + 'px';
+    div.style.top = zustand.picker.y + 'px';
+    div.innerHTML = '<div class="titel">Feld für Spalte ' + (zustand.picker.spalte + 1) + '</div>'
+      + FELDER.map((f) => {
+          const wo = belegt(f.code);
+          return '<button data-waehle-feld="' + f.code + '"><span class="haken">' + (sp.code === f.code ? '✓' : '') + '</span>'
+            + esc(f.klar)
+            + (wo !== -1 && wo !== zustand.picker.spalte ? '<span class="woanders">Spalte ' + (wo + 1) + '</span>' : '')
+            + '</button>';
+        }).join('')
+      + '<div class="trenner"></div>'
+      + '<button class="entfernen" data-spalte-weg><span class="haken"></span>Spalte entfernen</button>';
+    document.body.appendChild(div);
+    const r = div.getBoundingClientRect();
+    if (r.right > window.innerWidth - 8) div.style.left = Math.max(8, window.innerWidth - r.width - 8) + 'px';
+  }
+}
+
+/* ── Ereignisse ── */
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-ansicht],[data-spalten-kopf],[data-plus],[data-seite],[data-zeile],[data-waehle-feld],[data-spalte-weg]');
+
+  /* Klick neben den Picker schliesst ihn */
+  if (zustand.picker && !ev.target.closest('.picker') && !(el && el.dataset.spaltenKopf !== undefined)) {
+    zustand.picker = null; malAlles(); if (!el) return;
+  }
+  if (!el) return;
+  const d = el.dataset;
+
+  if (d.ansicht) { zustand.ansicht = d.ansicht; zustand.picker = null; if (d.ansicht === 'maske') zustand.seitenGroesse = zustand.standardGroesse; }
+  if (d.spaltenKopf !== undefined) {
+    const r = el.getBoundingClientRect();
+    zustand.picker = { spalte: +d.spaltenKopf, x: r.left + window.scrollX, y: r.bottom + window.scrollY + 3 };
+  }
+  if (d.waehleFeld) { zustand.spalten[zustand.picker.spalte].code = d.waehleFeld; zustand.picker = null; }
+  if (d.spalteWeg !== undefined) { zustand.spalten.splice(zustand.picker.spalte, 1); zustand.picker = null; }
+  if (d.plus !== undefined) {
+    const frei = FELDER.find((f) => !zustand.spalten.some((s) => s.code === f.code));
+    zustand.spalten.push({ code: (frei || FELDER[0]).code, breite: 150 });
+  }
+  if (d.seite) { const n = +d.seite; if (n >= 1) { zustand.seite = n; } }
+  if (d.zeile) { zustand.auswahl = zustand.auswahl === d.zeile ? null : d.zeile; }
+
+  malAlles();
+});
+
+document.addEventListener('input', (ev) => {
+  if (ev.target.id === 'suchfeld') {
+    zustand.suche = ev.target.value; zustand.seite = 1;
+    const pos = ev.target.selectionStart;
+    malAlles();
+    const feld = $('#suchfeld'); feld.focus(); feld.setSelectionRange(pos, pos);
+  }
+});
+document.addEventListener('change', (ev) => {
+  if (ev.target.matches('[data-standard-groesse]')) { zustand.standardGroesse = +ev.target.value; malAlles(); }
+  if (ev.target.matches('[data-seiten-groesse]')) { zustand.seitenGroesse = +ev.target.value; zustand.seite = 1; malAlles(); }
+});
+
+/* Spaltenbreite ziehen — funktioniert im Editor UND in der Maske */
+document.addEventListener('pointerdown', (ev) => {
+  const griff = ev.target.closest('[data-griff]');
+  if (!griff) return;
+  ev.preventDefault();
+  const i = +griff.dataset.griff;
+  zustand.zieht = { spalte: i, startX: ev.clientX, startBreite: zustand.spalten[i].breite };
+  griff.setPointerCapture(ev.pointerId);
+});
+document.addEventListener('pointermove', (ev) => {
+  if (!zustand.zieht) return;
+  const z = zustand.zieht;
+  zustand.spalten[z.spalte].breite = Math.max(60, z.startBreite + (ev.clientX - z.startX));
+  /* Nur die Breiten anfassen — kein Voll-Render waehrend der Geste */
+  document.querySelectorAll('table.se col').forEach((col, idx) => {
+    if (idx === z.spalte) col.style.width = zustand.spalten[z.spalte].breite + 'px';
+  });
+});
+document.addEventListener('pointerup', () => { if (zustand.zieht) { zustand.zieht = null; malAlles(); } });
+
+malAlles();
+</script>
