@@ -1,0 +1,867 @@
+<title>Kommandozentrale — Klickmodell</title>
+<style>
+  /* Designsprache = Editor-UI des Aufbau-Editors (src/index.css, shadcn-Tokens):
+     abgesetztes Hellgrau als Flaeche, weisse Panels, klare Raender, Blau als
+     Primaerfarbe, 8px-Rundung. Der Editor-Chrome ist bewusst hell — darum hat
+     dieses Klickmodell kein Dunkel-Thema. */
+  :root, :root[data-theme="light"], :root[data-theme="dark"] {
+    --bg: hsl(220 16% 96%);
+    --panel: hsl(0 0% 100%);
+    --panel-2: hsl(220 16% 98%);
+    --ink: hsl(222 47% 11%);
+    --muted: hsl(220 9% 46%);
+    --line: hsl(220 13% 85%);
+    --line-strong: hsl(220 13% 74%);
+    --accent: hsl(221 83% 53%);
+    --accent-ink: hsl(210 40% 98%);
+    --accent-soft: hsl(221 83% 95%);
+    --warn: hsl(35 85% 32%);
+    --warn-soft: hsl(43 92% 93%);
+    --danger: hsl(0 72% 44%);
+    --danger-soft: hsl(0 80% 95%);
+    --ok: hsl(150 55% 30%);
+    --ok-soft: hsl(150 45% 93%);
+    --code-bg: hsl(220 14% 93%);
+    --shadow: 0 1px 2px hsl(222 47% 11% / .06), 0 4px 16px hsl(222 47% 11% / .05);
+    --r: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 13.5px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, .mono {
+    font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  /* ── Kopf ── */
+  .kopf { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 6px 2px 14px; }
+  .kopf h1 { font-size: 20px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+  .kopf .kontext { color: var(--muted); }
+  .demo-badge {
+    margin-left: auto; font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--warn); background: var(--warn-soft); border: 1px solid transparent;
+    padding: 3px 9px; border-radius: 99px; font-weight: 600;
+  }
+
+  /* ── App-Rahmen ── */
+  .app {
+    display: grid; grid-template-columns: 200px 292px 1fr;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); overflow: hidden; min-height: 620px;
+  }
+
+  /* Navigation */
+  .nav { background: var(--panel-2); border-right: 1px solid var(--line); padding: 10px 8px; }
+  .nav-titel { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 6px 10px 8px; font-weight: 600; }
+  .nav button {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+    background: none; border: 1px solid transparent; border-radius: var(--r);
+    padding: 7px 10px; font: inherit; color: var(--ink); cursor: pointer;
+  }
+  .nav button:hover { background: var(--accent-soft); }
+  .nav button[data-aktiv="ja"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+  .nav .zahl { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .punkt { width: 7px; height: 7px; border-radius: 99px; flex: none; }
+  .punkt.ok { background: var(--ok); }
+  .punkt.warn { background: var(--warn); }
+  .punkt.leer { background: var(--line-strong); }
+
+  /* Master-Liste */
+  .master { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+  .master-kopf { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .master-kopf h2 { font-size: 14px; margin: 0; font-weight: 650; }
+  .master-liste { overflow-y: auto; padding: 8px; flex: 1; }
+  .eintrag {
+    width: 100%; text-align: left; background: none; border: 1px solid transparent;
+    border-radius: var(--r); padding: 8px 10px; font: inherit; color: var(--ink);
+    cursor: pointer; display: block; margin-bottom: 2px;
+  }
+  .eintrag:hover { background: var(--accent-soft); }
+  .eintrag[data-aktiv="ja"] { background: var(--accent-soft); border-color: var(--accent); }
+  .eintrag .zeile1 { display: flex; align-items: center; gap: 8px; }
+  .eintrag .name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .eintrag .unter { color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .gruppe { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; padding: 10px 10px 4px; }
+
+  /* Detail */
+  .detail { padding: 16px 18px 24px; overflow-y: auto; min-width: 0; background: var(--panel); }
+  .detail h3 { font-size: 15px; margin: 0 0 2px; font-weight: 650; }
+  .detail .sub { color: var(--muted); margin: 0 0 14px; }
+  .sektion { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; margin: 18px 0 8px; }
+  .sektion:first-of-type { margin-top: 8px; }
+
+  /* Bausteine */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; border: 1px solid var(--line-strong); color: var(--muted);
+    white-space: nowrap;
+  }
+  .chip.art { background: var(--code-bg); color: var(--ink); border-color: transparent; }
+  .chip.warnung { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+  .chip.fehler { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+  .chip.gut { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+  .chip.platzhalter { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-family: ui-monospace, Consolas, monospace; font-weight: 500; }
+
+  .feldzeile { display: grid; grid-template-columns: 150px 1fr; gap: 8px 12px; align-items: center; margin-bottom: 8px; }
+  .feldzeile label { color: var(--muted); }
+  input[type="text"], select, textarea {
+    font: inherit; color: var(--ink); background: var(--panel-2);
+    border: 1px solid var(--line-strong); border-radius: var(--r); padding: 6px 9px; width: 100%;
+  }
+  textarea { resize: vertical; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  input.mono, textarea.mono { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+  input[data-leer="ja"] { border-color: var(--danger); background: var(--danger-soft); }
+
+  .tabelle { width: 100%; border-collapse: collapse; }
+  .tabelle th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+  .tabelle td { padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  .tabelle td.mono { font-variant-numeric: tabular-nums; }
+  .tabelle tr:last-child td { border-bottom: none; }
+  .tabelle-rahmen { border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
+
+  .knopf {
+    font: inherit; font-weight: 600; border-radius: var(--r); cursor: pointer;
+    border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink);
+    padding: 6px 12px;
+  }
+  .knopf:hover { border-color: var(--accent); color: var(--accent); }
+  .knopf.primaer { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .knopf.primaer:hover { filter: brightness(1.06); color: var(--accent-ink); }
+  .knopf.klein { padding: 3px 9px; font-size: 12px; font-weight: 500; }
+  .knopf.geist { border-color: transparent; color: var(--muted); }
+  .knopf.geist:hover { color: var(--danger); }
+  .knopf[disabled] { opacity: .45; cursor: not-allowed; }
+
+  .kasten { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; background: var(--panel-2); }
+  .kasten.warnung { border-color: var(--warn); background: var(--warn-soft); }
+  .kasten.fehler { border-color: var(--danger); background: var(--danger-soft); }
+  .kasten.hinweis { border-left: 3px solid var(--accent); }
+
+  .codeblock {
+    background: var(--code-bg); border-radius: var(--r); padding: 10px 12px;
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px; line-height: 1.6;
+    overflow-x: auto; white-space: pre;
+  }
+
+  .leer { color: var(--muted); padding: 24px 12px; text-align: center; }
+
+  /* Übersicht */
+  .kacheln { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .kachel { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; background: var(--panel-2); cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+  .kachel:hover { border-color: var(--accent); }
+  .kachel .gross { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .kachel .titel { font-weight: 600; margin-bottom: 6px; display: flex; gap: 7px; align-items: center; }
+  .kachel .status { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .todo { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 8px; background: var(--panel-2); }
+  .todo .text { flex: 1; }
+  .todo .text b { font-weight: 600; }
+  .todo .folge { color: var(--muted); font-size: 12px; }
+
+  /* Aktions-Kette */
+  .schritt { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 8px; background: var(--panel-2); }
+  .schritt.problem { border-color: var(--danger); }
+  .schritt .nr {
+    flex: none; width: 24px; height: 24px; border-radius: 99px; background: var(--accent-soft);
+    color: var(--accent); font-weight: 650; font-size: 12px; display: flex; align-items: center;
+    justify-content: center; font-variant-numeric: tabular-nums; margin-top: 1px;
+  }
+  .schritt .rumpf { flex: 1; min-width: 0; }
+  .schritt .typ { font-weight: 650; }
+  .schritt .was { color: var(--muted); margin-top: 1px; }
+  .schritt .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .schritt .werkzeuge { display: flex; gap: 2px; flex: none; }
+  .pfeil-runter { text-align: center; color: var(--line-strong); font-size: 14px; margin: -4px 0 4px; user-select: none; }
+
+  .schritt-menue { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 10px; }
+  .schritt-menue button { text-align: left; padding: 9px 11px; border: 1px dashed var(--line-strong); border-radius: var(--r); background: none; font: inherit; color: var(--ink); cursor: pointer; }
+  .schritt-menue button:hover:not([disabled]) { border-color: var(--accent); background: var(--accent-soft); }
+  .schritt-menue .t { font-weight: 600; display: block; }
+  .schritt-menue .b { color: var(--muted); font-size: 12px; }
+
+  /* Verknüpfung Live-Demo */
+  .live { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .live .spalte { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+  .live .spalten-kopf { padding: 7px 11px; background: var(--panel-2); border-bottom: 1px solid var(--line); font-weight: 600; font-size: 12.5px; display: flex; gap: 8px; align-items: baseline; }
+  .live .spalten-kopf .q { color: var(--muted); font-weight: 500; font-size: 11.5px; }
+  .live .zeile { display: flex; gap: 10px; width: 100%; padding: 7px 11px; border: none; border-bottom: 1px solid var(--line); background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; align-items: baseline; }
+  .live .zeile:last-child { border-bottom: none; }
+  .live .zeile:hover { background: var(--accent-soft); }
+  .live .zeile[data-aktiv="ja"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .live .zeile .nr { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .live .statisch { cursor: default; }
+  .live .statisch:hover { background: none; }
+
+  .fuss { color: var(--muted); font-size: 12px; margin-top: 14px; text-align: center; }
+  .fuss .prinzipien { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; min-height: 0; }
+    .nav { display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 8px; gap: 4px; }
+    .nav-titel { display: none; }
+    .nav button { width: auto; white-space: nowrap; }
+    .master { border-right: none; border-bottom: 1px solid var(--line); max-height: 300px; }
+    .live { grid-template-columns: 1fr; }
+    .feldzeile { grid-template-columns: 1fr; gap: 3px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .eintrag, .nav button, .knopf, .kachel { transition: background .12s, border-color .12s, color .12s; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="kopf">
+    <h1>Kommandozentrale</h1>
+    <span class="kontext">Maske: <b>Empfang Kleintierpraxis</b></span>
+    <span class="demo-badge">Klickmodell · speichert nichts</span>
+  </div>
+
+  <div class="app">
+    <nav class="nav" id="nav" aria-label="Bereiche"></nav>
+    <section class="master" id="master"></section>
+    <section class="detail" id="detail"></section>
+  </div>
+
+  <div class="fuss">
+    Alle Namen und Werte sind Beispieldaten. Formen mit ⚠ (ERP-API, IDB-Import) werden vor dem Bau an einer echten SoftEngine-Maske verifiziert.
+    <div class="prinzipien">
+      <span>Klarname vorn, Technikwert als <code>Code</code></span>
+      <span>Eine Quelle für Editor, Export &amp; Laufzeit</span>
+      <span>Nichts scheitert still — der Export blockt mit Klartext</span>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════ Beispieldaten ═══════════ */
+
+const QUELLEN_ARTEN = {
+  idb:          { name: 'IDB-Tabelle',            beschr: 'Individuelle Datenbank-Tabelle der Installation.', sevar: 'SEFILELOOP · FELDER: *' },
+  adressstamm:  { name: 'Adressstamm (ADR)',      beschr: 'Fester SoftEngine-Stamm, Felder überall gleich.',  sevar: 'SEFILELOOP · explizite Feldliste' },
+  artikelstamm: { name: 'Artikelstamm (ART)',     beschr: 'Fester SoftEngine-Stamm.',                          sevar: 'SEFILELOOP · explizite Feldliste' },
+  beleg:        { name: 'Beleg (BEL)',            beschr: 'Belegdaten, optional mit Freiselekt-Filter.',       sevar: 'SEFILELOOP · Feldliste + FREISELEKT' },
+  memtab:       { name: 'In-Memory-Tabelle (MEMTAB)', beschr: 'Flüchtige Tabelle im Speicher der Sitzung.',    sevar: 'MEMTAB-Abschnitt ⚠ zu verifizieren' },
+  erpapi:       { name: 'ERP-API-Aufruf',         beschr: 'Daten per API-Aufruf aus dem ERP lesen.',           sevar: 'ERPAPICALL-Abschnitt ⚠ zu verifizieren' },
+};
+
+let quellen = [
+  { id: 'terminplaner', name: 'Terminplaner', alias: 'TERMINPLANER', art: 'idb', idbNr: '1',
+    satz: { pos: '0', len: '10' },
+    felder: [
+      { klar: 'Adressnummer', pos: '10', len: '8' }, { klar: 'Tierart', pos: '18', len: '30' },
+      { klar: 'Tiername', pos: '78', len: '30' }, { klar: 'Behandlung', pos: '118', len: '60' },
+      { klar: 'Uhrzeit', pos: '178', len: '5' }, { klar: 'Datum', pos: '183', len: '10' },
+      { klar: 'Vorname', pos: '193', len: '30' }, { klar: 'Nachname', pos: '223', len: '30' },
+      { klar: 'Zimmer', pos: '253', len: '30' },
+    ],
+    verwendung: ['Kanban „Terminübersicht"'] },
+  { id: 'kundenstamm', name: 'Kundenstamm', alias: 'KUNDEN', art: 'adressstamm', freiselekt: '',
+    felder: [
+      { klar: 'Adressnummer', pos: '2', len: '8' }, { klar: 'Name', pos: '10', len: '30' },
+      { klar: 'Vorname', pos: '40', len: '30' }, { klar: 'Ort', pos: '110', len: '30' },
+    ],
+    verwendung: ['Tabelle „Kunden"'] },
+  { id: 'haustiere', name: 'Kundenhaustiere', alias: 'HAUSTIERE', art: 'idb', idbNr: '4',
+    satz: { pos: '0', len: '10' },
+    felder: [
+      { klar: 'Adressnummer', pos: '10', len: '8' }, { klar: 'Tiername', pos: '18', len: '30' },
+      { klar: 'Tierart', pos: '48', len: '30' }, { klar: 'Rasse', pos: '78', len: '30' },
+      { klar: 'Geburtsdatum', pos: '108', len: '10' },
+    ],
+    verwendung: ['Liste „Haustiere"'] },
+  { id: 'zimmer', name: 'Zimmerliste', alias: 'ZIMMER', art: 'memtab', memId: 'MEM_ZIMMER', freiselekt: '',
+    felder: [ { klar: 'Zimmername', pos: '0', len: '30' } ], verwendung: [] },
+  { id: 'lager', name: 'Lagerbestand', alias: 'LAGER', art: 'erpapi', aufrufNr: '',
+    felder: [ { klar: 'Artikelname', pos: '', len: '' }, { klar: 'Bestand', pos: '', len: '' } ],
+    verwendung: ['Tabelle „Bestand"'] },
+];
+
+let relationen = [
+  { id: 'standard-put', name: 'Feld schreiben (Standard)', verb: 'PUT', nr: '174',
+    params: ['{FELD_POS}', '{FELD_LEN}', 'L', '{PINDEX}', '{RELID}', '{VALUE}'],
+    verwendung: ['Aktion „Karte verschoben" am Kanban'] },
+  { id: 'get-neue-nr', name: 'Neue Satznummer holen', verb: 'GET', nr: '640',
+    params: ['0', '10', 'L', '0', '{RELID}'],
+    verwendung: ['Aktion „Klick" an Schaltfläche „Neuer Termin"'] },
+  { id: 'putadd-termin', name: 'Termin anlegen', verb: 'PUTADD', nr: '174',
+    params: ['183', '10', 'L', '{neueNr}', 'ID0001', '{NOW_DATE}'],
+    verwendung: ['Aktion „Klick" an Schaltfläche „Neuer Termin"'] },
+];
+
+const VERB_NAMEN = { GET: 'Lesen (GET)', PUT: 'Schreiben (PUT)', PUTADD: 'Anhängen (PUTADD)' };
+
+const PLATZHALTER = [
+  { code: '{PINDEX}',      klar: 'Satznummer der Zeile (z. B. der gezogenen Karte)' },
+  { code: '{DROP_PINDEX}', klar: 'Satznummer der Ziel-Zeile beim Ablegen' },
+  { code: '{SELKEY}',      klar: 'Schlüssel der gewählten Zeile' },
+  { code: '{FELD_POS}',    klar: 'Feld-Position (aus dem gebundenen Feld)' },
+  { code: '{FELD_LEN}',    klar: 'Feld-Länge (aus dem gebundenen Feld)' },
+  { code: '{RELID}',       klar: 'Tabellen-ID der Datenquelle (ohne IDB-Präfix)' },
+  { code: '{VALUE}',       klar: 'Neuer Wert (z. B. Titel der Zielspalte)' },
+  { code: '{NOW_DATE}',    klar: 'Heutiges Datum' },
+];
+
+let aktionen = [
+  { id: 'a-drop', baustein: 'Kanban „Terminübersicht"', ereignis: 'Karte verschoben (Drag & Drop)',
+    schritte: [
+      { typ: 'relation', was: '„Feld schreiben (Standard)" — schreibt den Titel der Zielspalte in das Feld Zimmer', chips: ['{PINDEX}', '{VALUE}'], ergebnis: '' },
+      { typ: 'werkzeug', was: 'Werkzeug-Nr. 3003 — Ansicht in SoftEngine auffrischen', nr: '3003', chips: [], ergebnis: '' },
+    ] },
+  { id: 'a-click', baustein: 'Kanban „Terminübersicht"', ereignis: 'Karte angeklickt',
+    schritte: [
+      { typ: 'werkzeug', was: 'Karteikarte des Termins öffnen', nr: '', chips: ['{PINDEX}'], ergebnis: '', problem: 'Werkzeug-Nummer fehlt — der Export blockt, bis sie eingetragen ist.' },
+    ] },
+  { id: 'a-neu', baustein: 'Schaltfläche „Neuer Termin"', ereignis: 'Klick',
+    schritte: [
+      { typ: 'relation', was: '„Neue Satznummer holen" (GET 640) — wartet auf die Antwort', chips: ['{RELID}'], ergebnis: 'neueNr' },
+      { typ: 'relation', was: '„Termin anlegen" (PUTADD 174) — nutzt die Satznummer aus Schritt 1', chips: ['{neueNr}', '{NOW_DATE}'], ergebnis: '' },
+      { typ: 'neuladen', was: 'Alle Bausteine der Maske laden neu', chips: [], ergebnis: '' },
+    ] },
+  { id: 'a-kunden', baustein: 'Tabelle „Kunden"', ereignis: 'Zeile angeklickt', schritte: [] },
+];
+
+const SCHRITT_TYPEN = {
+  relation: { name: 'Relation ausführen', beschr: 'Lesen, Schreiben oder Anhängen über eine Relation-Vorlage. Ein Lese-Ergebnis bekommt einen Namen für spätere Schritte.' },
+  wert:     { name: 'Wert setzen',        beschr: 'Ein Feld oder einen Baustein-Wert direkt setzen.' },
+  werkzeug: { name: 'Werkzeug starten (START_TOOL)', beschr: 'Ein SoftEngine-Werkzeug per Nummer aufrufen, optional mit Parametern.' },
+  neuladen: { name: 'Daten neu laden',    beschr: 'Datenquellen der Maske neu einlesen.' },
+};
+const TYP_NAME = (t) => (SCHRITT_TYPEN[t] ? SCHRITT_TYPEN[t].name : t);
+
+let verknuepfungen = [
+  { id: 'v1', name: 'Haustiere des gewählten Kunden',
+    fuehrend: { baustein: 'Tabelle „Kunden"', quelle: 'Kundenstamm', feld: 'Adressnummer' },
+    abhaengig: { baustein: 'Liste „Haustiere"', quelle: 'Kundenhaustiere', feld: 'Adressnummer' },
+    op: '=', ohneAuswahl: 'leer' },
+];
+
+const DEMO_KUNDEN = [
+  { nr: '10234', name: 'Familie Berger' },
+  { nr: '10567', name: 'Murat Kaya' },
+  { nr: '10881', name: 'Sabine Lehmann' },
+];
+const DEMO_TIERE = [
+  { adr: '10234', name: 'Rocky', art: 'Hund, Labrador' },
+  { adr: '10234', name: 'Minka', art: 'Katze, EKH' },
+  { adr: '10567', name: 'Bubi', art: 'Wellensittich' },
+  { adr: '10881', name: 'Luna', art: 'Katze, Maine Coon' },
+  { adr: '10881', name: 'Felix', art: 'Katze, EKH' },
+];
+
+/* ═══════════ Zustand ═══════════ */
+
+const zustand = {
+  bereich: 'uebersicht',
+  quelle: 'terminplaner',
+  relation: 'standard-put',
+  aktion: 'a-drop',
+  verkn: 'v1',
+  kunde: null,
+  importOffen: false,
+  importErgebnis: null,
+  syntaxOffen: false,
+  syntaxText: '',
+  neueQuelleOffen: false,
+  schrittMenueOffen: false,
+  loeschFrage: null,
+};
+
+/* ═══════════ Helfer ═══════════ */
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const $ = (sel) => document.querySelector(sel);
+
+function quellenProblem(q) {
+  if (q.art === 'erpapi' && !q.aufrufNr) return 'Aufruf-Nummer fehlt';
+  return null;
+}
+function aktionsProblem(a) {
+  const s = a.schritte.find((x) => x.problem);
+  return s ? s.problem : null;
+}
+
+function parseSyntax(text) {
+  const m = text.trim().match(/^(GET|PUT|PUTADD)_RELATION\[([^\]]*)\]$/i);
+  if (!m) return null;
+  const teile = m[2].split('!');
+  return {
+    verb: m[1].toUpperCase(),
+    nr: teile[0] || '',
+    params: teile.slice(1).map((roh) => {
+      const ph = roh.match(/^\{+([^}]+)\}+$/);
+      if (ph) {
+        const bekannt = PLATZHALTER.find((p) => p.code === '{' + ph[1] + '}');
+        return { wert: '{' + ph[1] + '}', art: bekannt ? 'bekannt' : 'fremd', klar: bekannt ? bekannt.klar : '' };
+      }
+      return { wert: roh, art: 'fest', klar: '' };
+    }),
+  };
+}
+
+/* ═══════════ Navigation ═══════════ */
+
+function statusFuer(bereich) {
+  if (bereich === 'datenquellen') return quellen.some(quellenProblem) ? 'warn' : 'ok';
+  if (bereich === 'aktionen') return aktionen.some(aktionsProblem) ? 'warn' : 'ok';
+  if (bereich === 'relationen') return relationen.length ? 'ok' : 'leer';
+  if (bereich === 'verknuepfungen') return verknuepfungen.length ? 'ok' : 'leer';
+  return null;
+}
+
+function malNav() {
+  const punkte = [
+    { id: 'uebersicht', name: 'Übersicht', zahl: '' },
+    { id: 'datenquellen', name: 'Datenquellen', zahl: quellen.length },
+    { id: 'relationen', name: 'Relationen', zahl: relationen.length },
+    { id: 'aktionen', name: 'Aktionen', zahl: aktionen.length },
+    { id: 'verknuepfungen', name: 'Verknüpfungen', zahl: verknuepfungen.length },
+  ];
+  $('#nav').innerHTML = '<div class="nav-titel">Bereiche</div>' + punkte.map((p) => {
+    const st = statusFuer(p.id);
+    return '<button data-nav="' + p.id + '" data-aktiv="' + (zustand.bereich === p.id ? 'ja' : 'nein') + '">'
+      + (st ? '<span class="punkt ' + st + '"></span>' : '<span class="punkt" style="background:none"></span>')
+      + esc(p.name)
+      + (p.zahl !== '' ? '<span class="zahl">' + p.zahl + '</span>' : '')
+      + '</button>';
+  }).join('');
+}
+
+/* ═══════════ Übersicht ═══════════ */
+
+function malUebersicht() {
+  $('#master').innerHTML = '<div class="master-kopf"><h2>Übersicht</h2></div>'
+    + '<div class="master-liste"><p style="color:var(--muted);padding:4px 8px">Der Zustand der ganzen Maske auf einen Blick. Jede Meldung führt direkt an die Stelle, an der sie zu beheben ist.</p></div>';
+
+  const offen = [];
+  quellen.forEach((q) => {
+    const p = quellenProblem(q);
+    if (p) offen.push({ text: '<b>Datenquelle „' + esc(q.name) + '":</b> ' + esc(p) + '.', folge: 'Der Export blockt, solange die Quelle unvollständig ist.', ziel: 'datenquellen', id: q.id });
+  });
+  aktionen.forEach((a) => {
+    const p = aktionsProblem(a);
+    if (p) offen.push({ text: '<b>' + esc(a.baustein) + ' · „' + esc(a.ereignis) + '":</b> ' + esc(p), folge: '', ziel: 'aktionen', id: a.id });
+  });
+
+  $('#detail').innerHTML =
+    '<h3>Empfang Kleintierpraxis</h3><p class="sub">2 offene Punkte, bevor die Maske exportiert werden kann.</p>'
+    + '<div class="kacheln">'
+    + kachel('datenquellen', 'Datenquellen', quellen.length, quellen.some(quellenProblem) ? '1 unvollständig' : 'alle vollständig')
+    + kachel('relationen', 'Relationen', relationen.length, 'alle vollständig')
+    + kachel('aktionen', 'Aktionen', aktionen.length, aktionen.some(aktionsProblem) ? '1 mit Problem' : 'alle vollständig')
+    + kachel('verknuepfungen', 'Verknüpfungen', verknuepfungen.length, 'vollständig')
+    + '</div>'
+    + '<div class="sektion">Zu erledigen</div>'
+    + (offen.length ? offen.map((o) =>
+        '<div class="todo"><span class="punkt warn" style="margin-top:6px"></span><div class="text">' + o.text
+        + (o.folge ? '<div class="folge">' + esc(o.folge) + '</div>' : '') + '</div>'
+        + '<button class="knopf klein" data-springe="' + o.ziel + ':' + o.id + '">Öffnen</button></div>'
+      ).join('') : '<div class="kasten">Nichts offen — die Maske ist exportbereit.</div>');
+}
+
+function kachel(ziel, titel, zahl, status) {
+  const st = statusFuer(ziel);
+  return '<button class="kachel" data-nav="' + ziel + '"><div class="titel"><span class="punkt ' + st + '"></span>' + esc(titel) + '</div>'
+    + '<div class="gross">' + zahl + '</div><div class="status">' + esc(status) + '</div></button>';
+}
+
+/* ═══════════ Datenquellen ═══════════ */
+
+function malDatenquellen() {
+  $('#master').innerHTML = '<div class="master-kopf"><h2>Datenquellen</h2>'
+    + '<span style="margin-left:auto"></span>'
+    + '<button class="knopf klein primaer" data-tu="neue-quelle">+ Neue Datenquelle</button></div>'
+    + '<div class="master-liste">' + quellen.map((q) => {
+      const p = quellenProblem(q);
+      return '<button class="eintrag" data-quelle="' + q.id + '" data-aktiv="' + (zustand.quelle === q.id && !zustand.importOffen && !zustand.neueQuelleOffen ? 'ja' : 'nein') + '">'
+        + '<span class="zeile1"><span class="punkt ' + (p ? 'warn' : 'ok') + '"></span><span class="name">' + esc(q.name) + '</span>'
+        + '<span class="chip art">' + esc(QUELLEN_ARTEN[q.art].name.replace(/ \(.*\)/, '')) + '</span></span>'
+        + '<span class="unter">' + (q.verwendung.length ? 'Verwendet: ' + esc(q.verwendung.join(', ')) : 'Noch nicht verwendet') + '</span>'
+        + '</button>';
+    }).join('') + '</div>';
+
+  if (zustand.importOffen) { malImport(); return; }
+  if (zustand.neueQuelleOffen) { malNeueQuelle(); return; }
+
+  const q = quellen.find((x) => x.id === zustand.quelle) || quellen[0];
+  const art = QUELLEN_ARTEN[q.art];
+  const p = quellenProblem(q);
+
+  let artFelder = '';
+  if (q.art === 'idb') {
+    artFelder =
+      feld('Tabellen-Nummer', '<input class="mono" type="text" value="' + esc(q.idbNr || '') + '" style="width:90px"> <span style="color:var(--muted)">ergibt <code>IDBID' + esc(String(q.idbNr || '').padStart(4, '0')) + '</code></span>')
+      + feld('Satznummer', '<span>Position <input class="mono" type="text" value="' + esc(q.satz ? q.satz.pos : '') + '" style="width:70px"> Länge <input class="mono" type="text" value="' + esc(q.satz ? q.satz.len : '') + '" style="width:70px"> <span style="color:var(--muted)">— nötig zum Zurückschreiben</span></span>');
+  } else if (q.art === 'memtab') {
+    artFelder = feld('MEM-ID', '<input class="mono" type="text" value="' + esc(q.memId || '') + '" style="width:180px">')
+      + feld('Freiselekt (Filter)', '<input class="mono" type="text" value="' + esc(q.freiselekt || '') + '" placeholder="optional">');
+  } else if (q.art === 'erpapi') {
+    artFelder = feld('Aufruf-Nummer', '<span><input class="mono" type="text" value="' + esc(q.aufrufNr || '') + '" style="width:120px" ' + (q.aufrufNr ? '' : 'data-leer="ja"') + '> <span style="color:var(--muted)">— die Nummer des API-Aufrufs in eurer Installation; steht in der SoftEngine-Verwaltung bzw. kommt vom Betreuer</span></span>');
+  } else {
+    artFelder = feld('Tabellen-ID', '<code>' + (q.art === 'adressstamm' ? 'ADR' : q.art === 'artikelstamm' ? 'ART' : 'BEL') + '</code> <span style="color:var(--muted)">(fest für diese Art)</span>')
+      + feld('Freiselekt (Filter)', '<input class="mono" type="text" value="' + esc(q.freiselekt || '') + '" placeholder="optional">');
+  }
+
+  $('#detail').innerHTML =
+    '<h3>' + esc(q.name) + '</h3>'
+    + '<p class="sub">' + esc(art.name) + ' — ' + esc(art.beschr) + '</p>'
+    + (p ? '<div class="kasten fehler" style="margin-bottom:12px"><b>Unvollständig:</b> ' + esc(p) + '. Der Export blockt, solange das fehlt.</div>' : '')
+    + '<div class="sektion">Allgemein</div>'
+    + feld('Anzeigename', '<input type="text" value="' + esc(q.name) + '"> ')
+    + feld('Interner Name', '<span><code>' + esc(q.alias) + '</code> <span style="color:var(--muted)">entsteht automatisch beim Anlegen und bleibt stabil — Umbenennen des Anzeigenamens ändert an den Daten nichts</span></span>')
+    + feld('Art', '<span class="chip art">' + esc(art.name) + '</span> <span style="color:var(--muted)">— nach dem Anlegen fest</span>')
+    + artFelder
+    + '<div class="sektion">Felder <span style="text-transform:none;letter-spacing:0;font-weight:500">— Klarname sichtbar, Position/Länge arbeiten unsichtbar</span></div>'
+    + '<div class="tabelle-rahmen"><table class="tabelle"><tr><th>Klarname</th><th>Position</th><th>Länge</th><th>Code</th><th></th></tr>'
+    + q.felder.map((f) => '<tr><td>' + esc(f.klar) + '</td><td class="mono">' + esc(f.pos) + '</td><td class="mono">' + esc(f.len) + '</td><td class="mono" style="color:var(--muted)">' + (f.pos !== '' ? esc(f.pos + '_' + f.len) : '—') + '</td><td style="text-align:right"><button class="knopf klein geist" title="Feld entfernen">✕</button></td></tr>').join('')
+    + '</table></div>'
+    + '<div style="margin-top:8px"><button class="knopf klein">+ Feld</button></div>'
+    + '<div class="sektion">So landet die Quelle im Export</div>'
+    + '<div class="codeblock">' + esc(sevarVorschau(q)) + '</div>'
+    + (q.art === 'erpapi' || q.art === 'memtab' ? '<p style="color:var(--muted);font-size:12px;margin:6px 2px 0">⚠ Diese Form ist illustrativ — sie wird vor dem Bau an einer echten SoftEngine-Maske verifiziert.</p>' : '')
+    + '<div class="sektion">Verwendung in dieser Maske</div>'
+    + (q.verwendung.length
+        ? q.verwendung.map((v) => '<div class="todo" style="margin-bottom:6px"><div class="text">' + esc(v) + '</div><button class="knopf klein">Zur Stelle</button></div>').join('')
+        : '<div class="kasten">Noch von keinem Baustein verwendet.</div>')
+    + '<div style="margin-top:18px;display:flex;gap:8px">'
+    + (zustand.loeschFrage === q.id
+        ? '<div class="kasten warnung" style="flex:1"><b>Wirklich löschen?</b> ' + (q.verwendung.length ? 'Diese Quelle wird von ' + q.verwendung.length + ' Baustein(en) verwendet — deren Bindung ruht dann.' : 'Sie wird nicht verwendet.') + ' <button class="knopf klein" data-tu="loesche-quelle">Ja, löschen</button> <button class="knopf klein" data-tu="loesch-abbruch">Abbrechen</button></div>'
+        : '<button class="knopf klein geist" data-tu="loesch-frage">Quelle löschen…</button>')
+    + '</div>';
+}
+
+function sevarVorschau(q) {
+  if (q.art === 'idb') return '"SEFILELOOP": [{ "ALIAS": "' + q.alias + '", "ID": "IDBID' + String(q.idbNr || '').padStart(4, '0') + '", "FELDER": "*" }]';
+  if (q.art === 'memtab') return '"MEMTAB": [{ "ID": "' + (q.memId || '?') + '", "ALIAS": "' + q.alias + '", "FREISELEKT": "' + (q.freiselekt || '') + '" }]';
+  if (q.art === 'erpapi') return '"ERPAPICALL": [{ "ALIAS": "' + q.alias + '", "NR": "' + (q.aufrufNr || '?') + '", … }]';
+  const id = q.art === 'adressstamm' ? 'ADR' : q.art === 'artikelstamm' ? 'ART' : 'BEL';
+  const felder = q.felder.map((f) => f.pos + '_' + f.len).join(',');
+  return '"SEFILELOOP": [{ "ALIAS": "' + q.alias + '", "ID": "' + id + '", "FELDER": "' + felder + '"' + (q.freiselekt ? ', "FREISELEKT": "' + q.freiselekt + '"' : '') + ' }]';
+}
+
+function feld(label, html) {
+  return '<div class="feldzeile"><label>' + esc(label) + '</label><span>' + html + '</span></div>';
+}
+
+/* ── Neue Quelle: Art wählen ── */
+function malNeueQuelle() {
+  $('#detail').innerHTML =
+    '<h3>Neue Datenquelle</h3><p class="sub">Womit sollen die Daten gelesen werden? Jede Art bringt ihr eigenes Formular mit — neue Arten kommen als ein Eintrag in dieser Liste dazu, nicht als Umbau.</p>'
+    + '<div class="schritt-menue" style="grid-template-columns:1fr 1fr">'
+    + Object.entries(QUELLEN_ARTEN).map(([k, a]) =>
+        '<button data-neue-art="' + k + '"><span class="t">' + esc(a.name) + '</span><span class="b">' + esc(a.beschr) + '</span><span class="b" style="display:block;margin-top:4px">Export: <code>' + esc(a.sevar) + '</code></span></button>'
+      ).join('')
+    + '</div>'
+    + '<div class="kasten hinweis" style="margin-top:12px">Für IDB-Tabellen geht es auch bequemer: Tabelle in SoftEngine exportieren und die Datei einlesen — das Formular füllt sich vor. <button class="knopf klein" data-tu="import-oeffnen" style="margin-left:6px">Aus Datei füllen…</button></div>'
+    + '<div style="margin-top:14px"><button class="knopf klein" data-tu="neue-quelle-zu">Abbrechen</button></div>';
+}
+
+/* ── IDB-Import ── */
+const IMPORT_BEISPIEL = '<idbexport tabelle="4" name="Kundenhaustiere">\n  <feld pos="10" len="8">Adressnummer</feld>\n  <feld pos="18" len="30">Tiername</feld>\n  <feld pos="48" len="30">Tierart</feld>\n  <feld pos="78" len="30">Rasse</feld>\n  <feld pos="108" len="10">Geburtsdatum</feld>\n</idbexport>';
+
+function malImport() {
+  const erg = zustand.importErgebnis;
+  $('#detail').innerHTML =
+    '<h3>IDB-Tabelle importieren</h3>'
+    + '<p class="sub">Tabelle in SoftEngine exportieren, Datei hier einlesen — der Editor erkennt die Felder und legt das Formular vor. Nichts wird ungefragt gespeichert.</p>'
+    + '<div class="kasten hinweis" style="margin-bottom:12px">Beispieldatei ist eingefügt. Das echte Dateiformat wird vor dem Bau an einem echten SoftEngine-Export festgemacht.</div>'
+    + '<div class="sektion">1 · Datei-Inhalt</div>'
+    + '<textarea class="mono" id="import-text" rows="8">' + esc(IMPORT_BEISPIEL) + '</textarea>'
+    + '<div style="margin-top:8px"><button class="knopf primaer" data-tu="import-lesen">Felder erkennen</button> <button class="knopf" data-tu="import-zu">Abbrechen</button></div>'
+    + (erg ? ''
+      + '<div class="sektion">2 · Erkannte Felder — prüfen und übernehmen</div>'
+      + '<div class="kasten" style="margin-bottom:10px">Tabelle <b>' + esc(erg.name) + '</b> (Nummer ' + esc(erg.nr) + ', wird zu <code>IDBID' + esc(erg.nr.padStart(4, '0')) + '</code>)</div>'
+      + '<div class="tabelle-rahmen"><table class="tabelle"><tr><th></th><th>Klarname</th><th>Position</th><th>Länge</th></tr>'
+      + erg.felder.map((f, i) => '<tr><td><input type="checkbox" checked data-import-feld="' + i + '"></td><td>' + esc(f.klar) + '</td><td class="mono">' + esc(f.pos) + '</td><td class="mono">' + esc(f.len) + '</td></tr>').join('')
+      + '</table></div>'
+      + '<div style="margin-top:10px"><button class="knopf primaer" data-tu="import-uebernehmen">Als neue Quelle übernehmen</button></div>'
+      : '');
+}
+
+function leseImport() {
+  const text = $('#import-text').value;
+  const kopf = text.match(/<idbexport[^>]*tabelle="(\d+)"[^>]*name="([^"]*)"/);
+  const felder = [];
+  const re = /<feld[^>]*pos="(\d+)"[^>]*len="(\d+)"[^>]*>([^<]*)<\/feld>/g;
+  let m;
+  while ((m = re.exec(text))) felder.push({ pos: m[1], len: m[2], klar: m[3].trim() });
+  zustand.importErgebnis = kopf && felder.length
+    ? { nr: kopf[1], name: kopf[2], felder }
+    : { nr: '?', name: 'Nicht erkannt', felder: [] };
+}
+
+/* ═══════════ Relationen ═══════════ */
+
+function malRelationen() {
+  $('#master').innerHTML = '<div class="master-kopf"><h2>Relationen</h2>'
+    + '<span style="margin-left:auto"></span>'
+    + '<button class="knopf klein primaer" data-tu="syntax-oeffnen">+ Aus Syntax</button></div>'
+    + '<div class="master-liste">' + relationen.map((r) =>
+      '<button class="eintrag" data-relation="' + r.id + '" data-aktiv="' + (zustand.relation === r.id && !zustand.syntaxOffen ? 'ja' : 'nein') + '">'
+      + '<span class="zeile1"><span class="punkt ok"></span><span class="name">' + esc(r.name) + '</span>'
+      + '<span class="chip art">' + esc(r.verb) + ' ' + esc(r.nr) + '</span></span>'
+      + '<span class="unter">' + (r.verwendung.length ? 'Verwendet: ' + esc(r.verwendung.join(' · ')) : 'Noch nicht verwendet') + '</span>'
+      + '</button>').join('') + '</div>';
+
+  if (zustand.syntaxOffen) { malSyntax(); return; }
+
+  const r = relationen.find((x) => x.id === zustand.relation) || relationen[0];
+  $('#detail').innerHTML =
+    '<h3>' + esc(r.name) + '</h3>'
+    + '<p class="sub">' + esc(VERB_NAMEN[r.verb]) + ' · Nummer ' + esc(r.nr) + ' — Nummern und Parameter sind je Installation individuell, nichts ist fest verdrahtet.</p>'
+    + '<div class="sektion">Allgemein</div>'
+    + feld('Anzeigename', '<input type="text" value="' + esc(r.name) + '">')
+    + feld('Vorgang', '<select><option' + (r.verb === 'GET' ? ' selected' : '') + '>Lesen (GET)</option><option' + (r.verb === 'PUT' ? ' selected' : '') + '>Schreiben (PUT)</option><option' + (r.verb === 'PUTADD' ? ' selected' : '') + '>Anhängen (PUTADD)</option></select>')
+    + feld('Nummer', '<input class="mono" type="text" value="' + esc(r.nr) + '" style="width:100px">')
+    + '<div class="sektion">Parameter — in genau dieser Reihenfolge</div>'
+    + '<div class="tabelle-rahmen"><table class="tabelle"><tr><th style="width:34px">#</th><th>Wert</th><th>Bedeutung</th></tr>'
+    + r.params.map((p, i) => {
+        const ph = PLATZHALTER.find((x) => x.code === p);
+        const eigenes = /^\{[a-z]/.test(p);
+        return '<tr><td class="mono" style="color:var(--muted)">' + (i + 1) + '</td>'
+          + '<td>' + (ph || eigenes ? '<span class="chip platzhalter">' + esc(p) + '</span>' : '<code>' + esc(p) + '</code>') + '</td>'
+          + '<td style="color:var(--muted)">' + (ph ? esc(ph.klar) : eigenes ? 'Ergebnis eines früheren Aktions-Schrittes' : 'Fester Wert') + '</td></tr>';
+      }).join('')
+    + '</table></div>'
+    + '<div class="sektion">So sieht SoftEngine diesen Aufruf</div>'
+    + '<div class="codeblock">' + esc(r.verb + '_RELATION[' + r.nr + '!' + r.params.join('!') + ']') + '</div>'
+    + '<div class="sektion">Verwendung in dieser Maske</div>'
+    + (r.verwendung.length
+        ? r.verwendung.map((v) => '<div class="todo" style="margin-bottom:6px"><div class="text">' + esc(v) + '</div><button class="knopf klein">Zur Stelle</button></div>').join('')
+        : '<div class="kasten">Noch nicht verwendet.</div>');
+}
+
+function malSyntax() {
+  const erg = zustand.syntaxText ? parseSyntax(zustand.syntaxText) : null;
+  $('#detail').innerHTML =
+    '<h3>Relation aus Syntax anlegen</h3>'
+    + '<p class="sub">Die Relations-Zeile bekommst du fertig — vom SoftEngine-Betreuer, aus der Doku oder aus einer bestehenden Maske. Hier nur einfügen, zerlegen lassen, benennen. Variable Stellen (<code>{…}</code>) ordnest du einmal ihrer Bedeutung zu; geraten wird nie.</p>'
+    + '<div class="sektion">Syntax einfügen</div>'
+    + '<textarea class="mono" id="syntax-text" rows="3" placeholder="z. B. PUT_RELATION[174!{FELD_POS}!{FELD_LEN}!L!{PINDEX}!{RELID}!{VALUE}]">' + esc(zustand.syntaxText) + '</textarea>'
+    + '<div style="margin-top:8px;display:flex;gap:8px"><button class="knopf primaer" data-tu="syntax-lesen">Zerlegen</button>'
+    + '<button class="knopf" data-tu="syntax-beispiel">Beispiel einfügen</button>'
+    + '<button class="knopf" data-tu="syntax-zu">Abbrechen</button></div>'
+    + (zustand.syntaxText && !erg ? '<div class="kasten fehler" style="margin-top:12px"><b>Nicht erkannt.</b> Erwartet wird die Form <code>GET_RELATION[NR!p1!p2!…]</code>, ebenso mit PUT oder PUTADD.</div>' : '')
+    + (erg ? ''
+      + '<div class="sektion">Zerlegt — bitte prüfen</div>'
+      + feld('Vorgang', '<span class="chip art">' + esc(VERB_NAMEN[erg.verb]) + '</span>')
+      + feld('Nummer', '<code>' + esc(erg.nr) + '</code>')
+      + '<div class="tabelle-rahmen" style="margin-top:8px"><table class="tabelle"><tr><th style="width:34px">#</th><th>Wert</th><th>Bedeutung</th></tr>'
+      + erg.params.map((p, i) =>
+          '<tr><td class="mono" style="color:var(--muted)">' + (i + 1) + '</td>'
+          + '<td>' + (p.art === 'fest' ? '<code>' + esc(p.wert) + '</code>' : '<span class="chip platzhalter">' + esc(p.wert) + '</span>') + '</td>'
+          + '<td>' + (p.art === 'bekannt' ? '<span style="color:var(--muted)">' + esc(p.klar) + '</span>'
+              : p.art === 'fremd' ? '<select><option>Bedeutung zuordnen…</option>' + PLATZHALTER.map((x) => '<option>' + esc(x.klar) + '</option>').join('') + '<option>Fester Wert (so lassen)</option><option>Ergebnis eines Aktions-Schrittes…</option></select>'
+              : '<span style="color:var(--muted)">Fester Wert</span>')
+          + '</td></tr>').join('')
+      + '</table></div>'
+      + '<div class="feldzeile" style="margin-top:12px"><label>Anzeigename</label><span><input type="text" id="syntax-name" placeholder="z. B. „Behandlung abschließen""></span></div>'
+      + '<div style="margin-top:6px"><button class="knopf primaer" data-tu="syntax-uebernehmen">Als Vorlage speichern</button></div>'
+      : '')
+    + '<div class="sektion">Platzhalter-Vokabular</div>'
+    + '<div class="tabelle-rahmen"><table class="tabelle">'
+    + PLATZHALTER.map((p) => '<tr><td style="width:140px"><span class="chip platzhalter">' + esc(p.code) + '</span></td><td style="color:var(--muted)">' + esc(p.klar) + '</td></tr>').join('')
+    + '</table></div>';
+}
+
+/* ═══════════ Aktionen ═══════════ */
+
+function malAktionen() {
+  const gruppen = {};
+  aktionen.forEach((a) => { (gruppen[a.baustein] = gruppen[a.baustein] || []).push(a); });
+
+  $('#master').innerHTML = '<div class="master-kopf"><h2>Aktionen</h2></div>'
+    + '<div class="master-liste">'
+    + Object.entries(gruppen).map(([baustein, liste]) =>
+        '<div class="gruppe">' + esc(baustein) + '</div>'
+        + liste.map((a) => {
+            const p = aktionsProblem(a);
+            return '<button class="eintrag" data-aktion="' + a.id + '" data-aktiv="' + (zustand.aktion === a.id ? 'ja' : 'nein') + '">'
+              + '<span class="zeile1"><span class="punkt ' + (p ? 'warn' : (a.schritte.length ? 'ok' : 'leer')) + '"></span><span class="name">' + esc(a.ereignis) + '</span></span>'
+              + '<span class="unter">' + (a.schritte.length ? a.schritte.length + ' Schritt' + (a.schritte.length > 1 ? 'e' : '') : 'Noch keine Schritte') + '</span></button>';
+          }).join('')
+      ).join('')
+    + '</div>';
+
+  const a = aktionen.find((x) => x.id === zustand.aktion) || aktionen[0];
+  $('#detail').innerHTML =
+    '<h3>' + esc(a.baustein) + ' — „' + esc(a.ereignis) + '"</h3>'
+    + '<p class="sub">Die Schritte laufen von oben nach unten. Ein Lese-Schritt kann sein Ergebnis unter einem Namen ablegen — alle späteren Schritte nutzen es als Platzhalter.</p>'
+    + '<div class="sektion">Ablauf</div>'
+    + (a.schritte.length ? a.schritte.map((s, i) => malSchritt(a, s, i)).join('<div class="pfeil-runter">↓</div>')
+        : '<div class="kasten">Noch keine Schritte. Unten den ersten Schritt wählen — z. B. „Werkzeug starten", um beim Klick eine Karteikarte zu öffnen.</div>')
+    + '<div style="margin-top:12px">'
+    + (zustand.schrittMenueOffen
+        ? '<div class="sektion" style="margin-top:0">Schritt hinzufügen</div><div class="schritt-menue">'
+          + Object.entries(SCHRITT_TYPEN).map(([k, t]) => '<button data-neuer-schritt="' + k + '"><span class="t">' + esc(t.name) + '</span><span class="b">' + esc(t.beschr) + '</span></button>').join('')
+          + '<button disabled><span class="t">Popup öffnen · Lookup</span><span class="b">Kommen später — brauchen Seiten-Vorlagen.</span></button>'
+          + '</div><div style="margin-top:8px"><button class="knopf klein" data-tu="schritt-menue-zu">Abbrechen</button></div>'
+        : '<button class="knopf primaer" data-tu="schritt-menue-auf">+ Schritt</button>')
+    + '</div>';
+}
+
+function malSchritt(a, s, i) {
+  const verfuegbar = ['{PINDEX}', '{VALUE}', '{NOW_DATE}']
+    .concat(a.schritte.slice(0, i).filter((x) => x.ergebnis).map((x) => '{' + x.ergebnis + '}'));
+  return '<div class="schritt' + (s.problem ? ' problem' : '') + '">'
+    + '<span class="nr">' + (i + 1) + '</span>'
+    + '<div class="rumpf">'
+    + '<div class="typ">' + esc(TYP_NAME(s.typ)) + (s.typ === 'werkzeug' && s.nr ? ' <code>' + esc(s.nr) + '</code>' : '') + '</div>'
+    + '<div class="was">' + esc(s.was) + '</div>'
+    + (s.problem ? '<div class="chips"><span class="chip fehler">' + esc(s.problem) + '</span></div>' : '')
+    + '<div class="chips">'
+    + (s.ergebnis ? '<span class="chip gut">speichert als {' + esc(s.ergebnis) + '}</span>' : '')
+    + s.chips.map((c) => '<span class="chip platzhalter">' + esc(c) + '</span>').join('')
+    + '</div>'
+    + (i === a.schritte.length - 1 && verfuegbar.length ? '<div class="chips" style="margin-top:4px;color:var(--muted);font-size:11.5px">Hier verfügbar: ' + verfuegbar.map((v) => '<span class="chip platzhalter">' + esc(v) + '</span>').join(' ') + '</div>' : '')
+    + '</div>'
+    + '<div class="werkzeuge">'
+    + '<button class="knopf klein geist" data-schritt-hoch="' + i + '" title="Nach oben"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+    + '<button class="knopf klein geist" data-schritt-runter="' + i + '" title="Nach unten"' + (i === a.schritte.length - 1 ? ' disabled' : '') + '>↓</button>'
+    + '<button class="knopf klein geist" data-schritt-weg="' + i + '" title="Schritt entfernen">✕</button>'
+    + '</div></div>';
+}
+
+/* ═══════════ Verknüpfungen ═══════════ */
+
+function malVerknuepfungen() {
+  $('#master').innerHTML = '<div class="master-kopf"><h2>Verknüpfungen</h2>'
+    + '<span style="margin-left:auto"></span><button class="knopf klein primaer">+ Neu</button></div>'
+    + '<div class="master-liste">'
+    + verknuepfungen.map((v) => '<button class="eintrag" data-verkn="' + v.id + '" data-aktiv="ja">'
+        + '<span class="zeile1"><span class="punkt ok"></span><span class="name">' + esc(v.name) + '</span></span>'
+        + '<span class="unter">' + esc(v.fuehrend.baustein) + ' → ' + esc(v.abhaengig.baustein) + '</span></button>').join('')
+    + '<p style="color:var(--muted);padding:8px 10px 0;font-size:12px">Eine Verknüpfung filtert einen Baustein nach der Auswahl in einem anderen — z. B. „zeige nur die Haustiere des angeklickten Kunden".</p>'
+    + '</div>';
+
+  const v = verknuepfungen[0];
+  const kunde = zustand.kunde;
+  const tiere = kunde ? DEMO_TIERE.filter((t) => t.adr === kunde) : [];
+
+  $('#detail').innerHTML =
+    '<h3>' + esc(v.name) + '</h3>'
+    + '<p class="sub">Wird im führenden Baustein eine Zeile gewählt, zeigt der abhängige Baustein nur noch passende Zeilen.</p>'
+    + '<div class="sektion">Regel</div>'
+    + feld('Führender Baustein', '<select><option>' + esc(v.fuehrend.baustein) + ' — Quelle ' + esc(v.fuehrend.quelle) + '</option></select>')
+    + feld('… dessen Feld', '<select><option>' + esc(v.fuehrend.feld) + '</option><option>Name</option><option>Ort</option></select>')
+    + feld('Abhängiger Baustein', '<select><option>' + esc(v.abhaengig.baustein) + ' — Quelle ' + esc(v.abhaengig.quelle) + '</option></select>')
+    + feld('… dessen Feld', '<select><option>' + esc(v.abhaengig.feld) + '</option><option>Tiername</option></select>')
+    + feld('Vergleich', '<select style="width:120px"><option>ist gleich</option><option>beginnt mit</option><option>enthält</option></select>')
+    + feld('Ohne Auswahl', '<select style="width:240px"><option' + (v.ohneAuswahl === 'leer' ? ' selected' : '') + '>Abhängiger Baustein bleibt leer</option><option>Alle Zeilen zeigen</option></select>')
+    + '<div class="kasten hinweis" style="margin:12px 0">Gelesen heißt das: <b>Zeige in „' + esc(v.abhaengig.baustein) + '" nur Zeilen, deren ' + esc(v.abhaengig.feld) + ' der ' + esc(v.fuehrend.feld) + ' der gewählten Kunden-Zeile entspricht.</b></div>'
+    + '<div class="sektion">Direkt ausprobieren — Kunde anklicken</div>'
+    + '<div class="live">'
+    + '<div class="spalte"><div class="spalten-kopf">Tabelle „Kunden" <span class="q">Quelle: Kundenstamm</span></div>'
+    + DEMO_KUNDEN.map((k) => '<button class="zeile" data-kunde="' + k.nr + '" data-aktiv="' + (kunde === k.nr ? 'ja' : 'nein') + '"><span class="nr mono">' + k.nr + '</span> ' + esc(k.name) + '</button>').join('')
+    + '</div>'
+    + '<div class="spalte"><div class="spalten-kopf">Liste „Haustiere" <span class="q">Quelle: Kundenhaustiere · gefiltert</span></div>'
+    + (kunde
+        ? (tiere.length ? tiere.map((t) => '<div class="zeile statisch"><b>' + esc(t.name) + '</b> <span style="color:var(--muted)">' + esc(t.art) + '</span></div>').join('')
+          : '<div class="leer">Dieser Kunde hat keine Haustiere.</div>')
+        : '<div class="leer">Noch kein Kunde gewählt — die Liste bleibt leer (so ist es oben eingestellt).</div>')
+    + '</div></div>';
+}
+
+/* ═══════════ Rendern + Ereignisse ═══════════ */
+
+function malAlles() {
+  malNav();
+  if (zustand.bereich === 'uebersicht') malUebersicht();
+  else if (zustand.bereich === 'datenquellen') malDatenquellen();
+  else if (zustand.bereich === 'relationen') malRelationen();
+  else if (zustand.bereich === 'aktionen') malAktionen();
+  else malVerknuepfungen();
+}
+
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-nav],[data-springe],[data-quelle],[data-relation],[data-aktion],[data-kunde],[data-tu],[data-neue-art],[data-neuer-schritt],[data-schritt-hoch],[data-schritt-runter],[data-schritt-weg]');
+  if (!el) return;
+  const d = el.dataset;
+
+  if (d.nav) { zustand.bereich = d.nav; zustand.importOffen = zustand.syntaxOffen = zustand.neueQuelleOffen = zustand.schrittMenueOffen = false; zustand.loeschFrage = null; }
+  if (d.springe) { const [b, id] = d.springe.split(':'); zustand.bereich = b; if (b === 'datenquellen') zustand.quelle = id; if (b === 'aktionen') zustand.aktion = id; }
+  if (d.quelle) { zustand.quelle = d.quelle; zustand.importOffen = zustand.neueQuelleOffen = false; zustand.loeschFrage = null; }
+  if (d.relation) { zustand.relation = d.relation; zustand.syntaxOffen = false; }
+  if (d.aktion) { zustand.aktion = d.aktion; zustand.schrittMenueOffen = false; }
+  if (d.kunde) { zustand.kunde = zustand.kunde === d.kunde ? null : d.kunde; }
+
+  if (d.tu === 'import-oeffnen') { zustand.importOffen = true; zustand.neueQuelleOffen = false; zustand.importErgebnis = null; }
+  if (d.tu === 'import-zu') zustand.importOffen = false;
+  if (d.tu === 'import-lesen') { leseImport(); }
+  if (d.tu === 'import-uebernehmen') {
+    const e = zustand.importErgebnis;
+    const neu = { id: 'import-' + Date.now(), name: e.name, alias: e.name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12), art: 'idb', idbNr: e.nr, satz: { pos: '0', len: '10' }, felder: e.felder, verwendung: [] };
+    quellen.push(neu); zustand.quelle = neu.id; zustand.importOffen = false;
+  }
+  if (d.tu === 'neue-quelle') { zustand.neueQuelleOffen = true; zustand.importOffen = false; }
+  if (d.tu === 'neue-quelle-zu') zustand.neueQuelleOffen = false;
+  if (d.neueArt) {
+    const a = d.neueArt;
+    const neu = { id: 'neu-' + Date.now(), name: 'Neue Quelle (' + QUELLEN_ARTEN[a].name + ')', alias: 'NEU', art: a, felder: [], verwendung: [] };
+    if (a === 'idb') { neu.idbNr = ''; neu.satz = { pos: '0', len: '10' }; }
+    if (a === 'memtab') neu.memId = '';
+    if (a === 'erpapi') neu.aufrufNr = '';
+    quellen.push(neu); zustand.quelle = neu.id; zustand.neueQuelleOffen = false;
+  }
+  if (d.tu === 'loesch-frage') zustand.loeschFrage = zustand.quelle;
+  if (d.tu === 'loesch-abbruch') zustand.loeschFrage = null;
+  if (d.tu === 'loesche-quelle') {
+    quellen = quellen.filter((q) => q.id !== zustand.loeschFrage);
+    zustand.loeschFrage = null; zustand.quelle = quellen.length ? quellen[0].id : null;
+  }
+
+  if (d.tu === 'syntax-oeffnen') { zustand.syntaxOffen = true; zustand.syntaxText = ''; }
+  if (d.tu === 'syntax-zu') zustand.syntaxOffen = false;
+  if (d.tu === 'syntax-beispiel') zustand.syntaxText = 'PUT_RELATION[981!{FELD_POS}!{FELD_LEN}!L!{PINDEX}!{RELID}!{GJ}]';
+  if (d.tu === 'syntax-lesen') zustand.syntaxText = $('#syntax-text').value;
+  if (d.tu === 'syntax-uebernehmen') {
+    const erg = parseSyntax(zustand.syntaxText);
+    const nameEl = $('#syntax-name');
+    if (erg) {
+      relationen.push({ id: 'rel-' + Date.now(), name: (nameEl && nameEl.value.trim()) || (VERB_NAMEN[erg.verb] + ' ' + erg.nr), verb: erg.verb, nr: erg.nr, params: erg.params.map((p) => p.wert), verwendung: [] });
+      zustand.relation = relationen[relationen.length - 1].id;
+      zustand.syntaxOffen = false;
+    }
+  }
+
+  if (d.tu === 'schritt-menue-auf') zustand.schrittMenueOffen = true;
+  if (d.tu === 'schritt-menue-zu') zustand.schrittMenueOffen = false;
+  if (d.neuerSchritt) {
+    const a = aktionen.find((x) => x.id === zustand.aktion);
+    const t = d.neuerSchritt;
+    const beispiele = {
+      relation: { typ: 'relation', was: 'Noch einzurichten: Relation-Vorlage wählen', chips: [], ergebnis: '', problem: 'Noch keine Vorlage gewählt — der Export blockt, bis der Schritt eingerichtet ist.' },
+      wert:     { typ: 'wert', was: 'Noch einzurichten: Feld und Wert wählen', chips: [], ergebnis: '', problem: 'Noch kein Feld gewählt — der Export blockt, bis der Schritt eingerichtet ist.' },
+      werkzeug: { typ: 'werkzeug', was: 'Noch einzurichten: Werkzeug-Nummer eintragen', nr: '', chips: [], ergebnis: '', problem: 'Werkzeug-Nummer fehlt — der Export blockt, bis sie eingetragen ist.' },
+      neuladen: { typ: 'neuladen', was: 'Alle Bausteine der Maske laden neu', chips: [], ergebnis: '' },
+    };
+    a.schritte.push(beispiele[t]); zustand.schrittMenueOffen = false;
+  }
+  if (d.schrittHoch !== undefined) {
+    const a = aktionen.find((x) => x.id === zustand.aktion); const i = +d.schrittHoch;
+    if (i > 0) { const [s] = a.schritte.splice(i, 1); a.schritte.splice(i - 1, 0, s); }
+  }
+  if (d.schrittRunter !== undefined) {
+    const a = aktionen.find((x) => x.id === zustand.aktion); const i = +d.schrittRunter;
+    if (i < a.schritte.length - 1) { const [s] = a.schritte.splice(i, 1); a.schritte.splice(i + 1, 0, s); }
+  }
+  if (d.schrittWeg !== undefined) {
+    const a = aktionen.find((x) => x.id === zustand.aktion);
+    a.schritte.splice(+d.schrittWeg, 1);
+  }
+
+  malAlles();
+});
+
+malAlles();
+</script>
