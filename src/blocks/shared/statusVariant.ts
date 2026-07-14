@@ -1,18 +1,13 @@
 // statusVariant (Kap. 4K.3)
-// Geteiltes Status-Vokabular der Anzeige-Bloecke: Infobox, Status-Chip und
-// Karte tragen dieselben 4 Status-Bedeutungen (Regel "Technikwert !=
-// Anzeigename": der Bediener waehlt den Klarnamen Hinweis/Erfolg/Warnung/
-// Fehler, NIE die Farbe — die Farbe ergibt sich fest aus der Bedeutung ueber
-// die Statusfarben-Tokens).
-//
-// In 4K.2 bewusst zurueckgestellt ("sauber ziehen, wenn ein echter dritter
-// Nutzer kommt") — die Karte (ff-card) IST dieser dritte Nutzer, darum liegt
-// das Vokabular jetzt hier an EINER Stelle:
+// Geteiltes Status-Vokabular (Regel "Technikwert != Anzeigename": der
+// Bediener waehlt den Klarnamen Hinweis/Erfolg/Warnung/Fehler, NIE die
+// Farbe — die Farbe ergibt sich fest aus der Bedeutung ueber die
+// Statusfarben-Tokens). Nutzer seit dem Kahlschlag 2026-07-14 (Infobox +
+// Status-Chip entfernt): die Karte (ff-card) und die Kanban-Spalte.
 //  - StatusVariant/coerceStatusVariant: der unsichtbare Technikwert.
 //  - statusVariantProperty: die "Art"-Select-Beschreibung fuer den Inspector.
 //  - chipStyles: das Chip-Aussehen (.zb-chip im Zielbild
-//    dashboard/stilprobe.html) — EINE Quelle fuer ff-badge und den Chip
-//    innerhalb von ff-card, kann nicht auseinanderlaufen.
+//    dashboard/stilprobe.html) fuer den Chip innerhalb von ff-card.
 
 import { css } from 'lit'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'

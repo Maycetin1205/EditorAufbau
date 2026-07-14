@@ -77,6 +77,12 @@ export class KanbanBlock extends BasicBlock {
       kind: 'field',
       hiddenInInspector: true,
     },
+    // KEIN Inspector-Control (Nutzer-Entscheidung 2026-07-14): Relationen
+    // werden in der Steuerung gepflegt; das Board nutzt still die Standard-
+    // Schreibvorlage. Eine sichtbare Wahl kommt erst mit der gefuehrten
+    // Strecke (B4) zurueck. Die Beschreibung bleibt registriert, weil der
+    // Export (collectRelations) und der Verwendungs-Scan der Bibliothek
+    // kind-'relation'-Props darueber finden.
     {
       attributeName: 'putRelation',
       name: 'Beim Verschieben zurückschreiben über',
@@ -85,6 +91,7 @@ export class KanbanBlock extends BasicBlock {
       maxLength: 0,
       kind: 'relation',
       requiresDataSource: true,
+      hiddenInInspector: true,
     },
   ]
 

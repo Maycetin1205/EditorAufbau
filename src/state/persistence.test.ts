@@ -91,6 +91,41 @@ describe('sanitizeTree (Laden verteidigt sich)', () => {
     const ed = new Editor()
     expect(ed.blockCount).toBe(0) // leerer, benutzbarer Editor
   })
+
+  // Kahlschlag 2026-07-14: abgeschaffte Typen (text/container/infobox/badge/
+  // formfield) in alten Speicherständen verschwinden NIE still — der Bediener
+  // bekommt eine Meldung, und der INHALT eines abgeschafften Rahmens wird an
+  // seiner Stelle eingegliedert statt mitgelöscht.
+  it('meldet verworfene unbekannte Typen sichtbar und zieht deren Kinder hoch', () => {
+    const meldungen: string[] = []
+    ;(globalThis as Record<string, unknown>).alert = (msg: string) => { meldungen.push(msg) }
+    try {
+      const ed = load({
+        tree: {
+          root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'c1', 't2'] },
+          t1: { id: 't1', type: 'text', props: {}, parentId: 'root', childIds: [] },
+          // Abgeschaffter "Bereich" mit echtem Inhalt: der Rahmen fällt,
+          // der Block darin rückt an dieselbe Stelle unter die Wurzel.
+          c1: { id: 'c1', type: 'container', props: {}, parentId: 'root', childIds: ['drin'] },
+          drin: { id: 'drin', type: TEST_BLOCK, props: { text: 'Gerettet' }, parentId: 'c1', childIds: [] },
+          t2: { id: 't2', type: 'text', props: {}, parentId: 'root', childIds: [] },
+        },
+        selectedId: null,
+      })
+      expect(ed.getNode('t1')).toBeUndefined()
+      expect(ed.getNode('c1')).toBeUndefined()
+      expect(ed.getNode('drin')?.props.text).toBe('Gerettet')
+      expect(ed.getNode('drin')?.parentId).toBe(ed.rootId)
+      // Reihenfolge: der gerettete Inhalt steht an der Stelle des Rahmens.
+      expect(ed.getNode(ed.rootId)?.childIds).toEqual(['drin'])
+      expect(meldungen).toHaveLength(1)
+      expect(meldungen[0]).toContain('3 Baustein(e)')
+      expect(meldungen[0]).toContain('"text"')
+      expect(meldungen[0]).toContain('"container"')
+    } finally {
+      delete (globalThis as Record<string, unknown>).alert
+    }
+  })
 })
 
 describe('Aktionsketten (Z2) im Speicher', () => {

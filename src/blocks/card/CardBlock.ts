@@ -9,11 +9,11 @@
 // (Inline-Edit, WYSIWYG) und sind bindbare Stellen (Kap. 5.2); einziges
 // Inspector-Feld ist die Chip-Art (Bedeutung -> Farbe, Regel "Technikwert
 // != Anzeigename"). Status-Vokabular + Chip-Aussehen kommen aus dem
-// geteilten Modul shared/statusVariant — der Chip der Karte und der
-// freistehende Status-Chip (ff-badge) koennen nicht auseinanderlaufen.
-// Bewusst KEIN eingebettetes <ff-badge>-Element: dessen Inline-Edit-Event
-// wuerde an der Schattengrenze zur Karte umadressiert und die falsche Prop
-// beschreiben. KEINE Aktions-Knoepfe (Kap. 8), KEINE Verknuepfungs-Stellen
+// geteilten Modul shared/statusVariant. Der Chip ist bewusst KEIN eigenes
+// Element im Licht-DOM: dessen Inline-Edit-Event wuerde an der
+// Schattengrenze zur Karte umadressiert und die falsche Prop beschreiben.
+// (Der freistehende Status-Chip ff-badge ist seit dem Kahlschlag 2026-07-14
+// abgeschafft.) KEINE Aktions-Knoepfe (Kap. 8), KEINE Verknuepfungs-Stellen
 // wie Besitzer/Avatar (Kap. 7).
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Literale, keine
@@ -87,7 +87,7 @@ export class CardBlock extends BasicBlock {
   ]
 
   // Strukturelle Groessen (padding, margins, line-height, font-weight) als
-  // Literale wie bei Button/Infobox; Farben + Radius + Schriftgroessen aus
+  // Literale wie bei Button; Farben + Radius + Schriftgroessen aus
   // Tokens. .heading setzt --se-ink explizit (Shadow DOM erbt sonst je nach
   // Umgebung unterschiedlich — WYSIWYG). Titel/Meta bleiben einzeilig
   // (ellipsis); die Meta rueckt per negativem margin an den Titel heran

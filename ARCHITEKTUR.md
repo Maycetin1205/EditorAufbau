@@ -24,10 +24,21 @@ Ein Block ist eine Komponente mit eigener Klasse:
 ## Aktiver Umfang
 
 Der Umfang waechst kapitelweise — der VERBINDLICHE Stand steht in der
-CLAUDE.md-Roadmap. Aktuell (2026-07-11) aktiv:
+CLAUDE.md-Roadmap. Aktuell (2026-07-14) aktiv:
 
-- Bloecke: Bereich, Schaltflaeche, Eingabefeld (FormField v1), Status-Chip,
-  Infobox, Karte, Kanban (+ Spalte), Textblock
+- Bloecke: **Kanban (+ Spalte, Karte) und Schaltflaeche — sonst nichts.**
+  Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Text, Bereich (Container),
+  Infobox, Status-Chip (Badge) und Eingabefeld (FormField) sind KOMPLETT
+  entfernt (Code + Tests); sie hatten fuer das Ziel (Empfang-Board in
+  SoftEngine) keine Funktion. Alte Speicherstaende: unbekannte Typen werden
+  beim Laden SICHTBAR gemeldet (alert), ihre Kinder ruecken an ihre Stelle
+  hoch (sanitizeTree, kein stiller Verlust). Neue Bausteine erst, wenn eine
+  echte Maske sie erzwingt.
+- Relationen werden AUSSCHLIESSLICH in der Steuerung gepflegt; das
+  Inspector-Dropdown "Beim Verschieben zurueckschreiben ueber" ist
+  abgeschafft (putRelation: hiddenInInspector). Das Board nutzt still die
+  Standard-Schreibvorlage; Anpassen = Vorlage in der Steuerung bearbeiten
+  (id bleibt stabil). Sichtbare Wahl kommt erst mit der Strecke (B4).
 - Sidebar = nur die Baustein-Palette; Canvas (Flow + Drag&Drop);
   Inspector (Inhalt/Layout/Daten)
 - Kommandozentrale (Toolbar „Steuerung", Z1/Z2): Aktions-Ketten-Editor je

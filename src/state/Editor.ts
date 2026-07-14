@@ -86,7 +86,13 @@ function migrateKanbanVorlage(
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
 // Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
 // Props, repariert parentId und verwirft Waisen/Zyklen.
-function sanitizeTree(raw: Record<string, unknown>): BlockTree {
+// onDropType: meldet jeden verworfenen UNBEKANNTEN Typ (z. B. die 2026-07-14
+// abgeschafften Bausteine Text/Bereich/Infobox/Chip/Eingabefeld in alten
+// Speicherständen) — Nutzer-Regel: Verluste beim Laden passieren NIE still.
+function sanitizeTree(
+  raw: Record<string, unknown>,
+  onDropType?: (type: string) => void,
+): BlockTree {
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   migrateKanbanVorlage(src)
@@ -97,7 +103,16 @@ function sanitizeTree(raw: Record<string, unknown>): BlockTree {
     if (!node || typeof node !== 'object') return
     if (typeof node.type !== 'string') return
     const def = getBlockDefinition(node.type)
-    if (!def) return
+    if (!def) {
+      onDropType?.(node.type)
+      // Kinder eines unbekannten Typs werden zum Eltern-Knoten HOCHGEZOGEN
+      // statt still mitzuverschwinden (z. B. der Inhalt eines abgeschafften
+      // "Bereich"): der unbekannte Rahmen fällt, der Inhalt bleibt an
+      // seiner Position im Fluss.
+      const kids = Array.isArray(node.childIds) ? node.childIds : []
+      for (const k of kids) addChild(parentId, k)
+      return
+    }
     // Aktionsketten (Z2) laufen durch den eigenen strengen Lader — nur
     // Ereignis-Keys, die der Typ in der Registry deklariert.
     const events = sanitizeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key))
@@ -148,12 +163,26 @@ function loadFromStorage(): PersistedState | null {
     const parsed = JSON.parse(raw) as { tree?: unknown; blocks?: unknown; selectedId?: unknown }
 
     let tree: BlockTree | null = null
+    // Verworfene unbekannte Typen sammeln und MELDEN (nie still): trifft
+    // v. a. die 2026-07-14 abgeschafften Bausteine in alten Speicherständen.
+    const verworfen = new Map<string, number>()
     if (parsed.tree && typeof parsed.tree === 'object') {
-      tree = sanitizeTree(parsed.tree as Record<string, unknown>)
+      tree = sanitizeTree(parsed.tree as Record<string, unknown>, (type) => {
+        verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
+      })
     } else if (Array.isArray(parsed.blocks)) {
       tree = migrateFlatBlocks(parsed.blocks)
     }
     if (!tree) return null
+    if (verworfen.size > 0 && typeof alert === 'function') {
+      const anzahl = [...verworfen.values()].reduce((a, b) => a + b, 0)
+      const typen = [...verworfen.keys()].map((t) => `"${t}"`).join(', ')
+      alert(
+        `Beim Laden entfernt: ${anzahl} Baustein(e) der nicht mehr vorhandenen Typen ${typen}.\n`
+        + 'Diese Bausteintypen gibt es im Editor nicht mehr. Ihr Inhalt wurde — '
+        + 'falls vorhanden — an ihrer Stelle eingegliedert; der Rest der Maske ist unverändert.',
+      )
+    }
 
     const selectedId =
       typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID

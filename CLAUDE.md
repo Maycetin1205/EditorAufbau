@@ -12,10 +12,20 @@
 > gebündelt, im Hintergrund, unmittelbar vor einem Commit. Der Nutzer wartet
 > nie auf Testläufe.**
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-14): Zusammenführung B2 —
-> Auffangspalte + automatische Laufzeit-Spalte „Nicht zugeordnet", angepasst
-> an die neuere Entscheidung „Titel = Wert"; B1/statusValues bleibt draußen.**
-> Danach: B3–B6 geführte Bindungsstrecke → Optik-Runde → Z3 „Relation
+> **⚑ ARBEITSREGEL (2026-07-14, nach dem Branch-Chaos Codex/Claude
+> parallel): EIN Arbeitsbaum = EIN Agent. Codex und Claude arbeiten NIE
+> gleichzeitig im selben Ordner; Übergaben passieren AUSSCHLIESSLICH über
+> committete Stände.**
+>
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-14, abends): B3 — geführte
+> Strecke, Schritte 1–3.** Der Anschluss-Dialog (Quelle + Einsortieren-Feld)
+> ist als Vorleistung aus dem B2-Merge da; es fehlt der sichtbare
+> Spalten-/Auffang-Schritt. **Zusammenführung B2 ist ERLEDIGT** (Merge
+> 2e0d9df; 217 Unit + 31 E2E grün) und der **KAHLSCHLAG BIBLIOTHEK ist
+> umgesetzt** (eigener Roadmap-Eintrag: Bibliothek = nur noch Kanban +
+> Schaltfläche; Inspector-Relation-Dropdown raus — Relationen wohnen in der
+> Steuerung; Tests auf das Nutzer-Minimum von 4 Dateien reduziert).
+> Danach: B4–B6 → Optik-Runde → Z3 „Relation
 > ausführen" → Z4 → K-Rest → Stabilisierungs-Rest. **Z2 ist im SE-ECHTTEST
 > BESTANDEN (2026-07-14):** Werkzeug startet bei „Karte angeklickt" UND bei
 > Schaltflächen-Klick, vom Nutzer live bestätigt.
@@ -1020,12 +1030,18 @@ den Export (Kap. 3).
       vom 2026-07-14 lautet ohne Ausnahme „Spaltentitel = Datenwert". Listen
       mit eigenen Anzeigenamen bleiben dem späteren K5b-Unterbereichsmodell
       vorbehalten.
-    - ⌖ **B2 Auffang-Modell + „Nicht zugeordnet":** genau eine Spalte kann
-      Auffangspalte sein. Ohne gewählte Auffangspalte erzeugt die Laufzeit bei
-      Bedarf „Nicht zugeordnet"; sie ist kein Ablage-Ziel, Karten können zur
-      Reparatur in eine echte Spalte herausgezogen werden. Umsetzung wird
-      gegen den aktuellen Titel=Wert-Stand neu integriert, nicht blind aus
-      dem alten B1-Branch übernommen.
+    - ✅ **B2 Auffang-Modell + „Nicht zugeordnet" (ZUSAMMENGEFÜHRT
+      2026-07-14, Merge 2e0d9df):** genau eine Spalte kann Auffangspalte
+      sein (exclusiveAmongSiblings, 1 Undo). Ohne gewählte Auffangspalte
+      erzeugt die Laufzeit bei Bedarf „Nicht zugeordnet"; sie ist kein
+      Ablage-Ziel, Karten können zur Reparatur in eine echte Spalte
+      herausgezogen werden. Auf der V2-Linie gebaut (Details: Commit
+      d14bb77), Konfliktauflösung gegen den Titel=Wert-Stand durch Codex,
+      Abschluss + Prüfung hier (Bündel neu gebaut; 217 Unit + 31 E2E grün).
+      Mit dem Merge kam als VORLEISTUNG für B3 der Datenanschluss-Dialog
+      (bindingRoute: Quelle + Einsortieren-Feld im eigenen Dialog,
+      statusField aus dem Inspector ausgeblendet) und die pure
+      Vollständigkeitsprüfung bindungsStand.ts.
     - **B3 Strecke, Schritte 1–3:** Quelle → Einsortieren-Feld → Spalten.
       Pro Spalte zeigt die Strecke den Titel (= Datenwert) und die sichtbare
       Auffang-Wahl; KEIN Wert-Textfeld und KEINE Werteliste.
@@ -1037,6 +1053,46 @@ den Export (Kap. 3).
     - **B6 Export-Preflight:** nach Live-Abnahme von B3–B5 blockiert der Export
       fehlende Quelle/Feld/Schreibvorlage und widersprüchliche Auffang-Wahlen
       verständlich.
+  - ✅ **KAHLSCHLAG BIBLIOTHEK (2026-07-14, direkte Nutzer-Anweisung: „wir
+    löschen, was für den Bediener nichts tut"):** Die Bausteine Text,
+    Bereich (Container), Infobox, Status-Chip (Badge) und Eingabefeld
+    (FormField v1) sind KOMPLETT entfernt (Dateien, Registry-Importe, ihre
+    Export-Tests; Bündel neu gebaut, der Veralten-Wächter VERBIETET die
+    fünf Tags jetzt wie ff-kanban-vorlage). Bibliothek = nur noch **Kanban
+    + Schaltfläche** — beides in SoftEngine echt getestet. Neue Bausteine
+    erst, wenn eine echte Maske sie erzwingt (ein Eingabefeld käme mit
+    Kap. 6 als NEUBAU mit Feldbindung zurück; Zielbild in stilprobe.html
+    dann neu — die alte Sektion ist raus). Lade-Weg nach der Regel „keine
+    stillen Verluste": sanitizeTree MELDET verworfene unbekannte Typen
+    (alert mit Anzahl + Typen) und zieht deren KINDER an ihre Stelle hoch —
+    der Inhalt eines abgeschafften Bereichs überlebt an gleicher Position.
+    AUSSERDEM (dieselbe Anweisung): das Inspector-Dropdown „Beim
+    Verschieben zurückschreiben über" ist raus (putRelation
+    hiddenInInspector; Export/Verwendungs-Scan lesen die Registry direkt
+    und bleiben intakt) — **Relationen wohnen AUSSCHLIESSLICH in der
+    Steuerung.** Das Board nutzt still die Standard-Schreibvorlage;
+    Anpassen an die Installation = Vorlage in der Steuerung BEARBEITEN
+    (id bleibt stabil, das Board zieht ohne Neuwahl mit); die sichtbare
+    Wahl am Board kommt erst mit der Strecke (B4) zurück.
+    **TESTS AUF DAS ABSOLUTE MINIMUM (ausdrückliche Nutzer-Anweisung vom
+    selben Tag — die Leitplanke „Tests nie löschen" greift nicht, der
+    Nutzer HAT entschieden):** ALLE Tests gelöscht bis auf VIER Dateien,
+    jede mit Existenz-Begründung: 1. `export.test.ts` — der Export ist
+    eine GÜLTIGE SE-Maske (Marker/ASCII/LF, Determinismus) + der
+    Bündel-Veralten-Wächter (hat am selben Tag Codex' vergessenes
+    build:runtime gefangen); 2. `seRuntime.test.ts` — die Helfer, die IN
+    SoftEngine laufen (Feld lesen/schreiben mit SE-Präfix-Schlüsseln,
+    Spaltenwahl): ohne SE-Installation sonst UNPRÜFBAR, Fehler hießen
+    leere Karten / falsche Verteilung / kaputtes Zurückschreiben;
+    3. `persistence.test.ts` — das Laden verteidigt sich (Müll-Speicher,
+    alte Formate, Inline-Edit-Werte überleben den Reload, sichtbare
+    Meldung + Kinder-Hochziehen statt stiller Verluste): Fehler hieße
+    Bediener-Arbeit weg; 4. `e2e/kanban-data.spec.ts` — der EINE
+    Ende-zu-Ende-Beweis Editor → Export → hydrierte Maske mit SE-Daten →
+    Ziehen schreibt zurück (DAS Produkt). Bewusst akzeptierter Preis:
+    Store/Undo, Bibliotheken-UI, Aktionsketten, Preflight und
+    Einzel-Export-Formate sind ab jetzt UNGEPRÜFT — Fehler dort fallen
+    erst im Handtest oder SE-Echttest auf.
   - ⌖ **OPTIK-RUNDE STEUERUNG — Vorlage festgelegt (2026-07-13, erst nach
     B3–B6 bauen):** Die Codex-Demo „FormForge"
     (`kommandozentrale-geruest.html`, Visualisierung vom 2026-07-13) ist die

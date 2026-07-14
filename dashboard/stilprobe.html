@@ -414,54 +414,10 @@ body { font-size:13.5px; }
     </div>
   </div>
 
-  <!-- ============================================================
-       EINGABEFELD-ZIELBILD (Kap. 6) — VERBINDLICH fuer ff-formfield.
-       Nur var(--se-*) aus masken-tokens.css; kein einziger Farb-/
-       Radius-Literal. Der Baustein rendert NUR das Steuerelement —
-       die Beschriftung erzeugt SoftEngine selbst (kein Label-Prop).
-       ============================================================ -->
-  <style>
-    .zb-ff-row { display:flex; flex-wrap:wrap; gap:var(--se-gap-lg); align-items:flex-start; }
-    .zb-ff-item { display:flex; flex-direction:column; gap:var(--se-gap-sm); }
-    .zb-ff-cap { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--se-faint); }
-    /* Eingabe-Steuerelement — abgesetzte Innenflaeche (--se-panel-2), kantig */
-    .zb-input {
-      box-sizing:border-box; height:34px; width:220px;
-      border:1px solid var(--se-line); border-radius:var(--se-r-sm);
-      background:var(--se-panel-2); padding:0 10px;
-      font-family:var(--se-font); font-size:var(--se-fs); color:var(--se-ink);
-    }
-    .zb-input::placeholder { color:var(--se-faint); }
-    .zb-input:focus { outline:none; border-color:var(--se-accent); }
-    .zb-textarea { height:auto; min-height:74px; padding:7px 10px; line-height:1.4; resize:vertical; }
-    .zb-input:read-only:not(.zb-textarea), textarea.zb-input[readonly] { background:var(--se-line-soft); color:var(--se-muted); }
-    .zb-select { width:220px; }
-    .zb-check { width:18px; height:18px; accent-color:var(--se-accent); margin:0; }
-    .zb-ff-inline { flex-direction:row; align-items:center; gap:var(--se-gap); height:34px; }
-  </style>
-
-  <div class="zb">
-    <h2>Eingabefeld-Zielbild (Kap. 6) · verbindlich für ff-formfield</h2>
-    <p class="zb-sub">Alle Werte aus <code>masken-tokens.css</code> (var(--se-*)). Der Baustein rendert <b>nur das Steuerelement</b> — die Beschriftung erzeugt SoftEngine selbst.</p>
-
-    <div class="zb-ff-row">
-      <div class="zb-ff-item"><span class="zb-ff-cap">Text</span><input class="zb-input" type="text" placeholder="Nachname eingeben"></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Zahl</span><input class="zb-input" type="number" placeholder="0"></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">E-Mail</span><input class="zb-input" type="email" placeholder="name@praxis.de"></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Passwort</span><input class="zb-input" type="password" placeholder="••••••"></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Datum</span><input class="zb-input" type="date"></div>
-    </div>
-
-    <div class="zb-ff-row" style="margin-top:16px;">
-      <div class="zb-ff-item"><span class="zb-ff-cap">Mehrzeilig</span><textarea class="zb-input zb-textarea" placeholder="Notiz eingeben …"></textarea></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Auswahl</span>
-        <select class="zb-input zb-select"><option>Untersuchung</option><option>Impfung</option><option>Operation</option></select>
-      </div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Checkbox</span><div class="zb-ff-inline"><input class="zb-check" type="checkbox" checked></div></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Nur lesen</span><input class="zb-input" type="text" value="Mustermann, Max" readonly></div>
-      <div class="zb-ff-item"><span class="zb-ff-cap">Fokus</span><input class="zb-input" type="text" value="aktiv" autofocus style="border-color:var(--se-accent);"></div>
-    </div>
-  </div>
+  <!-- Das Eingabefeld-Zielbild (ehem. Kap. 6 / ff-formfield) ist mit dem
+       Kahlschlag 2026-07-14 entfernt: der Baustein existiert nicht mehr.
+       Wird ein Eingabefeld je wieder gebaut, entsteht sein Zielbild hier
+       NEU und wird VOR dem Bau abgenommen (Zielbild-Regel). -->
 
 </body>
 </html>

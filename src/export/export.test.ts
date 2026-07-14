@@ -85,8 +85,14 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-text', 'ff-container', 'ff-infobox', 'ff-badge', 'ff-card', 'ff-kanban', 'ff-kanban-spalte', 'ff-formfield']) {
+    for (const tag of ['ff-button', 'ff-card', 'ff-kanban', 'ff-kanban-spalte']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
+    }
+    // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Text, Bereich, Infobox,
+    // Status-Chip und Eingabefeld sind KOMPLETT entfernt — ein Bündel, das
+    // sie noch trägt, ist veraltet.
+    for (const tag of ['ff-text', 'ff-container', 'ff-infobox', 'ff-badge', 'ff-formfield']) {
+      expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} ist abgeschafft`).not.toContain(tag)
     }
     // P1.1: der Vorlagen-Kasten ist abgeschafft — ein Bündel, das ihn noch
     // trägt, ist veraltet.
