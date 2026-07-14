@@ -8,6 +8,7 @@
     --se-accent: #0e7a58; --se-accent-dark: #0b6247; --se-accent-soft: #e4f2ec;
     --se-amber: #9a6a00; --se-amber-soft: #f8f0dc;
     --se-green: #47761d; --se-green-soft: #ecf3e1;
+    --se-red: #c0201a; --se-red-soft: #fbe7e6;
     --se-r-sm: 2px; --se-r-md: 3px; --se-r-lg: 4px;
     --se-font: "Segoe UI", system-ui, -apple-system, sans-serif;
     --se-mono: "IBM Plex Mono", Consolas, monospace;
@@ -68,8 +69,22 @@
   .popup-titel .zu:hover { color: var(--se-ink); background: var(--se-line-soft); }
   .popup-titel input { font: inherit; font-weight: 650; border: 1px solid var(--se-accent); border-radius: var(--se-r-sm); padding: 1px 6px; width: 240px; }
   .popup-rumpf { flex: 1; overflow-y: auto; padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; align-content: start; }
-  .popup-feld { display: flex; flex-direction: column; gap: 3px; }
+  .popup-feld { display: flex; flex-direction: column; gap: 3px; position: relative; }
   .popup-feld.breit { grid-column: 1 / -1; }
+  .block-weg {
+    position: absolute; top: -7px; right: -7px; z-index: 2; width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center; border-radius: 999px;
+    border: 1px solid var(--se-line); background: var(--se-panel); color: var(--se-muted);
+    font-size: 10px; line-height: 1; cursor: pointer; padding: 0;
+  }
+  .block-weg:hover { color: var(--se-red); border-color: var(--se-red); background: var(--se-red-soft); }
+  .pop-tabelle { border: 1px solid var(--se-line); border-radius: var(--se-r-md); overflow: hidden; }
+  .pop-tabelle .kzeile { display: flex; background: var(--se-panel-2); border-bottom: 1px solid var(--se-line); }
+  .pop-tabelle .kzeile span { flex: 1; padding: 4px 8px; font-size: var(--se-fs-sm); font-weight: 650; }
+  .pop-tabelle .dzeile { display: flex; border-bottom: 1px solid var(--se-line-soft); }
+  .pop-tabelle .dzeile:last-child { border-bottom: none; }
+  .pop-tabelle .dzeile span { flex: 1; padding: 5px 8px; }
+  .editor-leiste.unter { border-radius: 0; }
   .popup-feld label { font-size: var(--se-fs-sm); color: var(--se-muted); font-weight: 600; }
   .popup-feld input, .popup-feld select { font: inherit; color: var(--se-ink); background: var(--se-panel-2); border: 1px solid var(--se-line); border-radius: var(--se-r-sm); padding: 6px 9px; width: 100%; }
   .popup-feld input:focus-visible, .popup-feld select:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -1px; }
@@ -100,7 +115,8 @@
     <span class="demo-badge">Klickmodell · speichert nichts</span>
   </div>
   <p class="erklaer">
-    Eine Maske hat eine Hauptseite und beliebig viele <b>Popup-Seiten</b> — jede Seite ist ein normaler Block-Baum mit denselben Bausteinen.
+    Eine Maske hat eine Hauptseite und beliebig viele <b>Popup-Seiten</b> — jede Seite ist ein normaler Canvas:
+    <b>was im Popup ist, entscheidest du</b> mit denselben Bausteinen aus der Bibliothek (Formularfelder, Tabellen mit eigener Datenquelle, Text …).
     Geöffnet wird ein Popup über den Aktions-Schritt „Popup öffnen" (Steuerung), z.&nbsp;B. am Klick der Schaltfläche.
   </p>
 
@@ -117,12 +133,27 @@
 'use strict';
 
 const STANDARD = { breite: 520, hoehe: 360 };
+const KUNDEN_ZEILEN = [
+  ['10234', 'Berger', 'Hamburg'],
+  ['10567', 'Kaya', 'Hamburg'],
+  ['10881', 'Lehmann', 'Norderstedt'],
+];
+let feldZaehler = 0;
 const zustand = {
   ansicht: 'editor',
   seite: 'haupt',            /* Editor: welche Seite wird bearbeitet */
   titel: 'Termin anlegen',
   breite: STANDARD.breite,
   hoehe: STANDARD.hoehe,
+  /* Der INHALT des Popups: ganz normale Bausteine, wie auf der Hauptseite.
+     Diese Liste fuellt der Bediener selbst — hier der Startbestand der Demo. */
+  inhalt: [
+    { typ: 'feld', label: 'Datum' },
+    { typ: 'feld', label: 'Uhrzeit' },
+    { typ: 'feld', label: 'Tiername' },
+    { typ: 'auswahl', label: 'Behandlung', optionen: ['Impfung', 'Kontrolle', 'Erstuntersuchung'] },
+    { typ: 'auswahl', label: 'Zimmer', optionen: ['Behandlungszimmer 1', 'Behandlungszimmer 2', 'Behandlungszimmer 3'], breit: true },
+  ],
   titelEdit: false,
   popupOffen: false,         /* Maske: Popup sichtbar? */
   status: null,              /* Maske: letzte ausgefuehrte Kette */
@@ -133,14 +164,39 @@ const zustand = {
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const $ = (sel) => document.querySelector(sel);
 
-/* ── Popup-Inhalt (dieselbe Quelle fuer Editor UND Maske = WYSIWYG) ── */
+/* ── Popup-Inhalt: normale Bausteine aus zustand.inhalt
+      (dieselbe Quelle fuer Editor UND Maske = WYSIWYG) ── */
+function malBaustein(b, i, editor) {
+  const weg = editor ? '<button class="block-weg" data-block-weg="' + i + '" title="Baustein entfernen">✕</button>' : '';
+  const tab = editor ? ' tabindex="-1"' : '';
+  if (b.typ === 'feld') {
+    return '<div class="popup-feld' + (b.breit ? ' breit' : '') + '">' + weg
+      + '<label>' + esc(b.label) + '</label><input type="text" placeholder="' + esc(b.label) + '"' + tab + '></div>';
+  }
+  if (b.typ === 'auswahl') {
+    return '<div class="popup-feld' + (b.breit ? ' breit' : '') + '">' + weg
+      + '<label>' + esc(b.label) + '</label><select' + tab + '>'
+      + b.optionen.map((o) => '<option>' + esc(o) + '</option>').join('') + '</select></div>';
+  }
+  if (b.typ === 'text') {
+    return '<div class="popup-feld breit">' + weg + '<span style="color:var(--se-muted)">' + esc(b.text) + '</span></div>';
+  }
+  if (b.typ === 'tabelle') {
+    return '<div class="popup-feld breit">' + weg
+      + '<label>Tabelle — Quelle: ' + esc(b.quelle) + '</label>'
+      + '<div class="pop-tabelle"><div class="kzeile"><span>Adressnummer</span><span>Name</span><span>Ort</span></div>'
+      + (editor
+          ? [70, 50, 62].map((w) => '<div class="dzeile"><span><span class="strich" style="width:' + w + '%"></span></span><span><span class="strich" style="width:45%"></span></span><span><span class="strich" style="width:55%"></span></span></div>').join('')
+          : KUNDEN_ZEILEN.map((z) => '<div class="dzeile"><span>' + z[0] + '</span><span>' + z[1] + '</span><span>' + z[2] + '</span></div>').join(''))
+      + '</div></div>';
+  }
+  return '';
+}
+
 function malPopupInhalt(editor) {
   return '<div class="popup-rumpf">'
-    + '<div class="popup-feld"><label>Datum</label><input type="text" placeholder="Datum"' + (editor ? ' tabindex="-1"' : '') + '></div>'
-    + '<div class="popup-feld"><label>Uhrzeit</label><input type="text" placeholder="Uhrzeit"' + (editor ? ' tabindex="-1"' : '') + '></div>'
-    + '<div class="popup-feld"><label>Tiername</label><input type="text" placeholder="Tiername"' + (editor ? ' tabindex="-1"' : '') + '></div>'
-    + '<div class="popup-feld"><label>Behandlung</label><select' + (editor ? ' tabindex="-1"' : '') + '><option>Impfung</option><option>Kontrolle</option><option>Erstuntersuchung</option></select></div>'
-    + '<div class="popup-feld breit"><label>Zimmer</label><select' + (editor ? ' tabindex="-1"' : '') + '><option>Behandlungszimmer 1</option><option>Behandlungszimmer 2</option><option>Behandlungszimmer 3</option></select></div>'
+    + zustand.inhalt.map((b, i) => malBaustein(b, i, editor)).join('')
+    + (zustand.inhalt.length === 0 ? '<div class="popup-feld breit" style="color:var(--se-faint)">Leeres Popup — unten Bausteine hinzufügen.</div>' : '')
     + '</div>'
     + '<div class="popup-fuss">'
     + '<button class="se-knopf leise" data-popup-zu' + (editor ? ' tabindex="-1"' : '') + '>Abbrechen</button>'
@@ -177,6 +233,14 @@ function malAlles() {
       + '<span class="hinweis">' + (aufPopupSeite
           ? 'Rand/Ecke ziehen = Größe · Doppelklick auf Anfasser = Standard · Doppelklick auf Titel = umbenennen'
           : 'Bausteine wie gewohnt — die Schaltfläche trägt ihre Kette') + '</span></div>'
+      + (aufPopupSeite
+          ? '<div class="editor-leiste unter"><span class="etikett">Bibliothek</span>'
+            + '<button class="seiten-tab neu" data-neu="feld">＋ Eingabefeld</button>'
+            + '<button class="seiten-tab neu" data-neu="auswahl">＋ Auswahlfeld</button>'
+            + '<button class="seiten-tab neu" data-neu="tabelle">＋ Tabelle (Quelle: Kundenstamm)</button>'
+            + '<button class="seiten-tab neu" data-neu="text">＋ Textzeile</button>'
+            + '<span class="hinweis">im echten Editor: dieselbe Bibliothek wie überall, per Ziehen — ✕ am Baustein entfernt</span></div>'
+          : '')
       + '<div class="canvas" style="min-height:' + Math.max(zustand.hoehe + 110, 420) + 'px">'
       + (aufPopupSeite
           ? '<div class="abdunkeln"><div class="mass-chip">' + zustand.breite + ' × ' + zustand.hoehe + ' px</div>' + malPopupRahmen(true) + '</div>'
@@ -214,7 +278,7 @@ document.addEventListener('click', (ev) => {
   if (ev.target.closest('[data-anfasser]')) return;
   if (ev.target.id === 'titel-edit') return;
 
-  const el = ev.target.closest('[data-ansicht],[data-seite],[data-popup-auf],[data-popup-zu],[data-popup-speichern],[data-abdunkeln]');
+  const el = ev.target.closest('[data-ansicht],[data-seite],[data-popup-auf],[data-popup-zu],[data-popup-speichern],[data-abdunkeln],[data-neu],[data-block-weg]');
   if (!el) { if (zustand.titelEdit) { uebernimmTitel(); malAlles(); } return; }
   const d = el.dataset;
 
@@ -222,6 +286,17 @@ document.addEventListener('click', (ev) => {
 
   if (d.ansicht) { zustand.ansicht = d.ansicht; zustand.popupOffen = false; zustand.status = null; }
   if (d.seite) zustand.seite = d.seite;
+  if (d.neu) {
+    feldZaehler++;
+    const neue = {
+      feld: { typ: 'feld', label: 'Neues Feld ' + feldZaehler },
+      auswahl: { typ: 'auswahl', label: 'Neue Auswahl ' + feldZaehler, optionen: ['Möglichkeit 1', 'Möglichkeit 2'] },
+      tabelle: { typ: 'tabelle', quelle: 'Kundenstamm' },
+      text: { typ: 'text', text: 'Hinweistext — Beschriftung im echten Editor per Doppelklick' },
+    };
+    zustand.inhalt.push(neue[d.neu]);
+  }
+  if (d.blockWeg !== undefined) zustand.inhalt.splice(+d.blockWeg, 1);
   if (d.popupAuf !== undefined) { zustand.popupOffen = true; zustand.status = null; }
   if (d.popupZu !== undefined) {
     if (zustand.ansicht === 'maske') { zustand.popupOffen = false; zustand.status = null; }
