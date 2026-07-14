@@ -11,6 +11,7 @@ import { useDataSources } from '../../state/useDataSources'
 import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
 import { SidePanel } from '@/ui/molecules/side-panel'
+import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
 import { DataSection } from './DataSection'
 import { LayoutSection } from './LayoutSection'
 import { SelectControl } from './controls/SelectControl'
@@ -124,12 +125,15 @@ export function Inspector() {
     }
   }
 
+  // Im eigenen Datenanschluss-Dialog gepflegte Props bekommen kein
+  // zweites Inspector-Control.
+  const visibleProps = def.customProperties.filter((p) => !p.hiddenInInspector)
   // Daten-Controls (Kap. 5.3/5.5) gehören in die Sektion "Daten", nicht in
   // die allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
-  const dataProps = def.customProperties.filter(
+  const dataProps = visibleProps.filter(
     (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'relation',
   )
-  const generalProps = def.customProperties.filter((p) => !dataProps.includes(p))
+  const generalProps = visibleProps.filter((p) => !dataProps.includes(p))
   // Sektion zeigen, wenn der Block eine Quelle anhängen kann (Kanban) ODER
   // seine Daten-Controls gerade sichtbar wären (z. B. Spalte unter einem
   // Board mit Quelle). Kein Typ-Check, alles Registry-Daten.
@@ -154,7 +158,10 @@ export function Inspector() {
             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Daten
             </h3>
-            {def.acceptsDataSource && <DataSection block={block} />}
+            {/* Board-Datenanschluss: Quelle + Einsortieren-Feld im eigenen Dialog. */}
+            {def.bindingRoute
+              ? <BindungsAnschluss block={block} />
+              : def.acceptsDataSource && <DataSection block={block} />}
             {dataProps.map(renderPropControl)}
           </section>
         )}

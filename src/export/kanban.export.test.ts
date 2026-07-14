@@ -144,7 +144,7 @@ describe('Kanban-Export (echte Bloecke)', () => {
     // Spalten: festgelegtes Breitenverhalten (lockedWidth 'fill') ->
     // flex-basis 0 + min-width 0. KEINE Mindestbreite, KEIN width-Attribut,
     // keine feste Pixelbreite (260px-Mindestbreite ist ABGELEHNT).
-    expect(html).toContain('heading="Offen" style="flex-grow:1;flex-basis:0;min-width:0"')
+    expect(html).toContain('heading="Offen" auffang="nein" style="flex-grow:1;flex-basis:0;min-width:0"')
     expect(html).not.toContain('flex-basis:260px')
     expect(html).not.toContain('width:290px')
     expect(html).not.toContain('width:260px')

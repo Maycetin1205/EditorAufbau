@@ -31,11 +31,25 @@ async function selectBoard(page: Page) {
   await expect(page.getByText('kanban ·')).toBeVisible() // Inspector-Kopf
 }
 
-// Datenquelle über die Inspector-Sektion "Daten" anhängen (Kap. 5.1).
+// Quelle + Einsortieren-Feld leben im eigenen Board-Dialog. Der
+// Knopf „Daten anschließen…" in der Inspector-Sektion "Daten" öffnet sie.
+async function openStrecke(page: Page) {
+  await page.getByRole('button', { name: 'Daten anschließen' }).click()
+  return page.getByRole('dialog', { name: 'Daten anschließen' })
+}
+
+async function closeStrecke(page: Page) {
+  await page.getByRole('dialog', { name: 'Daten anschließen' })
+    .getByRole('button', { name: 'Schließen' }).click()
+  await expect(page.getByRole('dialog', { name: 'Daten anschließen' })).toHaveCount(0)
+}
+
 async function attachTerminplaner(page: Page) {
   await selectBoard(page)
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  const strecke = await openStrecke(page)
+  await strecke.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name: 'Terminplaner' }).click()
+  await closeStrecke(page)
 }
 
 // Erste Karte: Klick auf die Textzeile selektiert die Karte (anderer Punkt
@@ -105,16 +119,18 @@ test('Quelle lösen nimmt Vorschau + Markierung zurück, Wieder-Anhängen bringt
   await picker(page).getByRole('button', { name: /Tiername/ }).click()
   await expect(heading(page)).toHaveText('Tiername')
 
-  // Quelle vom Board lösen → statischer Text, keine Markierung; die
-  // gespeicherte Bindung bleibt und lebt mit der Quelle wieder auf.
+  // Quelle vom Board lösen (Strecke, Chip „— keine —") → statischer Text,
+  // keine Markierung; die gespeicherte Bindung bleibt und lebt mit der
+  // Quelle wieder auf.
   await selectBoard(page)
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: '— keine —' }).click()
+  const strecke = await openStrecke(page)
+  const quellen = strecke.getByRole('group', { name: 'Datenquelle' })
+  await quellen.getByRole('button', { name: '— keine —' }).click()
   await expect(heading(page)).toHaveText('Rückruf Fr. Wagner')
   await expect(heading(page)).not.toHaveAttribute('data-ff-bound', '')
 
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await quellen.getByRole('button', { name: 'Terminplaner' }).click()
+  await closeStrecke(page)
   await expect(heading(page)).toHaveText('Tiername')
   await expect(heading(page)).toHaveAttribute('data-ff-bound', '')
 })

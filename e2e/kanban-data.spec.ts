@@ -33,8 +33,21 @@ async function selectBoard(page: Page) {
 
 async function attachTerminplaner(page: Page) {
   await selectBoard(page)
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await page.getByRole('button', { name: /Daten anschlie/ }).click()
+  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
+  await dialog.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name: 'Terminplaner' }).click()
+  await dialog.getByRole('button', { name: 'Fertig' }).click()
+}
+
+async function chooseEinsortierFeld(page: Page, field: string) {
+  await selectBoard(page)
+  await page.getByRole('button', { name: /Daten anschlie/ }).click()
+  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
+  const gruppe = dialog.getByRole('group', { name: 'Einsortieren nach' })
+  await expect(gruppe.getByRole('button', { name: '253_30' })).toHaveCount(0)
+  await gruppe.getByRole('button', { name: field }).click()
+  await dialog.getByRole('button', { name: 'Fertig' }).click()
 }
 
 // Spaltentitel per Doppelklick setzen — der TITEL ist seit 2026-07-14 der
@@ -71,13 +84,13 @@ const SEDATA_STUB = {
         { '253_30': '2', '78_30': 'Minka' },
         { '253_30': '3', '78_30': 'Buddy' },
         { '253_30': '2', '78_30': 'Nala' },
-        { '253_30': 'OP', '78_30': 'Rocky' }, // trifft keine Spalte -> Auffang
+        { '253_30': 'OP', '78_30': 'Rocky' }, // trifft keine Spalte -> Nicht zugeordnet
       ],
     }],
   },
 }
 
-test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer fällt in Spalte 1', async ({ page, context }) => {
+test('Export: Zeilen werden Karten; kein Treffer bleibt sichtbar in Nicht zugeordnet', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)
   await attachTerminplaner(page)
@@ -91,12 +104,10 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
 
   // Spalten-Feld am Board wählen: Klarname "Zimmer", nie der Feldcode.
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await expect(page.getByRole('option', { name: '253_30' })).toHaveCount(0)
-  await page.getByRole('option', { name: 'Zimmer' }).click()
+  await chooseEinsortierFeld(page, 'Zimmer')
 
   // Titel = Datenwert (2026-07-14): Spalten 2 + 3 heißen wie ihre Werte;
-  // Spalte 1 bleibt "Offen" (trifft keinen Zimmer-Wert) = Auffang.
+  // "Offen" trifft keinen Zimmer-Wert; ohne Auffang entsteht Nicht zugeordnet.
   await renameColumn(page, 1, '2')
   await renameColumn(page, 2, '3')
 
@@ -117,19 +128,20 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
     (window as unknown as Record<string, unknown>).SEDATA = sedata
   }, SEDATA_STUB)
 
-  // 4 Zeilen -> 4 Karten: Minka+Nala in "In Arbeit" (2), Buddy in "Fertig"
-  // (3), Rocky (Zimmer "OP", kein Treffer) im Auffang "Offen". Die
-  // Musterkarte (erste Karte des Boards) wird beim Hydrieren durch die
-  // Daten-Karten ERSETZT — sie zaehlt nicht doppelt.
+  // 4 Zeilen -> 4 Karten: Minka+Nala in 2, Buddy in 3 und Rocky sichtbar
+  // in Nicht zugeordnet. Die Musterkarte wird ersetzt, nicht verdoppelt.
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
+  await expect(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]')).toHaveCount(1)
+  await expect(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet] .title')).toHaveText('Nicht zugeordnet')
   // P1.1: einen Vorlagen-Kasten gibt es nicht mehr — nirgends in der Maske.
   await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
-  await expect(colCards(0)).toHaveText(['Rocky'])
+  await expect(colCards(0)).toHaveCount(0)
   await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
   await expect(colCards(2)).toHaveText(['Buddy'])
+  await expect(colCards(3)).toHaveText(['Rocky'])
   // Kartenzähler laufen mit (slotchange, dieselbe Logik wie im Editor).
-  await expect(mask.locator('ff-kanban-spalte .count')).toHaveText(['1', '2', '1'])
+  await expect(mask.locator('ff-kanban-spalte .count')).toHaveText(['0', '2', '1', '1'])
   // Ungebundene Stellen behalten den statischen Text der Vorlagen-Karte.
   await expect(mask.locator('ff-card .text').first()).toHaveText('Befund Minka besprechen')
 
@@ -163,10 +175,9 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
 
   // Spalten-Feld "Zimmer"; Titel = Wert: Spalte 2 -> '2', Spalte 3 -> '3',
-  // Spalte 1 bleibt "Offen" = Auffang.
+  // "Offen" bleibt eine normale Spalte; alle Testwerte treffen 2 oder 3.
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
+  await chooseEinsortierFeld(page, 'Zimmer')
   await renameColumn(page, 1, '2')
   await renameColumn(page, 2, '3')
 
@@ -256,8 +267,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
+  await chooseEinsortierFeld(page, 'Zimmer')
   await renameColumn(page, 1, '2')
   await renameColumn(page, 2, '3')
 
@@ -295,6 +305,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   }, SEDATA_SE_FORM)
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
+  await expect(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]')).toHaveCount(1)
   await expect(colCards(1)).toHaveText(['Minka', 'Nala'])
   expect(await mask.evaluate(() => {
     const sedata = (window as unknown as Record<string, unknown>).SEDATA
@@ -309,6 +320,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
     })
   })
   await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(1)
+  await expect(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]')).toHaveCount(0)
   await expect(colCards(2)).toHaveText(['Momo'])
 
   // Diagnose (Beifang Phase 2): erstes Paket liegt versteckt bereit,
@@ -326,9 +338,11 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   }, SEDATA_SE_FORM)
   const col2Cards = (i: number) => mask2.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(mask2.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
-  await expect(col2Cards(0)).toHaveText(['Rocky'])
+  await expect(mask2.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet]')).toHaveCount(1)
+  await expect(col2Cards(0)).toHaveCount(0)
   await expect(col2Cards(1)).toHaveText(['Minka', 'Nala'])
   await expect(col2Cards(2)).toHaveText(['Buddy'])
+  await expect(col2Cards(3)).toHaveText(['Rocky'])
 })
 
 test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', async ({ page, context }) => {

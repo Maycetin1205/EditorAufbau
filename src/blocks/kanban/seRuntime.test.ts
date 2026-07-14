@@ -253,15 +253,13 @@ describe('columnIndexFor (Zeilenwert -> Spalte)', () => {
     expect(columnIndexFor(' fertig ', values)).toBe(2)
   })
 
-  it('kein Treffer oder leerer Wert -> erste Spalte (Auffang)', () => {
-    expect(columnIndexFor('3', values)).toBe(0)
-    expect(columnIndexFor('', values)).toBe(0)
+  it('kein Treffer oder leerer Wert -> -1 fuer Auffang/Automatik', () => {
+    expect(columnIndexFor('3', values)).toBe(-1)
+    expect(columnIndexFor('', values)).toBe(-1)
   })
 
-  it('leere Spalten-Datenwerte treffen nie (nur als Auffang erreichbar)', () => {
-    // Zeilenwert '' darf NICHT auf die leere Spalte 1 "matchen", sondern
-    // faellt in den Auffang (hier ebenfalls 0 — aber ueber die Auffang-Regel).
-    expect(columnIndexFor('', ['x', '', 'y'])).toBe(0)
-    expect(columnIndexFor('unbekannt', ['x', '', 'y'])).toBe(0)
+  it('leere Spaltentitel treffen nie', () => {
+    expect(columnIndexFor('', ['x', '', 'y'])).toBe(-1)
+    expect(columnIndexFor('unbekannt', ['x', '', 'y'])).toBe(-1)
   })
 })

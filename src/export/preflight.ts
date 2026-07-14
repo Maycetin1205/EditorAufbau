@@ -38,6 +38,31 @@ export function preflightMask(
         })
       }
     }
+    // B2: exklusive Geschwister-Kennzeichen (exclusiveAmongSiblings in der
+    // PropertyDescription, z. B. die Auffangspalte). Der Store verhindert
+    // ein doppeltes 'ja' beim Bedienen — ein geladener Altbestand oder
+    // manipulierter Speicher nicht. Die Laufzeit naehme still die erste;
+    // genau solche stillen Mehrdeutigkeiten blockiert der Export mit
+    // Klartext. Registry-getrieben, kein `if type===`.
+    const byType = new Map<string, BlockNode[]>()
+    for (const childId of node.childIds) {
+      const child = tree[childId]
+      if (child) byType.set(child.type, [...(byType.get(child.type) ?? []), child])
+    }
+    for (const [childType, children] of byType) {
+      const childDef = getBlockDefinition(childType)
+      for (const prop of childDef?.customProperties ?? []) {
+        if (!prop.exclusiveAmongSiblings) continue
+        const count = children.filter((c) => c.props[prop.attributeName] === 'ja').length
+        if (count > 1) {
+          results.push({
+            name: 'Kennzeichen mehrfach vergeben',
+            ok: false,
+            detail: `Im Baustein "${def?.displayName ?? node.type}" tragen ${count} Bausteine "${childDef?.displayName ?? childType}" das Kennzeichen "${prop.name}" — hoechstens einer darf es tragen.`,
+          })
+        }
+      }
+    }
     // Z2: Aktionsketten mit nicht exportfaehigen Schritten (z. B. "Werkzeug
     // starten" ohne Werkzeug-Nummer) taeten in der Maske stumm nichts —
     // tote Aktion, darum blockieren. Das Typ-Wissen liegt im Modell

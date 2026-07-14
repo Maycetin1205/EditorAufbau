@@ -34,6 +34,13 @@ export interface BindableSpot {
   label: string
 }
 
+// Datenanschluss am Board: der Block deklariert das Einsortieren-Feld,
+// das gemeinsam mit der source-Prop im eigenen Anschluss-Dialog gepflegt wird.
+// Struktur und sichtbare Feldbindungen bleiben am echten Baustein im Canvas.
+export interface BindingRoute {
+  fieldProp: string
+}
+
 // Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff Kap. 8): was bei
 // diesem Baustein passieren kann. `name` = Klarname für den Bediener
 // („Karte angeklickt"), `key` = Technikwert — das Vokabular des alten
@@ -101,6 +108,9 @@ export interface BlockDefinition {
   acceptsDataSource?: boolean
   // Bindbare Stellen des Blocks (Kap. 5.2) — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
+  // Eigener Datenanschluss-Dialog fuer source + Einsortieren-Feld.
+  // Das dort gepflegte Feld-Control ist hiddenInInspector.
+  bindingRoute?: BindingRoute
   // Ereignisse des Blocks (Z1) — siehe BlockEventSpec. undefined = der
   // Baustein löst keine Ereignisse aus (erscheint nicht in der Zentrale).
   blockEvents?: readonly BlockEventSpec[]

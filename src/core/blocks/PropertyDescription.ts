@@ -1,17 +1,10 @@
 // PropertyDescription
-// Beschreibt eine editierbare Property eines Blocks fuer den Inspector.
-// `kind` waehlt das Control im Inspector. Ohne `kind` fallback per typeof.
-// `options` nur fuer kind 'select' relevant (key/value Paare).
-// `field` (Kap. 5.3): Auswahl eines Felds der Datenquelle in Reichweite
-// (Editor.dataSourceFor) — der Bediener sieht Klarnamen, gespeichert wird
-// der Feldcode (Technikwert). Ohne Quelle in Reichweite unsichtbar.
-// `relation` (Kap. 5.5): Auswahl einer Relation-Vorlage aus der Bibliothek
-// (RelationStore) — der Bediener sieht Anzeigenamen, gespeichert wird die
-// Vorlagen-id (Technikwert). Konsumenten (Kanban-Schreibweg) referenzieren
-// die Vorlage darüber, statt ein Protokoll fest zu verdrahten.
-// `requiresDataSource` (Kap. 5.3): Control nur zeigen, wenn eine Quelle in
-// Reichweite ist (fuer 'field' immer implizit der Fall).
-
+// Metadaten fuer genau ein editierbares Block-Property.
+// kind bestimmt das Inspector-Control; field speichert einen Feldcode,
+// relation die id einer Relation-Vorlage. requiresDataSource blendet ein
+// Control ohne Quelle aus. exclusiveAmongSiblings erzwingt hoechstens ein
+// Ja-Kennzeichen unter gleichartigen Geschwistern. hiddenInInspector ist nur
+// fuer Properties erlaubt, die in einem eigenen Dialog gepflegt werden.
 export type PropertyKind =
   | 'text'
   | 'textarea'
@@ -33,4 +26,6 @@ export interface PropertyDescription {
   kind?: PropertyKind
   options?: PropertySelectOption[]
   requiresDataSource?: boolean
+  exclusiveAmongSiblings?: boolean
+  hiddenInInspector?: boolean
 }

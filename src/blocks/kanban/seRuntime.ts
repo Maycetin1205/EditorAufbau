@@ -4,9 +4,8 @@
 // Karte des Boards als Vorlage, gebundene Stellen aus Kap. 5.2 zeigen die
 // Zeilenwerte), und der Wert des Spalten-Felds (statusField am Board)
 // bestimmt die Spalte: exakter Vergleich (getrimmt, Gross/klein egal) mit dem
-// TITEL der Spalte (heading — Nutzer-Entscheidung 2026-07-14: Titel = Wert,
-// kein separates statusValue mehr); kein Treffer -> erste Spalte (Auffang,
-// wie die Referenzmaske dashboard/praxis-kanban.html).
+// TITEL der Spalte (heading; Titel = Wert). Ohne Treffer greift die
+// gewaehlte Auffangspalte oder die sichtbare Laufzeitspalte Nicht zugeordnet.
 //
 // Laeuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle
@@ -272,9 +271,9 @@ export function messagePayload(eventData: unknown): unknown {
   return d.MSG.DATA
 }
 
-// Ziel-Spalte einer Zeile: erster exakter Treffer (getrimmt, Gross/klein
-// egal) gegen die Spalten-Titel; leere Titel treffen nie; kein Treffer ->
-// Spalte 0 (Auffang, wie SPALTEN[0] der Referenzmaske).
+// Ziel-Spalte einer Zeile: erster exakter Treffer gegen die Spaltentitel.
+// Leere Titel und unbekannte Werte liefern -1; hydrate entscheidet danach
+// zwischen gewaehlter Auffangspalte und Nicht zugeordnet.
 export function columnIndexFor(value: string, columnValues: readonly string[]): number {
   const v = value.trim().toLowerCase()
   if (v !== '') {
@@ -283,7 +282,12 @@ export function columnIndexFor(value: string, columnValues: readonly string[]): 
       if (cv !== '' && cv === v) return i
     }
   }
-  return 0
+  return -1
+}
+
+
+export function catchColumnIndex(flags: readonly (string | null | undefined)[]): number {
+  return flags.findIndex((flag) => (flag ?? '').trim() === 'ja')
 }
 
 // ---------- SoftEngine-Anbindung (nur im Export aktiv) ----------
@@ -329,10 +333,13 @@ let booted = false
 // keine duplizierten String-Literale).
 const SPALTE_TAG = KanbanSpalteBlock.tagName
 const CARD_TAG = CardBlock.tagName
+const AUTO_COLUMN_ATTR = 'data-ff-nicht-zugeordnet'
+const AUTO_COLUMN_TITLE = 'Nicht zugeordnet'
 
 function columnsOf(board: HTMLElement): HTMLElement[] {
   return Array.from(board.children).filter(
-    (el): el is HTMLElement => el.tagName.toLowerCase() === SPALTE_TAG,
+    (el): el is HTMLElement =>
+      el.tagName.toLowerCase() === SPALTE_TAG && !el.hasAttribute(AUTO_COLUMN_ATTR),
   )
 }
 
@@ -379,12 +386,33 @@ function hydrate(board: HTMLElement): void {
   // Titel = Datenwert (2026-07-14): heading reist als Export-Attribut mit.
   const columnValues = columns.map((c) => c.getAttribute('heading') ?? '')
   const spots = spotsForTag(template.tagName)
+  const catchIdx = catchColumnIndex(columns.map((c) => c.getAttribute('auffang')))
 
   // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
+  board.querySelectorAll('[' + AUTO_COLUMN_ATTR + ']').forEach((el) => el.remove())
+  let autoColumn: HTMLElement | null = null
+  const ensureAutoColumn = (): HTMLElement => {
+    if (!autoColumn) {
+      autoColumn = document.createElement(SPALTE_TAG)
+      autoColumn.setAttribute('heading', AUTO_COLUMN_TITLE)
+      autoColumn.setAttribute(AUTO_COLUMN_ATTR, '')
+      autoColumn.setAttribute(
+        'style',
+        columns[0].getAttribute('style') ?? 'flex-grow:1;flex-basis:0;min-width:0',
+      )
+      board.appendChild(autoColumn)
+    }
+    return autoColumn
+  }
+
   for (const col of columns) cardsOf(col).forEach((card) => card.remove())
   for (const row of rows) {
     const card = template.cloneNode(true) as HTMLElement
-    columns[columnIndexFor(getField(row, statusField), columnValues)].appendChild(card)
+    const idx = columnIndexFor(getField(row, statusField), columnValues)
+    const target = idx >= 0
+      ? columns[idx]
+      : catchIdx >= 0 ? columns[catchIdx] : ensureAutoColumn()
+    target.appendChild(card)
     // Gebundene Stellen mit den Zeilenwerten fuellen — ungebundene behalten
     // den statischen Text der Vorlage. Property-Zuweisung NACH dem Einhaengen
     // (Element ist dann sicher upgegradet, Lit uebernimmt das Rendern).
@@ -520,14 +548,15 @@ function wireDrag(board: HTMLElement): void {
   })
   board.addEventListener('dragend', () => { dragged = null })
   board.addEventListener('dragover', (e) => {
-    if (dragged?.board === board && columnOfEvent(board, e)) {
+    const column = columnOfEvent(board, e)
+    if (dragged?.board === board && column && !column.hasAttribute(AUTO_COLUMN_ATTR)) {
       e.preventDefault()
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
     }
   })
   board.addEventListener('drop', (e) => {
     const column = columnOfEvent(board, e)
-    if (!column) return
+    if (!column || column.hasAttribute(AUTO_COLUMN_ATTR)) return
     e.preventDefault()
     handleDrop(board, column)
     dragged = null

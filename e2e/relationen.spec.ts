@@ -45,7 +45,17 @@ async function renameColumn(page: Page, nth: number, title: string) {
   await page.keyboard.press('Enter')
   await expect(page.locator('ff-kanban-spalte .title').nth(nth)).toHaveText(title)
 }
-
+async function connectTerminplaner(page: Page, withZimmer = false) {
+  await page.getByRole('button', { name: /Daten anschlie/ }).click()
+  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
+  await dialog.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name: 'Terminplaner' }).click()
+  if (withZimmer) {
+    await dialog.getByRole('group', { name: 'Einsortieren nach' })
+      .getByRole('button', { name: 'Zimmer' }).click()
+  }
+  await dialog.getByRole('button', { name: 'Fertig' }).click()
+}
 // Board mit Terminplaner, Titel an Tiername gebunden, Spalten-Feld Zimmer,
 // Spalten 2/3 heißen '2'/'3' (Titel = Datenwert) — die gemeinsame Basis der
 // Schreibweg-Prüfungen (wie in kanban-data.spec.ts).
@@ -60,14 +70,11 @@ async function boardMitDaten(page: Page) {
     await expect(page.getByText('kanban ·')).toBeVisible()
   }
   await selectBoard()
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await connectTerminplaner(page, true)
   await page.locator('ff-card .text').first().click()
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
-  await selectBoard()
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
+
   await renameColumn(page, 1, '2')
   await renameColumn(page, 2, '3')
   return selectBoard
@@ -200,8 +207,7 @@ test('Bearbeiten: Umbenennen hält die id stabil — das Board behält seine Vor
   // Board an eine Quelle hängen, damit der Zurückschreibweg sichtbar ist.
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await connectTerminplaner(page)
   // Default ist die mitgelieferte Standard-Vorlage.
   await expect(page.getByLabel('Beim Verschieben zurückschreiben über')).toContainText('Standard-Schreiben')
 
@@ -221,8 +227,7 @@ test('Löschen: Rückfrage warnt, wenn die Vorlage benutzt wird', async ({ page 
   await freshEditor(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await connectTerminplaner(page)
 
   let frage = ''
   page.on('dialog', (d) => {

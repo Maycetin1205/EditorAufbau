@@ -13,7 +13,13 @@ async function freshEditor(page: Page) {
   await page.reload()
   await page.getByRole('button', { name: 'Kanban' }).waitFor()
 }
-
+async function attachSource(page: Page, name: string) {
+  await page.getByRole('button', { name: /Daten anschlie/ }).click()
+  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
+  await dialog.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name }).click()
+  await dialog.getByRole('button', { name: 'Fertig' }).click()
+}
 async function exportMaskHtml(page: Page): Promise<string> {
   const downloads: Download[] = []
   page.on('download', (d) => downloads.push(d))
@@ -58,8 +64,7 @@ test('Anlegen: neue Quelle erscheint überall, persistiert und reist in den Expo
   await closeSteuerung(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Geräte' }).click()
+  await attachSource(page, 'Geräte')
 
   // Titel-Stelle binden: Karte erst selektieren, dann die Stelle anklicken —
   // der Feld-Picker zeigt NUR den Klarnamen, die gebundene Stelle danach
@@ -102,8 +107,7 @@ test('Bearbeiten: Umbenennen hält die id stabil — angehängte Blöcke behalte
   await freshEditor(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await attachSource(page, 'Terminplaner')
 
   await openSteuerung(page, 'Datenquellen')
   await page.getByRole('button', { name: 'Terminplaner bearbeiten' }).click()
@@ -112,17 +116,16 @@ test('Bearbeiten: Umbenennen hält die id stabil — angehängte Blöcke behalte
   await dialog.getByRole('button', { name: 'Speichern' }).click()
   await closeSteuerung(page)
 
-  // Der Block hängt weiter an derselben Quelle (Select zeigt den neuen Namen).
+  // Der Block hängt weiter an derselben Quelle (Kurzzustand zeigt den neuen Namen).
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await expect(page.getByLabel('Datenquelle')).toContainText('Praxisplaner')
+  await expect(page.getByText(/Quelle: Praxisplaner/)).toBeVisible()
 })
 
 test('Löschen: Rückfrage warnt, wenn die Quelle benutzt wird; die Maske bleibt stehen', async ({ page }) => {
   await freshEditor(page)
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await attachSource(page, 'Terminplaner')
 
   let frage = ''
   page.on('dialog', (d) => {
@@ -150,8 +153,7 @@ test('S1a: geloeschte Datenquelle blockiert den Export mit verstaendlicher Meldu
   // Kanban einfuegen + Terminplaner anhaengen.
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await attachSource(page, 'Terminplaner')
 
   // Alle nativen Dialoge einsammeln (Loesch-Rueckfrage UND Export-Meldung).
   const dialogMessages: string[] = []

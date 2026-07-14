@@ -64,6 +64,9 @@ export class KanbanBlock extends BasicBlock {
     width: 'fill', height: 'auto' as const,
     source: '', statusField: '', putRelation: 'standard-put',
   }
+  static readonly bindingRoute = {
+    fieldProp: 'statusField',
+  }
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'statusField',
@@ -72,6 +75,7 @@ export class KanbanBlock extends BasicBlock {
       isArray: false,
       maxLength: 0,
       kind: 'field',
+      hiddenInInspector: true,
     },
     {
       attributeName: 'putRelation',

@@ -425,10 +425,26 @@ export class Editor extends Subject<Editor> {
     const node = this._tree[id]
     if (!node) return
     this.pushHistory()
-    this._tree = {
+    const next: BlockTree = {
       ...this._tree,
       [id]: { ...node, props: { ...node.props, [attr]: value } },
     }
+    // Exklusive Geschwister-Kennzeichen (V2/B2, exclusiveAmongSiblings in
+    // der PropertyDescription, z. B. Auffangspalte): hoechstens EIN
+    // Geschwister gleichen Typs darf 'ja' tragen. Wer auf 'ja' setzt,
+    // raeumt die anderen im SELBEN History-Eintrag ab; Ctrl+Z stellt
+    // beides zurueck. Registry-getrieben, kein `if type===`.
+    const prop = getBlockDefinition(node.type)?.customProperties
+      .find((p) => p.attributeName === attr)
+    if (prop?.exclusiveAmongSiblings && value === 'ja' && node.parentId) {
+      for (const sibId of this._tree[node.parentId]?.childIds ?? []) {
+        const sib = next[sibId]
+        if (sibId !== id && sib?.type === node.type && sib.props[attr] === 'ja') {
+          next[sibId] = { ...sib, props: { ...sib.props, [attr]: 'nein' } }
+        }
+      }
+    }
+    this._tree = next
     this.notify(this)
   }
 

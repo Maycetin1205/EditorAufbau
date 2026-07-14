@@ -36,7 +36,15 @@ async function renameColumn(page: Page, nth: number, title: string) {
   await page.keyboard.press('Enter')
   await expect(page.locator('ff-kanban-spalte .title').nth(nth)).toHaveText(title)
 }
-
+async function connectTerminplanerMitZimmer(page: Page) {
+  await page.getByRole('button', { name: /Daten anschlie/ }).click()
+  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
+  await dialog.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name: 'Terminplaner' }).click()
+  await dialog.getByRole('group', { name: 'Einsortieren nach' })
+    .getByRole('button', { name: 'Zimmer' }).click()
+  await dialog.getByRole('button', { name: 'Fertig' }).click()
+}
 // Schritt über das Formular anlegen (aus der Ereignis-Zeile heraus).
 async function addStep(page: Page, eventLi: ReturnType<Page['locator']>, nr: string, params: string[] = []) {
   await eventLi.getByRole('button', { name: 'Schritt', exact: true }).click()
@@ -141,18 +149,13 @@ test('Kanban: „Karte angeklickt" liefert {PINDEX}, „Karte verschoben" feuert
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(3)
 
-  // Bindungs-Strecke wie kanban-data.spec: Quelle, Titel-Stelle, Spalten-Feld;
-  // Titel = Datenwert (2026-07-14): Spalten 2/3 heißen '2'/'3', Spalte 1 =
-  // Auffang ("Offen").
+  // Board-Einstellungen im eigenen Dialog; Kartenfeld und Spaltentitel
+  // bleiben an den echten Bausteinen im Canvas.
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await connectTerminplanerMitZimmer(page)
   await page.locator('ff-card .text').first().click()
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
-  await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
   await renameColumn(page, 1, '2')
   await renameColumn(page, 2, '3')
 
