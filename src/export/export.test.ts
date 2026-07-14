@@ -85,7 +85,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-card', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte']) {
+    for (const tag of ['ff-button', 'ff-card', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Text, Bereich, Infobox,

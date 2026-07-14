@@ -350,4 +350,16 @@
         box-sizing: border-box;
       }
       .board slot { display: contents; }
-    `]}render(){return T`<div class="board"><slot></slot></div>`}connectedCallback(){super.connectedCallback(),Rt(this)}disconnectedCallback(){super.disconnectedCallback(),zt(this)}};L.defineAndRegister(Bt)})();
+    `]}render(){return T`<div class="board"><slot></slot></div>`}connectedCallback(){super.connectedCallback(),Rt(this)}disconnectedCallback(){super.disconnectedCallback(),zt(this)}};L.defineAndRegister(Bt);var Vt=class extends L{static{this.blockType=`zeile`}static{this.tagName=`ff-zeile`}static{this.displayName=`Zeile`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.childDirection=`row`}static{this.defaultProps={width:`fill`}}static{this.customProperties=[]}static{this.styles=[L.styles,o`
+      /* Wie die Maskenwurzel, nur waagerecht: Kinder beginnen oben
+         (flex-start) und behalten ihre natuerliche Hoehe. min-width:0
+         erlaubt der Zeile, in schmalen Umgebungen zu schrumpfen. */
+      .zeile {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: var(--se-gap);
+        min-width: 0;
+      }
+      .zeile slot { display: contents; }
+    `]}render(){return T`<div class="zeile"><slot></slot></div>`}};L.defineAndRegister(Vt)})();
