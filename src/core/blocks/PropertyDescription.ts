@@ -16,6 +16,11 @@
 // Konsumenten: der Store (updateProperty raeumt beim Setzen auf 'ja' die
 // anderen Geschwister ab, 1 Undo) und die Export-Preflight (mehr als ein
 // 'ja' im geladenen Altbestand blockiert den Export mit Klartext).
+// `hiddenInInspector` (V2/B3): true = KEIN eigenes Inspector-Control — die
+// Property wird woanders gepflegt (Bindungsstrecke am Board). Die
+// Beschreibung bleibt trotzdem die EINE Wahrheit der Property: Wortlaut
+// (name/description) fuer die Strecke, exclusiveAmongSiblings fuer Store +
+// Preflight. Loeschen statt verstecken wuerde diese Konsumenten brechen.
 
 export type PropertyKind =
   | 'text'
@@ -39,4 +44,5 @@ export interface PropertyDescription {
   options?: PropertySelectOption[]
   requiresDataSource?: boolean
   exclusiveAmongSiblings?: boolean
+  hiddenInInspector?: boolean
 }

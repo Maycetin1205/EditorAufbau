@@ -128,21 +128,28 @@ test('Kanban: „Karte angeklickt" liefert {PINDEX}, „Karte verschoben" feuert
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(3)
 
-  // Bindungs-Strecke wie kanban-data.spec: Quelle, Titel-Stelle, Spalten-Feld,
-  // Spaltenwerte 2/3 (Spalte 1 = Auffang).
+  // Bindung wie kanban-data.spec, seit B3 über die geführte Strecke am
+  // Board: Quelle, Titel-Stelle, Spalten-Feld, Spaltenwerte 2/3.
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  await page.getByRole('button', { name: 'Daten anschließen' }).click()
+  const strecke = page.getByRole('dialog', { name: 'Daten anschließen' })
+  await strecke.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name: 'Terminplaner' }).click()
+  await strecke.getByRole('button', { name: 'Schließen' }).click()
   await page.locator('ff-card .text').first().click()
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Wert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Wert dieser Spalte').fill('3')
+  await page.getByRole('button', { name: 'Daten anschließen' }).click()
+  await strecke.getByRole('group', { name: 'Einsortieren nach' })
+    .getByRole('button', { name: 'Zimmer', exact: true }).click()
+  for (const [spalte, wert] of [['In Arbeit', '2'], ['Fertig', '3']] as const) {
+    const gruppe = strecke.getByRole('group', { name: spalte, exact: true })
+    await gruppe.getByRole('button', { name: 'Anderen Wert eintragen' }).click()
+    await gruppe.getByLabel('Eigener Wert').fill(wert)
+    await gruppe.getByRole('button', { name: 'Übernehmen' }).click()
+  }
+  await strecke.getByRole('button', { name: 'Schließen' }).click()
 
   // Ketten an beiden Kanban-Ereignissen anlegen.
   await page.getByRole('button', { name: 'Steuerung' }).click()

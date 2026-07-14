@@ -77,9 +77,12 @@ export class KanbanSpalteBlock extends BasicBlock {
     auffang: 'nein',
   }
 
-  // Inspector: die Bedeutung (-> Farbwelt der Spalte) + der Datenwert der
-  // Spalte (nur sichtbar mit Datenquelle in Reichweite). Der Titel läuft
-  // über Inline-Edit direkt am Spaltenkopf.
+  // Inspector: nur noch die Bedeutung (-> Farbwelt der Spalte). Der Titel
+  // läuft über Inline-Edit direkt am Spaltenkopf; Werte-Liste + Auffang
+  // werden seit B3 in der Bindungsstrecke am BOARD gepflegt — ihre
+  // Beschreibungen bleiben hier die EINE Property-Wahrheit (Wortlaut für
+  // die Strecke, exclusiveAmongSiblings für Store + Preflight), sind aber
+  // hiddenInInspector (die B1/B2-Brücken-Controls sind ABGELÖST).
   static override readonly customProperties: PropertyDescription[] = [
     statusVariantProperty(
       'variant',
@@ -89,24 +92,19 @@ export class KanbanSpalteBlock extends BasicBlock {
       attributeName: 'statusValues',
       // Wortlaut-Runde V1 (2026-07-13, Nutzer): das ist das `zimmer:`-Feld
       // seiner Referenzmaske — Titel (sichtbar) und Wert (Technik) getrennt.
-      // B1-Brücke: das Textfeld pflegt den ERSTEN Listenwert; die volle
-      // Werte-Liste per Klick-Auswahl kommt mit der Strecke (B3), dann
-      // fliegt dieses Inspector-Feld raus.
-      name: 'Wert dieser Spalte',
-      description: 'Einträge, bei denen dieser Wert im Sortier-Feld steht, landen hier; beim Ablegen einer Karte wird er zurückgeschrieben. Leer = der Spaltentitel zählt als Wert. Passt ein Eintrag nirgends, landet er in der ersten Spalte.',
+      name: 'Werte dieser Spalte',
+      description: 'Einträge, bei denen einer dieser Werte im Sortier-Feld steht, landen hier; beim Ablegen einer Karte wird der erste Wert zurückgeschrieben. Ohne eigene Werte zählt der Spaltentitel.',
       isArray: true,
       maxLength: 60,
       kind: 'text',
       requiresDataSource: true,
+      hiddenInInspector: true,
     },
-    // B2-Bruecke wie das Wert-Feld darueber: die sichtbare Auffang-Wahl an
-    // EINEM Ort kommt mit der Strecke (B3); bis dahin steht das Kennzeichen
-    // hier im Inspector der Spalte.
     jaNeinProperty(
       'auffang',
       'Auffangspalte',
       'Einträge, die in keine Spalte passen, landen hier. Ohne Auffangspalte zeigt die Maske sie in einer eigenen Spalte "Nicht zugeordnet". Höchstens eine Spalte je Board.',
-      { requiresDataSource: true, exclusiveAmongSiblings: true },
+      { requiresDataSource: true, exclusiveAmongSiblings: true, hiddenInInspector: true },
     ),
   ]
 

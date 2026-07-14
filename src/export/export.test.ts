@@ -100,5 +100,8 @@ describe('Runtime-Bündel', () => {
     // wieder die abgeschaffte stille "erste Spalte"-Regel.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — Auffang-Kennzeichen (B2) fehlt').toContain('auffang')
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" (B2) fehlt').toContain('data-ff-nicht-zugeordnet')
+    // B3 (V2): das Board deklariert seine Bindungsstrecke in der Registry
+    // (bindingRoute) — ein Bündel ohne das Konzept stammt von vor B3.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — bindingRoute (B3) fehlt').toContain('bindingRoute')
   })
 })

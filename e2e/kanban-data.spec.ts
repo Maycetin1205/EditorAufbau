@@ -9,7 +9,7 @@
 // die Maske mit gestelltem SEDATA laden und das Ergebnis prüfen.
 
 import { readFile } from 'node:fs/promises'
-import { test, expect, type Download, type Page } from '@playwright/test'
+import { test, expect, type Download, type Locator, type Page } from '@playwright/test'
 
 async function freshEditor(page: Page) {
   await page.goto('/')
@@ -31,10 +31,34 @@ async function selectBoard(page: Page) {
   await expect(page.getByText('kanban ·')).toBeVisible() // Inspector-Kopf
 }
 
+// B3: die Bindung läuft über die geführte Strecke am Board (EIN Ort) —
+// Knopf „Daten anschließen…" in der Inspector-Sektion "Daten" öffnet sie.
+async function openStrecke(page: Page) {
+  await page.getByRole('button', { name: 'Daten anschließen' }).click()
+  return page.getByRole('dialog', { name: 'Daten anschließen' })
+}
+
+async function closeStrecke(page: Page) {
+  await page.getByRole('dialog', { name: 'Daten anschließen' })
+    .getByRole('button', { name: 'Schließen' }).click()
+  await expect(page.getByRole('dialog', { name: 'Daten anschließen' })).toHaveCount(0)
+}
+
+// Eigenen Spaltenwert über die beschriftete Ausnahme-Eingabe der Strecke
+// eintragen (Werte entstehen NIE in einem offenen Freitextfeld).
+async function spaltenWert(strecke: Locator, spalte: string, wert: string) {
+  const gruppe = strecke.getByRole('group', { name: spalte, exact: true })
+  await gruppe.getByRole('button', { name: 'Anderen Wert eintragen' }).click()
+  await gruppe.getByLabel('Eigener Wert').fill(wert)
+  await gruppe.getByRole('button', { name: 'Übernehmen' }).click()
+}
+
 async function attachTerminplaner(page: Page) {
   await selectBoard(page)
-  await page.getByLabel('Datenquelle').click()
-  await page.getByRole('option', { name: 'Terminplaner' }).click()
+  const strecke = await openStrecke(page)
+  await strecke.getByRole('group', { name: 'Datenquelle' })
+    .getByRole('button', { name: 'Terminplaner' }).click()
+  await closeStrecke(page)
 }
 
 // Toolbar-Export anstoßen und den HTML-Inhalt einsammeln (Dateinamen nach
@@ -77,19 +101,21 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   await picker.getByRole('button', { name: /Tiername/ }).click()
   await expect(page.locator('ff-card .heading').first()).toHaveText('Tiername')
 
-  // Spalten-Feld am Board wählen: Klarname "Zimmer", nie der Feldcode.
+  // Spalten-Feld in der Strecke wählen: Klarname "Zimmer" — die ganze
+  // Strecke zeigt NIE einen Feldcode.
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await expect(page.getByRole('option', { name: '253_30' })).toHaveCount(0)
-  await page.getByRole('option', { name: 'Zimmer' }).click()
+  const strecke = await openStrecke(page)
+  await expect(strecke.getByText('253_30')).toHaveCount(0)
+  await strecke.getByRole('group', { name: 'Einsortieren nach' })
+    .getByRole('button', { name: 'Zimmer', exact: true }).click()
 
-  // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt ohne eigenen Wert
-  // (B1-Standard: ihr Titel "Offen" zaehlt — den trifft keine Zeile; seit
-  // B2 ist sie damit KEIN stiller Auffang mehr).
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Wert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Wert dieser Spalte').fill('3')
+  // Datenwerte der Spalten 2 + 3 setzen (Ausnahme-Eingabe der Strecke);
+  // Spalte 1 bleibt ohne eigenen Wert (B1-Standard: ihr Titel "Offen"
+  // zaehlt — den trifft keine Zeile; seit B2 ist sie damit KEIN stiller
+  // Auffang mehr).
+  await spaltenWert(strecke, 'In Arbeit', '2')
+  await spaltenWert(strecke, 'Fertig', '3')
+  await closeStrecke(page)
 
   const html = await exportMaskHtml(page)
   // Beide Technikwerte reisen als Attribute in der Maske (Kap. 5.2 + 5.3);
@@ -159,14 +185,14 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
 
-  // Spalten-Feld "Zimmer"; Spalte 2 -> '2', Spalte 3 -> '3', Spalte 1 = Auffang.
+  // Spalten-Feld "Zimmer"; Spalte 2 -> '2', Spalte 3 -> '3' (Strecke).
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Wert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Wert dieser Spalte').fill('3')
+  const strecke = await openStrecke(page)
+  await strecke.getByRole('group', { name: 'Einsortieren nach' })
+    .getByRole('button', { name: 'Zimmer', exact: true }).click()
+  await spaltenWert(strecke, 'In Arbeit', '2')
+  await spaltenWert(strecke, 'Fertig', '3')
+  await closeStrecke(page)
 
   const html = await exportMaskHtml(page)
   const mask = await context.newPage()
@@ -237,12 +263,12 @@ async function buildBoundBoard(page: Page) {
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Wert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Wert dieser Spalte').fill('3')
+  const strecke = await openStrecke(page)
+  await strecke.getByRole('group', { name: 'Einsortieren nach' })
+    .getByRole('button', { name: 'Zimmer', exact: true }).click()
+  await spaltenWert(strecke, 'In Arbeit', '2')
+  await spaltenWert(strecke, 'Fertig', '3')
+  await closeStrecke(page)
 }
 
 test('B2: "Nicht zugeordnet" ist kein Ablage-Ziel — Herausziehen schreibt zurück und räumt die Spalte ab', async ({ page, context }) => {
@@ -288,13 +314,17 @@ test('B2: gewählte Auffangspalte fängt Zeilen ohne Treffer; Setzen räumt das 
   await buildBoundBoard(page)
 
   // Erst "In Arbeit" als Auffang waehlen, dann "Offen" — das Setzen raeumt
-  // das Kennzeichen der anderen Spalte ab (hoechstens eine je Board).
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Auffangspalte').click()
-  await page.getByRole('option', { name: 'Ja' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(0).click()
-  await page.getByLabel('Auffangspalte').click()
-  await page.getByRole('option', { name: 'Ja' }).click()
+  // das Kennzeichen der anderen Spalte ab (hoechstens eine je Board). Seit
+  // B3 passiert die Auffang-Wahl in der Strecke (Chips mit aria-pressed).
+  await selectBoard(page)
+  const strecke = await openStrecke(page)
+  const auffang = strecke.getByRole('group', { name: 'Auffangspalte' })
+  await auffang.getByRole('button', { name: 'In Arbeit' }).click()
+  await expect(auffang.getByRole('button', { name: 'In Arbeit' })).toHaveAttribute('aria-pressed', 'true')
+  await auffang.getByRole('button', { name: 'Offen' }).click()
+  await expect(auffang.getByRole('button', { name: 'Offen' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(auffang.getByRole('button', { name: 'In Arbeit' })).toHaveAttribute('aria-pressed', 'false')
+  await closeStrecke(page)
 
   const html = await exportMaskHtml(page)
   // Genau EIN auffang="ja" in der Maske — auf "Offen"; "In Arbeit" wurde
@@ -365,12 +395,12 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await selectBoard(page)
-  await page.getByLabel('Einsortieren nach').click()
-  await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Wert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Wert dieser Spalte').fill('3')
+  const strecke = await openStrecke(page)
+  await strecke.getByRole('group', { name: 'Einsortieren nach' })
+    .getByRole('button', { name: 'Zimmer', exact: true }).click()
+  await spaltenWert(strecke, 'In Arbeit', '2')
+  await spaltenWert(strecke, 'Fertig', '3')
+  await closeStrecke(page)
 
   const html = await exportMaskHtml(page)
 

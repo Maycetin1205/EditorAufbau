@@ -34,6 +34,27 @@ export interface BindableSpot {
   label: string
 }
 
+// Gefuehrte Bindungsstrecke (V2/B3): der Block deklariert, WO seine
+// Daten-Bindung lebt — die Strecke (EIN Ort am selektierten Board), der
+// Kurzzustand im Inspector und spaeter der Board-Hinweis (B5) + die
+// Export-Preflight (B6) lesen AUSSCHLIESSLICH diese Beschreibung, kein
+// `if type===`. `fieldProp` = Einsortieren-Feld am Block selbst (kind
+// 'field' in den customProperties — die Strecke uebernimmt deren
+// Wortlaut); `column` beschreibt die Spalten-Kinder: Block-Typ,
+// Titel-Prop (sichtbar), Werte-LISTEN-Prop (B1) und Auffang-Kennzeichen
+// (B2, 'ja'/'nein', exclusiveAmongSiblings).
+export interface BindingRouteColumn {
+  type: string
+  titleProp: string
+  valuesProp: string
+  catchProp: string
+}
+
+export interface BindingRoute {
+  fieldProp: string
+  column: BindingRouteColumn
+}
+
 // Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff Kap. 8): was bei
 // diesem Baustein passieren kann. `name` = Klarname für den Bediener
 // („Karte angeklickt"), `key` = Technikwert — das Vokabular des alten
@@ -101,6 +122,11 @@ export interface BlockDefinition {
   acceptsDataSource?: boolean
   // Bindbare Stellen des Blocks (Kap. 5.2) — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
+  // Gefuehrte Bindungsstrecke (V2/B3) — siehe BindingRoute. Gesetzt =
+  // die Inspector-Sektion "Daten" zeigt den Anschluss-Knopf + Kurzzustand
+  // statt des Quellen-Selects; die Einzel-Controls der Route-Props sind
+  // hiddenInInspector.
+  bindingRoute?: BindingRoute
   // Ereignisse des Blocks (Z1) — siehe BlockEventSpec. undefined = der
   // Baustein löst keine Ereignisse aus (erscheint nicht in der Zentrale).
   blockEvents?: readonly BlockEventSpec[]

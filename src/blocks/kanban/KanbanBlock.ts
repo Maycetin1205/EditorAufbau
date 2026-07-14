@@ -64,6 +64,19 @@ export class KanbanBlock extends BasicBlock {
     width: 'fill', height: 'auto' as const,
     source: '', statusField: '', putRelation: 'standard-put',
   }
+  // Geführte Bindungsstrecke (V2/B3): EIN Ort am selektierten Board pflegt
+  // Quelle -> Einsortieren-Feld -> Spalten (Werte-Klick-Auswahl + Auffang).
+  // Strecke, Kurzzustand, B5-Hinweis und B6-Preflight lesen NUR diese
+  // Beschreibung (kein `if type===`).
+  static readonly bindingRoute = {
+    fieldProp: 'statusField',
+    column: {
+      type: SPALTE,
+      titleProp: 'heading',
+      valuesProp: 'statusValues',
+      catchProp: 'auffang',
+    },
+  }
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'statusField',
@@ -74,6 +87,9 @@ export class KanbanBlock extends BasicBlock {
       isArray: false,
       maxLength: 0,
       kind: 'field',
+      // B3: gepflegt in der Bindungsstrecke (Schritt 2) — kein eigenes
+      // Inspector-Control mehr; die Strecke übernimmt name/description.
+      hiddenInInspector: true,
     },
     {
       attributeName: 'putRelation',
