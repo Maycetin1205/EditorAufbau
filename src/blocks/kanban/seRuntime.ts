@@ -437,7 +437,7 @@ function hydrate(board: HTMLElement): void {
 // HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> TITEL der Zielspalte
 // (heading = Datenwert) über die mitgelieferte Relation-Vorlage ins Spalten-
 // Feld schreiben, Zeile im Speicher aktualisieren, neu hydrieren (Muster alter
-// Editor, CLAUDE.md 5.3b (b)). Läuft NUR im Export: verdrahtet wird in
+// Editor, 5.3b (b)). Läuft NUR im Export: verdrahtet wird in
 // connectBoard, und Editor-Boards (data-ff-editor) melden sich dort nie an —
 // die Canvas-Drag-Logik des Editors bleibt unberührt.
 

@@ -1,7 +1,7 @@
 // exportMask
 // Kap. 3 Mini-Export: deterministischer Baum-Durchlauf → SoftEngine-Maske.
 //
-// Export-Grundsätze (CLAUDE.md):
+// Export-Grundsätze:
 //  (a) HTML + SEvariablen-JSON entstehen aus DERSELBEN Quelle (Baum +
 //      Datenquellen-Modell). Solange es keine Datenquellen gibt (Kap. 5),
 //      ist die JSON das leere, gültige Gerüst.

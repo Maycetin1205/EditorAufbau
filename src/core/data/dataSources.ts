@@ -1,6 +1,6 @@
 // dataSources
-// Kap. 5.1: Datenquellen sind eigenständige, benannte VORLAGEN (CLAUDE.md
-// Kap. 5): einmal definiert, in jeder Maske wiederverwendbar. Aus ihnen wird
+// Kap. 5.1: Datenquellen sind eigenständige, benannte VORLAGEN
+// (Kap. 5): einmal definiert, in jeder Maske wiederverwendbar. Aus ihnen wird
 // die SEvariablen-JSON des Exports erzeugt (SEFILELOOP) — nie von Hand.
 //
 // VERBINDLICHE QUELLE (korrigiert 2026-07-07): die FELD-Map der echten,
