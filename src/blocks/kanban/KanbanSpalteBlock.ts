@@ -55,33 +55,25 @@ export class KanbanSpalteBlock extends BasicBlock {
   static readonly allowedParentTypes = ['kanban']
   static readonly lockedWidth: FlowWidth = 'fill'
   static readonly resizableWidth = false
-  // statusValue (Kap. 5.3): Datenwert dieser Spalte (Technikwert) — Zeilen,
-  // deren Spalten-Feld (statusField am Board) genau diesen Wert hat, landen
-  // im Export hier. Der sichtbare Titel bleibt davon unabhängig (Technikwert
-  // ≠ Anzeigename). Default '' -> überlebt Persistenz, reist als Attribut.
+  // Nutzer-Entscheidung 2026-07-14: der TITEL (heading) IST der Datenwert
+  // der Spalte — das frühere separate statusValue ist abgeschafft (zweimal
+  // dasselbe eintippen war Unsinn). Einsortiert wird durch Vergleich des
+  // Spalten-Felds (statusField am Board) mit dem Titel (getrimmt, Groß/
+  // klein egal); Ziehen schreibt den Titel der Zielspalte zurück. Bewusste
+  // Konsequenz: der Titel muss exakt dem SoftEngine-Wert entsprechen —
+  // Umbenennen per Doppelklick ändert damit auch, was geschrieben wird.
   static readonly defaultProps = {
     variant: 'info',
     heading: 'Neue Spalte',
-    statusValue: '',
   }
 
-  // Inspector: die Bedeutung (-> Farbwelt der Spalte) + der Datenwert der
-  // Spalte (nur sichtbar mit Datenquelle in Reichweite). Der Titel läuft
-  // über Inline-Edit direkt am Spaltenkopf.
+  // Inspector: nur die Bedeutung (-> Farbwelt der Spalte). Der Titel
+  // (= Datenwert) läuft über Inline-Edit direkt am Spaltenkopf.
   static override readonly customProperties: PropertyDescription[] = [
     statusVariantProperty(
       'variant',
       'Bedeutung der Spalte — bestimmt ihre Farbwelt (Kopf, Fläche, Rahmen).',
     ),
-    {
-      attributeName: 'statusValue',
-      name: 'Datenwert dieser Spalte',
-      description: 'Zeilen, deren Spalten-Feld genau diesen Wert hat, landen hier. Kein Treffer irgendwo → erste Spalte. Der sichtbare Titel bleibt unabhängig davon.',
-      isArray: false,
-      maxLength: 60,
-      kind: 'text',
-      requiresDataSource: true,
-    },
   ]
 
   // Strukturelle Größen (padding, font-weight, 9px-Punkt, 22px-Zähler) als

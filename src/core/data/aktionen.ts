@@ -34,8 +34,10 @@ export interface StepTypeSpec {
   name: string
 }
 
+// Klarname + SE-Fachbegriff zusammen (Nutzer-Wunsch 2026-07-14, dasselbe
+// Muster wie die Relations-Verben „Lesen (GET)" in RelationForm).
 export const STEP_TYPES: readonly StepTypeSpec[] = [
-  { key: 'START_TOOL', name: 'Werkzeug starten' },
+  { key: 'START_TOOL', name: 'Werkzeug starten (START_TOOL)' },
 ]
 
 export function stepTypeName(typeKey: string): string {
@@ -197,7 +199,8 @@ export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep
 // null. Das Typ-Wissen bleibt hier im Modell; die Preflight bleibt generisch.
 export function stepProblem(step: Pick<ActionStep, 'type' | 'toolNr'>): string | null {
   if (step.type === 'START_TOOL' && step.toolNr.trim() === '') {
-    return 'Schritt "Werkzeug starten" hat keine Werkzeug-Nummer.'
+    // Klarname aus STEP_TYPES — Meldung und Anzeige laufen nie auseinander.
+    return `Schritt "${stepTypeName(step.type)}" hat keine Werkzeug-Nummer.`
   }
   return null
 }
