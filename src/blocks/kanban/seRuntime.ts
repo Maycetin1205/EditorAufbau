@@ -4,7 +4,8 @@
 // Karte des Boards als Vorlage, gebundene Stellen aus Kap. 5.2 zeigen die
 // Zeilenwerte), und der Wert des Spalten-Felds (statusField am Board)
 // bestimmt die Spalte: exakter Vergleich (getrimmt, Gross/klein egal) mit dem
-// Datenwert der Spalte (statusValue); kein Treffer -> erste Spalte (Auffang,
+// TITEL der Spalte (heading — Nutzer-Entscheidung 2026-07-14: Titel = Wert,
+// kein separates statusValue mehr); kein Treffer -> erste Spalte (Auffang,
 // wie die Referenzmaske dashboard/praxis-kanban.html).
 //
 // Laeuft NUR im Export: der BlockHost markiert Editor-Elemente mit
@@ -272,8 +273,8 @@ export function messagePayload(eventData: unknown): unknown {
 }
 
 // Ziel-Spalte einer Zeile: erster exakter Treffer (getrimmt, Gross/klein
-// egal); leere Spalten-Datenwerte treffen nie; kein Treffer -> Spalte 0
-// (Auffang, wie SPALTEN[0] der Referenzmaske).
+// egal) gegen die Spalten-Titel; leere Titel treffen nie; kein Treffer ->
+// Spalte 0 (Auffang, wie SPALTEN[0] der Referenzmaske).
 export function columnIndexFor(value: string, columnValues: readonly string[]): number {
   const v = value.trim().toLowerCase()
   if (v !== '') {
@@ -375,7 +376,8 @@ function hydrate(board: HTMLElement): void {
   if (!template) return // keine Musterkarte, nirgends: nichts tun
 
   const rows = rowsFor(seGlobal().SEDATA, source.name, source.tableId)
-  const columnValues = columns.map((c) => c.getAttribute('statusvalue') ?? '')
+  // Titel = Datenwert (2026-07-14): heading reist als Export-Attribut mit.
+  const columnValues = columns.map((c) => c.getAttribute('heading') ?? '')
   const spots = spotsForTag(template.tagName)
 
   // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
@@ -404,9 +406,9 @@ function hydrate(board: HTMLElement): void {
 
 // ---------- Karten-Drag im Export (Schreibweg 5.3b) ----------
 //
-// HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> Wert der Zielspalte
-// (statusValue) über die mitgelieferte Relation-Vorlage ins Spalten-Feld
-// schreiben, Zeile im Speicher aktualisieren, neu hydrieren (Muster alter
+// HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> TITEL der Zielspalte
+// (heading = Datenwert) über die mitgelieferte Relation-Vorlage ins Spalten-
+// Feld schreiben, Zeile im Speicher aktualisieren, neu hydrieren (Muster alter
 // Editor, CLAUDE.md 5.3b (b)). Läuft NUR im Export: verdrahtet wird in
 // connectBoard, und Editor-Boards (data-ff-editor) melden sich dort nie an —
 // die Canvas-Drag-Logik des Editors bleibt unberührt.
@@ -469,17 +471,18 @@ function sendPut(
   })
 }
 
-// Drop einer Daten-Karte auf eine Spalte. Spalte ohne Datenwert ist kein
-// Schreibziel; gleicher Wert = kein Zug (derselbe Vergleich wie beim
-// Verteilen: getrimmt, Groß/klein egal). Ohne konfigurierten Schreibweg
-// (keine Vorlage gewählt) bewegt sich NICHTS — ein rein lokaler Zug wäre
-// eine Täuschung (er verschwände beim nächsten ReloadData). WYSIWYG.
+// Drop einer Daten-Karte auf eine Spalte. Geschrieben wird der Spalten-TITEL
+// (Titel = Datenwert, 2026-07-14); Spalte ohne Titel ist kein Schreibziel;
+// gleicher Wert = kein Zug (derselbe Vergleich wie beim Verteilen: getrimmt,
+// Groß/klein egal). Ohne konfigurierten Schreibweg (keine Vorlage gewählt)
+// bewegt sich NICHTS — ein rein lokaler Zug wäre eine Täuschung (er
+// verschwände beim nächsten ReloadData). WYSIWYG.
 function handleDrop(board: HTMLElement, column: HTMLElement): void {
   if (!dragged || dragged.board !== board) return
   const data = cardData.get(dragged.card)
   if (!data) return
   const statusField = board.getAttribute('statusfield') ?? ''
-  const targetValue = column.getAttribute('statusvalue') ?? ''
+  const targetValue = column.getAttribute('heading') ?? ''
   if (statusField === '' || targetValue.trim() === '') return
   const current = getField(data.row, statusField)
   if (current.trim().toLowerCase() === targetValue.trim().toLowerCase()) return

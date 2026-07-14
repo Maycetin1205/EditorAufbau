@@ -31,8 +31,9 @@ CLAUDE.md-Roadmap. Aktuell (2026-07-11) aktiv:
 - Sidebar = nur die Baustein-Palette; Canvas (Flow + Drag&Drop);
   Inspector (Inhalt/Layout/Daten)
 - Kommandozentrale (Toolbar „Steuerung", Z1/Z2): Aktions-Ketten-Editor je
-  Baustein-Ereignis (StepForm; Z2: Schritt-Typ „Werkzeug starten") +
-  Datenquellen- + Relationen-Bibliothek (aus der Sidebar umgezogen)
+  Baustein-Ereignis (StepForm; Z2: Schritt-Typ „Werkzeug starten
+  (START_TOOL)") + Datenquellen- + Relationen-Bibliothek (aus der
+  Sidebar umgezogen)
 - Stores: Editor (Undo/Redo/Transaktionen), DataSourceStore, RelationStore
 - Export nach SoftEngine (index.basis.source.html +
   index.basis.SEvariablen.json) mit Validator + Preflight; SE-Laufzeit des
@@ -126,7 +127,9 @@ Daten-Controls im Inspector (Kap. 5.3, PropertyDescription statt Registry):
   (gespeicherte Werte bleiben erhalten und leben mit der Quelle wieder auf).
 - Beide erscheinen in der Inspector-Sektion „Daten" (nicht in der
   allgemeinen Gruppe). Das Kanban nutzt sie für `statusField` (Board:
-  „Spalten aus Feld") und `statusValue` (Spalte: „Datenwert dieser Spalte").
+  „Spalten aus Feld") und `putRelation` (Board: „Schreiben über").
+  Die Spalte hat KEIN Wert-Control: ihr TITEL (`heading`, Inline-Edit)
+  IST der Datenwert (Nutzer-Entscheidung 2026-07-14, Titel = Wert).
 
 Datenverhalten der exportierten Maske (Kap. 5.3): liegt beim Block, nicht
 im Export-Generator — `src/blocks/kanban/seRuntime.ts` ist Teil des
@@ -135,7 +138,8 @@ mit `data-ff-editor` (Editor) werden abgewiesen, darum existiert die
 SoftEngine-Mechanik im Editor nicht. Zeilen kommen aus SEDATA (Formen wie
 in `dashboard/praxis-kanban.html`), jede Zeile wird ein Klon der ersten
 gestalteten Karte, gebundene Stellen (`bindableSpots` aus der Registry)
-werden mit Zeilenwerten gefüllt, `statusValue` der Spalten verteilt.
+werden mit Zeilenwerten gefüllt, der Spalten-TITEL (`heading`) verteilt
+(Titel = Wert, 2026-07-14; Ziehen schreibt den Titel der Zielspalte).
 
 ## Datenfluss
 

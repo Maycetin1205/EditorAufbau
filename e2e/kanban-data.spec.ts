@@ -37,6 +37,18 @@ async function attachTerminplaner(page: Page) {
   await page.getByRole('option', { name: 'Terminplaner' }).click()
 }
 
+// Spaltentitel per Doppelklick setzen — der TITEL ist seit 2026-07-14 der
+// Datenwert der Spalte (Titel = Wert; das Inspector-Feld "Datenwert dieser
+// Spalte" ist abgeschafft). Muster: Titel-Edit in kanban.spec.ts.
+async function renameColumn(page: Page, nth: number, title: string) {
+  await page.locator('ff-kanban-spalte .head').nth(nth).click()
+  await page.locator('ff-kanban-spalte .title').nth(nth).dblclick()
+  await page.keyboard.press('ControlOrMeta+a')
+  await page.keyboard.type(title)
+  await page.keyboard.press('Enter')
+  await expect(page.locator('ff-kanban-spalte .title').nth(nth)).toHaveText(title)
+}
+
 // Toolbar-Export anstoßen und den HTML-Inhalt einsammeln (Dateinamen nach
 // SE-Konvention: index.basis.source.html + index.basis.SEvariablen.json).
 async function exportMaskHtml(page: Page): Promise<string> {
@@ -83,18 +95,19 @@ test('Export: Zeilen werden Karten, das Spalten-Feld verteilt sie, kein Treffer 
   await expect(page.getByRole('option', { name: '253_30' })).toHaveCount(0)
   await page.getByRole('option', { name: 'Zimmer' }).click()
 
-  // Datenwerte der Spalten 2 + 3 setzen; Spalte 1 bleibt leer = Auffang.
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  // Titel = Datenwert (2026-07-14): Spalten 2 + 3 heißen wie ihre Werte;
+  // Spalte 1 bleibt "Offen" (trifft keinen Zimmer-Wert) = Auffang.
+  await renameColumn(page, 1, '2')
+  await renameColumn(page, 2, '3')
 
   const html = await exportMaskHtml(page)
-  // Beide Technikwerte reisen als Attribute in der Maske (Kap. 5.2 + 5.3).
+  // Feldcode + Titel reisen als Attribute in der Maske (Kap. 5.2 + 5.3);
+  // ein separates statusvalue existiert NIRGENDS mehr (Titel = Wert).
   expect(html).toContain('statusfield="253_30"')
   expect(html).toContain('headingfield="78_30"')
-  expect(html).toContain('statusvalue="2"')
-  expect(html).toContain('statusvalue="3"')
+  expect(html).toContain('heading="2"')
+  expect(html).toContain('heading="3"')
+  expect(html.toLowerCase()).not.toContain('statusvalue')
 
   // Maske laden; SEDATA kommt NACH dem Boot (wie in SoftEngine — die Maske
   // wartet darauf, Poll wie die Referenzmaske).
@@ -149,14 +162,13 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
 
-  // Spalten-Feld "Zimmer"; Spalte 2 -> '2', Spalte 3 -> '3', Spalte 1 = Auffang.
+  // Spalten-Feld "Zimmer"; Titel = Wert: Spalte 2 -> '2', Spalte 3 -> '3',
+  // Spalte 1 bleibt "Offen" = Auffang.
   await selectBoard(page)
   await page.getByLabel('Spalten aus Feld').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await renameColumn(page, 1, '2')
+  await renameColumn(page, 2, '3')
 
   const html = await exportMaskHtml(page)
   const mask = await context.newPage()
@@ -184,13 +196,20 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
     ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
   ])
 
-  // Kein Schreibziel = kein PUT: Drop auf die eigene Spalte (gleicher Wert)
-  // und auf die Auffang-Spalte (leerer Datenwert) veraendern nichts.
+  // Gleicher Wert = kein PUT: Drop auf die eigene Spalte veraendert nichts.
   await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(1))
-  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(0))
   await expect(colCards(1)).toHaveText(['Luna'])
-  await expect(colCards(0)).toHaveText([])
   expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
+
+  // Titel = Wert gilt fuer JEDE Spalte (2026-07-14): Drop auf "Offen"
+  // schreibt woertlich 'Offen' (Luna, Satznummer 9) — die einstige stille
+  // No-Write-Spalte (leeres statusvalue) existiert nicht mehr.
+  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(0))
+  await expect(colCards(0)).toHaveText(['Luna'])
+  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([
+    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
+    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '9', 'ID0001', 'Offen'] }],
+  ])
 })
 
 // SEDATA in der ECHTEN SoftEngine-Form (belegt durch den SE-Echttest des
@@ -231,18 +250,16 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await insertBoard(page)
   await attachTerminplaner(page)
 
-  // Titel an "Tiername" binden; Spalten-Feld "Zimmer"; Spalte 2 -> '2',
-  // Spalte 3 -> '3' (dieselbe Strecke wie oben).
+  // Titel an "Tiername" binden; Spalten-Feld "Zimmer"; Titel = Wert:
+  // Spalte 2 -> '2', Spalte 3 -> '3' (dieselbe Strecke wie oben).
   await page.locator('ff-card .text').first().click()
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await selectBoard(page)
   await page.getByLabel('Spalten aus Feld').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await renameColumn(page, 1, '2')
+  await renameColumn(page, 2, '3')
 
   const html = await exportMaskHtml(page)
 

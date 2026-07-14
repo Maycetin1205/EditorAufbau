@@ -1,6 +1,6 @@
 # Aufbau-Editor — Hier weitermachen
 
-> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-13).** CLAUDE.md ist
+> **Synchronisierte Kopie von CLAUDE.md (Stand 2026-07-14).** CLAUDE.md ist
 > das Original — jede Änderung immer in BEIDE Dateien ziehen.
 
 > **Für KI-Chats:** Diese Datei zuerst lesen. Sie ist die verbindliche Wahrheit
@@ -8,17 +8,18 @@
 > Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
 > der Roadmap nehmen.
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-13): SE-Echttest Z2 durch den
-> Nutzer.** Z2 (Aktionen anlegen) ist GEBAUT + verifiziert (202 Unit +
-> 30 E2E, live belegt) — Echttest: Kette „Werkzeug starten" an „Karte
-> angeklickt" mit einer ECHTEN Werkzeug-Nummer der Installation anlegen
-> (Steuerung → Aktionen; ⚠ Nummern sind je Installation individuell,
-> 3003 ist in der Empfang-Referenz das REFRESH-Werkzeug), exportieren,
-> in SoftEngine Karte anklicken. Danach: Z3 („Relation ausführen" mit
-> Antwort-Warteschlange + Zwischenspeicher-Ausführung, dann „Wert
-> setzen"/„Daten neu laden"), Z4, dann K-Rest (K1–K5b, K6–K8), dann
-> Stabilisierungs-Rest. Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer
-> in SoftEngine bestätigt (2026-07-11).
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-14): Z3 „Relation ausführen"**
+> (Antwort-Warteschlange nach seGetNewIndex-Muster + Zwischenspeicher-
+> Ausführung, danach „Wert setzen"/„Daten neu laden"). **Z2 ist im
+> SE-ECHTTEST BESTANDEN (2026-07-14):** Werkzeug startet bei „Karte
+> angeklickt" UND bei Schaltflächen-Klick, vom Nutzer live bestätigt.
+> Danach: Z4, dann K-Rest (K1–K5b, K6–K8), dann Stabilisierungs-Rest.
+> Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer in SoftEngine
+> bestätigt (2026-07-11). ⚠ Beim „weiter"-Ritual Schritt 2: die zwei
+> Remote-Branches vom 2026-07-08 (`claude/editor-html-json-export-n0kski`,
+> `claude/architecture-extensibility-discussion-1a5p4s`) sind geprüfte
+> DUPLIKATE längst gemergter Arbeit (5.3b bzw. PARAMS-Notiz) — kein
+> Grund zu stoppen; der Nutzer darf sie löschen.
 
 ## Was der Editor ist (Nordstern)
 
@@ -956,7 +957,37 @@ den Export (Kap. 3).
       30 E2E grün (aktionen.spec neu: Formular-Validierung, alle
       Ketten-Operationen, Undo, Klick → `0,START_TOOL,3003,7`, Drop →
       erst PUT, dann `0,START_TOOL,4000,3`); live verifiziert mit
-      Screenshots (dashboard/z2-*.png).
+      Screenshots (dashboard/z2-*.png). **SE-ECHTTEST BESTANDEN
+      (2026-07-14):** Werkzeug startet bei „Karte angeklickt" UND bei
+      Schaltflächen-Klick — vom Nutzer in SoftEngine bestätigt.
+    - ✅ **Titel = Wert + START_TOOL-Benennung (2026-07-14,
+      Nutzer-Entscheidungen beim Z2-Echttest):** (a) **Der Spaltentitel
+      IST der Datenwert** — das separate `statusValue` („Datenwert dieser
+      Spalte") ist KOMPLETT abgeschafft (Modell, Inspector, Export-Attribut;
+      Altbestände verlieren den Wert beim Laden über normalizeProps).
+      Einsortieren vergleicht das Spalten-Feld mit den SpaltenTITELN
+      (getrimmt, Groß/klein egal), Ziehen schreibt den TITEL der Zielspalte
+      zurück; Umbenennen per Doppelklick ändert damit BEIDES. Bewusste,
+      vom Nutzer akzeptierte Konsequenz: der Titel muss exakt dem
+      SoftEngine-Wert entsprechen (kein „hübscher" Anzeigename mehr an
+      dieser Stelle — die Regel Technikwert ≠ Anzeigename ist hier auf
+      Nutzer-Entscheidung ausgesetzt); JEDE Spalte ist jetzt Schreibziel
+      (die stille No-Write-Spalte mit leerem Wert entfällt — Drop auf die
+      Auffangspalte „Offen" schreibt wörtlich `Offen`). (b) Schritt-Typ
+      heißt **„Werkzeug starten (START_TOOL)"** — Klarname + SE-Fachbegriff
+      (Muster „Lesen (GET)" der Relationen); stepProblem-Meldung speist
+      sich aus stepTypeName (eine Quelle). Tests zur neuen Spec umgebaut
+      (kanban.export: `statusvalue` taucht NIRGENDS mehr auf; kanban-data:
+      Auffang-Drop schreibt jetzt; preflight: Kürzel in der Meldung ist
+      erwünscht, onCardClick bleibt verboten; E2E-Helfer renameColumn =
+      Titel-Doppelklick statt Inspector-Feld). 202 Unit + 30 E2E grün;
+      live belegt (Screenshots: Inspector ohne Datenwert-Feld, hydrierte
+      Maske sortiert 4 Zeilen nach Titeln 1/2/1). K2 schrumpft damit auf
+      „Auffangspalte sichtbar wählen" (Werte-Anklicken entfällt — es gibt
+      kein Wert-Feld mehr); K3 bleibt sinnvoll (Spalten aus gefundenen
+      Werten ERZEUGEN = Titel setzen). Beifang-Befund des Echttests: zwei
+      Kanbans in der Maske (eines unsichtbar-leer) → Z4 „Sprung zur
+      Stelle" ist bestätigt nötig.
     - **Z3 „Relation ausführen":** Antwort-Warteschlange
       (seGetNewIndex-Muster) + Zwischenspeicher-Ausführung
       ({name}-Platzhalter in Folgeschritten), dann „Wert setzen" +
@@ -982,12 +1013,11 @@ den Export (Kap. 3).
   - **K1 Beispielzeilen an der Datenquelle** `[kritisch]`: Quelle trägt
     Beispiel-ZEILEN (kleine Tabelle, im Datenquellen-Formular pflegbar)
     statt nur einem Beispielwert je Feld. Fundament für K2–K4.
-  - **K2 Spaltenwert wählen + Auffangspalte:** „Datenwert dieser Spalte"
-    bietet die vorkommenden Werte aus den Beispielzeilen zum ANKLICKEN;
-    Sonderfall „Wert steht nicht in den Beispieldaten → selbst eintragen"
-    (bewusste Ausnahme, kein rohes Freitextfeld). Auffangspalte sichtbar
-    wählbar statt stillem „erste Spalte". Datenform so schneiden, dass K5b
-    (Werte-LISTE je Spalte) später ohne Umbau passt.
+  - **K2 Auffangspalte wählen (GESCHRUMPFT 2026-07-14):** Titel = Wert hat
+    das Wert-Feld abgeschafft — vom alten K2 bleibt nur: Auffangspalte
+    sichtbar wählbar statt stillem „erste Spalte". Datenform so schneiden,
+    dass K5b (Werte-LISTE je Spalte, dort MIT eigenen Anzeigenamen) später
+    ohne Umbau passt.
   - **K3 Spalten aus Werten erzeugen:** Spaltenfeld gewählt → Editor bietet
     an, Spalten aus den gefundenen Werten anzulegen (Titel frei änderbar,
     Technikwert unsichtbar dahinter).

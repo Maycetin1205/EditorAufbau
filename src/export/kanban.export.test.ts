@@ -137,14 +137,14 @@ describe('Kanban-Export (echte Bloecke)', () => {
   it('K0/Entscheidung A: Spalten teilen sich die Zeile IMMER gleichmaessig', () => {
     const { html } = exportMask(boardTree())
     // width fill, KEIN direction-Attribut; source="" = Datenquellen-Prop
-    // (Kap. 5.1) ohne angehaengte Quelle; statusfield=""/statusvalue="" =
-    // Daten-Props aus Kap. 5.3 ohne gesetzte Werte; putrelation = Default-
-    // Vorlage des Schreibwegs (Kap. 5.5).
+    // (Kap. 5.1) ohne angehaengte Quelle; statusfield="" = Daten-Prop aus
+    // Kap. 5.3 ohne gesetzten Wert; putrelation = Default-Vorlage des
+    // Schreibwegs (Kap. 5.5).
     expect(html).toContain('<ff-kanban source="" statusfield="" putrelation="standard-put" style="align-self:stretch">')
     // Spalten: festgelegtes Breitenverhalten (lockedWidth 'fill') ->
     // flex-basis 0 + min-width 0. KEINE Mindestbreite, KEIN width-Attribut,
     // keine feste Pixelbreite (260px-Mindestbreite ist ABGELEHNT).
-    expect(html).toContain('heading="Offen" statusvalue="" style="flex-grow:1;flex-basis:0;min-width:0"')
+    expect(html).toContain('heading="Offen" style="flex-grow:1;flex-basis:0;min-width:0"')
     expect(html).not.toContain('flex-basis:260px')
     expect(html).not.toContain('width:290px')
     expect(html).not.toContain('width:260px')
@@ -183,18 +183,21 @@ describe('Kanban-Export (echte Bloecke)', () => {
     expect(colCss).not.toContain('min-height: 150px')
   })
 
-  it('Spalten-Feld + Datenwerte der Spalten reisen als Attribute (Kap. 5.3)', () => {
+  it('Spalten-Feld reist als Attribut; der TITEL ist der Datenwert — statusvalue existiert nicht mehr (2026-07-14)', () => {
     const tree = boardTree()
     const board = tree[tree[ROOT_ID].childIds[0]]
     board.props.source = 'terminplaner'
     board.props.statusField = '253_30'
-    tree[board.childIds[0]].props.statusValue = '1'
-    tree[board.childIds[1]].props.statusValue = '2'
+    tree[board.childIds[0]].props.heading = 'Behandlungszimmer 1'
     const { html } = exportMask(tree)
     expect(html).toContain('<ff-kanban source="terminplaner" statusfield="253_30"')
-    expect(html).toContain('heading="Offen" statusvalue="1"')
-    expect(html).toContain('heading="In Arbeit" statusvalue="2"')
-    expect(html).toContain('heading="Fertig" statusvalue=""')
+    // Der Titel reist als heading-Attribut — die Laufzeit sortiert und
+    // schreibt GENAU dagegen (Titel = Wert, kein zweites Feld).
+    expect(html).toContain('heading="Behandlungszimmer 1"')
+    expect(html).toContain('heading="In Arbeit"')
+    // Das abgeschaffte statusValue taucht NIRGENDS mehr auf (weder als
+    // Attribut noch im Runtime-Buendel).
+    expect(html.toLowerCase()).not.toContain('statusvalue')
   })
 
   it('Spalten + Musterkarte tragen ihre Werte als Attribute (ASCII-escaped)', () => {

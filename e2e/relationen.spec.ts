@@ -34,9 +34,21 @@ async function closeSteuerung(page: Page) {
   await page.getByRole('dialog', { name: 'Steuerung' }).getByRole('button', { name: 'Schließen' }).click()
 }
 
+// Spaltentitel per Doppelklick setzen — der TITEL ist seit 2026-07-14 der
+// Datenwert der Spalte (Titel = Wert; das Inspector-Feld "Datenwert dieser
+// Spalte" ist abgeschafft). Muster: Titel-Edit in kanban.spec.ts.
+async function renameColumn(page: Page, nth: number, title: string) {
+  await page.locator('ff-kanban-spalte .head').nth(nth).click()
+  await page.locator('ff-kanban-spalte .title').nth(nth).dblclick()
+  await page.keyboard.press('ControlOrMeta+a')
+  await page.keyboard.type(title)
+  await page.keyboard.press('Enter')
+  await expect(page.locator('ff-kanban-spalte .title').nth(nth)).toHaveText(title)
+}
+
 // Board mit Terminplaner, Titel an Tiername gebunden, Spalten-Feld Zimmer,
-// Datenwerte 2/3 auf den Spalten 2/3 — die gemeinsame Basis der Schreibweg-
-// Prüfungen (wie in kanban-data.spec.ts).
+// Spalten 2/3 heißen '2'/'3' (Titel = Datenwert) — die gemeinsame Basis der
+// Schreibweg-Prüfungen (wie in kanban-data.spec.ts).
 async function boardMitDaten(page: Page) {
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(3)
@@ -56,10 +68,8 @@ async function boardMitDaten(page: Page) {
   await selectBoard()
   await page.getByLabel('Spalten aus Feld').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await renameColumn(page, 1, '2')
+  await renameColumn(page, 2, '3')
   return selectBoard
 }
 

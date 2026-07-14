@@ -25,6 +25,18 @@ async function exportMaskHtml(page: Page): Promise<string> {
   return await readFile(await maske.path(), 'utf8')
 }
 
+// Spaltentitel per Doppelklick setzen — der TITEL ist seit 2026-07-14 der
+// Datenwert der Spalte (Titel = Wert; das Inspector-Feld "Datenwert dieser
+// Spalte" ist abgeschafft). Muster: Titel-Edit in kanban.spec.ts.
+async function renameColumn(page: Page, nth: number, title: string) {
+  await page.locator('ff-kanban-spalte .head').nth(nth).click()
+  await page.locator('ff-kanban-spalte .title').nth(nth).dblclick()
+  await page.keyboard.press('ControlOrMeta+a')
+  await page.keyboard.type(title)
+  await page.keyboard.press('Enter')
+  await expect(page.locator('ff-kanban-spalte .title').nth(nth)).toHaveText(title)
+}
+
 // Schritt über das Formular anlegen (aus der Ereignis-Zeile heraus).
 async function addStep(page: Page, eventLi: ReturnType<Page['locator']>, nr: string, params: string[] = []) {
   await eventLi.getByRole('button', { name: 'Schritt', exact: true }).click()
@@ -58,8 +70,9 @@ test('Schaltfläche: Kette anlegen/umsortieren/duplizieren/löschen/bearbeiten +
   // Zweiter Schritt, dann die Ketten-Werkzeuge der Zentrale durchspielen.
   await addStep(page, eventLi, '2000')
   await expect(stepRows).toHaveCount(2)
-  await expect(stepRows.nth(0)).toContainText('Werkzeug starten — Nr. 1951')
-  await expect(stepRows.nth(1)).toContainText('Werkzeug starten — Nr. 2000')
+  // Klarname + SE-Fachbegriff zusammen (2026-07-14, Muster „Lesen (GET)").
+  await expect(stepRows.nth(0)).toContainText('Werkzeug starten (START_TOOL) — Nr. 1951')
+  await expect(stepRows.nth(1)).toContainText('Werkzeug starten (START_TOOL) — Nr. 2000')
 
   await eventLi.getByRole('button', { name: 'Schritt 2 nach oben' }).click()
   await expect(stepRows.nth(0)).toContainText('Nr. 2000')
@@ -128,8 +141,9 @@ test('Kanban: „Karte angeklickt" liefert {PINDEX}, „Karte verschoben" feuert
   await page.getByRole('button', { name: 'Kanban', exact: true }).click()
   await expect(page.locator('ff-kanban-spalte')).toHaveCount(3)
 
-  // Bindungs-Strecke wie kanban-data.spec: Quelle, Titel-Stelle, Spalten-Feld,
-  // Spaltenwerte 2/3 (Spalte 1 = Auffang).
+  // Bindungs-Strecke wie kanban-data.spec: Quelle, Titel-Stelle, Spalten-Feld;
+  // Titel = Datenwert (2026-07-14): Spalten 2/3 heißen '2'/'3', Spalte 1 =
+  // Auffang ("Offen").
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Datenquelle').click()
   await page.getByRole('option', { name: 'Terminplaner' }).click()
@@ -139,10 +153,8 @@ test('Kanban: „Karte angeklickt" liefert {PINDEX}, „Karte verschoben" feuert
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await page.getByLabel('Spalten aus Feld').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
-  await page.locator('ff-kanban-spalte .head').nth(1).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('2')
-  await page.locator('ff-kanban-spalte .head').nth(2).click()
-  await page.getByLabel('Datenwert dieser Spalte').fill('3')
+  await renameColumn(page, 1, '2')
+  await renameColumn(page, 2, '3')
 
   // Ketten an beiden Kanban-Ereignissen anlegen.
   await page.getByRole('button', { name: 'Steuerung' }).click()

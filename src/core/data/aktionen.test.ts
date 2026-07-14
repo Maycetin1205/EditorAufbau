@@ -21,19 +21,21 @@ function step(over: Partial<ActionStep> = {}): ActionStep {
 }
 
 describe('STEP_TYPES (Registry)', () => {
-  it('Z2 liefert genau „Werkzeug starten" (Technikwert START_TOOL, altes Editor-Vokabular)', () => {
-    expect(STEP_TYPES).toEqual([{ key: 'START_TOOL', name: 'Werkzeug starten' }])
+  it('Z2 liefert genau „Werkzeug starten (START_TOOL)" — Klarname + SE-Fachbegriff (Nutzer-Wunsch 2026-07-14, Muster „Lesen (GET)")', () => {
+    expect(STEP_TYPES).toEqual([{ key: 'START_TOOL', name: 'Werkzeug starten (START_TOOL)' }])
   })
 
-  it('Klarname ist nie der Technikwert', () => {
+  it('Klarname ist nie NUR der Technikwert (Fachbegriff in Klammern ist erwuenscht)', () => {
     for (const t of STEP_TYPES) {
       expect(t.name).not.toBe(t.key)
       expect(t.name).not.toMatch(/^[A-Z_]+$/)
+      // Der Klarname beginnt mit einem lesbaren Begriff, nie mit dem Kuerzel.
+      expect(t.name.startsWith(t.key)).toBe(false)
     }
   })
 
   it('stepTypeName uebersetzt, unbekannte Keys fallen auf den Key zurueck', () => {
-    expect(stepTypeName('START_TOOL')).toBe('Werkzeug starten')
+    expect(stepTypeName('START_TOOL')).toBe('Werkzeug starten (START_TOOL)')
     expect(stepTypeName('FREMD')).toBe('FREMD')
   })
 })
