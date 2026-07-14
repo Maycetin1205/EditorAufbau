@@ -29,3 +29,7 @@ grundlast/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Verifikations-Screenshots (Editor vs. exportierte Maske) — Belege, nie committen.
+# Die getrackten Referenzen in dashboard/ sind HTML (stilprobe.html u. a.).
+dashboard/*.png

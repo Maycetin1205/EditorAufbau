@@ -1,16 +1,24 @@
 # Aufbau-Editor — Hier weitermachen
 
-> **Für KI-Chats:** Diese Datei zuerst lesen. Sie ist die verbindliche Wahrheit
-> für Ziel + Arbeitsweise + Stand. Architektur-Details: `ARCHITEKTUR.md`.
-> Wenn der Nutzer „wir machen weiter" sagt → hier den nächsten offenen Punkt
-> der Roadmap nehmen.
+> **Für KI-Chats:** Diese Datei zuerst lesen — sie ist das NOTIZBUCH für
+> Ziel + Arbeitsweise + Stand. **Nutzer-Korrektur 2026-07-13: NICHT als
+> „reine Wahrheit" behandeln** — aktuelle Aussagen des Nutzers und der Code
+> schlagen diese Datei; bei Widerspruch nachfragen. Architektur-Details:
+> `ARCHITEKTUR.md`. Wenn der Nutzer „wir machen weiter" sagt → hier den
+> nächsten offenen Punkt nehmen.
 >
-> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-14): Z3 „Relation ausführen"**
-> (Antwort-Warteschlange nach seGetNewIndex-Muster + Zwischenspeicher-
-> Ausführung, danach „Wert setzen"/„Daten neu laden"). **Z2 ist im
-> SE-ECHTTEST BESTANDEN (2026-07-14):** Werkzeug startet bei „Karte
-> angeklickt" UND bei Schaltflächen-Klick, vom Nutzer live bestätigt.
-> Danach: Z4, dann K-Rest (K1–K5b, K6–K8), dann Stabilisierungs-Rest.
+> **⚑ ARBEITSWEISE-KORREKTUR (Nutzer, 2026-07-13, verbindlich):
+> Prüfungen (tsc/eslint/Tests) NIE zwischendurch laufen lassen — EINMAL
+> gebündelt, im Hintergrund, unmittelbar vor einem Commit. Der Nutzer wartet
+> nie auf Testläufe.**
+>
+> **⌖ NÄCHSTER OFFENER PUNKT (Stand 2026-07-14): Zusammenführung B2 —
+> Auffangspalte + automatische Laufzeit-Spalte „Nicht zugeordnet", angepasst
+> an die neuere Entscheidung „Titel = Wert"; B1/statusValues bleibt draußen.**
+> Danach: B3–B6 geführte Bindungsstrecke → Optik-Runde → Z3 „Relation
+> ausführen" → Z4 → K-Rest → Stabilisierungs-Rest. **Z2 ist im SE-ECHTTEST
+> BESTANDEN (2026-07-14):** Werkzeug startet bei „Karte angeklickt" UND bei
+> Schaltflächen-Klick, vom Nutzer live bestätigt.
 > Der Kanban-DATENPFAD ist KOMPLETT und vom Nutzer in SoftEngine
 > bestätigt (2026-07-11). ⚠ Beim „weiter"-Ritual Schritt 2: die zwei
 > Remote-Branches vom 2026-07-08 (`claude/editor-html-json-export-n0kski`,
@@ -346,7 +354,7 @@ den Export (Kap. 3).
     (4 neue Binding-Fälle inkl. Reload/Lösen/Doppelklick); browser-
     verifiziert mit Screenshots (Picker, gebundene Karte, Export-Maske).
   - ✅ **5.3a Kanban-Datenverhalten im Export — Lesen (2026-07-07):**
-    Board bekommt „Spalten aus Feld" (neues PropertyDescription-Konzept
+    Board bekommt „Einsortieren nach" (neues PropertyDescription-Konzept
     `kind: 'field'`: Klarnamen sichtbar, Feldcode als Technikwert in
     `statusField`), Spalte bekommt „Datenwert dieser Spalte" (`statusValue`;
     neues Flag `requiresDataSource` — Daten-Controls erscheinen in der
@@ -519,7 +527,8 @@ den Export (Kap. 3).
       id, update=id stabil; kein Undo).
     - **Konsum statt Protokoll:** Board trägt neue Prop `putRelation`
       (Default 'standard-put'), Inspector-Sektion „Daten" bekommt das Control
-      „Schreiben über" (neuer PropertyKind `relation`: Anzeigenamen sichtbar,
+      „Beim Verschieben zurückschreiben über" (neuer PropertyKind `relation`:
+      Anzeigenamen sichtbar,
       Vorlagen-id gespeichert, nur mit Quelle in Reichweite). Der Export
       bettet die BENUTZTEN Vorlagen als `var FF_RELATIONS` ein (registry-
       getrieben über kind-'relation'-Props, dedupliziert, DIESELBE Quelle wie
@@ -540,7 +549,7 @@ den Export (Kap. 3).
     (neu `e2e/relationen.spec.ts`: Anlegen→Wählen→Export→Drag mit EIGENER NR,
     read-only ohne Vorlage, Validierung, Umbenennen mit stabiler id, Löschen
     mit Benutzt-Warnung) grün; browser-verifiziert mit Screenshots (Formular
-    mit Platzhalter-Hinweis, Inspector „Schreiben über", dritte Bibliothek).
+    mit Platzhalter-Hinweis, Inspector-Zurückschreibweg, dritte Bibliothek).
     Verhaltensreferenz alter Editor war: `RelationForm.tsx`, `types/index.ts`
     (relNo/kind/syntax), `runtime/actions.ts` (pindexMode fixed/selected/drop
     — als {PINDEX}/{SELKEY}/{DROP_PINDEX} abgebildet).
@@ -848,15 +857,21 @@ den Export (Kap. 3).
     **→ SE-ECHTTEST DURCH DEN NUTZER STEHT AUS** (Regel: jedes Paket, das
     den Export berührt, direkt in SE testen). Sind die Kartenstellen dann
     noch leer: Strg+Alt+D → Inhalt kopieren → wird Test-Fixture für den
-    Feldauflösungs-Fix (nächstes Paket). Offen aus der Diagnose:
+    Feldauflösungs-Fix (nächstes Paket). ~~Offen aus der Diagnose:
     SEvariablen-XHR/fetch-Interception (Framework fragt die Konfig per
-    Request ab — Notwendigkeit prüfen). `dashboard/praxis-kanban.html` ist
+    Request ab — Notwendigkeit prüfen)~~ → **GEKLÄRT 2026-07-13 aus den
+    SoftEngine-Originalquellen:** Das Framework lädt die SEvariablen-Datei
+    selbst per XHR; die echte JSON-Datei neben dem HTML ist der Normalweg.
+    Die Interception der Empfang-Maske ist nur eine Ein-Datei-Optimierung —
+    nichts zu bauen. Die Brücke hat einen Callback-Slot (der letzte
+    Registrierer gewinnt); GET-Antworten landen in `SEDATA.Message<N>` —
+    verbindlich für Z3. `dashboard/praxis-kanban.html` ist
     auch für den DATEN-TRANSPORT keine Referenz (wie schon für Feldcodes).
     Nebenbefunde aus der echten Nutzer-Maske: Bindung war korrekt
     eingebettet (source/statusfield/FF_DATA_SOURCES ok), aber alle Spalten
     hatten `statusvalue=""` und das Board feste `width:1001px` —
     Bindungs-UX + Preflight müssen das in Phase 2 abfangen (K2/K6/K7;
-    dort auch: „Schreiben über" bietet bisher AUCH GET-Vorlagen an —
+    dort auch: Der Zurückschreibweg bietet bisher AUCH GET-Vorlagen an —
     Verb-Filter nachziehen, Fund der Zweit-Review 2026-07-11,
     Inspector.tsx Z. 114). Danach K1–K4, K5b, K6, K7, K8 in neu
     geplantem Zuschnitt.
@@ -913,8 +928,8 @@ den Export (Kap. 3).
       grün (zentrale.spec neu: Umzug/Klarnamen/Sprung/Escape-Schichtung;
       datenquellen- + relationen.spec auf den neuen Ort umgebaut, nicht
       abgeschwächt); live im Browser verifiziert.
-    - ✅ **Z2 Aktionen anlegen (GEBAUT 2026-07-13; SE-ECHTTEST DURCH DEN
-      NUTZER STEHT AUS):** Modell `src/core/data/aktionen.ts` nach
+    - ✅ **Z2 Aktionen anlegen (GEBAUT 2026-07-13; SE-ECHTTEST BESTANDEN
+      2026-07-14):** Modell `src/core/data/aktionen.ts` nach
       relations.ts-Muster — Ketten liegen als neues optionales Feld
       `events` am BlockNode (Ereignis-Key aus der Registry → Schritte;
       bewusst NICHT in props, die speisen Export-Attribute/Lit-Properties;
@@ -992,6 +1007,49 @@ den Export (Kap. 3).
     - **Z4 Ampeln:** Vollständigkeits-Anzeige in der Zentrale + Sprung
       zur Stelle (Vorstufe zu K6/K7).
     Danach geht es mit K1–K5b, K6–K8 und dem Stabilisierungs-Rest weiter.
+  - ⌖ **V2-PROGRAMM (2026-07-13 vom Nutzer in Worten freigegeben;
+    2026-07-14 mit der neueren Entscheidung „Titel = Wert" versöhnt):
+    geführte Bindungsstrecke am Board.** EIN Ort am ausgewählten Board,
+    Reihenfolge Quelle → Einsortieren-Feld → Spalten → Kartenstellen →
+    Zurückschreiben. Die Quellen-Zuweisung zieht aus dem Inspector in die
+    Strecke; die Vorlagen-Bibliothek bleibt in der Steuerung. Das Board zeigt
+    sichtbar „noch nicht angeschlossen", der Export blockt unvollständige
+    Bindungen mit Klartext. Nutzer-Auflagen: Zeilen ohne Treffer verschwinden
+    NIE still; Migrationen sind eigene sichtbare Baupunkte.
+    - ⛔ **B1/statusValues wird NICHT übernommen:** Die neuere Entscheidung
+      vom 2026-07-14 lautet ohne Ausnahme „Spaltentitel = Datenwert". Listen
+      mit eigenen Anzeigenamen bleiben dem späteren K5b-Unterbereichsmodell
+      vorbehalten.
+    - ⌖ **B2 Auffang-Modell + „Nicht zugeordnet":** genau eine Spalte kann
+      Auffangspalte sein. Ohne gewählte Auffangspalte erzeugt die Laufzeit bei
+      Bedarf „Nicht zugeordnet"; sie ist kein Ablage-Ziel, Karten können zur
+      Reparatur in eine echte Spalte herausgezogen werden. Umsetzung wird
+      gegen den aktuellen Titel=Wert-Stand neu integriert, nicht blind aus
+      dem alten B1-Branch übernommen.
+    - **B3 Strecke, Schritte 1–3:** Quelle → Einsortieren-Feld → Spalten.
+      Pro Spalte zeigt die Strecke den Titel (= Datenwert) und die sichtbare
+      Auffang-Wahl; KEIN Wert-Textfeld und KEINE Werteliste.
+    - **B4 Strecke, Schritte 4–5:** Kartenstellen als Liste mit Feld-Picker;
+      Zurückschreiben bietet nur PUT/PUTADD-Vorlagen an, nie GET.
+    - **B5 „Noch nicht angeschlossen" am Board:** reine Editor-Hilfe, nie im
+      Export; Klick öffnet die Strecke. Eine pure Vollständigkeitsprüfung
+      speist B5 und B6.
+    - **B6 Export-Preflight:** nach Live-Abnahme von B3–B5 blockiert der Export
+      fehlende Quelle/Feld/Schreibvorlage und widersprüchliche Auffang-Wahlen
+      verständlich.
+  - ⌖ **OPTIK-RUNDE STEUERUNG — Vorlage festgelegt (2026-07-13, erst nach
+    B3–B6 bauen):** Die Codex-Demo „FormForge"
+    (`kommandozentrale-geruest.html`, Visualisierung vom 2026-07-13) ist die
+    Bedien-/Layout-Vorlage: Master-Detail, Verwendungs-Zähler, Bearbeiten
+    inline statt Modal im Modal, „Verwendung in dieser Maske", Status-Badges,
+    Klartext-Leerzustände und sichtbare Anlegewege. Sie wird in die
+    Editor-Token-Welt übersetzt. Verworfen sind „Abläufe" als vierte
+    Bibliothek, separate „Zuweisungs"-Objekte, manuell angelegte Ereignisse
+    und stilles Verwerfen offener Formulare. Merkliste: START_TOOL später als
+    benannte Vorlagen; Verwendungs-Zähler in den Bibliotheken. Das zugehörige
+    BRIEFING ist KEINE technische Quelle: PUT-PARAMS, START_TOOL-Form und
+    console.log als GET-Antwortkanal sind dort falsch; der Datenpfad bleibt
+    ausschließlich durch die SoftEngine-Originalquellen bestimmt.
   - **K0 Geometrie (Korrektur 2026-07-10: Codex hat NIE
     angefangen — K0 wird hier gebaut, kein Fremd-Diff zu reviewen):**
     Spalten IMMER alle sichtbar nebeneinander: `flex:1 1 0` + `min-width:0`,

@@ -42,6 +42,19 @@ test('Steuerung: drei Bereiche, Bibliotheken umgezogen, Aktionen zeigen Klarname
   await expect(page.getByRole('button', { name: 'Neue Relation' })).toHaveCount(0)
 })
 
+test('Aktionen: gleichartige Bausteine bekommen unterscheidbare Namen + Regel-Hinweis (P8)', async ({ page }) => {
+  await freshEditor(page)
+  await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()
+  await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()
+
+  await page.getByRole('button', { name: 'Steuerung' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Steuerung' })
+
+  await expect(dialog.getByText(/tauchen bewusst nicht auf/)).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Schaltfläche — Klick mich (1)' })).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Schaltfläche — Klick mich (2)' })).toBeVisible()
+})
+
 test('Steuerung springt zum ausgewählten Baustein; Escape schließt (Formular zuerst)', async ({ page }) => {
   await freshEditor(page)
   await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()

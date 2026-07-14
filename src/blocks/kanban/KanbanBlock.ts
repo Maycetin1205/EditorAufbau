@@ -67,16 +67,16 @@ export class KanbanBlock extends BasicBlock {
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'statusField',
-      name: 'Spalten aus Feld',
-      description: 'Feld der Datenquelle, dessen Wert bestimmt, in welcher Spalte eine Zeile landet.',
+      name: 'Einsortieren nach',
+      description: 'Das Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt (z. B. Behandlungszimmer).',
       isArray: false,
       maxLength: 0,
       kind: 'field',
     },
     {
       attributeName: 'putRelation',
-      name: 'Schreiben über',
-      description: 'Relation-Vorlage, mit der eine gezogene Karte ihren neuen Spaltenwert zurückschreibt.',
+      name: 'Beim Verschieben zurückschreiben über',
+      description: 'Relation-Vorlage, über die eine verschobene Karte den Titel ihrer neuen Spalte ins Sortier-Feld zurückschreibt.',
       isArray: false,
       maxLength: 0,
       kind: 'relation',

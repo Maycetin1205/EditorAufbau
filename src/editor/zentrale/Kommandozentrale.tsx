@@ -108,6 +108,21 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
   )
 }
 
+// Der Anzeigename allein ist fuer mehrere gleichartige Bausteine nicht
+// eindeutig. Ein kurzer Eigentext macht die Eintraege sprechend.
+const TEXT_PROPS = ['label', 'heading', 'title', 'text'] as const
+
+function eigenerText(props: Record<string, unknown>): string {
+  for (const key of TEXT_PROPS) {
+    const value = props[key]
+    if (typeof value === 'string' && value.trim() !== '') {
+      const text = value.trim()
+      return text.length > 28 ? `${text.slice(0, 27)}…` : text
+    }
+  }
+  return ''
+}
+
 // Aktionen-Übersicht + Ketten-Editor (Z1/Z2): Bausteine der Maske mit ihren
 // Ereignissen (Registry: blockEvents, nur Klarnamen) in Baumreihenfolge.
 // Ist im Canvas gerade ein Baustein ausgewählt, ist sein Eintrag markiert
@@ -128,12 +143,26 @@ function AktionenBereich() {
       if (!node) continue
       const def = getBlockDefinition(node.type)
       if (def?.blockEvents?.length) {
-        eintraege.push({ id: cid, name: def.displayName, events: def.blockEvents })
+        const text = eigenerText(node.props)
+        const name = text === '' ? def.displayName : `${def.displayName} — ${text}`
+        eintraege.push({ id: cid, name, events: def.blockEvents })
       }
       walk(cid)
     }
   }
   walk(ROOT_ID)
+
+  // Gleiche Namen werden in Baumreihenfolge durchnummeriert.
+  const namensZahl = new Map<string, number>()
+  for (const e of eintraege) namensZahl.set(e.name, (namensZahl.get(e.name) ?? 0) + 1)
+  const laufend = new Map<string, number>()
+  for (const e of eintraege) {
+    if ((namensZahl.get(e.name) ?? 0) > 1) {
+      const n = (laufend.get(e.name) ?? 0) + 1
+      laufend.set(e.name, n)
+      e.name = `${e.name} (${n})`
+    }
+  }
 
   // Kette eines Ereignisses ersetzen (alle Mutationen laufen hierüber).
   const setChain = (blockId: string, eventKey: string, steps: ActionStep[]): void => {
@@ -182,6 +211,11 @@ function AktionenBereich() {
 
   return (
     <div className="flex flex-col gap-2">
+      <p className="text-xs text-muted-foreground">
+        Hier erscheint jeder Baustein, der auf Ereignisse reagieren kann
+        (z. B. Kanban, Schaltfläche). Bausteine ohne Ereignisse — etwa Text
+        oder Bereich — tauchen bewusst nicht auf.
+      </p>
       {eintraege.map((e) => (
         <div
           key={e.id}

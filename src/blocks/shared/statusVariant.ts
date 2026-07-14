@@ -35,15 +35,15 @@ export function coerceStatusVariant(value: string): StatusVariant {
     : 'info'
 }
 
-// Die "Art"-Property fuer den Inspector. attributeName + Beschreibung stellt
-// jeder Block selbst, die 4 Optionen (Bedeutung -> Farbe) sind fix.
+// Die Status-Property fuer den Inspector. Der Bediener waehlt weiterhin die
+// Bedeutung per Klarname; die feste Farbe ergibt sich daraus.
 export function statusVariantProperty(
   attributeName: string,
   description: string,
 ): PropertyDescription {
   return {
     attributeName,
-    name: 'Art',
+    name: 'Farbe',
     description,
     isArray: false,
     maxLength: 0,

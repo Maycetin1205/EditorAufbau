@@ -127,7 +127,8 @@ Daten-Controls im Inspector (Kap. 5.3, PropertyDescription statt Registry):
   (gespeicherte Werte bleiben erhalten und leben mit der Quelle wieder auf).
 - Beide erscheinen in der Inspector-Sektion „Daten" (nicht in der
   allgemeinen Gruppe). Das Kanban nutzt sie für `statusField` (Board:
-  „Spalten aus Feld") und `putRelation` (Board: „Schreiben über").
+  „Einsortieren nach") und `putRelation` (Board: „Beim Verschieben
+  zurückschreiben über").
   Die Spalte hat KEIN Wert-Control: ihr TITEL (`heading`, Inline-Edit)
   IST der Datenwert (Nutzer-Entscheidung 2026-07-14, Titel = Wert).
 

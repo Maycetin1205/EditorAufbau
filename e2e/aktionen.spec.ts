@@ -151,7 +151,7 @@ test('Kanban: „Karte angeklickt" liefert {PINDEX}, „Karte verschoben" feuert
   await page.locator('ff-card .heading').first().click()
   await page.getByRole('dialog', { name: /Feld für/ }).getByRole('button', { name: /Tiername/ }).click()
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await page.getByLabel('Spalten aus Feld').click()
+  await page.getByLabel('Einsortieren nach').click()
   await page.getByRole('option', { name: 'Zimmer' }).click()
   await renameColumn(page, 1, '2')
   await renameColumn(page, 2, '3')
