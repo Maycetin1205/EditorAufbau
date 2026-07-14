@@ -1,0 +1,284 @@
+<title>Popups &amp; Seiten — Klickmodell</title>
+<style>
+  /* ── Masken-Design-Tokens (Kopie aus src/design/masken-tokens.css) ── */
+  :root, :root[data-theme="light"], :root[data-theme="dark"] {
+    --se-bg: #eceff1; --se-panel: #ffffff; --se-panel-2: #f2f4f6;
+    --se-ink: #101c26; --se-muted: #51606d; --se-faint: #8494a1;
+    --se-line: #c9d2d9; --se-line-soft: #e0e6ea;
+    --se-accent: #0e7a58; --se-accent-dark: #0b6247; --se-accent-soft: #e4f2ec;
+    --se-amber: #9a6a00; --se-amber-soft: #f8f0dc;
+    --se-green: #47761d; --se-green-soft: #ecf3e1;
+    --se-r-sm: 2px; --se-r-md: 3px; --se-r-lg: 4px;
+    --se-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --se-mono: "IBM Plex Mono", Consolas, monospace;
+    --se-fs: 13.5px; --se-fs-sm: 12px; --se-fs-xs: 10.5px; --se-fs-lg: 15px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--se-bg); color: var(--se-ink); font-family: var(--se-font); font-size: var(--se-fs); line-height: 1.45; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  .kopf { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .kopf h1 { font-size: 17px; font-weight: 650; margin: 0; }
+  .kopf .demo-badge { margin-left: auto; font-size: var(--se-fs-xs); letter-spacing: .05em; text-transform: uppercase; color: var(--se-amber); background: var(--se-amber-soft); padding: 3px 9px; border-radius: 999px; font-weight: 600; }
+  .erklaer { color: var(--se-muted); font-size: var(--se-fs-sm); margin: 0 0 14px; }
+
+  .umschalter { display: inline-flex; border: 1px solid var(--se-line); border-radius: var(--se-r-sm); overflow: hidden; margin-bottom: 14px; background: var(--se-panel); }
+  .umschalter button { font: inherit; font-weight: 600; border: none; background: none; color: var(--se-muted); padding: 7px 16px; cursor: pointer; }
+  .umschalter button + button { border-left: 1px solid var(--se-line); }
+  .umschalter button[data-aktiv="ja"] { background: var(--se-accent); color: #fff; }
+  .umschalter button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
+
+  /* Editor-Hilfen (im echten Editor: BlockHost/Chrome — NIE im Export) */
+  .editor-leiste { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border: 1px dashed var(--se-line); border-bottom: none; border-radius: var(--se-r-lg) var(--se-r-lg) 0 0; background: var(--se-panel-2); padding: 7px 12px; font-size: var(--se-fs-sm); color: var(--se-muted); }
+  .editor-leiste .etikett { font-size: var(--se-fs-xs); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--se-faint); margin-right: 2px; }
+  .seiten-tab { font: inherit; font-size: var(--se-fs-sm); font-weight: 600; border: 1px solid var(--se-line); border-radius: var(--se-r-sm); background: var(--se-panel); color: var(--se-muted); padding: 4px 12px; cursor: pointer; }
+  .seiten-tab:hover { border-color: var(--se-accent); color: var(--se-accent-dark); }
+  .seiten-tab[data-aktiv="ja"] { background: var(--se-accent); border-color: var(--se-accent); color: #fff; }
+  .seiten-tab.neu { border-style: dashed; font-weight: 500; }
+  .editor-leiste .hinweis { margin-left: auto; }
+
+  .sim-hinweis { border: 1px solid var(--se-line); border-bottom: none; border-radius: var(--se-r-lg) var(--se-r-lg) 0 0; background: var(--se-amber-soft); color: var(--se-amber); padding: 7px 12px; font-size: var(--se-fs-sm); font-weight: 600; }
+
+  /* Canvas / Maskenflaeche */
+  .canvas { position: relative; border: 1px solid var(--se-line); border-radius: 0 0 var(--se-r-lg) var(--se-r-lg); background: var(--se-bg); padding: 18px; overflow: hidden; }
+
+  /* Masken-Bausteine (vereinfachte Andeutung) */
+  .se-knopf { font: inherit; font-weight: 600; border: 1px solid var(--se-accent-dark); border-radius: var(--se-r-sm); background: var(--se-accent); color: #fff; padding: 6px 14px; cursor: pointer; }
+  .se-knopf:hover { background: var(--se-accent-dark); }
+  .se-knopf.leise { background: var(--se-panel); border-color: var(--se-line); color: var(--se-ink); }
+  .se-knopf.leise:hover { border-color: var(--se-accent); color: var(--se-accent-dark); background: var(--se-panel); }
+  .se-knopf:focus-visible { outline: 2px solid var(--se-accent-dark); outline-offset: 1px; }
+
+  .kette-chip { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font-size: var(--se-fs-xs); font-weight: 600; color: var(--se-muted); background: var(--se-panel); border: 1px dashed var(--se-line); border-radius: 999px; padding: 3px 10px; cursor: pointer; vertical-align: middle; }
+  .kette-chip:hover { border-color: var(--se-accent); color: var(--se-accent-dark); }
+
+  .tabelle-skizze { margin-top: 14px; border: 1px solid var(--se-line); border-radius: var(--se-r-lg); background: var(--se-panel); max-width: 560px; }
+  .tabelle-skizze .kopfzeile { display: flex; gap: 1px; background: var(--se-panel-2); border-bottom: 1px solid var(--se-line); border-radius: var(--se-r-lg) var(--se-r-lg) 0 0; }
+  .tabelle-skizze .kopfzeile span { flex: 1; padding: 5px 10px; font-size: var(--se-fs-sm); font-weight: 650; }
+  .tabelle-skizze .zeile { display: flex; border-bottom: 1px solid var(--se-line-soft); }
+  .tabelle-skizze .zeile:last-child { border-bottom: none; }
+  .tabelle-skizze .zeile span { flex: 1; padding: 7px 10px; }
+  .strich { display: inline-block; height: 8px; border-radius: var(--se-r-sm); background: var(--se-line-soft); width: 70%; vertical-align: middle; }
+
+  /* ── Das Popup (Baustein-Welt: exakt gleich im Editor und in der Maske) ── */
+  .abdunkeln { position: absolute; inset: 0; background: rgba(16, 28, 38, .38); display: flex; align-items: flex-start; justify-content: center; padding-top: 34px; }
+  .popup { position: relative; display: flex; flex-direction: column; background: var(--se-panel); border: 1px solid var(--se-line); border-radius: var(--se-r-lg); box-shadow: 0 10px 34px rgba(16,28,38,.28); max-width: calc(100% - 24px); }
+  .popup-titel { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--se-panel-2); border-bottom: 1px solid var(--se-line); border-radius: var(--se-r-lg) var(--se-r-lg) 0 0; font-size: var(--se-fs-lg); font-weight: 650; }
+  .popup-titel .zu { margin-left: auto; font: inherit; border: none; background: none; color: var(--se-faint); font-size: 15px; cursor: pointer; padding: 2px 6px; border-radius: var(--se-r-sm); }
+  .popup-titel .zu:hover { color: var(--se-ink); background: var(--se-line-soft); }
+  .popup-titel input { font: inherit; font-weight: 650; border: 1px solid var(--se-accent); border-radius: var(--se-r-sm); padding: 1px 6px; width: 240px; }
+  .popup-rumpf { flex: 1; overflow-y: auto; padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; align-content: start; }
+  .popup-feld { display: flex; flex-direction: column; gap: 3px; }
+  .popup-feld.breit { grid-column: 1 / -1; }
+  .popup-feld label { font-size: var(--se-fs-sm); color: var(--se-muted); font-weight: 600; }
+  .popup-feld input, .popup-feld select { font: inherit; color: var(--se-ink); background: var(--se-panel-2); border: 1px solid var(--se-line); border-radius: var(--se-r-sm); padding: 6px 9px; width: 100%; }
+  .popup-feld input:focus-visible, .popup-feld select:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -1px; }
+  .popup-fuss { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--se-line-soft); }
+
+  /* Groessen-Anfasser (nur Editor) */
+  .anfasser { position: absolute; z-index: 3; }
+  .anfasser.r { top: 0; right: -5px; width: 10px; height: 100%; cursor: ew-resize; }
+  .anfasser.b { bottom: -5px; left: 0; height: 10px; width: 100%; cursor: ns-resize; }
+  .anfasser.e { right: -6px; bottom: -6px; width: 16px; height: 16px; cursor: nwse-resize; }
+  .anfasser.r::after { content: ""; position: absolute; right: 4px; top: 40%; height: 20%; width: 3px; border-radius: 2px; background: var(--se-accent); }
+  .anfasser.b::after { content: ""; position: absolute; bottom: 4px; left: 44%; width: 12%; height: 3px; border-radius: 2px; background: var(--se-accent); }
+  .anfasser.e::after { content: ""; position: absolute; right: 4px; bottom: 4px; width: 9px; height: 9px; border-right: 3px solid var(--se-accent); border-bottom: 3px solid var(--se-accent); border-radius: 1px; }
+
+  .mass-chip { position: absolute; top: 8px; right: 10px; font-family: var(--se-mono); font-size: 11.5px; color: #fff; background: rgba(16,28,38,.55); padding: 2px 8px; border-radius: var(--se-r-sm); }
+
+  .status { margin-top: 10px; border: 1px solid var(--se-line); border-radius: var(--se-r-md); background: var(--se-panel); padding: 8px 12px; font-size: var(--se-fs-sm); color: var(--se-muted); }
+  .status b { color: var(--se-ink); }
+  .status.gruen { border-color: var(--se-green); background: var(--se-green-soft); color: var(--se-green); }
+  .status code { font-family: var(--se-mono); font-size: 11.5px; background: rgba(16,28,38,.06); padding: 1px 5px; border-radius: var(--se-r-sm); }
+
+  .fussnote { color: var(--se-faint); font-size: var(--se-fs-sm); margin-top: 16px; text-align: center; }
+</style>
+
+<div class="wrap">
+  <div class="kopf">
+    <h1>Popups &amp; Seiten</h1>
+    <span class="demo-badge">Klickmodell · speichert nichts</span>
+  </div>
+  <p class="erklaer">
+    Eine Maske hat eine Hauptseite und beliebig viele <b>Popup-Seiten</b> — jede Seite ist ein normaler Block-Baum mit denselben Bausteinen.
+    Geöffnet wird ein Popup über den Aktions-Schritt „Popup öffnen" (Steuerung), z.&nbsp;B. am Klick der Schaltfläche.
+  </p>
+
+  <div class="umschalter" role="tablist">
+    <button data-ansicht="editor" data-aktiv="ja">Im Editor</button>
+    <button data-ansicht="maske" data-aktiv="nein">In der Maske (SoftEngine)</button>
+  </div>
+
+  <div id="buehne"></div>
+  <p class="fussnote" id="fussnote"></p>
+</div>
+
+<script>
+'use strict';
+
+const STANDARD = { breite: 520, hoehe: 360 };
+const zustand = {
+  ansicht: 'editor',
+  seite: 'haupt',            /* Editor: welche Seite wird bearbeitet */
+  titel: 'Termin anlegen',
+  breite: STANDARD.breite,
+  hoehe: STANDARD.hoehe,
+  titelEdit: false,
+  popupOffen: false,         /* Maske: Popup sichtbar? */
+  status: null,              /* Maske: letzte ausgefuehrte Kette */
+  zieht: null,               /* { modus:'r'|'b'|'e', startX, startY, b0, h0, bewegt } */
+  klickNachZug: false,
+};
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const $ = (sel) => document.querySelector(sel);
+
+/* ── Popup-Inhalt (dieselbe Quelle fuer Editor UND Maske = WYSIWYG) ── */
+function malPopupInhalt(editor) {
+  return '<div class="popup-rumpf">'
+    + '<div class="popup-feld"><label>Datum</label><input type="text" placeholder="Datum"' + (editor ? ' tabindex="-1"' : '') + '></div>'
+    + '<div class="popup-feld"><label>Uhrzeit</label><input type="text" placeholder="Uhrzeit"' + (editor ? ' tabindex="-1"' : '') + '></div>'
+    + '<div class="popup-feld"><label>Tiername</label><input type="text" placeholder="Tiername"' + (editor ? ' tabindex="-1"' : '') + '></div>'
+    + '<div class="popup-feld"><label>Behandlung</label><select' + (editor ? ' tabindex="-1"' : '') + '><option>Impfung</option><option>Kontrolle</option><option>Erstuntersuchung</option></select></div>'
+    + '<div class="popup-feld breit"><label>Zimmer</label><select' + (editor ? ' tabindex="-1"' : '') + '><option>Behandlungszimmer 1</option><option>Behandlungszimmer 2</option><option>Behandlungszimmer 3</option></select></div>'
+    + '</div>'
+    + '<div class="popup-fuss">'
+    + '<button class="se-knopf leise" data-popup-zu' + (editor ? ' tabindex="-1"' : '') + '>Abbrechen</button>'
+    + '<button class="se-knopf" data-popup-speichern' + (editor ? ' tabindex="-1"' : '') + '>Speichern</button>'
+    + '</div>';
+}
+
+function malPopupRahmen(editor) {
+  const titel = zustand.titelEdit
+    ? '<input id="titel-edit" value="' + esc(zustand.titel) + '">'
+    : '<span' + (editor ? ' data-titel title="Doppelklick: umbenennen"' : '') + '>' + esc(zustand.titel) + '</span>';
+  return '<div class="popup" style="width:' + zustand.breite + 'px;height:' + zustand.hoehe + 'px">'
+    + '<div class="popup-titel">' + titel + '<button class="zu" data-popup-zu title="Schließen">✕</button></div>'
+    + malPopupInhalt(editor)
+    + (editor
+        ? '<span class="anfasser r" data-anfasser="r" title="Breite ziehen · Doppelklick = Standard"></span>'
+          + '<span class="anfasser b" data-anfasser="b" title="Höhe ziehen · Doppelklick = Standard"></span>'
+          + '<span class="anfasser e" data-anfasser="e" title="Größe ziehen · Doppelklick = Standard"></span>'
+        : '')
+    + '</div>';
+}
+
+/* ── Rendern ── */
+function malAlles() {
+  document.querySelectorAll('[data-ansicht]').forEach((b) => { b.dataset.aktiv = b.dataset.ansicht === zustand.ansicht ? 'ja' : 'nein'; });
+
+  if (zustand.ansicht === 'editor') {
+    const aufPopupSeite = zustand.seite === 'popup';
+    $('#buehne').innerHTML =
+      '<div class="editor-leiste"><span class="etikett">Seiten dieser Maske</span>'
+      + '<button class="seiten-tab" data-seite="haupt" data-aktiv="' + (!aufPopupSeite ? 'ja' : 'nein') + '">Hauptseite</button>'
+      + '<button class="seiten-tab" data-seite="popup" data-aktiv="' + (aufPopupSeite ? 'ja' : 'nein') + '">Popup „' + esc(zustand.titel) + '"</button>'
+      + '<button class="seiten-tab neu" title="Im echten Editor: legt eine weitere Popup-Seite an">+ Neue Seite</button>'
+      + '<span class="hinweis">' + (aufPopupSeite
+          ? 'Rand/Ecke ziehen = Größe · Doppelklick auf Anfasser = Standard · Doppelklick auf Titel = umbenennen'
+          : 'Bausteine wie gewohnt — die Schaltfläche trägt ihre Kette') + '</span></div>'
+      + '<div class="canvas" style="min-height:' + Math.max(zustand.hoehe + 110, 420) + 'px">'
+      + (aufPopupSeite
+          ? '<div class="abdunkeln"><div class="mass-chip">' + zustand.breite + ' × ' + zustand.hoehe + ' px</div>' + malPopupRahmen(true) + '</div>'
+          : '<div><button class="se-knopf" tabindex="-1">＋ Termin anlegen</button>'
+            + '<span class="kette-chip" data-seite="popup" title="Zur Popup-Seite springen">Kette (Klick): 1 · Popup öffnen → „' + esc(zustand.titel) + '"</span>'
+            + '<div class="tabelle-skizze"><div class="kopfzeile"><span>Datum</span><span>Uhrzeit</span><span>Tiername</span></div>'
+            + [0, 1, 2].map(() => '<div class="zeile"><span><span class="strich"></span></span><span><span class="strich" style="width:45%"></span></span><span><span class="strich" style="width:60%"></span></span></div>').join('')
+            + '</div></div>')
+      + '</div>';
+    $('#fussnote').textContent = aufPopupSeite
+      ? 'Die Popup-Seite wird im Editor in ECHTER Größe bearbeitet — was du hier siehst, ist exakt das Popup der Maske.'
+      : 'Die Hauptseite wie gewohnt; das Popup ist eine eigene Seite derselben Maske und reist im Export als inaktive Vorlage mit.';
+  } else {
+    $('#buehne').innerHTML =
+      '<div class="sim-hinweis">Simulation: so verhält sich die exportierte Maske in SoftEngine.</div>'
+      + '<div class="canvas" style="min-height:' + Math.max(zustand.hoehe + 110, 420) + 'px">'
+      + '<div><button class="se-knopf" data-popup-auf>＋ Termin anlegen</button>'
+      + '<div class="tabelle-skizze"><div class="kopfzeile"><span>Datum</span><span>Uhrzeit</span><span>Tiername</span></div>'
+      + '<div class="zeile"><span>15.07.2026</span><span>08:30</span><span>Rocky</span></div>'
+      + '<div class="zeile"><span>15.07.2026</span><span>09:15</span><span>Minka</span></div>'
+      + '<div class="zeile"><span>15.07.2026</span><span>10:00</span><span>Luna</span></div>'
+      + '</div></div>'
+      + (zustand.popupOffen ? '<div class="abdunkeln" data-abdunkeln>' + malPopupRahmen(false) + '</div>' : '')
+      + '</div>'
+      + (zustand.status
+          ? '<div class="status gruen"><b>Kette ausgeführt:</b> ' + zustand.status + '</div>'
+          : '<div class="status">Schaltfläche anklicken → Aktions-Schritt „Popup öffnen" zeigt die Seite „' + esc(zustand.titel) + '" in <code>' + zustand.breite + ' × ' + zustand.hoehe + '</code>. Schließen: ✕, Abbrechen oder Escape.</div>');
+    $('#fussnote').textContent = 'Das Popup ist ein Overlay IM Maskenfenster — kein zweites Browserfenster. Es reist als inaktive Vorlage im Export mit und erscheint erst durch den Aktions-Schritt.';
+  }
+}
+
+/* ── Ereignisse ── */
+document.addEventListener('click', (ev) => {
+  if (zustand.klickNachZug) { zustand.klickNachZug = false; return; }
+  if (ev.target.closest('[data-anfasser]')) return;
+  if (ev.target.id === 'titel-edit') return;
+
+  const el = ev.target.closest('[data-ansicht],[data-seite],[data-popup-auf],[data-popup-zu],[data-popup-speichern],[data-abdunkeln]');
+  if (!el) { if (zustand.titelEdit) { uebernimmTitel(); malAlles(); } return; }
+  const d = el.dataset;
+
+  if (zustand.titelEdit) uebernimmTitel();
+
+  if (d.ansicht) { zustand.ansicht = d.ansicht; zustand.popupOffen = false; zustand.status = null; }
+  if (d.seite) zustand.seite = d.seite;
+  if (d.popupAuf !== undefined) { zustand.popupOffen = true; zustand.status = null; }
+  if (d.popupZu !== undefined) {
+    if (zustand.ansicht === 'maske') { zustand.popupOffen = false; zustand.status = null; }
+  }
+  if (d.popupSpeichern !== undefined && zustand.ansicht === 'maske') {
+    zustand.popupOffen = false;
+    zustand.status = '„Neue Satznummer holen" (GET) → gespeichert als <code>{neueNr}</code> · „Termin anlegen" (PUTADD) mit <code>{neueNr}</code> · Daten neu laden · Popup schließen';
+  }
+  /* Klick auf die Abdunkelung (nicht ins Popup) schliesst */
+  if (d.abdunkeln !== undefined && !ev.target.closest('.popup')) { zustand.popupOffen = false; zustand.status = null; }
+
+  malAlles();
+});
+
+document.addEventListener('dblclick', (ev) => {
+  const anf = ev.target.closest('[data-anfasser]');
+  if (anf) { zustand.breite = STANDARD.breite; zustand.hoehe = STANDARD.hoehe; malAlles(); return; }
+  if (ev.target.closest('[data-titel]')) {
+    zustand.titelEdit = true; malAlles();
+    const f = $('#titel-edit'); if (f) { f.focus(); f.select(); }
+  }
+});
+
+function uebernimmTitel() {
+  const f = $('#titel-edit');
+  if (f && f.value.trim()) zustand.titel = f.value.trim();
+  zustand.titelEdit = false;
+}
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' && zustand.titelEdit) { uebernimmTitel(); malAlles(); }
+  if (ev.key === 'Escape') {
+    if (zustand.titelEdit) { zustand.titelEdit = false; malAlles(); }
+    else if (zustand.popupOffen) { zustand.popupOffen = false; zustand.status = null; malAlles(); }
+  }
+});
+
+/* Groesse ziehen (nur Editor) */
+document.addEventListener('pointerdown', (ev) => {
+  const anf = ev.target.closest('[data-anfasser]');
+  if (!anf) return;
+  ev.preventDefault();
+  zustand.zieht = { modus: anf.dataset.anfasser, startX: ev.clientX, startY: ev.clientY, b0: zustand.breite, h0: zustand.hoehe, bewegt: false };
+  anf.setPointerCapture(ev.pointerId);
+});
+document.addEventListener('pointermove', (ev) => {
+  const z = zustand.zieht; if (!z) return;
+  if (Math.abs(ev.clientX - z.startX) > 2 || Math.abs(ev.clientY - z.startY) > 2) z.bewegt = true;
+  if (z.modus === 'r' || z.modus === 'e') zustand.breite = Math.min(880, Math.max(280, z.b0 + (ev.clientX - z.startX)));
+  if (z.modus === 'b' || z.modus === 'e') zustand.hoehe = Math.min(680, Math.max(200, z.h0 + (ev.clientY - z.startY)));
+  const p = document.querySelector('.popup');
+  if (p) { p.style.width = zustand.breite + 'px'; p.style.height = zustand.hoehe + 'px'; }
+  const chip = document.querySelector('.mass-chip');
+  if (chip) chip.textContent = zustand.breite + ' × ' + zustand.hoehe + ' px';
+});
+document.addEventListener('pointerup', () => {
+  if (zustand.zieht) { zustand.klickNachZug = zustand.zieht.bewegt; zustand.zieht = null; malAlles(); }
+});
+
+malAlles();
+</script>
