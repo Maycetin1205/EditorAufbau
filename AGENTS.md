@@ -1096,6 +1096,11 @@ den Export (Kap. 3).
     Store/Undo, Bibliotheken-UI, Aktionsketten, Preflight und
     Einzel-Export-Formate sind ab jetzt UNGEPRÜFT — Fehler dort fallen
     erst im Handtest oder SE-Echttest auf.
+    **NACHTRAG (gleicher Tag): Layout-Sektion KOMPLETT aus dem Inspector**
+    (Nutzer: „inline mache ich das") — Breite/Höhe laufen NUR noch über
+    die Zieh-Anfasser am Block; der Breiten-Anfasser kann jetzt wie der
+    Höhen-Anfasser Doppelklick = Standard (sonst käme ein einmal gezogener
+    Block nie wieder auf „Füllen" zurück). LayoutSection.tsx gelöscht.
   - ⌖ **OPTIK-RUNDE STEUERUNG — Vorlage festgelegt (2026-07-13, erst nach
     B3–B6 bauen):** Die Codex-Demo „FormForge"
     (`kommandozentrale-geruest.html`, Visualisierung vom 2026-07-13) ist die

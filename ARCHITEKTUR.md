@@ -40,7 +40,9 @@ CLAUDE.md-Roadmap. Aktuell (2026-07-14) aktiv:
   Standard-Schreibvorlage; Anpassen = Vorlage in der Steuerung bearbeiten
   (id bleibt stabil). Sichtbare Wahl kommt erst mit der Strecke (B4).
 - Sidebar = nur die Baustein-Palette; Canvas (Flow + Drag&Drop);
-  Inspector (Inhalt/Layout/Daten)
+  Inspector (Inhalt/Daten — KEINE Layout-Sektion mehr: Breite/Hoehe laufen
+  ausschliesslich ueber die Zieh-Anfasser am selektierten Block,
+  Doppelklick auf den Anfasser = Standard/Automatisch)
 - Kommandozentrale (Toolbar „Steuerung", Z1/Z2): Aktions-Ketten-Editor je
   Baustein-Ereignis (StepForm; Z2: Schritt-Typ „Werkzeug starten
   (START_TOOL)") + Datenquellen- + Relationen-Bibliothek (aus der

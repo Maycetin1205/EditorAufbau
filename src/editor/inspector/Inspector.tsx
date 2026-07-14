@@ -13,7 +13,6 @@ import { useEditor } from '../../state/useEditor'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
 import { DataSection } from './DataSection'
-import { LayoutSection } from './LayoutSection'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
@@ -165,24 +164,9 @@ export function Inspector() {
             {dataProps.map(renderPropControl)}
           </section>
         )}
-        {/* Blöcke mit festgelegter Breite und ohne Richtungs-Props (Kanban-
-            Spalte/Vorlagen-Kasten, K0) haben keine Layout-Einstellungen —
-            Sektion ganz weg statt leer. */}
-        {(def.lockedWidth === undefined
-          || (def.acceptsChildren && 'direction' in def.defaultProps)) && (
-          <section className="flex flex-col gap-3">
-            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Layout
-            </h3>
-            {/* Richtung/Abstände nur für Container, die diese Props auch
-                deklarieren — spezialisierte Container (Kanban) haben festes
-                Layout und bieten sie nicht an (kein Typ-Check, Registry-Daten). */}
-            <LayoutSection
-              block={block}
-              isContainer={def.acceptsChildren && 'direction' in def.defaultProps}
-            />
-          </section>
-        )}
+        {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14, Bedienlogik 6):
+            Breite und Höhe zeigen sich am Block selbst — Zieh-Anfasser am
+            selektierten Block, Doppelklick auf den Anfasser = Standard. */}
       </div>
     </SidePanel>
   )

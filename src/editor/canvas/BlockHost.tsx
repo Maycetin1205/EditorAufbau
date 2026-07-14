@@ -396,7 +396,17 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           draggable={false}
           onPointerDown={(e) => startResize(e, 'width', 40)}
           onDragStart={(e) => e.preventDefault()}
-          title="Breite ziehen"
+          onDoubleClick={(e) => {
+            // Zurück zur Standard-Breite des Bausteins direkt am Anfasser —
+            // die Breite hat seit 2026-07-14 KEIN Inspector-Feld mehr
+            // (Nutzer-Anweisung + Bedienlogik 6: nur was sich nicht zeigen
+            // lässt, steht im Inspector). Ohne das Zurücksetzen käme ein
+            // einmal gezogener Block nie wieder auf "Füllen"/"Automatisch".
+            e.stopPropagation()
+            const standard = getBlockDefinition(blockRef.current.type)?.defaultProps.width ?? 'auto'
+            editor.updateProperty(blockRef.current.id, 'width', standard)
+          }}
+          title="Breite ziehen · Doppelklick: Standard"
           style={{
             position: 'absolute',
             right: -4,
