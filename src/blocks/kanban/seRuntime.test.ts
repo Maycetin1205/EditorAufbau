@@ -1,23 +1,25 @@
-// Unit-Tests fuer die puren Helfer der Kanban-SoftEngine-Anbindung
-// (Kap. 5.3): Feldcode-Aufloesung (direkt + pos_len aus dem SATZ), Zeilen
-// aus den SEDATA-Formen der Referenzmaske, Spalten-Zuordnung mit Auffang.
-// Die DOM-Hydrierung selbst prueft e2e/kanban-data.spec.ts im echten Browser.
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
+// Unit-Tests für die puren Helfer der SoftEngine-Anbindung (Kap. 5.3):
+// Feldcode-Auflösung (direkt + pos_len aus dem SATZ), Zeilen aus den
+// SEDATA-Formen der Referenzmaske, Spalten-Zuordnung mit Auffang.
+// Die DOM-Hydrierung selbst prüft e2e/kanban-data.spec.ts im echten Browser.
+// LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
+// Schicht-Umzug 2026-07-15: die allgemeinen Helfer wohnen jetzt in
+// src/softengine/ — nur die Importpfade sind neu, jede Aussage unverändert.
 
 import { describe, expect, it } from 'vitest'
 // formatNowDate ist mit Z2 nach core/data/relations gezogen (zweiter
-// Konsument seAktionen) — der Testfall selbst ist unveraendert.
+// Konsument seAktionen) — der Testfall selbst ist unverändert.
 import { formatNowDate } from '../../core/data/relations'
 import {
-  columnIndexFor,
   findRuntimeDataSource,
-  findRuntimeRelation,
   getField,
   messagePayload,
   payloadDaten,
   rowsFor,
   setField,
-} from './seRuntime'
+} from '../../softengine/data'
+import { findRuntimeRelation } from '../../softengine/relations'
+import { columnIndexFor } from './seRuntime'
 
 // Kap. 5.4: die exportierte Maske traegt ihre Quellen-Definitionen selbst
 // (var FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.

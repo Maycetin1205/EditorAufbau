@@ -94,14 +94,15 @@ add_repo an die Session hängen).
      Platzhalter-Position über gemeinsame Innenabstands-Variablen statt
      Magic Numbers, Text-Template zusammengezogen, „Text …"-Griff auch
      für geleerte Ankreuzfeld-Beschriftung.
-  2. **SoftEngine-Schicht herausziehen, verhaltensgleich:** aus
-     `blocks/kanban/seRuntime.ts` nach `src/softengine/` — `bridge.ts`
-     (Anmeldung, Daten-Push, Diagnose), `data.ts` (getField/setField/
-     rowsFor/Quellen), `relations.ts` (Vorlagen, PUT). Einzige
-     strukturelle Naht: der Abo-Punkt für Daten-Pushs. KEINE neuen
-     Funktionen im selben Paket. Abhängigkeitsregel: Bausteine importieren
-     die Schicht — die Schicht kennt NIE einen Baustein.
-     Verschieben → Tests grün → Bündel neu bauen.
+  2. ✅ **SoftEngine-Schicht herausgezogen (erledigt 2026-07-15),
+     verhaltensgleich:** `src/softengine/` — `bridge.ts` (Anmeldung,
+     Daten-Push, Diagnose, Abo-Punkt `onSeDaten`), `data.ts` (getField/
+     setField/rowsFor/Quellen), `relations.ts` (Vorlagen, PUT; die
+     GET-Warteschlange zieht mit Schritt 3 hier ein). Kanban-seRuntime
+     enthält nur noch Kanban (Hydrierung, Spaltenwahl, Karten-Drag) und
+     hört als erster Zuhörer auf die Klingel. Abhängigkeitsregel gilt:
+     Bausteine importieren die Schicht — die Schicht kennt NIE einen
+     Baustein. Keine neuen Funktionen im Paket; Tests unverändert grün.
   3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
      seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern).
   4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
