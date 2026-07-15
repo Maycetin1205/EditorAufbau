@@ -58,7 +58,7 @@ export interface DataSource {
   // SoftEngine-Tabellen-ID, z. B. 'IDBID0001' — NUR bei kind 'idb'
   // (Stammtabellen haben feste IDs, siehe tableIdFor).
   idbId?: string
-  // Feldcode der Satznummer (pindex) — braucht der Schreibweg (Kap. 5.3b):
+  // Feldcode der Datensatz-Nummer (pindex) — braucht der Schreibweg (Kap. 5.3b):
   // PUT_RELATION adressiert den Satz über diese Nummer. Kein Anzeige-Feld.
   indexField?: string
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
@@ -122,12 +122,13 @@ export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
 
 // ---------- Pure Helfer für das Eingabe-Formular (Kap. 5.4b) ----------
 // Regel Technikwert ≠ Anzeigename: der Bediener gibt Klarname + Position +
-// Länge bzw. eine Tabellennummer ein — die Technikwerte ('pos_len',
-// 'IDBIDnnnn') entstehen daraus unsichtbar. Ungültige Eingaben ergeben ''
-// (das Formular zeigt dann einen Fehler, es wird nie geraten).
+// Länge bzw. die IDB-ID im SoftEngine-Format ('ID0004') ein — die
+// Technikwerte ('pos_len', 'IDBIDnnnn') entstehen daraus unsichtbar.
+// Ungültige Eingaben ergeben '' (das Formular zeigt dann einen Fehler,
+// es wird nie geraten).
 
 // Position + Länge -> Feldcode: ('193', '30') -> '193_30'. Position darf 0
-// sein (Satznummer '0_10'), Länge muss mindestens 1 sein.
+// sein (Datensatz-Nummer '0_10'), Länge muss mindestens 1 sein.
 export function fieldCode(pos: string, len: string): string {
   const p = pos.trim()
   const l = len.trim()
@@ -135,16 +136,17 @@ export function fieldCode(pos: string, len: string): string {
   return `${p}_${l}`
 }
 
-// Tabellennummer -> IDB-ID: '7' -> 'IDBID0007' (SoftEngine-Format IDBIDnnnn).
-export function idbIdFromNumber(nr: string): string {
-  const n = nr.trim()
-  return /^\d{1,4}$/.test(n) ? `IDBID${n.padStart(4, '0')}` : ''
+// IDB-ID-Eingabe -> Technikwert: 'ID0004' (auch 'IDBID0004' oder klein
+// geschrieben, Ziffern werden auf 4 Stellen aufgefüllt) -> 'IDBID0004'.
+export function idbIdFromInput(raw: string): string {
+  const m = /^(?:IDB)?ID(\d{1,4})$/i.exec(raw.trim())
+  return m ? `IDBID${m[1].padStart(4, '0')}` : ''
 }
 
-// Rückweg fürs Bearbeiten: 'IDBID0007' -> '7'; alles andere -> ''.
-export function numberFromIdbId(idbId: string | undefined): string {
-  const m = /^IDBID(\d{4})$/.exec(idbId ?? '')
-  return m ? String(Number(m[1])) : ''
+// Rückweg fürs Bearbeiten/Anzeigen: 'IDBID0004' -> 'ID0004'; sonst ''.
+export function idbIdAnzeige(idbId: string | undefined): string {
+  const m = /^IDB(ID\d{4})$/.exec(idbId ?? '')
+  return m ? m[1] : ''
 }
 
 // Baut aus rohen (evtl. kaputten) localStorage-Daten eine saubere

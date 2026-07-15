@@ -30,10 +30,10 @@ export const RELATION_VERBS: readonly RelationVerb[] = [
 // zusätzlich beliebige eigene Platzhalter wie {GJ} oder {BELART} enthalten;
 // deren Wertquelle wird erst beim Aktionsschritt zugeordnet.
 //  FELD_POS/FELD_LEN  Position/Länge des Ziel-Felds (Feldcode gesplittet)
-//  PINDEX             Satznummer des betroffenen Satzes
-//  SELKEY             Satznummer der Auswahl (füllt erst Kap. 8 — bis dahin
-//                     liefert kein Konsument einen Wert, Auflösung ergibt '')
-//  DROP_PINDEX        Satznummer der gezogenen Karte (Kanban-Drop)
+//  PINDEX             Nummer des betroffenen Datensatzes
+//  SELKEY             Nummer des gewählten Datensatzes (füllt erst Kap. 8 —
+//                     bis dahin liefert kein Konsument einen Wert, Auflösung ergibt '')
+//  DROP_PINDEX        Nummer der gezogenen Karte (Kanban-Drop)
 //  RELID              Relations-ID der Tabelle OHNE 'IDB'-Präfix
 //  VALUE              der zu schreibende / auslösende Wert
 //  NOW_DATE           heutiges Datum (füllt der Konsument, z. B. seRuntime)

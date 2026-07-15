@@ -38,10 +38,9 @@ interface StepFormProps {
   onClose: () => void
 }
 
-const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({
-  value,
-  label: value === 'PINDEX' ? 'Satznummer' : value === 'VALUE' ? 'Ereigniswert' : 'Heutiges Datum',
-}))
+// Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
+// (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen).
+const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({ value, label: value }))
 
 function BindingValue({
   binding,

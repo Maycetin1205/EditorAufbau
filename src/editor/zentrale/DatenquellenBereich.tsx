@@ -1,7 +1,7 @@
 // DatenquellenBereich — Master-Detail für die Datenquellen-Bibliothek
 // (Gerüst 2026-07-15, ersetzt die frühere schmale DataSourceList).
 // Links die Vorlagen mit Art-Etikett und Verwendungs-Zähler, rechts das
-// Detail: Felder, Satznummer, „Verwendung in dieser Maske". Bearbeiten
+// Detail: Felder, „Verwendung in dieser Maske". Bearbeiten
 // läuft inline im Detail (FormularKarte) — kein Modal im Modal.
 // Löschen fragt nach (Bedienlogik 5), mit deutlicher Warnung, wenn die
 // Quelle in der Maske benutzt wird (Registry-getrieben, kein `if type===`).
@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { Database, Plus } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import type { DataSource } from '../../core/data/dataSources'
+import { idbIdAnzeige, type DataSource } from '../../core/data/dataSources'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { DataSourceForm } from './DataSourceForm'
@@ -105,9 +105,9 @@ export function DatenquellenBereich() {
               <h3 className="text-sm font-semibold">{auswahl.name}</h3>
               <p className="text-muted-foreground">
                 {KIND_LABELS[auswahl.kind]}
-                {auswahl.indexField
-                  ? ' · mit Satznummer'
-                  : ' · ohne Satznummer'}
+                {auswahl.kind === 'idb' && idbIdAnzeige(auswahl.idbId) !== ''
+                  ? ` · ${idbIdAnzeige(auswahl.idbId)}`
+                  : ''}
               </p>
             </div>
 

@@ -1,8 +1,13 @@
 // DataSourceForm
 // Kap. 5.4b: Anlegen/Bearbeiten einer Datenquellen-Vorlage. Der Bediener
-// gibt NUR Klarnamen + Positionen/Längen ein — die Technikwerte (Feldcode
-// 'pos_len', Tabellen-ID 'IDBIDnnnn') entstehen unsichtbar (Regel
-// Technikwert ≠ Anzeigename; pure Helfer in dataSources.ts).
+// gibt Klarnamen + Positionen/Längen und die IDB-ID im SoftEngine-Format
+// ('ID0004') ein — der Technikwert ('IDBID0004', Feldcode 'pos_len')
+// entsteht unsichtbar (pure Helfer in dataSources.ts).
+// KEIN eigenes Formularfeld für die Datensatz-Nummer (Nutzer-Entscheidung
+// 2026-07-15): Felder pflegt allein die „+ Feld"-Liste. Der Schreibweg-
+// Technikwert indexField bleibt unsichtbar — Bestand behält seinen Wert,
+// neue Quellen bekommen das Terminplaner-Muster '0_10' (die bisherige
+// Vorbelegung, nur ohne Formularfeld).
 //
 // Beim Bearbeiten bleibt die id der Vorlage stabil (angehängte Blöcke
 // behalten ihre Quelle) — das erledigt dataSourceStore.update.
@@ -16,8 +21,8 @@ import { Field } from '@/ui/molecules/field'
 import {
   DATA_SOURCE_KINDS,
   fieldCode,
-  idbIdFromNumber,
-  numberFromIdbId,
+  idbIdAnzeige,
+  idbIdFromInput,
   type DataSource,
   type DataSourceField,
   type DataSourceKind,
@@ -69,12 +74,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const store = useDataSources()
   const [name, setName] = useState(source?.name ?? '')
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
-  const [idbNummer, setIdbNummer] = useState(numberFromIdbId(source?.idbId))
-  const indexPl = splitFieldCode(source?.indexField ?? '')
-  // Satznummer (pindex): braucht der Schreibweg (Kap. 5.3b). Bei neuen
-  // IDB-Quellen sinnvoll vorbelegt ('0_10' wie der Terminplaner), änderbar.
-  const [indexPos, setIndexPos] = useState(source ? (indexPl?.pos ?? '') : '0')
-  const [indexLen, setIndexLen] = useState(source ? (indexPl?.len ?? '') : '10')
+  const [idbEingabe, setIdbEingabe] = useState(idbIdAnzeige(source?.idbId))
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
       ? source.fields.map(zeileFromField)
@@ -89,15 +89,9 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // ---------- Validierung (Fehlertexte '' = gültig) ----------
   const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
   const idbFehler =
-    kind === 'idb' && idbIdFromNumber(idbNummer) === ''
-      ? 'Tabellennummer fehlt (1–4 Ziffern, z. B. 1).'
+    kind === 'idb' && idbIdFromInput(idbEingabe) === ''
+      ? 'IDB-ID fehlt (z. B. ID0001).'
       : ''
-  const indexFehler =
-    indexPos.trim() === '' && indexLen.trim() === ''
-      ? '' // Satznummer ist optional (Quelle ist dann nur lesbar)
-      : fieldCode(indexPos, indexLen) === ''
-        ? 'Position und Länge als Zahlen angeben — oder beide leer lassen.'
-        : ''
   const zeilenFehler = zeilen.map((z) => {
     if (z.label.trim() === '') return 'Klarname fehlt.'
     if (FELDCODE.test(z.label.trim())) return 'Klarname darf kein Feldcode sein.'
@@ -108,7 +102,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
     ? 'Zwei Felder haben dieselbe Position + Länge.'
     : ''
-  const alleFehler = [nameFehler, idbFehler, indexFehler, doppeltFehler, ...zeilenFehler]
+  const alleFehler = [nameFehler, idbFehler, doppeltFehler, ...zeilenFehler]
 
   function speichern() {
     if (alleFehler.some((f) => f !== '')) {
@@ -118,10 +112,12 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     const daten: Omit<DataSource, 'id'> = {
       name: name.trim(),
       kind,
-      ...(kind === 'idb' ? { idbId: idbIdFromNumber(idbNummer) } : {}),
-      ...(fieldCode(indexPos, indexLen) !== ''
-        ? { indexField: fieldCode(indexPos, indexLen) }
-        : {}),
+      ...(kind === 'idb' ? { idbId: idbIdFromInput(idbEingabe) } : {}),
+      // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
+      // bleibt, neue Quellen bekommen '0_10'.
+      ...(source
+        ? (source.indexField ? { indexField: source.indexField } : {})
+        : { indexField: '0_10' }),
       fields: zeilen.map((z) => ({
         code: zeilenCode(z),
         label: z.label.trim(),
@@ -148,54 +144,24 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
         <SelectControl
           label="Art"
-          description="Woher die Daten kommen — bestimmt, wie die Maske die Tabelle anspricht."
           value={kind}
           options={DATA_SOURCE_KINDS.map((k) => ({ value: k, label: KIND_LABELS[k] }))}
           onChange={(v) => setKind(v as DataSourceKind)}
         />
 
         {kind === 'idb' && (
-          <Field
-            label="Tabellennummer"
-            description="Nummer der IDB-Tabelle in Ihrer Installation (z. B. 1)."
-            error={zeigeFehler ? idbFehler : ''}
-          >
+          <Field label="IDB-ID" error={zeigeFehler ? idbFehler : ''}>
             {(f) => (
               <TextInput
                 {...f}
-                value={idbNummer}
-                placeholder="z. B. 1"
+                value={idbEingabe}
+                placeholder="z. B. ID0001"
                 className="w-28"
-                onChange={(e) => setIdbNummer(e.target.value)}
+                onChange={(e) => setIdbEingabe(e.target.value)}
               />
             )}
           </Field>
         )}
-
-        <Field
-          label="Satznummer (Position / Länge)"
-          description="Wo die Satznummer im Datensatz steht — nötig, damit die Maske Werte zurückschreiben kann. Leer = nur lesen."
-          error={zeigeFehler ? indexFehler : ''}
-        >
-          {(f) => (
-            <div className="flex gap-2">
-              <TextInput
-                {...f}
-                value={indexPos}
-                placeholder="Position"
-                className="w-24"
-                onChange={(e) => setIndexPos(e.target.value)}
-              />
-              <TextInput
-                aria-label="Satznummer Länge"
-                value={indexLen}
-                placeholder="Länge"
-                className="w-24"
-                onChange={(e) => setIndexLen(e.target.value)}
-              />
-            </div>
-          )}
-        </Field>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">

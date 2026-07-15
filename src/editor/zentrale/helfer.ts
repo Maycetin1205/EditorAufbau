@@ -34,9 +34,9 @@ export const VERB_KURZ: Record<RelationTemplate['verb'], string> = {
 export const PLATZHALTER_KLARTEXT: Record<string, string> = {
   FELD_POS: 'Feld-Position (aus dem gebundenen Feld)',
   FELD_LEN: 'Feld-Länge (aus dem gebundenen Feld)',
-  PINDEX: 'Satznummer der Zeile',
+  PINDEX: 'Nummer des Datensatzes',
   SELKEY: 'Schlüssel der gewählten Zeile',
-  DROP_PINDEX: 'Satznummer der Ziel-Zeile beim Ablegen',
+  DROP_PINDEX: 'Nummer des Ziel-Datensatzes beim Ablegen',
   RELID: 'Tabellen-ID der Datenquelle (ohne IDB-Präfix)',
   VALUE: 'Neuer Wert (z. B. Titel der Zielspalte)',
   NOW_DATE: 'Heutiges Datum',

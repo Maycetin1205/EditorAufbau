@@ -145,7 +145,7 @@ function hydrate(board: HTMLElement): void {
         (card as unknown as Record<string, unknown>)[spot.prop] = getField(row, code)
       }
     }
-    // Schreibweg (5.3b): nur Karten mit Satznummer sind ziehbar. Ohne
+    // Schreibweg (5.3b): nur Karten mit Datensatz-Nummer sind ziehbar. Ohne
     // indexField der Quelle bleibt das Board reines Lesen (wie 5.3a).
     const pindex = getField(row, source.indexField)
     if (pindex !== '') {
@@ -164,7 +164,7 @@ function hydrate(board: HTMLElement): void {
 // connectBoard, und Editor-Boards (data-ff-editor) melden sich dort nie an —
 // die Canvas-Drag-Logik des Editors bleibt unberührt.
 
-// Zeile + Satznummer je Daten-Karte (WeakMap: lebt und stirbt mit der Karte).
+// Zeile + Datensatz-Nummer je Daten-Karte (WeakMap: lebt und stirbt mit der Karte).
 const cardData = new WeakMap<HTMLElement, { row: unknown; pindex: string }>()
 // Die gerade gezogene Karte — ein Drag zur Zeit (Browser-Modell).
 let dragged: { card: HTMLElement; board: HTMLElement } | null = null
@@ -213,7 +213,7 @@ function handleDrop(board: HTMLElement, column: HTMLElement): void {
   setField(data.row, statusField, targetValue)
   hydrate(board)
   // Z2: Aktionskette „Karte verschoben" NACH dem erfolgreichen
-  // Zurückschreiben — {PINDEX} = Satznummer der gezogenen Karte,
+  // Zurückschreiben — {PINDEX} = Nummer der gezogenen Karte,
   // {VALUE} = der neue Spaltenwert.
   void runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
 }
@@ -222,7 +222,7 @@ function wireDrag(board: HTMLElement): void {
   if (wiredBoards.has(board)) return
   wiredBoards.add(board)
   // Z2: Aktionskette „Karte angeklickt" — nur echte Datenkarten mit
-  // Satznummer lösen aus (dieselbe Regel wie das Ziehen: cardData).
+  // Datensatz-Nummer lösen aus (dieselbe Regel wie das Ziehen: cardData).
   board.addEventListener('click', (e) => {
     const card = (e.composedPath().find(
       (el) => el instanceof HTMLElement && cardData.has(el),
