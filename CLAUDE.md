@@ -106,11 +106,12 @@ add_repo an die Session hängen).
   2b. ✅ **Zentrale-Gerüst (eingeschoben + erledigt 2026-07-15,
      Nutzer-Entscheidung: kein neues Feature mehr in die alte Steuerung):**
      Steuerung neu als Master-Detail nach der Demo-Vorlage — Bereiche
-     Übersicht | Datenquellen | Relationen | Aktionen; Bearbeiten inline
+     Datenquellen | Relationen | Aktionen; Bearbeiten inline
      (FormularKarte statt Modal im Modal, Escape-Schichtung erhalten);
      Detail zeigt Felder/Parameter mit Klartext-Bedeutung, Syntaxzeile
-     und „Verwendung in dieser Maske"; Übersicht = Kacheln + „Zu
-     erledigen" aus der VORHANDENEN Export-Vorprüfung mit Sprung.
+     und „Verwendung in dieser Maske". Die anfängliche Übersicht mit Kacheln
+     und „Zu erledigen" wurde auf Nutzer-Entscheidung wieder restlos entfernt;
+     die Steuerung öffnet direkt mit Datenquellen.
      Alte DataSourceList/RelationList gelöscht (kein toter Code).
      Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT der
      Selektions-Funktion; tiefe Zentrale-Funktionen (Syntax-Import,

@@ -1,6 +1,6 @@
 // Kommandozentrale (Z1; Gerüst-Neuschnitt 2026-07-15 nach der abgenommenen
 // Demo-Vorlage): der EINE übersichtliche Ort für alles Verdrahtete der
-// Maske. Vier Bereiche — Übersicht | Datenquellen | Relationen | Aktionen —
+// Maske. Drei Bereiche — Datenquellen | Relationen | Aktionen —
 // als Master-Detail, Bearbeiten inline im Detail (kein Modal im Modal).
 // Der Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT der
 // Selektions-Funktion (kein leerer Platzhalter-Bereich).
@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Database, LayoutDashboard, Link2, ListChecks, X } from 'lucide-react'
+import { Database, Link2, ListChecks, X } from 'lucide-react'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { ROOT_ID } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
@@ -25,17 +25,17 @@ import { useRelations } from '../../state/useRelations'
 import { AktionenBereich } from './AktionenBereich'
 import { DatenquellenBereich } from './DatenquellenBereich'
 import { RelationenBereich } from './RelationenBereich'
-import { Uebersicht, type Bereich, type UebersichtZaehler } from './Uebersicht'
+
+type Bereich = 'datenquellen' | 'relationen' | 'aktionen'
 
 const BEREICHE: ReadonlyArray<{ key: Bereich; name: string; icon: typeof ListChecks }> = [
-  { key: 'uebersicht', name: 'Übersicht', icon: LayoutDashboard },
   { key: 'datenquellen', name: 'Datenquellen', icon: Database },
   { key: 'relationen', name: 'Relationen', icon: Link2 },
   { key: 'aktionen', name: 'Aktionen', icon: ListChecks },
 ]
 
 export function Kommandozentrale({ onClose }: { onClose: () => void }) {
-  const [bereich, setBereich] = useState<Bereich>('uebersicht')
+  const [bereich, setBereich] = useState<Bereich>('datenquellen')
   const ed = useEditor()
   const sources = useDataSources()
   const relations = useRelations()
@@ -48,43 +48,32 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  // Die VORHANDENE Export-Vorprüfung speist Übersicht + Warn-Punkte in der
-  // Navigation — dieselben Meldungen, die sonst erst beim Export erscheinen.
+  // Die VORHANDENE Export-Vorprüfung speist die Warn-Punkte in der Navigation
+  // — dieselben Meldungen, die sonst erst beim Export erscheinen.
   const probleme = preflightMask(ed.tree, sources.list)
   const warnt: Record<Bereich, boolean> = {
-    uebersicht: probleme.length > 0,
     datenquellen: probleme.some((p) => p.name === 'Datenquelle fehlt'),
     relationen: false,
     aktionen: probleme.some((p) => p.name === 'Aktion unvollstaendig'),
   }
 
-  // Zähler für Navigation + Übersicht (Bausteine mit Ereignissen in
-  // Baumreihenfolge; Schritte über alle Ketten summiert).
+  // Zähler für die Navigation (Bausteine mit Ereignissen in Baumreihenfolge).
   let aktionenBausteine = 0
-  let aktionenSchritte = 0
   const zaehle = (id: string): void => {
     for (const cid of ed.tree[id]?.childIds ?? []) {
       const node = ed.tree[cid]
       if (!node) continue
       if (getBlockDefinition(node.type)?.blockEvents?.length) {
         aktionenBausteine += 1
-        for (const steps of Object.values(node.events ?? {})) aktionenSchritte += steps.length
       }
       zaehle(cid)
     }
   }
   zaehle(ROOT_ID)
 
-  const zaehler: UebersichtZaehler = {
-    datenquellen: sources.list.length,
-    relationen: relations.list.length,
-    aktionenBausteine,
-    aktionenSchritte,
-  }
   const navZahl: Record<Bereich, string> = {
-    uebersicht: probleme.length > 0 ? String(probleme.length) : '',
-    datenquellen: String(zaehler.datenquellen),
-    relationen: String(zaehler.relationen),
+    datenquellen: String(sources.list.length),
+    relationen: String(relations.list.length),
     aktionen: String(aktionenBausteine),
   }
 
@@ -136,11 +125,6 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
               </button>
             ))}
           </nav>
-          {bereich === 'uebersicht' && (
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <Uebersicht zaehler={zaehler} probleme={probleme} oeffne={setBereich} />
-            </div>
-          )}
           {bereich === 'datenquellen' && <DatenquellenBereich />}
           {bereich === 'relationen' && <RelationenBereich />}
           {bereich === 'aktionen' && <AktionenBereich />}
