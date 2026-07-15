@@ -1,6 +1,6 @@
 // DataSourceList
 // Kap. 5.1/5.4: die Datenquellen-Bibliothek neben der Baustein-Bibliothek
-// (CLAUDE.md Kap. 5). Seit 5.4b mit Anlegen/Bearbeiten/Löschen — die
+// (Kap. 5). Seit 5.4b mit Anlegen/Bearbeiten/Löschen — die
 // Vorlagen gehören dem Bediener (DataSourceStore). Sichtbar sind nur
 // Klarnamen, Technikwerte (IDB-ID, Feldcodes) bleiben unsichtbar.
 // Löschen fragt nach (Bedienlogik 5), mit deutlicher Warnung, wenn die

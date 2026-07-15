@@ -1,6 +1,6 @@
 // RelationList
 // Kap. 5.5: die Relation-Vorlagen-Bibliothek neben der Baustein- und der
-// Datenquellen-Bibliothek (CLAUDE.md Kap. 5.5). Anlegen/Bearbeiten/Löschen —
+// Datenquellen-Bibliothek (Kap. 5.5). Anlegen/Bearbeiten/Löschen —
 // die Vorlagen gehören dem Bediener (RelationStore). Sichtbar sind nur
 // Anzeigenamen, Technikwerte (Verb-Kürzel als Kontext, NR) begleiten sie.
 // Löschen fragt nach (Bedienlogik 5), mit deutlicher Warnung, wenn die

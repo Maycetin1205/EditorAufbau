@@ -9,6 +9,7 @@
 // lebt im BlockHost über der Maske und erscheint nie im Export.
 
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import type { DataSourceField } from '../../core/data/dataSources'
 
 interface FieldPickerProps {
@@ -19,7 +20,9 @@ interface FieldPickerProps {
   fields: readonly DataSourceField[]
   // Aktuell gebundener Feldcode ('' = ungebunden).
   current: string
-  // Position relativ zum BlockHost-Wrapper.
+  // Position in VIEWPORT-Koordinaten: der Picker haengt per Portal als
+  // fixiertes Overlay am body — kein Scroll-/Overflow-Container (z. B.
+  // der Kanban-Spaltenrumpf) kann ihn einfangen oder abschneiden.
   top: number
   left: number
   // code = Feldcode oder '' für "nicht gebunden".
@@ -41,6 +44,8 @@ export function FieldPicker({
 
   // Außenklick + Escape schließen. pointerdown (nicht click), damit auch
   // ein Klick, der woanders eine Auswahl startet, sofort schließt.
+  // Scrollen außerhalb schließt ebenfalls: der Picker sitzt fixiert im
+  // Viewport — beim Scrollen wanderte die Stelle sonst unter ihm weg.
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
@@ -48,11 +53,17 @@ export function FieldPicker({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
+    const onScroll = (e: Event) => {
+      if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return
+      onClose()
+    }
     document.addEventListener('pointerdown', onPointerDown, true)
     document.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('scroll', onScroll, true)
     return () => {
       document.removeEventListener('pointerdown', onPointerDown, true)
       document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('scroll', onScroll, true)
     }
   }, [onClose])
 
@@ -72,7 +83,7 @@ export function FieldPicker({
     </button>
   )
 
-  return (
+  return createPortal(
     <div
       ref={ref}
       role="dialog"
@@ -85,7 +96,7 @@ export function FieldPicker({
         e.preventDefault()
         e.stopPropagation()
       }}
-      style={{ position: 'absolute', top, left, zIndex: 30 }}
+      style={{ position: 'fixed', top, left, zIndex: 50 }}
       className="max-h-64 w-60 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
     >
       <p className="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -93,6 +104,7 @@ export function FieldPicker({
       </p>
       {eintrag('', '— nicht gebunden —')}
       {fields.map((f) => eintrag(f.code, f.label))}
-    </div>
+    </div>,
+    document.body,
   )
 }

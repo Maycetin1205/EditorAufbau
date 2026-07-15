@@ -1,6 +1,6 @@
 // relations
 // Kap. 5.5 (Fundament seit 5.3b): GET/PUT-Relations sind BENUTZERDEFINIERTE
-// VORLAGEN — Daten, kein Code (CLAUDE.md 5.3b (d): NR '174' NICHT
+// VORLAGEN — Daten, kein Code (5.3b (d): NR '174' NICHT
 // festverdrahten; es gibt >1000 Relations, je Installation individuell).
 // Eine Vorlage beschreibt Verb, NR und die Parameter-Syntax mit
 // PLATZHALTERN, die zur Laufzeit gefüllt werden. Der Standard-PUT (NR 174)
@@ -25,7 +25,7 @@ export const RELATION_VERBS: readonly RelationVerb[] = [
   'GET_RELATION', 'PUT_RELATION', 'PUTADD_RELATION',
 ]
 
-// Das PLATZHALTER-Vokabular (CLAUDE.md 5.5) — die eine Quelle für
+// Das PLATZHALTER-Vokabular (5.5) — die eine Quelle für
 // Formular-Validierung, Hilfe-Text und Laufzeit-Kontext:
 //  FELD_POS/FELD_LEN  Position/Länge des Ziel-Felds (Feldcode gesplittet)
 //  PINDEX             Satznummer des betroffenen Satzes

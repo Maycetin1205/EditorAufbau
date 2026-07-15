@@ -15,7 +15,7 @@ import { css, html, type TemplateResult } from 'lit'
 import { BasicBlock } from '../../core/blocks/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
-import type { FlowDirection } from '../../core/blocks/flowLayout'
+import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -31,6 +31,10 @@ export class KanbanBlock extends BasicBlock {
   static readonly acceptsChildren = true
   static readonly allowedChildTypes = [SPALTE]
   static readonly childDirection: FlowDirection = 'row'
+  // Ein Board ist die Hauptfläche seiner Maske: immer volle verfügbare
+  // Breite, ohne versehentlich exportierbare Pixelbreite.
+  static readonly lockedWidth: FlowWidth = 'fill'
+  static readonly resizableWidth = false
   static readonly containerHint = false
   static readonly addChildButton = { label: 'Spalte', childType: SPALTE }
   // P1.1 (ersetzt den Vorlagen-Kasten aus S3): die ERSTE Karte des Boards
@@ -40,8 +44,8 @@ export class KanbanBlock extends BasicBlock {
   static readonly templateChild = { type: CardBlock.blockType, label: 'Muster' }
   // P1.3: das Board hat als einziger Block eine einstellbare HÖHE
   // (Registry-Konzept resizableHeight + height in den defaultProps).
-  // Fest = Karten scrollen senkrecht IM Spaltenrumpf (Empfang-Vorbild),
-  // Automatisch = Board wächst mit der höchsten Spalte.
+  // Standard fill = verbleibende Maskenhöhe (Empfang-Vorbild). Ziehen setzt
+  // bewusst eine feste Pixelhöhe; Doppelklick kehrt zu fill zurück.
   static readonly resizableHeight = true
   // Kap. 5.1: an das Board lässt sich eine Datenquelle hängen (Inspector-
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
@@ -61,7 +65,7 @@ export class KanbanBlock extends BasicBlock {
   // mitgelieferte Standard-PUT-Vorlage. Alle Defaults '' bzw. fester
   // Technikwert -> überleben Persistenz, reisen als Attribut mit.
   static readonly defaultProps = {
-    width: 'fill', height: 'auto' as const,
+    width: 'fill', height: 'fill' as const,
     source: '', statusField: '', putRelation: 'standard-put',
   }
   static readonly bindingRoute = {

@@ -46,7 +46,16 @@ describe('exportMask', () => {
   it('Breite wirkt als Flex-Item-Style (dieselbe flowLayout-Quelle)', () => {
     const { html } = exportMask(demoTree())
     expect(html).toContain('style="width:240px;flex-shrink:0"') // width fest
-    expect(html).toContain('style="align-self:stretch"')        // fill in Spalte
+    expect(html).toContain('align-self:stretch')                 // fill in Spalte
+  })
+
+  it('exportiert eine Vollbildhülle und fill als verbleibende Höhe', () => {
+    const tree = demoTree()
+    tree.c1.props.height = 'fill'
+    const { html } = exportMask(tree)
+    expect(html).toContain('html, body { width: 100%; height: 100%;')
+    expect(html).toContain('.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto;')
+    expect(html).toContain('flex-grow:1;flex-basis:0;min-height:0')
   })
 
   it('hält die ASCII-Regel: Umlaute werden zu Entities', () => {
@@ -85,7 +94,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-card', 'ff-kanban', 'ff-kanban-spalte']) {
+    for (const tag of ['ff-button', 'ff-card', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Text, Bereich, Infobox,

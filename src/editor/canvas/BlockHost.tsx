@@ -171,13 +171,17 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     return null
   }
 
-  // Picker-Position: direkt unter der Stelle, relativ zum Host-Wrapper
-  // (position:relative — der Absolut-Anker).
-  function pickerPos(spotEl: HTMLElement): { top: number; left: number } | null {
-    const rootRect = rootRef.current?.getBoundingClientRect()
-    if (!rootRect) return null
+  // Picker-Position: direkt unter der Stelle, in VIEWPORT-Koordinaten —
+  // der Picker lebt per Portal als Overlay ueber der Seite (FieldPicker,
+  // position:fixed), damit ihn kein Scroll-/Overflow-Container einfaengt
+  // (der Spaltenrumpf scrollt und schnitt ihn vorher ab). Am Rand wird er
+  // in den sichtbaren Bereich geschoben (Picker-Breite 240px, s. w-60).
+  function pickerPos(spotEl: HTMLElement): { top: number; left: number } {
     const spotRect = spotEl.getBoundingClientRect()
-    return { top: spotRect.bottom - rootRect.top + 4, left: spotRect.left - rootRect.left }
+    return {
+      top: Math.max(8, spotRect.bottom + 4),
+      left: Math.max(8, Math.min(spotRect.left, window.innerWidth - 248)),
+    }
   }
 
   function onClick(e: ReactMouseEvent<HTMLDivElement>) {
@@ -191,7 +195,15 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     const hit = spotAt(e)
     if (!hit) return
     const pos = pickerPos(hit.el)
-    if (!pos) return
+    // GEBUNDENE Stelle: sofort öffnen — auch der Doppelklick führt dort
+    // zum Picker, es gibt keinen Inline-Edit-Konflikt und darum keinen
+    // Grund zu warten (die pauschalen 300 ms fühlten sich träge an).
+    if (bindingCode(blockRef.current.props, hit.spot) !== '') {
+      setPicker({ spot: hit.spot, ...pos })
+      return
+    }
+    // UNGEBUNDENE Stelle: kurz warten, damit ein Doppelklick (= Inline-
+    // Edit) den Picker nicht zusätzlich aufreißt.
     pickerTimer.current = setTimeout(() => {
       pickerTimer.current = null
       if (editor.selectedId === blockRef.current.id) {
@@ -208,8 +220,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     const hit = spotAt(e)
     if (!hit || bindingCode(blockRef.current.props, hit.spot) === '') return
     e.stopPropagation()
-    const pos = pickerPos(hit.el)
-    if (pos) setPicker({ spot: hit.spot, ...pos })
+    setPicker({ spot: hit.spot, ...pickerPos(hit.el) })
   }
 
   // Breite/Höhe ziehen (Anfasser rechts bzw. unten): eine Geste = eine
@@ -426,13 +437,13 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           onPointerDown={(e) => startResize(e, 'height', 120)}
           onDragStart={(e) => e.preventDefault()}
           onDoubleClick={(e) => {
-            // Zurück zu "automatisch" direkt am Anfasser — die Höhe hat
-            // BEWUSST kein Inspector-Feld (Bedienlogik 6: nur was sich
-            // nicht zeigen lässt, steht im Inspector).
+            // Zurück zum Block-Standard direkt am Anfasser — die Höhe hat
+            // BEWUSST kein Inspector-Feld (Kanban-Standard = fill).
             e.stopPropagation()
-            editor.updateProperty(blockRef.current.id, 'height', 'auto')
+            const standard = getBlockDefinition(blockRef.current.type)?.defaultProps.height ?? 'auto'
+            editor.updateProperty(blockRef.current.id, 'height', standard)
           }}
-          title="Höhe ziehen · Doppelklick: automatisch"
+          title="Höhe ziehen · Doppelklick: Standard"
           style={{
             position: 'absolute',
             bottom: -4,

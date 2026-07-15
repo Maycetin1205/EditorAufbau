@@ -174,7 +174,7 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
         opacity: dnd.dragId === node.id ? 0.4 : 1,
         // Breite + Höhe im Fluss: dieselbe Logik, die der Export benutzt.
         ...flowItemStyle(parseFlowWidth(node.props.width), listDirection, def?.lockedWidth),
-        ...flowItemHeightStyle(parseFlowHeight(node.props.height)),
+        ...flowItemHeightStyle(parseFlowHeight(node.props.height), listDirection),
       }}
     >
       <BlockHost
@@ -234,17 +234,18 @@ export function Canvas() {
     <DndContext.Provider value={dnd}>
       <div
         onClick={() => ed.selectBlock(null)}
-        className="relative h-full w-full overflow-auto rounded-lg border border-border bg-card shadow-sm"
+        className="relative h-full w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm"
         style={{ minHeight: 400 }}
       >
         <div
           // Wurzel-Fluss aus ROOT_FLOW — dieselben Werte benutzt der Export.
           // Hintergrund = Masken-Grundfarbe (--se-bg), NICHT Editor-Chrome:
           // die Fläche zeigt die Maske, wie sie exportiert wird (WYSIWYG).
-          className="flex min-h-full flex-col items-start"
+          className="flex h-full min-h-0 flex-col items-start overflow-auto"
           style={{
             gap: ROOT_FLOW.gap,
             padding: ROOT_FLOW.padding,
+            boxSizing: 'border-box',
             background: 'var(--se-bg)',
           }}
           onDragOver={onCanvasDragOver}

@@ -17,9 +17,10 @@ export type FlowWidth = 'auto' | 'fill' | number
 // Höhe (P1.3, opt-in): nur Blöcke mit resizableHeight in der Registry
 // deklarieren eine height-Prop (Kanban: Karten scrollen dann IN der
 // Spalte statt das Board endlos wachsen zu lassen — Empfang-Vorbild).
-//   'auto'  → natürliche Höhe (Default)
+//   'auto'  → natürliche Höhe
+//   'fill'  → verbleibende Höhe des Eltern-Flusses
 //   number  → feste Höhe in px
-export type FlowHeight = 'auto' | number
+export type FlowHeight = 'auto' | 'fill' | number
 
 // Fluss-Richtung der KINDER eines Containers — EINE Quelle für Canvas und
 // Export. Der generische Bereich steuert sie über seine `direction`-Prop;
@@ -50,14 +51,24 @@ export function parseFlowWidth(value: unknown): FlowWidth {
 }
 
 export function parseFlowHeight(value: unknown): FlowHeight {
+  if (value === 'fill') return 'fill'
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
   return 'auto'
 }
 
-// CSS für die feste Höhe eines Blocks — DIESELBE Quelle für den Editor
-// (Canvas-Wrapper) und den Export (style-Attribut am Element). flex-shrink 0
-// hält die Höhe auch in streckenden Spalten-Flüssen.
-export function flowItemHeightStyle(height: FlowHeight): Record<string, string | number> {
+// CSS für die Höhe eines Blocks — DIESELBE Quelle für den Editor
+// (Canvas-Wrapper) und den Export (style-Attribut am Element). In einer
+// Spalte nimmt fill den verbleibenden Platz; in einer Zeile streckt es den
+// Block auf die verfügbare Elternhöhe. Feste Pixelhöhen schrumpfen nicht.
+export function flowItemHeightStyle(
+  height: FlowHeight,
+  parentDirection: FlowDirection,
+): Record<string, string | number> {
+  if (height === 'fill') {
+    return parentDirection === 'column'
+      ? { flexGrow: 1, flexBasis: 0, minHeight: 0 }
+      : { alignSelf: 'stretch', minHeight: 0 }
+  }
   if (typeof height === 'number') {
     return { height: `${height}px`, flexShrink: 0 }
   }

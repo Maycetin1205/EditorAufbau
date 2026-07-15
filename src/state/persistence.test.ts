@@ -200,6 +200,44 @@ describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
   })
 })
 
+describe('Migration (Schema 2: Root-Kanban nutzt die Maskenfläche)', () => {
+  it('setzt alte Pixelmaße einmalig auf volle Breite und verbleibende Höhe', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: {
+          id: 'board',
+          type: 'kanban',
+          props: { width: 1273, height: 836 },
+          parentId: 'root',
+          childIds: [],
+        },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('board')?.props.width).toBe('fill')
+    expect(ed.getNode('board')?.props.height).toBe('fill')
+  })
+
+  it('erhält eine danach bewusst gesetzte feste Höhe', () => {
+    const ed = load({
+      schemaVersion: 2,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: {
+          id: 'board',
+          type: 'kanban',
+          props: { width: 'fill', height: 500 },
+          parentId: 'root',
+          childIds: [],
+        },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('board')?.props.height).toBe(500)
+  })
+})
+
 describe('Migration (altes Flach-Format)', () => {
   it('übernimmt Blöcke aus dem alten Listen-Format, Layout wird verworfen', () => {
     const ed = load({

@@ -13,9 +13,9 @@
 // basisHTML_SND_MSG('START_TOOL', { NR: nr, PARAMS: params }). Werkzeug-
 // Nummern sind je Installation individuell (3003 ist in der Empfang-Maske
 // das Refresh-Werkzeug!) und werden NIE festverdrahtet — der Bediener gibt
-// sie ein (dieselbe Regel wie Relations-NRs, CLAUDE.md 5.3b (d)).
+// sie ein (dieselbe Regel wie Relations-NRs, 5.3b (d)).
 //
-// ZWISCHENSPEICHER (Nutzer-Kernanforderung, CLAUDE.md Z-Programm): jeder
+// ZWISCHENSPEICHER (Nutzer-Kernanforderung, Z-Programm): jeder
 // Schritt traegt ab Tag 1 einen optionalen Ergebnis-Namen (resultKey).
 // „Werkzeug starten" liefert kein Ergebnis — gefuellt und benutzt wird der
 // Zwischenspeicher erst mit „Relation ausfuehren" (Z3, seGetNewIndex-
