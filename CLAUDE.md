@@ -116,10 +116,40 @@ add_repo an die Session hängen).
      Selektions-Funktion; tiefe Zentrale-Funktionen (Syntax-Import,
      IDB-Import, Arten-Katalog, Ampeln über die Vorprüfung hinaus)
      kommen als eigene Pakete, wenn ihre Grundlage existiert.
-  3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
-     seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern). Die
-     Bedienung (Schritt-Typ „Relation ausführen", Ergebnis-Name) landet
-     direkt im neuen Gerüst.
+  3. **Gemeinsame GET/PUT-Logik — ÜBERGEBEN AN CODEX (Nutzer-Entscheidung
+     2026-07-15).** Arbeitsauftrag (vor dem Bau: Plan zeigen, „go"
+     abwarten — die Arbeitsregeln oben gelten unverändert):
+     a) `src/softengine/relations.ts`: GET-Ausführung mit
+        Antwort-Warteschlange. GET-Antworten landen in
+        `SEDATA.Message<N>`; immer nur EINE Anfrage in Flug, Antwort
+        abwarten, dann die nächste (Muster `seGetNewIndex` der
+        Empfang-Referenz — liegt lokal:
+        `behandlung-umbau/empfang/index.basis.source.html`). Die Antwort
+        wird unter dem Ergebnis-Namen des Schritts (`resultKey`) in einem
+        Ketten-Zwischenspeicher abgelegt.
+     b) `src/blocks/shared/seAktionen.ts`: neuer Schritt-Typ „Relation
+        ausführen" — Vorlage über `FF_RELATIONS` auflösen (nie NR
+        festverdrahten); GET wartet auf die Antwort, PUT/PUTADD =
+        fire-and-forget über `sendPut`; FOLGE-Schritte derselben Kette
+        dürfen `{ergebnisName}` als Platzhalter benutzen
+        (Platzhalter-Auflösung erweitern). Ketten-Sperre bleibt.
+     c) Steuerung (Gerüst): StepForm bekommt die Schritt-Art „Relation
+        ausführen" — Vorlagen-Auswahl mit Anzeigenamen; bei GET ein Feld
+        „Ergebnis speichern als"; der AktionenBereich zeigt
+        „speichert als {name}". Preflight blockt Relation-Schritte ohne
+        gewählte/bekannte Vorlage.
+     d) ⚠ FALLE Export: `exportMask` sammelt FF_RELATIONS heute NUR aus
+        kind-'relation'-Props der Bausteine — Relations-Schritte in
+        Aktionsketten MÜSSEN mitgesammelt werden, sonst läuft die Kette
+        in der Maske ins Leere. Gleiches gilt für den Verwendungs-Scan
+        der Relationen-Bibliothek (Löschen-Warnung + „Verwendung in
+        dieser Maske").
+     e) Handwerk: Umbau und neue Funktionen getrennte Commits; Prüfungen
+        einmal gebündelt vor dem Commit; Tests nur innerhalb der vier
+        Wächter-Dateien erweitern; nach Änderungen an Blöcken/softengine
+        `npm run build:runtime` (der Veralten-Wächter fängt Vergessenes);
+        alter Editor `runtime/actions.ts` (executeSteps, step_ref) NUR
+        als Funktionsliste. Danach SE-Echttest durch den Nutzer.
   4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
      Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
   5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
@@ -135,6 +165,17 @@ add_repo an die Session hängen).
   verschiedenen Quellen; bausteinübergreifende Selektion; Avatar-Zuordnung
   ein-/ausblendbar; Datumsanzeige-Baustein; Spaltenbreiten der Tabelle in
   der Maske dauerhaft merken; Sortierung wie Windows (Zahl/Datum/ABC).
+
+## Übergabe-Stand (2026-07-15, Claude → Codex)
+
+Branch `claude/data-binding-architecture-odkwi0` (gepusht, Arbeitsbaum
+sauber) enthält: N1 Formularfeld-Nacharbeiten, SoftEngine-Schicht-Umzug
+(`src/softengine/`), Zentrale-Gerüst (Master-Detail + Inline-Formulare),
+Eingabe-Proportionen-Fix, die drei Klickmodelle in `dashboard/` und diese
+Datei. Auf `main` liegt davon nur das CLAUDE.md. **Ab hier baut Codex**
+(Fahrplan-Schritt 3) — ein Arbeitsbaum = ein Agent: Claude fasst den Code
+nicht an, bis der Nutzer zurückübergibt; Übergaben ausschließlich über
+gepushte Commits.
 
 ## Wichtige Stellen
 
