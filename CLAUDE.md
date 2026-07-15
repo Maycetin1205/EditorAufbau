@@ -86,24 +86,53 @@ add_repo an die Session hängen).
 - **Klickmodelle als Diskussionsgrundlage** (kein Produktcode, Einbau erst
   nach Detail-Besprechung + „go"): `dashboard/kommandozentrale-demo.html`,
   `dashboard/datatable-demo.html`, `dashboard/popup-demo.html`.
-- **Vereinbarter Fahrplan (2026-07-15, Claude + Codex einig; Umbau und
-  neue Funktionen sind IMMER getrennte Pakete):**
+- **Umbau-Fahrplan „Alles fixen" (2026-07-15, Nutzer-Entscheidung nach
+  Code-Gutachten; läuft VOR N1). Jedes Paket: verhaltensgleich, ein
+  Commit, Prüfungen gebündelt davor; SE-Echttests gebündelt (max. zwei):**
+  1. ✅ **U0** CLAUDE.md: diesen Fahrplan eintragen (dieses Paket).
+  2. **U1** Ladefehler sichtbar + Notfallkopie: kaputter Speicherstand
+     wird ERST unter zweitem Schlüssel gesichert (Autosave darf ihn nie
+     überschreiben), dann Klartext-Meldung statt stummem Leerstart.
+     persistence-Wächter bekommt die Testfälle (abgesprochen).
+  3. **U2** Subject auf Set (keine Doppel-Abos, sauberes Abmelden).
+  4. **U3** SoftEngine-Schicht herausziehen (= alter Schritt 2): aus
+     `blocks/kanban/seRuntime.ts` nach `src/softengine/` — `bridge.ts`
+     (Anmeldung, Daten-Push, Diagnose), `data.ts` (getField/setField/
+     rowsFor/Quellen), `relations.ts` (Vorlagen, PUT), `types.ts`;
+     im Kanban bleibt nur `kanbanRuntime.ts` (Hydrierung, Karten-Drag).
+     Einzige strukturelle Naht: der Abo-Punkt für Daten-Pushs. KEINE
+     neuen Funktionen. Bausteine importieren die Schicht — die Schicht
+     kennt NIE einen Baustein. Verschieben → Tests grün → Bündel neu
+     bauen → **SE-Echttest 1 (Nutzer)**.
+  5. **U4** Editor.ts zerlegen: Store-Kern, Baumoperationen, Historie,
+     Persistenz (inkl. U1), Migrationen, Musterkarten-/Schutzregeln —
+     je ein Modul, Außenverhalten identisch.
+  6. **U5** Editor über Providers (React Context) statt globalem
+     Singleton; die drei Import-Stellen stellen um.
+  7. **U6** BlockHost zerlegen: Hooks (Element-Brücke, Bindung/Picker,
+     Größenziehen) + kleine Komponenten (Chrome, Anfasser, Picker).
+     Editor-Hilfen bleiben im Host (Regel 1).
+  8. **U7** Element-Adapter als React↔Lit-Grenze (erzeugen/Props/
+     aufräumen an einer Stelle; Host kennt keine Details mehr).
+  9. **U8** Bindungs-/Export-Verträge explizit: `<prop>Field`-Konvention
+     wird typgeprüfte Registry-Angabe; Editor, softengine-Schicht und
+     Export lesen DIESELBE Definition; Rundlauf-Test. Ziel: Export
+     Byte-identisch (export-Wächter beweist es).
+  10. **U9** Exporter auf neutralen Zwischenbaum + einen Serialisierer
+     (ASCII/LF/Reihenfolge an genau einer Stelle). Ziel: Byte-identisch;
+     nur falls U8/U9 Bytes ändern → **SE-Echttest 2 (Nutzer)**.
+  11. **U10** Rein historische Kommentar-Passagen nach `docs/decisions/`
+     (eine Datei pro Entscheidung); im Code bleibt der gültige Vertrag.
+- **Danach Funktions-Fahrplan (Umbau und neue Funktionen IMMER getrennte
+  Pakete):**
   1. **N1** Formularfeld-Nacharbeiten — nur Darstellung/Bedienung, kein
      GET/PUT (Beschriftungs-Klick schaltet Haken in der Maske,
      Platzhalter-Robustheit, Doppel-Zweig).
-  2. **SoftEngine-Schicht herausziehen, verhaltensgleich:** aus
-     `blocks/kanban/seRuntime.ts` nach `src/softengine/` — `bridge.ts`
-     (Anmeldung, Daten-Push, Diagnose), `data.ts` (getField/setField/
-     rowsFor/Quellen), `relations.ts` (Vorlagen, PUT). Einzige
-     strukturelle Naht: der Abo-Punkt für Daten-Pushs. KEINE neuen
-     Funktionen im selben Paket. Abhängigkeitsregel: Bausteine importieren
-     die Schicht — die Schicht kennt NIE einen Baustein.
-     Verschieben → Tests grün → Bündel neu bauen.
-  3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
+  2. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
      seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern).
-  4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
+  3. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
      Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
-  5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
+  4. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
      Popup-Seiten als normale Block-Bäume; Größe per Anfasser;
      Aktions-Schritte „Popup öffnen/schließen"; Export als inaktive
      Vorlage im selben HTML). Popup-Darstellung + Lebenszyklus bleiben
@@ -124,6 +153,6 @@ add_repo an die Session hängen).
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·
   Runtime-Bündel: `npm run build:runtime` (Veralten-Wächter im export.test!)
 - SE-Laufzeit: `src/blocks/kanban/seRuntime.ts` (Umzug nach
-  `src/softengine/` = Fahrplan-Schritt 2) · `src/blocks/shared/seAktionen.ts`
+  `src/softengine/` = Umbau-Paket U3) · `src/blocks/shared/seAktionen.ts`
 - Design: Masken-Tokens `src/design/masken-tokens.css` (--se-*, kantig,
   Grün) · Editor-UI `src/index.css` (shadcn, hell, Blau) — nie mischen.
