@@ -8,16 +8,13 @@ import { describe, expect, it } from 'vitest'
 // formatNowDate ist mit Z2 nach core/data/relations gezogen (zweiter
 // Konsument seAktionen) — der Testfall selbst ist unveraendert.
 import { formatNowDate } from '../../core/data/relations'
-import {
-  columnIndexFor,
-  findRuntimeDataSource,
-  findRuntimeRelation,
-  getField,
-  messagePayload,
-  payloadDaten,
-  rowsFor,
-  setField,
-} from './seRuntime'
+// U3: die puren Helfer liegen jetzt in der SoftEngine-Schicht (data/
+// relations/bridge); columnIndexFor blieb Board-Logik (kanbanRuntime).
+// Der Waechter selbst ist unveraendert — nur die Import-Pfade zeigen neu.
+import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
+import { findRuntimeRelation } from '../../softengine/relations'
+import { messagePayload, payloadDaten } from '../../softengine/bridge'
+import { columnIndexFor } from './kanbanRuntime'
 
 // Kap. 5.4: die exportierte Maske traegt ihre Quellen-Definitionen selbst
 // (var FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.

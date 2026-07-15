@@ -19,7 +19,7 @@ import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
-import { connectBoard, disconnectBoard } from './seRuntime'
+import { connectBoard, disconnectBoard } from './kanbanRuntime'
 
 const SPALTE = KanbanSpalteBlock.blockType
 
