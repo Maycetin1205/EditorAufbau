@@ -81,7 +81,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
 
   return (
     <FormularKarte title={step ? 'Schritt bearbeiten' : 'Neuer Schritt'} onClose={onClose}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <SelectControl
           label="Schritt-Art"
           description="Was dieser Schritt tut. Weitere Arten folgen."
@@ -143,8 +143,8 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border pt-3">
-          <Button variant="outline" onClick={onClose}>Abbrechen</Button>
-          <Button onClick={speichern}>Speichern</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>Abbrechen</Button>
+          <Button size="sm" onClick={speichern}>Speichern</Button>
         </div>
       </div>
     </FormularKarte>

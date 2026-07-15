@@ -34,7 +34,7 @@ export function FormularKarte({ title, onClose, children }: FormularKarteProps) 
           <X size={16} />
         </IconButton>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-3">{children}</div>
     </div>
   )
 }

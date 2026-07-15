@@ -134,7 +134,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
   return (
     <FormularKarte title={source ? 'Datenquelle bearbeiten' : 'Neue Datenquelle'} onClose={onClose}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <Field label="Anzeigename" error={zeigeFehler ? nameFehler : ''}>
           {(f) => (
             <TextInput
@@ -253,8 +253,8 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border pt-3">
-          <Button variant="outline" onClick={onClose}>Abbrechen</Button>
-          <Button onClick={speichern}>Speichern</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>Abbrechen</Button>
+          <Button size="sm" onClick={speichern}>Speichern</Button>
         </div>
       </div>
     </FormularKarte>
