@@ -6,16 +6,21 @@
 type Listener<T> = (data: T) => void
 
 export class Subject<T = void> {
-  private listeners: Listener<T>[] = []
+  // Set statt Array: gleicher Listener kann sich nicht doppelt anmelden, und
+  // das Abmelden ist ein direktes delete (kein Neuaufbau der ganzen Liste).
+  private listeners = new Set<Listener<T>>()
 
   subscribe(fn: Listener<T>): () => void {
-    this.listeners.push(fn)
+    this.listeners.add(fn)
     return () => {
-      this.listeners = this.listeners.filter((l) => l !== fn)
+      this.listeners.delete(fn)
     }
   }
 
   notify(data: T): void {
-    this.listeners.forEach((fn) => fn(data))
+    // Ueber eine Momentaufnahme laufen: meldet sich ein Listener waehrend des
+    // notify ab (oder ein neuer an), aendert das den laufenden Durchlauf nicht
+    // — dasselbe Verhalten wie die fruehere filter-Kopie beim Array.
+    for (const fn of [...this.listeners]) fn(data)
   }
 }
