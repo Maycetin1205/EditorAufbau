@@ -61,7 +61,7 @@ export function RelationenBereich() {
                 key={r.id}
                 type="button"
                 onClick={() => { setAuswahlId(r.id); setModus('lesen') }}
-                className={`mb-1 w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors ${
+                className={`mb-1 w-full rounded-md border px-2.5 py-1 text-left text-xs transition-colors ${
                   aktiv ? 'border-ring bg-secondary' : 'border-transparent hover:bg-secondary/60'
                 }`}
               >
@@ -77,7 +77,7 @@ export function RelationenBereich() {
           })}
           {store.list.length === 0 && (
             <p className="px-1 py-2 text-xs text-muted-foreground">
-              Noch keine Relationen — oben anlegen.
+              Noch keine Relationen.
             </p>
           )}
         </div>
@@ -90,19 +90,14 @@ export function RelationenBereich() {
           <RelationForm relation={auswahl} onClose={() => setModus('lesen')} />
         )}
         {modus === 'lesen' && !auswahl && (
-          <p className="text-xs text-muted-foreground">
-            Keine Relation gewählt. Eine Relation ist ein Lese- oder
-            Schreibweg Ihrer SoftEngine-Installation — die Zeile dafür
-            bekommen Sie vom SoftEngine-Betreuer.
-          </p>
+          <p className="text-xs text-muted-foreground">Keine Relation gewählt.</p>
         )}
         {modus === 'lesen' && auswahl && (
           <div className="flex flex-col gap-4 text-xs">
             <div>
               <h3 className="text-sm font-semibold">{auswahl.name}</h3>
               <p className="text-muted-foreground">
-                {VERB_LABELS[auswahl.verb]} · Nummer {auswahl.nr} — Nummern
-                und Parameter sind je Installation individuell.
+                {VERB_LABELS[auswahl.verb]} · Nummer {auswahl.nr}
               </p>
             </div>
 

@@ -37,7 +37,8 @@ export interface StepTypeSpec {
 // Klarname + SE-Fachbegriff zusammen (Nutzer-Wunsch 2026-07-14, dasselbe
 // Muster wie die Relations-Verben „Lesen (GET)" in RelationForm).
 export const STEP_TYPES: readonly StepTypeSpec[] = [
-  { key: 'START_TOOL', name: 'Werkzeug starten (START_TOOL)' },
+  // Anzeige-Name = SE-Fachbegriff selbst (Nutzer-Entscheidung 2026-07-15).
+  { key: 'START_TOOL', name: 'START_TOOL' },
 ]
 
 export function stepTypeName(typeKey: string): string {
@@ -200,7 +201,7 @@ export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep
 export function stepProblem(step: Pick<ActionStep, 'type' | 'toolNr'>): string | null {
   if (step.type === 'START_TOOL' && step.toolNr.trim() === '') {
     // Klarname aus STEP_TYPES — Meldung und Anzeige laufen nie auseinander.
-    return `Schritt "${stepTypeName(step.type)}" hat keine Werkzeug-Nummer.`
+    return `Schritt "${stepTypeName(step.type)}" hat keine Nummer.`
   }
   return null
 }

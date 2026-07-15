@@ -28,7 +28,7 @@ export function FormularKarte({ title, onClose, children }: FormularKarteProps) 
 
   return (
     <div className="rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <h3 className="text-sm font-semibold">{title}</h3>
         <IconButton aria-label="Abbrechen" onClick={onClose}>
           <X size={16} />

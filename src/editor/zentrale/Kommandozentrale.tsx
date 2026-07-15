@@ -101,13 +101,8 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
         aria-label="Steuerung"
         className="flex h-full max-h-[760px] w-full max-w-5xl flex-col rounded-lg border border-border bg-background shadow-lg"
       >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div className="leading-tight">
-            <h2 className="text-sm font-semibold">Steuerung</h2>
-            <p className="text-xs text-muted-foreground">
-              Datenquellen, Relationen und Aktionen der Maske — an einem Ort.
-            </p>
-          </div>
+        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+          <h2 className="text-sm font-semibold">Steuerung</h2>
           <IconButton aria-label="Schließen" onClick={onClose}>
             <X size={16} />
           </IconButton>

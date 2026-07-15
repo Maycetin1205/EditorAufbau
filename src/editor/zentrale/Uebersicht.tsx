@@ -61,23 +61,18 @@ export function Uebersicht({ zaehler, probleme, oeffne }: UebersichtProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs text-muted-foreground">
-        Der Zustand der Maske auf einen Blick. Jede Meldung unten führt in
-        den Bereich, in dem sie zu beheben ist.
-      </p>
-
       <div className="grid grid-cols-3 gap-2">
         <Kachel
           titel="Datenquellen"
           wert={String(zaehler.datenquellen)}
-          status={quellenProbleme > 0 ? `${quellenProbleme} Verweis(e) kaputt` : 'alle in Ordnung'}
+          status={quellenProbleme > 0 ? `${quellenProbleme} Verweis(e) kaputt` : 'in Ordnung'}
           warnung={quellenProbleme > 0}
           onClick={() => oeffne('datenquellen')}
         />
         <Kachel
           titel="Relationen"
           wert={String(zaehler.relationen)}
-          status="Vorlagen der Installation"
+          status="in Ordnung"
           warnung={false}
           onClick={() => oeffne('relationen')}
         />
@@ -99,15 +94,15 @@ export function Uebersicht({ zaehler, probleme, oeffne }: UebersichtProps) {
           Zu erledigen
         </h3>
         {probleme.length === 0 ? (
-          <p className="mt-2 rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-            Nichts offen — die Vorprüfung des Exports meldet keine Probleme.
+          <p className="mt-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground">
+            Nichts offen.
           </p>
         ) : (
           <ul className="mt-2 flex flex-col gap-1.5">
             {probleme.map((p, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs"
+                className="flex items-start gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs"
               >
                 <span className="mt-1 size-2 shrink-0 rounded-full bg-amber-500" />
                 <span className="min-w-0 flex-1">

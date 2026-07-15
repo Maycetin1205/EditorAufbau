@@ -27,8 +27,13 @@ add_repo an die Session hängen).
    bindableSpots, blockEvents, visibleWhen, …); Canvas, Inspector und Export
    lesen generisch. Nirgends `if typ === 'kanban'`.
 3. **Technikwert ≠ Anzeigename:** Feldcodes, IDs, NRs arbeiten unsichtbar,
-   sichtbar sind Klarnamen. (Bewusste Nutzer-Ausnahme: Kanban-Spaltentitel
-   = Datenwert.)
+   sichtbar sind Klarnamen. (Bewusste Nutzer-Ausnahmen: Kanban-Spaltentitel
+   = Datenwert; die SE-Fachbegriffe START_TOOL / GET_RELATION /
+   PUT_RELATION / PUTADD_RELATION sind SELBST die Anzeige-Namen der
+   Schritt-Arten und Verben — keine Klarname-Kombis wie „Werkzeug starten"
+   oder „Lesen (GET)", Entscheidung 2026-07-15. Außerdem: START_TOOL hat
+   KEINE Parameter im Formular, nur die Nummer; keine sichtbaren
+   Erklär-/Tutorial-Texte in der Steuerung.)
 4. **Ein Export, eine Quelle, nichts scheitert still:** HTML + SEvariablen
    entstehen deterministisch aus demselben Baum + denselben Bibliotheken;
    Validator + Preflight blocken mit Klartext.
