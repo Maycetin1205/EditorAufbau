@@ -27,14 +27,14 @@ export function FormularKarte({ title, onClose, children }: FormularKarteProps) 
   }, [onClose])
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+    <div className="border-t border-border pt-3">
+      <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{title}</h3>
         <IconButton aria-label="Abbrechen" onClick={onClose}>
           <X size={16} />
         </IconButton>
       </div>
-      <div className="p-3">{children}</div>
+      <div>{children}</div>
     </div>
   )
 }

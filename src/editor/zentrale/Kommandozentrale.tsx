@@ -50,11 +50,13 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
 
   // Die VORHANDENE Export-Vorprüfung speist die Warn-Punkte in der Navigation
   // — dieselben Meldungen, die sonst erst beim Export erscheinen.
-  const probleme = preflightMask(ed.tree, sources.list)
+  const probleme = preflightMask(ed.tree, sources.list, relations.list)
   const warnt: Record<Bereich, boolean> = {
     datenquellen: probleme.some((p) => p.name === 'Datenquelle fehlt'),
     relationen: false,
-    aktionen: probleme.some((p) => p.name === 'Aktion unvollstaendig'),
+    aktionen: probleme.some((p) =>
+      p.name === 'Aktion unvollstaendig' || p.name === 'Relations-Laufzeit fehlt',
+    ),
   }
 
   // Zähler für die Navigation (Bausteine mit Ereignissen in Baumreihenfolge).

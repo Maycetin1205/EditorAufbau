@@ -35,6 +35,9 @@ add_repo an die Session hängen).
 5. **SE-Kontrakte nur aus Originalquellen** (echte Masken), nie geraten.
    Alles Installations-Individuelle (Relations-NRs, Werkzeug-Nummern,
    Felder) sind **Daten** (Vorlagen), nie fest im Code.
+   Jeder Export lädt das offizielle Interface über
+   `<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js`; ohne
+   diesen Anschluss bekommt WEBWARE weder SEFILELOOP-Daten noch Relationen.
 6. **Alter Editor = nur Funktionsliste.**
 7. **Bedienung am Ding:** Anfasser, Doppelklick, Klick auf die Stelle;
    Inspector nur für Unzeigbares; der Editor **erfindet nie Daten**
@@ -66,8 +69,11 @@ add_repo an die Session hängen).
   PARAMS = sechs Strings `[pos, len, 'L', pindex, relId, wert]`.
   ⚠ `relId` OHNE `IDB`-Präfix (`ID0001`, nicht `IDBID0001`). Standard-PUT
   NR 174 ist nur die mitgelieferte Vorlage.
-- **GET-Antworten** landen in `SEDATA.Message<N>`; immer nur EINE Anfrage
-  in Flug (Warteschlange, Muster `seGetNewIndex`) — Grundlage für Z3.
+- **GET-Antworten:** Das offizielle `basisHTML_REGISTER` vereinheitlicht
+  `BWMSG` (BüroWARE/WinUI) und `WWMSG` (WEBWARE) zu demselben Callback.
+  Dieser Callback ist der Hauptweg; neue `SEDATA.Message<N>` sind nur der
+  Rückfallweg. Immer nur EINE GET-Anfrage in Flug (Warteschlange, Muster
+  `seGetNewIndex`). Nie direkt nur auf `BWMSG` lauschen.
 - **START_TOOL:** `sendBWLinkIntern('0,START_TOOL,<nr>[,params URL-kodiert]')`,
   Fallback `basisHTML_SND_MSG`. Werkzeug-Nummern je Installation individuell.
 - **Quellen-Arten bestimmen die SEvariablen-Form:** IDB → SEFILELOOP
@@ -77,7 +83,8 @@ add_repo an die Session hängen).
 
 ## Stand (2026-07-15) + vereinbarte nächste Schritte
 
-- **Bibliothek:** Kanban (+ Spalte/Karte, Datenpfad in SoftEngine bestätigt),
+- **Bibliothek:** Kanban (+ Spalte/Karte, Datenpfad in SoftEngine bestätigt;
+  Karten immer 112px hoch, Text maximal zwei Zeilen, Chip am unteren Rand),
   Schaltfläche, Formularfeld (v1 statisch, Neubau nach behandlung-Referenz),
   Zeile. Export = Vollbild (`height: 'fill'`, Schema-v2-Migration).
   Aktionsketten (Z2/START_TOOL) in SoftEngine bestätigt.
@@ -97,12 +104,14 @@ add_repo an die Session hängen).
   2. ✅ **SoftEngine-Schicht herausgezogen (erledigt 2026-07-15),
      verhaltensgleich:** `src/softengine/` — `bridge.ts` (Anmeldung,
      Daten-Push, Diagnose, Abo-Punkt `onSeDaten`), `data.ts` (getField/
-     setField/rowsFor/Quellen), `relations.ts` (Vorlagen, PUT; die
-     GET-Warteschlange zieht mit Schritt 3 hier ein). Kanban-seRuntime
+     setField/rowsFor/Quellen), `relations.ts` (Vorlagen, PUT/PUTADD,
+     plattformneutrale GET-Warteschlange). Kanban-seRuntime
      enthält nur noch Kanban (Hydrierung, Spaltenwahl, Karten-Drag) und
      hört als erster Zuhörer auf die Klingel. Abhängigkeitsregel gilt:
      Bausteine importieren die Schicht — die Schicht kennt NIE einen
-     Baustein. Keine neuen Funktionen im Paket; Tests unverändert grün.
+     Baustein.
+     `Strg+Alt+D` zeigt die unsichtbare Bridge-Diagnose auch dann, wenn noch
+     kein Paket ankam (Interface/Senden/pid/REGMSG/Registrierung/SEDATA).
   2b. ✅ **Zentrale-Gerüst (eingeschoben + erledigt 2026-07-15,
      Nutzer-Entscheidung: kein neues Feature mehr in die alte Steuerung):**
      Steuerung neu als Master-Detail nach der Demo-Vorlage — Bereiche
@@ -125,10 +134,24 @@ add_repo an die Session hängen).
      Vorlage. Formular = nur Anzeigename + Syntax; Bibliothek durchsucht Name,
      NR und Syntax und filtert fachlich nach Lesen (GET) bzw. Schreiben
      (PUT/PUTADD). Keine Relations-Ausführung in diesem Paket.
-  3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
-     seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern). Die
-     Bedienung (Schritt-Typ „Relation ausführen", Ergebnis-Name) landet
-     direkt im neuen Gerüst.
+  3a. **Relations-Aktion im vorhandenen Ereignisablauf** *(implementiert,
+      Browser-Abnahme offen)*: Baustein → Ereignis → Schritt mit sichtbarer
+      Aktion „Relation" (Technikwert `RELATION`, kein Sonderpfad). Das
+      Aktionsmodell ist eine echte Union aus START_TOOL und RELATION;
+      Relationsschritte speichern nur stabile Vorlagen-ID, positionsgetreue
+      Zuordnungen ALLER Syntaxparameter (feste, leere und dynamische) und
+      optionale Zusatzparameter. Relationsauswahl durchsucht Name/NR/Syntax;
+      Datenfelder speichern Quellen-ID + Feldcode. Aktionen-UI ist flach:
+      Ereignisse und Schritte sind Zeilen mit Trennern statt Karten-in-Karten.
+      Verwendete Vorlagen reisen über `FF_RELATIONS`.
+  3b. ✅ **Gemeinsame GET/PUT/PUTADD-Laufzeit implementiert (2026-07-15,
+      SoftEngine-Echttest offen):** `basisHTML_REGISTER` ist der gemeinsame
+      Antwortkanal für BWMSG und WWMSG; kein WinUI-Sonderlistener und kein
+      console.log-Abfangen. GET läuft seriell, Callback primär und neue
+      `SEDATA.Message<N>` als Rückfallweg; PUT/PUTADD fire-and-forget.
+      Parameterquellen Fest/Ereignis/Datenfeld/vorheriges Ergebnis/SE
+      VAR-Array werden aufgelöst, benannte GET-Ergebnisse bleiben in der
+      Kette verfügbar. Die Export-Sperre ist entfernt.
   4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
      Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
   5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +

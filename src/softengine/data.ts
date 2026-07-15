@@ -16,9 +16,10 @@ export function isRecord(v: unknown): v is UnknownRecord {
 
 // Quellen-Definition in der EXPORTIERTEN Maske (Kap. 5.4): die Vorlagen
 // sind benutzerdefiniert und leben im Editor-localStorage — exportMask
-// bettet die benutzten Definitionen deshalb als `var FF_DATA_SOURCES = […]`
-// in die Maske ein (nur was die Runtime braucht; Feld-Bindungen reisen
-// weiter als Attribute). Hier wird ausschließlich darüber aufgelöst.
+// bettet die benutzten Definitionen deshalb als `window.FF_DATA_SOURCES = […]`
+// in die Maske ein (window. statt var wegen WebUI-Kapselung, s. exportMask;
+// nur was die Runtime braucht, Feld-Bindungen reisen weiter als Attribute).
+// Hier wird ausschließlich darüber aufgelöst.
 export interface RuntimeDataSource {
   id: string
   name: string

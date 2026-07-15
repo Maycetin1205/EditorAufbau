@@ -8,9 +8,10 @@
 import { describe, expect, it } from 'vitest'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
+import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
-import { registerTestBlocks, TEST_BLOCK, TEST_BOX } from '../test/testBlocks'
+import { registerTestBlocks, TEST_BLOCK, TEST_BOX, TEST_EVENT_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
 
@@ -34,6 +35,13 @@ describe('exportMask', () => {
   it('besteht die eingebaute SE-Prüfung', () => {
     const { html } = exportMask(demoTree())
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('laedt das offizielle SoftEngine-Interface vor der eigenen Runtime', () => {
+    const { html } = exportMask(demoTree())
+    const interfaceTag = '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>'
+    expect(html).toContain(interfaceTag)
+    expect(html.indexOf(interfaceTag)).toBeLessThan(html.indexOf('<script>'))
   })
 
   it('serialisiert den Baum als verschachtelte Custom Elements', () => {
@@ -68,6 +76,30 @@ describe('exportMask', () => {
     const { sevariablen } = exportMask(demoTree())
     expect(JSON.parse(sevariablen)).toEqual({ SEFILELOOP: [], ERPAPICALL: [] })
   })
+
+  it('nimmt Relationsvorlagen aus Aktionsschritten in FF_RELATIONS auf', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+      a: {
+        id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
+        events: {
+          onClick: [{
+            id: 's1', type: 'RELATION', resultKey: '', relationId: 'rel-a',
+            params: [{ source: 'context', value: 'VALUE' }],
+            extraParams: [],
+          }],
+        },
+      },
+    }
+    const relations = [{
+      id: 'rel-a', name: 'Schreiben', verb: 'PUT_RELATION', nr: '0174',
+      params: ['{VALUE}'], allowExtraParams: false,
+    }] as const
+    const { html } = exportMask(tree, 'Maske', [], relations)
+    expect(html).toContain('window.FF_RELATIONS = [{"id":"rel-a"')
+    expect(html).toContain('&quot;type&quot;:&quot;RELATION&quot;')
+    expect(preflightMask(tree, [], relations)).toEqual([])
+  })
 })
 
 describe('validateMaskHtml (Verteidigung)', () => {
@@ -81,6 +113,16 @@ describe('validateMaskHtml (Verteidigung)', () => {
 
     const umlaut = html.replace('</body>', 'ä</body>')
     expect(failedChecks(validateMaskHtml(umlaut)).map((f) => f.name)).toContain('ASCII-only')
+  })
+
+  it('blockiert einen Export ohne SoftEngine-Interface', () => {
+    const { html } = exportMask(demoTree())
+    const ohneInterface = html.replace(
+      '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>\n',
+      '',
+    )
+    expect(failedChecks(validateMaskHtml(ohneInterface)).map((f) => f.name))
+      .toContain('SoftEngine-Interface vorhanden')
   })
 })
 
@@ -113,5 +155,13 @@ describe('Runtime-Bündel', () => {
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" (B2) fehlt').toContain('data-ff-nicht-zugeordnet')
     // Der eigene Datenanschluss bleibt Registry-getrieben.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — bindingRoute fehlt').toContain('bindingRoute')
+    // Karten bleiben auch mit leeren Bindungen gleich hoch; die Diagnose
+    // muss schon ohne empfangenes Datenpaket im Export vorhanden sein.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — feste Kartenhöhe fehlt')
+      .toContain('height: 112px')
+    for (const marker of ['body.REGMSG', 'Empfangene Pakete', 'nach 10s kein Interface']) {
+      expect(runtimeJsRaw, `npm run build:runtime ausführen — Diagnose ${marker} fehlt`)
+        .toContain(marker)
+    }
   })
 })

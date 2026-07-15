@@ -14,6 +14,7 @@ import { exportMask } from '../../export/exportMask'
 import { preflightMask } from '../../export/preflight'
 import { failedChecks, validateMaskHtml } from '../../export/validator'
 import { dataSourceStore } from '../../state/DataSourceStore'
+import { relationStore } from '../../state/RelationStore'
 import { useEditor } from '../../state/useEditor'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -44,11 +45,12 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
   const handleExport = () => {
     // Dieselbe Vorlagen-Bibliothek fuer Preflight UND Export (Konsistenz).
     const sources = dataSourceStore.list
-    const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources)
+    const relations = relationStore.list
+    const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations)
     // Semantische Preflight (Stabilisierung S1: kaputte Datenquellen-Referenz)
     // + Dateiform-Pruefung — beide muessen gruen sein, sonst kein Download.
     const failed = [
-      ...failedChecks(preflightMask(ed.tree, sources)),
+      ...failedChecks(preflightMask(ed.tree, sources, relations)),
       ...failedChecks(validateMaskHtml(html)),
     ]
     if (failed.length > 0) {

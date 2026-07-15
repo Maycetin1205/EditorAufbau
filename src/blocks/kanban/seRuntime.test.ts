@@ -18,11 +18,17 @@ import {
   rowsFor,
   setField,
 } from '../../softengine/data'
-import { findRuntimeRelation } from '../../softengine/relations'
+import {
+  extractRelationResult,
+  findRuntimeRelation,
+  newSeMessageResult,
+  resolveActionParam,
+  seMessageKeys,
+} from '../../softengine/relations'
 import { columnIndexFor } from './seRuntime'
 
 // Kap. 5.4: die exportierte Maske traegt ihre Quellen-Definitionen selbst
-// (var FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.
+// (window.FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.
 describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
   const liste = [
     { id: 'terminplaner', name: 'Terminplaner', tableId: 'IDBID0001', indexField: '0_10' },
@@ -49,7 +55,7 @@ describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
 })
 
 // Kap. 5.5: die exportierte Maske traegt ihre Relation-Vorlagen selbst
-// (var FF_RELATIONS aus exportMask) — hier die pure Aufloesung dazu.
+// (window.FF_RELATIONS aus exportMask) — hier die pure Aufloesung dazu.
 describe('findRuntimeRelation (FF_RELATIONS -> Vorlage)', () => {
   const liste = [
     { id: 'standard-put', verb: 'PUT_RELATION', nr: '174', params: ['{FELD_POS}', 'L'] },
@@ -71,6 +77,64 @@ describe('findRuntimeRelation (FF_RELATIONS -> Vorlage)', () => {
     expect(findRuntimeRelation([{ id: 'x', verb: 'X', nr: '1', params: [] }], 'x')).toBeUndefined()
     expect(findRuntimeRelation([{ id: 'x', verb: 'PUT_RELATION', nr: '1', params: 'nope' }], 'x')).toBeUndefined()
     expect(findRuntimeRelation([{ id: 'x', verb: 'PUT_RELATION', nr: '', params: [] }], 'x')).toBeUndefined()
+  })
+})
+
+describe('Relations-Antworten (BWMSG/WWMSG-Callback und SEDATA-Fallback)', () => {
+  it('liest explizite Ergebnisse aus den belegten Antwortformen', () => {
+    expect(extractRelationResult({ RESULT: '4711' })).toBe('4711')
+    expect(extractRelationResult(JSON.stringify({ payload: { result: { PINDEX: 23 } } }))).toBe('23')
+    expect(extractRelationResult({ DATA: { RESULT: false } })).toBe('false')
+  })
+
+  it('verwechselt fremde Callback-Daten nicht mit einer Relationsantwort', () => {
+    expect(extractRelationResult({ status: 'irgendein Event' })).toBeUndefined()
+    expect(extractRelationResult('kein JSON')).toBeUndefined()
+  })
+
+  it('nimmt nur neu entstandene SEDATA.MessageN-Slots', () => {
+    const seData = {
+      Message1: { RESULT: 'alt' },
+      Message3: { RESULT: 'neu' },
+      Daten: {},
+    }
+    expect(seMessageKeys(seData)).toEqual(['Message1', 'Message3'])
+    expect(newSeMessageResult(seData, new Set(['Message1']))).toBe('neu')
+    expect(newSeMessageResult(seData, new Set(['Message1', 'Message3']))).toBeUndefined()
+  })
+})
+
+describe('Relations-Parameterquellen', () => {
+  const runtime = {
+    FF_DATA_SOURCES: [
+      { id: 'termine', name: 'Terminplaner', tableId: 'IDBID0001', indexField: '0_10' },
+    ],
+    SEDATA: {
+      Daten: {
+        VARArrays: { Mandant: '03' },
+        SEFileLoop: [{
+          ALIAS: 'Terminplaner',
+          Zeilen: [
+            { '0_10': '41', '78_30': 'Minka' },
+            { '0_10': '42', '78_30': 'Balu' },
+          ],
+        }],
+      },
+    },
+  }
+  const values = { context: { PINDEX: '42', VALUE: 'Neu' }, previousResult: '991' }
+
+  it('loest fest, Ereigniswert, vorheriges Ergebnis und VAR-Array auf', () => {
+    expect(resolveActionParam({ source: 'fixed', value: 'L' }, values, runtime)).toBe('L')
+    expect(resolveActionParam({ source: 'context', value: 'VALUE' }, values, runtime)).toBe('Neu')
+    expect(resolveActionParam({ source: 'previous_result', value: '' }, values, runtime)).toBe('991')
+    expect(resolveActionParam({ source: 'se_variable', value: 'Mandant' }, values, runtime)).toBe('03')
+  })
+
+  it('liest das Feld der ueber PINDEX bestimmten Datenzeile', () => {
+    expect(resolveActionParam({
+      source: 'data_field', value: '78_30', dataSourceId: 'termine',
+    }, values, runtime)).toBe('Balu')
   })
 })
 
@@ -204,8 +268,8 @@ describe('payloadDaten (geschobenes SE-Paket -> Daten)', () => {
 
 describe('messagePayload (message-Event -> Nutzlast)', () => {
   it('zieht MSG.DATA aus Objekt- und String-Events', () => {
-    expect(messagePayload({ MSG: { DATA: { Daten: {} } } })).toEqual({ Daten: {} })
-    expect(messagePayload(JSON.stringify({ MSG: { DATA: 'roh' } }))).toBe('roh')
+    expect(messagePayload({ MSG: { MSGID: 'BWMSG', DATA: { Daten: {} } } })).toEqual({ Daten: {} })
+    expect(messagePayload(JSON.stringify({ MSG: { MSGID: 'WWMSG', DATA: 'roh' } }))).toBe('roh')
   })
 
   it('ignoriert fremde Events (kein MSG, kaputtes JSON, kein Objekt)', () => {

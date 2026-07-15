@@ -16,6 +16,8 @@ import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { stepProblem, stepTypeName, type ActionStep } from '../../core/data/aktionen'
 import { useEditor } from '../../state/useEditor'
+import { useRelations } from '../../state/useRelations'
+import { useDataSources } from '../../state/useDataSources'
 import { bausteinName } from './helfer'
 import { StepForm } from './StepForm'
 
@@ -27,6 +29,8 @@ interface Eintrag {
 
 export function AktionenBereich() {
   const ed = useEditor()
+  const relations = useRelations()
+  const dataSources = useDataSources()
   // Offenes Schritt-Formular: an welchem Ereignis, ggf. welcher Schritt
   // (bearbeiten). null = kein Formular offen.
   const [form, setForm] = useState<{ blockId: string; eventKey: string; step?: ActionStep } | null>(null)
@@ -99,7 +103,15 @@ export function AktionenBereich() {
   }
 
   const duplicateStep = (blockId: string, eventKey: string, steps: ActionStep[], at: number): void => {
-    const copy: ActionStep = { ...steps[at], toolParams: [...steps[at].toolParams], id: crypto.randomUUID() }
+    const source = steps[at]
+    const copy: ActionStep = source.type === 'START_TOOL'
+      ? { ...source, toolParams: [...source.toolParams], id: crypto.randomUUID() }
+      : {
+          ...source,
+          params: source.params.map((binding) => ({ ...binding })),
+          extraParams: source.extraParams.map((binding) => ({ ...binding })),
+          id: crypto.randomUUID(),
+        }
     const next = [...steps]
     next.splice(at + 1, 0, copy)
     setChain(blockId, eventKey, next)
@@ -109,7 +121,8 @@ export function AktionenBereich() {
     e.events.reduce((sum, ev) => sum + (ed.tree[e.id]?.events?.[ev.key]?.length ?? 0), 0)
 
   const hatProblem = (e: Eintrag): boolean =>
-    e.events.some((ev) => (ed.tree[e.id]?.events?.[ev.key] ?? []).some((s) => stepProblem(s) !== null))
+    e.events.some((ev) => (ed.tree[e.id]?.events?.[ev.key] ?? [])
+      .some((s) => stepProblem(s, relations.list, dataSources.list) !== null))
 
   if (eintraege.length === 0) {
     return (
@@ -127,10 +140,6 @@ export function AktionenBereich() {
       {/* Master: Bausteine mit Ereignissen */}
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
-          <p className="px-1 pb-2 text-[10px] text-muted-foreground">
-            Jeder Baustein, der auf Ereignisse reagieren kann. Die
-            Canvas-Auswahl wählt hier vor.
-          </p>
           {eintraege.map((e) => {
             const aktiv = auswahl?.id === e.id
             const summe = schrittSumme(e)
@@ -141,7 +150,7 @@ export function AktionenBereich() {
                 type="button"
                 data-ausgewaehlt={e.id === aktivImCanvas || undefined}
                 onClick={() => { setAuswahlId(e.id); setForm(null) }}
-                className={`mb-1 w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors ${
+                className={`mb-0.5 w-full border-l-2 px-2 py-1.5 text-left text-xs transition-colors ${
                   aktiv ? 'border-ring bg-secondary' : 'border-transparent hover:bg-secondary/60'
                 }`}
               >
@@ -168,14 +177,11 @@ export function AktionenBereich() {
           <div className="flex flex-col gap-3">
             <div>
               <h3 className="text-sm font-semibold">{auswahl.name}</h3>
-              <p className="text-xs text-muted-foreground">
-                Die Schritte eines Ereignisses laufen von oben nach unten.
-              </p>
             </div>
             {auswahl.events.map((ev) => {
               const steps = ed.tree[auswahl.id]?.events?.[ev.key] ?? []
               return (
-                <div key={ev.key} className="rounded-md border border-border bg-card p-3 text-xs">
+                <div key={ev.key} className="border-b border-border py-2 text-xs last:border-b-0">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold">{ev.name}</span>
                     <div className="flex items-center gap-2">
@@ -192,21 +198,25 @@ export function AktionenBereich() {
                     </div>
                   </div>
                   {steps.length > 0 && (
-                    <ol className="mt-2 flex flex-col gap-1">
+                    <ol className="mt-1 divide-y divide-border/70">
                       {steps.map((s, i) => {
-                        const problem = stepProblem(s)
+                        const problem = stepProblem(s, relations.list, dataSources.list)
+                        const relation = s.type === 'RELATION' ? relations.get(s.relationId) : undefined
                         return (
                           <li
                             key={s.id}
-                            className={`flex items-center gap-1 rounded-md border px-2 py-1 ${
-                              problem !== null ? 'border-amber-500 bg-amber-500/10' : 'border-border bg-secondary/40'
+                            className={`flex items-center gap-1 border-l-2 px-1 py-1.5 transition-colors ${
+                              problem !== null
+                                ? 'border-amber-500 bg-amber-500/10'
+                                : 'border-transparent hover:bg-secondary/50'
                             }`}
                           >
                             <span className="w-4 shrink-0 text-right text-muted-foreground">{i + 1}.</span>
                             <span className="min-w-0 flex-1 truncate" title={problem ?? undefined}>
                               {stepTypeName(s.type)}
-                              {s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
-                              {s.toolParams.length > 0 ? ` (${s.toolParams.join(', ')})` : ''}
+                              {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
+                              {s.type === 'START_TOOL' && s.toolParams.length > 0 ? ` (${s.toolParams.join(', ')})` : ''}
+                              {s.type === 'RELATION' && relation ? ` — ${relation.name}` : ''}
                               {problem !== null ? ' — unvollständig' : ''}
                             </span>
                             <IconButton

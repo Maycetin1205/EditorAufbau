@@ -50,6 +50,7 @@ function refreshDataBasis(): void {
 // ---------- Abo-Punkt ----------
 
 const zuhoerer = new Set<() => void>()
+const antwortZuhoerer = new Set<(raw: unknown) => void>()
 
 // Zuhörer anmelden: wird bei JEDEM angenommenen Daten-Push (und den
 // SE-Einstiegspunkten Erstellen/initData/ReloadData) gerufen. Die Zuhörer
@@ -58,8 +59,23 @@ export function onSeDaten(cb: () => void): void {
   zuhoerer.add(cb)
 }
 
+// Rohantworten aus dem registrierten SoftEngine-Callback. Das offizielle
+// basisHTML-Interface hat an dieser Stelle BWMSG (BüroWARE/WinUI) und WWMSG
+// (WEBWARE) bereits identisch auf MSG.DATA reduziert. Konsumenten dürfen
+// deshalb nie selbst auf einen der beiden Transportnamen lauschen.
+export function onSeAntwort(cb: (raw: unknown) => void): () => void {
+  antwortZuhoerer.add(cb)
+  return () => { antwortZuhoerer.delete(cb) }
+}
+
 function klingeln(): void {
   zuhoerer.forEach((cb) => cb())
+}
+
+function antwortKlingeln(raw: unknown): void {
+  antwortZuhoerer.forEach((cb) => {
+    try { cb(raw) } catch { /* ein Konsument darf den Empfang nie stoppen */ }
+  })
 }
 
 // ---------- Diagnose ----------
@@ -68,19 +84,64 @@ function klingeln(): void {
 // versteckte Textarea gelegt — Strg+Alt+D blendet sie ein, der Bediener
 // kann den Inhalt ohne Konsole kopieren. Reines Diagnose-Werkzeug,
 // unsichtbar, darf die Maske nie stören.
-let diagnoseDumped = false
-function dumpDiagnose(raw: unknown): void {
-  if (diagnoseDumped) return
-  diagnoseDumped = true
+const diagnoseStatus = new Map<string, string>()
+let diagnoseRaw = ''
+let empfangenePakete = 0
+
+function diagnoseTextarea(): HTMLTextAreaElement | null {
   try {
-    const text = typeof raw === 'string' ? raw : JSON.stringify(raw)
-    const ta = document.createElement('textarea')
-    ta.id = 'ff-se-diagnose'
-    ta.readOnly = true
-    ta.value = text ?? ''
-    ta.style.cssText = 'display:none;position:fixed;left:8px;right:8px;bottom:8px;'
-      + 'height:40vh;z-index:99999;font:11px monospace;'
-    document.body.appendChild(ta)
+    let ta = document.getElementById('ff-se-diagnose') as HTMLTextAreaElement | null
+    if (!ta && document.body) {
+      ta = document.createElement('textarea')
+      ta.id = 'ff-se-diagnose'
+      ta.readOnly = true
+      ta.style.cssText = 'display:none;position:fixed;left:8px;right:8px;bottom:8px;'
+        + 'height:40vh;z-index:99999;font:11px monospace;'
+      document.body.appendChild(ta)
+    }
+    return ta
+  } catch {
+    return null
+  }
+}
+
+function renderDiagnose(): void {
+  const ta = diagnoseTextarea()
+  if (!ta) return
+  const status = Array.from(diagnoseStatus, ([key, value]) => `${key}: ${value}`).join('\n')
+  ta.value = status + (diagnoseRaw === '' ? '' : `\n\nERSTES PAKET\n${diagnoseRaw}`)
+}
+
+function diagnoseSet(key: string, value: string): void {
+  diagnoseStatus.set(key, value)
+  renderDiagnose()
+}
+
+function refreshDiagnoseEnvironment(): void {
+  const g = seGlobal()
+  diagnoseStatus.set(
+    'basisHTML_REGISTER',
+    typeof g.basisHTML_REGISTER === 'function' ? 'vorhanden' : 'fehlt',
+  )
+  diagnoseStatus.set(
+    'basisHTML_SND_MSG',
+    typeof g.basisHTML_SND_MSG === 'function' ? 'vorhanden' : 'fehlt',
+  )
+  diagnoseStatus.set('body.pid', document.body?.getAttribute('pid') ? 'gesetzt' : 'fehlt')
+  diagnoseStatus.set('body.REGMSG', document.body?.getAttribute('REGMSG') ? 'gesetzt' : 'fehlt')
+  diagnoseStatus.set('Empfangene Pakete', String(empfangenePakete))
+  diagnoseStatus.set('SEDATA.Daten', hasSeData() ? 'vorhanden' : 'fehlt')
+  renderDiagnose()
+}
+
+// Das erste Paket bleibt unter den Statuszeilen kopierbar. Anders als zuvor
+// existiert die Diagnose aber schon VOR dem ersten Paket: genau dann wird sie
+// in WEBWARE gebraucht.
+function dumpDiagnose(raw: unknown): void {
+  if (diagnoseRaw !== '') return
+  try {
+    diagnoseRaw = typeof raw === 'string' ? raw : (JSON.stringify(raw) ?? '')
+    renderDiagnose()
   } catch { /* Diagnose darf nie stören */ }
 }
 
@@ -91,12 +152,20 @@ function dumpDiagnose(raw: unknown): void {
 // Jeder weitere Push aktualisiert erneut — das ist der Live-Weg von
 // SoftEngine (der Poll feuerte nur einmal).
 function seConsume(raw: unknown): void {
+  empfangenePakete += 1
+  dumpDiagnose(raw)
+  diagnoseSet('Empfangene Pakete', String(empfangenePakete))
   const daten = payloadDaten(raw)
-  if (!daten) return
+  if (!daten) {
+    diagnoseSet('Letztes Paket', 'Antwort ohne Daten')
+    antwortKlingeln(raw)
+    return
+  }
   const g = seGlobal()
   if (!isRecord(g.SEDATA)) g.SEDATA = {}
   g.SEDATA.Daten = daten
-  dumpDiagnose(raw)
+  diagnoseSet('Letztes Paket', 'Daten-Push angenommen')
+  diagnoseSet('SEDATA.Daten', 'vorhanden')
   refreshDataBasis()
   klingeln()
 }
@@ -108,13 +177,23 @@ function seConsume(raw: unknown): void {
 function registerSe(tries = 0): void {
   const g = seGlobal()
   if (typeof g.basisHTML_REGISTER === 'function') {
+    refreshDiagnoseEnvironment()
     try { g.basisHTML_SetConsoleLog?.(true, true) } catch { /* optional */ }
     try {
       g.basisHTML_REGISTER((data: unknown) => { seConsume(data) }, document.title, '1.0')
-    } catch { /* nicht in SE */ }
+      diagnoseSet('Registrierung', 'ausgeführt')
+    } catch (error) {
+      diagnoseSet('Registrierung', `Fehler: ${error instanceof Error ? error.message : String(error)}`)
+    }
     return
   }
-  if (tries < 400) setTimeout(() => { registerSe(tries + 1) }, 25)
+  if (tries < 400) {
+    if (tries === 0) diagnoseSet('Registrierung', 'wartet auf Interface')
+    setTimeout(() => { registerSe(tries + 1) }, 25)
+  } else {
+    refreshDiagnoseEnvironment()
+    diagnoseSet('Registrierung', 'nach 10s kein Interface')
+  }
 }
 
 let booted = false
@@ -126,6 +205,9 @@ let booted = false
 export function bootSe(): void {
   if (booted) return
   booted = true
+  diagnoseSet('Runtime', 'gestartet')
+  diagnoseSet('Registrierung', 'noch nicht ausgeführt')
+  refreshDiagnoseEnvironment()
   tryInitSe()
   const g = seGlobal()
   g.Erstellen = () => { refreshDataBasis(); klingeln() }
@@ -139,9 +221,11 @@ export function bootSe(): void {
     const payload = messagePayload(evt.data)
     if (payload !== undefined) seConsume(payload)
   }, true)
-  // Strg+Alt+D: Diagnose-Textarea ein-/ausblenden (s. dumpDiagnose).
+  // Strg+Alt+D: Diagnose-Textarea ein-/ausblenden. Sie existiert bereits
+  // ohne Datenpaket, damit ein fehlender WEBWARE-Anschluss sichtbar wird.
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'd') {
+      refreshDiagnoseEnvironment()
       const ta = document.getElementById('ff-se-diagnose')
       if (ta) ta.style.display = ta.style.display === 'none' ? 'block' : 'none'
     }
@@ -151,10 +235,12 @@ export function bootSe(): void {
     tries += 1
     if (hasSeData()) {
       clearInterval(poll)
+      diagnoseSet('SEDATA.Daten', 'vorhanden')
       refreshDataBasis()
       klingeln()
     } else if (tries > 100) {
       clearInterval(poll)
+      diagnoseSet('Daten-Wartezeit', 'nach 30s ohne Daten')
     }
   }, 300)
 }

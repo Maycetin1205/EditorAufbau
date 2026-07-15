@@ -29,6 +29,12 @@ import {
   resolveParams,
   type RelationContext,
 } from '../../core/data/relations'
+import { bootSe, seGlobal } from '../../softengine/bridge'
+import {
+  executeRelation,
+  findRuntimeRelation,
+  resolveActionParam,
+} from '../../softengine/relations'
 
 // ---------- Pure Helfer (Node-testbar, kein DOM) ----------
 
@@ -43,14 +49,6 @@ export function buildStartToolLink(nr: string, params: readonly string[]): strin
 }
 
 // ---------- SoftEngine-Anbindung (nur im Export aktiv) ----------
-
-/* eslint-disable @typescript-eslint/no-explicit-any -- sendBWLinkIntern/
-   basisHTML_SND_MSG sind fremde, untypisierte SoftEngine-Globals
-   (Muster seGlobal in seRuntime). */
-function seGlobal(): any {
-  return globalThis as any
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Werkzeug starten — Transport exakt nach Referenz-seStartTool. Ohne
 // Bridge (Vorschau, Tests ohne Stub) passiert nichts.
@@ -81,7 +79,11 @@ const laufend = new WeakMap<HTMLElement, Set<string>>()
 // Fuehrt die Kette eines Ereignisses aus. `context` liefert die Werte der
 // Platzhalter ({PINDEX}/{VALUE}; {NOW_DATE} fuellt diese Funktion selbst).
 // Kein Attribut / keine Kette am Ereignis -> nichts passiert.
-export function runEvent(el: HTMLElement, eventKey: string, context: RelationContext): void {
+export async function runEvent(
+  el: HTMLElement,
+  eventKey: string,
+  context: RelationContext,
+): Promise<void> {
   if (el.hasAttribute('data-ff-editor')) return
   const steps = parseBlockEvents(el.getAttribute('data-ff-aktionen'))[eventKey]
   if (!steps || steps.length === 0) return
@@ -98,11 +100,23 @@ export function runEvent(el: HTMLElement, eventKey: string, context: RelationCon
     // Nutzer-Kernanforderung) steckt ab Tag 1 im MODELL; hier ausgefuehrt
     // wird er erst mit „Relation ausfuehren" (Z3, seGetNewIndex-Muster) —
     // „Werkzeug starten" liefert kein Ergebnis.
-    const values: RelationContext = { ...context, NOW_DATE: formatNowDate(new Date()) }
+    const values: Record<string, string | undefined> = {
+      ...context,
+      NOW_DATE: formatNowDate(new Date()),
+    }
+    let previousResult = ''
     for (const step of steps) {
       if (step.type === 'START_TOOL') {
         seStartTool(step.toolNr, resolveParams({ params: step.toolParams }, values))
+        continue
       }
+      const relation = findRuntimeRelation(seGlobal().FF_RELATIONS, step.relationId)
+      if (!relation) continue
+      const runtimeValues = { context: values, previousResult }
+      const params = [...step.params, ...step.extraParams]
+        .map((binding) => resolveActionParam(binding, runtimeValues))
+      previousResult = await executeRelation(relation, params)
+      if (step.resultKey !== '') values[step.resultKey] = previousResult
     }
   } finally {
     locks.delete(eventKey)
@@ -119,7 +133,11 @@ export function connectClickAktionen(el: HTMLElement, eventKey: string): void {
   if (!el.hasAttribute('data-ff-aktionen')) return
   if (verdrahtet.has(el)) return
   verdrahtet.add(el)
+  const chains = parseBlockEvents(el.getAttribute('data-ff-aktionen'))
+  if (Object.values(chains).some((steps) => steps.some((step) => step.type === 'RELATION'))) {
+    bootSe()
+  }
   el.addEventListener('click', () => {
-    runEvent(el, eventKey, {})
+    void runEvent(el, eventKey, {})
   })
 }

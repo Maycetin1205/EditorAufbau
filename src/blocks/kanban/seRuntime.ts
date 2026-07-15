@@ -215,7 +215,7 @@ function handleDrop(board: HTMLElement, column: HTMLElement): void {
   // Z2: Aktionskette „Karte verschoben" NACH dem erfolgreichen
   // Zurückschreiben — {PINDEX} = Satznummer der gezogenen Karte,
   // {VALUE} = der neue Spaltenwert.
-  runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
+  void runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
 }
 
 function wireDrag(board: HTMLElement): void {
@@ -228,7 +228,7 @@ function wireDrag(board: HTMLElement): void {
       (el) => el instanceof HTMLElement && cardData.has(el),
     ) ?? null) as HTMLElement | null
     if (!card) return
-    runEvent(board, 'onCardClick', { PINDEX: cardData.get(card)?.pindex ?? '' })
+    void runEvent(board, 'onCardClick', { PINDEX: cardData.get(card)?.pindex ?? '' })
   })
   board.addEventListener('dragstart', (e) => {
     const card = (e.composedPath().find(

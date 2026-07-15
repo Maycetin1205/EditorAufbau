@@ -4,6 +4,7 @@ import {
   parseRelationSyntax,
   relationGroup,
   relationMatchesSearch,
+  relationPlaceholderNames,
   resolveParams,
   sanitizeRelationTemplates,
 } from './relations'
@@ -92,5 +93,11 @@ describe('Relations-Vorlagen', () => {
     expect(relationMatchesSearch(relation, '0174')).toBe(true)
     expect(relationMatchesSearch(relation, '!!{value}!...')).toBe(true)
     expect(relationMatchesSearch(relation, '640')).toBe(false)
+  })
+
+  it('liefert freie Platzhalter einmalig in Syntax-Reihenfolge', () => {
+    expect(relationPlaceholderNames({
+      params: ['fest', '{GJ}', 'vor-{BELART}', '{GJ}', ''],
+    })).toEqual(['GJ', 'BELART'])
   })
 })

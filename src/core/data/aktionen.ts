@@ -1,171 +1,234 @@
-// aktionen (Z2)
-// Aktionsketten am Baustein je Ereignis — der Kern von Kap. 8, vorgezogen
-// als Z-Programm. Ketten sind DATEN im Baum (BlockNode.events), kein Code:
-// Schluessel = Ereignis-Key aus der Registry (blockEvents, Vokabular des
-// alten Editors: onClick/onCardClick/onCardDrop), Wert = geordnete
-// Schrittkette. Schritt-Typen sind eine Registry (STEP_TYPES) — Z2 liefert
-// nur „Werkzeug starten" (START_TOOL), Z3 ergaenzt Relation ausfuehren /
-// Wert setzen / Daten neu laden.
-//
-// VERBINDLICHE QUELLE des START_TOOL-Kontrakts: behandlung-umbau,
-// empfang/index.basis.source.html Z. 861-882 (seStartTool): primaer
-// sendBWLinkIntern('0,START_TOOL,<nr>[,<params URL-kodiert>]'), Fallback
-// basisHTML_SND_MSG('START_TOOL', { NR: nr, PARAMS: params }). Werkzeug-
-// Nummern sind je Installation individuell (3003 ist in der Empfang-Maske
-// das Refresh-Werkzeug!) und werden NIE festverdrahtet — der Bediener gibt
-// sie ein (dieselbe Regel wie Relations-NRs, 5.3b (d)).
-//
-// ZWISCHENSPEICHER (Nutzer-Kernanforderung, Z-Programm): jeder
-// Schritt traegt ab Tag 1 einen optionalen Ergebnis-Namen (resultKey).
-// „Werkzeug starten" liefert kein Ergebnis — gefuellt und benutzt wird der
-// Zwischenspeicher erst mit „Relation ausfuehren" (Z3, seGetNewIndex-
-// Muster); das Modell ist dafuer vorbereitet.
-//
-// Regel Technikwert ≠ Anzeigename: type/eventKey/Platzhalter sind
-// Technikwerte; der Bediener sieht nur Klarnamen (STEP_TYPES.name,
-// blockEvents.name aus der Registry).
+// Aktionsketten am Baustein je Ereignis. Die Ketten sind reine Daten im
+// Block-Baum; die konkrete Ausfuehrung gehoert in die Export-Runtime.
 
-// ---------- Schritt-Typen (Registry, Muster RELATION_VERBS) ----------
+import type { DataSource } from './dataSources'
+import type { RelationTemplate } from './relations'
+import { unknownPlaceholders } from './relations'
+
+// ---------- Schritt-Typen ----------
+
+export type StepTypeKey = 'START_TOOL' | 'RELATION'
 
 export interface StepTypeSpec {
-  // Technikwert — das Vokabular des alten Editors (STEP_TYPES dort).
-  key: string
-  // Klarname fuer den Bediener.
+  key: StepTypeKey
   name: string
 }
 
-// Klarname + SE-Fachbegriff zusammen (Nutzer-Wunsch 2026-07-14, dasselbe
-// Muster wie die Relations-Verben „Lesen (GET)" in RelationForm).
 export const STEP_TYPES: readonly StepTypeSpec[] = [
-  { key: 'START_TOOL', name: 'Werkzeug starten (START_TOOL)' },
+  { key: 'START_TOOL', name: 'Werkzeug starten' },
+  { key: 'RELATION', name: 'Relation' },
 ]
 
 export function stepTypeName(typeKey: string): string {
   return STEP_TYPES.find((t) => t.key === typeKey)?.name ?? typeKey
 }
 
-// ---------- Schritt + Ereignis-Map ----------
+// ---------- Parameterquellen fuer Relationsschritte ----------
 
-export interface ActionStep {
-  // Editor-interner Schluessel (React-Keys, Umsortieren/Duplizieren/
-  // Loeschen). Reist NICHT in den Export.
+export const ACTION_PARAM_SOURCES = [
+  { key: 'fixed', name: 'Fester Wert' },
+  { key: 'context', name: 'Ereigniswert' },
+  { key: 'data_field', name: 'Feld der Datenquelle' },
+  { key: 'previous_result', name: 'Vorheriger Schritt' },
+  { key: 'se_variable', name: 'SE VAR-Array' },
+] as const
+
+export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number]['key']
+
+export interface ActionParamBinding {
+  source: ActionParamSource
+  // fixed: Wert, context: PINDEX/VALUE/NOW_DATE, data_field: Feldcode,
+  // se_variable: Variablenname. previous_result braucht keinen Wert.
+  value: string
+  // Nur data_field: stabile ID der Datenquellen-Vorlage. Der Feldcode allein
+  // ist zwischen verschiedenen Tabellen nicht eindeutig.
+  dataSourceId?: string
+}
+
+interface ActionStepBase {
   id: string
-  // Technikwert aus STEP_TYPES.
-  type: string
-  // Zwischenspeicher: Name, unter dem das Schritt-Ergebnis fuer
-  // Folgeschritte abgelegt wird ('' = keiner). Ab Tag 1 im Modell.
+  type: StepTypeKey
+  // Optionaler Name fuer das Ergebnis eines Schritts. START_TOOL liefert
+  // heute keines; RELATION nutzt ihn spaeter fuer GET-Ergebnisse.
   resultKey: string
-  // START_TOOL: Werkzeug-Nummer der Installation (freie Eingabe).
+}
+
+export interface StartToolStep extends ActionStepBase {
+  type: 'START_TOOL'
   toolNr: string
-  // START_TOOL: Parameter — feste Werte und {PLATZHALTER}.
   toolParams: string[]
 }
 
-// Ereignis-Key -> Schrittkette. Liegt als optionales `events` am BlockNode.
-export type BlockEventsMap = Record<string, ActionStep[]>
-
-// Frischer Schritt mit Typ-Defaults (UI „+ Schritt").
-export function createStep(typeKey: string): ActionStep | null {
-  if (!STEP_TYPES.some((t) => t.key === typeKey)) return null
-  return { id: crypto.randomUUID(), type: typeKey, resultKey: '', toolNr: '', toolParams: [] }
+export interface RelationStep extends ActionStepBase {
+  type: 'RELATION'
+  // Stabile ID aus dem RelationStore; Syntax wird niemals in den Schritt
+  // kopiert und bleibt damit an genau einer Stelle gepflegt.
+  relationId: string
+  // Jede Syntaxposition genau einmal und in derselben Reihenfolge. Auch feste
+  // und leere Parameter bleiben sichtbar und koennen bei Bedarf eine andere
+  // Wertquelle erhalten.
+  params: ActionParamBinding[]
+  // Nur fuer Vorlagen mit abschliessendem ... relevant.
+  extraParams: ActionParamBinding[]
 }
 
-// ---------- Platzhalter (Teilmenge des Relations-Vokabulars) ----------
+export type ActionStep = StartToolStep | RelationStep
+export type BlockEventsMap = Record<string, ActionStep[]>
 
-// In Werkzeug-Parametern erlaubte Platzhalter — aufgeloest ueber DIESELBE
-// Mechanik wie Relations (resolveParams in relations.ts):
-//  PINDEX    Satznummer der ausloesenden Karte/Zeile
-//  VALUE     ausloesender Wert (z. B. Ziel-Spaltenwert beim Verschieben)
-//  NOW_DATE  heutiges Datum (fuellt der Konsument, z. B. seAktionen)
+export function createStep(typeKey: StepTypeKey): ActionStep {
+  const base = { id: crypto.randomUUID(), resultKey: '' }
+  return typeKey === 'RELATION'
+    ? { ...base, type: 'RELATION', relationId: '', params: [], extraParams: [] }
+    : { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
+}
+
+// In Werkzeug-Parametern erlaubte Platzhalter.
 export const AKTIONS_PLATZHALTER = ['PINDEX', 'VALUE', 'NOW_DATE'] as const
 
-// ---------- Strukturelle Pruefung (Muster sanitizeRelationTemplates) ----------
+// Syntaxpositionen werden wie im OG-Editor vollstaendig aufgeteilt: normale
+// Werte bleiben feste Vorbelegung, leere Positionen bleiben leer. Nur ein
+// vollstaendiger bekannter {KONTEXT}-Wert wird automatisch zugeordnet;
+// installationsspezifische Platzhalter bleiben bewusst offen.
+export function defaultRelationParams(
+  relation: Pick<RelationTemplate, 'params'>,
+): ActionParamBinding[] {
+  return relation.params.map((raw) => {
+    const placeholder = /^\{([A-Za-z0-9_]+)\}$/.exec(raw)?.[1]
+    return placeholder && (AKTIONS_PLATZHALTER as readonly string[]).includes(placeholder)
+      ? { source: 'context', value: placeholder }
+      : { source: 'fixed', value: placeholder ? '' : raw }
+  })
+}
 
-// Typ-geprüfte Schritt-Felder aus rohen Daten — ohne id (die braucht nur
-// der Editor). Kaputt -> null.
-function stepFields(raw: unknown): Omit<ActionStep, 'id'> | null {
-  if (!raw || typeof raw !== 'object') return null
-  const s = raw as Record<string, unknown>
-  if (typeof s.type !== 'string' || !STEP_TYPES.some((t) => t.key === s.type)) return null
-  if (typeof s.resultKey !== 'string') return null
-  if (typeof s.toolNr !== 'string') return null
-  if (!Array.isArray(s.toolParams) || s.toolParams.some((p) => typeof p !== 'string')) return null
+// ---------- Strukturelle Pruefung ----------
+
+export type RuntimeStep = Omit<StartToolStep, 'id'> | Omit<RelationStep, 'id'>
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function bindingFields(raw: unknown): ActionParamBinding | null {
+  if (!isRecord(raw)) return null
+  if (
+    typeof raw.source !== 'string'
+    || !ACTION_PARAM_SOURCES.some((source) => source.key === raw.source)
+    || typeof raw.value !== 'string'
+  ) return null
+  if (raw.dataSourceId !== undefined && typeof raw.dataSourceId !== 'string') return null
   return {
-    type: s.type,
-    resultKey: s.resultKey,
-    toolNr: s.toolNr,
-    toolParams: [...(s.toolParams as string[])],
+    source: raw.source as ActionParamSource,
+    value: raw.value,
+    ...(typeof raw.dataSourceId === 'string' ? { dataSourceId: raw.dataSourceId } : {}),
   }
 }
 
-// Baut aus rohen (evtl. kaputten) Daten eine saubere Ereignis-Map fuer den
-// Editor-Baum (sanitizeTree). Streng: nur Ereignis-Keys, die der Block-Typ
-// in der Registry deklariert (allowedEvents); EIN kaputter oder id-loser
-// Schritt verwirft die GANZE Kette des Ereignisses — eine Luecke wuerde
-// die Reihenfolge-Semantik verschieben und falsch ausfuehren (dieselbe
-// Begruendung wie die Stelligkeit bei sanitizeRelationTemplates).
-// Nichts Brauchbares -> undefined (Feld entfaellt).
+function stepFields(raw: unknown): RuntimeStep | null {
+  if (!isRecord(raw) || typeof raw.type !== 'string' || typeof raw.resultKey !== 'string') {
+    return null
+  }
+  if (raw.type === 'START_TOOL') {
+    if (typeof raw.toolNr !== 'string') return null
+    if (!Array.isArray(raw.toolParams) || raw.toolParams.some((p) => typeof p !== 'string')) return null
+    return {
+      type: 'START_TOOL',
+      resultKey: raw.resultKey,
+      toolNr: raw.toolNr,
+      toolParams: [...raw.toolParams] as string[],
+    }
+  }
+  if (raw.type === 'RELATION') {
+    if (typeof raw.relationId !== 'string') return null
+    if (!Array.isArray(raw.extraParams)) return null
+    if (!Array.isArray(raw.params) && !isRecord(raw.bindings)) return null
+    const params: ActionParamBinding[] = []
+    if (Array.isArray(raw.params)) {
+      for (const value of raw.params) {
+        const binding = bindingFields(value)
+        if (!binding) return null
+        params.push(binding)
+      }
+    }
+    // Kurzzeitig im Browser gespeicherte Vorab-Version mit `bindings` wird
+    // als leere Positionsliste geladen; das Formular setzt beim Bearbeiten
+    // die Vorlagen-Defaults ein. Keine kaputte Kette wegen unseres Umbaus.
+    const extraParams: ActionParamBinding[] = []
+    for (const value of raw.extraParams) {
+      const binding = bindingFields(value)
+      if (!binding) return null
+      extraParams.push(binding)
+    }
+    return {
+      type: 'RELATION',
+      resultKey: raw.resultKey,
+      relationId: raw.relationId,
+      params,
+      extraParams,
+    }
+  }
+  return null
+}
+
 export function sanitizeBlockEvents(
   raw: unknown,
   allowedEvents: readonly string[],
 ): BlockEventsMap | undefined {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
-  const src = raw as Record<string, unknown>
+  if (!isRecord(raw)) return undefined
   const out: BlockEventsMap = {}
   for (const key of allowedEvents) {
-    const chain = src[key]
+    const chain = raw[key]
     if (!Array.isArray(chain) || chain.length === 0) continue
     const steps: ActionStep[] = []
     const seenIds = new Set<string>()
     let broken = false
     for (const entry of chain) {
       const fields = stepFields(entry)
-      const id = fields && typeof (entry as Record<string, unknown>).id === 'string'
-        ? ((entry as Record<string, unknown>).id as string)
-        : ''
+      const id = isRecord(entry) && typeof entry.id === 'string' ? entry.id : ''
       if (!fields || id === '' || seenIds.has(id)) {
         broken = true
         break
       }
       seenIds.add(id)
-      steps.push({ id, ...fields })
+      steps.push({ id, ...fields } as ActionStep)
     }
     if (!broken && steps.length > 0) out[key] = steps
   }
   return Object.keys(out).length > 0 ? out : undefined
 }
 
-// ---------- Export-Transport (Attribut data-ff-aktionen) ----------
+// ---------- Export-Transport ----------
 
-// Ketten fuer den Export serialisieren: Ereignis-Keys in Registry-
-// Reihenfolge (eventOrder = blockEvents-Keys -> deterministisch), nur
-// nicht-leere Ketten, OHNE Editor-ids (die Laufzeit braucht sie nicht).
-// Nichts zu transportieren -> null (kein Attribut).
+function withoutEditorId(step: ActionStep): RuntimeStep {
+  if (step.type === 'START_TOOL') {
+    return {
+      type: step.type,
+      resultKey: step.resultKey,
+      toolNr: step.toolNr,
+      toolParams: [...step.toolParams],
+    }
+  }
+  return {
+    type: step.type,
+    resultKey: step.resultKey,
+    relationId: step.relationId,
+    params: step.params.map((binding) => ({ ...binding })),
+    extraParams: step.extraParams.map((binding) => ({ ...binding })),
+  }
+}
+
 export function serializeBlockEvents(
   events: BlockEventsMap | undefined,
   eventOrder: readonly string[],
 ): string | null {
   if (!events) return null
-  const out: Record<string, Omit<ActionStep, 'id'>[]> = {}
+  const out: Record<string, RuntimeStep[]> = {}
   for (const key of eventOrder) {
     const steps = events[key]
-    if (!steps || steps.length === 0) continue
-    out[key] = steps.map((s) => ({
-      type: s.type,
-      resultKey: s.resultKey,
-      toolNr: s.toolNr,
-      toolParams: [...s.toolParams],
-    }))
+    if (steps?.length) out[key] = steps.map(withoutEditorId)
   }
   return Object.keys(out).length > 0 ? JSON.stringify(out) : null
 }
 
-// Schritt in der EXPORTIERTEN Maske (ohne Editor-id).
-export type RuntimeStep = Omit<ActionStep, 'id'>
-
-// Gegenstueck zu serializeBlockEvents fuer die Laufzeit: liest das
-// data-ff-aktionen-Attribut. Kaputte/fremde Eintraege werden verworfen —
-// nie raten (Muster findRuntimeDataSource/findRuntimeRelation).
 export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep[]> {
   if (!raw) return {}
   let parsed: unknown
@@ -174,7 +237,7 @@ export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep
   } catch {
     return {}
   }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+  if (!isRecord(parsed)) return {}
   const out: Record<string, RuntimeStep[]> = {}
   for (const [key, chain] of Object.entries(parsed)) {
     if (!Array.isArray(chain) || chain.length === 0) continue
@@ -193,14 +256,59 @@ export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep
   return out
 }
 
-// ---------- Export-Tauglichkeit (Preflight) ----------
+// ---------- Vollstaendigkeit ----------
 
-// Verstaendliche Meldung, wenn ein Schritt nicht exportfaehig ist — sonst
-// null. Das Typ-Wissen bleibt hier im Modell; die Preflight bleibt generisch.
-export function stepProblem(step: Pick<ActionStep, 'type' | 'toolNr'>): string | null {
-  if (step.type === 'START_TOOL' && step.toolNr.trim() === '') {
-    // Klarname aus STEP_TYPES — Meldung und Anzeige laufen nie auseinander.
-    return `Schritt "${stepTypeName(step.type)}" hat keine Werkzeug-Nummer.`
+function bindingProblem(binding: ActionParamBinding | undefined): boolean {
+  if (!binding) return true
+  if (binding.source === 'fixed' || binding.source === 'previous_result') return false
+  if (binding.source === 'data_field') {
+    return !binding.dataSourceId?.trim() || binding.value.trim() === ''
   }
+  return binding.value.trim() === ''
+}
+
+export function stepProblem(
+  step: ActionStep,
+  relations?: readonly RelationTemplate[],
+  dataSources?: readonly DataSource[],
+): string | null {
+  if (step.type === 'START_TOOL') {
+    if (step.toolNr.trim() === '') {
+      return `Schritt "${stepTypeName(step.type)}" hat keine Werkzeug-Nummer.`
+    }
+    if (step.toolParams.some((param) => param.trim() === '')) {
+      return `Schritt "${stepTypeName(step.type)}" hat einen leeren Parameter.`
+    }
+    const unknown = step.toolParams.flatMap((param) => unknownPlaceholders(param, AKTIONS_PLATZHALTER))
+    if (unknown.length > 0) {
+      return `Schritt "${stepTypeName(step.type)}" hat einen unbekannten Platzhalter.`
+    }
+    return null
+  }
+  if (step.relationId === '') return 'Schritt "Relation" hat keine Vorlage.'
+  if (!relations) return null
+  const relation = relations.find((entry) => entry.id === step.relationId)
+  if (!relation) return 'Schritt "Relation" verweist auf eine geloeschte Vorlage.'
+  if (step.params.length !== relation.params.length) {
+    return 'Schritt "Relation" hat nicht alle Syntaxparameter uebernommen.'
+  }
+  const missing = step.params.findIndex(bindingProblem)
+  if (missing >= 0) return `Schritt "Relation": Parameter ${missing + 1} ist unvollstaendig.`
+  if (!relation.allowExtraParams && step.extraParams.length > 0) {
+    return 'Schritt "Relation" hat nicht erlaubte Zusatzparameter.'
+  }
+  if (step.extraParams.some(bindingProblem)) {
+    return 'Schritt "Relation" hat einen leeren Zusatzparameter.'
+  }
+  const allBindings = [
+    ...step.params,
+    ...step.extraParams,
+  ]
+  const missingSource = allBindings.find((binding) =>
+    binding?.source === 'data_field'
+    && dataSources
+    && !dataSources.some((source) => source.id === binding.dataSourceId),
+  )
+  if (missingSource) return 'Schritt "Relation" verweist auf eine geloeschte Datenquelle.'
   return null
 }

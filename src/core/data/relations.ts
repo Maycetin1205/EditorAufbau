@@ -175,6 +175,26 @@ export function relationMatchesSearch(
     .some((value) => value.toLocaleLowerCase('de').includes(needle))
 }
 
+// Dynamische Namen einer Vorlage in stabiler Syntax-Reihenfolge. Feste
+// Parameter bleiben Teil der Vorlage; nur diese Platzhalter bekommen im
+// Aktionsschritt eine Wertquelle. Mehrfach verwendete Namen werden einmal
+// zugeordnet und beim Aufloesen an jeder Stelle gleich eingesetzt.
+export function relationPlaceholderNames(
+  relation: Pick<RelationTemplate, 'params'>,
+): string[] {
+  const seen = new Set<string>()
+  const names: string[] = []
+  for (const param of relation.params) {
+    for (const match of param.matchAll(/\{([A-Za-z0-9_]+)\}/g)) {
+      const name = match[1]
+      if (seen.has(name)) continue
+      seen.add(name)
+      names.push(name)
+    }
+  }
+  return names
+}
+
 // Platzhalter einer Vorlage füllen: {NAME} -> Kontextwert (fehlend -> '').
 // Feste Werte (z. B. 'L') laufen unverändert durch. Deterministisch.
 export function resolveParams(

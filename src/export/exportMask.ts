@@ -39,6 +39,12 @@ import {
 import tokensCssRaw from '../design/masken-tokens.css?raw'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 
+// Verbindlicher SoftEngine-Anschluss aus JWHtmlStart.html / Monaco-Referenz.
+// BüroWARE stellt diese Funktionen teils bereits im Host bereit; WEBWARE
+// benötigt das Interface selbst, um pid/REGMSG, Daten-Push und Senden zu
+// verdrahten. Der EditorPfad-Platzhalter wird von SoftEngine aufgelöst.
+const SE_INTERFACE_SCRIPT = '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>'
+
 export interface MaskExport {
   html: string
   sevariablen: string
@@ -204,26 +210,31 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
 
 // ---------- Relation-Vorlagen → FF_RELATIONS (Kap. 5.5) ----------
 
-// Sammelt die im Baum benutzten Relation-Vorlagen: für jeden Block liest
-// sie die Werte aller customProperties mit kind 'relation' (Technikwert =
-// Vorlagen-id) — registry-getrieben, kein `if type===`. Baum-Reihenfolge,
-// dedupliziert, deterministisch. Unbekannte ids werden übersprungen.
+// Sammelt benutzte Vorlagen aus registry-getriebenen Relation-Properties
+// UND aus Relationsschritten. Baum-, Ereignis- und Schritt-Reihenfolge sind
+// deterministisch; unbekannte IDs werden von der Preflight abgefangen.
 function collectRelations(
   tree: BlockTree,
   relations: readonly RelationTemplate[],
 ): RelationTemplate[] {
   const seen = new Set<string>()
   const acc: RelationTemplate[] = []
+  const add = (id: unknown): void => {
+    const rel = typeof id === 'string' ? relations.find((r) => r.id === id) : undefined
+    if (!rel || seen.has(rel.id)) return
+    seen.add(rel.id)
+    acc.push(rel)
+  }
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
     const def = getBlockDefinition(node.type)
     for (const prop of def?.customProperties ?? []) {
       if (prop.kind !== 'relation') continue
-      const id = node.props[prop.attributeName]
-      const rel = typeof id === 'string' ? relations.find((r) => r.id === id) : undefined
-      if (rel && !seen.has(rel.id)) {
-        seen.add(rel.id)
-        acc.push(rel)
+      add(node.props[prop.attributeName])
+    }
+    for (const event of def?.blockEvents ?? []) {
+      for (const step of node.events?.[event.key] ?? []) {
+        if (step.type === 'RELATION') add(step.relationId)
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))
@@ -261,8 +272,16 @@ export function exportMask(
   // Global auf. DIESELBE collectDataSources-Quelle wie die SEFILELOOP
   // (Export-Grundsatz a); nur was die Runtime braucht (kein Feld-Wörterbuch:
   // Bindungen reisen längst als Feldcode-Attribute).
+  //
+  // SE-KONTRAKT (WEBWARE/WebUI, Beleg SE-Echttest 2026-07-15): explizit ans
+  // window hängen, NIEMALS `var`. WinUI (BüroWARE) lädt die Maske als ganze
+  // Seite — ein top-level `var` landet am window. WebUI führt dasselbe Skript
+  // GEKAPSELT aus (iFrame/Wrapper) — ein `var` bleibt lokal, und seRuntime
+  // (liest globalThis.FF_*) findet nichts: der Board-Rahmen rendert, die
+  // Karten fehlen. Die Referenz JWHtmlEnde.html hängt aus genau diesem Grund
+  // window.Erstellen/window.HTMLFarbe explizit an (nicht bloß deklariert).
   const sourcesJs = guardScriptContent(escapeNonAsciiJs(
-    'var FF_DATA_SOURCES = ' + JSON.stringify(used.map((s) => ({
+    'window.FF_DATA_SOURCES = ' + JSON.stringify(used.map((s) => ({
       id: s.id,
       name: s.name,
       tableId: tableIdFor(s),
@@ -273,11 +292,12 @@ export function exportMask(
   // seRuntime löst putRelation-ids über dieses Global auf. Nur Technikwerte
   // (Verb/NR/Params) — der Anzeigename bleibt im Editor.
   const relationsJs = guardScriptContent(escapeNonAsciiJs(
-    'var FF_RELATIONS = ' + JSON.stringify(usedRelations.map((r) => ({
+    'window.FF_RELATIONS = ' + JSON.stringify(usedRelations.map((r) => ({
       id: r.id,
       verb: r.verb,
       nr: r.nr,
       params: r.params,
+      allowExtraParams: r.allowExtraParams === true,
     }))) + ';',
   ))
 
@@ -288,6 +308,7 @@ export function exportMask(
     '<head>',
     '<meta charset="UTF-8" />',
     `<title>${escapeHtmlText(title)}</title>`,
+    SE_INTERFACE_SCRIPT,
     '<style>',
     tokensCss,
     '',

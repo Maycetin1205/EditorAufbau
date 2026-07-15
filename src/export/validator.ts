@@ -37,11 +37,19 @@ export function validateMaskHtml(html: string): CheckResult[] {
     badChar ? `Zeichen U+${badChar[0].codePointAt(0)!.toString(16).toUpperCase()} an Position ${badChar.index}` : '',
   )
 
-  // 4. Blockstruktur des Mini-Exports: genau 1 <style> + 1 <script>
+  // 4. Blockstruktur des Mini-Exports: genau 1 <style>, genau das offizielle
+  // SoftEngine-Interface und genau 1 eigene Inline-Runtime. Das Interface
+  // muss explizit mitreisen: BüroWARE injiziert es teils, WEBWARE nicht.
   const styles = (html.match(/<style[\s>]/g) ?? []).length
   const scripts = (html.match(/<script[\s>]/g) ?? []).length
+  const interfaceScripts = (html.match(
+    /<script src="<!--SOFTENGINE-VAR!EditorPfad-->\/JS\/JS\/basis\.html\.interface\.js"><\/script>/g,
+  ) ?? []).length
+  const inlineScripts = (html.match(/<script>/g) ?? []).length
   check('genau 1 <style>', styles === 1, `gefunden: ${styles}`)
-  check('genau 1 <script>', scripts === 1, `gefunden: ${scripts}`)
+  check('genau 2 <script>', scripts === 2, `gefunden: ${scripts}`)
+  check('SoftEngine-Interface vorhanden', interfaceScripts === 1, `gefunden: ${interfaceScripts}`)
+  check('genau 1 eigene Runtime', inlineScripts === 1, `gefunden: ${inlineScripts}`)
 
   // 5. Grundgerüst
   check('DOCTYPE vorhanden', html.includes('<!DOCTYPE html>'))
