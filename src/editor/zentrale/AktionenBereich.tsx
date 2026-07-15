@@ -128,8 +128,7 @@ export function AktionenBereich() {
     return (
       <div className="flex-1 p-4">
         <p className="text-xs text-muted-foreground">
-          Noch kein Baustein mit Ereignissen in der Maske — z. B. ein Kanban
-          oder eine Schaltfläche einfügen.
+          Kein Baustein mit Ereignissen in der Maske.
         </p>
       </div>
     )
@@ -150,7 +149,7 @@ export function AktionenBereich() {
                 type="button"
                 data-ausgewaehlt={e.id === aktivImCanvas || undefined}
                 onClick={() => { setAuswahlId(e.id); setForm(null) }}
-                className={`mb-0.5 w-full border-l-2 px-2 py-1.5 text-left text-xs transition-colors ${
+                className={`mb-0.5 w-full border-l-2 px-2 py-1 text-left text-xs transition-colors ${
                   aktiv ? 'border-ring bg-secondary' : 'border-transparent hover:bg-secondary/60'
                 }`}
               >
@@ -175,9 +174,7 @@ export function AktionenBereich() {
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {auswahl && (
           <div className="flex flex-col gap-3">
-            <div>
-              <h3 className="text-sm font-semibold">{auswahl.name}</h3>
-            </div>
+            <h3 className="text-sm font-semibold">{auswahl.name}</h3>
             {auswahl.events.map((ev) => {
               const steps = ed.tree[auswahl.id]?.events?.[ev.key] ?? []
               return (
@@ -215,7 +212,6 @@ export function AktionenBereich() {
                             <span className="min-w-0 flex-1 truncate" title={problem ?? undefined}>
                               {stepTypeName(s.type)}
                               {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
-                              {s.type === 'START_TOOL' && s.toolParams.length > 0 ? ` (${s.toolParams.join(', ')})` : ''}
                               {s.type === 'RELATION' && relation ? ` — ${relation.name}` : ''}
                               {problem !== null ? ' — unvollständig' : ''}
                             </span>

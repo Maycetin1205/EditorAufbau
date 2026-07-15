@@ -15,7 +15,8 @@ export interface StepTypeSpec {
 }
 
 export const STEP_TYPES: readonly StepTypeSpec[] = [
-  { key: 'START_TOOL', name: 'Werkzeug starten' },
+  // Anzeige-Name = SE-Fachbegriff selbst (Nutzer-Entscheidung 2026-07-15).
+  { key: 'START_TOOL', name: 'START_TOOL' },
   { key: 'RELATION', name: 'Relation' },
 ]
 
@@ -274,7 +275,8 @@ export function stepProblem(
 ): string | null {
   if (step.type === 'START_TOOL') {
     if (step.toolNr.trim() === '') {
-      return `Schritt "${stepTypeName(step.type)}" hat keine Werkzeug-Nummer.`
+      // Codex-Wortlaut 2026-07-15 (Erklärtexte raus): „Nummer", nicht „Werkzeug-Nummer".
+      return `Schritt "${stepTypeName(step.type)}" hat keine Nummer.`
     }
     if (step.toolParams.some((param) => param.trim() === '')) {
       return `Schritt "${stepTypeName(step.type)}" hat einen leeren Parameter.`

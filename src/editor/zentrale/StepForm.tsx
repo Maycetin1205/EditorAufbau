@@ -1,6 +1,9 @@
 // Ein Schritt im bestehenden Ablauf: Baustein -> Ereignis -> Aktion.
 // START_TOOL und RELATION teilen nur die Huelle; ihre Felder bleiben durch
 // das typisierte Kernmodell strikt getrennt.
+// START_TOOL traegt nur die Nummer — KEINE Parameter im Formular
+// (Nutzer-Entscheidung 2026-07-15); toolParams bleibt im Modell fuer
+// Altbestaende und die Laufzeit, gespeichert wird leer.
 
 import { useState } from 'react'
 import { Plus, Search, X } from 'lucide-react'
@@ -161,9 +164,6 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
   const dataSources = useDataSources()
   const [typ, setTyp] = useState<StepTypeKey>(step?.type ?? 'START_TOOL')
   const [toolNr, setToolNr] = useState(step?.type === 'START_TOOL' ? step.toolNr : '')
-  const [toolParams, setToolParams] = useState<string[]>(
-    step?.type === 'START_TOOL' ? [...step.toolParams] : [],
-  )
   const [relationId, setRelationId] = useState(
     step?.type === 'RELATION' ? step.relationId : '',
   )
@@ -212,7 +212,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
         type: 'START_TOOL',
         resultKey: '',
         toolNr: toolNr.trim(),
-        toolParams: toolParams.map((param) => param.trim()),
+        toolParams: [],
       }
     }
     const normalizedParams = relation
@@ -254,40 +254,16 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
         />
 
         {typ === 'START_TOOL' && (
-          <>
-            <Field label="Werkzeug-Nummer" error={zeigeFehler ? problem ?? '' : ''}>
-              {(field) => (
-                <TextInput
-                  {...field}
-                  value={toolNr}
-                  className="w-28"
-                  onChange={(e) => setToolNr(e.target.value)}
-                />
-              )}
-            </Field>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">Parameter</span>
-                <Button variant="outline" size="sm" onClick={() => setToolParams((current) => [...current, ''])}>
-                  <Plus size={14} /> Parameter
-                </Button>
-              </div>
-              {toolParams.map((param, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <TextInput
-                    value={param}
-                    onChange={(e) => setToolParams((current) => current.map((value, at) => at === index ? e.target.value : value))}
-                  />
-                  <IconButton
-                    aria-label={`Parameter ${index + 1} entfernen`}
-                    onClick={() => setToolParams((current) => current.filter((_, at) => at !== index))}
-                  >
-                    <X size={14} />
-                  </IconButton>
-                </div>
-              ))}
-            </div>
-          </>
+          <Field label="Nummer" error={zeigeFehler ? problem ?? '' : ''}>
+            {(field) => (
+              <TextInput
+                {...field}
+                value={toolNr}
+                className="w-28"
+                onChange={(e) => setToolNr(e.target.value)}
+              />
+            )}
+          </Field>
         )}
 
         {typ === 'RELATION' && (

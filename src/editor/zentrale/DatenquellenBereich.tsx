@@ -63,7 +63,7 @@ export function DatenquellenBereich() {
                 key={s.id}
                 type="button"
                 onClick={() => { setAuswahlId(s.id); setModus('lesen') }}
-                className={`mb-1 w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors ${
+                className={`mb-1 w-full rounded-md border px-2.5 py-1 text-left text-xs transition-colors ${
                   aktiv ? 'border-ring bg-secondary' : 'border-transparent hover:bg-secondary/60'
                 }`}
               >
@@ -82,7 +82,7 @@ export function DatenquellenBereich() {
           })}
           {store.list.length === 0 && (
             <p className="px-1 py-2 text-xs text-muted-foreground">
-              Noch keine Datenquellen — oben anlegen.
+              Noch keine Datenquellen.
             </p>
           )}
         </div>
@@ -97,10 +97,7 @@ export function DatenquellenBereich() {
           <DataSourceForm source={auswahl} onClose={() => setModus('lesen')} />
         )}
         {modus === 'lesen' && !auswahl && (
-          <p className="text-xs text-muted-foreground">
-            Keine Datenquelle gewählt. Eine Datenquelle beschreibt, aus
-            welcher SoftEngine-Tabelle ein Baustein seine Zeilen bekommt.
-          </p>
+          <p className="text-xs text-muted-foreground">Keine Datenquelle gewählt.</p>
         )}
         {modus === 'lesen' && auswahl && (
           <div className="flex flex-col gap-4 text-xs">
@@ -109,8 +106,8 @@ export function DatenquellenBereich() {
               <p className="text-muted-foreground">
                 {KIND_LABELS[auswahl.kind]}
                 {auswahl.indexField
-                  ? ' · mit Satznummer (kann zurückschreiben)'
-                  : ' · ohne Satznummer (nur lesen)'}
+                  ? ' · mit Satznummer'
+                  : ' · ohne Satznummer'}
               </p>
             </div>
 

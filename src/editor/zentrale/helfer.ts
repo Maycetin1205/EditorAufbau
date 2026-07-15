@@ -14,12 +14,12 @@ export const KIND_LABELS: Record<DataSourceKind, string> = {
   beleg: 'Beleg',
 }
 
-// Klarnamen der Verben (der SoftEngine-Techniker kennt GET/PUT — darum das
-// Kürzel in Klammern; gespeichert wird der Technikwert `verb`).
+// Anzeige-Namen der Verben = die SE-Fachbegriffe selbst (Nutzer-
+// Entscheidung 2026-07-15: keine Klarname-Kombis wie „Lesen (GET)").
 export const VERB_LABELS: Record<RelationTemplate['verb'], string> = {
-  GET_RELATION: 'Lesen (GET)',
-  PUT_RELATION: 'Schreiben (PUT)',
-  PUTADD_RELATION: 'Anhängen (PUTADD)',
+  GET_RELATION: 'GET_RELATION',
+  PUT_RELATION: 'PUT_RELATION',
+  PUTADD_RELATION: 'PUTADD_RELATION',
 }
 
 // Kürzel für kompakte Listenzeilen (Kontext, kein Anzeigename).

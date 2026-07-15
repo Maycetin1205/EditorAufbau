@@ -27,8 +27,13 @@ add_repo an die Session hängen).
    bindableSpots, blockEvents, visibleWhen, …); Canvas, Inspector und Export
    lesen generisch. Nirgends `if typ === 'kanban'`.
 3. **Technikwert ≠ Anzeigename:** Feldcodes, IDs, NRs arbeiten unsichtbar,
-   sichtbar sind Klarnamen. (Bewusste Nutzer-Ausnahme: Kanban-Spaltentitel
-   = Datenwert.)
+   sichtbar sind Klarnamen. (Bewusste Nutzer-Ausnahmen: Kanban-Spaltentitel
+   = Datenwert; die SE-Fachbegriffe START_TOOL / GET_RELATION /
+   PUT_RELATION / PUTADD_RELATION sind SELBST die Anzeige-Namen der
+   Schritt-Arten und Verben — keine Klarname-Kombis wie „Werkzeug starten"
+   oder „Lesen (GET)", Entscheidung 2026-07-15. Außerdem: START_TOOL hat
+   KEINE Parameter im Formular, nur die Nummer; keine sichtbaren
+   Erklär-/Tutorial-Texte in der Steuerung.)
 4. **Ein Export, eine Quelle, nichts scheitert still:** HTML + SEvariablen
    entstehen deterministisch aus demselben Baum + denselben Bibliotheken;
    Validator + Preflight blocken mit Klartext.
@@ -44,6 +49,10 @@ add_repo an die Session hängen).
    (Striche statt Demo-Werte, der Klarname ist die Vorschau).
 8. **Ein Arbeitsbaum = ein Agent** (Claude und Codex nie parallel im selben
    Ordner); Übergabe nur über gepushte Commits; ein Thema = ein Commit.
+   **Pflicht seit dem Kollisions-Vorfall 2026-07-15:** VOR Arbeitsbeginn
+   und VOR jedem Push `git fetch` — ist origin voraus, erst dessen Stand
+   ansehen und zusammenführen, dann bauen/pushen. NIE force-pushen. Ein
+   Branch, an dem der jeweils andere Agent laut Auftrag arbeitet, ist tabu.
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
    `npx eslint src` + `npm test` + `npx playwright test`), nie zwischendurch.
    Sicherheitsnetz = vier Wächter (export / seRuntime / persistence /
@@ -167,6 +176,19 @@ add_repo an die Session hängen).
   verschiedenen Quellen; bausteinübergreifende Selektion; Avatar-Zuordnung
   ein-/ausblendbar; Datumsanzeige-Baustein; Spaltenbreiten der Tabelle in
   der Maske dauerhaft merken; Sortierung wie Windows (Zahl/Datum/ABC).
+
+## Übergabe-Stand (2026-07-15, nach der Zusammenführung)
+
+⚠ **Vorfall 2026-07-15:** Claude und Codex haben parallel ab demselben
+Commit auf DEMSELBEN Branch gearbeitet (Verstoß gegen Regel 8) — Codex
+Steuerung-Feinschliff, Claude Fahrplan-Schritt 3. Claude hat beide Stränge
+zusammengeführt: Struktur/Funktion aus dem Claude-Strang (Relations-Aktion,
+GET/PUT-Laufzeit, flache Aktionen-UI), Nutzer-Entscheidungen aus dem
+Codex-Strang (SE-Fachbegriffe als Anzeigenamen, START_TOOL nur Nummer,
+Erklärtexte raus, dichteres Raster). Nichts aus beiden Strängen ist
+verloren. **Kommandozentrale, Datenbindung und SE-Echttest sind NICHT
+abgenommen** — Browser-Abnahme + SE-Echttest durch den Nutzer stehen aus;
+kein Merge nach `main` davor.
 
 ## Wichtige Stellen
 
