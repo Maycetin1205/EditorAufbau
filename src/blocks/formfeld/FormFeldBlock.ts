@@ -95,8 +95,16 @@ export class FormFeldBlock extends BasicBlock {
   static styles = [
     BasicBlock.styles,
     css`
-      .feld { font-family: var(--se-font); }
-      /* Anker fuer den im Feld sitzenden Platzhalter. */
+      .feld {
+        font-family: var(--se-font);
+        /* Innenabstände EINMAL definiert — .ctrl und .ph leiten sich beide
+           daraus ab, damit der Platzhalter exakt an der Textposition sitzt.
+           (N1: keine Magic Numbers, die beim Padding-Ändern auseinanderlaufen.) */
+        --feld-pad-y: 7px;
+        --feld-pad-x: 10px;
+        --feld-rand: 1px;
+      }
+      /* Anker für den im Feld sitzenden Platzhalter. */
       .huelle { position: relative; }
       /* .ctrl exakt nach Referenz-Optik: Rahmen, Panel-Flaeche, kantiger
          Radius; Fokus = Hausfarbe als Rahmen + 1px-Ring (kein weicher
@@ -104,8 +112,8 @@ export class FormFeldBlock extends BasicBlock {
       .ctrl {
         box-sizing: border-box;
         width: 100%;
-        padding: 7px 10px;
-        border: 1px solid var(--se-line);
+        padding: var(--feld-pad-y) var(--feld-pad-x);
+        border: var(--feld-rand) solid var(--se-line);
         background: var(--se-panel);
         border-radius: var(--se-r-sm);
         font-family: var(--se-font);
@@ -123,15 +131,15 @@ export class FormFeldBlock extends BasicBlock {
         min-height: 64px;
         line-height: 1.5;
       }
-      select.ctrl { padding: 6px 8px; }
+      select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
       /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
          1px Rahmen + 7px/10px Innenabstand), faengt keine Klicks der
          Maske ab und verschwindet, sobald das Feld Inhalt hat. */
       .ph {
         position: absolute;
-        top: 8px;
-        left: 11px;
-        right: 11px;
+        top: calc(var(--feld-pad-y) + var(--feld-rand));
+        left: calc(var(--feld-pad-x) + var(--feld-rand));
+        right: calc(var(--feld-pad-x) + var(--feld-rand));
         color: var(--se-faint);
         font-size: var(--se-fs);
         white-space: nowrap;
@@ -143,13 +151,14 @@ export class FormFeldBlock extends BasicBlock {
       /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
          Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
       .ph-select {
-        top: 7px;
-        left: 9px;
-        right: 25px;
+        top: calc(var(--feld-pad-y) - 1px + var(--feld-rand));
+        left: calc(var(--feld-pad-x) - 2px + var(--feld-rand));
+        right: 25px; /* Platz für den Aufklapp-Pfeil */
       }
-      /* Ankreuzfeld: Kaestchen + Beschriftung in EINER Zeile (Referenz
-         .impf-chk) — bewusst ohne <label for>-Kopplung, sonst kollidiert
-         der Beschriftungs-Klick mit dem Inline-Edit. */
+      /* Ankreuzfeld: Kästchen + Beschriftung in EINER Zeile (Referenz
+         .impf-chk) — bewusst ohne <label for>-Kopplung: im Editor ist die
+         Beschriftung das Umbenennen-Ziel. Den Haken-Klick auf den Text
+         übernimmt in der MASKE ein eigener Handler (N1, s. onTextClick). */
       .zeile {
         display: flex;
         align-items: center;
@@ -170,7 +179,12 @@ export class FormFeldBlock extends BasicBlock {
          Platzhalter bekommt nur im Editor einen greifbaren Hinweis. */
       :host([data-ff-editor]) .ctrl { pointer-events: none; }
       :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
-      :host([data-ff-editor]) .ph:empty::before { content: 'Text …'; opacity: 0.6; }
+      /* N1: der "Text …"-Griff gilt für JEDEN geleerten Inline-Edit-Text —
+         auch die Ankreuzfeld-Beschriftung bleibt im Editor anfassbar. */
+      :host([data-ff-editor]) [data-ff-editable]:empty::before { content: 'Text …'; opacity: 0.6; }
+      /* N1: in der MASKE schaltet die Beschriftung den Haken (Windows-
+         Gewohnheit) — klickbar zeigen, Textauswahl beim Klicken vermeiden. */
+      :host(:not([data-ff-editor])) .zeile .text { cursor: pointer; user-select: none; }
     `,
   ]
 
@@ -188,14 +202,27 @@ export class FormFeldBlock extends BasicBlock {
   }
 
   // Der Text IM Feld — Platzhalter bzw. Ankreuzfeld-Beschriftung; per
-  // Doppelklick direkt am Feld aenderbar (nur bei selektiertem Block,
-  // wie jedes Inline-Edit).
-  private textTpl(cls: string): TemplateResult {
+  // Doppelklick direkt am Feld änderbar (nur bei selektiertem Block,
+  // wie jedes Inline-Edit). EIN Template für beide Fälle (N1: der
+  // doppelte Zweig aus render() ist hier zusammengezogen).
+  private textTpl(cls: string, hidden = false): TemplateResult {
     return html`<span
       class=${cls}
+      ?hidden=${hidden}
       data-ff-editable
+      @click=${this.onTextClick}
       @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'placeholder')}
     >${this.placeholder}</span>`
+  }
+
+  // N1: Klick auf die Ankreuzfeld-Beschriftung schaltet in der MASKE den
+  // Haken — wie unter Windows. Im Editor passiert nichts (dort ist der
+  // Text das Umbenennen-Ziel); der Platzhalter (.ph) ist in der Maske
+  // klick-durchlässig (pointer-events) und erreicht diesen Handler nie.
+  private onTextClick(): void {
+    if (this.hasAttribute('data-ff-editor')) return
+    const box = this.renderRoot.querySelector<HTMLInputElement>('input[type="checkbox"]')
+    if (box) box.checked = !box.checked
   }
 
   private controlTpl(typ: FeldTyp): TemplateResult {
@@ -231,12 +258,7 @@ export class FormFeldBlock extends BasicBlock {
       <div class="huelle">
         ${this.controlTpl(typ)}
         ${MIT_PLATZHALTER.includes(typ)
-          ? html`<span
-              class=${typ === 'select' ? 'ph ph-select' : 'ph'}
-              ?hidden=${this._belegt}
-              data-ff-editable
-              @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'placeholder')}
-            >${this.placeholder}</span>`
+          ? this.textTpl(typ === 'select' ? 'ph ph-select' : 'ph', this._belegt)
           : nothing}
       </div>
     </div>`

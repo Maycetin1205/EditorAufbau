@@ -133,8 +133,16 @@
         @dblclick=${e=>this.inlineEdit(e,`chipText`)}
       >${this.chipText}</span>
     </div>`}};I([F()],z.prototype,`chipVariant`,void 0),I([F()],z.prototype,`heading`,void 0),I([F()],z.prototype,`time`,void 0),I([F()],z.prototype,`meta`,void 0),I([F()],z.prototype,`text`,void 0),I([F()],z.prototype,`chipText`,void 0),I([F()],z.prototype,`headingField`,void 0),I([F()],z.prototype,`timeField`,void 0),I([F()],z.prototype,`metaField`,void 0),I([F()],z.prototype,`textField`,void 0),I([F()],z.prototype,`chipTextField`,void 0),L.defineAndRegister(z);var rt=[`text`,`number`,`textarea`,`select`,`date`,`checkbox`];function it(e){return rt.includes(e)?e:`text`}var at=[`text`,`number`,`textarea`,`select`],B=class extends L{constructor(...e){super(...e),this.fieldType=`text`,this.placeholder=`Feldname`,this.options=``,this._belegt=!1}static{this.blockType=`formfeld`}static{this.tagName=`ff-formfeld`}static{this.displayName=`Formularfeld`}static{this.category=`eingabe`}static{this.defaultProps={width:240,fieldType:`text`,placeholder:`Feldname`,options:``}}static{this.customProperties=[{attributeName:`fieldType`,name:`Feldtyp`,description:`Welche Art Eingabe das Feld annimmt.`,isArray:!1,maxLength:0,kind:`select`,options:[{value:`text`,label:`Text`},{value:`number`,label:`Zahl`},{value:`textarea`,label:`Mehrzeilig`},{value:`select`,label:`Auswahl`},{value:`date`,label:`Datum`},{value:`checkbox`,label:`Ankreuzfeld`}]},{attributeName:`options`,name:`Auswahl-Optionen`,description:`Nur bei Feldtyp "Auswahl": Einträge durch Komma getrennt (z. B. "Zimmer 1, Zimmer 2") — jeder Eintrag wird eine Dropdown-Zeile.`,isArray:!1,maxLength:0,kind:`text`,visibleWhen:{attributeName:`fieldType`,equals:`select`}}]}static{this.styles=[L.styles,o`
-      .feld { font-family: var(--se-font); }
-      /* Anker fuer den im Feld sitzenden Platzhalter. */
+      .feld {
+        font-family: var(--se-font);
+        /* Innenabstände EINMAL definiert — .ctrl und .ph leiten sich beide
+           daraus ab, damit der Platzhalter exakt an der Textposition sitzt.
+           (N1: keine Magic Numbers, die beim Padding-Ändern auseinanderlaufen.) */
+        --feld-pad-y: 7px;
+        --feld-pad-x: 10px;
+        --feld-rand: 1px;
+      }
+      /* Anker für den im Feld sitzenden Platzhalter. */
       .huelle { position: relative; }
       /* .ctrl exakt nach Referenz-Optik: Rahmen, Panel-Flaeche, kantiger
          Radius; Fokus = Hausfarbe als Rahmen + 1px-Ring (kein weicher
@@ -142,8 +150,8 @@
       .ctrl {
         box-sizing: border-box;
         width: 100%;
-        padding: 7px 10px;
-        border: 1px solid var(--se-line);
+        padding: var(--feld-pad-y) var(--feld-pad-x);
+        border: var(--feld-rand) solid var(--se-line);
         background: var(--se-panel);
         border-radius: var(--se-r-sm);
         font-family: var(--se-font);
@@ -161,15 +169,15 @@
         min-height: 64px;
         line-height: 1.5;
       }
-      select.ctrl { padding: 6px 8px; }
+      select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
       /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
          1px Rahmen + 7px/10px Innenabstand), faengt keine Klicks der
          Maske ab und verschwindet, sobald das Feld Inhalt hat. */
       .ph {
         position: absolute;
-        top: 8px;
-        left: 11px;
-        right: 11px;
+        top: calc(var(--feld-pad-y) + var(--feld-rand));
+        left: calc(var(--feld-pad-x) + var(--feld-rand));
+        right: calc(var(--feld-pad-x) + var(--feld-rand));
         color: var(--se-faint);
         font-size: var(--se-fs);
         white-space: nowrap;
@@ -181,13 +189,14 @@
       /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
          Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
       .ph-select {
-        top: 7px;
-        left: 9px;
-        right: 25px;
+        top: calc(var(--feld-pad-y) - 1px + var(--feld-rand));
+        left: calc(var(--feld-pad-x) - 2px + var(--feld-rand));
+        right: 25px; /* Platz für den Aufklapp-Pfeil */
       }
-      /* Ankreuzfeld: Kaestchen + Beschriftung in EINER Zeile (Referenz
-         .impf-chk) — bewusst ohne <label for>-Kopplung, sonst kollidiert
-         der Beschriftungs-Klick mit dem Inline-Edit. */
+      /* Ankreuzfeld: Kästchen + Beschriftung in EINER Zeile (Referenz
+         .impf-chk) — bewusst ohne <label for>-Kopplung: im Editor ist die
+         Beschriftung das Umbenennen-Ziel. Den Haken-Klick auf den Text
+         übernimmt in der MASKE ein eigener Handler (N1, s. onTextClick). */
       .zeile {
         display: flex;
         align-items: center;
@@ -208,12 +217,19 @@
          Platzhalter bekommt nur im Editor einen greifbaren Hinweis. */
       :host([data-ff-editor]) .ctrl { pointer-events: none; }
       :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
-      :host([data-ff-editor]) .ph:empty::before { content: 'Text …'; opacity: 0.6; }
-    `]}onInput(e){let t=e.target;this._belegt=t.value!==``}textTpl(e){return T`<span
+      /* N1: der "Text …"-Griff gilt für JEDEN geleerten Inline-Edit-Text —
+         auch die Ankreuzfeld-Beschriftung bleibt im Editor anfassbar. */
+      :host([data-ff-editor]) [data-ff-editable]:empty::before { content: 'Text …'; opacity: 0.6; }
+      /* N1: in der MASKE schaltet die Beschriftung den Haken (Windows-
+         Gewohnheit) — klickbar zeigen, Textauswahl beim Klicken vermeiden. */
+      :host(:not([data-ff-editor])) .zeile .text { cursor: pointer; user-select: none; }
+    `]}onInput(e){let t=e.target;this._belegt=t.value!==``}textTpl(e,t=!1){return T`<span
       class=${e}
+      ?hidden=${t}
       data-ff-editable
+      @click=${this.onTextClick}
       @dblclick=${e=>this.inlineEdit(e,`placeholder`)}
-    >${this.placeholder}</span>`}controlTpl(e){switch(e){case`textarea`:return T`<textarea class="ctrl" @input=${this.onInput}></textarea>`;case`select`:{let e=this.options.split(`,`).map(e=>e.trim()).filter(e=>e!==``);return T`<select class="ctrl" @change=${this.onInput}>
+    >${this.placeholder}</span>`}onTextClick(){if(this.hasAttribute(`data-ff-editor`))return;let e=this.renderRoot.querySelector(`input[type="checkbox"]`);e&&(e.checked=!e.checked)}controlTpl(e){switch(e){case`textarea`:return T`<textarea class="ctrl" @input=${this.onInput}></textarea>`;case`select`:{let e=this.options.split(`,`).map(e=>e.trim()).filter(e=>e!==``);return T`<select class="ctrl" @change=${this.onInput}>
           <option value="" disabled selected hidden></option>
           ${e.length===0?T`<option disabled>(keine Optionen)</option>`:e.map(e=>T`<option value=${e}>${e}</option>`)}
         </select>`}default:return T`<input class="ctrl" type=${e} @input=${this.onInput} />`}}render(){let e=it(this.fieldType);return e===`checkbox`?T`<div class="feld">
@@ -224,12 +240,7 @@
       </div>`:T`<div class="feld">
       <div class="huelle">
         ${this.controlTpl(e)}
-        ${at.includes(e)?T`<span
-              class=${e===`select`?`ph ph-select`:`ph`}
-              ?hidden=${this._belegt}
-              data-ff-editable
-              @dblclick=${e=>this.inlineEdit(e,`placeholder`)}
-            >${this.placeholder}</span>`:D}
+        ${at.includes(e)?this.textTpl(e===`select`?`ph ph-select`:`ph`,this._belegt):D}
       </div>
     </div>`}};I([F()],B.prototype,`fieldType`,void 0),I([F()],B.prototype,`placeholder`,void 0),I([F()],B.prototype,`options`,void 0),I([Ne()],B.prototype,`_belegt`,void 0),L.defineAndRegister(B);function ot(e,t,n,r){return{attributeName:e,name:t,description:n,isArray:!1,maxLength:0,kind:`select`,options:[{value:`nein`,label:`Nein`},{value:`ja`,label:`Ja`}],...r}}var V=class extends L{constructor(...e){super(...e),this.variant=`info`,this.heading=`Neue Spalte`,this._count=0}static{this.blockType=`kanban-spalte`}static{this.tagName=`ff-kanban-spalte`}static{this.displayName=`Kanban-Spalte`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[z.blockType]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.allowedParentTypes=[`kanban`]}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={variant:`info`,heading:`Neue Spalte`,auffang:`nein`}}static{this.customProperties=[tt(`variant`,`Bedeutung der Spalte — bestimmt ihre Farbwelt (Kopf, Fläche, Rahmen).`),ot(`auffang`,`Auffangspalte`,`Einträge ohne passenden Spaltentitel landen hier. Ohne Auffangspalte zeigt die Maske sie sichtbar in „Nicht zugeordnet“.`,{requiresDataSource:!0,exclusiveAmongSiblings:!0})]}static{this.styles=[L.styles,o`
       /* Die Spalte fuellt die Board-Hoehe in BEIDEN Welten (P1.2-Fix eines

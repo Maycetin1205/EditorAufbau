@@ -88,9 +88,12 @@ add_repo an die Session hängen).
   `dashboard/datatable-demo.html`, `dashboard/popup-demo.html`.
 - **Vereinbarter Fahrplan (2026-07-15, Claude + Codex einig; Umbau und
   neue Funktionen sind IMMER getrennte Pakete):**
-  1. **N1** Formularfeld-Nacharbeiten — nur Darstellung/Bedienung, kein
-     GET/PUT (Beschriftungs-Klick schaltet Haken in der Maske,
-     Platzhalter-Robustheit, Doppel-Zweig).
+  1. ✅ **N1** Formularfeld-Nacharbeiten (erledigt 2026-07-15) — nur
+     Darstellung/Bedienung, kein GET/PUT: Beschriftungs-Klick schaltet in
+     der Maske den Haken (im Editor bleibt er Umbenennen-Ziel),
+     Platzhalter-Position über gemeinsame Innenabstands-Variablen statt
+     Magic Numbers, Text-Template zusammengezogen, „Text …"-Griff auch
+     für geleerte Ankreuzfeld-Beschriftung.
   2. **SoftEngine-Schicht herausziehen, verhaltensgleich:** aus
      `blocks/kanban/seRuntime.ts` nach `src/softengine/` — `bridge.ts`
      (Anmeldung, Daten-Push, Diagnose), `data.ts` (getField/setField/
