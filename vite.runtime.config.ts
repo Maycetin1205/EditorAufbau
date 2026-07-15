@@ -6,6 +6,10 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  // Der Runtime-Build erzeugt ausschließlich das eingebettete JS-Bündel.
+  // Dateien aus public/ gehören zur Editor-App und dürfen hier nicht in
+  // src/export/generated/ kopiert werden.
+  publicDir: false,
   define: { 'process.env.NODE_ENV': '"production"' },
   build: {
     lib: {
