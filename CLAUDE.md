@@ -114,9 +114,17 @@ add_repo an die Session hängen).
      die Steuerung öffnet direkt mit Datenquellen.
      Alte DataSourceList/RelationList gelöscht (kein toter Code).
      Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT der
-     Selektions-Funktion; tiefe Zentrale-Funktionen (Syntax-Import,
-     IDB-Import, Arten-Katalog, Ampeln über die Vorprüfung hinaus)
+     Selektions-Funktion; tiefe Zentrale-Funktionen (IDB-Import,
+     Arten-Katalog, Ampeln über die Vorprüfung hinaus)
      kommen als eigene Pakete, wenn ihre Grundlage existiert.
+  2c. ✅ **Universeller Relations-Syntax-Import (erledigt 2026-07-15):**
+     GET_RELATION / PUT_RELATION / PUTADD_RELATION werden ohne Annahmen über
+     Parameterpositionen zerlegt; führende Nullen, leere Parameter, freie
+     Platzhalternamen, Werte mit `[` und ein abschließendes `...` bleiben
+     erhalten. Syntax ist nur Ein-/Ausgabe, gespeichert wird eine strukturierte
+     Vorlage. Formular = nur Anzeigename + Syntax; Bibliothek durchsucht Name,
+     NR und Syntax und filtert fachlich nach Lesen (GET) bzw. Schreiben
+     (PUT/PUTADD). Keine Relations-Ausführung in diesem Paket.
   3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
      seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern). Die
      Bedienung (Schritt-Typ „Relation ausführen", Ergebnis-Name) landet

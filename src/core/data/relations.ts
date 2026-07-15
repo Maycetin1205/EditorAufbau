@@ -25,8 +25,10 @@ export const RELATION_VERBS: readonly RelationVerb[] = [
   'GET_RELATION', 'PUT_RELATION', 'PUTADD_RELATION',
 ]
 
-// Das PLATZHALTER-Vokabular (5.5) — die eine Quelle für
-// Formular-Validierung, Hilfe-Text und Laufzeit-Kontext:
+// Automatisch befüllbare Standard-Platzhalter (5.5) — die eine Quelle für
+// Hilfe-Text und den heute vorhandenen Laufzeit-Kontext. Relations-Syntax darf
+// zusätzlich beliebige eigene Platzhalter wie {GJ} oder {BELART} enthalten;
+// deren Wertquelle wird erst beim Aktionsschritt zugeordnet.
 //  FELD_POS/FELD_LEN  Position/Länge des Ziel-Felds (Feldcode gesplittet)
 //  PINDEX             Satznummer des betroffenen Satzes
 //  SELKEY             Satznummer der Auswahl (füllt erst Kap. 8 — bis dahin
@@ -42,9 +44,9 @@ export const RELATION_PLACEHOLDERS = [
 
 export type RelationPlaceholder = (typeof RELATION_PLACEHOLDERS)[number]
 
-// Werte, die ein Konsument zur Laufzeit liefert. Schlüssel = Platzhalter
-// (im Param-String als {NAME}); nicht gelieferte Platzhalter bleiben leer.
-export type RelationContext = Partial<Record<RelationPlaceholder, string>>
+// Werte, die ein Konsument zur Laufzeit liefert. Neben den Standardnamen sind
+// benutzerdefinierte Platzhalter erlaubt. Nicht gelieferte Namen werden leer.
+export type RelationContext = Readonly<Record<string, string | undefined>>
 
 export interface RelationTemplate {
   // Stabiler Technikwert — Konsumenten (Kanban-Schreibweg, später Kap. 8)
@@ -57,7 +59,16 @@ export interface RelationTemplate {
   nr: string
   // Parameter-Syntax: feste Werte und Platzhalter (siehe RelationContext).
   params: readonly string[]
+  // Ein abschließendes !... in der eingegebenen Syntax: der spätere
+  // Aktionsschritt darf weitere Parameter anhängen. Der Marker selbst wird
+  // niemals an SoftEngine gesendet.
+  allowExtraParams?: boolean
 }
+
+export type ParsedRelationSyntax = Pick<
+  RelationTemplate,
+  'verb' | 'nr' | 'params' | 'allowExtraParams'
+>
 
 // Mitgelieferter Startbestand (Kap. 5.5: nur noch der SEED des
 // RelationStore — danach gehören die Vorlagen dem Bediener). Die id
@@ -96,6 +107,74 @@ export function splitFieldCode(code: string): { pos: string; len: string } | nul
   return m ? { pos: m[1], len: m[2] } : null
 }
 
+// SoftEngine-Syntax -> neutrale Vorlage. Nur die äußere Hülle hat Bedeutung:
+// Verb, NR und die mit ! getrennte Parameter-Reihenfolge. Parameterpositionen
+// werden NIE fachlich geraten. Leere Positionen und führende Nullen bleiben
+// erhalten. Der letzte ] schließt die Relation, damit Werte wie DATUM[10
+// korrekt als Parameter gelesen werden.
+export function parseRelationSyntax(input: string): ParsedRelationSyntax | null {
+  const raw = input.trim()
+  const head = /^(GET_RELATION|PUTADD_RELATION|PUT_RELATION)\[/i.exec(raw)
+  if (!head || !raw.endsWith(']') || /[\r\n]/.test(raw)) return null
+
+  const body = raw.slice(head[0].length, -1)
+  const parts = body.split('!')
+  const nr = parts.shift() ?? ''
+  if (!/^\d+$/.test(nr)) return null
+
+  let allowExtraParams = false
+  if (parts.at(-1) === '...') {
+    allowExtraParams = true
+    parts.pop()
+  }
+
+  // Doppelte Klammern kamen im Alt-Editor vor. Als reine, vollständige
+  // Platzhalter-Position werden sie sicher auf die kanonische Form gebracht;
+  // sonst bleibt der Parameter exakt erhalten.
+  const params = parts.map((param) => {
+    const doubled = /^\{\{([A-Za-z0-9_]+)\}\}$/.exec(param)
+    return doubled ? `{${doubled[1]}}` : param
+  })
+
+  return {
+    verb: head[1].toUpperCase() as RelationVerb,
+    nr,
+    params,
+    allowExtraParams,
+  }
+}
+
+// Strukturierte Vorlage -> kanonische SoftEngine-Syntax. Damit existiert nur
+// eine gespeicherte Wahrheit; die Syntaxzeile ist stets daraus abgeleitet.
+export function formatRelationSyntax(
+  relation: Pick<RelationTemplate, 'verb' | 'nr' | 'params' | 'allowExtraParams'>,
+): string {
+  const parts = [relation.nr, ...relation.params]
+  if (relation.allowExtraParams) parts.push('...')
+  return `${relation.verb}[${parts.join('!')}]`
+}
+
+// Die Bedienoberfläche kennt nur die zwei fachlichen Gruppen Lesen und
+// Schreiben. PUTADD bleibt intern ein eigenes SoftEngine-Verb, gehört bei
+// Suche und Auswahl aber zur Gruppe Schreiben.
+export type RelationGroup = 'lesen' | 'schreiben'
+
+export function relationGroup(relation: Pick<RelationTemplate, 'verb'>): RelationGroup {
+  return relation.verb === 'GET_RELATION' ? 'lesen' : 'schreiben'
+}
+
+// Gemeinsame Suche für Relationsbibliothek und späteren Aktions-Picker.
+// Gesucht wird in Anzeigename, exakter NR und der vollständigen Syntax.
+export function relationMatchesSearch(
+  relation: Pick<RelationTemplate, 'name' | 'verb' | 'nr' | 'params' | 'allowExtraParams'>,
+  query: string,
+): boolean {
+  const needle = query.trim().toLocaleLowerCase('de')
+  if (needle === '') return true
+  return [relation.name, relation.nr, formatRelationSyntax(relation)]
+    .some((value) => value.toLocaleLowerCase('de').includes(needle))
+}
+
 // Platzhalter einer Vorlage füllen: {NAME} -> Kontextwert (fehlend -> '').
 // Feste Werte (z. B. 'L') laufen unverändert durch. Deterministisch.
 export function resolveParams(
@@ -103,16 +182,15 @@ export function resolveParams(
   context: RelationContext,
 ): string[] {
   return template.params.map((p) =>
-    p.replace(/\{([A-Z_]+)\}/g, (_, key: string) =>
-      String(context[key as RelationPlaceholder] ?? ''),
+    p.replace(/\{([A-Za-z0-9_]+)\}/g, (_, key: string) =>
+      String(context[key] ?? ''),
     ),
   )
 }
 
-// Unbekannte {PLATZHALTER} eines Param-Strings (für die Formular-Validierung
-// in 5.5b: Tippfehler wie {PINDX} würden sonst stumm zu '' aufgelöst).
-// `known` erlaubt engere Vokabulare (Z2: Werkzeug-Parameter kennen nur eine
-// Teilmenge, AKTIONS_PLATZHALTER) — Default bleibt das Relations-Vokabular.
+// Unbekannte {PLATZHALTER} eines Param-Strings für Kontexte mit bewusst engem
+// Vokabular (heute: START_TOOL). Relations-Vorlagen selbst dürfen freie Namen
+// verwenden; deren Zuordnung folgt mit dem Relations-Aktionsschritt.
 export function unknownPlaceholders(
   param: string,
   known: readonly string[] = RELATION_PLACEHOLDERS,
@@ -149,6 +227,7 @@ export function sanitizeRelationTemplates(raw: unknown): RelationTemplate[] {
       verb: e.verb as RelationVerb,
       nr: e.nr,
       params: [...(e.params as string[])],
+      allowExtraParams: e.allowExtraParams === true,
     })
   }
   return acc

@@ -45,6 +45,7 @@ export const PLATZHALTER_KLARTEXT: Record<string, string> = {
 // Bedeutung eines Relations-Parameters in Klartext: gefundene Platzhalter
 // werden erklärt, ein Parameter ohne Platzhalter ist ein fester Wert.
 export function parameterBedeutung(param: string): string {
+  if (param === '') return 'Leerer Parameter (Position bleibt erhalten)'
   const gefunden = [...param.matchAll(/\{([^}]+)\}/g)].map((m) => m[1])
   if (gefunden.length === 0) return 'Fester Wert'
   return gefunden

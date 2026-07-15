@@ -7,22 +7,35 @@
 // kind-'relation'-Properties, kein `if type===`).
 
 import { useState } from 'react'
-import { Plus, Share2 } from 'lucide-react'
+import { Plus, Search, Share2 } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
+import { TextInput } from '@/ui/atoms/text-input'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import type { RelationTemplate } from '../../core/data/relations'
+import {
+  formatRelationSyntax,
+  relationGroup,
+  relationMatchesSearch,
+  type RelationGroup,
+  type RelationTemplate,
+} from '../../core/data/relations'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
 import { RelationForm } from './RelationForm'
-import { bausteinName, parameterBedeutung, VERB_KURZ, VERB_LABELS } from './helfer'
+import { bausteinName, parameterBedeutung, VERB_KURZ } from './helfer'
 
 export function RelationenBereich() {
   const store = useRelations()
   const ed = useEditor()
+  const [suche, setSuche] = useState('')
+  const [filter, setFilter] = useState<'alle' | RelationGroup>('alle')
   const [auswahlId, setAuswahlId] = useState<string | null>(store.list[0]?.id ?? null)
   const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu'>('lesen')
 
-  const auswahl = store.list.find((r) => r.id === auswahlId) ?? store.list[0]
+  const sichtbareRelationen = store.list.filter((relation) =>
+    (filter === 'alle' || relationGroup(relation) === filter)
+    && relationMatchesSearch(relation, suche),
+  )
+  const auswahl = sichtbareRelationen.find((r) => r.id === auswahlId) ?? sichtbareRelationen[0]
 
   // Bausteine der Maske, die diese Vorlage benutzen (Klarnamen).
   const verwendungFor = (id: string): string[] =>
@@ -48,13 +61,46 @@ export function RelationenBereich() {
     <div className="flex min-h-0 flex-1">
       {/* Master */}
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
-        <div className="border-b border-border p-2">
+        <div className="flex flex-col gap-2 border-b border-border p-2">
           <Button variant="outline" size="sm" className="w-full" onClick={() => setModus('neu')}>
             <Plus size={14} /> Neue Relation
           </Button>
+          <div className="relative">
+            <Search
+              size={13}
+              className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <TextInput
+              aria-label="Relationen durchsuchen"
+              value={suche}
+              placeholder="Suchen"
+              className="pl-7"
+              onChange={(e) => setSuche(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {([
+              ['alle', 'Alle'],
+              ['lesen', 'Lesen'],
+              ['schreiben', 'Schreiben'],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                className={`rounded-md border px-1.5 py-1 text-[10px] font-medium transition-colors ${
+                  filter === key
+                    ? 'border-ring bg-secondary text-foreground'
+                    : 'border-border text-muted-foreground hover:bg-secondary/60'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
-          {store.list.map((r) => {
+          {sichtbareRelationen.map((r) => {
             const aktiv = modus !== 'neu' && auswahl?.id === r.id
             return (
               <button
@@ -80,6 +126,9 @@ export function RelationenBereich() {
               Noch keine Relationen — oben anlegen.
             </p>
           )}
+          {store.list.length > 0 && sichtbareRelationen.length === 0 && (
+            <p className="px-1 py-2 text-xs text-muted-foreground">Keine Treffer.</p>
+          )}
         </div>
       </div>
 
@@ -91,19 +140,13 @@ export function RelationenBereich() {
         )}
         {modus === 'lesen' && !auswahl && (
           <p className="text-xs text-muted-foreground">
-            Keine Relation gewählt. Eine Relation ist ein Lese- oder
-            Schreibweg Ihrer SoftEngine-Installation — die Zeile dafür
-            bekommen Sie vom SoftEngine-Betreuer.
+            Keine Relation gewählt.
           </p>
         )}
         {modus === 'lesen' && auswahl && (
           <div className="flex flex-col gap-4 text-xs">
             <div>
               <h3 className="text-sm font-semibold">{auswahl.name}</h3>
-              <p className="text-muted-foreground">
-                {VERB_LABELS[auswahl.verb]} · Nummer {auswahl.nr} — Nummern
-                und Parameter sind je Installation individuell.
-              </p>
             </div>
 
             <div>
@@ -118,7 +161,9 @@ export function RelationenBereich() {
                         <td className="w-6 px-2 py-1 text-right font-mono text-[11px] text-muted-foreground">
                           {i + 1}
                         </td>
-                        <td className="px-2 py-1 font-mono text-[11px]">{p}</td>
+                        <td className="px-2 py-1 font-mono text-[11px]">
+                          {p === '' ? <span className="text-muted-foreground">(leer)</span> : p}
+                        </td>
                         <td className="px-2 py-1 text-muted-foreground">{parameterBedeutung(p)}</td>
                       </tr>
                     ))}
@@ -132,10 +177,10 @@ export function RelationenBereich() {
 
             <div>
               <h4 className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-muted-foreground">
-                So sieht SoftEngine diesen Aufruf
+                Gespeicherte SoftEngine-Syntax
               </h4>
               <code className="block overflow-x-auto rounded-md bg-secondary px-2.5 py-1.5 font-mono text-[11px]">
-                {auswahl.verb}[{[auswahl.nr, ...auswahl.params].join('!')}]
+                {formatRelationSyntax(auswahl)}
               </code>
             </div>
 
