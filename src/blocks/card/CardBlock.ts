@@ -100,6 +100,9 @@ export class CardBlock extends BasicBlock {
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
+        height: 112px;
+        min-height: 112px;
+        overflow: hidden;
         gap: 5px;
         background: var(--se-card-bg);
         border: 1px solid var(--se-card-line);
@@ -142,9 +145,14 @@ export class CardBlock extends BasicBlock {
         color: var(--se-muted);
         font-size: var(--se-fs);
         line-height: 1.35;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
       }
       .card .chip {
         align-self: flex-start;
+        margin-top: auto;
       }
     `,
   ]
