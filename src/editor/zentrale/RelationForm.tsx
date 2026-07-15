@@ -16,7 +16,6 @@ import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
-import { Modal } from '@/ui/molecules/modal'
 import {
   RELATION_PLACEHOLDERS,
   RELATION_VERBS,
@@ -26,14 +25,8 @@ import {
 } from '../../core/data/relations'
 import { useRelations } from '../../state/useRelations'
 import { SelectControl } from '../inspector/controls/SelectControl'
-
-// Klarnamen der Verben (der SoftEngine-Techniker kennt GET/PUT — darum das
-// Kürzel in Klammern; gespeichert wird der Technikwert `verb`).
-const VERB_LABELS: Record<RelationVerb, string> = {
-  GET_RELATION: 'Lesen (GET)',
-  PUT_RELATION: 'Schreiben (PUT)',
-  PUTADD_RELATION: 'Anhängen (PUTADD)',
-}
+import { FormularKarte } from './FormularKarte'
+import { VERB_LABELS } from './helfer'
 
 interface RelationFormProps {
   // Vorhandene Vorlage = Bearbeiten; undefined = Anlegen.
@@ -83,7 +76,7 @@ export function RelationForm({ relation, onClose }: RelationFormProps) {
   }
 
   return (
-    <Modal title={relation ? 'Relation bearbeiten' : 'Neue Relation'} onClose={onClose}>
+    <FormularKarte title={relation ? 'Relation bearbeiten' : 'Neue Relation'} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <Field label="Anzeigename" error={zeigeFehler ? nameFehler : ''}>
           {(f) => (
@@ -166,6 +159,6 @@ export function RelationForm({ relation, onClose }: RelationFormProps) {
           <Button onClick={speichern}>Speichern</Button>
         </div>
       </div>
-    </Modal>
+    </FormularKarte>
   )
 }

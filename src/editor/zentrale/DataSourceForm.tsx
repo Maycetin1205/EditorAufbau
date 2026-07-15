@@ -13,7 +13,6 @@ import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
-import { Modal } from '@/ui/molecules/modal'
 import {
   DATA_SOURCE_KINDS,
   fieldCode,
@@ -26,14 +25,8 @@ import {
 import { splitFieldCode } from '../../core/data/relations'
 import { useDataSources } from '../../state/useDataSources'
 import { SelectControl } from '../inspector/controls/SelectControl'
-
-// Klarnamen der Quellen-Arten (der Technikwert `kind` bleibt unsichtbar).
-const KIND_LABELS: Record<DataSourceKind, string> = {
-  idb: 'IDB-Tabelle',
-  adressstamm: 'Adressstamm',
-  artikelstamm: 'Artikelstamm',
-  beleg: 'Beleg',
-}
+import { FormularKarte } from './FormularKarte'
+import { KIND_LABELS } from './helfer'
 
 const FELDCODE = /^\d+_\d+$/
 
@@ -140,7 +133,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   }
 
   return (
-    <Modal title={source ? 'Datenquelle bearbeiten' : 'Neue Datenquelle'} onClose={onClose}>
+    <FormularKarte title={source ? 'Datenquelle bearbeiten' : 'Neue Datenquelle'} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <Field label="Anzeigename" error={zeigeFehler ? nameFehler : ''}>
           {(f) => (
@@ -264,6 +257,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           <Button onClick={speichern}>Speichern</Button>
         </div>
       </div>
-    </Modal>
+    </FormularKarte>
   )
 }

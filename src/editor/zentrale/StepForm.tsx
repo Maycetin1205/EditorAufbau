@@ -8,9 +8,10 @@
 // (Zwischenspeicher), aber „Werkzeug starten" liefert kein Ergebnis — das
 // Feld erscheint mit „Relation ausführen" (Z3).
 //
-// Muster: RelationForm (dasselbe Modal-Molekül, dieselbe Zeilen-Mechanik
-// für Parameter, Validierung erst beim Speichern). Das Modal fängt sein
-// Escape vor der Zentrale ab (Escape-Schichtung, Z1).
+// Muster: RelationForm (dieselbe Zeilen-Mechanik für Parameter, Validierung
+// erst beim Speichern). Seit dem Gerüst (2026-07-15) inline im Detail-
+// Bereich (FormularKarte) statt als Modal — die Karte fängt ihr Escape
+// weiterhin vor der Zentrale ab (Escape-Schichtung, Z1).
 
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
@@ -18,7 +19,6 @@ import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
-import { Modal } from '@/ui/molecules/modal'
 import {
   AKTIONS_PLATZHALTER,
   STEP_TYPES,
@@ -26,6 +26,7 @@ import {
 } from '../../core/data/aktionen'
 import { unknownPlaceholders } from '../../core/data/relations'
 import { SelectControl } from '../inspector/controls/SelectControl'
+import { FormularKarte } from './FormularKarte'
 
 // Klarnamen der Platzhalter für den Hinweis-Text (Technikwert in Klammern
 // ist hier der Platzhalter selbst — den muss der Bediener ja eintippen).
@@ -79,7 +80,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
   }
 
   return (
-    <Modal title={step ? 'Schritt bearbeiten' : 'Neuer Schritt'} onClose={onClose}>
+    <FormularKarte title={step ? 'Schritt bearbeiten' : 'Neuer Schritt'} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <SelectControl
           label="Schritt-Art"
@@ -146,6 +147,6 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
           <Button onClick={speichern}>Speichern</Button>
         </div>
       </div>
-    </Modal>
+    </FormularKarte>
   )
 }

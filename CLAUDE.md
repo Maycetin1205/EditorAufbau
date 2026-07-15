@@ -103,8 +103,23 @@ add_repo an die Session hängen).
      hört als erster Zuhörer auf die Klingel. Abhängigkeitsregel gilt:
      Bausteine importieren die Schicht — die Schicht kennt NIE einen
      Baustein. Keine neuen Funktionen im Paket; Tests unverändert grün.
+  2b. ✅ **Zentrale-Gerüst (eingeschoben + erledigt 2026-07-15,
+     Nutzer-Entscheidung: kein neues Feature mehr in die alte Steuerung):**
+     Steuerung neu als Master-Detail nach der Demo-Vorlage — Bereiche
+     Übersicht | Datenquellen | Relationen | Aktionen; Bearbeiten inline
+     (FormularKarte statt Modal im Modal, Escape-Schichtung erhalten);
+     Detail zeigt Felder/Parameter mit Klartext-Bedeutung, Syntaxzeile
+     und „Verwendung in dieser Maske"; Übersicht = Kacheln + „Zu
+     erledigen" aus der VORHANDENEN Export-Vorprüfung mit Sprung.
+     Alte DataSourceList/RelationList gelöscht (kein toter Code).
+     Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT der
+     Selektions-Funktion; tiefe Zentrale-Funktionen (Syntax-Import,
+     IDB-Import, Arten-Katalog, Ampeln über die Vorprüfung hinaus)
+     kommen als eigene Pakete, wenn ihre Grundlage existiert.
   3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
-     seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern).
+     seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern). Die
+     Bedienung (Schritt-Typ „Relation ausführen", Ergebnis-Name) landet
+     direkt im neuen Gerüst.
   4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
      Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
   5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
