@@ -42,7 +42,8 @@ export function BindungsAnschluss({ block }: BindungsAnschlussProps) {
     zustand = 'Die gewählte Datenquelle fehlt in der Bibliothek.'
     warnung = true
   } else if (!stand.feldGewaehlt) {
-    zustand = `Quelle: ${quelle?.name} · ${feldName} fehlt noch.`
+    // Das Feld ist optional (2026-07-15) — kein Mangel, nur der Zustand.
+    zustand = `Quelle: ${quelle?.name} · ${feldName}: keins`
   } else {
     zustand = `Quelle: ${quelle?.name} · ${feldName}: ${feldLabel ?? 'unbekanntes Feld'}`
   }

@@ -71,8 +71,9 @@ export type ParsedRelationSyntax = Pick<
 >
 
 // Mitgelieferter Startbestand (Kap. 5.5: nur noch der SEED des
-// RelationStore — danach gehören die Vorlagen dem Bediener). Die id
-// 'standard-put' ist der Default der Kanban-Prop `putRelation`.
+// RelationStore — danach gehören die Vorlagen dem Bediener). Seit
+// 2026-07-15 benutzt sie KEIN Baustein mehr automatisch: sie ist eine
+// normale, löschbare Bibliotheks-Vorlage für Aktionsketten.
 export const BUILTIN_RELATION_TEMPLATES: readonly RelationTemplate[] = [
   {
     id: 'standard-put',

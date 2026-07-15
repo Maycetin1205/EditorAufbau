@@ -3,21 +3,24 @@
 // Seit dem Schicht-Umzug 2026-07-15 liegt hier NUR noch Kanban: Zeilen
 // werden Karten (Vorlage = die Musterkarte des Boards), der Wert des
 // Spalten-Felds bestimmt die Spalte (exakter Vergleich mit dem TITEL,
-// Titel = Wert), Karten ziehen schreibt zurück. Alles Allgemeine —
-// SE-Anmeldung/Daten-Push (bridge), Feld lesen/schreiben und Zeilen
-// (data), Vorlagen-Auflösung + PUT (relations) — wohnt in src/softengine/
-// und wird hier nur benutzt.
+// Titel = Wert). Alles Allgemeine — SE-Anmeldung/Daten-Push (bridge),
+// Feld lesen und Zeilen (data) — wohnt in src/softengine/ und wird hier
+// nur benutzt.
+//
+// KEIN eingebauter Schreibweg mehr (Nutzer-Entscheidung 2026-07-15):
+// das frühere automatische Standard-PUT beim Karten-Ziehen ist ersatzlos
+// entfernt. Ein Drop ist nur ein Auslöser — was passiert, bestimmt allein
+// die sichtbare Aktionskette „Karte verschoben". „Einsortieren nach"
+// (statusField) ist OPTIONAL: ohne Feld landen alle Zeilen in der
+// Auffang- bzw. einer Auto-Spalte.
 //
 // Läuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle
-// oder ohne Spalten-Feld bleibt die exportierte Maske statisch (WYSIWYG
-// wie bisher) — nichts bricht.
+// bleibt die exportierte Maske statisch (WYSIWYG wie bisher) — nichts bricht.
 
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
-import { relIdFromIdbId } from '../../core/data/relations'
 import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
-import { findRuntimeRelation, sendPut, type RuntimeRelation } from '../../softengine/relations'
+import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -81,8 +84,10 @@ function spotsForTag(tagName: string) {
 
 function hydrate(board: HTMLElement): void {
   const sourceId = board.getAttribute('source') ?? ''
+  // „Einsortieren nach" ist optional (Nutzer-Entscheidung 2026-07-15):
+  // ohne Feld gehen alle Zeilen in die Auffang- bzw. eine Auto-Spalte.
   const statusField = board.getAttribute('statusfield') ?? ''
-  if (sourceId === '' || statusField === '') return // statisch bleiben
+  if (sourceId === '') return // statisch bleiben
   const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, sourceId)
   if (!source) return
 
@@ -131,7 +136,9 @@ function hydrate(board: HTMLElement): void {
   for (const col of columns) cardsOf(col).forEach((card) => card.remove())
   for (const row of rows) {
     const card = template.cloneNode(true) as HTMLElement
-    const idx = columnIndexFor(getField(row, statusField), columnValues)
+    const idx = statusField === ''
+      ? -1
+      : columnIndexFor(getField(row, statusField), columnValues)
     const target = idx >= 0
       ? columns[idx]
       : catchIdx >= 0 ? columns[catchIdx] : ensureAutoColumn()
@@ -145,24 +152,26 @@ function hydrate(board: HTMLElement): void {
         (card as unknown as Record<string, unknown>)[spot.prop] = getField(row, code)
       }
     }
-    // Schreibweg (5.3b): nur Karten mit Datensatz-Nummer sind ziehbar. Ohne
-    // indexField der Quelle bleibt das Board reines Lesen (wie 5.3a).
-    const pindex = getField(row, source.indexField)
-    if (pindex !== '') {
-      cardData.set(card, { row, pindex })
-      card.draggable = true
-    }
+    // Jede Daten-Karte ist ziehbar. Der Drop ist nur ein Auslöser für die
+    // Kette „Karte verschoben" — {PINDEX} reist mit, wenn die Zeile eine
+    // Datensatz-Nummer trägt, sonst leer (die Kette entscheidet selbst,
+    // was sie braucht).
+    const pindex = source.indexField === '' ? '' : getField(row, source.indexField)
+    cardData.set(card, { row, pindex })
+    card.draggable = true
   }
 }
 
-// ---------- Karten-Drag im Export (Schreibweg 5.3b) ----------
+// ---------- Karten-Drag im Export ----------
 //
-// HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> TITEL der Zielspalte
-// (heading = Datenwert) über die mitgelieferte Relation-Vorlage ins Spalten-
-// Feld schreiben, Zeile im Speicher aktualisieren, neu hydrieren (Muster alter
-// Editor, 5.3b (b)). Läuft NUR im Export: verdrahtet wird in
-// connectBoard, und Editor-Boards (data-ff-editor) melden sich dort nie an —
-// die Canvas-Drag-Logik des Editors bleibt unberührt.
+// HTML5-Drag auf Daten-Karten, Drop auf eine Spalte -> AUSSCHLIESSLICH die
+// Aktionskette „Karte verschoben" läuft ({PINDEX} = Nummer der gezogenen
+// Karte, {VALUE} = Titel der Zielspalte). Kein eingebautes Zurückschreiben,
+// kein lokales Umhängen — was die Daten ändert, ist allein die Kette; der
+// nächste Daten-Push hydriert neu (Nutzer-Entscheidung 2026-07-15).
+// Läuft NUR im Export: verdrahtet wird in connectBoard, und Editor-Boards
+// (data-ff-editor) melden sich dort nie an — die Canvas-Drag-Logik des
+// Editors bleibt unberührt.
 
 // Zeile + Datensatz-Nummer je Daten-Karte (WeakMap: lebt und stirbt mit der Karte).
 const cardData = new WeakMap<HTMLElement, { row: unknown; pindex: string }>()
@@ -179,42 +188,15 @@ function columnOfEvent(board: HTMLElement, e: Event): HTMLElement | null {
   return null
 }
 
-// Der Schreibweg des Boards (Kap. 5.5): die am Board GEWÄHLTE Vorlage +
-// die Datenquelle, beide aufgelöst über die eingebetteten FF_*-Daten.
-// Kein `putrelation` (leer/unbekannt) ODER keine Quelle -> undefined =
-// das Board schreibt nicht (read-only). Der Schreibweg kennt kein Protokoll
-// mehr, nur die Vorlage.
-function writePathFor(board: HTMLElement): { template: RuntimeRelation; relId: string } | undefined {
-  const g = seGlobal()
-  const template = findRuntimeRelation(g.FF_RELATIONS, board.getAttribute('putrelation') ?? '')
-  const source = findRuntimeDataSource(g.FF_DATA_SOURCES, board.getAttribute('source') ?? '')
-  if (!template || !source) return undefined
-  return { template, relId: relIdFromIdbId(source.tableId) }
-}
-
-// Drop einer Daten-Karte auf eine Spalte. Geschrieben wird der Spalten-TITEL
-// (Titel = Datenwert, 2026-07-14); Spalte ohne Titel ist kein Schreibziel;
-// gleicher Wert = kein Zug (derselbe Vergleich wie beim Verteilen: getrimmt,
-// Groß/klein egal). Ohne konfigurierten Schreibweg (keine Vorlage gewählt)
-// bewegt sich NICHTS — ein rein lokaler Zug wäre eine Täuschung (er
-// verschwände beim nächsten ReloadData). WYSIWYG.
+// Drop einer Daten-Karte auf eine Spalte: NUR die Aktionskette läuft.
+// Die Karte bleibt liegen — ein rein lokaler Zug wäre eine Täuschung
+// (er verschwände beim nächsten Daten-Push). WYSIWYG: was sich bewegt,
+// haben die Daten bestätigt.
 function handleDrop(board: HTMLElement, column: HTMLElement): void {
   if (!dragged || dragged.board !== board) return
   const data = cardData.get(dragged.card)
   if (!data) return
-  const statusField = board.getAttribute('statusfield') ?? ''
   const targetValue = column.getAttribute('heading') ?? ''
-  if (statusField === '' || targetValue.trim() === '') return
-  const current = getField(data.row, statusField)
-  if (current.trim().toLowerCase() === targetValue.trim().toLowerCase()) return
-  const path = writePathFor(board)
-  if (!path) return
-  sendPut(path.template, path.relId, statusField, data.pindex, targetValue)
-  setField(data.row, statusField, targetValue)
-  hydrate(board)
-  // Z2: Aktionskette „Karte verschoben" NACH dem erfolgreichen
-  // Zurückschreiben — {PINDEX} = Nummer der gezogenen Karte,
-  // {VALUE} = der neue Spaltenwert.
   void runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
 }
 

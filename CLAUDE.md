@@ -97,6 +97,17 @@ add_repo an die Session hängen).
   Schaltfläche, Formularfeld (v1 statisch, Neubau nach behandlung-Referenz),
   Zeile. Export = Vollbild (`height: 'fill'`, Schema-v2-Migration).
   Aktionsketten (Z2/START_TOOL) in SoftEngine bestätigt.
+  **Kanban-Entscheidungen 2026-07-15 (SE-Echttest-Feedback):**
+  „Einsortieren nach" ist OPTIONAL (ohne Feld → alle Zeilen in die
+  Auffang-/Auto-Spalte); der eingebaute Schreibweg (automatisches
+  Standard-PUT 174 beim Ziehen) ist ERSATZLOS raus — ein Drop führt nur
+  die sichtbare Kette „Karte verschoben" aus, die Karte bleibt liegen
+  (der nächste Daten-Push entscheidet). `putRelation` existiert nicht
+  mehr; NR 174 ist nur noch eine löschbare Bibliotheks-Vorlage.
+  Datenquellen: IDB-ID wird als `ID0004` eingegeben/angezeigt (Technikwert
+  `IDBID0004` unsichtbar); KEIN Formularfeld für die Datensatz-Nummer —
+  Felder pflegt allein „+ Feld", `indexField` läuft unsichtbar (Bestand
+  bleibt, neue Quellen `0_10`).
 - **Steuerung** (Aktionen | Datenquellen | Relationen) wird nach der
   Demo-Vorlage neu geschnitten.
 - **Klickmodelle als Diskussionsgrundlage** (kein Produktcode, Einbau erst

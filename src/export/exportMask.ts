@@ -289,8 +289,8 @@ export function exportMask(
     }))) + ';',
   ))
   // Die benutzten Relation-Vorlagen reisen ebenso als DATEN mit (Kap. 5.5):
-  // seRuntime löst putRelation-ids über dieses Global auf. Nur Technikwerte
-  // (Verb/NR/Params) — der Anzeigename bleibt im Editor.
+  // die Aktionsketten lösen ihre relationId über dieses Global auf. Nur
+  // Technikwerte (Verb/NR/Params) — der Anzeigename bleibt im Editor.
   const relationsJs = guardScriptContent(escapeNonAsciiJs(
     'window.FF_RELATIONS = ' + JSON.stringify(usedRelations.map((r) => ({
       id: r.id,

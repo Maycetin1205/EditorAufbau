@@ -149,8 +149,8 @@ test('Export: Zeilen werden Karten; kein Treffer bleibt sichtbar in Nicht zugeor
   await expect(page.locator('ff-card')).toHaveCount(1)
 })
 
-// Schreibweg 5.3b: Zeilen tragen die Satznummer (indexField '0_10' des
-// Terminplaners) — nur damit sind Karten ziehbar.
+// Zeilen tragen die Datensatz-Nummer (indexField '0_10' des Terminplaners) —
+// sie reist beim Drop als {PINDEX} in die Aktionskette.
 const SEDATA_DRAG_STUB = {
   Daten: {
     SEFileLoop: [{
@@ -164,7 +164,7 @@ const SEDATA_DRAG_STUB = {
   },
 }
 
-test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3b)', async ({ page, context }) => {
+test('Export: Karte ziehen schreibt NICHTS automatisch — kein eingebautes PUT, keine lokale Bewegung', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)
   await attachTerminplaner(page)
@@ -197,30 +197,20 @@ test('Export: Karte ziehen schreibt den Spaltenwert per PUT-Vorlage zurück (5.3
   // Hydriert: Bello+Luna in "In Arbeit" (2), Rex in "Fertig" (3).
   const colCards = (i: number) => mask.locator('ff-kanban-spalte').nth(i).locator('ff-card .heading')
   await expect(colCards(1)).toHaveText(['Bello', 'Luna'])
+  await expect(colCards(2)).toHaveText(['Rex'])
 
-  // Bello nach "Fertig" ziehen: exakt EIN PUT über die Standard-Vorlage —
-  // PARAMS [pos, len, 'L', pindex, relId OHNE IDB-Präfix, Zielwert].
+  // Daten-Karten sind ziehbar — der Drop ist der Auslöser der Kette
+  // „Karte verschoben" ({PINDEX}/{VALUE}).
+  await expect(mask.locator('ff-kanban-spalte ff-card').first()).toHaveAttribute('draggable', 'true')
+
+  // Kein eingebauter Schreibweg mehr (Nutzer-Entscheidung 2026-07-15,
+  // das automatische Standard-PUT ist ersatzlos entfernt): Ohne eigene
+  // Kette passiert beim Drop NICHTS — kein PUT, keine lokale Bewegung.
+  // Was sich bewegt, müssen die Daten bestätigen (WYSIWYG).
   await mask.locator('ff-card', { hasText: 'Bello' }).dragTo(mask.locator('ff-kanban-spalte').nth(2))
-  await expect(colCards(1)).toHaveText(['Luna'])
-  await expect(colCards(2)).toHaveText(['Bello', 'Rex']) // Zeilen-Reihenfolge
-  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([
-    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
-  ])
-
-  // Gleicher Wert = kein PUT: Drop auf die eigene Spalte veraendert nichts.
-  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(1))
-  await expect(colCards(1)).toHaveText(['Luna'])
-  expect(await mask.evaluate(() => ((window as unknown as Record<string, unknown>).PUT_CALLS as unknown[]).length)).toBe(1)
-
-  // Titel = Wert gilt fuer JEDE Spalte (2026-07-14): Drop auf "Offen"
-  // schreibt woertlich 'Offen' (Luna, Satznummer 9) — die einstige stille
-  // No-Write-Spalte (leeres statusvalue) existiert nicht mehr.
-  await mask.locator('ff-card', { hasText: 'Luna' }).dragTo(mask.locator('ff-kanban-spalte').nth(0))
-  await expect(colCards(0)).toHaveText(['Luna'])
-  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([
-    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '7', 'ID0001', '3'] }],
-    ['PUT_RELATION', { NR: '174', PARAMS: ['253', '30', 'L', '9', 'ID0001', 'Offen'] }],
-  ])
+  await expect(colCards(1)).toHaveText(['Bello', 'Luna'])
+  await expect(colCards(2)).toHaveText(['Rex'])
+  expect(await mask.evaluate(() => (window as unknown as Record<string, unknown>).PUT_CALLS)).toEqual([])
 })
 
 // SEDATA in der ECHTEN SoftEngine-Form (belegt durch den SE-Echttest des
@@ -345,7 +335,7 @@ test('Export: SoftEngine schiebt die Daten — Register-Weg und message-Fallback
   await expect(col2Cards(3)).toHaveText(['Rocky'])
 })
 
-test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', async ({ page, context }) => {
+test('Export ohne Spalten-Feld hydriert trotzdem — alle Zeilen in "Nicht zugeordnet", nie Demo-Karten', async ({ page, context }) => {
   await freshEditor(page)
   await insertBoard(page)
   await attachTerminplaner(page)
@@ -359,12 +349,13 @@ test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', as
     (window as unknown as Record<string, unknown>).SEDATA = sedata
   }, SEDATA_STUB)
 
-  // Keine Hydrierung — und seit 2026-07-10 gibt es NIE sichtbare
-  // Demo-Karten in der Maske: die Musterkarte reist nur als inertes
-  // <template data-ff-template>, die Spalten bleiben leer, bis echte
-  // Daten kommen (der Poll hätte 300ms-Takte — kurz warten, dann prüfen).
-  await mask.waitForTimeout(1000)
-  await expect(mask.locator('ff-card')).toHaveCount(0)
+  // „Einsortieren nach" ist OPTIONAL (Nutzer-Entscheidung 2026-07-15):
+  // ohne Feld hydriert das Board trotzdem — ALLE Zeilen landen in der
+  // Auto-Spalte „Nicht zugeordnet" (bzw. der gewählten Auffang-Spalte).
+  // Demo-Karten gibt es weiterhin NIE: die Musterkarte reist nur als
+  // inertes <template data-ff-template>.
+  await expect(mask.locator('ff-kanban-spalte ff-card')).toHaveCount(4)
+  await expect(mask.locator('ff-kanban-spalte[data-ff-nicht-zugeordnet] ff-card')).toHaveCount(4)
   await expect(mask.locator('template[data-ff-template]')).toHaveCount(1)
   await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
 })

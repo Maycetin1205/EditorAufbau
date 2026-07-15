@@ -59,14 +59,15 @@ export class KanbanBlock extends BasicBlock {
     { key: 'onCardDrop', name: 'Karte verschoben' },
   ]
   // statusField (Kap. 5.3): Feldcode des Spalten-Felds (Technikwert,
-  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte.
-  // putRelation (Kap. 5.5): id der Relation-Vorlage, über die der
-  // Kanban-Schreibweg (5.3b) Werte zurückschreibt — Default = die
-  // mitgelieferte Standard-PUT-Vorlage. Alle Defaults '' bzw. fester
-  // Technikwert -> überleben Persistenz, reisen als Attribut mit.
+  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. OPTIONAL
+  // (Nutzer-Entscheidung 2026-07-15): ohne Feld landen alle Zeilen in der
+  // Auffang- bzw. einer Auto-Spalte.
+  // KEIN putRelation mehr (dieselbe Entscheidung): das automatische
+  // Standard-PUT beim Ziehen ist ersatzlos entfernt — was ein Drop tut,
+  // bestimmt allein die Aktionskette „Karte verschoben".
   static readonly defaultProps = {
     width: 'fill', height: 'fill' as const,
-    source: '', statusField: '', putRelation: 'standard-put',
+    source: '', statusField: '',
   }
   static readonly bindingRoute = {
     fieldProp: 'statusField',
@@ -75,26 +76,10 @@ export class KanbanBlock extends BasicBlock {
     {
       attributeName: 'statusField',
       name: 'Einsortieren nach',
-      description: 'Das Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt (z. B. Behandlungszimmer).',
+      description: 'Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt. Leer = alle Einträge in der Auffang-Spalte.',
       isArray: false,
       maxLength: 0,
       kind: 'field',
-      hiddenInInspector: true,
-    },
-    // KEIN Inspector-Control (Nutzer-Entscheidung 2026-07-14): Relationen
-    // werden in der Steuerung gepflegt; das Board nutzt still die Standard-
-    // Schreibvorlage. Eine sichtbare Wahl kommt erst mit der gefuehrten
-    // Strecke (B4) zurueck. Die Beschreibung bleibt registriert, weil der
-    // Export (collectRelations) und der Verwendungs-Scan der Bibliothek
-    // kind-'relation'-Props darueber finden.
-    {
-      attributeName: 'putRelation',
-      name: 'Beim Verschieben zurückschreiben über',
-      description: 'Relation-Vorlage, über die eine verschobene Karte den Titel ihrer neuen Spalte ins Sortier-Feld zurückschreibt.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'relation',
-      requiresDataSource: true,
       hiddenInInspector: true,
     },
   ]

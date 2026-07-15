@@ -13,9 +13,10 @@ export interface BindungsStand {
   quelleGewaehlt: boolean
   // ... und die Vorlage existiert (noch) in der Bibliothek.
   quelleBekannt: boolean
-  // Das Einsortieren-Feld (route.fieldProp) ist gewaehlt.
+  // Das Einsortieren-Feld (route.fieldProp) ist gewaehlt — OPTIONAL
+  // (Nutzer-Entscheidung 2026-07-15): reine Anzeige-Info, kein Mangel.
   feldGewaehlt: boolean
-  // Alles zusammen: das Board ist angeschlossen.
+  // Angeschlossen = die Quelle steht und existiert. Das Feld ist optional.
   angeschlossen: boolean
 }
 
@@ -34,6 +35,6 @@ export function bindungsStand(
     quelleGewaehlt,
     quelleBekannt,
     feldGewaehlt,
-    angeschlossen: quelleBekannt && feldGewaehlt,
+    angeschlossen: quelleBekannt,
   }
 }
