@@ -20,6 +20,11 @@ import { Subject } from './Subject'
 import { deepClone } from '../lib/deepClone'
 
 const STORAGE_KEY = 'aufbau_editor_mvp_v1'
+// Notfallkopie eines UNLESBAREN Speicherstands (U1): getrennter Schlüssel,
+// den der Autosave (STORAGE_KEY) nie anfasst — die beschädigten Rohdaten
+// bleiben damit erhalten, auch nachdem der Editor leer weiterläuft und beim
+// ersten Speichern den kaputten STORAGE_KEY überschreibt.
+export const BACKUP_KEY = 'aufbau_editor_mvp_v1__notfallkopie'
 const CURRENT_SCHEMA_VERSION = 2
 const HISTORY_LIMIT = 50
 const SAVE_DEBOUNCE_MS = 500
@@ -181,10 +186,32 @@ function migrateRootKanbanToViewportFill(tree: BlockTree): boolean {
   return migrated
 }
 
-function loadFromStorage(): LoadedState | null {
+// Einen UNLESBAREN Speicherstand behandeln (U1, Nutzer-Regel „Verluste
+// passieren nie still"): die Rohdaten ZUERST als Notfallkopie sichern (nur
+// falls dort noch keine liegt — die früheste, wertvollste Kopie bleibt), dann
+// Klartext melden. Der Editor startet danach leer weiter; die Kopie überlebt,
+// weil sie unter einem eigenen Schlüssel liegt (Autosave rührt sie nie an).
+function backupUnreadableState(raw: string): void {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
+    if (localStorage.getItem(BACKUP_KEY) === null) {
+      localStorage.setItem(BACKUP_KEY, raw)
+    }
+  } catch { /* Das Sichern selbst darf nie zusätzlich Schaden anrichten. */ }
+  if (typeof alert === 'function') {
+    alert(
+      'Der gespeicherte Editor-Stand war beschädigt und konnte nicht gelesen '
+      + 'werden.\nEr wurde NICHT gelöscht, sondern als Notfallkopie gesichert '
+      + `(Schlüssel „${BACKUP_KEY}" im Browser-Speicher).\n`
+      + 'Der Editor startet vorerst leer; die Kopie bleibt erhalten, bis sie '
+      + 'gerettet oder bewusst entfernt wird.',
+    )
+  }
+}
+
+function loadFromStorage(): LoadedState | null {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return null
+  try {
     const parsed = JSON.parse(raw) as {
       schemaVersion?: unknown
       tree?: unknown
@@ -203,7 +230,13 @@ function loadFromStorage(): LoadedState | null {
     } else if (Array.isArray(parsed.blocks)) {
       tree = migrateFlatBlocks(parsed.blocks)
     }
-    if (!tree) return null
+    if (!tree) {
+      // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder
+      // oder halb-kaputter Inhalt, in dem echte Arbeit stecken könnte): wie
+      // einen Lesefehler behandeln — sichern + melden, nicht still leer starten.
+      backupUnreadableState(raw)
+      return null
+    }
     const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
     const migrated = schemaVersion < CURRENT_SCHEMA_VERSION
       ? migrateRootKanbanToViewportFill(tree)
@@ -223,7 +256,12 @@ function loadFromStorage(): LoadedState | null {
         ? parsed.selectedId
         : null
     return { tree, selectedId, migrated }
-  } catch {
+  } catch (error) {
+    // Unlesbarer Stand (kaputtes JSON, unerwarteter Fehler beim Aufbau):
+    // NIE still leer starten und NIE vom Autosave überschreiben lassen —
+    // Rohdaten sichern, dann melden.
+    console.error('Editor: gespeicherter Stand nicht lesbar', error)
+    backupUnreadableState(raw)
     return null
   }
 }
