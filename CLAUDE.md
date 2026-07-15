@@ -86,15 +86,31 @@ add_repo an die Session hängen).
 - **Klickmodelle als Diskussionsgrundlage** (kein Produktcode, Einbau erst
   nach Detail-Besprechung + „go"): `dashboard/kommandozentrale-demo.html`,
   `dashboard/datatable-demo.html`, `dashboard/popup-demo.html`.
-- **Vereinbarte Reihenfolge:** N1 Formularfeld-Nacharbeiten
-  (Beschriftungs-Klick schaltet Haken in der Maske, Platzhalter-Robustheit,
-  Doppel-Zweig) → **SE-Schicht-Umzug** (Brücke/Daten/Relationen aus
-  `blocks/kanban/seRuntime.ts` nach `src/se/`, reine Verschiebung) →
-  **Popup P1–P5** (Seiten-Modell: Maske = Hauptseite + Popup-Seiten als
-  normale Block-Bäume; Größe per Anfasser; Aktions-Schritte „Popup
-  öffnen/schließen"; Export als inaktive Vorlage im selben HTML).
-  Danach: Z3 „Relation ausführen" + Zwischenspeicher, Tabelle,
-  Verknüpfungen/Selektion, Quellen-Arten-Registry (+ ERP-API/MEMTAB).
+- **Vereinbarter Fahrplan (2026-07-15, Claude + Codex einig; Umbau und
+  neue Funktionen sind IMMER getrennte Pakete):**
+  1. **N1** Formularfeld-Nacharbeiten — nur Darstellung/Bedienung, kein
+     GET/PUT (Beschriftungs-Klick schaltet Haken in der Maske,
+     Platzhalter-Robustheit, Doppel-Zweig).
+  2. **SoftEngine-Schicht herausziehen, verhaltensgleich:** aus
+     `blocks/kanban/seRuntime.ts` nach `src/softengine/` — `bridge.ts`
+     (Anmeldung, Daten-Push, Diagnose), `data.ts` (getField/setField/
+     rowsFor/Quellen), `relations.ts` (Vorlagen, PUT). Einzige
+     strukturelle Naht: der Abo-Punkt für Daten-Pushs. KEINE neuen
+     Funktionen im selben Paket. Abhängigkeitsregel: Bausteine importieren
+     die Schicht — die Schicht kennt NIE einen Baustein.
+     Verschieben → Tests grün → Bündel neu bauen.
+  3. **Gemeinsame GET/PUT-Logik ergänzen** (GET-Warteschlange nach
+     seGetNewIndex-Muster + Zwischenspeicher — der Z3-Kern).
+  4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
+     Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
+  5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
+     Popup-Seiten als normale Block-Bäume; Größe per Anfasser;
+     Aktions-Schritte „Popup öffnen/schließen"; Export als inaktive
+     Vorlage im selben HTML). Popup-Darstellung + Lebenszyklus bleiben
+     beim Popup — nur Datenzugriff/Relationen laufen über die
+     SoftEngine-Schicht.
+  Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
+  (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
 - **Merkliste:** Platzhalter muss auch bei programmatischem Befüllen
   verschwinden (gehört zur Feld-Datenbindung); Tabellen-Spalten aus
   verschiedenen Quellen; bausteinübergreifende Selektion; Avatar-Zuordnung
@@ -107,7 +123,7 @@ add_repo an die Session hängen).
   Bausteine: `src/blocks/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·
   Runtime-Bündel: `npm run build:runtime` (Veralten-Wächter im export.test!)
-- SE-Laufzeit: `src/blocks/kanban/seRuntime.ts` (Umzug nach `src/se/`
-  geplant) · `src/blocks/shared/seAktionen.ts`
+- SE-Laufzeit: `src/blocks/kanban/seRuntime.ts` (Umzug nach
+  `src/softengine/` = Fahrplan-Schritt 2) · `src/blocks/shared/seAktionen.ts`
 - Design: Masken-Tokens `src/design/masken-tokens.css` (--se-*, kantig,
   Grün) · Editor-UI `src/index.css` (shadcn, hell, Blau) — nie mischen.
