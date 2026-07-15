@@ -60,8 +60,9 @@ export interface BlockDefinition {
   customProperties: PropertyDescription[]
   acceptsChildren: boolean
   resizableWidth: boolean
-  // true = der Block hat eine einstellbare HÖHE (P1.3, opt-in): Inspector
-  // „Höhe: Automatisch / Fest (px)" + Zieh-Anfasser an der Unterkante.
+  // true = der Block hat eine einstellbare HÖHE (P1.3, opt-in): Zieh-
+  // Anfasser an der Unterkante; Doppelklick setzt den Block-Standard
+  // (z. B. Kanban = verbleibende Höhe/fill) zurück.
   // Der Block muss dafür `height` in seinen defaultProps deklarieren
   // (Kanban: feste Höhe = Karten scrollen im Spaltenrumpf). Default false.
   resizableHeight: boolean

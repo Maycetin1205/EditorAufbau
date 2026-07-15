@@ -1,6 +1,7 @@
 // useKeyboardShortcuts
 // Bindet globale Tastatur-Shortcuts an Editor-Befehle.
-// Delete/Backspace = Block loeschen.
+// Ausschliesslich Delete = Block loeschen. Backspace bleibt immer fuer
+// Textbearbeitung reserviert und loescht niemals einen Baustein.
 // Ctrl/Cmd+Z = Undo. Ctrl/Cmd+Shift+Z oder Ctrl+Y = Redo.
 // Ctrl/Cmd+D = Duplicate.
 
@@ -21,7 +22,7 @@ export function useKeyboardShortcuts() {
       if (isEditableTarget(e.target)) return
       const mod = e.ctrlKey || e.metaKey
 
-      if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
+      if (!mod && e.key === 'Delete') {
         if (editor.selectedId) {
           e.preventDefault()
           editor.removeBlock(editor.selectedId)

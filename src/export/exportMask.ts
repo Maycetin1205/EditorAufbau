@@ -97,7 +97,7 @@ function styleAttr(
   const style = {
     ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
     // Feste Höhe (P1.3) — DIESELBE Quelle wie der Canvas-Wrapper.
-    ...flowItemHeightStyle(parseFlowHeight(node.props.height)),
+    ...flowItemHeightStyle(parseFlowHeight(node.props.height), parentDirection),
   }
   const css = Object.entries(style)
     .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
@@ -292,9 +292,9 @@ export function exportMask(
     tokensCss,
     '',
     '/* Grundgeruest + Wurzel-Fluss (identisch zum Editor-Canvas, ROOT_FLOW) */',
-    'html, body { margin: 0; padding: 0; }',
+    'html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }',
     'body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); color: var(--se-ink); }',
-    `.ff-root { display: flex; flex-direction: column; align-items: flex-start; gap: ${ROOT_FLOW.gap}px; padding: ${ROOT_FLOW.padding}px; }`,
+    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; display: flex; flex-direction: column; align-items: flex-start; gap: ${ROOT_FLOW.gap}px; padding: ${ROOT_FLOW.padding}px; }`,
     '</style>',
     '</head>',
     '<body>',

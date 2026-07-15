@@ -2,9 +2,11 @@
 // Metadaten fuer genau ein editierbares Block-Property.
 // kind bestimmt das Inspector-Control; field speichert einen Feldcode,
 // relation die id einer Relation-Vorlage. requiresDataSource blendet ein
-// Control ohne Quelle aus. exclusiveAmongSiblings erzwingt hoechstens ein
-// Ja-Kennzeichen unter gleichartigen Geschwistern. hiddenInInspector ist nur
-// fuer Properties erlaubt, die in einem eigenen Dialog gepflegt werden.
+// Control ohne Quelle aus. visibleWhen beschreibt registry-getrieben, wann
+// ein Control zum aktuellen Blockzustand passt. exclusiveAmongSiblings
+// erzwingt hoechstens ein Ja-Kennzeichen unter gleichartigen Geschwistern.
+// hiddenInInspector ist nur fuer Properties erlaubt, die in einem eigenen
+// Dialog gepflegt werden.
 export type PropertyKind =
   | 'text'
   | 'textarea'
@@ -17,6 +19,11 @@ export interface PropertySelectOption {
   label: string
 }
 
+export interface PropertyVisibilityCondition {
+  attributeName: string
+  equals: unknown
+}
+
 export interface PropertyDescription {
   attributeName: string
   name: string
@@ -25,6 +32,7 @@ export interface PropertyDescription {
   maxLength: number
   kind?: PropertyKind
   options?: PropertySelectOption[]
+  visibleWhen?: PropertyVisibilityCondition
   requiresDataSource?: boolean
   exclusiveAmongSiblings?: boolean
   hiddenInInspector?: boolean

@@ -437,13 +437,13 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           onPointerDown={(e) => startResize(e, 'height', 120)}
           onDragStart={(e) => e.preventDefault()}
           onDoubleClick={(e) => {
-            // Zurück zu "automatisch" direkt am Anfasser — die Höhe hat
-            // BEWUSST kein Inspector-Feld (Bedienlogik 6: nur was sich
-            // nicht zeigen lässt, steht im Inspector).
+            // Zurück zum Block-Standard direkt am Anfasser — die Höhe hat
+            // BEWUSST kein Inspector-Feld (Kanban-Standard = fill).
             e.stopPropagation()
-            editor.updateProperty(blockRef.current.id, 'height', 'auto')
+            const standard = getBlockDefinition(blockRef.current.type)?.defaultProps.height ?? 'auto'
+            editor.updateProperty(blockRef.current.id, 'height', standard)
           }}
-          title="Höhe ziehen · Doppelklick: automatisch"
+          title="Höhe ziehen · Doppelklick: Standard"
           style={{
             position: 'absolute',
             bottom: -4,

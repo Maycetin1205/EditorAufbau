@@ -13,8 +13,8 @@
 // (Inline-Edit, WYSIWYG). Der Platzhalter ist ein eigenes Element mit
 // Verschwinde-Logik (statt native placeholder-Attribut), damit derselbe
 // Text in Editor UND Maske identisch sitzt und im Editor editierbar ist;
-// die Maske blendet ihn beim Tippen aus (input-Event — die Komponente
-// lebt in beiden Welten, 1 Render-Quelle).
+// die Maske blendet ihn beim Tippen bzw. nach einer Auswahl aus (input-/
+// change-Event — die Komponente lebt in beiden Welten, 1 Render-Quelle).
 //
 // V1 = STATISCH (Nutzer-Entscheidung: erst die Bausteine, dann Schritt
 // fuer Schritt die SoftEngine-Logik): kein field-Prop, kein Lesen/
@@ -45,8 +45,10 @@ function coerceFeldTyp(v: unknown): FeldTyp {
   return FELD_TYPEN.includes(v as FeldTyp) ? (v as FeldTyp) : 'text'
 }
 
-// Typen mit sichtbarem Platzhalter IM Feld (Datum/Auswahl zeigen eigenes).
-const MIT_PLATZHALTER: readonly FeldTyp[] = ['text', 'number', 'textarea']
+// Typen mit sichtbarem Platzhalter IM Feld. Beim Select liegt darunter eine
+// leere, deaktivierte Startoption: der Platzhalter beschreibt das Feld, ist
+// aber selbst nie ein auswählbarer Wert.
+const MIT_PLATZHALTER: readonly FeldTyp[] = ['text', 'number', 'textarea', 'select']
 
 export class FormFeldBlock extends BasicBlock {
   static readonly blockType = 'formfeld'
@@ -86,6 +88,7 @@ export class FormFeldBlock extends BasicBlock {
       isArray: false,
       maxLength: 0,
       kind: 'text',
+      visibleWhen: { attributeName: 'fieldType', equals: 'select' },
     },
   ]
 
@@ -137,6 +140,13 @@ export class FormFeldBlock extends BasicBlock {
         pointer-events: none;
       }
       .ph[hidden] { display: none; }
+      /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
+         Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
+      .ph-select {
+        top: 7px;
+        left: 9px;
+        right: 25px;
+      }
       /* Ankreuzfeld: Kaestchen + Beschriftung in EINER Zeile (Referenz
          .impf-chk) — bewusst ohne <label for>-Kopplung, sonst kollidiert
          der Beschriftungs-Klick mit dem Inline-Edit. */
@@ -173,7 +183,7 @@ export class FormFeldBlock extends BasicBlock {
   @state() private _belegt = false
 
   private onInput(e: Event): void {
-    const t = e.target as HTMLInputElement | HTMLTextAreaElement
+    const t = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     this._belegt = t.value !== ''
   }
 
@@ -194,10 +204,11 @@ export class FormFeldBlock extends BasicBlock {
         return html`<textarea class="ctrl" @input=${this.onInput}></textarea>`
       case 'select': {
         const eintraege = this.options.split(',').map((o) => o.trim()).filter((o) => o !== '')
-        return html`<select class="ctrl">
+        return html`<select class="ctrl" @change=${this.onInput}>
+          <option value="" disabled selected hidden></option>
           ${eintraege.length === 0
-            ? html`<option>(keine Optionen)</option>`
-            : eintraege.map((o) => html`<option>${o}</option>`)}
+            ? html`<option disabled>(keine Optionen)</option>`
+            : eintraege.map((o) => html`<option value=${o}>${o}</option>`)}
         </select>`
       }
       default:
@@ -221,7 +232,7 @@ export class FormFeldBlock extends BasicBlock {
         ${this.controlTpl(typ)}
         ${MIT_PLATZHALTER.includes(typ)
           ? html`<span
-              class="ph"
+              class=${typ === 'select' ? 'ph ph-select' : 'ph'}
               ?hidden=${this._belegt}
               data-ff-editable
               @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'placeholder')}

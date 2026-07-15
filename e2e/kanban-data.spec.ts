@@ -368,3 +368,58 @@ test('Export ohne Spalten-Feld hydriert nicht — und zeigt NIE Demo-Karten', as
   await expect(mask.locator('template[data-ff-template]')).toHaveCount(1)
   await expect(mask.locator('ff-kanban-vorlage')).toHaveCount(0)
 })
+
+test('Export: komplette Vorlage füllt den Viewport, Kanban den verbleibenden Platz', async ({ page, context }) => {
+  await freshEditor(page)
+  // Normaler Baustein oben: behält seine natürliche Höhe. Das danach
+  // eingefügte Kanban muss den gesamten verbleibenden Platz übernehmen.
+  await page.getByRole('button', { name: 'Formularfeld', exact: true }).click()
+  await insertBoard(page)
+
+  const html = await exportMaskHtml(page)
+  expect(html).toContain('html, body { width: 100%; height: 100%;')
+  expect(html).toMatch(/<ff-kanban[^>]*style="align-self:stretch;flex-grow:1;flex-basis:0;min-height:0"/)
+
+  const maske = await context.newPage()
+  await maske.setContent(html)
+  await maske.locator('ff-kanban').waitFor()
+
+  for (const viewport of [
+    { width: 900, height: 600 },
+    { width: 1440, height: 900 },
+  ]) {
+    await maske.setViewportSize(viewport)
+    const mass = await maske.evaluate(() => {
+      const root = document.querySelector('.ff-root') as HTMLElement
+      const board = document.querySelector('ff-kanban') as HTMLElement
+      const formfeld = document.querySelector('ff-formfeld') as HTMLElement
+      const rootRect = root.getBoundingClientRect()
+      const boardRect = board.getBoundingClientRect()
+      return {
+        viewportWidth: innerWidth,
+        viewportHeight: innerHeight,
+        documentWidth: document.documentElement.scrollWidth,
+        documentHeight: document.documentElement.scrollHeight,
+        rootClientWidth: root.clientWidth,
+        rootClientHeight: root.clientHeight,
+        rootScrollWidth: root.scrollWidth,
+        rootScrollHeight: root.scrollHeight,
+        rootWidth: rootRect.width,
+        rootHeight: rootRect.height,
+        boardWidth: boardRect.width,
+        boardBottom: boardRect.bottom,
+        formfeldHeight: formfeld.getBoundingClientRect().height,
+      }
+    })
+
+    expect(mass.documentWidth).toBe(mass.viewportWidth)
+    expect(mass.documentHeight).toBe(mass.viewportHeight)
+    expect(mass.rootWidth).toBe(mass.viewportWidth)
+    expect(mass.rootHeight).toBe(mass.viewportHeight)
+    expect(mass.rootScrollWidth).toBe(mass.rootClientWidth)
+    expect(mass.rootScrollHeight).toBe(mass.rootClientHeight)
+    expect(mass.boardWidth).toBe(mass.viewportWidth - 32)
+    expect(mass.boardBottom).toBe(mass.viewportHeight - 16)
+    expect(mass.formfeldHeight).toBeLessThan(100)
+  }
+})

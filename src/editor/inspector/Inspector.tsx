@@ -126,7 +126,11 @@ export function Inspector() {
 
   // Im eigenen Datenanschluss-Dialog gepflegte Props bekommen kein
   // zweites Inspector-Control.
-  const visibleProps = def.customProperties.filter((p) => !p.hiddenInInspector)
+  const visibleProps = def.customProperties.filter((p) => {
+    if (p.hiddenInInspector) return false
+    if (!p.visibleWhen) return true
+    return Object.is(block.props[p.visibleWhen.attributeName], p.visibleWhen.equals)
+  })
   // Daten-Controls (Kap. 5.3/5.5) gehören in die Sektion "Daten", nicht in
   // die allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
   const dataProps = visibleProps.filter(

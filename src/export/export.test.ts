@@ -46,7 +46,16 @@ describe('exportMask', () => {
   it('Breite wirkt als Flex-Item-Style (dieselbe flowLayout-Quelle)', () => {
     const { html } = exportMask(demoTree())
     expect(html).toContain('style="width:240px;flex-shrink:0"') // width fest
-    expect(html).toContain('style="align-self:stretch"')        // fill in Spalte
+    expect(html).toContain('align-self:stretch')                 // fill in Spalte
+  })
+
+  it('exportiert eine Vollbildhülle und fill als verbleibende Höhe', () => {
+    const tree = demoTree()
+    tree.c1.props.height = 'fill'
+    const { html } = exportMask(tree)
+    expect(html).toContain('html, body { width: 100%; height: 100%;')
+    expect(html).toContain('.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto;')
+    expect(html).toContain('flex-grow:1;flex-basis:0;min-height:0')
   })
 
   it('hält die ASCII-Regel: Umlaute werden zu Entities', () => {

@@ -20,12 +20,20 @@ import { Subject } from './Subject'
 import { deepClone } from '../lib/deepClone'
 
 const STORAGE_KEY = 'aufbau_editor_mvp_v1'
+const CURRENT_SCHEMA_VERSION = 2
 const HISTORY_LIMIT = 50
 const SAVE_DEBOUNCE_MS = 500
 
 interface PersistedState {
+  schemaVersion: number
   tree: BlockTree
   selectedId: string | null
+}
+
+interface LoadedState {
+  tree: BlockTree
+  selectedId: string | null
+  migrated: boolean
 }
 
 interface EditorSnapshot {
@@ -156,11 +164,33 @@ function migrateFlatBlocks(blocks: unknown[]): BlockTree {
   return tree
 }
 
-function loadFromStorage(): PersistedState | null {
+// Schema 2: Root-Kanbans sind Vollbild-Hauptflächen. Alte Pixelmaße kamen
+// aus der früheren frei ziehbaren Canvas und ließen den SoftEngine-Bereich
+// überragen. Nur beim EINMALIGEN Wechsel von Schema 1 werden Root-Boards auf
+// volle Breite + verbleibende Höhe gesetzt. Danach bleiben bewusst gesetzte
+// Pixelhöhen erhalten.
+function migrateRootKanbanToViewportFill(tree: BlockTree): boolean {
+  let migrated = false
+  for (const id of tree[ROOT_ID]?.childIds ?? []) {
+    const node = tree[id]
+    if (node?.type !== 'kanban') continue
+    if (node.props.width === 'fill' && node.props.height === 'fill') continue
+    tree[id] = { ...node, props: { ...node.props, width: 'fill', height: 'fill' } }
+    migrated = true
+  }
+  return migrated
+}
+
+function loadFromStorage(): LoadedState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as { tree?: unknown; blocks?: unknown; selectedId?: unknown }
+    const parsed = JSON.parse(raw) as {
+      schemaVersion?: unknown
+      tree?: unknown
+      blocks?: unknown
+      selectedId?: unknown
+    }
 
     let tree: BlockTree | null = null
     // Verworfene unbekannte Typen sammeln und MELDEN (nie still): trifft
@@ -174,6 +204,10 @@ function loadFromStorage(): PersistedState | null {
       tree = migrateFlatBlocks(parsed.blocks)
     }
     if (!tree) return null
+    const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
+    const migrated = schemaVersion < CURRENT_SCHEMA_VERSION
+      ? migrateRootKanbanToViewportFill(tree)
+      : false
     if (verworfen.size > 0 && typeof alert === 'function') {
       const anzahl = [...verworfen.values()].reduce((a, b) => a + b, 0)
       const typen = [...verworfen.keys()].map((t) => `"${t}"`).join(', ')
@@ -188,7 +222,7 @@ function loadFromStorage(): PersistedState | null {
       typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID
         ? parsed.selectedId
         : null
-    return { tree, selectedId }
+    return { tree, selectedId, migrated }
   } catch {
     return null
   }
@@ -237,6 +271,7 @@ export class Editor extends Subject<Editor> {
     this._tree = persisted ? persisted.tree : createEmptyTree()
     this._selectedId = persisted?.selectedId ?? null
     this._hydrated = true
+    if (persisted?.migrated) this.scheduleSave()
   }
 
   get tree(): Readonly<BlockTree> { return this._tree }
@@ -565,7 +600,11 @@ export class Editor extends Subject<Editor> {
     if (this._saveTimer) clearTimeout(this._saveTimer)
     this._saveTimer = setTimeout(() => {
       try {
-        const state: PersistedState = { tree: this._tree, selectedId: this._selectedId }
+        const state: PersistedState = {
+          schemaVersion: CURRENT_SCHEMA_VERSION,
+          tree: this._tree,
+          selectedId: this._selectedId,
+        }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
       } catch (err) {
         console.warn('Editor: localStorage-Speichern fehlgeschlagen', err)
