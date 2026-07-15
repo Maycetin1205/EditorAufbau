@@ -4,11 +4,11 @@
 // überleben das Neuladen (der am 2026-07-02 gefixte Bug).
 // LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
 
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Side-Effect-Import: registriert die echten Kanban-Blöcke (kanban,
 // kanban-spalte, card) für die P1.1-Migrationstests.
 import '../blocks/kanban/KanbanBlock'
-import { Editor } from './Editor'
+import { BACKUP_KEY, Editor } from './Editor'
 import {
   registerTestBlocks,
   TEST_BLOCK,
@@ -25,7 +25,16 @@ function load(state: unknown): Editor {
   return new Editor()
 }
 
+// Sammelt alert-Meldungen für die Dauer eines Tests (die meisten Lade-Tests
+// prüfen sie nicht — dann bleibt alert schlicht ungestubbt wie bisher).
+function captureAlerts(): string[] {
+  const msgs: string[] = []
+  ;(globalThis as Record<string, unknown>).alert = (m: string) => { msgs.push(m) }
+  return msgs
+}
+
 beforeEach(() => localStorage.clear())
+afterEach(() => { delete (globalThis as Record<string, unknown>).alert })
 
 describe('sanitizeTree (Laden verteidigt sich)', () => {
   it('lädt einen gesunden Baum vollständig', () => {
@@ -124,6 +133,61 @@ describe('sanitizeTree (Laden verteidigt sich)', () => {
       expect(meldungen[0]).toContain('"container"')
     } finally {
       delete (globalThis as Record<string, unknown>).alert
+    }
+  })
+})
+
+describe('Notfallkopie bei unlesbarem Stand (U1)', () => {
+  it('sichert kaputtes JSON als Notfallkopie und meldet es, statt still leer zu starten', () => {
+    const msgs = captureAlerts()
+    localStorage.setItem(KEY, '{{{kein json')
+    const ed = new Editor()
+    expect(ed.blockCount).toBe(0)                                 // leerer, benutzbarer Editor
+    expect(localStorage.getItem(BACKUP_KEY)).toBe('{{{kein json') // Rohdaten unverändert gesichert
+    expect(msgs).toHaveLength(1)
+    expect(msgs[0]).toContain('beschädigt')
+    expect(msgs[0]).toContain(BACKUP_KEY)                         // Fundort steht in der Meldung
+  })
+
+  it('behandelt gültiges JSON ohne verwertbaren Baum wie einen Lesefehler', () => {
+    const msgs = captureAlerts()
+    // Hatte mal einen tree-Schlüssel (also echte Editor-Daten), aber die
+    // Struktur ist unbrauchbar — nicht still verwerfen.
+    const raw = JSON.stringify({ schemaVersion: 2, tree: 'kaputt', selectedId: null })
+    localStorage.setItem(KEY, raw)
+    const ed = new Editor()
+    expect(ed.blockCount).toBe(0)
+    expect(localStorage.getItem(BACKUP_KEY)).toBe(raw)
+    expect(msgs).toHaveLength(1)
+  })
+
+  it('überschreibt eine bereits vorhandene Notfallkopie NICHT (früheste bleibt)', () => {
+    captureAlerts()
+    localStorage.setItem(BACKUP_KEY, 'aeltere kopie')
+    localStorage.setItem(KEY, '{{{kein json')
+    new Editor()
+    expect(localStorage.getItem(BACKUP_KEY)).toBe('aeltere kopie')
+  })
+
+  it('der Autosave überschreibt die Notfallkopie nie (getrennter Schlüssel)', () => {
+    vi.useFakeTimers()
+    try {
+      captureAlerts()
+      localStorage.setItem(KEY, '{{{kein json')
+      const ed = new Editor()
+      const kopie = localStorage.getItem(BACKUP_KEY)
+      expect(kopie).toBe('{{{kein json')
+      // Echte Änderung anstoßen und den debounced Save durchlaufen lassen.
+      ed.addBlock(TEST_BLOCK)
+      vi.runAllTimers()
+      // STORAGE_KEY trägt jetzt gültige Editor-Daten ...
+      const gespeichert = localStorage.getItem(KEY)
+      expect(gespeichert).not.toBe('{{{kein json')
+      expect(() => JSON.parse(gespeichert as string)).not.toThrow()
+      // ... die Notfallkopie ist unangetastet.
+      expect(localStorage.getItem(BACKUP_KEY)).toBe(kopie)
+    } finally {
+      vi.useRealTimers()
     }
   })
 })
