@@ -238,8 +238,17 @@ add_repo an die Session hängen).
      display:none, Editor-Reiter erzwingt Sicht über data-ff-editor;
      Export IMMER ohne offen-Attribut (export.test). Löschen der Seite =
      normales Entfernen des selektierten Popups.
-     (P-B) Ketten-Schritte öffnen/schließen + Laufzeit, (P-C) Export-e2e +
-     Wächter + SE-Echttest.
+     (P-B) ✅ Ketten-Schritte + Laufzeit ERLEDIGT (2026-07-16):
+     Schritt-Arten POPUP_OPEN/POPUP_CLOSE (Anzeige „Popup öffnen/
+     schließen" — Klarnamen, KEINE SE-Fachbegriffe); der Schritt speichert
+     die stabile Seiten-id (übersteht Umbenennen), der Export übersetzt sie
+     in den KLARNAMEN (Editor-ids reisen nie mit), die Laufzeit schaltet
+     das offen-Attribut am ff-popup mit diesem name (applyPopupStep in
+     seAktionen, eigener Wächter). Preflight: Schritt ohne/auf gelöschte
+     Seite blockt; Popup-NAMEN MÜSSEN EINDEUTIG sein (Laufzeit-Identität,
+     eigener Preflight-Block mit Klartext). StepForm: Popup-Auswahl in
+     Klarnamen; Schrittzeile zeigt „Popup öffnen — <Name>".
+     (P-C) Export-e2e + Wächter + SE-Echttest.
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
 - **Merkliste:** Tabellen-Spalten aus verschiedenen Quellen;

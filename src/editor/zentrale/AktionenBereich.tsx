@@ -106,12 +106,14 @@ export function AktionenBereich() {
     const source = steps[at]
     const copy: ActionStep = source.type === 'START_TOOL'
       ? { ...source, toolParams: [...source.toolParams], id: crypto.randomUUID() }
-      : {
-          ...source,
-          params: source.params.map((binding) => ({ ...binding })),
-          extraParams: source.extraParams.map((binding) => ({ ...binding })),
-          id: crypto.randomUUID(),
-        }
+      : source.type === 'RELATION'
+        ? {
+            ...source,
+            params: source.params.map((binding) => ({ ...binding })),
+            extraParams: source.extraParams.map((binding) => ({ ...binding })),
+            id: crypto.randomUUID(),
+          }
+        : { ...source, id: crypto.randomUUID() }
     const next = [...steps]
     next.splice(at + 1, 0, copy)
     setChain(blockId, eventKey, next)
@@ -197,8 +199,14 @@ export function AktionenBereich() {
                   {steps.length > 0 && (
                     <ol className="mt-1 divide-y divide-border/70">
                       {steps.map((s, i) => {
-                        const problem = stepProblem(s, relations.list, dataSources.list)
+                        const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
+                        const problem = stepProblem(
+                          s, relations.list, dataSources.list, popupSeiten.map((seite) => seite.id),
+                        )
                         const relation = s.type === 'RELATION' ? relations.get(s.relationId) : undefined
+                        const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'
+                          ? popupSeiten.find((seite) => seite.id === s.popupId)?.name
+                          : undefined
                         return (
                           <li
                             key={s.id}
@@ -213,6 +221,7 @@ export function AktionenBereich() {
                               {stepTypeName(s.type)}
                               {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
                               {s.type === 'RELATION' && relation ? ` — ${relation.name}` : ''}
+                              {popupName ? ` — ${popupName}` : ''}
                               {problem !== null ? ' — unvollständig' : ''}
                             </span>
                             <IconButton

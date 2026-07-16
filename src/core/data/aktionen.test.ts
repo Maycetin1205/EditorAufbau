@@ -98,3 +98,39 @@ describe('Aktionsmodell', () => {
     expect(stepProblem({ ...step, relationId: 'weg' }, [relation])).toContain('geloeschte')
   })
 })
+
+describe('Popup-Schritte (P-B)', () => {
+  const offen = {
+    id: 's1', type: 'POPUP_OPEN' as const, resultKey: '', popupId: 'seite-1',
+  }
+
+  it('Editor speichert die Seiten-id, der Export reist mit dem Klarnamen — nie mit der id', () => {
+    const events: BlockEventsMap = { onClick: [offen] }
+    const raw = serializeBlockEvents(events, ['onClick'], (id) =>
+      id === 'seite-1' ? 'Neue Behandlung' : '')
+    expect(raw).toBe(JSON.stringify({
+      onClick: [{ type: 'POPUP_OPEN', resultKey: '', popup: 'Neue Behandlung' }],
+    }))
+    // Laufzeit-Weg: das Attribut wird zurückgelesen.
+    const parsed = parseBlockEvents(raw)
+    expect(parsed.onClick[0]).toMatchObject({ type: 'POPUP_OPEN', popup: 'Neue Behandlung' })
+    // Persistenz-Weg: der gespeicherte Schritt (popupId) bleibt erhalten.
+    const sanitized = sanitizeBlockEvents(events, ['onClick'])
+    expect(sanitized?.onClick[0]).toMatchObject({ type: 'POPUP_OPEN', popupId: 'seite-1' })
+  })
+
+  it('createStep legt einen leeren Popup-Schritt an', () => {
+    const step = createStep('POPUP_CLOSE')
+    expect(step).toMatchObject({ type: 'POPUP_CLOSE', popupId: '', resultKey: '' })
+  })
+
+  it('stepProblem: Popup-Schritt braucht ein gewähltes, vorhandenes Popup', () => {
+    const leer = { ...offen, popupId: '' }
+    expect(stepProblem(leer)).toContain('kein Popup')
+    expect(stepProblem(offen, undefined, undefined, ['andere-seite']))
+      .toContain('gelöschte Popup-Seite')
+    expect(stepProblem(offen, undefined, undefined, ['seite-1'])).toBeNull()
+    // Ohne Seitenwissen (Laufzeit-fern) keine falsche Meldung.
+    expect(stepProblem(offen)).toBeNull()
+  })
+})

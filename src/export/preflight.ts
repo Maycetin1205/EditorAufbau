@@ -72,7 +72,7 @@ export function preflightMask(
     for (const [eventKey, steps] of Object.entries(node.events ?? {})) {
       const eventName = def?.blockEvents?.find((e) => e.key === eventKey)?.name ?? eventKey
       for (const step of steps) {
-        const problem = stepProblem(step, relations, sources)
+        const problem = stepProblem(step, relations, sources, popupIds)
         if (problem) {
           results.push({
             name: 'Aktion unvollstaendig',
@@ -83,6 +83,27 @@ export function preflightMask(
       }
     }
     node.childIds.forEach((childId) => visit(tree[childId]))
+  }
+  // P-B: Popup-Seiten des Baums (pageBlock) — Schritte zeigen auf ihre id,
+  // die Laufzeit adressiert sie über den Klarnamen. Darum: doppelte Namen
+  // blockieren (der Öffnen-Schritt träfe sonst still das falsche Fenster).
+  const popupSeiten = (tree[ROOT_ID]?.childIds ?? [])
+    .map((id) => tree[id])
+    .filter((n): n is BlockNode => Boolean(n) && getBlockDefinition(n!.type)?.pageBlock === true)
+  const popupIds = popupSeiten.map((n) => n.id)
+  const nameZaehler = new Map<string, number>()
+  for (const seite of popupSeiten) {
+    const name = typeof seite.props.name === 'string' ? seite.props.name : ''
+    nameZaehler.set(name, (nameZaehler.get(name) ?? 0) + 1)
+  }
+  for (const [name, count] of nameZaehler) {
+    if (count > 1) {
+      results.push({
+        name: 'Popup-Name doppelt',
+        ok: false,
+        detail: `${count} Popup-Seiten heißen "${name}" — Namen müssen eindeutig sein (Doppelklick auf den Fenstertitel benennt um).`,
+      })
+    }
   }
   visit(tree[ROOT_ID])
   return results

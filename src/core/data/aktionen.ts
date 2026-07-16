@@ -7,7 +7,7 @@ import { unknownPlaceholders } from './relations'
 
 // ---------- Schritt-Typen ----------
 
-export type StepTypeKey = 'START_TOOL' | 'RELATION'
+export type StepTypeKey = 'START_TOOL' | 'RELATION' | 'POPUP_OPEN' | 'POPUP_CLOSE'
 
 export interface StepTypeSpec {
   key: StepTypeKey
@@ -18,6 +18,9 @@ export const STEP_TYPES: readonly StepTypeSpec[] = [
   // Anzeige-Name = SE-Fachbegriff selbst (Nutzer-Entscheidung 2026-07-15).
   { key: 'START_TOOL', name: 'START_TOOL' },
   { key: 'RELATION', name: 'Relation' },
+  // Popup-Schritte (P-B) sind KEINE SE-Fachbegriffe — sie bekommen Klarnamen.
+  { key: 'POPUP_OPEN', name: 'Popup öffnen' },
+  { key: 'POPUP_CLOSE', name: 'Popup schließen' },
 ]
 
 export function stepTypeName(typeKey: string): string {
@@ -73,14 +76,36 @@ export interface RelationStep extends ActionStepBase {
   extraParams: ActionParamBinding[]
 }
 
-export type ActionStep = StartToolStep | RelationStep
+// Im EDITOR: stabile Knoten-id der Popup-Seite (übersteht Umbenennen).
+// Der Export übersetzt sie in den Klarnamen (Editor-ids reisen nie mit,
+// s. serializeBlockEvents); die Laufzeit adressiert das ff-popup über
+// sein name-Attribut — die Preflight erzwingt dafür eindeutige Namen.
+// Öffnen/Schließen sind ZWEI Typen (je eine Diskriminante), damit
+// TypeScript sie in den Schritt-Weichen sauber ausschließen kann.
+export interface PopupOpenStep extends ActionStepBase {
+  type: 'POPUP_OPEN'
+  popupId: string
+}
+
+export interface PopupCloseStep extends ActionStepBase {
+  type: 'POPUP_CLOSE'
+  popupId: string
+}
+
+export type PopupStep = PopupOpenStep | PopupCloseStep
+
+export type ActionStep = StartToolStep | RelationStep | PopupStep
 export type BlockEventsMap = Record<string, ActionStep[]>
 
 export function createStep(typeKey: StepTypeKey): ActionStep {
   const base = { id: crypto.randomUUID(), resultKey: '' }
-  return typeKey === 'RELATION'
-    ? { ...base, type: 'RELATION', relationId: '', params: [], extraParams: [] }
-    : { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
+  if (typeKey === 'RELATION') {
+    return { ...base, type: 'RELATION', relationId: '', params: [], extraParams: [] }
+  }
+  if (typeKey === 'POPUP_OPEN' || typeKey === 'POPUP_CLOSE') {
+    return { ...base, type: typeKey, popupId: '' }
+  }
+  return { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
 }
 
 // In Werkzeug-Parametern erlaubte Platzhalter.
@@ -103,7 +128,24 @@ export function defaultRelationParams(
 
 // ---------- Strukturelle Pruefung ----------
 
-export type RuntimeStep = Omit<StartToolStep, 'id'> | Omit<RelationStep, 'id'>
+// Popup-Schritt unterwegs: im gespeicherten Baum trägt er die popupId
+// (Editor), im data-ff-aktionen-Attribut der Maske stattdessen `popup`
+// (Klarname — Editor-ids reisen nie mit). stepFields akzeptiert beide
+// Darstellungen; wer welche braucht, prüft selbst (Laufzeit: popup).
+interface RuntimePopupFields {
+  resultKey: string
+  popupId?: string
+  popup?: string
+}
+
+export type RuntimePopupStep =
+  | (RuntimePopupFields & { type: 'POPUP_OPEN' })
+  | (RuntimePopupFields & { type: 'POPUP_CLOSE' })
+
+export type RuntimeStep =
+  | Omit<StartToolStep, 'id'>
+  | Omit<RelationStep, 'id'>
+  | RuntimePopupStep
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -136,6 +178,17 @@ function stepFields(raw: unknown): RuntimeStep | null {
       resultKey: raw.resultKey,
       toolNr: raw.toolNr,
       toolParams: [...raw.toolParams] as string[],
+    }
+  }
+  if (raw.type === 'POPUP_OPEN' || raw.type === 'POPUP_CLOSE') {
+    const popupId = typeof raw.popupId === 'string' ? raw.popupId : undefined
+    const popup = typeof raw.popup === 'string' ? raw.popup : undefined
+    if (popupId === undefined && popup === undefined) return null
+    return {
+      type: raw.type,
+      resultKey: raw.resultKey,
+      ...(popupId !== undefined ? { popupId } : {}),
+      ...(popup !== undefined ? { popup } : {}),
     }
   }
   if (raw.type === 'RELATION') {
@@ -199,13 +252,25 @@ export function sanitizeBlockEvents(
 
 // ---------- Export-Transport ----------
 
-function withoutEditorId(step: ActionStep): RuntimeStep {
+function withoutEditorId(
+  step: ActionStep,
+  popupName: (id: string) => string,
+): RuntimeStep {
   if (step.type === 'START_TOOL') {
     return {
       type: step.type,
       resultKey: step.resultKey,
       toolNr: step.toolNr,
       toolParams: [...step.toolParams],
+    }
+  }
+  if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
+    // Editor-ids reisen nie mit: der Schritt trägt in der Maske den
+    // KLARNAMEN des Popups (die Preflight erzwingt eindeutige Namen).
+    return {
+      type: step.type,
+      resultKey: step.resultKey,
+      popup: popupName(step.popupId),
     }
   }
   return {
@@ -220,12 +285,15 @@ function withoutEditorId(step: ActionStep): RuntimeStep {
 export function serializeBlockEvents(
   events: BlockEventsMap | undefined,
   eventOrder: readonly string[],
+  // Übersetzt die popupId eines Popup-Schritts in den Klarnamen der Seite
+  // (Export-Aufrufer reicht den Baum-Blick herein). Ohne Auflösung → ''.
+  popupName: (id: string) => string = () => '',
 ): string | null {
   if (!events) return null
   const out: Record<string, RuntimeStep[]> = {}
   for (const key of eventOrder) {
     const steps = events[key]
-    if (steps?.length) out[key] = steps.map(withoutEditorId)
+    if (steps?.length) out[key] = steps.map((step) => withoutEditorId(step, popupName))
   }
   return Object.keys(out).length > 0 ? JSON.stringify(out) : null
 }
@@ -272,7 +340,18 @@ export function stepProblem(
   step: ActionStep,
   relations?: readonly RelationTemplate[],
   dataSources?: readonly DataSource[],
+  // Vorhandene Popup-Seiten (ids) — nur wer sie kennt (Zentrale, Preflight),
+  // bekommt die Meldung über eine gelöschte Seite.
+  popupIds?: readonly string[],
 ): string | null {
+  if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
+    const name = stepTypeName(step.type)
+    if (step.popupId.trim() === '') return `Schritt "${name}" hat kein Popup gewählt.`
+    if (popupIds && !popupIds.includes(step.popupId)) {
+      return `Schritt "${name}" verweist auf eine gelöschte Popup-Seite.`
+    }
+    return null
+  }
   if (step.type === 'START_TOOL') {
     if (step.toolNr.trim() === '') {
       // Codex-Wortlaut 2026-07-15 (Erklärtexte raus): „Nummer", nicht „Werkzeug-Nummer".

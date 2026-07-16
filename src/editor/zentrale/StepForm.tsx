@@ -29,6 +29,7 @@ import {
 } from '../../core/data/relations'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
+import { useEditor } from '../../state/useEditor'
 import { SelectControl } from '../inspector/controls/SelectControl'
 import { FormularKarte } from './FormularKarte'
 
@@ -161,8 +162,15 @@ function BindingRow({
 export function StepForm({ step, onSave, onClose }: StepFormProps) {
   const relations = useRelations()
   const dataSources = useDataSources()
+  const ed = useEditor()
+  // Popup-Seiten der Maske (P-B): Auswahl per Klarname, gespeichert wird
+  // die stabile Seiten-id (übersteht Umbenennen).
+  const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
   const [typ, setTyp] = useState<StepTypeKey>(step?.type ?? 'START_TOOL')
   const [toolNr, setToolNr] = useState(step?.type === 'START_TOOL' ? step.toolNr : '')
+  const [popupId, setPopupId] = useState(
+    step?.type === 'POPUP_OPEN' || step?.type === 'POPUP_CLOSE' ? step.popupId : '',
+  )
   const [relationId, setRelationId] = useState(
     step?.type === 'RELATION' ? step.relationId : '',
   )
@@ -205,6 +213,9 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
 
   function candidate(): ActionStep {
     const id = step?.id ?? crypto.randomUUID()
+    if (typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') {
+      return { id, type: typ, resultKey: '', popupId }
+    }
     if (typ === 'START_TOOL') {
       return {
         id,
@@ -230,11 +241,12 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
     }
   }
 
-  const problem = stepProblem(candidate(), relations.list, dataSources.list)
+  const popupIds = popupSeiten.map((seite) => seite.id)
+  const problem = stepProblem(candidate(), relations.list, dataSources.list, popupIds)
 
   function speichern() {
     const next = candidate()
-    if (stepProblem(next, relations.list, dataSources.list)) {
+    if (stepProblem(next, relations.list, dataSources.list, popupIds)) {
       setZeigeFehler(true)
       return
     }
@@ -251,6 +263,26 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
           options={STEP_TYPES.map((entry) => ({ value: entry.key, label: entry.name }))}
           onChange={(value) => setTyp(value as StepTypeKey)}
         />
+
+        {(typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') && (
+          <Field label="Popup" error={zeigeFehler ? problem ?? '' : ''}>
+            {(field) => (
+              <select
+                {...field}
+                value={popupId}
+                onChange={(e) => setPopupId(e.target.value)}
+                className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
+              >
+                <option value="">
+                  {popupSeiten.length === 0 ? '(keine Popup-Seite vorhanden)' : '— wählen —'}
+                </option>
+                {popupSeiten.map((seite) => (
+                  <option key={seite.id} value={seite.id}>{seite.name}</option>
+                ))}
+              </select>
+            )}
+          </Field>
+        )}
 
         {typ === 'START_TOOL' && (
           <Field label="Nummer" error={zeigeFehler ? problem ?? '' : ''}>

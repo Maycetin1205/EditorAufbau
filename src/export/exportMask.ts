@@ -128,6 +128,9 @@ function nodeToHtml(
   node: BlockNode,
   parentDirection: FlowDirection,
   depth: number,
+  // Übersetzt Popup-Schritt-ids in Klarnamen (P-B): der Baumblick entsteht
+  // EINMAL in exportMask, die Rekursion reicht ihn nur durch.
+  popupName: (id: string) => string,
   templateCtx?: TemplateCtx,
 ): string {
   const def = getBlockDefinition(node.type)
@@ -136,7 +139,7 @@ function nodeToHtml(
   const pad = '  '.repeat(depth)
   if (templateCtx && node.type === templateCtx.type) {
     if (node.id !== templateCtx.id) return '' // Demo-Karte: nie exportieren
-    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, undefined)
+    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, popupName, undefined)
     return `${pad}<template data-ff-template>\n${inner}\n${pad}</template>`
   }
 
@@ -156,7 +159,7 @@ function nodeToHtml(
   // schiede damit aus. Deterministisch: Ereignis-Reihenfolge = Registry
   // (blockEvents), Editor-ids reisen nicht mit (serializeBlockEvents).
   // Die Laufzeit (seAktionen) liest das Attribut zurück.
-  const aktionen = serializeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key))
+  const aktionen = serializeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key), popupName)
   const aktionenAttr = aktionen ? ` data-ff-aktionen="${escapeHtmlAttr(aktionen)}"` : ''
 
   const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${styleAttr(node, parentDirection, def.lockedWidth)}>`
@@ -173,7 +176,7 @@ function nodeToHtml(
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))
-    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, childCtx))
+    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, childCtx))
     .filter((html) => html !== '')
     .join('\n')
   return children === ''
@@ -255,10 +258,21 @@ export function exportMask(
   relations: readonly RelationTemplate[] = relationStore.list,
 ): MaskExport {
   const root = tree[ROOT_ID]
+  // Popup-Klarnamen je Seiten-id (P-B): Popup-Schritte reisen mit dem NAMEN
+  // der Seite (Editor-ids nie); die Preflight erzwingt eindeutige Namen.
+  const popupNameById = new Map<string, string>()
+  for (const id of root?.childIds ?? []) {
+    const n = tree[id]
+    if (n && getBlockDefinition(n.type)?.pageBlock) {
+      popupNameById.set(n.id, typeof n.props.name === 'string' ? n.props.name : '')
+    }
+  }
+  const popupName = (id: string): string => popupNameById.get(id) ?? ''
+
   const blocks = (root?.childIds ?? [])
     .map((id) => tree[id])
     .filter((n): n is BlockNode => Boolean(n))
-    .map((n) => nodeToHtml(tree, n, 'column', 2))
+    .map((n) => nodeToHtml(tree, n, 'column', 2, popupName))
     .join('\n')
 
   const used = collectDataSources(tree, sources)

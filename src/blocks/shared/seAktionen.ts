@@ -24,6 +24,7 @@
 // Verdacht).
 
 import { parseBlockEvents } from '../../core/data/aktionen'
+import { PopupBlock } from '../popup/PopupBlock'
 import {
   formatNowDate,
   resolveParams,
@@ -70,6 +71,23 @@ function seStartTool(nr: string, params: readonly string[]): void {
   } catch { /* nicht in SE */ }
 }
 
+// ---------- Popup-Schritte (P-B) ----------
+
+// Schaltet das offen-Attribut des Popups mit dem Klarnamen `name` (die
+// Preflight erzwingt eindeutige Namen). Darstellung/Lebenszyklus bleiben
+// beim Popup-Baustein selbst — hier wird NUR geschaltet. Leerer Name oder
+// kein Treffer: nichts passiert (die Preflight verhindert das im Export;
+// defensiv bleibt es trotzdem still-harmlos).
+// Exportiert fuer den Wächter-Test (Node/jsdom, Muster seRuntime-Helfer).
+export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean): void {
+  if (name.trim() === '') return
+  for (const el of Array.from(root.querySelectorAll(PopupBlock.tagName))) {
+    if ((el.getAttribute('name') ?? '') !== name) continue
+    if (oeffnen) el.setAttribute('offen', '')
+    else el.removeAttribute('offen')
+  }
+}
+
 // ---------- Ketten-Ausfuehrung ----------
 
 // Laufende Ketten je Element (Sperre gegen erneutes Ausloesen desselben
@@ -108,6 +126,10 @@ export async function runEvent(
     for (const step of steps) {
       if (step.type === 'START_TOOL') {
         seStartTool(step.toolNr, resolveParams({ params: step.toolParams }, values))
+        continue
+      }
+      if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
+        applyPopupStep(el.ownerDocument ?? document, step.popup ?? '', step.type === 'POPUP_OPEN')
         continue
       }
       const relation = findRuntimeRelation(seGlobal().FF_RELATIONS, step.relationId)
