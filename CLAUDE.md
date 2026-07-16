@@ -186,13 +186,25 @@ add_repo an die Session hängen).
       Parameterquellen Fest/Ereignis/Datenfeld/vorheriges Ergebnis/SE
       VAR-Array werden aufgelöst, benannte GET-Ergebnisse bleiben in der
       Kette verfügbar. Die Export-Sperre ist entfernt.
-  4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
-     Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
-     **→ AN CODEX ÜBERGEBEN (2026-07-16, Nutzer-Anweisung), zusammen mit
-     Multi-Datenquelle und Datumsanzeige-Baustein. Fertige Analyse + Design
-     mit Dateipfaden: `docs/AUFTRAG-CODEX.md`. Arbeitsbranch =
-     `claude/data-binding-architecture-odkwi0`, NICHT main (Begründung im
-     Auftrag — main fehlt die komplette Relations-/Laufzeit-Basis).**
+  4. ✅ **Formularfeld anschließen (erledigt 2026-07-16, Codex nach
+     Claude-Auftrag `docs/AUFTRAG-CODEX.md` + Claude-Nachprüfung;
+     SE-Echttest durch den Nutzer offen):** Feld deklariert
+     acceptsDataSource + bindingRoute(valueField) + bindableSpot 'Wert' +
+     Ereignis „Wert geändert" — alles Registry, kein Sondercode. Lesen:
+     feldRuntime hydriert aus der ERSTEN Zeile der eigenen Quelle;
+     Platzhalter weg, sobald Wert DA (egal woher). Schreiben: Tippen
+     patcht die Zeile lokal (setField); nach SoftEngine schreibt NUR die
+     sichtbare Kette „Wert geändert" ({VALUE}/{PINDEX}) — kein Auto-PUT.
+     Ankreuzfeld bewusst unbindbar (SE-Wert-Kontrakt unbelegt, Merkliste).
+     ⚠ Gelernter Kontrakt: 'change' ist NICHT composed und stirbt an der
+     Schattengrenze — Eingabe-Bausteine müssen es am Host neu auslösen
+     (FormFeldBlock.onChange); 'input' ist composed und braucht das nicht.
+     Wächter: e2e/formfeld-data.spec.ts (tippt ECHT — fill() feuert kein
+     natives change). **Multi-Datenquelle damit belegt:** jedes Feld wählt
+     seine eigene Quelle, Export sammelt alle (FF_DATA_SOURCES +
+     SEFILELOOP je Quelle, export.test). **Datumsanzeige-Baustein** (ff-datum,
+     'Anzeige'): ungebunden echte Uhr (Datum/Zeit/beides, Klarnamen),
+     gebunden Feldwert über DIESELBE feldRuntime.
   5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
      Popup-Seiten als normale Block-Bäume; Größe per Anfasser;
      Aktions-Schritte „Popup öffnen/schließen"; Export als inaktive

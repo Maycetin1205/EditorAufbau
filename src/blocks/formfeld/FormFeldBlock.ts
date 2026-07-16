@@ -229,6 +229,15 @@ export class FormFeldBlock extends BasicBlock {
       : t.value
   }
 
+  // 'change' ist laut DOM-Standard NICHT composed und endet an der
+  // Schattengrenze — die Feld-Runtime (Kette „Wert geändert") lauscht aber
+  // am Host. Deshalb wird das committete Ändern hier einmal am Host neu
+  // ausgelöst ('input' ist composed und braucht das nicht). Belegt durch
+  // e2e/formfeld-data.spec.ts — ohne diesen Schritt feuert die Kette nie.
+  private onChange(): void {
+    this.dispatchEvent(new Event('change'))
+  }
+
   // Der Text IM Feld — Platzhalter bzw. Ankreuzfeld-Beschriftung; per
   // Doppelklick direkt am Feld änderbar (nur bei selektiertem Block,
   // wie jedes Inline-Edit). EIN Template für beide Fälle (N1: der
@@ -256,11 +265,11 @@ export class FormFeldBlock extends BasicBlock {
   private controlTpl(typ: FeldTyp): TemplateResult {
     switch (typ) {
       case 'textarea':
-        return html`<textarea class="ctrl" .value=${this.value} @input=${this.onInput}></textarea>`
+        return html`<textarea class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onChange}></textarea>`
       case 'select': {
         const eintraege = this.options.split(',').map((o) => o.trim()).filter((o) => o !== '')
         const fremdwert = this.value !== '' && !eintraege.includes(this.value)
-        return html`<select class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onInput}>
+        return html`<select class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onChange}>
           <option value="" disabled hidden></option>
           ${fremdwert ? html`<option value=${this.value} hidden>${this.value}</option>` : nothing}
           ${eintraege.length === 0
@@ -275,6 +284,7 @@ export class FormFeldBlock extends BasicBlock {
           type=${typ}
           .value=${typ === 'date' ? dateValueToInput(this.value) : this.value}
           @input=${this.onInput}
+          @change=${this.onChange}
         />`
     }
   }

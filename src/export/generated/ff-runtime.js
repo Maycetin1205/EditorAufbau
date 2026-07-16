@@ -299,13 +299,13 @@
       /* N1: in der MASKE schaltet die Beschriftung den Haken (Windows-
          Gewohnheit) — klickbar zeigen, Textauswahl beim Klicken vermeiden. */
       :host(:not([data-ff-editor])) .zeile .text { cursor: pointer; user-select: none; }
-    `]}onInput(e){let t=e.target;this.value=fn(this.fieldType)===`date`?Zt(t.value):t.value}textTpl(e,t=!1){return S`<span
+    `]}onInput(e){let t=e.target;this.value=fn(this.fieldType)===`date`?Zt(t.value):t.value}onChange(){this.dispatchEvent(new Event(`change`))}textTpl(e,t=!1){return S`<span
       class=${e}
       ?hidden=${t}
       data-ff-editable
       @click=${this.onTextClick}
       @dblclick=${e=>this.inlineEdit(e,`placeholder`)}
-    >${this.placeholder}</span>`}onTextClick(){if(this.hasAttribute(`data-ff-editor`))return;let e=this.renderRoot.querySelector(`input[type="checkbox"]`);e&&(e.checked=!e.checked)}controlTpl(e){switch(e){case`textarea`:return S`<textarea class="ctrl" .value=${this.value} @input=${this.onInput}></textarea>`;case`select`:{let e=this.options.split(`,`).map(e=>e.trim()).filter(e=>e!==``),t=this.value!==``&&!e.includes(this.value);return S`<select class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onInput}>
+    >${this.placeholder}</span>`}onTextClick(){if(this.hasAttribute(`data-ff-editor`))return;let e=this.renderRoot.querySelector(`input[type="checkbox"]`);e&&(e.checked=!e.checked)}controlTpl(e){switch(e){case`textarea`:return S`<textarea class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onChange}></textarea>`;case`select`:{let e=this.options.split(`,`).map(e=>e.trim()).filter(e=>e!==``),t=this.value!==``&&!e.includes(this.value);return S`<select class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onChange}>
           <option value="" disabled hidden></option>
           ${t?S`<option value=${this.value} hidden>${this.value}</option>`:T}
           ${e.length===0?S`<option disabled>(keine Optionen)</option>`:e.map(e=>S`<option value=${e}>${e}</option>`)}
@@ -314,6 +314,7 @@
           type=${e}
           .value=${e===`date`?Xt(this.value):this.value}
           @input=${this.onInput}
+          @change=${this.onChange}
         />`}}render(){let e=fn(this.fieldType);return e===`checkbox`?S`<div class="feld">
         <div class="zeile">
           <input class="ctrl" type="checkbox" />
