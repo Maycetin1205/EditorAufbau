@@ -1,12 +1,14 @@
 // useEditor
-// React-Hook: bindet die Editor-Singleton-Instanz an React via useSyncExternalStore.
-// React fragt offiziell: wie abonnieren (subscribe) + welcher Snapshot (version).
-// Bei version-Aenderung rendert die nutzende Komponente neu.
+// React-Hook: bindet die Editor-Instanz aus dem Context (U5) an React via
+// useSyncExternalStore. React fragt offiziell: wie abonnieren (subscribe) +
+// welcher Snapshot (version). Bei version-Änderung rendert die nutzende
+// Komponente neu.
 
 import { useSyncExternalStore } from 'react'
-import { editor } from './Editor'
+import { useEditorInstance } from './EditorContext'
 
 export function useEditor() {
+  const editor = useEditorInstance()
   useSyncExternalStore(
     (cb) => editor.subscribe(() => cb()),
     () => editor.version,

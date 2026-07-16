@@ -108,7 +108,7 @@ add_repo an die Session hängen).
   5. ✅ **U4** Editor.ts zerlegen: Store-Kern, Baumoperationen, Historie,
      Persistenz (inkl. U1), Migrationen, Musterkarten-/Schutzregeln —
      je ein Modul, Außenverhalten identisch.
-  6. **U5** Editor über Providers (React Context) statt globalem
+  6. ✅ **U5** Editor über Providers (React Context) statt globalem
      Singleton; die drei Import-Stellen stellen um.
   7. **U6** BlockHost zerlegen: Hooks (Element-Brücke, Bindung/Picker,
      Größenziehen) + kleine Komponenten (Chrome, Anfasser, Picker).

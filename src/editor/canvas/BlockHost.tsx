@@ -21,7 +21,7 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { editor } from '../../state/Editor'
+import { useEditorInstance } from '../../state/EditorContext'
 import { useDataSources } from '../../state/useDataSources'
 import { FieldPicker } from './FieldPicker'
 
@@ -50,6 +50,9 @@ function bindingCode(props: Record<string, unknown>, spot: BindableSpot): string
 }
 
 export function BlockHost({ block, selected, onSelect, children }: BlockHostProps) {
+  // Store-Instanz aus dem Context (U5) — ohne Abo: die Canvas abonniert den
+  // Store und rendert die Hosts mit (siehe useDataSources-Kommentar unten).
+  const editor = useEditorInstance()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
@@ -109,7 +112,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
       elementRef.current = null
       setElement(null)
     }
-  }, [block.type])
+  }, [block.type, editor])
 
   useEffect(() => {
     const el = elementRef.current
@@ -474,6 +477,7 @@ interface AddChildButtonProps {
 }
 
 function AddChildButton({ label, childType, parentId }: AddChildButtonProps) {
+  const editor = useEditorInstance()
   return (
     <button
       type="button"

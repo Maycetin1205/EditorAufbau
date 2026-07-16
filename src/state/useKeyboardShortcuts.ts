@@ -6,7 +6,7 @@
 // Ctrl/Cmd+D = Duplicate.
 
 import { useEffect } from 'react'
-import { editor } from './Editor'
+import { useEditorInstance } from './EditorContext'
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
@@ -17,6 +17,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function useKeyboardShortcuts() {
+  const editor = useEditorInstance()
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isEditableTarget(e.target)) return
@@ -52,5 +53,5 @@ export function useKeyboardShortcuts() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [editor])
 }

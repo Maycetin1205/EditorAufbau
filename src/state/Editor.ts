@@ -327,4 +327,3 @@ export class Editor extends Subject<Editor> {
   }
 }
 
-export const editor = new Editor()
