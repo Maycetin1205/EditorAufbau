@@ -290,8 +290,12 @@ SE-Echttest (Nutzer, 2026-07-16).
 
 ## Wichtige Stellen
 
-- Store: `src/state/Editor.ts` · Registry-Konzepte: `src/core/blocks/` ·
-  Bausteine: `src/blocks/`
+- Store: `src/state/Editor.ts` (nur Zustand + öffentliche Methoden;
+  Fächer daneben: treeOps/history/persistence/migrations/templateRules —
+  Aufräumen A1 2026-07-16, Plan in `Aufräum.md`; A2: KEINE Weltvariable
+  mehr, die eine Instanz entsteht in `src/app/providers.tsx` und reist
+  über EditorProvider/EditorContext; A3–A7 offen, erst nach Nutzer-Go) ·
+  Registry-Konzepte: `src/core/blocks/` · Bausteine: `src/blocks/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·
   Runtime-Bündel: `npm run build:runtime` (Veralten-Wächter im export.test!)
 - SE-Laufzeit: `src/blocks/kanban/seRuntime.ts` (Umzug nach
