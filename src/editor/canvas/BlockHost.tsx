@@ -15,10 +15,11 @@
 // etwas vom Editor weiß. Gestrichelter Rahmen + Platzhalter sind reine
 // Editor-Hilfen und leben hier, NICHT im Baustein (WYSIWYG).
 //
-// Aufräumen A3: Bindungs-Picker (useBindingPicker) und Größenziehen
-// (useBlockResize) wohnen in eigenen Hooks daneben.
+// Aufräumen A3/A4: Bindungs-Picker (useBindingPicker), Größenziehen
+// (useBlockResize) und die React↔Lit-Übergabestelle (useLitElement)
+// wohnen in eigenen Hooks daneben.
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
@@ -29,6 +30,7 @@ import { useDataSources } from '../../state/useDataSources'
 import { FieldPicker } from './FieldPicker'
 import { bindingCode, useBindingPicker } from './useBindingPicker'
 import { useBlockResize } from './useBlockResize'
+import { useLitElement } from './useLitElement'
 
 interface BlockHostProps {
   block: BlockNode
@@ -36,11 +38,6 @@ interface BlockHostProps {
   onSelect?: () => void
   // Kind-Hosts (nur für Container-Blöcke; vom Canvas rekursiv erzeugt).
   children?: ReactNode
-}
-
-interface PropChangeDetail {
-  attr: string
-  value: unknown
 }
 
 // Stabile leere Liste, damit der Props-Effekt nicht bei jedem Render neu
@@ -53,11 +50,6 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   // Canvas neu, exakt die alte Semantik des direkten Imports.
   const editor = useEditorInstance()
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
-  // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
-  const elementRef = useRef<HTMLElement | null>(null)
-  const [element, setElement] = useState<HTMLElement | null>(null)
   const def = getBlockDefinition(block.type)
   const isContainer = def?.acceptsChildren ?? false
   // Datenquelle in Reichweite (Kap. 5.2) — nur für Blöcke mit bindbaren
@@ -74,73 +66,15 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     blockRef.current = block
   })
 
-  useEffect(() => {
-    const def = getBlockDefinition(block.type)
-    if (!def) {
-      console.warn(`BlockHost: keine BlockDefinition für Typ "${block.type}"`)
-      return
-    }
-    const container = containerRef.current
-    if (!container) return
-    const el = document.createElement(def.tagName)
-    // Editor-Kennung (Kap. 5.2): schaltet editor-exklusives Block-CSS frei
-    // (Daten-Markierung gebundener Stellen). Der Export setzt sie nie.
-    el.setAttribute('data-ff-editor', '')
-    container.appendChild(el)
-    elementRef.current = el
-    setElement(el)
-
-    // Inline-Doppelklick-Edit: Block emittiert 'ff-prop-change' { attr, value },
-    // der Host schreibt das in den Store. Der Baustein bleibt editor-blind.
-    // 'ff-prop-change' ist bubbles+composed; in verschachtelten Bereichen
-    // erreicht das Event eines Kindes auch die Listener der Eltern-Hosts.
-    // Nur das eigene Element behandeln, sonst schreibt der Bereich die
-    // Prop des Kindes zusätzlich auf sich selbst.
-    const onPropChange = (e: Event) => {
-      if (e.target !== el) return
-      const ce = e as CustomEvent<PropChangeDetail>
-      const detail = ce.detail
-      if (!detail || typeof detail.attr !== 'string') return
-      editor.updateProperty(blockRef.current.id, detail.attr, detail.value)
-    }
-    el.addEventListener('ff-prop-change', onPropChange)
-
-    return () => {
-      el.removeEventListener('ff-prop-change', onPropChange)
-      if (container.contains(el)) container.removeChild(el)
-      elementRef.current = null
-      setElement(null)
-    }
-    // editor ist app-lebenslang stabil (Provider) — der Effekt läuft
-    // weiterhin nur bei Typwechsel.
-  }, [block.type, editor])
-
-  useEffect(() => {
-    const el = elementRef.current
-    if (!el) return
-    const elAny = el as unknown as Record<string, unknown>
-    for (const [key, value] of Object.entries(block.props)) {
-      elAny[key] = value
-    }
-    // Bindungs-Vorschau (Kap. 5.2, revidiert 2026-07-10): gebundene Stellen
-    // zeigen den KLARNAMEN ihres Felds statt des statischen Texts — keine
-    // erfundenen Beispielwerte. Nur die ANZEIGE (DOM-Properties), der Baum
-    // bleibt unberührt. Ist die Bindung nicht auflösbar (keine Quelle in
-    // Reichweite / Feld nicht im Wörterbuch), zeigt die Stelle ihren
-    // statischen Text ohne Markierung; die Bindung selbst bleibt gespeichert
-    // und lebt wieder auf, sobald die Quelle zurückkommt.
-    for (const spot of bindableSpots) {
-      const code = block.props[`${spot.prop}Field`]
-      if (typeof code !== 'string' || code === '') continue
-      const field = dataSource?.fields.find((f) => f.code === code)
-      if (field) {
-        elAny[spot.prop] = field.label
-      } else {
-        elAny[`${spot.prop}Field`] = ''
-      }
-    }
-    elAny.editable = !!selected
-  }, [element, block.props, selected, bindableSpots, dataSource])
+  // React↔Lit-Übergabestelle (A4): Erzeugen/Props/Aufräumen — useLitElement.
+  const { containerRef, elementRef, element } = useLitElement({
+    editor,
+    blockRef,
+    block,
+    selected,
+    bindableSpots,
+    dataSource,
+  })
 
   // ---- Klick-auf-Stelle-Binding (Kap. 5.2, Bedienlogik 3) ----
   const { picker, closePicker, onClick, onDoubleClick } = useBindingPicker({
