@@ -242,13 +242,16 @@ add_repo an die Session hängen).
      Wächter + SE-Echttest.
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
-- **Merkliste:** Platzhalter muss auch bei programmatischem Befüllen
-  verschwinden (gehört zur Feld-Datenbindung); Tabellen-Spalten aus
-  verschiedenen Quellen; bausteinübergreifende Selektion; pflegbare
-  Wert→Bild-Zuordnung für den Karten-Avatar (installations-individuell —
-  bis dahin gilt die eingebaute Empfang-Liste); Datumsanzeige-Baustein;
-  Spaltenbreiten der Tabelle in der Maske dauerhaft merken; Sortierung wie
-  Windows (Zahl/Datum/ABC).
+- **Merkliste:** Tabellen-Spalten aus verschiedenen Quellen;
+  bausteinübergreifende Selektion; pflegbare Wert→Bild-Zuordnung für den
+  Karten-Avatar (installations-individuell — bis dahin gilt die eingebaute
+  Empfang-Liste); Spaltenbreiten der Tabelle in der Maske dauerhaft merken;
+  Sortierung wie Windows (Zahl/Datum/ABC); Ankreuzfeld bindbar machen,
+  sobald der SE-Wert-Kontrakt (J/N? 1/0?) an einer echten Maske belegt ist;
+  Seiten-Leiste als kompakte Aufklappliste, falls viele Popups je Maske
+  real werden (Nutzer-Sorge 2026-07-16); „Maske als Datei
+  speichern/laden" für Sicherung/zweiten Arbeitsplatz (heute nur
+  Browser-Speicher + Export).
 
 ## Zusammenführung ERLEDIGT (2026-07-16, Nutzer-Go)
 
