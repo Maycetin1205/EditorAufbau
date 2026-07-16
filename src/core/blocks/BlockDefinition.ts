@@ -115,4 +115,10 @@ export interface BlockDefinition {
   // Ereignisse des Blocks (Z1) — siehe BlockEventSpec. undefined = der
   // Baustein löst keine Ereignisse aus (erscheint nicht in der Zentrale).
   blockEvents?: readonly BlockEventSpec[]
+  // true = der Block ist eine SEITE der Maske (Popup, Kap. P-A): er liegt
+  // als Kind der Wurzel im Baum (Persistenz/Undo/Export laufen generisch
+  // mit), erscheint aber NIE im Fluss der Hauptseite — der Canvas zeigt ihn
+  // nur als eigenen Seiten-Reiter. Kein `if type===`: Editor.childNodesOf
+  // und die Seitenleiste lesen ausschließlich dieses Kennzeichen.
+  pageBlock?: boolean
 }

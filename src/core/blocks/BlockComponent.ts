@@ -53,5 +53,7 @@ export interface BlockComponentStatic {
   readonly bindingRoute?: BindingRoute
   // Ereignisse des Blocks (Z1) — Bedeutung siehe BlockDefinition.
   readonly blockEvents?: readonly BlockEventSpec[]
+  // Seiten-Baustein (Popup, P-A) — Bedeutung siehe BlockDefinition.
+  readonly pageBlock?: boolean
   new(): BlockComponent
 }

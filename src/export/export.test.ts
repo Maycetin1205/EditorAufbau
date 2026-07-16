@@ -6,6 +6,8 @@
 // LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
 
 import { describe, expect, it } from 'vitest'
+// Side-Effect-Import: registriert den echten Popup-Baustein (Seiten-Test P-A).
+import '../blocks/popup/PopupBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -137,6 +139,27 @@ describe('exportMask', () => {
       { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
       { INDEX_NR: 0, ALIAS: 'Adressen', ID: 'ADR', FELDER: '2_8' },
     ])
+  })
+
+  it('exportiert eine Popup-Seite GESCHLOSSEN im selben HTML, Inhalt reist mit (P-A)', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'p1'] },
+      t1: { id: 't1', type: TEST_BLOCK, props: { text: 'Hauptseite' }, parentId: 'root', childIds: [] },
+      p1: {
+        id: 'p1', type: 'popup',
+        props: { name: 'Neue Behandlung', breite: 400, hoehe: 300 },
+        parentId: 'root', childIds: ['t2'],
+      },
+      t2: { id: 't2', type: TEST_BLOCK, props: { text: 'Im Popup' }, parentId: 'p1', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    const tag = /<ff-popup[^>]*/.exec(html)?.[0] ?? ''
+    expect(tag).toContain('name="Neue Behandlung"')
+    expect(tag).toContain('breite="400"')
+    expect(tag).toContain('hoehe="300"')
+    // Geschlossen bis eine Kette öffnet (P-B): NIE mit offen-Attribut exportieren.
+    expect(tag).not.toContain('offen')
+    expect(html).toMatch(/<ff-popup[^>]*>\n\s+<ff-t-block[^>]*text="Im Popup"/)
   })
 })
 

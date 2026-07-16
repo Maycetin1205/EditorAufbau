@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Side-Effect-Import: registriert die echten Kanban-Blöcke (kanban,
 // kanban-spalte, card) für die P1.1-Migrationstests.
 import '../blocks/kanban/KanbanBlock'
+// … und den echten Popup-Baustein für die Seiten-Tests (P-A).
+import '../blocks/popup/PopupBlock'
 import { BACKUP_KEY, Editor } from './Editor'
 import {
   registerTestBlocks,
@@ -356,5 +358,42 @@ describe('Migration (altes Flach-Format)', () => {
     expect(ed.getNode('alt1')?.parentId).toBe(ed.rootId)
     expect(ed.getNode('alt1')?.props.layout).toBeUndefined()
     expect(ed.getNode('alt2')).toBeUndefined()
+  })
+})
+
+describe('Popup-Seiten (P-A)', () => {
+  it('Popup-Knoten mit Inhalt überlebt das Neuladen; die Hauptseite fließt ohne ihn', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'p'] },
+        a: { id: 'a', type: TEST_BLOCK, props: { text: 'Haupt' }, parentId: 'root', childIds: [] },
+        p: { id: 'p', type: 'popup', props: { name: 'Neue Behandlung', breite: 400, hoehe: 300 }, parentId: 'root', childIds: ['b'] },
+        b: { id: 'b', type: TEST_BLOCK, props: { text: 'Im Popup' }, parentId: 'p', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('p')?.props.name).toBe('Neue Behandlung')
+    expect(ed.getNode('b')?.parentId).toBe('p')
+    // Seiten-Bausteine erscheinen NIE im Fluss der Hauptseite …
+    expect(ed.childNodesOf('root').map((n) => n.id)).toEqual(['a'])
+    // … sondern als eigene Seiten neben der Hauptseite.
+    expect(ed.pages.map((s) => s.name)).toEqual(['Hauptseite', 'Neue Behandlung'])
+  })
+
+  it('addPopupPage: eindeutiger Name, Seite wird aktiv, Anlegen+Benennen = EIN Undo-Schritt', () => {
+    const ed = new Editor()
+    const p1 = ed.addPopupPage()
+    const p2 = ed.addPopupPage()
+    expect(p1).not.toBeNull()
+    expect(p2).not.toBeNull()
+    expect(ed.getNode(p1!.id)?.props.name).toBe('Popup')
+    expect(ed.getNode(p2!.id)?.props.name).toBe('Popup 2')
+    expect(ed.activePageId).toBe(p2!.id)
+    ed.undo()
+    // Ein Undo entfernt die Seite KOMPLETT (nicht erst den Namen) und die
+    // aktive Seite fällt sicher auf die Hauptseite zurück.
+    expect(ed.getNode(p2!.id)).toBeUndefined()
+    expect(ed.activePageId).toBe(ed.rootId)
+    expect(ed.pages.map((s) => s.name)).toEqual(['Hauptseite', 'Popup'])
   })
 })

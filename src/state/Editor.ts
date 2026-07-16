@@ -317,6 +317,10 @@ function cloneSubtree(
 export class Editor extends Subject<Editor> {
   private _tree: BlockTree = createEmptyTree()
   private _selectedId: string | null = null
+  // Aktive SEITE der Maske (P-A): ROOT_ID = Hauptseite, sonst die id eines
+  // Seiten-Bausteins (pageBlock, z.B. Popup) unter der Wurzel. Bewusst NICHT
+  // persistiert — welche Seite offen ist, ist Arbeitszustand wie die Auswahl.
+  private _activePageId: string = ROOT_ID
   private _version = 0
   private _history: EditorSnapshot[] = []
   private _future: EditorSnapshot[] = []
@@ -336,7 +340,57 @@ export class Editor extends Subject<Editor> {
   }
 
   get tree(): Readonly<BlockTree> { return this._tree }
-  get rootId(): string { return ROOT_ID }
+
+  // Wurzel der AKTIVEN Seite (P-A): Canvas, Bibliothek und Drag-Ziele
+  // arbeiten dadurch automatisch auf der Seite, die gerade offen ist.
+  // Verschwindet die Seite (Undo, Löschen), fällt alles auf die Hauptseite.
+  get rootId(): string {
+    return this._tree[this._activePageId] ? this._activePageId : ROOT_ID
+  }
+
+  get activePageId(): string { return this.rootId }
+
+  // Seiten der Maske: Hauptseite + alle Seiten-Bausteine (pageBlock) unter
+  // der Wurzel, in Baum-Reihenfolge. Registry-getrieben, kein `if type===`.
+  get pages(): { id: string; name: string; istHauptseite: boolean }[] {
+    const popups = (this._tree[ROOT_ID]?.childIds ?? [])
+      .map((id) => this._tree[id])
+      .filter((n): n is BlockNode => Boolean(n) && getBlockDefinition(n!.type)?.pageBlock === true)
+      .map((n) => ({
+        id: n.id,
+        name: typeof n.props.name === 'string' && n.props.name !== '' ? n.props.name : 'Popup',
+        istHauptseite: false,
+      }))
+    return [{ id: ROOT_ID, name: 'Hauptseite', istHauptseite: true }, ...popups]
+  }
+
+  // Seite wechseln: reiner Arbeitszustand (kein History-Schritt); die
+  // Auswahl wird geleert, damit Inspector/Anfasser nicht auf einen Block
+  // einer unsichtbaren Seite zeigen.
+  setActivePage(id: string): void {
+    const next = id === ROOT_ID || this._tree[id] ? id : ROOT_ID
+    if (next === this._activePageId) return
+    this._activePageId = next
+    this._selectedId = null
+    this.notify(this)
+  }
+
+  // Neue Popup-Seite: ein Seiten-Baustein als Kind der Wurzel mit
+  // eindeutigem Klarnamen; die Seite wird sofort aktiv. Transaktion =
+  // Anlegen + Benennen sind zusammen EIN Undo-Schritt.
+  addPopupPage(): BlockNode | null {
+    const vergeben = new Set(this.pages.map((p) => p.name))
+    let name = 'Popup'
+    for (let n = 2; vergeben.has(name); n++) name = `Popup ${n}`
+    this.beginTransaction()
+    const node = this.addBlock('popup', ROOT_ID)
+    if (node) {
+      this._activePageId = node.id
+      this.updateProperty(node.id, 'name', name)
+    }
+    this.endTransaction()
+    return node
+  }
 
   getNode(id: string): BlockNode | undefined { return this._tree[id] }
 
@@ -345,7 +399,9 @@ export class Editor extends Subject<Editor> {
     if (!parent) return []
     return parent.childIds
       .map((id) => this._tree[id])
-      .filter((n): n is BlockNode => Boolean(n))
+      // Seiten-Bausteine (Popups) erscheinen NIE im Fluss ihres Elternteils —
+      // sie sind eigene Seiten (Reiter), keine Inhalte der Hauptseite.
+      .filter((n): n is BlockNode => Boolean(n) && getBlockDefinition(n!.type)?.pageBlock !== true)
   }
 
   // Anzahl echter Blöcke (ohne die Wurzel).
@@ -415,8 +471,10 @@ export class Editor extends Subject<Editor> {
   // Beispieldaten (defaultChildren) kommen als kompletter Teilbaum mit —
   // ein Undo entfernt alles wieder. Verweigert Typen, die der Zielcontainer
   // nicht aufnimmt (allowedChildTypes) — dann kein History-Eintrag, null.
-  addBlock(type: string, parentId: string = ROOT_ID, index?: number): BlockNode | null {
-    const parent = this._tree[parentId] ?? this._tree[ROOT_ID]
+  // Ohne parentId landet der Block auf der AKTIVEN Seite (P-A) — die
+  // Bibliothek bestückt damit automatisch die Seite, die gerade offen ist.
+  addBlock(type: string, parentId?: string, index?: number): BlockNode | null {
+    const parent = this._tree[parentId ?? this.rootId] ?? this._tree[ROOT_ID]
     if (!canContain(parent.type, type)) return null
     this.pushHistory()
     const { nodes, rootId } = createBlockSubtree(type)

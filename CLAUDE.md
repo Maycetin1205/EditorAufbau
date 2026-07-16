@@ -225,8 +225,20 @@ add_repo an die Session hängen).
      Fenster + X gehören zum Popup-Baustein (1 Render-Quelle).
      Popup-Darstellung + Lebenszyklus bleiben beim Popup — nur Daten-
      zugriff/Relationen laufen über die SoftEngine-Schicht.
-     Paketschnitt: (P-A) Seiten-Gerüst + Reiter + Schema v3/Migration,
-     (P-B) Ketten-Schritte öffnen/schließen + Laufzeit, (P-C) Export +
+     Paketschnitt: (P-A) ✅ Seiten-Gerüst ERLEDIGT (2026-07-16) —
+     einfacher als geplant: KEIN Schema v3 nötig, eine Popup-Seite ist ein
+     Popup-Knoten (pageBlock in der Registry) als Kind der Wurzel im
+     vorhandenen Baum; Persistenz/Undo/Export/Preflight laufen dadurch
+     generisch mit, alte Speicherstände laden unverändert. Editor.rootId =
+     Wurzel der AKTIVEN Seite (Canvas/Bibliothek/Drag folgen automatisch),
+     childNodesOf filtert Seiten-Bausteine aus jedem Fluss. ff-popup:
+     zentriertes Fenster (breite/hoehe-Props + Editor-Anfasser, zieht um
+     2×delta weil zentriert), Kopf = Klarname (Doppelklick = umbenennen),
+     X + Abdunklung (--se-scrim-Token) im Baustein; geschlossen =
+     display:none, Editor-Reiter erzwingt Sicht über data-ff-editor;
+     Export IMMER ohne offen-Attribut (export.test). Löschen der Seite =
+     normales Entfernen des selektierten Popups.
+     (P-B) Ketten-Schritte öffnen/schließen + Laufzeit, (P-C) Export-e2e +
      Wächter + SE-Echttest.
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.

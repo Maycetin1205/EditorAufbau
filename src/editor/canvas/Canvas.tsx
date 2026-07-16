@@ -15,6 +15,7 @@ import {
   useMemo,
   useState,
   type DragEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
@@ -188,6 +189,167 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
   )
 }
 
+// ---- Seiten (P-A): Reiter über der Fläche + Popup-Seitenansicht ----
+
+// Seiten-Leiste (reine Editor-Hilfe): Hauptseite | Popup-Klarnamen | + Popup.
+// Umbenannt wird am Ding (Doppelklick auf den Fenstertitel der Popup-Seite),
+// gelöscht über das normale Entfernen des selektierten Popups.
+function SeitenLeiste() {
+  const ed = useEditor()
+  const pages = ed.pages
+  const aktiv = ed.activePageId
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-1.5" data-ff-editor-helper>
+      <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Seiten
+      </span>
+      {pages.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => ed.setActivePage(p.id)}
+          className={
+            p.id === aktiv
+              ? 'rounded border border-ring bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground'
+              : 'rounded border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground hover:border-ring hover:text-foreground'
+          }
+        >
+          {p.name}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => ed.addPopupPage()}
+        className="rounded border border-dashed border-border bg-background px-3 py-1 text-xs text-muted-foreground hover:border-ring hover:text-foreground"
+      >
+        ＋ Popup
+      </button>
+    </div>
+  )
+}
+
+// Mindest- und Standardgröße des Popup-Fensters (Anfasser, P-A).
+const POPUP_MIN_BREITE = 240
+const POPUP_MIN_HOEHE = 160
+
+function popupZahl(v: unknown, fallback: number): number {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+// Die Popup-Seite: das Popup-Element füllt die Fläche (Abdunklung + Fenster
+// kommen aus dem Baustein selbst — 1 Render-Quelle); dazu Editor-Anfasser
+// für breite/hoehe am zentrierten Fenster. Das Fenster ist zentriert, darum
+// wächst es beim Ziehen um 2×delta (die Kante bleibt unter dem Zeiger).
+function PopupSeite({ popupId }: { popupId: string }) {
+  const ed = useEditor()
+  const dnd = useDnd()
+  const node = ed.getNode(popupId)
+  if (!node) return null
+  const selected = ed.selectedId === node.id
+  const breite = popupZahl(node.props.breite, 520)
+  const hoehe = popupZahl(node.props.hoehe, 380)
+
+  const startResize = (
+    e: ReactPointerEvent<HTMLDivElement>,
+    prop: 'breite' | 'hoehe',
+    start: number,
+    min: number,
+  ) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startPos = prop === 'breite' ? e.clientX : e.clientY
+    ed.beginTransaction()
+    const onMove = (ev: PointerEvent) => {
+      const pos = prop === 'breite' ? ev.clientX : ev.clientY
+      ed.updateProperty(node.id, prop, Math.max(min, Math.round(start + (pos - startPos) * 2)))
+    }
+    const onUp = () => {
+      ed.endTransaction()
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  const standard = getBlockDefinition(node.type)?.defaultProps ?? {}
+
+  return (
+    <div
+      style={{ position: 'absolute', inset: 0 }}
+      onDragOver={(e) => {
+        // Freie Fläche der Popup-Seite: Drop ans Ende des Popup-Rumpfs.
+        if (dnd.dragId === null && !isNewBlockDrag(e.dataTransfer)) return
+        e.preventDefault()
+        dnd.setDropTarget({ parentId: node.id, index: ed.childNodesOf(node.id).length })
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        commitDrop(e, ed, dnd)
+      }}
+    >
+      <BlockHost
+        block={node}
+        selected={selected}
+        onSelect={() => ed.selectBlock(node.id)}
+      >
+        <NodeList parentId={node.id} direction="column" />
+      </BlockHost>
+      {selected && (
+        <>
+          <div
+            draggable={false}
+            data-ff-editor-helper
+            onPointerDown={(e) => startResize(e, 'breite', breite, POPUP_MIN_BREITE)}
+            onDragStart={(e) => e.preventDefault()}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              ed.updateProperty(node.id, 'breite', standard.breite ?? 520)
+            }}
+            title="Breite ziehen · Doppelklick: Standard"
+            style={{
+              position: 'absolute',
+              left: `calc(50% + ${breite / 2}px - 3px)`,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 7,
+              height: 26,
+              borderRadius: 4,
+              background: 'hsl(var(--ring))',
+              cursor: 'ew-resize',
+              zIndex: 20,
+            }}
+          />
+          <div
+            draggable={false}
+            data-ff-editor-helper
+            onPointerDown={(e) => startResize(e, 'hoehe', hoehe, POPUP_MIN_HOEHE)}
+            onDragStart={(e) => e.preventDefault()}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              ed.updateProperty(node.id, 'hoehe', standard.hoehe ?? 380)
+            }}
+            title="Höhe ziehen · Doppelklick: Standard"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: `calc(50% + ${hoehe / 2}px - 3px)`,
+              transform: 'translateX(-50%)',
+              width: 26,
+              height: 7,
+              borderRadius: 4,
+              background: 'hsl(var(--ring))',
+              cursor: 'ns-resize',
+              zIndex: 20,
+            }}
+          />
+        </>
+      )}
+    </div>
+  )
+}
+
 // Führt den Drop aus: vorhandener Block → moveNode, Palette-Block → addBlock.
 function commitDrop(
   e: DragEvent,
@@ -230,37 +392,45 @@ export function Canvas() {
     setDropTarget({ parentId: ed.rootId, index: ed.childNodesOf(ed.rootId).length })
   }
 
+  // Aktive Seite (P-A): Hauptseite = Wurzel-Fluss; Popup-Seite = das eine
+  // Popup-Element über der abgedunkelten Maskenfläche (Seiten-Leiste oben).
+  const hauptseite = ed.activePageId === ed.pages[0].id
+
   return (
     <DndContext.Provider value={dnd}>
-      <div
-        onClick={() => ed.selectBlock(null)}
-        className="relative h-full w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm"
-        style={{ minHeight: 400 }}
-      >
+      <div className="flex h-full w-full flex-col">
+        <SeitenLeiste />
         <div
-          // Wurzel-Fluss aus ROOT_FLOW — dieselben Werte benutzt der Export.
-          // Hintergrund = Masken-Grundfarbe (--se-bg), NICHT Editor-Chrome:
-          // die Fläche zeigt die Maske, wie sie exportiert wird (WYSIWYG).
-          className="flex h-full min-h-0 flex-col items-start overflow-auto"
-          style={{
-            gap: ROOT_FLOW.gap,
-            padding: ROOT_FLOW.padding,
-            boxSizing: 'border-box',
-            background: 'var(--se-bg)',
-          }}
-          onDragOver={onCanvasDragOver}
-          onDrop={(e) => {
-            e.preventDefault()
-            commitDrop(e, ed, dnd)
-          }}
-          onDragLeave={(e) => {
-            // Nur zurücksetzen, wenn der Zeiger die Fläche wirklich verlässt.
-            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-              setDropTarget(null)
-            }
-          }}
+          onClick={() => ed.selectBlock(null)}
+          className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-border bg-card shadow-sm"
+          style={{ minHeight: 400 }}
         >
-          <NodeList parentId={ed.rootId} direction="column" />
+          <div
+            // Wurzel-Fluss aus ROOT_FLOW — dieselben Werte benutzt der Export.
+            // Hintergrund = Masken-Grundfarbe (--se-bg), NICHT Editor-Chrome:
+            // die Fläche zeigt die Maske, wie sie exportiert wird (WYSIWYG).
+            className="flex h-full min-h-0 flex-col items-start overflow-auto"
+            style={{
+              gap: ROOT_FLOW.gap,
+              padding: ROOT_FLOW.padding,
+              boxSizing: 'border-box',
+              background: 'var(--se-bg)',
+            }}
+            onDragOver={onCanvasDragOver}
+            onDrop={(e) => {
+              e.preventDefault()
+              commitDrop(e, ed, dnd)
+            }}
+            onDragLeave={(e) => {
+              // Nur zurücksetzen, wenn der Zeiger die Fläche wirklich verlässt.
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                setDropTarget(null)
+              }
+            }}
+          >
+            {hauptseite && <NodeList parentId={ed.rootId} direction="column" />}
+          </div>
+          {!hauptseite && <PopupSeite popupId={ed.activePageId} />}
         </div>
       </div>
     </DndContext.Provider>

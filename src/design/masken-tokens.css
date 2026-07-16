@@ -36,6 +36,9 @@
   --se-line:      #c9d2d9;  /* sichtbare Rahmen */
   --se-line-soft: #e0e6ea;  /* Zeilentrenner, Innenrahmen */
 
+  /* Abdunklung hinter Popups (Ink bei 45%) */
+  --se-scrim:     rgba(16, 28, 38, 0.45);
+
   /* Akzent — EINE Hausfarbe (Gruen), sparsam einsetzen */
   --se-accent:      #0e7a58;
   --se-accent-dark: #0b6247; /* Hover/aktiv */

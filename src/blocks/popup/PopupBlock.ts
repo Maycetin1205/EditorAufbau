@@ -1,0 +1,176 @@
+// PopupBlock (P-A, Nutzer-Entscheidungen 2026-07-16)
+// Eine SEITE der Maske: zentriertes Fenster auf abgedunkelter Fläche.
+// Der Knoten liegt als Kind der Wurzel im Baum (pageBlock in der Registry) —
+// Persistenz, Undo, Export-Sammlung und Preflight laufen dadurch generisch
+// mit, ohne Schema-Änderung. Die Hauptseite rendert ihn NIE (Editor.
+// childNodesOf filtert Seiten-Bausteine); sichtbar wird er über seinen
+// Seiten-Reiter im Editor bzw. — ab P-B — über den Ketten-Schritt
+// „Popup öffnen" in der Maske.
+//
+// Entscheidungen: eingebautes X oben rechts (schließt in der MASKE immer;
+// im Editor ist es nur Optik), Klick auf die Abdunklung tut NICHTS
+// (ERP-üblich, kein Datenverlust), IMMER zentriert; Größe (breite/hoehe)
+// zieht der Editor am Anfasser der Popup-Seite. Der Fenster-Titel ist der
+// Klarname der Seite (name-Prop) und wird per Doppelklick direkt am Kopf
+// umbenannt (Bedienung am Ding).
+//
+// Eine Render-Quelle (Regel 1): Abdunklung + Fenster + Kopf + X kommen aus
+// DIESEM Baustein — der Editor-Reiter zeigt exakt das Export-Popup
+// (data-ff-editor erzwingt nur die Sichtbarkeit). Aussehen ausschließlich
+// aus Masken-Tokens; strukturelle Größen als Literale wie überall.
+
+import { css, html, type TemplateResult } from 'lit'
+import { property } from 'lit/decorators.js'
+import { BasicBlock } from '../base/BasicBlock'
+import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import { ROOT_TYPE } from '../../core/blocks/BlockData'
+
+// Größen kommen im Export als Attribut-Strings an — defensiv wandeln.
+function px(v: unknown, fallback: number): number {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+export class PopupBlock extends BasicBlock {
+  static readonly blockType = 'popup'
+  static readonly tagName = 'ff-popup'
+  static readonly displayName = 'Popup'
+  static readonly category: BlockCategory = 'layout'
+  static readonly acceptsChildren = true
+  // Seiten entstehen NUR über den „+ Popup"-Reiter, nie aus der Bibliothek;
+  // sie leben ausschließlich direkt unter der Wurzel (kein Popup im Popup).
+  static readonly showInPalette = false
+  static readonly allowedParentTypes = [ROOT_TYPE]
+  static readonly pageBlock = true
+  // Größe läuft über breite/hoehe (eigene Props, reisen als Attribute) —
+  // die generischen width/height-Anfasser des BlockHost bleiben aus.
+  static readonly resizableWidth = false
+  static readonly containerHint = false
+  static readonly defaultProps = {
+    name: 'Popup',
+    breite: 520,
+    hoehe: 380,
+  }
+
+  static styles = [
+    BasicBlock.styles,
+    css`
+      /* Geschlossen = restlos unsichtbar (Export-Zustand bis P-B öffnet).
+         Der Editor-Seitenreiter erzwingt die Sicht über data-ff-editor. */
+      :host { display: none; }
+      :host([offen]),
+      :host([data-ff-editor]) {
+        display: block;
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        font-family: var(--se-font);
+      }
+      /* Klick auf die Abdunklung tut NICHTS (Nutzer-Entscheidung) —
+         deshalb bewusst kein Handler. */
+      .abdunklung {
+        position: absolute;
+        inset: 0;
+        background: var(--se-scrim);
+      }
+      .buehne {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+      .fenster {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        max-width: calc(100% - 24px);
+        max-height: calc(100% - 24px);
+        background: var(--se-panel);
+        border: 1px solid var(--se-line);
+        border-radius: var(--se-r-lg);
+        overflow: hidden;
+      }
+      .kopf {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 6px 6px 12px;
+        background: var(--se-panel-2);
+        border-bottom: 1px solid var(--se-line-soft);
+      }
+      .titel {
+        font-weight: 600;
+        font-size: var(--se-fs);
+        color: var(--se-ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .x {
+        margin-left: auto;
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: none;
+        border-radius: var(--se-r-sm);
+        background: none;
+        color: var(--se-muted);
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .x:hover {
+        background: var(--se-line-soft);
+        color: var(--se-ink);
+      }
+      /* Der Rumpf fließt wie die Hauptseite: Spalte, linksbündig. */
+      .rumpf {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .rumpf slot { display: contents; }
+    `,
+  ]
+
+  @property() name = 'Popup'
+  @property() breite: number | string = 520
+  @property() hoehe: number | string = 380
+
+  // X schließt NUR in der Maske (ab P-B öffnet dort der Ketten-Schritt);
+  // im Editor ist das X reine Optik — die Seite verlässt man über die Reiter.
+  private onClose(): void {
+    if (this.hasAttribute('data-ff-editor')) return
+    this.removeAttribute('offen')
+  }
+
+  render(): TemplateResult {
+    const b = px(this.breite, 520)
+    const h = px(this.hoehe, 380)
+    return html`<div class="abdunklung"></div>
+      <div class="buehne">
+        <div class="fenster" style="width:${b}px;height:${h}px">
+          <div class="kopf">
+            <span
+              class="titel"
+              data-ff-editable
+              @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'name')}
+            >${this.name}</span>
+            <button class="x" type="button" aria-label="Schließen" title="Schließen" @click=${this.onClose}>✕</button>
+          </div>
+          <div class="rumpf"><slot></slot></div>
+        </div>
+      </div>`
+  }
+}
+
+BasicBlock.defineAndRegister(PopupBlock)
