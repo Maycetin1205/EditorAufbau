@@ -178,8 +178,9 @@ add_repo an die Session hängen).
       Datenfelder speichern Quellen-ID + Feldcode. Aktionen-UI ist flach:
       Ereignisse und Schritte sind Zeilen mit Trennern statt Karten-in-Karten.
       Verwendete Vorlagen reisen über `FF_RELATIONS`.
-  3b. ✅ **Gemeinsame GET/PUT/PUTADD-Laufzeit implementiert (2026-07-15,
-      SoftEngine-Echttest offen):** `basisHTML_REGISTER` ist der gemeinsame
+  3b. ✅ **Gemeinsame GET/PUT/PUTADD-Laufzeit implementiert (2026-07-15;
+      PUT-Weg in SoftEngine BESTÄTIGT 2026-07-16 über die
+      Formularfeld-Kette — GET-Echttest weiter offen):** `basisHTML_REGISTER` ist der gemeinsame
       Antwortkanal für BWMSG und WWMSG; kein WinUI-Sonderlistener und kein
       console.log-Abfangen. GET läuft seriell, Callback primär und neue
       `SEDATA.Message<N>` als Rückfallweg; PUT/PUTADD fire-and-forget.
@@ -188,7 +189,8 @@ add_repo an die Session hängen).
       Kette verfügbar. Die Export-Sperre ist entfernt.
   4. ✅ **Formularfeld anschließen (erledigt 2026-07-16, Codex nach
      Claude-Auftrag `docs/AUFTRAG-CODEX.md` + Claude-Nachprüfung;
-     SE-Echttest durch den Nutzer offen):** Feld deklariert
+     SE-ECHTTEST BESTANDEN, Nutzer 2026-07-16: Tippen UND Auswahlfeld →
+     Kette „Wert geändert" → PUT_RELATION schreibt wirklich):** Feld deklariert
      acceptsDataSource + bindingRoute(valueField) + bindableSpot 'Wert' +
      Ereignis „Wert geändert" — alles Registry, kein Sondercode. Lesen:
      feldRuntime hydriert aus der ERSTEN Zeile der eigenen Quelle;
