@@ -58,11 +58,22 @@
         padding: 8px 10px 9px;
         font-family: var(--se-font);
       }
-      .head {
+      .main {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+      }
+      /* Zeit + Datum oben rechts (Nutzer-Entscheidung 2026-07-16) —
+         align-self:flex-start hält die Gruppe an der Oberkante, auch wenn
+         der Titelblock zweizeilig ist. */
+      .when {
         display: flex;
         align-items: baseline;
         gap: 7px;
-        min-width: 0;
+        flex: none;
+        margin-left: auto;
+        align-self: flex-start;
       }
       .time,
       .date {
@@ -70,26 +81,22 @@
         font-family: var(--se-mono);
         font-size: var(--se-fs-sm);
       }
-      .main {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-      }
+      /* Avatar wie das Empfang-Original: 30px runde getönte Fläche,
+         17px-Silhouette in der Hausfarbe. */
       .avatar {
         box-sizing: border-box;
         display: grid;
         place-items: center;
-        width: 28px;
-        height: 28px;
+        width: 30px;
+        height: 30px;
         flex: none;
         border-radius: var(--se-r-pill);
         background: var(--se-accent-soft);
         color: var(--se-accent);
       }
       .avatar svg {
-        width: 16px;
-        height: 16px;
+        width: 17px;
+        height: 17px;
         display: block;
       }
       .titles {
@@ -153,34 +160,30 @@
         background: transparent;
         border: 1px dashed var(--se-faint);
       }
-      :host([data-ff-editor]) .avatar[data-ff-bound] {
-        outline: 2px dotted var(--se-accent);
-        outline-offset: 1px;
-      }
     `]}stelle(e,t){return C`<span
       class=${t}
       data-ff-editable
       data-ff-spot=${e}
       ?data-ff-bound=${this[`${e}Field`]!==``}
       @dblclick=${t=>this.inlineEdit(t,e)}
-    >${this[e]}</span>`}render(){let e=zt(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.time)||n(this.date),i=n(this.heading)||n(this.heading2),a=n(this.avatar)||i||n(this.meta);return C`<div class="card">
-      ${r?C`<div class="head">
-            ${n(this.time)?this.stelle(`time`,`time`):E}
-            ${n(this.date)?this.stelle(`date`,`date`):E}
-          </div>`:E}
-      ${a?C`<div class="main">
+    >${this[e]}</span>`}render(){let e=zt(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.heading)||n(this.heading2),i=n(this.time)||n(this.date);return C`<div class="card">
+      ${n(this.avatar)||r||n(this.meta)||i?C`<div class="main">
             ${n(this.avatar)?C`<span
                   class="avatar"
                   data-ff-spot="avatar"
                   ?data-ff-bound=${this.avatarField!==``}
                 >${this.avatar.trim()===``?E:Wt(this.avatar)}</span>`:E}
             <div class="titles">
-              ${i?C`<div class="trow">
+              ${r?C`<div class="trow">
                     ${n(this.heading)?this.stelle(`heading`,`heading`):E}
                     ${n(this.heading2)?this.stelle(`heading2`,`heading2`):E}
                   </div>`:E}
               ${n(this.meta)?this.stelle(`meta`,`meta`):E}
             </div>
+            ${i?C`<div class="when">
+                  ${n(this.date)?this.stelle(`date`,`date`):E}
+                  ${n(this.time)?this.stelle(`time`,`time`):E}
+                </div>`:E}
           </div>`:E}
       ${n(this.text)?this.stelle(`text`,`text`):E}
       ${n(this.chipText)?C`<span

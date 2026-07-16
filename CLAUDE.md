@@ -93,15 +93,21 @@ add_repo an die Session hängen).
 ## Stand (2026-07-15) + vereinbarte nächste Schritte
 
 - **Bibliothek:** Kanban (+ Spalte/Karte, Datenpfad in SoftEngine bestätigt;
-  Karte seit 2026-07-16 nach der Empfang-Anatomie: acht bindbare Stellen
-  (Zeit, Datum, Avatar, Titel, Titel 2, Unterzeile, Textzeile, Chip),
-  auto-hoch mit 112px MINDESThöhe (Nutzer-Entscheidung, ersetzt die feste
-  Höhe), Text maximal zwei Zeilen, Chip am unteren Rand; LEER-REGEL: Stellen
-  ohne Inhalt verschwinden in der Maske restlos samt leerer Zeilen, im
-  Editor bleiben sie Klick-Ziele (Strich/gestrichelter Kreis); Avatar =
-  Datenwert→Tier-Silhouette, Icons + Schlüsselwörter 1:1 aus der
-  Empfang-Referenz in `src/blocks/card/tierIcon.ts`, unbekannter Wert →
-  Pfote, leerer Wert → Avatar weg),
+  Karte seit 2026-07-16 nach der Empfang-Anatomie: acht bindbare Stellen —
+  Avatar links neben Titel + Titel 2 (nebeneinander in EINER Zeile) mit
+  Unterzeile darunter, Zeit + Datum OBEN RECHTS in derselben Zeile,
+  Textzeile, Chip am unteren Rand; auto-hoch mit 112px MINDESThöhe
+  (Nutzer-Entscheidung, ersetzt die feste Höhe), Text maximal zwei Zeilen;
+  LEER-REGEL: Stellen ohne Inhalt verschwinden in der Maske restlos samt
+  leerer Zeilen, im Editor bleiben sie Klick-Ziele (Strich/gestrichelter
+  Kreis) — NUR Platzhalter, nie Texte; Avatar wie das Original: 30px runde
+  getönte Fläche, Datenwert→Tier-Silhouette, Icons + Schlüsselwörter 1:1
+  aus der Empfang-Referenz in `src/blocks/card/tierIcon.ts`, unbekannter
+  Wert → Pfote, leerer Wert → Avatar weg. Der „Muster"-Anstecker an der
+  Musterkarte ist ABGESCHAFFT (Nutzer-Entscheidung 2026-07-16, der
+  Löschschutz bleibt); die früheren Karten-Demo-Werte („Rückruf Fr.
+  Wagner", „Befund Minka besprechen", „Heute", …) werden beim Laden alter
+  Speicherstände geleert (exakter Vergleich, `putzeAlteKartenDemos`)),
   Schaltfläche, Formularfeld (v1 statisch, Neubau nach behandlung-Referenz),
   Zeile. Export = Vollbild (`height: 'fill'`, Schema-v2-Migration).
   Aktionsketten (Z2/START_TOOL) in SoftEngine bestätigt.

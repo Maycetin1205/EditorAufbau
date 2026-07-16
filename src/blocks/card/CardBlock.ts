@@ -1,9 +1,10 @@
 // CardBlock
 // Molekuel (4K.3, erweitert P1.2; Empfang-Anatomie 2026-07-16): Karte mit
-// ACHT Stellen nach dem Empfang-Vorbild — Kopfzeile = Zeit + Datum (Mono),
-// darunter Avatar (rund, Tier-Silhouette aus dem Datenwert) neben dem
-// Titelblock (Titel + Titel 2 fliessen in einer Zeile zusammen, darunter
-// die Unterzeile), dann Textzeile, unten der Status-Chip. Karten sind
+// ACHT Stellen nach dem Empfang-Vorbild — oben Avatar (rund, Tier-
+// Silhouette aus dem Datenwert) neben dem Titelblock (Titel + Titel 2
+// fliessen in einer Zeile zusammen, darunter die Unterzeile), Zeit +
+// Datum sitzen OBEN RECHTS in derselben Zeile (Nutzer-Entscheidung
+// 2026-07-16), dann Textzeile, unten der Status-Chip. Karten sind
 // NORMALE Bloecke im Baum — keine eigene Drag-Sonderlogik, die Canvas-
 // Drag-Logik aus 2.3 zieht sie wie jeden anderen Block.
 //
@@ -133,11 +134,22 @@ export class CardBlock extends BasicBlock {
         padding: 8px 10px 9px;
         font-family: var(--se-font);
       }
-      .head {
+      .main {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+      }
+      /* Zeit + Datum oben rechts (Nutzer-Entscheidung 2026-07-16) —
+         align-self:flex-start hält die Gruppe an der Oberkante, auch wenn
+         der Titelblock zweizeilig ist. */
+      .when {
         display: flex;
         align-items: baseline;
         gap: 7px;
-        min-width: 0;
+        flex: none;
+        margin-left: auto;
+        align-self: flex-start;
       }
       .time,
       .date {
@@ -145,26 +157,22 @@ export class CardBlock extends BasicBlock {
         font-family: var(--se-mono);
         font-size: var(--se-fs-sm);
       }
-      .main {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-      }
+      /* Avatar wie das Empfang-Original: 30px runde getönte Fläche,
+         17px-Silhouette in der Hausfarbe. */
       .avatar {
         box-sizing: border-box;
         display: grid;
         place-items: center;
-        width: 28px;
-        height: 28px;
+        width: 30px;
+        height: 30px;
         flex: none;
         border-radius: var(--se-r-pill);
         background: var(--se-accent-soft);
         color: var(--se-accent);
       }
       .avatar svg {
-        width: 16px;
-        height: 16px;
+        width: 17px;
+        height: 17px;
         display: block;
       }
       .titles {
@@ -228,10 +236,6 @@ export class CardBlock extends BasicBlock {
         background: transparent;
         border: 1px dashed var(--se-faint);
       }
-      :host([data-ff-editor]) .avatar[data-ff-bound] {
-        outline: 2px dotted var(--se-accent);
-        outline-offset: 1px;
-      }
     `,
   ]
 
@@ -275,16 +279,10 @@ export class CardBlock extends BasicBlock {
     // zur Render-Zeit ist das Attribut stabil.
     const editor = this.hasAttribute('data-ff-editor')
     const zeigt = (wert: string) => editor || wert.trim() !== ''
-    const kopf = zeigt(this.time) || zeigt(this.date)
     const titel = zeigt(this.heading) || zeigt(this.heading2)
-    const mitte = zeigt(this.avatar) || titel || zeigt(this.meta)
+    const wann = zeigt(this.time) || zeigt(this.date)
+    const mitte = zeigt(this.avatar) || titel || zeigt(this.meta) || wann
     return html`<div class="card">
-      ${kopf
-        ? html`<div class="head">
-            ${zeigt(this.time) ? this.stelle('time', 'time') : nothing}
-            ${zeigt(this.date) ? this.stelle('date', 'date') : nothing}
-          </div>`
-        : nothing}
       ${mitte
         ? html`<div class="main">
             ${zeigt(this.avatar)
@@ -303,6 +301,12 @@ export class CardBlock extends BasicBlock {
                 : nothing}
               ${zeigt(this.meta) ? this.stelle('meta', 'meta') : nothing}
             </div>
+            ${wann
+              ? html`<div class="when">
+                  ${zeigt(this.date) ? this.stelle('date', 'date') : nothing}
+                  ${zeigt(this.time) ? this.stelle('time', 'time') : nothing}
+                </div>`
+              : nothing}
           </div>`
         : nothing}
       ${zeigt(this.text) ? this.stelle('text', 'text') : nothing}

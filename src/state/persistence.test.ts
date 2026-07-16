@@ -200,6 +200,48 @@ describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
   })
 })
 
+describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => {
+  it('leert exakt die früheren Werkswerte, echte Eingaben bleiben', () => {
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+        s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['demo', 'echt'] },
+        demo: {
+          id: 'demo',
+          type: 'card',
+          props: {
+            heading: 'Rückruf Fr. Wagner',
+            time: '09:15',
+            meta: 'Katze · EKH',
+            text: 'Befund Minka besprechen',
+            chipText: 'Heute',
+          },
+          parentId: 's1',
+          childIds: [],
+        },
+        echt: {
+          id: 'echt',
+          type: 'card',
+          props: { heading: 'Rückruf Hr. Meier', text: 'Vom Nutzer getippt' },
+          parentId: 's1',
+          childIds: [],
+        },
+      },
+      selectedId: null,
+    })
+    const demo = ed.getNode('demo')?.props
+    expect(demo?.heading).toBe('')
+    expect(demo?.time).toBe('')
+    expect(demo?.meta).toBe('')
+    expect(demo?.text).toBe('')
+    expect(demo?.chipText).toBe('')
+    const echt = ed.getNode('echt')?.props
+    expect(echt?.heading).toBe('Rückruf Hr. Meier')
+    expect(echt?.text).toBe('Vom Nutzer getippt')
+  })
+})
+
 describe('Migration (Schema 2: Root-Kanban nutzt die Maskenfläche)', () => {
   it('setzt alte Pixelmaße einmalig auf volle Breite und verbleibende Höhe', () => {
     const ed = load({

@@ -254,9 +254,10 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   const resizable = def?.resizableWidth ?? true
   const heightResizable = def?.resizableHeight === true
 
-  // Musterkarten-Markierung (P1.1): die Laufzeit-Vorlage des Boards
-  // (templateChild in der Registry) dezent kennzeichnen — reine
-  // Editor-Hilfe im Wrapper, taucht im Export nie auf.
+  // Musterkarte (P1.1, templateChild in der Registry): KEIN sichtbares
+  // Etikett mehr (Nutzer-Entscheidung 2026-07-16 — der frühere
+  // „Muster"-Anstecker ist raus). Die Markierung steuert nur noch das
+  // Kreuzchen: die Musterkarte hat keins (Löschschutz, s. onRemoveClick).
   const templateMark = editor.templateMarkFor(block.id)
 
   // Kreuzchen (Bedienlogik 5): Entfernen direkt am Block, Rückfrage nur wenn
@@ -351,27 +352,6 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           childType={def.addChildButton.childType}
           parentId={block.id}
         />
-      )}
-      {templateMark && (
-        <div
-          style={{
-            position: 'absolute',
-            top: -8,
-            left: 8,
-            padding: '0 6px',
-            borderRadius: 4,
-            background: 'hsl(var(--ring))',
-            color: '#fff',
-            fontSize: 9.5,
-            fontWeight: 700,
-            lineHeight: '15px',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            pointerEvents: 'none',
-          }}
-        >
-          {templateMark}
-        </div>
       )}
       {selected && !templateMark && (
         <button

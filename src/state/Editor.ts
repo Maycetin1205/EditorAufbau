@@ -91,6 +91,28 @@ function migrateKanbanVorlage(
   }
 }
 
+// Migration 2026-07-16 (Nutzer-Beschwerde): Karten trugen bis zum Paket
+// „Stellen starten leer" erfundene Demo-Werte ab Werk — in alten
+// Speicherständen stehen sie noch und sehen aus wie Eingaben („Befund
+// Minka besprechen", „Heute", …). Sie werden beim Laden geleert: EXAKTER
+// Textvergleich gegen die fünf früheren Werkswerte, echte Eingaben
+// bleiben unberührt.
+const ALTE_KARTEN_DEMOS: ReadonlyArray<readonly [string, string]> = [
+  ['heading', 'Rückruf Fr. Wagner'],
+  ['time', '09:15'],
+  ['meta', 'Katze · EKH'],
+  ['text', 'Befund Minka besprechen'],
+  ['chipText', 'Heute'],
+]
+function putzeAlteKartenDemos(tree: BlockTree): void {
+  for (const node of Object.values(tree)) {
+    if (node.type !== 'card') continue
+    for (const [prop, demo] of ALTE_KARTEN_DEMOS) {
+      if (node.props[prop] === demo) node.props[prop] = ''
+    }
+  }
+}
+
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
 // Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
 // Props, repariert parentId und verwirft Waisen/Zyklen.
@@ -140,6 +162,7 @@ function sanitizeTree(
   const rootSrc = src[ROOT_ID]
   const rootChildren = rootSrc && Array.isArray(rootSrc.childIds) ? rootSrc.childIds : []
   for (const cid of rootChildren) addChild(ROOT_ID, cid)
+  putzeAlteKartenDemos(tree)
   return tree
 }
 
