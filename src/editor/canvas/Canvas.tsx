@@ -12,7 +12,9 @@ import {
   createContext,
   Fragment,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type DragEvent,
   type PointerEvent as ReactPointerEvent,
@@ -244,11 +246,30 @@ function popupZahl(v: unknown, fallback: number): number {
 function PopupSeite({ popupId }: { popupId: string }) {
   const ed = useEditor()
   const dnd = useDnd()
+  // Bühnengröße (die Fläche, in der das Fenster zentriert): das Fenster
+  // begrenzt sich auf „Bühne minus 24px" (dieselbe Regel wie in der Maske,
+  // s. PopupBlock max-width/height). Die Anfasser müssen an der SICHTBAREN
+  // Kante sitzen — sonst wären sie bei eingeklemmtem Fenster außerhalb der
+  // Fläche abgeschnitten und ein zu großes Popup ließe sich nie verkleinern.
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  const [stage, setStage] = useState<{ b: number; h: number } | null>(null)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const beobachter = new ResizeObserver(() =>
+      setStage({ b: el.clientWidth, h: el.clientHeight }))
+    beobachter.observe(el)
+    return () => beobachter.disconnect()
+  }, [])
   const node = ed.getNode(popupId)
   if (!node) return null
   const selected = ed.selectedId === node.id
   const breite = popupZahl(node.props.breite, 520)
   const hoehe = popupZahl(node.props.hoehe, 380)
+  // EXAKT die Fenster-Regel des Bausteins (max: Fläche − 24px, ohne Boden) —
+  // nur ein kleiner Greif-Mindestwert, damit die Anfasser nie zusammenfallen.
+  const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - 24)) : breite
+  const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - 24)) : hoehe
 
   const startResize = (
     e: ReactPointerEvent<HTMLDivElement>,
@@ -277,6 +298,7 @@ function PopupSeite({ popupId }: { popupId: string }) {
 
   return (
     <div
+      ref={wrapRef}
       style={{ position: 'absolute', inset: 0 }}
       onDragOver={(e) => {
         // Freie Fläche der Popup-Seite: Drop ans Ende des Popup-Rumpfs.
@@ -301,7 +323,7 @@ function PopupSeite({ popupId }: { popupId: string }) {
           <div
             draggable={false}
             data-ff-editor-helper
-            onPointerDown={(e) => startResize(e, 'breite', breite, POPUP_MIN_BREITE)}
+            onPointerDown={(e) => startResize(e, 'breite', sichtbareBreite, POPUP_MIN_BREITE)}
             onDragStart={(e) => e.preventDefault()}
             onDoubleClick={(e) => {
               e.stopPropagation()
@@ -310,7 +332,7 @@ function PopupSeite({ popupId }: { popupId: string }) {
             title="Breite ziehen · Doppelklick: Standard"
             style={{
               position: 'absolute',
-              left: `calc(50% + ${breite / 2}px - 3px)`,
+              left: `calc(50% + ${sichtbareBreite / 2}px - 3px)`,
               top: '50%',
               transform: 'translateY(-50%)',
               width: 7,
@@ -324,7 +346,7 @@ function PopupSeite({ popupId }: { popupId: string }) {
           <div
             draggable={false}
             data-ff-editor-helper
-            onPointerDown={(e) => startResize(e, 'hoehe', hoehe, POPUP_MIN_HOEHE)}
+            onPointerDown={(e) => startResize(e, 'hoehe', sichtbareHoehe, POPUP_MIN_HOEHE)}
             onDragStart={(e) => e.preventDefault()}
             onDoubleClick={(e) => {
               e.stopPropagation()
@@ -334,7 +356,7 @@ function PopupSeite({ popupId }: { popupId: string }) {
             style={{
               position: 'absolute',
               left: '50%',
-              top: `calc(50% + ${hoehe / 2}px - 3px)`,
+              top: `calc(50% + ${sichtbareHoehe / 2}px - 3px)`,
               transform: 'translateX(-50%)',
               width: 26,
               height: 7,

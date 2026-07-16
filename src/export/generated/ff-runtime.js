@@ -28,11 +28,17 @@
         inset: 0;
         background: var(--se-scrim);
       }
+      /* Flex statt Grid (Fix 2026-07-16): bei Grid wächst die auto-Spur mit
+         dem Fenster, und max-width: calc(100% - 24px) rechnet gegen die
+         GEWACHSENE Spur — auf zu kleiner Fläche ragte das Fenster hinaus
+         und wirkte zugleich um genau 24px verkleinert (Editor vs. Export).
+         Im Flex-Container rechnet die Grenze gegen die echte Fläche. */
       .buehne {
         position: absolute;
         inset: 0;
-        display: grid;
-        place-items: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .fenster {
         position: relative;
