@@ -90,12 +90,12 @@ add_repo an die Session hängen).
   Code-Gutachten; läuft VOR N1). Jedes Paket: verhaltensgleich, ein
   Commit, Prüfungen gebündelt davor; SE-Echttests gebündelt (max. zwei):**
   1. ✅ **U0** CLAUDE.md: diesen Fahrplan eintragen (dieses Paket).
-  2. **U1** Ladefehler sichtbar + Notfallkopie: kaputter Speicherstand
+  2. ✅ **U1** Ladefehler sichtbar + Notfallkopie: kaputter Speicherstand
      wird ERST unter zweitem Schlüssel gesichert (Autosave darf ihn nie
      überschreiben), dann Klartext-Meldung statt stummem Leerstart.
      persistence-Wächter bekommt die Testfälle (abgesprochen).
-  3. **U2** Subject auf Set (keine Doppel-Abos, sauberes Abmelden).
-  4. **U3** SoftEngine-Schicht herausziehen (= alter Schritt 2): aus
+  3. ✅ **U2** Subject auf Set (keine Doppel-Abos, sauberes Abmelden).
+  4. ✅ **U3** SoftEngine-Schicht herausziehen (= alter Schritt 2): aus
      `blocks/kanban/seRuntime.ts` nach `src/softengine/` — `bridge.ts`
      (Anmeldung, Daten-Push, Diagnose), `data.ts` (getField/setField/
      rowsFor/Quellen), `relations.ts` (Vorlagen, PUT), `types.ts`;
@@ -103,8 +103,9 @@ add_repo an die Session hängen).
      Einzige strukturelle Naht: der Abo-Punkt für Daten-Pushs. KEINE
      neuen Funktionen. Bausteine importieren die Schicht — die Schicht
      kennt NIE einen Baustein. Verschieben → Tests grün → Bündel neu
-     bauen → **SE-Echttest 1 (Nutzer)**.
-  5. **U4** Editor.ts zerlegen: Store-Kern, Baumoperationen, Historie,
+     bauen → **SE-Echttest 1 (Nutzer)**: ✅ bestanden 2026-07-16
+     (Büroware + Webware).
+  5. ✅ **U4** Editor.ts zerlegen: Store-Kern, Baumoperationen, Historie,
      Persistenz (inkl. U1), Migrationen, Musterkarten-/Schutzregeln —
      je ein Modul, Außenverhalten identisch.
   6. **U5** Editor über Providers (React Context) statt globalem
@@ -148,11 +149,13 @@ add_repo an die Session hängen).
 
 ## Wichtige Stellen
 
-- Store: `src/state/Editor.ts` · Registry-Konzepte: `src/core/blocks/` ·
+- Store: `src/state/Editor.ts` (Kern; Module treeOps/history/persistence/
+  migrations/templateRules, U4) · Registry-Konzepte: `src/core/blocks/` ·
   Bausteine: `src/blocks/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·
   Runtime-Bündel: `npm run build:runtime` (Veralten-Wächter im export.test!)
-- SE-Laufzeit: `src/blocks/kanban/seRuntime.ts` (Umzug nach
-  `src/softengine/` = Umbau-Paket U3) · `src/blocks/shared/seAktionen.ts`
+- SE-Schicht: `src/softengine/` (bridge/data/relations/types, U3; Naht =
+  `bridge.onData`) · Board-Laufzeit: `src/blocks/kanban/kanbanRuntime.ts` ·
+  `src/blocks/shared/seAktionen.ts`
 - Design: Masken-Tokens `src/design/masken-tokens.css` (--se-*, kantig,
   Grün) · Editor-UI `src/index.css` (shadcn, hell, Blau) — nie mischen.
