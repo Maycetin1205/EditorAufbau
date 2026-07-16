@@ -11,7 +11,13 @@ import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
-import { registerTestBlocks, TEST_BLOCK, TEST_BOX, TEST_EVENT_BLOCK } from '../test/testBlocks'
+import {
+  registerTestBlocks,
+  TEST_BLOCK,
+  TEST_BOX,
+  TEST_DATA_BOX,
+  TEST_EVENT_BLOCK,
+} from '../test/testBlocks'
 
 registerTestBlocks()
 
@@ -99,6 +105,38 @@ describe('exportMask', () => {
     expect(html).toContain('window.FF_RELATIONS = [{"id":"rel-a"')
     expect(html).toContain('&quot;type&quot;:&quot;RELATION&quot;')
     expect(preflightMask(tree, [], relations)).toEqual([])
+  })
+
+  it('exportiert Kanban und Formularfeld mit eigenen Quellen gemeinsam', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board', 'field'] },
+      board: {
+        id: 'board', type: TEST_DATA_BOX, props: { source: 'termine' },
+        parentId: 'root', childIds: [],
+      },
+      field: {
+        id: 'field', type: TEST_DATA_BOX, props: { source: 'adressen' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [
+      {
+        id: 'termine', name: 'Termine', kind: 'idb' as const,
+        idbId: 'IDBID0001', indexField: '0_10', fields: [],
+      },
+      {
+        id: 'adressen', name: 'Adressen', kind: 'adressstamm' as const,
+        fields: [{ code: '2_8', label: 'Adressnummer' }],
+      },
+    ]
+
+    const { html, sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(html).toContain('window.FF_DATA_SOURCES = [{"id":"termine"')
+    expect(html).toContain('{"id":"adressen","name":"Adressen","tableId":"ADR"')
+    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
+      { INDEX_NR: 0, ALIAS: 'Adressen', ID: 'ADR', FELDER: '2_8' },
+    ])
   })
 })
 

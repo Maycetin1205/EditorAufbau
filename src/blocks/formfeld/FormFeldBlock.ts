@@ -16,10 +16,10 @@
 // die Maske blendet ihn beim Tippen bzw. nach einer Auswahl aus (input-/
 // change-Event — die Komponente lebt in beiden Welten, 1 Render-Quelle).
 //
-// V1 = STATISCH (Nutzer-Entscheidung: erst die Bausteine, dann Schritt
-// fuer Schritt die SoftEngine-Logik): kein field-Prop, kein Lesen/
-// Schreiben. Die Datenanbindung kommt spaeter ueber die vorhandenen
-// Mechaniken (getField / Relation-Vorlagen — dieselben wie beim Kanban).
+// Die Datenanbindung ist registry-getrieben: das Feld deklariert Quelle,
+// Bindungsroute und bindbare Wert-Stelle. Die Export-Runtime liest die erste
+// Zeile der gewählten Quelle; Schreiben nach SoftEngine bleibt eine sichtbar
+// konfigurierte Aktionskette am Ereignis „Wert geändert".
 //
 // Inspector: nur Feldtyp + Auswahl-Optionen (Klarnamen sichtbar,
 // Technikwerte text/number/... unsichtbar). Im EDITOR ist das
@@ -32,10 +32,17 @@
 // Literale wie bei Karte/Spalte.
 
 import { css, html, nothing, type TemplateResult } from 'lit'
-import { property, state } from 'lit/decorators.js'
+import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import {
+  connectField,
+  dateValueToInput,
+  disconnectField,
+  inputValueToDate,
+} from './feldRuntime'
 
 // Feldtypen (Technikwerte) — der Bediener sieht nur die Klarnamen unten.
 const FELD_TYPEN = ['text', 'number', 'textarea', 'select', 'date', 'checkbox'] as const
@@ -55,6 +62,10 @@ export class FormFeldBlock extends BasicBlock {
   static readonly tagName = 'ff-formfeld'
   static readonly displayName = 'Formularfeld'
   static readonly category: BlockCategory = 'eingabe'
+  static readonly acceptsDataSource = true
+  static readonly bindingRoute = { fieldProp: 'valueField' }
+  static readonly bindableSpots: BindableSpot[] = [{ prop: 'value', label: 'Wert' }]
+  static readonly blockEvents = [{ key: 'onChange', name: 'Wert geändert' }]
   // Standardbreite fest (240px) — der Breiten-Anfasser bleibt aktiv,
   // Doppelklick auf den Anfasser stellt den Standard wieder her.
   static readonly defaultProps = {
@@ -62,6 +73,9 @@ export class FormFeldBlock extends BasicBlock {
     fieldType: 'text',
     placeholder: 'Feldname',
     options: '',
+    source: '',
+    value: '',
+    valueField: '',
   }
 
   static override readonly customProperties: PropertyDescription[] = [
@@ -89,6 +103,15 @@ export class FormFeldBlock extends BasicBlock {
       maxLength: 0,
       kind: 'text',
       visibleWhen: { attributeName: 'fieldType', equals: 'select' },
+    },
+    {
+      attributeName: 'valueField',
+      name: 'Feld',
+      description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',
+      isArray: false,
+      maxLength: 0,
+      kind: 'field',
+      hiddenInInspector: true,
     },
   ]
 
@@ -179,6 +202,10 @@ export class FormFeldBlock extends BasicBlock {
          Platzhalter bekommt nur im Editor einen greifbaren Hinweis. */
       :host([data-ff-editor]) .ctrl { pointer-events: none; }
       :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
+      :host([data-ff-editor]) .huelle[data-ff-bound] .ctrl {
+        border-style: dotted;
+        border-color: var(--se-accent);
+      }
       /* N1: der "Text …"-Griff gilt für JEDEN geleerten Inline-Edit-Text —
          auch die Ankreuzfeld-Beschriftung bleibt im Editor anfassbar. */
       :host([data-ff-editor]) [data-ff-editable]:empty::before { content: 'Text …'; opacity: 0.6; }
@@ -191,14 +218,15 @@ export class FormFeldBlock extends BasicBlock {
   @property() fieldType = 'text'
   @property() placeholder = 'Feldname'
   @property() options = ''
-
-  // true sobald das Feld Inhalt traegt -> Platzhalter weg (laeuft in der
-  // Maske; im Editor ist das Feld inert und bleibt leer).
-  @state() private _belegt = false
+  @property() source = ''
+  @property() value = ''
+  @property() valueField = ''
 
   private onInput(e: Event): void {
     const t = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    this._belegt = t.value !== ''
+    this.value = coerceFeldTyp(this.fieldType) === 'date'
+      ? inputValueToDate(t.value)
+      : t.value
   }
 
   // Der Text IM Feld — Platzhalter bzw. Ankreuzfeld-Beschriftung; per
@@ -228,11 +256,13 @@ export class FormFeldBlock extends BasicBlock {
   private controlTpl(typ: FeldTyp): TemplateResult {
     switch (typ) {
       case 'textarea':
-        return html`<textarea class="ctrl" @input=${this.onInput}></textarea>`
+        return html`<textarea class="ctrl" .value=${this.value} @input=${this.onInput}></textarea>`
       case 'select': {
         const eintraege = this.options.split(',').map((o) => o.trim()).filter((o) => o !== '')
-        return html`<select class="ctrl" @change=${this.onInput}>
-          <option value="" disabled selected hidden></option>
+        const fremdwert = this.value !== '' && !eintraege.includes(this.value)
+        return html`<select class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onInput}>
+          <option value="" disabled hidden></option>
+          ${fremdwert ? html`<option value=${this.value} hidden>${this.value}</option>` : nothing}
           ${eintraege.length === 0
             ? html`<option disabled>(keine Optionen)</option>`
             : eintraege.map((o) => html`<option value=${o}>${o}</option>`)}
@@ -240,7 +270,12 @@ export class FormFeldBlock extends BasicBlock {
       }
       default:
         // text / number / date teilen das eine Input-Element.
-        return html`<input class="ctrl" type=${typ} @input=${this.onInput} />`
+        return html`<input
+          class="ctrl"
+          type=${typ}
+          .value=${typ === 'date' ? dateValueToInput(this.value) : this.value}
+          @input=${this.onInput}
+        />`
     }
   }
 
@@ -255,13 +290,27 @@ export class FormFeldBlock extends BasicBlock {
       </div>`
     }
     return html`<div class="feld">
-      <div class="huelle">
+      <div
+        class="huelle"
+        data-ff-spot="value"
+        ?data-ff-bound=${this.valueField !== ''}
+      >
         ${this.controlTpl(typ)}
         ${MIT_PLATZHALTER.includes(typ)
-          ? this.textTpl(typ === 'select' ? 'ph ph-select' : 'ph', this._belegt)
+          ? this.textTpl(typ === 'select' ? 'ph ph-select' : 'ph', this.value !== '')
           : nothing}
       </div>
     </div>`
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback()
+    connectField(this)
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    disconnectField(this)
   }
 }
 
