@@ -1,8 +1,9 @@
-// feldRuntime — Datenverhalten gebundener Formularfelder im Export.
+// feldRuntime — gemeinsames Datenverhalten einwertiger Blöcke im Export.
 //
 // Die Runtime kennt nur den gemeinsamen Vertrag source + valuefield + value.
-// Die Quelle und Zeilen kommen aus der SoftEngine-Schicht; das Feld selbst
-// bleibt ein normales Web Component. Editor-Elemente melden sich nie an.
+// Formularfeld und Datumsanzeige verwenden ihn identisch. Die Quelle und
+// Zeilen kommen aus der SoftEngine-Schicht; der konkrete Baustein bleibt ein
+// normales Web Component. Editor-Elemente melden sich nie an.
 
 import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'

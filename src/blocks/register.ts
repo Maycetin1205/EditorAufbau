@@ -15,6 +15,7 @@
 
 import './button/ButtonBlock'
 import './card/CardBlock'
+import './datum/DatumBlock'
 import './formfeld/FormFeldBlock'
 import './kanban/KanbanBlock'
 import './kanban/KanbanSpalteBlock'
