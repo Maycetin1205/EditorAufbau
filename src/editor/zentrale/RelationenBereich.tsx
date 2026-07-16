@@ -58,7 +58,7 @@ export function RelationenBereich() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-0 min-w-0 flex-1">
       {/* Master */}
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
         <div className="flex flex-col gap-2 border-b border-border p-2">
@@ -133,7 +133,7 @@ export function RelationenBereich() {
       </div>
 
       {/* Detail */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
         {modus === 'neu' && <RelationForm onClose={() => setModus('lesen')} />}
         {modus === 'bearbeiten' && auswahl && (
           <RelationForm relation={auswahl} onClose={() => setModus('lesen')} />

@@ -41,7 +41,7 @@ export function DatenquellenBereich() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-0 min-w-0 flex-1">
       {/* Master: die Vorlagen-Liste */}
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
         <div className="border-b border-border p-2">
@@ -89,7 +89,7 @@ export function DatenquellenBereich() {
       </div>
 
       {/* Detail */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
         {modus === 'neu' && (
           <DataSourceForm onClose={() => setModus('lesen')} />
         )}
