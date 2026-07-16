@@ -93,7 +93,15 @@ add_repo an die Session hängen).
 ## Stand (2026-07-15) + vereinbarte nächste Schritte
 
 - **Bibliothek:** Kanban (+ Spalte/Karte, Datenpfad in SoftEngine bestätigt;
-  Karten immer 112px hoch, Text maximal zwei Zeilen, Chip am unteren Rand),
+  Karte seit 2026-07-16 nach der Empfang-Anatomie: acht bindbare Stellen
+  (Zeit, Datum, Avatar, Titel, Titel 2, Unterzeile, Textzeile, Chip),
+  auto-hoch mit 112px MINDESThöhe (Nutzer-Entscheidung, ersetzt die feste
+  Höhe), Text maximal zwei Zeilen, Chip am unteren Rand; LEER-REGEL: Stellen
+  ohne Inhalt verschwinden in der Maske restlos samt leerer Zeilen, im
+  Editor bleiben sie Klick-Ziele (Strich/gestrichelter Kreis); Avatar =
+  Datenwert→Tier-Silhouette, Icons + Schlüsselwörter 1:1 aus der
+  Empfang-Referenz in `src/blocks/card/tierIcon.ts`, unbekannter Wert →
+  Pfote, leerer Wert → Avatar weg),
   Schaltfläche, Formularfeld (v1 statisch, Neubau nach behandlung-Referenz),
   Zeile. Export = Vollbild (`height: 'fill'`, Schema-v2-Migration).
   Aktionsketten (Z2/START_TOOL) in SoftEngine bestätigt.
@@ -184,9 +192,11 @@ add_repo an die Session hängen).
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
 - **Merkliste:** Platzhalter muss auch bei programmatischem Befüllen
   verschwinden (gehört zur Feld-Datenbindung); Tabellen-Spalten aus
-  verschiedenen Quellen; bausteinübergreifende Selektion; Avatar-Zuordnung
-  ein-/ausblendbar; Datumsanzeige-Baustein; Spaltenbreiten der Tabelle in
-  der Maske dauerhaft merken; Sortierung wie Windows (Zahl/Datum/ABC).
+  verschiedenen Quellen; bausteinübergreifende Selektion; pflegbare
+  Wert→Bild-Zuordnung für den Karten-Avatar (installations-individuell —
+  bis dahin gilt die eingebaute Empfang-Liste); Datumsanzeige-Baustein;
+  Spaltenbreiten der Tabelle in der Maske dauerhaft merken; Sortierung wie
+  Windows (Zahl/Datum/ABC).
 
 ## Übergabe-Stand (2026-07-15, nach der Zusammenführung)
 

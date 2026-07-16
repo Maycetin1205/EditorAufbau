@@ -142,10 +142,10 @@ test('Export: Zeilen werden Karten; kein Treffer bleibt sichtbar in Nicht zugeor
   await expect(colCards(3)).toHaveText(['Rocky'])
   // Kartenzähler laufen mit (slotchange, dieselbe Logik wie im Editor).
   await expect(mask.locator('ff-kanban-spalte .count')).toHaveText(['0', '2', '1', '1'])
-  // Ungebundene Stellen behalten den statischen Text der Vorlagen-Karte —
-  // und der ist ab Werk LEER (Regel 7, Nutzer-Entscheidung 2026-07-16):
-  // ohne Feldzuweisung zeigt die Maske nichts, nie erfundene Demo-Werte.
-  await expect(mask.locator('ff-card .text').first()).toHaveText('')
+  // Leer-Regel (Nutzer-Entscheidung 2026-07-16): ungebundene/leere Stellen
+  // existieren in der Maske GAR NICHT — nie erfundene Demo-Werte, kein
+  // leeres Element, das Platz einnimmt.
+  await expect(mask.locator('ff-card .text')).toHaveCount(0)
 
   // Der EDITOR hydriert nie: dort steht weiterhin nur die Musterkarte.
   await expect(page.locator('ff-card')).toHaveCount(1)
