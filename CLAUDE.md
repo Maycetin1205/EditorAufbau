@@ -168,8 +168,8 @@ add_repo an die Session hängen).
      Vorlage. Formular = nur Anzeigename + Syntax; Bibliothek durchsucht Name,
      NR und Syntax und filtert fachlich nach Lesen (GET) bzw. Schreiben
      (PUT/PUTADD). Keine Relations-Ausführung in diesem Paket.
-  3a. **Relations-Aktion im vorhandenen Ereignisablauf** *(implementiert,
-      Browser-Abnahme offen)*: Baustein → Ereignis → Schritt mit sichtbarer
+  3a. ✅ **Relations-Aktion im vorhandenen Ereignisablauf** *(implementiert;
+      Abnahme durch den Nutzer erteilt 2026-07-16)*: Baustein → Ereignis → Schritt mit sichtbarer
       Aktion „Relation" (Technikwert `RELATION`, kein Sonderpfad). Das
       Aktionsmodell ist eine echte Union aus START_TOOL und RELATION;
       Relationsschritte speichern nur stabile Vorlagen-ID, positionsgetreue
@@ -188,6 +188,11 @@ add_repo an die Session hängen).
       Kette verfügbar. Die Export-Sperre ist entfernt.
   4. **Formularfeld anschließen** (Feld-Bindung lesen/schreiben; dabei
      Platzhalter-Regel: weg, sobald das Feld einen Wert HAT — egal woher).
+     **→ AN CODEX ÜBERGEBEN (2026-07-16, Nutzer-Anweisung), zusammen mit
+     Multi-Datenquelle und Datumsanzeige-Baustein. Fertige Analyse + Design
+     mit Dateipfaden: `docs/AUFTRAG-CODEX.md`. Arbeitsbranch =
+     `claude/data-binding-architecture-odkwi0`, NICHT main (Begründung im
+     Auftrag — main fehlt die komplette Relations-/Laufzeit-Basis).**
   5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
      Popup-Seiten als normale Block-Bäume; Größe per Anfasser;
      Aktions-Schritte „Popup öffnen/schließen"; Export als inaktive
@@ -213,9 +218,13 @@ zusammengeführt: Struktur/Funktion aus dem Claude-Strang (Relations-Aktion,
 GET/PUT-Laufzeit, flache Aktionen-UI), Nutzer-Entscheidungen aus dem
 Codex-Strang (SE-Fachbegriffe als Anzeigenamen, START_TOOL nur Nummer,
 Erklärtexte raus, dichteres Raster). Nichts aus beiden Strängen ist
-verloren. **Kommandozentrale, Datenbindung und SE-Echttest sind NICHT
-abgenommen** — Browser-Abnahme + SE-Echttest durch den Nutzer stehen aus;
-kein Merge nach `main` davor.
+verloren. **Abnahme durch den Nutzer erteilt (2026-07-16)** — Schritt 3a/3b
+gelten als abgenommen (Nutzer-Aussage „Abnahme ist schon", 2026-07-16).
+⚠ main und dieser Branch sind seither WEITER auseinandergelaufen: auf main
+liegt Codex' U-Umbau (U1–U5, eigenes CLAUDE.md mit eigenem Fahrplan), hier
+die gesamte Feature-Basis (Zentrale, Relationen, GET/PUT, Karten-Anatomie).
+Die Zusammenführung ist ein EIGENES Paket auf Nutzer-Anweisung — bis dahin
+laufen neue Funktionen auf DIESEM Branch (s. docs/AUFTRAG-CODEX.md).
 
 ## Wichtige Stellen
 
