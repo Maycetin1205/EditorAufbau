@@ -396,4 +396,6 @@ export class Editor extends Subject<Editor> {
   }
 }
 
-export const editor = new Editor()
+// A2 (Aufräum.md 2026-07-16): Es gibt KEINE Weltvariable mehr — die eine
+// App-Instanz entsteht in src/app/providers.tsx und reist über den
+// EditorProvider; Tests bauen sich ihre Instanzen selbst (`new Editor()`).

@@ -1,0 +1,17 @@
+// EditorContext (A2, Aufräum.md 2026-07-16)
+// Der Context + Zugriffs-Hook für die eine Editor-Instanz der App.
+// Bewusst getrennt von der Provider-KOMPONENTE (EditorProvider.tsx):
+// eine Datei = nur Komponenten ODER nur Helfer (Fast-Refresh-Regel).
+
+import { createContext, useContext } from 'react'
+import type { Editor } from './Editor'
+
+export const EditorContext = createContext<Editor | null>(null)
+
+export function useEditorInstance(): Editor {
+  const instance = useContext(EditorContext)
+  if (!instance) {
+    throw new Error('EditorProvider fehlt — die App muss in <EditorProvider> eingespannt sein (src/app/providers.tsx).')
+  }
+  return instance
+}
