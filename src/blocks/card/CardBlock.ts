@@ -36,6 +36,7 @@ import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { BindableSpot } from '../../core/blocks/BlockDefinition'
+import type { FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import {
   chipStyles,
@@ -62,6 +63,13 @@ export class CardBlock extends BasicBlock {
   // die Datenkarten.
   static readonly allowedParentTypes = ['kanban-spalte']
   static readonly showInPalette = false
+  // Nutzer-Entscheidung 2026-07-16: Karten haben KEINE einstellbare Breite —
+  // sie sind IMMER so breit wie ihre Spalte (lockedWidth 'fill', dasselbe
+  // Muster wie die Spalte selbst: die width-Prop des Knotens wird ignoriert,
+  // kein Breiten-Anfasser). Bereits verschmälerte Bestandskarten springen
+  // damit von selbst zurück auf volle Spaltenbreite.
+  static readonly lockedWidth: FlowWidth = 'fill'
+  static readonly resizableWidth = false
   // Regel 7 (Nutzer-Entscheidung 2026-07-16): der Editor erfindet nie Daten —
   // alle Stellen starten LEER. Ohne Feldzuweisung zeigt die Maske nichts;
   // im Editor markiert ein Strich (CSS ::before) die leere Stelle als
