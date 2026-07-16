@@ -12,7 +12,7 @@
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Zielbild: .zb-board.
 
 import { css, html, type TemplateResult } from 'lit'
-import { BasicBlock } from '../../core/blocks/BasicBlock'
+import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'

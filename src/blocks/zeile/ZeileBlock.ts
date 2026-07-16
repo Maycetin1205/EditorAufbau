@@ -16,7 +16,7 @@
 // haben allowedParentTypes und landen nie in einer Zeile — ohne Sondercode.
 
 import { css, html, type TemplateResult } from 'lit'
-import { BasicBlock } from '../../core/blocks/BasicBlock'
+import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { FlowDirection } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'

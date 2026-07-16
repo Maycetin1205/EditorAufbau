@@ -33,7 +33,7 @@
 
 import { css, html, nothing, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'
-import { BasicBlock } from '../../core/blocks/BasicBlock'
+import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 

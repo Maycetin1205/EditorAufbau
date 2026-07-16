@@ -21,10 +21,10 @@
 
 import { css, LitElement, type CSSResultGroup } from 'lit'
 import { property } from 'lit/decorators.js'
-import type { BlockComponent, BlockComponentStatic } from './BlockComponent'
-import type { PropertyDescription } from './PropertyDescription'
-import { registerBlockType } from './blockRegistry'
-import { FLOW_DEFAULTS } from './flowLayout'
+import type { BlockComponent, BlockComponentStatic } from '../../core/blocks/BlockComponent'
+import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { registerBlockType } from '../../core/blocks/blockRegistry'
+import { FLOW_DEFAULTS } from '../../core/blocks/flowLayout'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
   // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt

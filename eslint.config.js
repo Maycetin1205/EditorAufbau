@@ -9,6 +9,33 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 // react-app/grundlast als Kandidat fuer das Projekt-Root angesehen wird.
 const rootDir = import.meta.dirname
 
+const coreOuterLayers = '(?:app|blocks|design|editor|export|softengine|state|test|ui)'
+
+function restrictCoreImports(files, parentSegments) {
+  return {
+    files,
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          { name: 'lit', message: 'Der fachliche Core muss frameworkfrei bleiben.' },
+          { name: 'react', message: 'Der fachliche Core muss frameworkfrei bleiben.' },
+          { name: 'react-dom', message: 'Der fachliche Core muss frameworkfrei bleiben.' },
+        ],
+        patterns: [
+          {
+            group: ['lit/*', 'react/*', 'react-dom/*'],
+            message: 'Der fachliche Core muss frameworkfrei bleiben.',
+          },
+          {
+            regex: `^(?:\\.\\./){${parentSegments}}${coreOuterLayers}(?:/|$)`,
+            message: 'Der fachliche Core darf keine aeussere Anwendungsschicht importieren.',
+          },
+        ],
+      }],
+    },
+  }
+}
+
 export default defineConfig([
   globalIgnores(['dist', 'src.vibe-backup-*', 'grundlast']),
   {
@@ -26,4 +53,8 @@ export default defineConfig([
       },
     },
   },
+  restrictCoreImports(['src/core/*.{ts,tsx}'], 1),
+  restrictCoreImports(['src/core/*/*.{ts,tsx}'], 2),
+  restrictCoreImports(['src/core/*/*/*.{ts,tsx}'], 3),
+  restrictCoreImports(['src/core/*/*/*/*.{ts,tsx}'], 4),
 ])

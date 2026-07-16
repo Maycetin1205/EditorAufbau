@@ -10,7 +10,7 @@ const templatePath = path.join(root, 'scripts', 'project-map-template.html')
 const outputPath = path.join(root, 'public', 'project-map.html')
 
 const ignoredDirectories = new Set([
-  '.git', '.codex', '.agents', '.tmp', 'coverage', 'dist', 'grundlast', 'node_modules',
+  '.git', '.codex', '.agents', '.claude', '.tmp', 'coverage', 'dist', 'grundlast', 'node_modules',
   'playwright-report', 'public', 'test-results', 'tmp',
 ])
 const ignoredFiles = new Set(['package-lock.json'])
@@ -101,7 +101,7 @@ const flows = [
       { id: 'edit-shell', label: 'Editor bedienen', detail: 'Canvas, Palette oder Inspector lösen eine Änderung aus.', files: ['src/editor/shell/EditorShell.tsx', 'src/editor/canvas/Canvas.tsx', 'src/editor/inspector/Inspector.tsx'] },
       { id: 'edit-state', label: 'Zustand ändern', detail: 'Der Editor-Store aktualisiert den serialisierbaren Blockbaum.', files: ['src/state/Editor.ts', 'src/state/useEditor.ts'] },
       { id: 'edit-rules', label: 'Regeln anwenden', detail: 'Registry, Factory und Baumregeln bestimmen das erlaubte Ergebnis.', files: ['src/core/blocks/blockRegistry.ts', 'src/core/blocks/blockFactory.ts', 'src/core/blocks/treeQuery.ts'] },
-      { id: 'edit-render', label: 'Baustein darstellen', detail: 'BlockHost setzt den Knoten als registriertes Web Component um.', files: ['src/editor/canvas/BlockHost.tsx', 'src/core/blocks/BasicBlock.ts', 'src/blocks/register.ts'] },
+      { id: 'edit-render', label: 'Baustein darstellen', detail: 'BlockHost setzt den Knoten als registriertes Web Component um.', files: ['src/editor/canvas/BlockHost.tsx', 'src/blocks/base/BasicBlock.ts', 'src/blocks/register.ts'] },
     ],
   },
   {
