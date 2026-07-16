@@ -207,12 +207,27 @@ add_repo an die Session hängen).
      SEFILELOOP je Quelle, export.test). **Datumsanzeige-Baustein** (ff-datum,
      'Anzeige'): ungebunden echte Uhr (Datum/Zeit/beides, Klarnamen),
      gebunden Feldwert über DIESELBE feldRuntime.
-  5. **Popup P1–P5 darauf aufbauen** (Seiten-Modell: Maske = Hauptseite +
-     Popup-Seiten als normale Block-Bäume; Größe per Anfasser;
-     Aktions-Schritte „Popup öffnen/schließen"; Export als inaktive
-     Vorlage im selben HTML). Popup-Darstellung + Lebenszyklus bleiben
-     beim Popup — nur Datenzugriff/Relationen laufen über die
-     SoftEngine-Schicht.
+  5. **Popup darauf aufbauen — Detail-Besprechung ERLEDIGT (Nutzer-
+     Entscheidungen 2026-07-16):** Seiten-Modell: Maske = Hauptseite +
+     Popup-Seiten als normale Block-Bäume, bedient über SEITEN-REITER am
+     Canvas („Hauptseite | <Popup-Klarname> | + Popup", wie die Demo);
+     Popup-Inhalt = dieselben Bausteine wie überall (Datenbindung
+     funktioniert automatisch mit). SPEICHERN: derselbe Speicherstand der
+     Maske (Schema v3: Hauptseite + Popup-Seiten-Liste mit Klarname,
+     Größe, eigenem Baum; Migration v2→v3 verlustfrei, Undo seitenüber-
+     greifend). Öffnen/Schließen = zwei neue sichtbare KETTEN-Schritt-
+     Arten (Auswahl per Klarname, Technikwert = stabile Seiten-id).
+     Entschieden: eingebautes X oben rechts (schließt immer, zusätzlich
+     per Ketten-Schritt) · Klick auf die Abdunklung tut NICHTS (ERP-üblich,
+     kein Datenverlust) · IMMER zentriert, Größe per Anfasser (freie
+     Position erst, wenn eine echte Maske sie erzwingt). Export: dieselbe
+     eine HTML-Datei, Popup inaktiv bis eine Kette öffnet; Abdunklung +
+     Fenster + X gehören zum Popup-Baustein (1 Render-Quelle).
+     Popup-Darstellung + Lebenszyklus bleiben beim Popup — nur Daten-
+     zugriff/Relationen laufen über die SoftEngine-Schicht.
+     Paketschnitt: (P-A) Seiten-Gerüst + Reiter + Schema v3/Migration,
+     (P-B) Ketten-Schritte öffnen/schließen + Laufzeit, (P-C) Export +
+     Wächter + SE-Echttest.
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
 - **Merkliste:** Platzhalter muss auch bei programmatischem Befüllen
