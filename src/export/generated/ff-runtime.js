@@ -44,7 +44,7 @@
   .chip.v-success { background: var(--se-green-soft); color: var(--se-green); }
   .chip.v-warning { background: var(--se-amber-soft); color: var(--se-amber); }
   .chip.v-danger { background: var(--se-red-soft); color: var(--se-red); }
-`,q=class extends j{constructor(...e){super(...e),this.chipVariant=`info`,this.heading=`Rückruf Fr. Wagner`,this.time=`09:15`,this.meta=`Katze · EKH`,this.text=`Befund Minka besprechen`,this.chipText=`Heute`,this.headingField=``,this.timeField=``,this.metaField=``,this.textField=``,this.chipTextField=``}static{this.blockType=`card`}static{this.tagName=`ff-card`}static{this.displayName=`Karte`}static{this.category=`anzeige`}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.showInPalette=!1}static{this.defaultProps={chipVariant:`info`,heading:`Rückruf Fr. Wagner`,time:`09:15`,meta:`Katze · EKH`,text:`Befund Minka besprechen`,chipText:`Heute`,headingField:``,timeField:``,metaField:``,textField:``,chipTextField:``}}static{this.bindableSpots=[{prop:`heading`,label:`Titel`},{prop:`time`,label:`Zeit`},{prop:`meta`,label:`Meta-Zeile`},{prop:`text`,label:`Textzeile`},{prop:`chipText`,label:`Chip`}]}static{this.customProperties=[Rt(`chipVariant`,`Bedeutung des Chips auf der Karte — bestimmt die Chip-Farbe.`)]}static{this.styles=[j.styles,zt,o`
+`,q=class extends j{constructor(...e){super(...e),this.chipVariant=`info`,this.heading=``,this.time=``,this.meta=``,this.text=``,this.chipText=``,this.headingField=``,this.timeField=``,this.metaField=``,this.textField=``,this.chipTextField=``}static{this.blockType=`card`}static{this.tagName=`ff-card`}static{this.displayName=`Karte`}static{this.category=`anzeige`}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.showInPalette=!1}static{this.defaultProps={chipVariant:`info`,heading:``,time:``,meta:``,text:``,chipText:``,headingField:``,timeField:``,metaField:``,textField:``,chipTextField:``}}static{this.bindableSpots=[{prop:`heading`,label:`Titel`},{prop:`time`,label:`Zeit`},{prop:`meta`,label:`Meta-Zeile`},{prop:`text`,label:`Textzeile`},{prop:`chipText`,label:`Chip`}]}static{this.customProperties=[Rt(`chipVariant`,`Bedeutung des Chips auf der Karte — bestimmt die Chip-Farbe.`)]}static{this.styles=[j.styles,zt,o`
       .card {
         box-sizing: border-box;
         display: flex;
@@ -102,6 +102,16 @@
       .card .chip {
         align-self: flex-start;
         margin-top: auto;
+      }
+      /* Leere Stellen: in der Maske unsichtbar (leerer Chip komplett weg),
+         im Editor ein Strich als Klick-Ziel (Regel 7: Striche statt
+         Demo-Werte). Lit-Marker-Kommentare zählen für :empty nicht. */
+      :host(:not([data-ff-editor])) .chip:empty {
+        display: none;
+      }
+      :host([data-ff-editor]) [data-ff-spot]:empty::before {
+        content: '—';
+        color: var(--se-faint);
       }
     `]}render(){let e=Lt(this.chipVariant);return S`<div class="card">
       <div class="row">

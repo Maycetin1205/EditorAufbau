@@ -49,13 +49,17 @@ export class CardBlock extends BasicBlock {
   // die Datenkarten.
   static readonly allowedParentTypes = ['kanban-spalte']
   static readonly showInPalette = false
+  // Regel 7 (Nutzer-Entscheidung 2026-07-16): der Editor erfindet nie Daten —
+  // alle Stellen starten LEER. Ohne Feldzuweisung zeigt die Maske nichts;
+  // im Editor markiert ein Strich (CSS ::before) die leere Stelle als
+  // Klick-Ziel für Inline-Edit und Feld-Picker.
   static readonly defaultProps = {
     chipVariant: 'info',
-    heading: 'Rückruf Fr. Wagner',
-    time: '09:15',
-    meta: 'Katze · EKH',
-    text: 'Befund Minka besprechen',
-    chipText: 'Heute',
+    heading: '',
+    time: '',
+    meta: '',
+    text: '',
+    chipText: '',
     // Bindungen der Stellen (Kap. 5.2): Feldcode der Datenquelle in
     // Reichweite (Technikwert, unsichtbar) — '' = ungebunden, die Stelle
     // zeigt ihren statischen Text.
@@ -154,15 +158,25 @@ export class CardBlock extends BasicBlock {
         align-self: flex-start;
         margin-top: auto;
       }
+      /* Leere Stellen: in der Maske unsichtbar (leerer Chip komplett weg),
+         im Editor ein Strich als Klick-Ziel (Regel 7: Striche statt
+         Demo-Werte). Lit-Marker-Kommentare zählen für :empty nicht. */
+      :host(:not([data-ff-editor])) .chip:empty {
+        display: none;
+      }
+      :host([data-ff-editor]) [data-ff-spot]:empty::before {
+        content: '—';
+        color: var(--se-faint);
+      }
     `,
   ]
 
   @property() chipVariant: StatusVariant = 'info'
-  @property() heading = 'Rückruf Fr. Wagner'
-  @property() time = '09:15'
-  @property() meta = 'Katze · EKH'
-  @property() text = 'Befund Minka besprechen'
-  @property() chipText = 'Heute'
+  @property() heading = ''
+  @property() time = ''
+  @property() meta = ''
+  @property() text = ''
+  @property() chipText = ''
   @property() headingField = ''
   @property() timeField = ''
   @property() metaField = ''
