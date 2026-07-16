@@ -223,22 +223,31 @@ add_repo an die Session hängen).
   Spaltenbreiten der Tabelle in der Maske dauerhaft merken; Sortierung wie
   Windows (Zahl/Datum/ABC).
 
-## Übergabe-Stand (2026-07-15, nach der Zusammenführung)
+## Zusammenführung ERLEDIGT (2026-07-16, Nutzer-Go)
 
-⚠ **Vorfall 2026-07-15:** Claude und Codex haben parallel ab demselben
-Commit auf DEMSELBEN Branch gearbeitet (Verstoß gegen Regel 8) — Codex
-Steuerung-Feinschliff, Claude Fahrplan-Schritt 3. Claude hat beide Stränge
-zusammengeführt: Struktur/Funktion aus dem Claude-Strang (Relations-Aktion,
-GET/PUT-Laufzeit, flache Aktionen-UI), Nutzer-Entscheidungen aus dem
-Codex-Strang (SE-Fachbegriffe als Anzeigenamen, START_TOOL nur Nummer,
-Erklärtexte raus, dichteres Raster). Nichts aus beiden Strängen ist
-verloren. **Abnahme durch den Nutzer erteilt (2026-07-16)** — Schritt 3a/3b
-gelten als abgenommen (Nutzer-Aussage „Abnahme ist schon", 2026-07-16).
-⚠ main und dieser Branch sind seither WEITER auseinandergelaufen: auf main
-liegt Codex' U-Umbau (U1–U5, eigenes CLAUDE.md mit eigenem Fahrplan), hier
-die gesamte Feature-Basis (Zentrale, Relationen, GET/PUT, Karten-Anatomie).
-Die Zusammenführung ist ein EIGENES Paket auf Nutzer-Anweisung — bis dahin
-laufen neue Funktionen auf DIESEM Branch (s. docs/AUFTRAG-CODEX.md).
+Die zwei auseinandergelaufenen Linien (main = U-Umbau, dieser Branch =
+Feature-Basis) sind wieder EINE: Baum = die Feature-Basis (gelebte, vom
+Nutzer abgenommene und SE-getestete Wahrheit), Historien vereint
+(merge -s ours, kein Force-Push). Aus dem U-Fahrplan von main:
+- **U1 ✅ übernommen** (Notfallkopie + Klartext-Meldung bei unlesbarem
+  Speicherstand, `BACKUP_KEY` in Editor.ts + persistence-Wächter-Fälle).
+- **U2 ✅ übernommen** (Subject-Listener als Set).
+- **U3 ✅ längst hier in neuerer Fassung** (src/softengine/ inkl.
+  Relations-Laufzeit + BWMSG/WWMSG-Vereinheitlichung — main's Fassung
+  verworfen).
+- **U4/U5 (Editor.ts-Module, Provider statt Singleton): NICHT übernommen.**
+  Die Commits stehen in der Historie, ihr Inhalt ist aber bewusst NICHT im
+  Baum — verhaltensgleicher Umbau wird auf der vereinten Basis NEU
+  aufgesetzt (eigenes Paket, billiger neu als verbogen). U6–U10 offen.
+⚠ Für Codex: main's altes CLAUDE.md (mit U-Fahrplan als aktuellem Stand)
+ist Geschichte — DIESES Dokument ist die eine Wahrheit. Es gibt wieder
+genau EINE Projektlinie; ein Thema = ein Branch ab main = ein Agent.
+
+Frühere Vorfälle als Lehre: 2026-07-15 arbeiteten Claude und Codex parallel
+auf demselben Branch (Verstoß gegen Regel 8), danach zwei Tage auf zwei
+divergierenden Linien. Beides ist repariert; nichts ging verloren.
+Abnahmen: Schritt 3a/3b + Zentrale (Nutzer, 2026-07-16), Schritt 4 inkl.
+SE-Echttest (Nutzer, 2026-07-16).
 
 ## Wichtige Stellen
 
