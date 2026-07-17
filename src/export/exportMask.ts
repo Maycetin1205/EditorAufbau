@@ -161,14 +161,23 @@ function nodeToHtml(
 function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): DataSource[] {
   const seen = new Set<string>()
   const acc: DataSource[] = []
+  const add = (id: unknown): void => {
+    const src = typeof id === 'string' ? sources.find((s) => s.id === id) : undefined
+    if (src && !seen.has(src.id)) {
+      seen.add(src.id)
+      acc.push(src)
+    }
+  }
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
     if (getBlockDefinition(node.type)?.acceptsDataSource) {
-      const id = node.props.source
-      const src = typeof id === 'string' ? sources.find((s) => s.id === id) : undefined
-      if (src && !seen.has(src.id)) {
-        seen.add(src.id)
-        acc.push(src)
+      add(node.props.source)
+    }
+    // „Quelle speichern" braucht seine Quelle auch OHNE angehängten
+    // Baustein in FF_DATA_SOURCES (die Laufzeit löst die id dort auf).
+    for (const event of getBlockDefinition(node.type)?.blockEvents ?? []) {
+      for (const step of node.events?.[event.key] ?? []) {
+        if (step.type === 'QUELLE_SPEICHERN') add(step.dataSourceId)
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))
@@ -203,7 +212,7 @@ function collectRelations(
     }
     for (const event of def?.blockEvents ?? []) {
       for (const step of node.events?.[event.key] ?? []) {
-        if (step.type === 'RELATION') add(step.relationId)
+        if (step.type === 'RELATION' || step.type === 'QUELLE_SPEICHERN') add(step.relationId)
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))

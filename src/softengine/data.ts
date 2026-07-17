@@ -79,6 +79,18 @@ export function getField(row: unknown, code: string): string {
   return raw.substring(pos, pos + len).trim()
 }
 
+// Änderungs-Spur je Zeile (Schritt „Quelle speichern", 2026-07-17): welche
+// Feldcodes wurden seit dem letzten Daten-Push LOKAL geschrieben? WeakMap
+// auf das Zeilen-Objekt — ein neuer Push erzeugt neue Zeilen und beginnt
+// damit automatisch mit leerer Spur. Bausteinneutral: die Spur entsteht in
+// setField selbst, nicht bei einem Baustein.
+const geaendert = new WeakMap<object, Set<string>>()
+
+export function geaenderteFelder(row: unknown): string[] {
+  if (!isRecord(row)) return []
+  return [...(geaendert.get(row) ?? [])]
+}
+
 // Wert eines Feldcodes in eine Zeile ZURÜCKschreiben (Schreibweg 5.3b):
 // eine direkte Property wird gesetzt; ein 'pos_len'-Code patcht zusätzlich
 // den SATZ-Rohstring (derselbe Schlüssel, den getField liest), damit jede
@@ -114,6 +126,14 @@ export function setField(row: unknown, code: string, value: string): boolean {
         written = true
       }
     }
+  }
+  if (written) {
+    let spur = geaendert.get(row)
+    if (!spur) {
+      spur = new Set()
+      geaendert.set(row, spur)
+    }
+    spur.add(key)
   }
   return written
 }

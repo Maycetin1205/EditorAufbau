@@ -45,6 +45,12 @@ export function findRuntimeRelation(list: unknown, id: string): RuntimeRelation 
   return undefined
 }
 
+// relId einer Quelle: SE-Kontrakt — OHNE IDB-Präfix ('ID0001', nicht
+// 'IDBID0001'; hart erarbeitet, s. CLAUDE.md SoftEngine-Kontrakte).
+export function relIdFuer(tableId: string): string {
+  return tableId.replace(/^IDB/, '')
+}
+
 // PUT über eine aufgelöste Vorlage. Bridge-Wächter: außerhalb von SoftEngine
 // (Vorschau, Tests ohne Stub) wird nichts gesendet. PUT ist fire-and-forget
 // (Spec 5.3b (c)). {DROP_PINDEX} erhält denselben Wert wie {PINDEX} — die

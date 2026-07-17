@@ -7,7 +7,7 @@ import { unknownPlaceholders } from './relations'
 
 // ---------- Schritt-Typen ----------
 
-export type StepTypeKey = 'START_TOOL' | 'RELATION' | 'POPUP_OPEN' | 'POPUP_CLOSE'
+export type StepTypeKey = 'START_TOOL' | 'RELATION' | 'POPUP_OPEN' | 'POPUP_CLOSE' | 'QUELLE_SPEICHERN'
 
 export interface StepTypeSpec {
   key: StepTypeKey
@@ -21,6 +21,8 @@ export const STEP_TYPES: readonly StepTypeSpec[] = [
   // Popup-Schritte (P-B) sind KEINE SE-Fachbegriffe — sie bekommen Klarnamen.
   { key: 'POPUP_OPEN', name: 'Popup öffnen' },
   { key: 'POPUP_CLOSE', name: 'Popup schließen' },
+  // Sammel-Schreiben (Nutzer-Go 2026-07-17): ebenfalls Klarname.
+  { key: 'QUELLE_SPEICHERN', name: 'Quelle speichern' },
 ]
 
 export function stepTypeName(typeKey: string): string {
@@ -94,7 +96,26 @@ export interface PopupCloseStep extends ActionStepBase {
 
 export type PopupStep = PopupOpenStep | PopupCloseStep
 
-export type ActionStep = StartToolStep | RelationStep | PopupStep
+// „Quelle speichern" (Nutzer-Go 2026-07-17): schreibt alle seit dem letzten
+// Daten-Push LOKAL GEÄNDERTEN Felder einer Quelle (setField-Spur der
+// SoftEngine-Schicht — bausteinneutral: jeder Baustein, der lokal schreibt,
+// ist automatisch dabei) über EINE frei wählbare Schreib-Vorlage
+// (PUT/PUTADD, Platzhalter-Auflösung wie sendPut — nichts fest verdrahtet).
+// pos/len je Feld stecken im Feldcode, die relId in der Quelle; konfiguriert
+// wird nur Quelle + Vorlage + Herkunft des PINDEX (typisch: das benannte
+// GET-Ergebnis des Schritts davor).
+export interface QuelleSpeichernStep extends ActionStepBase {
+  type: 'QUELLE_SPEICHERN'
+  // Stabile ID der Datenquellen-Vorlage (reist unverändert in die Maske —
+  // FF_DATA_SOURCES löst sie auf, wie das source-Attribut der Bausteine).
+  dataSourceId: string
+  // Stabile ID der Schreib-Vorlage (FF_RELATIONS, Muster RelationStep).
+  relationId: string
+  // Herkunft des PINDEX — dieselben Wertquellen wie Relationsparameter.
+  pindex: ActionParamBinding
+}
+
+export type ActionStep = StartToolStep | RelationStep | PopupStep | QuelleSpeichernStep
 export type BlockEventsMap = Record<string, ActionStep[]>
 
 export function createStep(typeKey: StepTypeKey): ActionStep {
@@ -104,6 +125,17 @@ export function createStep(typeKey: StepTypeKey): ActionStep {
   }
   if (typeKey === 'POPUP_OPEN' || typeKey === 'POPUP_CLOSE') {
     return { ...base, type: typeKey, popupId: '' }
+  }
+  if (typeKey === 'QUELLE_SPEICHERN') {
+    // Vorbelegung „Vorheriger Schritt": der gelebte Fluss ist GET (Index
+    // holen) → Quelle speichern — und damit ist der Schritt sofort gültig.
+    return {
+      ...base,
+      type: 'QUELLE_SPEICHERN',
+      dataSourceId: '',
+      relationId: '',
+      pindex: { source: 'previous_result', value: '' },
+    }
   }
   return { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
 }
@@ -145,6 +177,7 @@ export type RuntimePopupStep =
 export type RuntimeStep =
   | Omit<StartToolStep, 'id'>
   | Omit<RelationStep, 'id'>
+  | Omit<QuelleSpeichernStep, 'id'>
   | RuntimePopupStep
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -189,6 +222,18 @@ function stepFields(raw: unknown): RuntimeStep | null {
       resultKey: raw.resultKey,
       ...(popupId !== undefined ? { popupId } : {}),
       ...(popup !== undefined ? { popup } : {}),
+    }
+  }
+  if (raw.type === 'QUELLE_SPEICHERN') {
+    if (typeof raw.dataSourceId !== 'string' || typeof raw.relationId !== 'string') return null
+    const pindex = bindingFields(raw.pindex)
+    if (!pindex) return null
+    return {
+      type: 'QUELLE_SPEICHERN',
+      resultKey: raw.resultKey,
+      dataSourceId: raw.dataSourceId,
+      relationId: raw.relationId,
+      pindex,
     }
   }
   if (raw.type === 'RELATION') {
@@ -271,6 +316,17 @@ function withoutEditorId(
       type: step.type,
       resultKey: step.resultKey,
       popup: popupName(step.popupId),
+    }
+  }
+  if (step.type === 'QUELLE_SPEICHERN') {
+    // dataSourceId/relationId sind stabile VORLAGEN-ids (keine Editor-ids):
+    // sie reisen unverändert — FF_DATA_SOURCES/FF_RELATIONS lösen sie auf.
+    return {
+      type: step.type,
+      resultKey: step.resultKey,
+      dataSourceId: step.dataSourceId,
+      relationId: step.relationId,
+      pindex: { ...step.pindex },
     }
   }
   return {
@@ -363,6 +419,35 @@ export function stepProblem(
     const unknown = step.toolParams.flatMap((param) => unknownPlaceholders(param, AKTIONS_PLATZHALTER))
     if (unknown.length > 0) {
       return `Schritt "${stepTypeName(step.type)}" hat einen unbekannten Platzhalter.`
+    }
+    return null
+  }
+  if (step.type === 'QUELLE_SPEICHERN') {
+    const name = stepTypeName(step.type)
+    if (step.dataSourceId.trim() === '') return `Schritt "${name}" hat keine Quelle gewählt.`
+    if (dataSources && !dataSources.some((source) => source.id === step.dataSourceId)) {
+      return `Schritt "${name}" verweist auf eine geloeschte Datenquelle.`
+    }
+    if (step.relationId === '') return `Schritt "${name}" hat keine Schreib-Vorlage.`
+    if (relations) {
+      const relation = relations.find((entry) => entry.id === step.relationId)
+      if (!relation) return `Schritt "${name}" verweist auf eine geloeschte Vorlage.`
+      // Fachliche Grenze wie der Bibliotheks-Filter: gespeichert wird über
+      // Schreib-Verben — eine GET-Vorlage kann nichts schreiben.
+      if (relation.verb === 'GET_RELATION') {
+        return `Schritt "${name}" braucht eine Schreib-Vorlage (PUT/PUTADD).`
+      }
+    }
+    // Ein leerer fester PINDEX wäre ein stiller Fehlgriff — anders als bei
+    // Syntaxparametern (dort sind Leerwerte legitime Positionen).
+    if (bindingProblem(step.pindex)
+      || (step.pindex.source === 'fixed' && step.pindex.value.trim() === '')) {
+      return `Schritt "${name}": PINDEX ist unvollstaendig.`
+    }
+    if (step.pindex.source === 'data_field'
+      && dataSources
+      && !dataSources.some((source) => source.id === step.pindex.dataSourceId)) {
+      return `Schritt "${name}" verweist auf eine geloeschte Datenquelle.`
     }
     return null
   }

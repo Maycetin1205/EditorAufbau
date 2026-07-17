@@ -207,6 +207,9 @@ export function AktionenBereich() {
                         const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'
                           ? popupSeiten.find((seite) => seite.id === s.popupId)?.name
                           : undefined
+                        const quelleName = s.type === 'QUELLE_SPEICHERN'
+                          ? dataSources.list.find((source) => source.id === s.dataSourceId)?.name
+                          : undefined
                         return (
                           <li
                             key={s.id}
@@ -222,6 +225,7 @@ export function AktionenBereich() {
                               {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
                               {s.type === 'RELATION' && relation ? ` — ${relation.name}` : ''}
                               {popupName ? ` — ${popupName}` : ''}
+                              {quelleName ? ` — ${quelleName}` : ''}
                               {problem !== null ? ' — unvollständig' : ''}
                             </span>
                             <IconButton

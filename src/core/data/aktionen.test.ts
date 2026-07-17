@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { DataSource } from './dataSources'
 import type { RelationTemplate } from './relations'
 import {
   createStep,
@@ -96,6 +97,63 @@ describe('Aktionsmodell', () => {
     step.params[2] = { source: 'se_variable', value: '' }
     expect(stepProblem(step, [relation])).toContain('Parameter 3')
     expect(stepProblem({ ...step, relationId: 'weg' }, [relation])).toContain('geloeschte')
+  })
+})
+
+describe('Quelle speichern (2026-07-17)', () => {
+  const schritt = {
+    id: 's1',
+    type: 'QUELLE_SPEICHERN' as const,
+    resultKey: '',
+    dataSourceId: 'q1',
+    relationId: 'rel-1',
+    pindex: { source: 'previous_result' as const, value: '' },
+  }
+  // stepProblem prüft nur die id — der Rest der Vorlage ist hier egal.
+  const quelle = { id: 'q1', name: 'Terminplaner' } as unknown as DataSource
+
+  it('createStep: Vorbelegung PINDEX = vorheriger Schritt (GET-Fluss)', () => {
+    expect(createStep('QUELLE_SPEICHERN')).toMatchObject({
+      type: 'QUELLE_SPEICHERN',
+      dataSourceId: '',
+      relationId: '',
+      pindex: { source: 'previous_result', value: '' },
+    })
+  })
+
+  it('transportiert Quelle, Vorlage und PINDEX — ohne Editor-id', () => {
+    const raw = serializeBlockEvents({ onClick: [schritt] }, ['onClick'])
+    expect(raw).not.toContain('"id"')
+    expect(parseBlockEvents(raw)).toEqual({
+      onClick: [{
+        type: 'QUELLE_SPEICHERN',
+        resultKey: '',
+        dataSourceId: 'q1',
+        relationId: 'rel-1',
+        pindex: { source: 'previous_result', value: '' },
+      }],
+    })
+    // Persistenz-Weg: gespeicherter Schritt bleibt vollständig erhalten.
+    expect(sanitizeBlockEvents({ onClick: [schritt] }, ['onClick']))
+      .toEqual({ onClick: [schritt] })
+    // Kaputter pindex wird verworfen (nie raten).
+    expect(sanitizeBlockEvents({
+      onClick: [{ ...schritt, pindex: 'kaputt' }],
+    }, ['onClick'])).toBeUndefined()
+  })
+
+  it('stepProblem: Quelle, Schreib-Vorlage und PINDEX müssen stehen', () => {
+    expect(stepProblem({ ...schritt, dataSourceId: '' })).toContain('keine Quelle')
+    expect(stepProblem(schritt, undefined, [])).toContain('geloeschte Datenquelle')
+    expect(stepProblem({ ...schritt, relationId: '' })).toContain('keine Schreib-Vorlage')
+    expect(stepProblem({ ...schritt, relationId: 'weg' }, [relation])).toContain('geloeschte Vorlage')
+    // Fachliche Grenze: eine GET-Vorlage kann nichts schreiben.
+    expect(stepProblem(schritt, [{ ...relation, verb: 'GET_RELATION' }]))
+      .toContain('Schreib-Vorlage (PUT/PUTADD)')
+    // Leerer fester PINDEX = stiller Fehlgriff -> blocken.
+    expect(stepProblem({ ...schritt, pindex: { source: 'fixed', value: '' } }))
+      .toContain('PINDEX')
+    expect(stepProblem(schritt, [relation], [quelle])).toBeNull()
   })
 })
 

@@ -276,6 +276,25 @@ add_repo an die Session hängen).
      geändert, Masken-Markup Byte-identisch.
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
+- **Ketten-Schritt „Quelle speichern" (Nutzer-Go + gebaut 2026-07-17):**
+  schreibt alle seit dem letzten Daten-Push LOKAL GEÄNDERTEN Felder einer
+  Quelle — Erfassungs-Muster „Felder füllen → Knopf → GET holt Index →
+  alles auf diesen Index schreiben" in zwei Schritten. Nutzer-Vorgaben
+  eingehalten: BAUSTEINNEUTRAL (Änderungs-Spur lebt in setField der
+  SoftEngine-Schicht als WeakMap je Zeilen-Objekt — jeder lokal schreibende
+  Baustein ist automatisch dabei, neuer Push = leere Spur) und
+  VORLAGENNEUTRAL (jede PUT/PUTADD-Vorlage wählbar, Platzhalter-Auflösung
+  über das vorhandene sendPut — nichts fest verdrahtet). Konfiguriert wird
+  nur Quelle + Schreib-Vorlage + PINDEX-Herkunft (Vorbelegung „vorheriger
+  Schritt" = GET-Fluss); pos/len kommen aus dem Feldcode, relId aus der
+  Quelle (relIdFuer, ohne IDB-Präfix). Grenzen (bewusst): ERSTE Zeile der
+  Quelle (wie die Feld-Hydrierung); ohne gepushte Zeile nichts zu
+  schreiben; erneuter Klick sendet dieselben Felder erneut (Spur lebt bis
+  zum nächsten Push). Preflight blockt GET-Vorlagen und leeren festen
+  PINDEX. Wächter: aktionen.test + seAktionen.test + export.test + EIN
+  e2e-Kreislauf (speichern-data.spec.ts, Test-Bremse).
+  **SE-ECHTTEST AUSSTEHEND — wird gebündelt (Nutzer-Wunsch: Aufwand
+  sammeln):** Formular tippen → Knopf → PUT je geändertem Feld prüfen.
 - **Merkliste:** Tabellen-Spalten aus verschiedenen Quellen;
   bausteinübergreifende Selektion; pflegbare Wert→Bild-Zuordnung für den
   Karten-Avatar (installations-individuell — bis dahin gilt die eingebaute

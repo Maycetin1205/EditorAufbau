@@ -26,6 +26,7 @@ import type { DataSource } from '../../core/data/dataSources'
 import {
   formatRelationSyntax,
   relationMatchesSearch,
+  type RelationTemplate,
 } from '../../core/data/relations'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
@@ -159,6 +160,60 @@ function BindingRow({
   )
 }
 
+// Vorlagen-Suche + -Liste — EINE Stelle für Relation-Schritt und
+// „Quelle speichern" (dort fachlich auf Schreib-Vorlagen gefiltert).
+function RelationAuswahl({
+  label,
+  eintraege,
+  relationId,
+  suche,
+  onSuche,
+  onSelect,
+}: {
+  label: string
+  eintraege: readonly RelationTemplate[]
+  relationId: string
+  suche: string
+  onSuche: (value: string) => void
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-medium">{label}</span>
+      <div className="relative">
+        <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <TextInput
+          aria-label={`${label} suchen`}
+          value={suche}
+          placeholder="Name, Nummer oder Syntax"
+          className="pl-7"
+          onChange={(e) => onSuche(e.target.value)}
+        />
+      </div>
+      <div className="max-h-36 overflow-y-auto border-y border-border py-1">
+        {eintraege.map((entry) => (
+          <button
+            key={entry.id}
+            type="button"
+            onClick={() => onSelect(entry.id)}
+            className={`w-full px-2 py-1.5 text-left text-xs ${
+              entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
+            }`}
+          >
+            <span className="block truncate">{entry.name}</span>
+            <span className="block truncate font-mono text-[10px] text-muted-foreground">
+              {formatRelationSyntax(entry)}
+            </span>
+          </button>
+        ))}
+        {eintraege.length === 0 && (
+          <p className="px-2 py-1 text-xs text-muted-foreground">Keine Treffer.</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function StepForm({ step, onSave, onClose }: StepFormProps) {
   const relations = useRelations()
   const dataSources = useDataSources()
@@ -172,7 +227,17 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
     step?.type === 'POPUP_OPEN' || step?.type === 'POPUP_CLOSE' ? step.popupId : '',
   )
   const [relationId, setRelationId] = useState(
-    step?.type === 'RELATION' ? step.relationId : '',
+    step?.type === 'RELATION' || step?.type === 'QUELLE_SPEICHERN' ? step.relationId : '',
+  )
+  // Quelle speichern: Quelle + Herkunft des PINDEX (Vorbelegung wie
+  // createStep — der gelebte Fluss ist GET davor -> vorheriges Ergebnis).
+  const [dataSourceId, setDataSourceId] = useState(
+    step?.type === 'QUELLE_SPEICHERN' ? step.dataSourceId : '',
+  )
+  const [pindexBinding, setPindexBinding] = useState<ActionParamBinding>(
+    step?.type === 'QUELLE_SPEICHERN'
+      ? { ...step.pindex }
+      : { source: 'previous_result', value: '' },
   )
   const initialRelation = step?.type === 'RELATION' ? relations.get(step.relationId) : undefined
   const [relationParams, setRelationParams] = useState<ActionParamBinding[]>(() => {
@@ -190,7 +255,12 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
   const [zeigeFehler, setZeigeFehler] = useState(false)
 
   const relation = relations.get(relationId)
-  const sichtbareRelationen = relations.list.filter((entry) => relationMatchesSearch(entry, suche))
+  // Quelle speichern zeigt nur Schreib-Vorlagen (fachlicher Filter wie die
+  // Bibliothek: Lesen = GET, Schreiben = PUT/PUTADD).
+  const vorlagenBestand = typ === 'QUELLE_SPEICHERN'
+    ? relations.list.filter((entry) => entry.verb !== 'GET_RELATION')
+    : relations.list
+  const sichtbareRelationen = vorlagenBestand.filter((entry) => relationMatchesSearch(entry, suche))
   const defaultParams = relation ? defaultRelationParams(relation) : []
   const bindingFor = (index: number): ActionParamBinding =>
     relationParams[index] ?? defaultParams[index] ?? { source: 'fixed', value: '' }
@@ -223,6 +293,16 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
         resultKey: '',
         toolNr: toolNr.trim(),
         toolParams: [],
+      }
+    }
+    if (typ === 'QUELLE_SPEICHERN') {
+      return {
+        id,
+        type: 'QUELLE_SPEICHERN',
+        resultKey: '',
+        dataSourceId,
+        relationId,
+        pindex: { ...pindexBinding, value: pindexBinding.value.trim() },
       }
     }
     const normalizedParams = relation
@@ -297,41 +377,57 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
           </Field>
         )}
 
+        {typ === 'QUELLE_SPEICHERN' && (
+          <>
+            <Field label="Quelle">
+              {(field) => (
+                <select
+                  {...field}
+                  value={dataSourceId}
+                  onChange={(e) => setDataSourceId(e.target.value)}
+                  className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
+                >
+                  <option value="">
+                    {dataSources.list.length === 0 ? '(keine Datenquelle vorhanden)' : '— wählen —'}
+                  </option>
+                  {dataSources.list.map((source) => (
+                    <option key={source.id} value={source.id}>{source.name}</option>
+                  ))}
+                </select>
+              )}
+            </Field>
+            <RelationAuswahl
+              label="Schreib-Vorlage"
+              eintraege={sichtbareRelationen}
+              relationId={relationId}
+              suche={suche}
+              onSuche={setSuche}
+              onSelect={setRelationId}
+            />
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>Parameter</span><span>Wert</span><span>Quelle</span><span />
+              </div>
+              <BindingRow
+                label="PINDEX"
+                binding={pindexBinding}
+                dataSources={dataSources.list}
+                onChange={setPindexBinding}
+              />
+            </div>
+          </>
+        )}
+
         {typ === 'RELATION' && (
           <>
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium">Relation</span>
-              <div className="relative">
-                <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <TextInput
-                  aria-label="Relation suchen"
-                  value={suche}
-                  placeholder="Name, Nummer oder Syntax"
-                  className="pl-7"
-                  onChange={(e) => setSuche(e.target.value)}
-                />
-              </div>
-              <div className="max-h-36 overflow-y-auto border-y border-border py-1">
-                {sichtbareRelationen.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    onClick={() => selectRelation(entry.id)}
-                    className={`w-full px-2 py-1.5 text-left text-xs ${
-                      entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
-                    }`}
-                  >
-                    <span className="block truncate">{entry.name}</span>
-                    <span className="block truncate font-mono text-[10px] text-muted-foreground">
-                      {formatRelationSyntax(entry)}
-                    </span>
-                  </button>
-                ))}
-                {sichtbareRelationen.length === 0 && (
-                  <p className="px-2 py-1 text-xs text-muted-foreground">Keine Treffer.</p>
-                )}
-              </div>
-            </div>
+            <RelationAuswahl
+              label="Relation"
+              eintraege={sichtbareRelationen}
+              relationId={relationId}
+              suche={suche}
+              onSuche={setSuche}
+              onSelect={selectRelation}
+            />
 
             {relation && (
               <div className="flex flex-col gap-2">
@@ -394,7 +490,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
           </>
         )}
 
-        {zeigeFehler && problem && typ === 'RELATION' && (
+        {zeigeFehler && problem && (typ === 'RELATION' || typ === 'QUELLE_SPEICHERN') && (
           <p className="text-xs text-destructive">{problem}</p>
         )}
 
