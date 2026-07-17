@@ -14,6 +14,7 @@ import { BlockHost } from './BlockHost'
 import { NodeList } from './CanvasNode'
 import { isNewBlockDrag } from './dnd'
 import { commitDrop, useDnd } from './dndState'
+import { zieheGroesse } from './zieheGroesse'
 
 // Mindest- und Standardgröße des Popup-Fensters (Anfasser, P-A).
 const POPUP_MIN_BREITE = 240
@@ -53,27 +54,22 @@ export function PopupSeite({ popupId }: { popupId: string }) {
   const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - POPUP_RAND)) : breite
   const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - POPUP_RAND)) : hoehe
 
+  // Dieselbe Geste wie am Block (zieheGroesse) — nur die Daten sind anders:
+  // zentriertes Fenster => Faktor 2 (die Kante bleibt unter dem Zeiger).
   const startResize = (
     e: ReactPointerEvent<HTMLDivElement>,
     prop: 'breite' | 'hoehe',
     start: number,
     min: number,
   ) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const startPos = prop === 'breite' ? e.clientX : e.clientY
-    ed.beginTransaction()
-    const onMove = (ev: PointerEvent) => {
-      const pos = prop === 'breite' ? ev.clientX : ev.clientY
-      ed.updateProperty(node.id, prop, Math.max(min, Math.round(start + (pos - startPos) * 2)))
-    }
-    const onUp = () => {
-      ed.endTransaction()
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    zieheGroesse(ed, e, {
+      achse: prop === 'breite' ? 'x' : 'y',
+      prop,
+      getId: () => node.id,
+      start,
+      min,
+      faktor: 2,
+    })
   }
 
   const standard = getBlockDefinition(node.type)?.defaultProps ?? {}

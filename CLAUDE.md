@@ -285,9 +285,7 @@ add_repo an die Session hängen).
   Seiten-Leiste als kompakte Aufklappliste, falls viele Popups je Maske
   real werden (Nutzer-Sorge 2026-07-16); „Maske als Datei
   speichern/laden" für Sicherung/zweiten Arbeitsplatz (heute nur
-  Browser-Speicher + Export); gemeinsame Zieh-Mechanik für Block- UND
-  Popup-Anfasser (vereinbart 2026-07-17 als eigenes Editor-Paket,
-  kein Export-Einfluss — wartet auf „go"); Projektkarte
+  Browser-Speicher + Export); Projektkarte
   (public/project-map.html) veraltet still — auf Nutzer-Wunsch SPÄTER
   bereden (2026-07-17); Markup-Bauen (nodeToHtml/styleAttr) aus
   exportMask erst MIT dem Tabellen-Baustein herausziehen.
@@ -329,7 +327,9 @@ SE-Echttest (Nutzer, 2026-07-16), Popup P-A–P-C inkl. SE-Echttest
   mehr, die eine Instanz entsteht in `src/app/providers.tsx` und reist
   über EditorProvider/EditorContext; A3–A7 ERLEDIGT 2026-07-17: Canvas/
   BlockHost in Handgriffe (CanvasNode/dndState/SeitenLeiste/PopupSeite +
-  useBindingPicker/useBlockResize), useLitElement = die EINE React↔Lit-
+  useBindingPicker/useBlockResize; zieheGroesse = die EINE Zieh-Mechanik
+  für Block- UND Popup-Anfasser, Nutzer-Go 2026-07-17, kein Export-
+  Einfluss), useLitElement = die EINE React↔Lit-
   Übergabestelle, Bindungs-Konvention typgeprüft in BlockDefinition
   (bindingProp/BindableSpotsFor — Laufzeit nur Typ-Anker, Bündel
   unverändert), `src/export/serializer.ts` = die eine Zeichen-Regel-
