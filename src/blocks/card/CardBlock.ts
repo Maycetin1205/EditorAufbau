@@ -1,19 +1,18 @@
 // CardBlock
-// Molekuel (4K.3, erweitert P1.2; Empfang-Anatomie 2026-07-16): Karte mit
-// ACHT Stellen nach dem Empfang-Vorbild — oben Avatar (rund, Tier-
-// Silhouette aus dem Datenwert) neben dem Titelblock (Titel + Titel 2
-// fliessen in einer Zeile zusammen, darunter die Unterzeile), Zeit +
-// Datum sitzen OBEN RECHTS in derselben Zeile (Nutzer-Entscheidung
-// 2026-07-16), dann Textzeile, unten der Status-Chip. Karten sind
-// NORMALE Bloecke im Baum — keine eigene Drag-Sonderlogik, die Canvas-
-// Drag-Logik aus 2.3 zieht sie wie jeden anderen Block.
+// Molekuel (4K.3; Empfang-Anatomie): Karte mit ACHT Stellen nach dem
+// Empfang-Vorbild — oben Avatar (rund, Tier-Silhouette aus dem Datenwert)
+// neben dem Titelblock (Titel + Titel 2 fliessen in einer Zeile zusammen,
+// darunter die Unterzeile), Zeit + Datum sitzen OBEN RECHTS in derselben
+// Zeile, dann Textzeile, unten der Status-Chip. Karten sind NORMALE
+// Bloecke im Baum — keine eigene Drag-Sonderlogik, die Canvas-Drag-Logik
+// aus 2.3 zieht sie wie jeden anderen Block. (Entscheidungs-Historie:
+// docs/decisions/2026-07-16-karte-empfang-anatomie.md)
 //
-// Leer-Regel (Nutzer-Entscheidung 2026-07-16): In der MASKE verschwinden
-// Stellen ohne Inhalt restlos — samt ihrer Zeile, wenn alles darin leer
-// ist; die Karte ist deshalb auto-hoch mit 112px MINDESThoehe (ersetzt die
-// feste 112px-Hoehe vom SE-Echttest 2026-07-15, ebenfalls Nutzer-
-// Entscheidung). Im Editor bleibt jede Stelle als Klick-Ziel stehen
-// (Strich bzw. gestrichelter Avatar-Kreis, Regel 7: nie erfundene Daten).
+// Leer-Regel: In der MASKE verschwinden Stellen ohne Inhalt restlos —
+// samt ihrer Zeile, wenn alles darin leer ist; die Karte ist deshalb
+// auto-hoch mit 112px MINDESThoehe. Im Editor bleibt jede Stelle als
+// Klick-Ziel stehen (Strich bzw. gestrichelter Avatar-Kreis, Regel 7:
+// nie erfundene Daten).
 //
 // Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
 // (Inline-Edit, WYSIWYG) und sind bindbare Stellen (Kap. 5.2); der Avatar
@@ -54,20 +53,19 @@ export class CardBlock extends BasicBlock {
   static readonly tagName = 'ff-card'
   static readonly displayName = 'Karte'
   static readonly category: BlockCategory = 'anzeige'
-  // P1.1 (Vorlagen-Kasten abgeschafft, wie das Empfang-Vorbild): Karten
-  // leben in Kanban-Spalten (Gegenrichtung zu allowedChildTypes; Literal,
-  // weil ein Import von KanbanSpalteBlock einen Zyklus ergäbe) und stehen
-  // nicht in der Bibliothek — sie entstehen mit dem Board bzw. über
-  // "+ Karte" an der Spalte. Die ERSTE Karte des Boards ist die
+  // Karten leben in Kanban-Spalten (Gegenrichtung zu allowedChildTypes;
+  // Literal, weil ein Import von KanbanSpalteBlock einen Zyklus ergäbe)
+  // und stehen nicht in der Bibliothek — sie entstehen mit dem Board bzw.
+  // über "+ Karte" an der Spalte. Die ERSTE Karte des Boards ist die
   // Musterkarte (templateChild am Board): aus ihr erzeugt die Laufzeit
   // die Datenkarten.
   static readonly allowedParentTypes = ['kanban-spalte']
   static readonly showInPalette = false
-  // Nutzer-Entscheidung 2026-07-16: Karten haben KEINE einstellbare Breite —
-  // sie sind IMMER so breit wie ihre Spalte (lockedWidth 'fill', dasselbe
-  // Muster wie die Spalte selbst: die width-Prop des Knotens wird ignoriert,
-  // kein Breiten-Anfasser). Bereits verschmälerte Bestandskarten springen
-  // damit von selbst zurück auf volle Spaltenbreite.
+  // Karten haben KEINE einstellbare Breite — sie sind IMMER so breit wie
+  // ihre Spalte (lockedWidth 'fill', dasselbe Muster wie die Spalte selbst:
+  // die width-Prop des Knotens wird ignoriert, kein Breiten-Anfasser).
+  // Bereits verschmälerte Bestandskarten springen damit von selbst zurück
+  // auf volle Spaltenbreite.
   static readonly lockedWidth: FlowWidth = 'fill'
   static readonly resizableWidth = false
   // Regel 7 (Nutzer-Entscheidung 2026-07-16): der Editor erfindet nie Daten —

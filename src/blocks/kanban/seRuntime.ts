@@ -1,18 +1,16 @@
 // seRuntime (Kap. 5.3) — das KANBAN-Datenverhalten in der exportierten Maske
 //
-// Seit dem Schicht-Umzug 2026-07-15 liegt hier NUR noch Kanban: Zeilen
-// werden Karten (Vorlage = die Musterkarte des Boards), der Wert des
-// Spalten-Felds bestimmt die Spalte (exakter Vergleich mit dem TITEL,
-// Titel = Wert). Alles Allgemeine — SE-Anmeldung/Daten-Push (bridge),
-// Feld lesen und Zeilen (data) — wohnt in src/softengine/ und wird hier
-// nur benutzt.
+// Hier liegt NUR Kanban: Zeilen werden Karten (Vorlage = die Musterkarte
+// des Boards), der Wert des Spalten-Felds bestimmt die Spalte (exakter
+// Vergleich mit dem TITEL, Titel = Wert). Alles Allgemeine — SE-Anmeldung/
+// Daten-Push (bridge), Feld lesen und Zeilen (data) — wohnt in
+// src/softengine/ und wird hier nur benutzt.
 //
-// KEIN eingebauter Schreibweg mehr (Nutzer-Entscheidung 2026-07-15):
-// das frühere automatische Standard-PUT beim Karten-Ziehen ist ersatzlos
-// entfernt. Ein Drop ist nur ein Auslöser — was passiert, bestimmt allein
-// die sichtbare Aktionskette „Karte verschoben". „Einsortieren nach"
-// (statusField) ist OPTIONAL: ohne Feld landen alle Zeilen in der
-// Auffang- bzw. einer Auto-Spalte.
+// KEIN eingebauter Schreibweg: ein Drop ist nur ein Auslöser — was
+// passiert, bestimmt allein die sichtbare Aktionskette „Karte verschoben".
+// „Einsortieren nach" (statusField) ist OPTIONAL: ohne Feld landen alle
+// Zeilen in der Auffang- bzw. einer Auto-Spalte. (Entscheidungs-Historie:
+// docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md)
 //
 // Läuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle

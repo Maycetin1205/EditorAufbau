@@ -2,8 +2,8 @@
 // Geteiltes Status-Vokabular (Regel "Technikwert != Anzeigename": der
 // Bediener waehlt den Klarnamen Hinweis/Erfolg/Warnung/Fehler, NIE die
 // Farbe — die Farbe ergibt sich fest aus der Bedeutung ueber die
-// Statusfarben-Tokens). Nutzer seit dem Kahlschlag 2026-07-14 (Infobox +
-// Status-Chip entfernt): die Karte (ff-card) und die Kanban-Spalte.
+// Statusfarben-Tokens). Nutzer: die Karte (ff-card) und die Kanban-Spalte
+// (Herkunft: docs/decisions/2026-07-14-kahlschlag-bausteine.md).
 //  - StatusVariant/coerceStatusVariant: der unsichtbare Technikwert.
 //  - statusVariantProperty: die "Art"-Select-Beschreibung fuer den Inspector.
 //  - chipStyles: das Chip-Aussehen (.zb-chip im Zielbild

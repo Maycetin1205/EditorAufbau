@@ -59,12 +59,10 @@ export class KanbanBlock extends BasicBlock {
     { key: 'onCardDrop', name: 'Karte verschoben' },
   ]
   // statusField (Kap. 5.3): Feldcode des Spalten-Felds (Technikwert,
-  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. OPTIONAL
-  // (Nutzer-Entscheidung 2026-07-15): ohne Feld landen alle Zeilen in der
-  // Auffang- bzw. einer Auto-Spalte.
-  // KEIN putRelation mehr (dieselbe Entscheidung): das automatische
-  // Standard-PUT beim Ziehen ist ersatzlos entfernt — was ein Drop tut,
-  // bestimmt allein die Aktionskette „Karte verschoben".
+  // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. OPTIONAL:
+  // ohne Feld landen alle Zeilen in der Auffang- bzw. einer Auto-Spalte.
+  // Was ein Drop tut, bestimmt allein die Aktionskette „Karte verschoben"
+  // (docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md).
   static readonly defaultProps = {
     width: 'fill', height: 'fill' as const,
     source: '', statusField: '',

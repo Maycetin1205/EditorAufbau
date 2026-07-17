@@ -93,9 +93,9 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   const heightResizable = def?.resizableHeight === true
 
   // Musterkarte (P1.1, templateChild in der Registry): KEIN sichtbares
-  // Etikett mehr (Nutzer-Entscheidung 2026-07-16 — der frühere
-  // „Muster"-Anstecker ist raus). Die Markierung steuert nur noch das
-  // Kreuzchen: die Musterkarte hat keins (Löschschutz, s. onRemoveClick).
+  // Etikett (docs/decisions/2026-07-16-karte-empfang-anatomie.md). Die
+  // Markierung steuert nur das Kreuzchen: die Musterkarte hat keins
+  // (Löschschutz, s. onRemoveClick).
   const templateMark = editor.templateMarkFor(block.id)
 
   // Kreuzchen (Bedienlogik 5): Entfernen direkt am Block, Rückfrage nur wenn
@@ -280,11 +280,11 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
 }
 
 // Editor-Hilfe "Plus-Knopf" (Bedienlogik 5, aus der Registry: addChildButton).
-// P1.1b (Nutzer-Beschwerde 2026-07-10): kein Platzfresser mehr IM Baustein
-// (die alte 180px-Kachel stahl den Kanban-Spalten Breite — WYSIWYG-Bruch).
-// Jetzt ein kleiner Anstecker am Wrapper-Rand (Muster Kreuzchen), sichtbar
-// NUR wenn die Auswahl im Teilbaum des Containers liegt — ein unselektierter
-// Baustein sieht im Editor exakt aus wie im Export.
+// Ein kleiner Anstecker am Wrapper-Rand (Muster Kreuzchen), bewusst NIE im
+// Baustein selbst (er stähle dem Baustein Platz — WYSIWYG-Bruch; Herkunft:
+// docs/decisions/2026-07-10-editor-hilfen.md), sichtbar NUR wenn die
+// Auswahl im Teilbaum des Containers liegt — ein unselektierter Baustein
+// sieht im Editor exakt aus wie im Export.
 interface AddChildButtonProps {
   label: string
   childType: string

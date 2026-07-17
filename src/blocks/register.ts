@@ -1,17 +1,11 @@
 // register
 // Zentrale Side-Effect-Imports aller Built-in-Block-Typen.
-// Jeder Import triggert HMR-geschuetztes customElements.define + registerBlockType.
+// Jeder Import triggert HMR-geschütztes customElements.define + registerBlockType.
 // Wer Blocks benutzt, importiert diese eine Datei.
 //
-// Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Text, Bereich (Container),
-// Infobox, Status-Chip (Badge) und Eingabefeld (FormField) sind KOMPLETT
-// entfernt — sie hatten fuer das Ziel (Empfang-Board in SoftEngine) keine
-// Funktion. Es bleibt, was funktioniert: Kanban (+ Spalte/Karte) und
-// Schaltflaeche. Neue Bausteine erst, wenn eine echte Maske sie erzwingt.
-//
-// Formularfeld (2026-07-14, Nutzer-Auftrag): NEUBAU nach der echten
-// behandlung-Referenz — v1 statisch, SoftEngine-Logik folgt Schritt fuer
-// Schritt (erst alle Bausteine, dann die Logik).
+// Neue Bausteine erst, wenn eine echte Maske sie erzwingt (Regel 10).
+// Warum es genau diese Bausteine sind (Kahlschlag der Anfangs-Bausteine,
+// Formularfeld-Neubau): docs/decisions/2026-07-14-kahlschlag-bausteine.md.
 
 import './button/ButtonBlock'
 import './card/CardBlock'
