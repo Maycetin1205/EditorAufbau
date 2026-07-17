@@ -38,6 +38,13 @@ import {
 } from '../core/blocks/flowLayout'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
+import {
+  escapeHtmlAttr,
+  escapeHtmlText,
+  escapeNonAsciiJs,
+  guardScriptContent,
+  stripCssComments,
+} from './serializer'
 
 // Verbindlicher SoftEngine-Anschluss aus JWHtmlStart.html / Monaco-Referenz.
 // BüroWARE stellt diese Funktionen teils bereits im Host bereit; WEBWARE
@@ -50,50 +57,9 @@ export interface MaskExport {
   sevariablen: string
 }
 
-// ---------- Escaping (ASCII-Regel) ----------
-
-function escapeNonAsciiHtml(s: string): string {
-  return s.replace(/[^\n\t\x20-\x7E]/g, (c) => `&#x${c.codePointAt(0)!.toString(16).toUpperCase()};`)
-}
-
-function escapeHtmlText(s: string): string {
-  return escapeNonAsciiHtml(
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
-  )
-}
-
-function escapeHtmlAttr(s: string): string {
-  return escapeHtmlText(s).replace(/"/g, '&quot;')
-}
-
-function escapeNonAsciiJs(s: string): string {
-  // Nicht-ASCII in JS-Bündeln steht praktisch nur in String-Literalen —
-  // \uXXXX ist dort immer gültig. Ein Test kompiliert das Ergebnis zur
-  // Sicherheit (export.test.ts).
-  return s.replace(/[^\n\t\x20-\x7E]/g, (c) => {
-    const code = c.charCodeAt(0)
-    return '\\u' + code.toString(16).toUpperCase().padStart(4, '0')
-  })
-}
-
-// '</script>' im eingebetteten Bündel würde den Skriptblock sprengen.
-function guardScriptContent(js: string): string {
-  return js.replace(/<\/script/gi, '<\\/script')
-}
-
-// CSS: Kommentare raus (enthalten Umlaute/Gedankenstriche), dann ASCII-Check
-// durch den Validator. Werte selbst sind ASCII.
-function stripCssComments(css: string): string {
-  return css
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
-    .map((l) => l.trimEnd())
-    .filter((l, i, arr) => l !== '' || (arr[i - 1] ?? '') !== '')
-    .join('\n')
-    .trim()
-}
-
 // ---------- Baum → Markup ----------
+// (Zeichen-Regeln — ASCII-Escaping, Skript-Schutz, CSS-Bereinigung —
+// wohnen seit A6 im serializer; hier entstehen Markup und Reihenfolge.)
 
 function styleAttr(
   node: BlockNode,
