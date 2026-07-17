@@ -105,6 +105,29 @@ Undo, Seite wechseln, speichern/neu laden).
   + Verweis. Migrations-Kommentare bewusst unangetastet (dokumentierte
   Daten-Übergänge). Bündel + Export weiterhin Byte-identisch.
 
+## Aufgefallen unterwegs (2026-07-17) — Nacharbeiten aus A3–A7
+
+Bewusste Restposten der Umzüge, als entscheidbare Pakete notiert
+(Vorschlagen ist Pflicht, gebaut wird nichts ohne „go"):
+
+- **Zieh-Mechanik einmal:** Block-Anfasser (`useBlockResize`) und
+  Popup-Anfasser (`PopupSeite`) teilen dieselbe Geste (Transaktion auf →
+  Wert je Bewegung in den Store → Transaktion zu); unterschiedlich sind
+  nur Prop, Mindestwert und Faktor (Popup: 2×Delta, weil zentriert).
+  Eigenes Editor-Paket, kein Export-Einfluss — **wartet auf „go"**.
+- **Huckepack an P-C** (derselbe SE-Echttest deckt alles, beides ändert
+  das Runtime-Bündel): `bindingAttr()` wirklich in der Laufzeit benutzen
+  (seRuntime/feldRuntime — heute nur Typ-Anker aus A5) + die Popup-Regel
+  „Fläche − 24px" als EINE geteilte Konstante (heute doppelt:
+  PopupBlock-CSS und PopupSeite-Anfasser).
+- **Markup-Bauen aus exportMask** (nodeToHtml/styleAttr als eigenes Fach)
+  erst MIT dem Tabellen-Baustein — vorher nur Ästhetik, Risiko am
+  empfindlichsten Stück; Reihenfolge-Regeln haben heute schon genau
+  EINE Heimat (exportMask).
+- **Entscheidungen offen (Nutzer):** Projektkarte automatisch aktuell
+  halten (`docs:map` in der Commit-Routine oder docs:map:check als
+  fünfter Wächter) · Export-Referenzabzug als festes Beweis-Skript.
+
 ## Prüf-Checkliste je Schritt (abhaken)
 
 - [ ] Nur Umzug, keine Logik-Änderung (Diff nebeneinander gelesen)

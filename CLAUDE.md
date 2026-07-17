@@ -4,6 +4,10 @@
 > schlagen diese Datei; bei Widerspruch nachfragen. Der Nutzer kann nicht
 > programmieren: diese Regeln + die Prüfungen sind sein Ersatz dafür, Code
 > lesen zu können. **Vor jeder Code-Änderung: Plan zeigen, „go" abwarten.**
+> **Jeder Paket-Abschlussbericht endet mit „Aufgefallen unterwegs"**
+> (Regel seit 2026-07-17): 0–3 konkrete Verbesserungsvorschläge, je mit
+> Preisschild (Aufwand; Export berührt? → SE-Echttest) — Vorschlagen ist
+> Pflicht, gebaut wird weiterhin NICHTS ohne „go".
 > Sachlich, direkt, kein Cheerleading.
 
 ## Ziel (Nordstern)
@@ -248,7 +252,13 @@ add_repo an die Session hängen).
      Seite blockt; Popup-NAMEN MÜSSEN EINDEUTIG sein (Laufzeit-Identität,
      eigener Preflight-Block mit Klartext). StepForm: Popup-Auswahl in
      Klarnamen; Schrittzeile zeigt „Popup öffnen — <Name>".
-     (P-C) Export-e2e + Wächter + SE-Echttest.
+     (P-C) Export-e2e + Wächter + SE-Echttest. HUCKEPACK (vereinbart
+     2026-07-17, derselbe Echttest deckt alles, beides ändert das
+     Runtime-Bündel): bindingAttr() aus der Bindungs-Konvention WIRKLICH
+     in der Laufzeit benutzen (seRuntime/feldRuntime — heute nur
+     Typ-Anker aus A5) + die Popup-Regel „Fläche − 24px" als EINE
+     geteilte Konstante (steht heute doppelt: PopupBlock-CSS und
+     PopupSeite-Anfasser — WYSIWYG-Drift-Gefahr).
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
 - **Merkliste:** Tabellen-Spalten aus verschiedenen Quellen;
@@ -260,7 +270,16 @@ add_repo an die Session hängen).
   Seiten-Leiste als kompakte Aufklappliste, falls viele Popups je Maske
   real werden (Nutzer-Sorge 2026-07-16); „Maske als Datei
   speichern/laden" für Sicherung/zweiten Arbeitsplatz (heute nur
-  Browser-Speicher + Export).
+  Browser-Speicher + Export); gemeinsame Zieh-Mechanik für Block- UND
+  Popup-Anfasser (vereinbart 2026-07-17 als eigenes Editor-Paket,
+  kein Export-Einfluss — wartet auf „go"); Projektkarte
+  (public/project-map.html) veraltet still — Entscheidung offen:
+  `npm run docs:map` fest in die Commit-Routine oder docs:map:check als
+  fünfter Wächter (Regel 9); Export-Referenzabzug (das Byte-Beweis-
+  Werkzeug aus A5/A6: Referenzmaske rein, HTML/SEvariablen byte-genau
+  vergleichen) als festes Skript für künftige Umbauten — Entscheidung
+  offen (Sicherheitsnetz); Markup-Bauen (nodeToHtml/styleAttr) aus
+  exportMask erst MIT dem Tabellen-Baustein herausziehen.
 
 ## Zusammenführung ERLEDIGT (2026-07-16, Nutzer-Go)
 
