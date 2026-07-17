@@ -34,6 +34,49 @@ export interface BindableSpot {
   label: string
 }
 
+// ---------------------------------------------------------------------------
+// Bindungs-Konvention (Aufräumen A5) — DIE eine, typgeprüfte Definition.
+// Die Bindung einer Stelle liegt in der Prop `<prop>Field` (Feldcode =
+// Technikwert, '' = ungebunden); im exportierten HTML normalisiert sie der
+// Browser zum kleingeschriebenen Attribut `<prop>field`. Alle Leser gehen
+// über diese Typen/Helfer statt eigener String-Bastelei:
+//   - Editor: bindingProp() in useLitElement/useBindingPicker/BlockHost.
+//   - Laufzeit: seRuntime/feldRuntime verankern ihre Attributnamen per
+//     `satisfies BindingAttr` (nur Typprüfung — das Runtime-Bündel und
+//     damit der Export bleiben Byte-identisch).
+//   - Bausteine: bindableSpots/bindingRoute sind über BindableSpotsFor/
+//     BindingRouteFor gegen die eigenen defaultProps geprüft.
+
+// Prop-Form der Bindung (`heading` → `headingField`).
+export type BindingProp<P extends string = string> = `${P}Field`
+
+// Attribut-Form der Bindung (`headingField` → `headingfield`): HTML-
+// Attribute sind kleingeschrieben, das Suffix bleibt `field`.
+export type BindingAttr = `${string}field`
+
+// Die EINE Stelle, die den Bindungs-Prop-Namen baut.
+export function bindingProp<P extends string>(prop: P): BindingProp<P> {
+  return `${prop}Field`
+}
+
+// Typgeprüfte bindableSpots: eine Stelle ist nur deklarierbar, wenn ihre
+// Bindungs-Prop `<prop>Field` in den defaultProps des Blocks existiert —
+// sonst könnten Persistenz und Export die Bindung nicht mitnehmen.
+export type BindableSpotProp<Props> = keyof Props extends infer K
+  ? K extends BindingProp<infer P> ? P : never
+  : never
+
+export type BindableSpotsFor<Props> = ReadonlyArray<{
+  prop: BindableSpotProp<Props>
+  label: string
+}>
+
+// Typgeprüfte bindingRoute: das Einsortieren-/Wert-Feld muss eine
+// existierende Bindungs-Prop des Blocks sein.
+export type BindingRouteFor<Props> = {
+  fieldProp: keyof Props & BindingProp
+}
+
 // Datenanschluss am Board: der Block deklariert das Einsortieren-Feld,
 // das gemeinsam mit der source-Prop im eigenen Anschluss-Dialog gepflegt wird.
 // Struktur und sichtbare Feldbindungen bleiben am echten Baustein im Canvas.

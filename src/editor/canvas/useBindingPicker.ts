@@ -8,14 +8,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, RefObject } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import type { BindableSpot } from '../../core/blocks/BlockDefinition'
+import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
 import type { DataSource } from '../../core/data/dataSources'
 import type { Editor } from '../../state/Editor'
 
-// Gebundener Feldcode einer Stelle ('' = ungebunden) — Bindung liegt per
-// Konvention in der Prop `<prop>Field` (siehe BindableSpot).
+// Gebundener Feldcode einer Stelle ('' = ungebunden) — Bindung liegt in der
+// Prop `<prop>Field` (Bindungs-Konvention, bindingProp in BlockDefinition).
 export function bindingCode(props: Record<string, unknown>, spot: BindableSpot): string {
-  const code = props[`${spot.prop}Field`]
+  const code = props[bindingProp(spot.prop)]
   return typeof code === 'string' ? code : ''
 }
 

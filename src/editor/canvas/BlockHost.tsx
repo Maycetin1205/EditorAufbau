@@ -23,7 +23,7 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import type { BindableSpot } from '../../core/blocks/BlockDefinition'
+import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { useEditorInstance } from '../../state/EditorContext'
 import { useDataSources } from '../../state/useDataSources'
@@ -176,7 +176,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           top={picker.top}
           left={picker.left}
           onPick={(code) => {
-            editor.updateProperty(blockRef.current.id, `${picker.spot.prop}Field`, code)
+            editor.updateProperty(blockRef.current.id, bindingProp(picker.spot.prop), code)
             closePicker()
           }}
           onClose={closePicker}

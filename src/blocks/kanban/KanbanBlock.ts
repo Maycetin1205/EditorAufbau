@@ -14,7 +14,7 @@
 import { css, html, type TemplateResult } from 'lit'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
+import type { BindingRouteFor, DefaultChildSpec } from '../../core/blocks/BlockDefinition'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
@@ -69,7 +69,8 @@ export class KanbanBlock extends BasicBlock {
     width: 'fill', height: 'fill' as const,
     source: '', statusField: '',
   }
-  static readonly bindingRoute = {
+  // Typgeprüft gegen die eigenen defaultProps (Bindungs-Konvention, A5).
+  static readonly bindingRoute: BindingRouteFor<typeof KanbanBlock.defaultProps> = {
     fieldProp: 'statusField',
   }
   static override readonly customProperties: PropertyDescription[] = [

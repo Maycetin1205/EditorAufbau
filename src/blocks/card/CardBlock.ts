@@ -35,7 +35,7 @@ import { css, html, nothing, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { BindableSpot } from '../../core/blocks/BlockDefinition'
+import type { BindableSpotsFor, BindingProp } from '../../core/blocks/BlockDefinition'
 import type { FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import {
@@ -99,8 +99,9 @@ export class CardBlock extends BasicBlock {
 
   // Bindbare Stellen (Kap. 5.2, Bedienlogik 3): Klick auf die Stelle bindet
   // sie an ein Feld der Datenquelle in Reichweite (Kanban). Klarnamen für
-  // den Feld-Picker; die Bindung liegt in `<prop>Field` (siehe defaultProps).
-  static readonly bindableSpots: BindableSpot[] = [
+  // den Feld-Picker; die Bindung liegt in `<prop>Field` (siehe defaultProps,
+  // typgeprüft über die Bindungs-Konvention, A5).
+  static readonly bindableSpots: BindableSpotsFor<typeof CardBlock.defaultProps> = [
     { prop: 'time', label: 'Zeit' },
     { prop: 'date', label: 'Datum' },
     { prop: 'avatar', label: 'Avatar' },
@@ -274,7 +275,7 @@ export class CardBlock extends BasicBlock {
       class=${klass}
       data-ff-editable
       data-ff-spot=${prop}
-      ?data-ff-bound=${this[`${prop}Field`] !== ''}
+      ?data-ff-bound=${this[`${prop}Field` satisfies BindingProp<TextSpotProp>] !== ''}
       @dblclick=${(e: MouseEvent) => this.inlineEdit(e, prop)}
     >${this[prop]}</span>`
   }

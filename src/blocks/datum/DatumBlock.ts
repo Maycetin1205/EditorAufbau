@@ -8,7 +8,7 @@
 import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { BindableSpot } from '../../core/blocks/BlockDefinition'
+import type { BindableSpotsFor, BindingRouteFor } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { BasicBlock } from '../base/BasicBlock'
 import { connectField, disconnectField } from '../formfeld/feldRuntime'
@@ -20,8 +20,9 @@ export class DatumBlock extends BasicBlock {
   static readonly displayName = 'Datum'
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsDataSource = true
-  static readonly bindingRoute = { fieldProp: 'valueField' }
-  static readonly bindableSpots: BindableSpot[] = [{ prop: 'value', label: 'Wert' }]
+  // Typgeprüft gegen die eigenen defaultProps (Bindungs-Konvention, A5).
+  static readonly bindingRoute: BindingRouteFor<typeof DatumBlock.defaultProps> = { fieldProp: 'valueField' }
+  static readonly bindableSpots: BindableSpotsFor<typeof DatumBlock.defaultProps> = [{ prop: 'value', label: 'Wert' }]
   static readonly defaultProps = {
     zeigt: 'date',
     source: '',

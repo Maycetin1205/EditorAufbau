@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import type { BindableSpot } from '../../core/blocks/BlockDefinition'
+import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { DataSource } from '../../core/data/dataSources'
 import type { Editor } from '../../state/Editor'
@@ -102,13 +102,13 @@ export function useLitElement({
     // statischen Text ohne Markierung; die Bindung selbst bleibt gespeichert
     // und lebt wieder auf, sobald die Quelle zurückkommt.
     for (const spot of bindableSpots) {
-      const code = block.props[`${spot.prop}Field`]
+      const code = block.props[bindingProp(spot.prop)]
       if (typeof code !== 'string' || code === '') continue
       const field = dataSource?.fields.find((f) => f.code === code)
       if (field) {
         elAny[spot.prop] = field.label
       } else {
-        elAny[`${spot.prop}Field`] = ''
+        elAny[bindingProp(spot.prop)] = ''
       }
     }
     elAny.editable = !!selected
