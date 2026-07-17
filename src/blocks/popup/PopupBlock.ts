@@ -31,6 +31,11 @@ function px(v: unknown, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback
 }
 
+// Die Fenster-Grenze „Fläche minus Rand": gilt WÖRTLICH gleich in der Maske
+// (max-width/height unten) und am Editor-Anfasser (PopupSeite) — EINE
+// Konstante statt zweier 24er (P-C 2026-07-17, WYSIWYG-Drift-Gefahr).
+export const POPUP_RAND = 24
+
 export class PopupBlock extends BasicBlock {
   static readonly blockType = 'popup'
   static readonly tagName = 'ff-popup'
@@ -90,8 +95,8 @@ export class PopupBlock extends BasicBlock {
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        max-width: calc(100% - 24px);
-        max-height: calc(100% - 24px);
+        max-width: calc(100% - ${POPUP_RAND}px);
+        max-height: calc(100% - ${POPUP_RAND}px);
         background: var(--se-panel);
         border: 1px solid var(--se-line);
         border-radius: var(--se-r-lg);

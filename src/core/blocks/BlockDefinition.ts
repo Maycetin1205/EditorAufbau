@@ -41,9 +41,9 @@ export interface BindableSpot {
 // Browser zum kleingeschriebenen Attribut `<prop>field`. Alle Leser gehen
 // über diese Typen/Helfer statt eigener String-Bastelei:
 //   - Editor: bindingProp() in useLitElement/useBindingPicker/BlockHost.
-//   - Laufzeit: seRuntime/feldRuntime verankern ihre Attributnamen per
-//     `satisfies BindingAttr` (nur Typprüfung — das Runtime-Bündel und
-//     damit der Export bleiben Byte-identisch).
+//   - Laufzeit: seRuntime/feldRuntime bauen ihre Attributnamen über
+//     bindingAttr() (P-C 2026-07-17 — vorher nur Typ-Anker per satisfies;
+//     seither reist diese Funktion im Runtime-Bündel mit).
 //   - Bausteine: bindableSpots/bindingRoute sind über BindableSpotsFor/
 //     BindingRouteFor gegen die eigenen defaultProps geprüft.
 
@@ -57,6 +57,12 @@ export type BindingAttr = `${string}field`
 // Die EINE Stelle, die den Bindungs-Prop-Namen baut.
 export function bindingProp<P extends string>(prop: P): BindingProp<P> {
   return `${prop}Field`
+}
+
+// Die EINE Stelle, die den Bindungs-Attributnamen baut (Laufzeit liest
+// Attribute, nicht Props — HTML normalisiert `valueField` zu `valuefield`).
+export function bindingAttr(prop: string): BindingAttr {
+  return `${prop.toLowerCase()}field`
 }
 
 // Typgeprüfte bindableSpots: eine Stelle ist nur deklarierbar, wenn ihre

@@ -7,6 +7,7 @@
 // unter dem Zeiger).
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { POPUP_RAND } from '../../blocks/popup/PopupBlock'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
@@ -46,10 +47,11 @@ export function PopupSeite({ popupId }: { popupId: string }) {
   const selected = ed.selectedId === node.id
   const breite = popupZahl(node.props.breite, 520)
   const hoehe = popupZahl(node.props.hoehe, 380)
-  // EXAKT die Fenster-Regel des Bausteins (max: Fläche − 24px, ohne Boden) —
-  // nur ein kleiner Greif-Mindestwert, damit die Anfasser nie zusammenfallen.
-  const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - 24)) : breite
-  const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - 24)) : hoehe
+  // EXAKT die Fenster-Regel des Bausteins (max: Fläche − POPUP_RAND, dieselbe
+  // Konstante wie im PopupBlock-CSS — P-C) — nur ein kleiner Greif-
+  // Mindestwert, damit die Anfasser nie zusammenfallen.
+  const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - POPUP_RAND)) : breite
+  const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - POPUP_RAND)) : hoehe
 
   const startResize = (
     e: ReactPointerEvent<HTMLDivElement>,

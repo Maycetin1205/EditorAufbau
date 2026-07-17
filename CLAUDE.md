@@ -62,6 +62,10 @@ add_repo an die Session hängen).
    Sicherheitsnetz = fünf Wächter (export / seRuntime / persistence /
    e2e kanban-data / Export-Referenzabzug, fünfter per Nutzer-Go
    2026-07-17) — Nutzer-Entscheidung, nicht ohne Absprache aufblähen.
+   **Test-Bremse (Nutzer-Entscheidung 2026-07-17, Variante B bei P-C):**
+   neue Browser-Tests nur, wenn ein Paket Export/Laufzeit berührt — und
+   dann EIN schlanker Kreislauf-Test statt vieler Einzeltests; reine
+   Editor-Bedienpakete (z. B. Zieh-Mechanik) bekommen KEINE neuen e2e.
    Der Referenzabzug (`src/export/referenzabzug.test.ts` + Referenz in
    `src/export/referenz/`) vergleicht den Export einer festen
    Referenzmaske Byte für Byte: Umbauten müssen ihn grün lassen; ändert
@@ -258,13 +262,17 @@ add_repo an die Session hängen).
      Seite blockt; Popup-NAMEN MÜSSEN EINDEUTIG sein (Laufzeit-Identität,
      eigener Preflight-Block mit Klartext). StepForm: Popup-Auswahl in
      Klarnamen; Schrittzeile zeigt „Popup öffnen — <Name>".
-     (P-C) Export-e2e + Wächter + SE-Echttest. HUCKEPACK (vereinbart
-     2026-07-17, derselbe Echttest deckt alles, beides ändert das
-     Runtime-Bündel): bindingAttr() aus der Bindungs-Konvention WIRKLICH
-     in der Laufzeit benutzen (seRuntime/feldRuntime — heute nur
-     Typ-Anker aus A5) + die Popup-Regel „Fläche − 24px" als EINE
-     geteilte Konstante (steht heute doppelt: PopupBlock-CSS und
-     PopupSeite-Anfasser — WYSIWYG-Drift-Gefahr).
+     (P-C) ✅ implementiert (2026-07-17) — SE-ECHTTEST DURCH DEN NUTZER
+     STEHT AUS: Export-e2e `e2e/popup-data.spec.ts` = bewusst EIN
+     Kreislauf-Test (Variante B: zu → Kette öffnet → Kette schließt →
+     X schließt; Ketten reisen im HTML — connectClickAktionen verdrahtet
+     nur Knöpfe, die data-ff-aktionen beim Anschließen SCHON tragen).
+     HUCKEPACK erledigt: bindingAttr() ist jetzt DIE eine Stelle der
+     Attribut-Form (BlockDefinition) und läuft echt in seRuntime/
+     feldRuntime; POPUP_RAND=24 (PopupBlock) ist die EINE Konstante für
+     „Fläche − Rand" in Masken-CSS UND PopupSeite-Anfasser. Bündel neu
+     gebaut, Referenzabzug erneuert — belegt: NUR Script-Inhalte
+     geändert, Masken-Markup Byte-identisch.
   Danach: Tabelle, Verknüpfungen/Selektion, Quellen-Arten-Registry
   (+ ERP-API/MEMTAB nach Beleg), Steuerung-Neuschnitt nach Demo-Vorlage.
 - **Merkliste:** Tabellen-Spalten aus verschiedenen Quellen;

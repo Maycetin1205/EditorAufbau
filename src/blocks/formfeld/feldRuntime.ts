@@ -5,7 +5,7 @@
 // Zeilen kommen aus der SoftEngine-Schicht; der konkrete Baustein bleibt ein
 // normales Web Component. Editor-Elemente melden sich nie an.
 
-import type { BindingAttr } from '../../core/blocks/BlockDefinition'
+import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
 import { runEvent } from '../shared/seAktionen'
@@ -42,10 +42,10 @@ function currentValue(field: RuntimeFieldElement): string {
 
 // Exportiert für den gezielten Runtime-Test. Attribute sind absichtlich
 // lowercase: HTML normalisiert valueField beim Export zu valuefield
-// (Attribut-Form der Bindungs-Konvention, A5 — satisfies = nur Typanker).
+// (Attribut-Form der Bindungs-Konvention — bindingAttr = die eine Stelle).
 export function hydrateField(field: RuntimeFieldElement): void {
   const sourceId = field.getAttribute('source') ?? ''
-  const code = field.getAttribute('valuefield' satisfies BindingAttr) ?? ''
+  const code = field.getAttribute(bindingAttr('value')) ?? ''
   if (sourceId === '' || code === '') {
     fieldData.delete(field)
     return

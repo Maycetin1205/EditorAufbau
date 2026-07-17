@@ -16,7 +16,7 @@
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle
 // bleibt die exportierte Maske statisch (WYSIWYG wie bisher) — nichts bricht.
 
-import type { BindingAttr } from '../../core/blocks/BlockDefinition'
+import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
@@ -146,8 +146,8 @@ function hydrate(board: HTMLElement): void {
     // den statischen Text der Vorlage. Property-Zuweisung NACH dem Einhängen
     // (Element ist dann sicher upgegradet, Lit übernimmt das Rendern).
     for (const spot of spots) {
-      // Attribut-Form der Bindungs-Konvention (A5, satisfies = nur Typanker).
-      const code = card.getAttribute(`${spot.prop.toLowerCase()}field` satisfies BindingAttr) ?? ''
+      // Attribut-Form der Bindungs-Konvention (bindingAttr = die eine Stelle).
+      const code = card.getAttribute(bindingAttr(spot.prop)) ?? ''
       if (code !== '') {
         (card as unknown as Record<string, unknown>)[spot.prop] = getField(row, code)
       }
