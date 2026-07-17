@@ -294,7 +294,14 @@ SE-Echttest (Nutzer, 2026-07-16).
   Fächer daneben: treeOps/history/persistence/migrations/templateRules —
   Aufräumen A1 2026-07-16, Plan in `Aufräum.md`; A2: KEINE Weltvariable
   mehr, die eine Instanz entsteht in `src/app/providers.tsx` und reist
-  über EditorProvider/EditorContext; A3–A7 offen, erst nach Nutzer-Go) ·
+  über EditorProvider/EditorContext; A3–A7 ERLEDIGT 2026-07-17: Canvas/
+  BlockHost in Handgriffe (CanvasNode/dndState/SeitenLeiste/PopupSeite +
+  useBindingPicker/useBlockResize), useLitElement = die EINE React↔Lit-
+  Übergabestelle, Bindungs-Konvention typgeprüft in BlockDefinition
+  (bindingProp/BindableSpotsFor — Laufzeit nur Typ-Anker, Bündel
+  unverändert), `src/export/serializer.ts` = die eine Zeichen-Regel-
+  Stelle, Kommentar-Historie in `docs/decisions/`; Export bei A5–A7
+  nachweislich Byte-identisch) ·
   Registry-Konzepte: `src/core/blocks/` · Bausteine: `src/blocks/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·
   Runtime-Bündel: `npm run build:runtime` (Veralten-Wächter im export.test!)

@@ -78,18 +78,32 @@ Schritte:
 liefert NULL Treffer; Editor im Browser kurz durchgeklickt (bauen,
 Undo, Seite wechseln, speichern/neu laden).
 
-## Danach — erst NACH Rücksprache (A3–A7, grob)
+## A3–A7 — ERLEDIGT 2026-07-17 (Nutzer-Go im Auftrag, je Schritt ein Commit)
 
-- **A3** BlockHost (489 Z.) + Canvas (463 Z.) in Handgriffe teilen:
-  Element-Brücke, Bindungs-Picker, Größenziehen als eigene Hooks/
-  Komponenten; Seiten-Leiste + Popup-Seite aus Canvas.tsx herauslösen.
-- **A4** React↔Lit-Übergabestelle als ein Adapter (erzeugen/Props/
-  aufräumen an genau einer Stelle).
-- **A5** `…Field`-Bindungs-Konvention als typgeprüfte Registry-Angabe;
-  Editor/Laufzeit/Export lesen DIESELBE Definition; Export Byte-identisch.
-- **A6** Exporter auf einen Serialisierer (ASCII/LF/Reihenfolge an genau
-  einer Stelle); Byte-identisch, sonst SE-Echttest.
-- **A7** Historische Kommentar-Passagen nach `docs/decisions/`.
+- **A3 ✅** BlockHost + Canvas in Handgriffe geteilt: Knoten-Rekursion
+  (`CanvasNode.tsx`), Dnd-Zustand (`dndState.ts`), Seiten-Reiter
+  (`SeitenLeiste.tsx`), Popup-Seite (`PopupSeite.tsx`); Bindungs-Picker
+  (`useBindingPicker.ts`) + Größenziehen (`useBlockResize.ts`) als Hooks.
+  Canvas.tsx re-exportiert `DndContext`/`DropTarget` (Außen-Vertrag).
+- **A4 ✅** React↔Lit-Übergabestelle als EIN Adapter
+  (`useLitElement.ts`): Erzeugen/Props/Aufräumen an genau einer Stelle,
+  wörtlich aus BlockHost gezogen.
+- **A5 ✅** Bindungs-Konvention als typgeprüfte Registry-Angabe in
+  `BlockDefinition.ts` (BindingProp/BindingAttr/bindingProp +
+  BindableSpotsFor/BindingRouteFor). Editor liest `bindingProp()`;
+  Laufzeit (seRuntime/feldRuntime) und Bausteine verankern per
+  `satisfies`/Annotation — NUR Typen. Beweis: Runtime-Bündel nach
+  Rebuild diff-frei UND Export-Referenzabzug Byte-identisch.
+- **A6 ✅** Zeichen-Serialisierung (ASCII-Escaping, Skript-Schutz,
+  CSS-Bereinigung) wörtlich in `src/export/serializer.ts`; Markup +
+  Reihenfolge bleiben in exportMask. Beweis: Export Byte-identisch
+  (Referenzabzug vorher/nachher).
+- **A7 ✅** Historische Kommentar-Passagen nach `docs/decisions/`
+  (2026-07-10-editor-hilfen, 2026-07-14-kahlschlag-bausteine,
+  2026-07-15-kanban-schreibweg-und-schicht,
+  2026-07-16-karte-empfang-anatomie); im Code bleiben geltende Verträge
+  + Verweis. Migrations-Kommentare bewusst unangetastet (dokumentierte
+  Daten-Übergänge). Bündel + Export weiterhin Byte-identisch.
 
 ## Prüf-Checkliste je Schritt (abhaken)
 
