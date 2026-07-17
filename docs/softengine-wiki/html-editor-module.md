@@ -157,11 +157,10 @@ Merklisten-Punkt **Tabelle**: es gibt ein natives `SETabelle`.
 - **Passung zu unseren Bausteinen:** Kanban/Karte/Popup haben kein natives
   Gegenstück; nur ein Teil unserer Bibliothek überlappt mit den SE-Modulen.
 
-**Merkliste / Entscheidung (nicht bauen, Regel 10):**
-
-- Vor dem **Tabellen-Paket** bewusst entscheiden: eigene Tabelle-Web-Component
-  **oder** natives `SETabelle` einbetten. Das ist eine Architektur-Weiche mit
-  Export-Berührung → gehört besprochen + evtl. SE-Echttest, bevor gebaut wird.
+**ENTSCHIEDEN (Nutzer, 2026-07-17): eigene Tabelle-Web-Component.**
+Zur SETabelle ist im SE-Wiki nichts auffindbar — ohne Originalquelle gibt es
+nichts einzubetten (Regel 5, nie raten). Die Weiche ist damit zu; sollte je
+eine echte SETabelle-Doku auftauchen, kann man neu bewerten.
 - Der Lebenszyklus `InitialisiereSchnittstelle()` / `InitialisiereDatenBasis()`
   / `Reset…` ist zu merken, falls wir je ein SE-Modul einbetten.
 
