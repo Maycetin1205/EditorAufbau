@@ -1,0 +1,17 @@
+{
+  "SEFILELOOP": [
+    {
+      "INDEX_NR": 0,
+      "ALIAS": "Terminplaner",
+      "ID": "IDBID0004",
+      "FELDER": "*"
+    },
+    {
+      "INDEX_NR": 0,
+      "ALIAS": "Adre\u00DFstamm",
+      "ID": "ADR",
+      "FELDER": "10_30"
+    }
+  ],
+  "ERPAPICALL": []
+}

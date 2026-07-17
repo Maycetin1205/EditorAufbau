@@ -59,8 +59,14 @@ add_repo an die Session hängen).
    Branch, an dem der jeweils andere Agent laut Auftrag arbeitet, ist tabu.
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
    `npx eslint src` + `npm test` + `npx playwright test`), nie zwischendurch.
-   Sicherheitsnetz = vier Wächter (export / seRuntime / persistence /
-   e2e kanban-data) — Nutzer-Entscheidung, nicht ohne Absprache aufblähen.
+   Sicherheitsnetz = fünf Wächter (export / seRuntime / persistence /
+   e2e kanban-data / Export-Referenzabzug, fünfter per Nutzer-Go
+   2026-07-17) — Nutzer-Entscheidung, nicht ohne Absprache aufblähen.
+   Der Referenzabzug (`src/export/referenzabzug.test.ts` + Referenz in
+   `src/export/referenz/`) vergleicht den Export einer festen
+   Referenzmaske Byte für Byte: Umbauten müssen ihn grün lassen; ändert
+   ein Paket den Export ABSICHTLICH, Referenz mit `npx vitest run -u`
+   erneuern — der Datei-Diff macht die Maskenänderung im Commit sichtbar.
    Berührt ein Paket den Export → SE-Echttest durch den Nutzer.
 10. **Nichts auf Verdacht bauen** — Gemeinsames erst herausziehen bzw.
     Neues erst bauen, wenn ein echter zweiter Fall es erzwingt.
@@ -273,13 +279,11 @@ add_repo an die Session hängen).
   Browser-Speicher + Export); gemeinsame Zieh-Mechanik für Block- UND
   Popup-Anfasser (vereinbart 2026-07-17 als eigenes Editor-Paket,
   kein Export-Einfluss — wartet auf „go"); Projektkarte
-  (public/project-map.html) veraltet still — Entscheidung offen:
-  `npm run docs:map` fest in die Commit-Routine oder docs:map:check als
-  fünfter Wächter (Regel 9); Export-Referenzabzug (das Byte-Beweis-
-  Werkzeug aus A5/A6: Referenzmaske rein, HTML/SEvariablen byte-genau
-  vergleichen) als festes Skript für künftige Umbauten — Entscheidung
-  offen (Sicherheitsnetz); Markup-Bauen (nodeToHtml/styleAttr) aus
+  (public/project-map.html) veraltet still — auf Nutzer-Wunsch SPÄTER
+  bereden (2026-07-17); Markup-Bauen (nodeToHtml/styleAttr) aus
   exportMask erst MIT dem Tabellen-Baustein herausziehen.
+  (Export-Referenzabzug: ERLEDIGT 2026-07-17 als fünfter Wächter, s.
+  Regel 9.)
 
 ## Zusammenführung ERLEDIGT (2026-07-16, Nutzer-Go)
 
