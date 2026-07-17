@@ -262,8 +262,9 @@ add_repo an die Session hängen).
      Seite blockt; Popup-NAMEN MÜSSEN EINDEUTIG sein (Laufzeit-Identität,
      eigener Preflight-Block mit Klartext). StepForm: Popup-Auswahl in
      Klarnamen; Schrittzeile zeigt „Popup öffnen — <Name>".
-     (P-C) ✅ implementiert (2026-07-17) — SE-ECHTTEST DURCH DEN NUTZER
-     STEHT AUS: Export-e2e `e2e/popup-data.spec.ts` = bewusst EIN
+     (P-C) ✅ ERLEDIGT inkl. SE-ECHTTEST BESTANDEN (Nutzer, 2026-07-17 —
+     Popup läuft in SoftEngine; damit ist Kapitel 5/Popup komplett zu):
+     Export-e2e `e2e/popup-data.spec.ts` = bewusst EIN
      Kreislauf-Test (Variante B: zu → Kette öffnet → Kette schließt →
      X schließt; Ketten reisen im HTML — connectClickAktionen verdrahtet
      nur Knöpfe, die data-ff-aktionen beim Anschließen SCHON tragen).
@@ -317,7 +318,8 @@ Frühere Vorfälle als Lehre: 2026-07-15 arbeiteten Claude und Codex parallel
 auf demselben Branch (Verstoß gegen Regel 8), danach zwei Tage auf zwei
 divergierenden Linien. Beides ist repariert; nichts ging verloren.
 Abnahmen: Schritt 3a/3b + Zentrale (Nutzer, 2026-07-16), Schritt 4 inkl.
-SE-Echttest (Nutzer, 2026-07-16).
+SE-Echttest (Nutzer, 2026-07-16), Popup P-A–P-C inkl. SE-Echttest
+(Nutzer, 2026-07-17).
 
 ## Wichtige Stellen
 
