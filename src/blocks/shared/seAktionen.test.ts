@@ -5,7 +5,7 @@
 // je ein PUT über die gewählte Vorlage, relId ohne IDB-Präfix.
 
 import { afterEach, describe, expect, it } from 'vitest'
-import { applyPopupStep, applyQuelleSpeichern } from './seAktionen'
+import { applyCreateRecord, applyPopupStep, applyQuelleSpeichern } from './seAktionen'
 import { geaenderteFelder, setField } from '../../softengine/data'
 import { resolveActionParam } from '../../softengine/relations'
 import type { ActionParamBinding } from '../../core/data/aktionen'
@@ -120,6 +120,27 @@ describe('Quelle speichern (2026-07-17)', () => {
       { dataSourceId: 'weg', relationId: 'rel-put', pindex: { source: 'fixed', value: '7' } },
       { context: {}, previousResult: '' },
     )
+    expect(gesendet).toEqual([])
+  })
+})
+
+describe('Neuen Satz anlegen (CREATE_RECORD, 2026-07-20)', () => {
+  const g = globalThis as Record<string, unknown>
+  afterEach(() => {
+    delete g.FF_RELATIONS
+    delete g.FF_DATA_SOURCES
+    delete g.SEDATA
+    delete g.basisHTML_SND_MSG
+  })
+
+  it('ohne auflösbare Vorlagen/Quelle: stiller No-op (kein GET, kein PUT)', async () => {
+    const gesendet: unknown[] = []
+    g.FF_RELATIONS = []
+    g.FF_DATA_SOURCES = []
+    g.SEDATA = { Daten: { SEFileLoop: [] } }
+    g.basisHTML_SND_MSG = (verb: string, obj: unknown) => { gesendet.push([verb, obj]) }
+
+    await applyCreateRecord({ dataSourceId: 'q1', getRelationId: 'rel-get', relationId: 'rel-put' })
     expect(gesendet).toEqual([])
   })
 })

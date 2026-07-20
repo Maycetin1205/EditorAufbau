@@ -260,12 +260,18 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     step?.type === 'POPUP_OPEN' || step?.type === 'POPUP_CLOSE' ? step.popupId : '',
   )
   const [relationId, setRelationId] = useState(
-    step?.type === 'RELATION' || step?.type === 'QUELLE_SPEICHERN' ? step.relationId : '',
+    step?.type === 'RELATION' || step?.type === 'QUELLE_SPEICHERN' || step?.type === 'CREATE_RECORD'
+      ? step.relationId
+      : '',
+  )
+  // Nur „Neuen Satz anlegen": die Hol-Vorlage (GET), die den Index holt.
+  const [getRelationId, setGetRelationId] = useState(
+    step?.type === 'CREATE_RECORD' ? step.getRelationId : '',
   )
   // Quelle speichern: Quelle + Herkunft des PINDEX (Vorbelegung wie
   // createStep — der gelebte Fluss ist GET davor -> vorheriges Ergebnis).
   const [dataSourceId, setDataSourceId] = useState(
-    step?.type === 'QUELLE_SPEICHERN' ? step.dataSourceId : '',
+    step?.type === 'QUELLE_SPEICHERN' || step?.type === 'CREATE_RECORD' ? step.dataSourceId : '',
   )
   const [pindexBinding, setPindexBinding] = useState<ActionParamBinding>(
     step?.type === 'QUELLE_SPEICHERN'
@@ -294,6 +300,10 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     ? relations.list.filter((entry) => entry.verb !== 'GET_RELATION')
     : relations.list
   const sichtbareRelationen = vorlagenBestand.filter((entry) => relationMatchesSearch(entry, suche))
+  // „Neuen Satz anlegen": Hol-Vorlagen (GET) und Schreib-Vorlagen (PUT/PUTADD)
+  // getrennt als einfache Auswahllisten — kurze Bestände, keine Suche nötig.
+  const getVorlagen = relations.list.filter((entry) => entry.verb === 'GET_RELATION')
+  const putVorlagen = relations.list.filter((entry) => entry.verb !== 'GET_RELATION')
   const defaultParams = relation ? defaultRelationParams(relation) : []
   const bindingFor = (index: number): ActionParamBinding =>
     relationParams[index] ?? defaultParams[index] ?? { source: 'fixed', value: '' }
@@ -337,6 +347,9 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
         relationId,
         pindex: { ...pindexBinding, value: pindexBinding.value.trim() },
       }
+    }
+    if (typ === 'CREATE_RECORD') {
+      return { id, type: 'CREATE_RECORD', resultKey: '', dataSourceId, getRelationId, relationId }
     }
     const normalizedParams = relation
       ? relation.params.map((_, index) => {
@@ -412,7 +425,10 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
 
         {typ === 'QUELLE_SPEICHERN' && (
           <>
-            <Field label="Quelle">
+            <Field
+              label="Datenquelle deiner Felder"
+              description="Alle geänderten Felder dieser Quelle werden gespeichert — keine zusätzliche Quelle, nur deine eigenen Felder."
+            >
               {(field) => (
                 <select
                   {...field}
@@ -430,7 +446,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
               )}
             </Field>
             <RelationAuswahl
-              label="Schreib-Vorlage"
+              label="Schreib-Vorlage (PUT, z. B. 174)"
               eintraege={sichtbareRelationen}
               relationId={relationId}
               suche={suche}
@@ -439,16 +455,81 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
             />
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <span>Parameter</span><span>Wert</span><span>Quelle</span><span />
+                <span>Parameter</span><span>Wert</span><span>Herkunft</span><span />
               </div>
               <BindingRow
-                label="PINDEX"
+                label="Ziel-Satz (Index)"
                 binding={pindexBinding}
                 dataSources={dataSources.list}
                 schritte={ergebnisSchritte}
                 onChange={setPindexBinding}
               />
             </div>
+          </>
+        )}
+
+        {typ === 'CREATE_RECORD' && (
+          <>
+            <Field
+              label="Datenquelle"
+              description="In dieser Tabelle wird ein neuer Satz angelegt; alle ausgefüllten Felder dieser Quelle werden hineingeschrieben."
+            >
+              {(field) => (
+                <select
+                  {...field}
+                  value={dataSourceId}
+                  onChange={(e) => setDataSourceId(e.target.value)}
+                  className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
+                >
+                  <option value="">
+                    {dataSources.list.length === 0 ? '(keine Datenquelle vorhanden)' : '— wählen —'}
+                  </option>
+                  {dataSources.list.map((source) => (
+                    <option key={source.id} value={source.id}>{source.name}</option>
+                  ))}
+                </select>
+              )}
+            </Field>
+            <Field
+              label="Hol-Vorlage (holt den neuen Satz)"
+              description="Die GET-Vorlage, die eine leere Satz-Nummer zurückgibt (z. B. GET 640)."
+            >
+              {(field) => (
+                <select
+                  {...field}
+                  value={getRelationId}
+                  onChange={(e) => setGetRelationId(e.target.value)}
+                  className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
+                >
+                  <option value="">
+                    {getVorlagen.length === 0 ? '(keine GET-Vorlage vorhanden)' : '— wählen —'}
+                  </option>
+                  {getVorlagen.map((entry) => (
+                    <option key={entry.id} value={entry.id}>{entry.name}</option>
+                  ))}
+                </select>
+              )}
+            </Field>
+            <Field
+              label="Schreib-Vorlage (schreibt die Felder)"
+              description="Die PUT-Vorlage, mit der die Felder geschrieben werden (z. B. PUT 174)."
+            >
+              {(field) => (
+                <select
+                  {...field}
+                  value={relationId}
+                  onChange={(e) => setRelationId(e.target.value)}
+                  className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
+                >
+                  <option value="">
+                    {putVorlagen.length === 0 ? '(keine Schreib-Vorlage vorhanden)' : '— wählen —'}
+                  </option>
+                  {putVorlagen.map((entry) => (
+                    <option key={entry.id} value={entry.id}>{entry.name}</option>
+                  ))}
+                </select>
+              )}
+            </Field>
           </>
         )}
 
@@ -466,7 +547,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
             {relation && (
               <div className="flex flex-col gap-2">
                 <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  <span>Parameter</span><span>Wert</span><span>Quelle</span><span />
+                  <span>Parameter</span><span>Wert</span><span>Herkunft</span><span />
                 </div>
                 {relation.params.map((raw, index) => (
                   <BindingRow
@@ -526,7 +607,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
           </>
         )}
 
-        {zeigeFehler && problem && (typ === 'RELATION' || typ === 'QUELLE_SPEICHERN') && (
+        {zeigeFehler && problem && (typ === 'RELATION' || typ === 'QUELLE_SPEICHERN' || typ === 'CREATE_RECORD') && (
           <p className="text-xs text-destructive">{problem}</p>
         )}
 
