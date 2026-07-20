@@ -153,56 +153,6 @@ describe('exportMask', () => {
       r.detail.includes('Schreib-Vorlage'))).toBe(true)
   })
 
-  it('Neuen-Satz-anlegen-Schritt: Quelle + BEIDE Vorlagen reisen mit, Verben werden geprüft (2026-07-20)', () => {
-    const schritt = {
-      id: 's1', type: 'CREATE_RECORD' as const, resultKey: '',
-      dataSourceId: 'termine', getRelationId: 'rel-get', relationId: 'rel-put',
-    }
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
-      a: {
-        id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
-        events: { onClick: [schritt] },
-      },
-    }
-    const sources = [{
-      id: 'termine', name: 'Termine', kind: 'idb' as const,
-      idbId: 'IDBID0001', indexField: '0_10', fields: [],
-    }]
-    const relations = [
-      {
-        id: 'rel-get', name: 'Neuer Satz', verb: 'GET_RELATION' as const, nr: '0640',
-        params: ['ID0001'], allowExtraParams: false,
-      },
-      {
-        id: 'rel-put', name: 'Schreiben', verb: 'PUT_RELATION' as const, nr: '0174',
-        params: ['{FELD_POS}', '{FELD_LEN}', 'L', '{PINDEX}', '{RELID}', '{VALUE}'],
-        allowExtraParams: false,
-      },
-    ]
-
-    const { html } = exportMask(tree, 'Maske', sources, relations)
-    // Der Schritt reist vollständig (stabile Vorlagen-ids, keine Editor-id).
-    const attr = /data-ff-aktionen="([^"]*)"/.exec(html)?.[1] ?? ''
-    expect(attr).toContain('&quot;type&quot;:&quot;CREATE_RECORD&quot;')
-    expect(attr).toContain('&quot;dataSourceId&quot;:&quot;termine&quot;')
-    expect(attr).toContain('&quot;getRelationId&quot;:&quot;rel-get&quot;')
-    expect(attr).toContain('&quot;relationId&quot;:&quot;rel-put&quot;')
-    // Quelle + BEIDE Vorlagen (Hol- und Schreib-Weg) reisen als Laufzeit-Daten.
-    expect(html).toContain('window.FF_DATA_SOURCES = [{"id":"termine"')
-    expect(html).toContain('"id":"rel-get"')
-    expect(html).toContain('"id":"rel-put"')
-    expect(preflightMask(tree, sources, relations)).toEqual([])
-
-    // Fachliche Grenzen: Hol-Vorlage MUSS GET sein, Schreib-Vorlage KEIN GET.
-    const holenKeinGet = [{ ...relations[0], verb: 'PUT_RELATION' as const }, relations[1]]
-    expect(preflightMask(tree, sources, holenKeinGet).some((r) =>
-      r.detail.includes('GET-Vorlage'))).toBe(true)
-    const schreibenIstGet = [relations[0], { ...relations[1], verb: 'GET_RELATION' as const }]
-    expect(preflightMask(tree, sources, schreibenIstGet).some((r) =>
-      r.detail.includes('Schreib-Vorlage'))).toBe(true)
-  })
-
   it('exportiert Kanban und Formularfeld mit eigenen Quellen gemeinsam', () => {
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board', 'field'] },

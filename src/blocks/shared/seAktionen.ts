@@ -45,7 +45,7 @@ import {
   getField,
   rowsFor,
 } from '../../softengine/data'
-import type { CreateRecordStep, QuelleSpeichernStep } from '../../core/data/aktionen'
+import type { QuelleSpeichernStep } from '../../core/data/aktionen'
 
 // ---------- Pure Helfer (Node-testbar, kein DOM) ----------
 
@@ -125,31 +125,6 @@ export function applyQuelleSpeichern(
   }
 }
 
-// „Neuen Satz anlegen" (Nutzer-Go 2026-07-20): holt EINEN frischen Index über
-// die GET-Vorlage (getwert = relId der Quelle — genau GET 640 im Referenz-Log
-// „Termin anlegen") und schreibt danach ALLE lokal geänderten Felder der
-// ersten Zeile auf diesen Index (Schreibweg identisch zu applyQuelleSpeichern:
-// pos/len aus dem Feldcode, relId aus der Quelle). Ohne Bridge, Vorlagen oder
-// Index passiert nichts. Der Index reist NICHT weiter — er lebt nur hier.
-export async function applyCreateRecord(
-  step: Pick<CreateRecordStep, 'dataSourceId' | 'getRelationId' | 'relationId'>,
-): Promise<void> {
-  const g = seGlobal()
-  const holen = findRuntimeRelation(g.FF_RELATIONS, step.getRelationId)
-  const schreiben = findRuntimeRelation(g.FF_RELATIONS, step.relationId)
-  const source = findRuntimeDataSource(g.FF_DATA_SOURCES, step.dataSourceId)
-  if (!holen || !schreiben || !source) return
-  const relId = relIdFuer(source.tableId)
-  // getwert = relId an der ersten Position der Vorlage (GET_RELATION[640!ID000x]);
-  // etwaige weitere Positionen bleiben leer.
-  const index = await executeRelation(holen, holen.params.map((_, i) => (i === 0 ? relId : '')))
-  if (index === '') return
-  const row = rowsFor(g.SEDATA, source.name, source.tableId)[0]
-  for (const code of geaenderteFelder(row)) {
-    sendPut(schreiben, relId, code, index, getField(row, code))
-  }
-}
-
 // ---------- Ketten-Ausfuehrung ----------
 
 // Laufende Ketten je Element (Sperre gegen erneutes Ausloesen desselben
@@ -202,11 +177,6 @@ export async function runEvent(
       }
       if (step.type === 'QUELLE_SPEICHERN') {
         applyQuelleSpeichern(step, { context: values, previousResult, stepResults })
-        stepResults.push('')
-        continue
-      }
-      if (step.type === 'CREATE_RECORD') {
-        await applyCreateRecord(step)
         stepResults.push('')
         continue
       }

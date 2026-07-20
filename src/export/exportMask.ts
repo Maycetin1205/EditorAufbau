@@ -177,7 +177,7 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
     // Baustein in FF_DATA_SOURCES (die Laufzeit löst die id dort auf).
     for (const event of getBlockDefinition(node.type)?.blockEvents ?? []) {
       for (const step of node.events?.[event.key] ?? []) {
-        if (step.type === 'QUELLE_SPEICHERN' || step.type === 'CREATE_RECORD') add(step.dataSourceId)
+        if (step.type === 'QUELLE_SPEICHERN') add(step.dataSourceId)
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))
@@ -213,8 +213,6 @@ function collectRelations(
     for (const event of def?.blockEvents ?? []) {
       for (const step of node.events?.[event.key] ?? []) {
         if (step.type === 'RELATION' || step.type === 'QUELLE_SPEICHERN') add(step.relationId)
-        // „Neuen Satz anlegen" bringt ZWEI Vorlagen mit: Hol- und Schreib-Weg.
-        if (step.type === 'CREATE_RECORD') { add(step.getRelationId); add(step.relationId) }
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))

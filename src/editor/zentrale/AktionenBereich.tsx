@@ -213,7 +213,7 @@ export function AktionenBereich() {
                         const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'
                           ? popupSeiten.find((seite) => seite.id === s.popupId)?.name
                           : undefined
-                        const quelleName = s.type === 'QUELLE_SPEICHERN' || s.type === 'CREATE_RECORD'
+                        const quelleName = s.type === 'QUELLE_SPEICHERN'
                           ? dataSources.list.find((source) => source.id === s.dataSourceId)?.name
                           : undefined
                         return (

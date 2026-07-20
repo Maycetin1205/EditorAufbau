@@ -7,7 +7,7 @@ import { unknownPlaceholders } from './relations'
 
 // ---------- Schritt-Typen ----------
 
-export type StepTypeKey = 'START_TOOL' | 'RELATION' | 'POPUP_OPEN' | 'POPUP_CLOSE' | 'QUELLE_SPEICHERN' | 'CREATE_RECORD'
+export type StepTypeKey = 'START_TOOL' | 'RELATION' | 'POPUP_OPEN' | 'POPUP_CLOSE' | 'QUELLE_SPEICHERN'
 
 export interface StepTypeSpec {
   key: StepTypeKey
@@ -21,12 +21,8 @@ export const STEP_TYPES: readonly StepTypeSpec[] = [
   // Popup-Schritte (P-B) sind KEINE SE-Fachbegriffe — sie bekommen Klarnamen.
   { key: 'POPUP_OPEN', name: 'Popup öffnen' },
   { key: 'POPUP_CLOSE', name: 'Popup schließen' },
-  // Sammel-Schreiben: Klarname. Umbenannt 2026-07-20 (Nutzer-Feedback
-  // „Quelle/Schreib-Vorlage verwirrt") von „Quelle speichern".
-  { key: 'QUELLE_SPEICHERN', name: 'Felder speichern' },
-  // Neuen Satz anlegen (Nutzer-Go 2026-07-20): Index holen + alle Felder
-  // schreiben in EINEM Schritt (Referenz-Log „Termin anlegen"). Klarname.
-  { key: 'CREATE_RECORD', name: 'Neuen Satz anlegen' },
+  // Sammel-Schreiben (Nutzer-Go 2026-07-17): ebenfalls Klarname.
+  { key: 'QUELLE_SPEICHERN', name: 'Quelle speichern' },
 ]
 
 export function stepTypeName(typeKey: string): string {
@@ -155,23 +151,7 @@ export interface QuelleSpeichernStep extends ActionStepBase {
   pindex: ActionParamBinding
 }
 
-// „Neuen Satz anlegen" (Nutzer-Go 2026-07-20): EIN Schritt für das häufigste
-// Muster aus dem Referenz-Log „Termin anlegen" — einen frischen Satz-Index
-// holen (getRelationId = GET-Vorlage) und ALLE lokal ausgefüllten Felder der
-// Quelle darauf schreiben (relationId = Schreib-Vorlage, PUT/PUTADD). Der
-// Bediener wählt nur die Datenquelle + einmal die zwei Vorlagen — kein Feld-
-// für-Feld, kein Kopieren. GET/PUT-Nummern sind installations-DATEN (Regel 5),
-// nicht fest im Code. Der geholte Index lebt nur in diesem Schritt (reist
-// NICHT als Ergebnis durch die Kette). pos/len je Feld stecken im Feldcode,
-// die relId in der Quelle — Schreibweg wie „Felder speichern".
-export interface CreateRecordStep extends ActionStepBase {
-  type: 'CREATE_RECORD'
-  dataSourceId: string
-  getRelationId: string
-  relationId: string
-}
-
-export type ActionStep = StartToolStep | RelationStep | PopupStep | QuelleSpeichernStep | CreateRecordStep
+export type ActionStep = StartToolStep | RelationStep | PopupStep | QuelleSpeichernStep
 export type BlockEventsMap = Record<string, ActionStep[]>
 
 export function createStep(typeKey: StepTypeKey): ActionStep {
@@ -192,9 +172,6 @@ export function createStep(typeKey: StepTypeKey): ActionStep {
       relationId: '',
       pindex: { source: 'previous_result', value: '' },
     }
-  }
-  if (typeKey === 'CREATE_RECORD') {
-    return { ...base, type: 'CREATE_RECORD', dataSourceId: '', getRelationId: '', relationId: '' }
   }
   return { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
 }
@@ -237,7 +214,6 @@ export type RuntimeStep =
   | Omit<StartToolStep, 'id'>
   | Omit<RelationStep, 'id'>
   | Omit<QuelleSpeichernStep, 'id'>
-  | Omit<CreateRecordStep, 'id'>
   | RuntimePopupStep
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -294,18 +270,6 @@ function stepFields(raw: unknown): RuntimeStep | null {
       dataSourceId: raw.dataSourceId,
       relationId: raw.relationId,
       pindex,
-    }
-  }
-  if (raw.type === 'CREATE_RECORD') {
-    if (typeof raw.dataSourceId !== 'string'
-      || typeof raw.getRelationId !== 'string'
-      || typeof raw.relationId !== 'string') return null
-    return {
-      type: 'CREATE_RECORD',
-      resultKey: raw.resultKey,
-      dataSourceId: raw.dataSourceId,
-      getRelationId: raw.getRelationId,
-      relationId: raw.relationId,
     }
   }
   if (raw.type === 'RELATION') {
@@ -405,16 +369,6 @@ function withoutEditorId(
       dataSourceId: step.dataSourceId,
       relationId: step.relationId,
       pindex: binding(step.pindex),
-    }
-  }
-  if (step.type === 'CREATE_RECORD') {
-    // Alles stabile VORLAGEN-ids (keine Editor-ids): reisen unverändert.
-    return {
-      type: step.type,
-      resultKey: step.resultKey,
-      dataSourceId: step.dataSourceId,
-      getRelationId: step.getRelationId,
-      relationId: step.relationId,
     }
   }
   return {
@@ -553,29 +507,6 @@ export function stepProblem(
     }
     if (ergebnisKaputt(step.pindex)) {
       return `Schritt "${name}": PINDEX zeigt auf keinen GET-Schritt davor.`
-    }
-    return null
-  }
-  if (step.type === 'CREATE_RECORD') {
-    const name = stepTypeName(step.type)
-    if (step.dataSourceId.trim() === '') return `Schritt "${name}" hat keine Datenquelle gewählt.`
-    if (dataSources && !dataSources.some((source) => source.id === step.dataSourceId)) {
-      return `Schritt "${name}" verweist auf eine geloeschte Datenquelle.`
-    }
-    if (step.getRelationId === '') return `Schritt "${name}" hat keine Hol-Vorlage.`
-    if (step.relationId === '') return `Schritt "${name}" hat keine Schreib-Vorlage.`
-    if (relations) {
-      const holen = relations.find((entry) => entry.id === step.getRelationId)
-      if (!holen) return `Schritt "${name}" verweist auf eine geloeschte Vorlage.`
-      // Der Index kommt aus einer GET-Vorlage (wie GET 640 im Referenz-Log).
-      if (holen.verb !== 'GET_RELATION') {
-        return `Schritt "${name}" braucht als Hol-Vorlage eine GET-Vorlage.`
-      }
-      const schreiben = relations.find((entry) => entry.id === step.relationId)
-      if (!schreiben) return `Schritt "${name}" verweist auf eine geloeschte Vorlage.`
-      if (schreiben.verb === 'GET_RELATION') {
-        return `Schritt "${name}" braucht eine Schreib-Vorlage (PUT/PUTADD).`
-      }
     }
     return null
   }
