@@ -51,8 +51,14 @@ add_repo an die Session hängen).
 7. **Bedienung am Ding:** Anfasser, Doppelklick, Klick auf die Stelle;
    Inspector nur für Unzeigbares; der Editor **erfindet nie Daten**
    (Striche statt Demo-Werte, der Klarname ist die Vorschau).
-8. **Ein Arbeitsbaum = ein Agent** (Claude und Codex nie parallel im selben
-   Ordner); Übergabe nur über gepushte Commits; ein Thema = ein Commit.
+8. **Ein Arbeitsbaum = ein federführender Agent:** Unabhängige
+   Parallelarbeit von Claude und Codex im selben Ordner bleibt tabu;
+   Übergabe nur über gepushte Commits; ein Thema = ein Commit.
+   **NEU (Nutzer-Entscheidung 2026-07-20, TRIP):** Innerhalb EINER
+   Claude-Code-Sitzung darf Claude das Codex CLI als Unterschritt aufrufen
+   (Plan-Review, Code-Review, Batch-Implementierung — Skills in
+   `.claude/skills/`) — nacheinander, nie gleichzeitig; jeder Codex-Diff
+   wird von Claude geprüft, bevor er gilt.
    **Pflicht seit dem Kollisions-Vorfall 2026-07-15:** VOR Arbeitsbeginn
    und VOR jedem Push `git fetch` — ist origin voraus, erst dessen Stand
    ansehen und zusammenführen, dann bauen/pushen. NIE force-pushen. Ein
@@ -337,6 +343,21 @@ divergierenden Linien. Beides ist repariert; nichts ging verloren.
 Abnahmen: Schritt 3a/3b + Zentrale (Nutzer, 2026-07-16), Schritt 4 inkl.
 SE-Echttest (Nutzer, 2026-07-16), Popup P-A–P-C inkl. SE-Echttest
 (Nutzer, 2026-07-17).
+
+## Arbeitsablauf: TRIP + Codex-Zweitmeinung (Nutzer-Go 2026-07-20)
+
+- Skills in `.claude/skills/`: `/TRIP-1-plan` (planen; Codex/GPT 5.6
+  zerpflückt den Plan) → `/TRIP-2-implement` (Codex implementiert in
+  Batches, Claude prüft jeden Diff; Testing-Gate = Prüfbündel aus Regel 9)
+  → `/TRIP-3-release` (Changelog/Doku/Commit — Commit und Push weiterhin
+  NUR nach Nutzer-Go).
+- Architektur-Karte für die Agenten: `docs/ARCHI.md` (Pflege nach
+  `docs/ARCHI-rules.md`). CLAUDE.md bleibt Regel- und Entscheidungsbuch —
+  bei Widerspruch gewinnt CLAUDE.md.
+- Die Rituale gelten in TRIP unverändert: Plan zeigen + „go" abwarten,
+  Test-Bremse, SE-Echttest gebündelt, „Aufgefallen unterwegs". Dem Nutzer
+  nie Datei-/Technik-Reviews vorlegen — nur fachliche Entscheidungen in
+  Klartext (Lehre 2026-07-20).
 
 ## Wichtige Stellen
 
