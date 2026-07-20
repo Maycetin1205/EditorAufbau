@@ -51,7 +51,7 @@ npx playwright test e2e/kanban-data.spec.ts
 
 - Unit-/Snapshot-Tests liegen NEBEN der Quelle: `*.test.ts` (z. B. `src/export/export.test.ts`, `src/blocks/shared/seAktionen.test.ts`, `src/core/data/aktionen.test.ts`)
 - e2e-Kreisläufe: `e2e/*.spec.ts` (Playwright, echter Browser — `fill()` feuert kein natives `change`, deshalb wird ECHT getippt)
-- Fünf Wächter (Nutzer-Entscheidung, nicht ohne Absprache aufblähen): export.test · seRuntime.test · persistence.test · e2e kanban-data · Export-Referenzabzug (`src/export/referenzabzug.test.ts` gegen `src/export/referenz/`)
+- Sechs Wächter (Nutzer-Entscheidung, nicht ohne Absprache aufblähen): export.test · seRuntime.test · persistence.test · e2e kanban-data · Export-Referenzabzug (`src/export/referenzabzug.test.ts` gegen `src/export/referenz/`) · Bündel-Wächter `npm run check:runtime` (eigener Schritt VOR vitest)
 
 ### Testing Priorities
 
@@ -64,7 +64,7 @@ npx playwright test e2e/kanban-data.spec.ts
 
 **e2e (Playwright)**:
 
-- EIN Kreislauf-Test je Export-/Laufzeit-Paket (Test-Bremse!) — Muster: `e2e/speichern-data.spec.ts`
+- EIN Kreislauf-Test je Export-/Laufzeit-Paket (Test-Bremse!) — Muster: `e2e/zwischenspeicher-data.spec.ts`
 - KEINE neuen e2e für reine Editor-Bedienpakete (vorhandene Specs decken die Bedienung mit ab)
 
 **What to Test**:

@@ -31,7 +31,7 @@ Editor-Oberfläche.
 | Build | Vite 8 (`vite.config` + `vite.runtime.config`) | Dev-Server, App-Build, Runtime-Bündel |
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
-| Tests | Vitest 4 (Unit/Snapshot) + Playwright (e2e, echter Browser) | fünf Wächter + Prüfbündel |
+| Tests | Vitest 4 (Unit/Snapshot) + Playwright (e2e, echter Browser) | sechs Wächter + Prüfbündel |
 | Version | `package.json` (`0.0.0`) | SemVer, bisher nie erhöht |
 
 ## 3. Projektstruktur
@@ -62,10 +62,8 @@ src/
 ├── softengine/     Die SoftEngine-SCHICHT (kennt NIE einen Baustein):
 │   ├── bridge.ts   Anmeldung basisHTML_REGISTER, Daten-Push, Abo-Punkt
 │   │               onSeDaten, Diagnose-Overlay (Strg+Alt+D)
-│   ├── data.ts     getField/setField (Präfix-Scan), rowsFor, Quellen,
-│   │               Änderungs-Spur (WeakMap je Zeile, für „Quelle speichern")
-│   └── relations.ts Vorlagen (GET/PUT/PUTADD), serielle GET-Warteschlange,
-│                   sendPut, relIdFuer (relId OHNE IDB-Präfix)
+│   ├── data.ts     getField/setField (Präfix-Scan), rowsFor, Quellen
+│   └── relations.ts Vorlagen (GET/PUT/PUTADD), serielle GET-Warteschlange
 ├── editor/         Editor-Oberfläche (NICHT im Export):
 │   ├── canvas/     Fläche, CanvasNode, Drag&Drop (dndState), Seiten-Reiter
 │   │               (SeitenLeiste/PopupSeite), Anfasser (zieheGroesse = DIE
@@ -87,11 +85,10 @@ src/
 ├── ui/             Editor-Kleinteile (atoms/molecules, shadcn-Stil)
 ├── lib/ · test/    Helfer · Test-Aufbau
 e2e/                Playwright-Kreisläufe (kanban-, formfeld-, popup-,
-                    speichern-, zwischenspeicher-data u. a.)
+                    zwischenspeicher-data u. a.)
 docs/               ARCHI.md (diese Datei), TRIP-Ordner (1-plans …), decisions/,
-                    softengine-wiki/ (SE-Kontrakte), AUFTRAG-CODEX.md
-dashboard/          Klick-Demos als Diskussionsgrundlage (KEIN Produktcode)
-scripts/            generate-project-map.mjs (public/project-map.html)
+                    softengine-wiki/ (SE-Kontrakte)
+scripts/            check-runtime-bundle.mjs (Bündel-Wächter, 6. Wächter)
 ```
 
 ## 4. Kern-Architekturprinzipien (Kurzfassung der 10 Regeln)
@@ -104,7 +101,7 @@ Verbindlicher Wortlaut in `CLAUDE.md`. Für die tägliche Arbeit:
 4. **Ein Export, nichts scheitert still** — Validator + Preflight blocken mit Klartext.
 5. **SE-Kontrakte nur aus Originalquellen** — Installations-Individuelles ist DATEN (Vorlagen), nie Code.
 7. **Bedienung am Ding** — der Editor erfindet nie Daten (Striche statt Demo-Werte).
-9. **Prüfungen gebündelt vor dem Commit** — fünf Wächter + Test-Bremse (s. Abschnitt 9).
+9. **Prüfungen gebündelt vor dem Commit** — sechs Wächter + Test-Bremse (s. Abschnitt 9).
 10. **Nichts auf Verdacht bauen** — erst der echte zweite Fall erzwingt Gemeinsames.
 
 ## 5. Zustand, Seiten & Persistenz
@@ -132,8 +129,7 @@ NIE einen Baustein.**
   Diagnose-Overlay: `Strg+Alt+D`.
 - **data.ts:** Zeilen-Properties tragen Tabellen-Präfix (`IDBID0001_253_30`);
   Schlüssel-Scan gleich/`code_`-Präfix/`_code`-Endung — für Lesen UND
-  Schreiben. `setField` patcht lokal und führt die **Änderungs-Spur** (WeakMap
-  je Zeilen-Objekt; neuer Push = leere Spur) — Grundlage von „Quelle speichern".
+  Schreiben. `setField` patcht die Zeile lokal.
 - **relations.ts:** Vorlagen (GET/PUT/PUTADD) sind DATEN mit stabiler ID.
   GET: immer nur EINE Anfrage in Flug (serielle Warteschlange), Antwort primär
   über den REGISTER-Callback. PUT: `basisHTML_SND_MSG('PUT_RELATION',
@@ -153,7 +149,6 @@ Schritte. Schritt-Arten (echte Union, Anzeige in Klammern):
 | `START_TOOL` | START_TOOL | nur Werkzeug-Nummer (SE-Fachbegriff = Anzeigename) |
 | `RELATION` | GET_RELATION / PUT_RELATION / PUTADD_RELATION | Vorlagen-ID + positionsgetreue Parameter-Zuordnung |
 | `POPUP_OPEN` / `POPUP_CLOSE` | Popup öffnen/schließen | stabile Seiten-id, Export übersetzt in Klarnamen |
-| `QUELLE_SPEICHERN` | Quelle speichern | schreibt alle lokal geänderten Felder einer Quelle (Änderungs-Spur), PINDEX-Vorbelegung „vorheriger Schritt" |
 
 Parameterquellen: Fest / Ereignis ({VALUE}, {PINDEX}) / Datenfeld / vorheriges
 Ergebnis / SE-VAR-Array. Benannte GET-Ergebnisse bleiben in der Kette verfügbar.
@@ -190,7 +185,7 @@ gebündelte Laufzeit] --> E
   Absichtliche Export-Änderung → Referenz mit `npx vitest run -u` erneuern
   (Diff macht die Maskenänderung im Commit sichtbar).
 
-## 9. Test-Strategie (fünf Wächter + Prüfbündel)
+## 9. Test-Strategie (sechs Wächter + Prüfbündel)
 
 **Prüfbündel — EINMAL gebündelt vor dem Commit, nie zwischendurch:**
 
@@ -198,7 +193,7 @@ gebündelte Laufzeit] --> E
 npx tsc -b && npx eslint src && npm run check:runtime && npm test && npx playwright test
 ```
 
-- Fünf Wächter: export.test · seRuntime.test · persistence.test ·
+- Wächter 1–5: export.test · seRuntime.test · persistence.test ·
   e2e kanban-data · Export-Referenzabzug. Nicht ohne Absprache aufblähen.
 - Sechster Wächter (Nutzer-Go 2026-07-20): `npm run check:runtime`
   (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
@@ -254,12 +249,11 @@ bleibt bis zum nächsten Push liegen).
 | `npm run build` | `tsc -b` + App-Build |
 | `npm run build:runtime` | ff-runtime-Bündel erneuern (nach Laufzeit-Änderungen Pflicht) |
 | `npm test` / `npm run test:e2e` | Vitest / Playwright |
-| `npm run docs:map` | Projektkarte erzeugen (public/project-map.html — veraltet, s. Merkliste) |
+| `npm run check:runtime` | Bündel-Wächter (6. Wächter, läuft VOR vitest) |
 
 ## 13. Bewusste Grenzen (Stand 2026-07-20)
 
-- Feld-Hydrierung und „Quelle speichern" arbeiten mit der **ersten Zeile**
-  der Quelle.
+- Die Feld-Hydrierung arbeitet mit der **ersten Zeile** der Quelle.
 - Ankreuzfeld unbindbar, MEMTAB/ERPAPICALL ungebaut — SE-Kontrakt unbelegt.
 - Werkzeug-Nummern/Relations-NRs sind installations-individuell = Vorlagen-Daten.
 - Vollständige Merkliste: `CLAUDE.md`.

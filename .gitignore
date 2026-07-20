@@ -30,6 +30,6 @@ grundlast/
 /blob-report/
 /playwright/.cache/
 
-# Verifikations-Screenshots (Editor vs. exportierte Maske) — Belege, nie committen.
-# Die getrackten Referenzen in dashboard/ sind HTML (stilprobe.html u. a.).
-dashboard/*.png
+# Notiz-Fotos des Nutzers (Chef-Skizze + Lernnotizen) — bewusst NUR lokal,
+# Nutzer-Entscheidung 2026-07-20. Kurzfassung des Inhalts: CLAUDE.md, Fahrplan Punkt 4.
+docs/Test-note*

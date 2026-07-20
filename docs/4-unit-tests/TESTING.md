@@ -36,8 +36,8 @@ npx playwright test e2e/kanban-data.spec.ts # einzelner e2e
 
 Neue Browser-Tests NUR, wenn ein Paket Export/Laufzeit berührt — dann EIN
 schlanker Kreislauf-Test statt vieler Einzeltests (Muster:
-`e2e/speichern-data.spec.ts`). Reine Editor-Bedienpakete bekommen KEINE
-neuen e2e.
+`e2e/zwischenspeicher-data.spec.ts`). Reine Editor-Bedienpakete bekommen
+KEINE neuen e2e.
 
 ## Export berührt?
 
