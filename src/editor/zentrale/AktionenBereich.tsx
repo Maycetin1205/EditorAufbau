@@ -14,7 +14,7 @@ import { IconButton } from '@/ui/atoms/icon-button'
 import { ROOT_ID } from '../../core/blocks/BlockData'
 import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { stepProblem, stepTypeName, type ActionStep } from '../../core/data/aktionen'
+import { ergebnisSchritteVor, stepProblem, stepTypeName, type ActionStep } from '../../core/data/aktionen'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
@@ -123,8 +123,13 @@ export function AktionenBereich() {
     e.events.reduce((sum, ev) => sum + (ed.tree[e.id]?.events?.[ev.key]?.length ?? 0), 0)
 
   const hatProblem = (e: Eintrag): boolean =>
-    e.events.some((ev) => (ed.tree[e.id]?.events?.[ev.key] ?? [])
-      .some((s) => stepProblem(s, relations.list, dataSources.list) !== null))
+    e.events.some((ev) => {
+      const kette = ed.tree[e.id]?.events?.[ev.key] ?? []
+      return kette.some((s) => stepProblem(
+        s, relations.list, dataSources.list, undefined,
+        ergebnisSchritteVor(kette, s.id, relations.list).map((g) => g.id),
+      ) !== null)
+    })
 
   if (eintraege.length === 0) {
     return (
@@ -202,6 +207,7 @@ export function AktionenBereich() {
                         const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
                         const problem = stepProblem(
                           s, relations.list, dataSources.list, popupSeiten.map((seite) => seite.id),
+                          ergebnisSchritteVor(steps, s.id, relations.list).map((g) => g.id),
                         )
                         const relation = s.type === 'RELATION' ? relations.get(s.relationId) : undefined
                         const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'
@@ -271,6 +277,7 @@ export function AktionenBereich() {
             {form && form.blockId === auswahl.id && (
               <StepForm
                 step={form.step}
+                kette={ed.tree[form.blockId]?.events?.[form.eventKey] ?? []}
                 onClose={() => setForm(null)}
                 onSave={(step) => {
                   const steps = ed.tree[form.blockId]?.events?.[form.eventKey] ?? []

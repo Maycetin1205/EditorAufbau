@@ -252,6 +252,10 @@ export function executeRelation(
 export interface RuntimeActionValues {
   context: Readonly<Record<string, string | undefined>>
   previousResult: string
+  // Ergebnis je Ketten-Schritt in Ausführungs-Reihenfolge (runEvent führt
+  // die Liste; nur GET-Schritte liefern etwas, alle anderen ''). Der
+  // Zwischenspeicher des Nutzers: „Ergebnis von Schritt N" (2026-07-17).
+  stepResults?: readonly string[]
 }
 
 export function resolveActionParam(
@@ -262,6 +266,12 @@ export function resolveActionParam(
   if (binding.source === 'fixed') return binding.value
   if (binding.source === 'context') return values.context[binding.value] ?? ''
   if (binding.source === 'previous_result') return values.previousResult
+  if (binding.source === 'step_result') {
+    // In der Maske traegt die Bindung die 0-basierte Ketten-Position
+    // (Export uebersetzt die Editor-Schritt-id); Unsinn loest zu '' auf.
+    const idx = Number(binding.value)
+    return Number.isInteger(idx) && idx >= 0 ? values.stepResults?.[idx] ?? '' : ''
+  }
   if (!isRecord(runtime)) return ''
 
   if (binding.source === 'se_variable') {
@@ -272,10 +282,15 @@ export function resolveActionParam(
   }
 
   const source = findRuntimeDataSource(runtime.FF_DATA_SOURCES, binding.dataSourceId ?? '')
-  if (!source || source.indexField === '') return ''
-  const pindex = values.context.PINDEX ?? ''
-  if (pindex === '') return ''
+  if (!source) return ''
   const rows = rowsFor(runtime.SEDATA, source.name, source.tableId)
-  const row = rows.find((entry) => getField(entry, source.indexField) === pindex)
+  const pindex = values.context.PINDEX ?? ''
+  // Mit Ereignis-Index (z. B. Kanban-Karte) die passende Zeile; OHNE (z. B.
+  // Knopf-Klick) die ERSTE Zeile — dieselbe Regel wie die Feld-Hydrierung
+  // (feldRuntime). Vorher lief der Knopf-Fall still auf '' (Befund
+  // 2026-07-17: PUTs am Knopf kamen nie an ihre Feldwerte).
+  const row = pindex !== '' && source.indexField !== ''
+    ? rows.find((entry) => getField(entry, source.indexField) === pindex)
+    : rows[0]
   return row ? getField(row, binding.value) : ''
 }

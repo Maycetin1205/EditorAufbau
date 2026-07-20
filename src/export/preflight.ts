@@ -11,7 +11,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
-import { stepProblem } from '../core/data/aktionen'
+import { ergebnisSchritteVor, stepProblem } from '../core/data/aktionen'
 import type { DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import type { CheckResult } from './validator'
@@ -72,7 +72,8 @@ export function preflightMask(
     for (const [eventKey, steps] of Object.entries(node.events ?? {})) {
       const eventName = def?.blockEvents?.find((e) => e.key === eventKey)?.name ?? eventKey
       for (const step of steps) {
-        const problem = stepProblem(step, relations, sources, popupIds)
+        const problem = stepProblem(step, relations, sources, popupIds,
+          ergebnisSchritteVor(steps, step.id, relations).map((g) => g.id))
         if (problem) {
           results.push({
             name: 'Aktion unvollstaendig',

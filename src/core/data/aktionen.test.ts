@@ -4,6 +4,7 @@ import type { RelationTemplate } from './relations'
 import {
   createStep,
   defaultRelationParams,
+  ergebnisSchritteVor,
   parseBlockEvents,
   sanitizeBlockEvents,
   serializeBlockEvents,
@@ -97,6 +98,62 @@ describe('Aktionsmodell', () => {
     step.params[2] = { source: 'se_variable', value: '' }
     expect(stepProblem(step, [relation])).toContain('Parameter 3')
     expect(stepProblem({ ...step, relationId: 'weg' }, [relation])).toContain('geloeschte')
+  })
+})
+
+describe('Schritt-Ergebnis (Zwischenspeicher, 2026-07-17)', () => {
+  const relGet: RelationTemplate = {
+    id: 'rel-get', name: 'Neuer Index', verb: 'GET_RELATION', nr: '0640',
+    params: ['ID0001'], allowExtraParams: false,
+  }
+  const kettenGet = (id: string): RelationStep => ({
+    id, type: 'RELATION', resultKey: '', relationId: relGet.id,
+    params: [{ source: 'fixed', value: 'ID0001' }], extraParams: [],
+  })
+  const kettenPut = (id: string, pindexQuelle: string): RelationStep => ({
+    id, type: 'RELATION', resultKey: '', relationId: relation.id,
+    params: [
+      { source: 'fixed', value: 'fest' },
+      { source: 'step_result', value: pindexQuelle },
+      { source: 'fixed', value: 'A' },
+    ],
+    extraParams: [],
+  })
+
+  it('ergebnisSchritteVor: nur GET-Schritte VOR der eigenen Position', () => {
+    const chain = [kettenGet('gA'), kettenPut('pB', 'gA'), kettenGet('gC')]
+    const vorlagen = [relGet, relation]
+    expect(ergebnisSchritteVor(chain, 'pB', vorlagen))
+      .toEqual([{ id: 'gA', nr: 1, name: 'Neuer Index' }])
+    expect(ergebnisSchritteVor(chain, 'gA', vorlagen)).toEqual([])
+    // Neuer Schritt (ans Ende) sieht beide GETs — zwei Zwischenspeicher
+    // gleichzeitig (SE-Log „Termin anlegen": Termin- UND Haustier-Index).
+    expect(ergebnisSchritteVor(chain, undefined, vorlagen).map((s) => s.nr)).toEqual([1, 3])
+  })
+
+  it('Export übersetzt die Schritt-id in die Ketten-Position — nie die Editor-id', () => {
+    const chain = [kettenGet('gA'), kettenPut('pB', 'gA')]
+    const raw = serializeBlockEvents({ onClick: chain }, ['onClick'])
+    expect(raw).not.toContain('gA')
+    const parsed = parseBlockEvents(raw)
+    expect(parsed.onClick[1]).toMatchObject({
+      params: [
+        { source: 'fixed', value: 'fest' },
+        { source: 'step_result', value: '0' },
+        { source: 'fixed', value: 'A' },
+      ],
+    })
+  })
+
+  it('stepProblem: Verweis muss auf einen GET-Schritt davor zeigen', () => {
+    const put = kettenPut('pB', 'gA')
+    expect(stepProblem(put, [relation], undefined, undefined, ['gA'])).toBeNull()
+    expect(stepProblem(put, [relation], undefined, undefined, []))
+      .toContain('GET-Schritt davor')
+    // Ohne Ketten-Wissen (Laufzeit-fern) keine falsche Meldung.
+    expect(stepProblem(put, [relation])).toBeNull()
+    // Leere Auswahl bleibt ein normaler unvollständiger Parameter.
+    expect(stepProblem(kettenPut('pB', ''), [relation])).toContain('Parameter 2')
   })
 })
 

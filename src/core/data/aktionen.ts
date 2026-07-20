@@ -36,6 +36,11 @@ export const ACTION_PARAM_SOURCES = [
   { key: 'context', name: 'Ereigniswert' },
   { key: 'data_field', name: 'Feld der Datenquelle' },
   { key: 'previous_result', name: 'Vorheriger Schritt' },
+  // Zwischenspeicher (Nutzer-Befund + -Vorschlag 2026-07-17): das Ergebnis
+  // eines FRÜHEREN GET-Schritts der Kette, per Auswahl „Schritt N" — kein
+  // Namen-Vergeben. Referenz-Beleg: SE-Log „Termin anlegen" (GET 640 →
+  // PUTs auf den Index; ZWEI GET-Ergebnisse gleichzeitig in Gebrauch).
+  { key: 'step_result', name: 'Ergebnis von Schritt' },
   { key: 'se_variable', name: 'SE VAR-Array' },
 ] as const
 
@@ -45,10 +50,41 @@ export interface ActionParamBinding {
   source: ActionParamSource
   // fixed: Wert, context: PINDEX/VALUE/NOW_DATE, data_field: Feldcode,
   // se_variable: Variablenname. previous_result braucht keinen Wert.
+  // step_result: im EDITOR die stabile Schritt-id (übersteht Umsortieren,
+  // Muster popupId), in der MASKE die Position in der Kette (Editor-ids
+  // reisen nie mit — serializeBlockEvents übersetzt).
   value: string
   // Nur data_field: stabile ID der Datenquellen-Vorlage. Der Feldcode allein
   // ist zwischen verschiedenen Tabellen nicht eindeutig.
   dataSourceId?: string
+}
+
+// GET-Schritte VOR einer Position — die Auswahl „Ergebnis von Schritt N"
+// (StepForm) und die Gültigkeitsprüfung (stepProblem-Aufrufer) lesen
+// dieselbe Liste. Nur echte GET-Vorlagen liefern ein Ergebnis; Schritte
+// mit gelöschter Vorlage werden nicht angeboten (die blockt stepProblem).
+export interface ErgebnisSchritt {
+  id: string
+  nr: number // 1-basierte Anzeige-Position in der Kette
+  name: string
+}
+
+export function ergebnisSchritteVor(
+  chain: readonly ActionStep[],
+  stepId: string | undefined, // undefined = neuer Schritt ans Kettenende
+  relations: readonly RelationTemplate[] | undefined,
+): ErgebnisSchritt[] {
+  const eigene = stepId === undefined ? -1 : chain.findIndex((s) => s.id === stepId)
+  const bis = eigene < 0 ? chain.length : eigene
+  const out: ErgebnisSchritt[] = []
+  for (let i = 0; i < bis; i++) {
+    const s = chain[i]
+    if (s.type !== 'RELATION') continue
+    const rel = relations?.find((r) => r.id === s.relationId)
+    if (!rel || rel.verb !== 'GET_RELATION') continue
+    out.push({ id: s.id, nr: i + 1, name: rel.name })
+  }
+  return out
 }
 
 interface ActionStepBase {
@@ -300,7 +336,13 @@ export function sanitizeBlockEvents(
 function withoutEditorId(
   step: ActionStep,
   popupName: (id: string) => string,
+  // step_result-Bindungen: Schritt-id (Editor) → Ketten-Position (Maske).
+  // Editor-ids reisen nie mit; unbekannte id → '-1' (die Preflight blockt
+  // das vorher, die Laufzeit löst -1 defensiv zu '' auf).
+  stepPosition: (id: string) => string,
 ): RuntimeStep {
+  const binding = (b: ActionParamBinding): ActionParamBinding =>
+    b.source === 'step_result' ? { ...b, value: stepPosition(b.value) } : { ...b }
   if (step.type === 'START_TOOL') {
     return {
       type: step.type,
@@ -326,15 +368,15 @@ function withoutEditorId(
       resultKey: step.resultKey,
       dataSourceId: step.dataSourceId,
       relationId: step.relationId,
-      pindex: { ...step.pindex },
+      pindex: binding(step.pindex),
     }
   }
   return {
     type: step.type,
     resultKey: step.resultKey,
     relationId: step.relationId,
-    params: step.params.map((binding) => ({ ...binding })),
-    extraParams: step.extraParams.map((binding) => ({ ...binding })),
+    params: step.params.map(binding),
+    extraParams: step.extraParams.map(binding),
   }
 }
 
@@ -349,7 +391,12 @@ export function serializeBlockEvents(
   const out: Record<string, RuntimeStep[]> = {}
   for (const key of eventOrder) {
     const steps = events[key]
-    if (steps?.length) out[key] = steps.map((step) => withoutEditorId(step, popupName))
+    if (!steps?.length) continue
+    // Position je Schritt-id DIESER Kette (0-basiert) — die Laufzeit führt
+    // eine Ergebnis-Liste in exakt derselben Reihenfolge (runEvent).
+    const position = new Map(steps.map((s, i) => [s.id, String(i)]))
+    out[key] = steps.map((step) =>
+      withoutEditorId(step, popupName, (id) => position.get(id) ?? '-1'))
   }
   return Object.keys(out).length > 0 ? JSON.stringify(out) : null
 }
@@ -399,7 +446,16 @@ export function stepProblem(
   // Vorhandene Popup-Seiten (ids) — nur wer sie kennt (Zentrale, Preflight),
   // bekommt die Meldung über eine gelöschte Seite.
   popupIds?: readonly string[],
+  // Gültige „Ergebnis von Schritt"-Ziele für DIESEN Schritt (ids der GET-
+  // Schritte davor, ergebnisSchritteVor) — nur wer die Kette kennt, prüft.
+  ergebnisIds?: readonly string[],
 ): string | null {
+  // step_result muss auf einen GET-Schritt DAVOR zeigen — ein gelöschter,
+  // späterer oder Nicht-GET-Schritt liefe in der Maske still auf ''.
+  const ergebnisKaputt = (binding: ActionParamBinding | undefined): boolean =>
+    binding?.source === 'step_result'
+    && ergebnisIds !== undefined
+    && !ergebnisIds.includes(binding.value)
   if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
     const name = stepTypeName(step.type)
     if (step.popupId.trim() === '') return `Schritt "${name}" hat kein Popup gewählt.`
@@ -449,6 +505,9 @@ export function stepProblem(
       && !dataSources.some((source) => source.id === step.pindex.dataSourceId)) {
       return `Schritt "${name}" verweist auf eine geloeschte Datenquelle.`
     }
+    if (ergebnisKaputt(step.pindex)) {
+      return `Schritt "${name}": PINDEX zeigt auf keinen GET-Schritt davor.`
+    }
     return null
   }
   if (step.relationId === '') return 'Schritt "Relation" hat keine Vorlage.'
@@ -476,5 +535,8 @@ export function stepProblem(
     && !dataSources.some((source) => source.id === binding.dataSourceId),
   )
   if (missingSource) return 'Schritt "Relation" verweist auf eine geloeschte Datenquelle.'
+  if (allBindings.some(ergebnisKaputt)) {
+    return 'Schritt "Relation": ein Parameter zeigt auf keinen GET-Schritt davor.'
+  }
   return null
 }

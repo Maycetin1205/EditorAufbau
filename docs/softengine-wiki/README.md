@@ -41,6 +41,10 @@ Alternative zu unseren eigenen Web Components (v. a. beim Thema Tabelle) →
   UI-Module (Beiträge #35275, #36474, #34931): Datenbasis-Lebenszyklus
   (InitialisiereDatenBasis / ResetDataBasis), SEInfoBox, SEFeldListe;
   erwähnt SETabelle, ButtonBar, Chart, Liste.
+- [muster-satz-anlegen.md](muster-satz-anlegen.md) — Originalquelle
+  SE-Ausführungslog (Nutzer, 2026-07-17): Satz anlegen = GET „neuer Index"
+  → ein PUT je Feld (auch leere!) → Querverweis-PUT; mehrere
+  Index-Zwischenspeicher gleichzeitig in Gebrauch.
 
 ## Neue Seite anlegen
 

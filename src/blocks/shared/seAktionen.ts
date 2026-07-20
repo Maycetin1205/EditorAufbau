@@ -160,26 +160,42 @@ export async function runEvent(
       NOW_DATE: formatNowDate(new Date()),
     }
     let previousResult = ''
+    // Ergebnis je Schritt in Ketten-Reihenfolge — dieselben Positionen, die
+    // der Export in step_result-Bindungen schreibt (serializeBlockEvents).
+    // Jeder Schritt bekommt GENAU einen Eintrag, auch ergebnislose ('').
+    const stepResults: string[] = []
     for (const step of steps) {
       if (step.type === 'START_TOOL') {
         seStartTool(step.toolNr, resolveParams({ params: step.toolParams }, values))
+        stepResults.push('')
         continue
       }
       if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
         applyPopupStep(el.ownerDocument ?? document, step.popup ?? '', step.type === 'POPUP_OPEN')
+        stepResults.push('')
         continue
       }
       if (step.type === 'QUELLE_SPEICHERN') {
-        applyQuelleSpeichern(step, { context: values, previousResult })
+        applyQuelleSpeichern(step, { context: values, previousResult, stepResults })
+        stepResults.push('')
         continue
       }
       const relation = findRuntimeRelation(seGlobal().FF_RELATIONS, step.relationId)
-      if (!relation) continue
-      const runtimeValues = { context: values, previousResult }
+      if (!relation) {
+        stepResults.push('')
+        continue
+      }
+      const runtimeValues = { context: values, previousResult, stepResults }
       const params = [...step.params, ...step.extraParams]
         .map((binding) => resolveActionParam(binding, runtimeValues))
-      previousResult = await executeRelation(relation, params)
-      if (step.resultKey !== '') values[step.resultKey] = previousResult
+      const result = await executeRelation(relation, params)
+      stepResults.push(result)
+      // NUR GET liefert ein Ergebnis — PUT/PUTADD überschreiben den
+      // Zwischenspeicher NICHT mehr (Nutzer-Befund 2026-07-17: in der Kette
+      // GET → PUT → PUT bekam nur der erste PUT den Index, danach war der
+      // „vorherige Schritt" leer).
+      if (relation.verb === 'GET_RELATION') previousResult = result
+      if (step.resultKey !== '') values[step.resultKey] = result
     }
   } finally {
     locks.delete(eventKey)

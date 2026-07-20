@@ -16,10 +16,12 @@ import {
   AKTIONS_PLATZHALTER,
   STEP_TYPES,
   defaultRelationParams,
+  ergebnisSchritteVor,
   stepProblem,
   type ActionParamBinding,
   type ActionParamSource,
   type ActionStep,
+  type ErgebnisSchritt,
   type StepTypeKey,
 } from '../../core/data/aktionen'
 import type { DataSource } from '../../core/data/dataSources'
@@ -36,6 +38,9 @@ import { FormularKarte } from './FormularKarte'
 
 interface StepFormProps {
   step?: ActionStep
+  // Die AKTUELLE Kette des Ereignisses — für die Auswahl „Ergebnis von
+  // Schritt N" (nur GET-Schritte VOR diesem Schritt sind wählbar).
+  kette: readonly ActionStep[]
   onSave: (step: ActionStep) => void
   onClose: () => void
 }
@@ -47,10 +52,12 @@ const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({ value, label: valu
 function BindingValue({
   binding,
   dataSources,
+  schritte,
   onChange,
 }: {
   binding: ActionParamBinding
   dataSources: readonly DataSource[]
+  schritte: readonly ErgebnisSchritt[]
   onChange: (binding: ActionParamBinding) => void
 }) {
   if (binding.source === 'previous_result') {
@@ -58,6 +65,24 @@ function BindingValue({
       <div className="flex h-7 items-center rounded border border-input bg-secondary/50 px-2 text-[11px] text-muted-foreground">
         Ergebnis des vorherigen Schritts
       </div>
+    )
+  }
+  if (binding.source === 'step_result') {
+    // Der Zwischenspeicher des Nutzers (2026-07-17): GET-Schritte davor,
+    // per Position angeboten — kein Namen-Vergeben, nur anklicken.
+    return (
+      <select
+        value={binding.value}
+        onChange={(e) => onChange({ ...binding, value: e.target.value })}
+        className="h-7 w-full rounded border border-input bg-background px-2 text-xs"
+      >
+        <option value="">
+          {schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
+        </option>
+        {schritte.map((s) => (
+          <option key={s.id} value={s.id}>{`Schritt ${s.nr} — ${s.name}`}</option>
+        ))}
+      </select>
     )
   }
   if (binding.source === 'context') {
@@ -114,6 +139,7 @@ function BindingRow({
   label,
   binding,
   dataSources,
+  schritte,
   removable = false,
   onChange,
   onRemove,
@@ -121,15 +147,18 @@ function BindingRow({
   label: string
   binding: ActionParamBinding
   dataSources: readonly DataSource[]
+  schritte: readonly ErgebnisSchritt[]
   removable?: boolean
   onChange: (binding: ActionParamBinding) => void
   onRemove?: () => void
 }) {
   const setSource = (source: ActionParamSource) => {
-    const value = source === 'previous_result'
-      ? ''
-      : source === 'context'
-        ? 'VALUE'
+    const value = source === 'context'
+      ? 'VALUE'
+      // Genau EIN GET davor: direkt vorwählen — der häufigste Fall
+      // (GET Index holen → benutzen) kommt dann ohne zweiten Klick aus.
+      : source === 'step_result' && schritte.length === 1
+        ? schritte[0].id
         : ''
     onChange({ source, value })
   }
@@ -137,7 +166,7 @@ function BindingRow({
   return (
     <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] items-center gap-2">
       <span className="truncate font-mono text-[11px]" title={label}>{label}</span>
-      <BindingValue binding={binding} dataSources={dataSources} onChange={onChange} />
+      <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
       <select
         value={binding.source}
         onChange={(e) => setSource(e.target.value as ActionParamSource)}
@@ -147,7 +176,8 @@ function BindingRow({
           <option
             key={source.key}
             value={source.key}
-            disabled={source.key === 'data_field' && dataSources.length === 0}
+            disabled={(source.key === 'data_field' && dataSources.length === 0)
+              || (source.key === 'step_result' && schritte.length === 0)}
           >
             {source.name}
           </option>
@@ -214,10 +244,13 @@ function RelationAuswahl({
   )
 }
 
-export function StepForm({ step, onSave, onClose }: StepFormProps) {
+export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const relations = useRelations()
   const dataSources = useDataSources()
   const ed = useEditor()
+  // Wählbare GET-Ergebnisse: nur Schritte VOR diesem (neuer Schritt = Ende).
+  const ergebnisSchritte = ergebnisSchritteVor(kette, step?.id, relations.list)
+  const ergebnisIds = ergebnisSchritte.map((s) => s.id)
   // Popup-Seiten der Maske (P-B): Auswahl per Klarname, gespeichert wird
   // die stabile Seiten-id (übersteht Umbenennen).
   const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
@@ -322,11 +355,11 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
   }
 
   const popupIds = popupSeiten.map((seite) => seite.id)
-  const problem = stepProblem(candidate(), relations.list, dataSources.list, popupIds)
+  const problem = stepProblem(candidate(), relations.list, dataSources.list, popupIds, ergebnisIds)
 
   function speichern() {
     const next = candidate()
-    if (stepProblem(next, relations.list, dataSources.list, popupIds)) {
+    if (stepProblem(next, relations.list, dataSources.list, popupIds, ergebnisIds)) {
       setZeigeFehler(true)
       return
     }
@@ -412,6 +445,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
                 label="PINDEX"
                 binding={pindexBinding}
                 dataSources={dataSources.list}
+                schritte={ergebnisSchritte}
                 onChange={setPindexBinding}
               />
             </div>
@@ -440,6 +474,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
                     label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
                     binding={bindingFor(index)}
                     dataSources={dataSources.list}
+                    schritte={ergebnisSchritte}
                     onChange={(binding) => setBinding(index, binding)}
                   />
                 ))}
@@ -467,6 +502,7 @@ export function StepForm({ step, onSave, onClose }: StepFormProps) {
                     label={`${index + 1}.`}
                     binding={binding}
                     dataSources={dataSources.list}
+                    schritte={ergebnisSchritte}
                     removable
                     onChange={(next) => setExtraParams((current) => current.map((value, at) => at === index ? next : value))}
                     onRemove={() => setExtraParams((current) => current.filter((_, at) => at !== index))}
