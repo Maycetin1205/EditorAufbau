@@ -13,6 +13,7 @@
     "docs:map:check": "node scripts/generate-project-map.mjs --check",
     "docs:map:open": "vite --open /project-map.html",
     "build:runtime": "vite build --config vite.runtime.config.ts",
+    "check:runtime": "node scripts/check-runtime-bundle.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

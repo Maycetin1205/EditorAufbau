@@ -195,11 +195,18 @@ gebündelte Laufzeit] --> E
 **Prüfbündel — EINMAL gebündelt vor dem Commit, nie zwischendurch:**
 
 ```bash
-npx tsc -b && npx eslint src && npm test && npx playwright test
+npx tsc -b && npx eslint src && npm run check:runtime && npm test && npx playwright test
 ```
 
 - Fünf Wächter: export.test · seRuntime.test · persistence.test ·
   e2e kanban-data · Export-Referenzabzug. Nicht ohne Absprache aufblähen.
+- Sechster Wächter (Nutzer-Go 2026-07-20): `npm run check:runtime`
+  (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
+  CLI-Weg neu und vergleicht es inhaltlich mit dem eingecheckten
+  `ff-runtime.js` — fängt BELIEBIGE Bündel-Drift, nicht nur die bekannten
+  Marker des Wächters in export.test.ts (der bleibt als billiger Sanity-Check).
+  BEWUSST kein vitest-Test: In-Place-Bauen im vitest-Lauf würde die
+  `?raw`-Leser (export.test.ts) flaky machen; darum eigener Schritt VOR vitest.
 - **Test-Bremse:** neue Browser-Tests NUR, wenn ein Paket Export/Laufzeit
   berührt — dann EIN schlanker Kreislauf-Test. Reine Editor-Bedienpakete
   bekommen KEINE neuen e2e.

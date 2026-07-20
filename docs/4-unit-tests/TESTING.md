@@ -16,16 +16,21 @@ npx playwright test e2e/kanban-data.spec.ts # einzelner e2e
 ```
 
 **Prüfbündel (Regel 9) — EINMAL gebündelt vor dem Commit, nie zwischendurch:**
-`npx tsc -b` + `npx eslint src` + `npm test` + `npx playwright test`
+`npx tsc -b` + `npx eslint src` + `npm run check:runtime` + `npm test` +
+`npx playwright test` (check:runtime VOR vitest — s. u.).
 
 ## Aufbau & Konventionen
 
 - e2e-Tests fahren den ECHTEN Browser und tippen echt — `fill()` feuert kein
   natives `change`; `change` ist nicht composed und stirbt an der
   Schattengrenze (gelernter Kontrakt, s. CLAUDE.md Schritt 4).
-- **Fünf Wächter** (Nutzer-Entscheidung, nicht ohne Absprache aufblähen):
+- **Sechs Wächter** (Nutzer-Entscheidung, nicht ohne Absprache aufblähen):
   export.test · seRuntime.test · persistence.test · e2e kanban-data ·
-  Export-Referenzabzug (`src/export/referenzabzug.test.ts` gegen `src/export/referenz/`).
+  Export-Referenzabzug (`src/export/referenzabzug.test.ts` gegen `src/export/referenz/`) ·
+  Bündel-Wächter `npm run check:runtime` (`scripts/check-runtime-bundle.mjs`,
+  Nutzer-Go 2026-07-20). Der Bündel-Wächter läuft VOR vitest und ist BEWUSST
+  kein vitest-Test: In-Place-Bauen im vitest-Lauf würde die `?raw`-Leser
+  (export.test.ts) flaky machen.
 
 ## Test-Bremse (Nutzer-Entscheidung 2026-07-17)
 

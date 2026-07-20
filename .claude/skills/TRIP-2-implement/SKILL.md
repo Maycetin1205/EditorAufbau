@@ -111,6 +111,7 @@ npx tsc -b 2>&1 | tee /tmp/_trip2-typecheck.txt
 ### 2. Run the test suites (Prüfbündel, Regel 9)
 
 ```bash
+npm run check:runtime  # Bündel-Wächter: ff-runtime.js == frischer Build? (VOR vitest, s. Regel 9)
 npm test               # Vitest — enthält die Wächter (export / seRuntime / persistence / Referenzabzug)
 npx playwright test    # e2e im echten Browser
 ```

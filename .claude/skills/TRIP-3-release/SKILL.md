@@ -33,6 +33,7 @@ If this skill was NOT chained from a TRIP-2 session in the current conversation,
 ```bash
 npx eslint src
 npx tsc -b
+npm run check:runtime             # Bündel-Wächter (VOR vitest)
 npm test && npx playwright test   # Prüfbündel (Regel 9)
 ```
 

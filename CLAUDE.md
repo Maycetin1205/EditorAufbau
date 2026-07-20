@@ -64,10 +64,16 @@ add_repo an die Session hängen).
    ansehen und zusammenführen, dann bauen/pushen. NIE force-pushen. Ein
    Branch, an dem der jeweils andere Agent laut Auftrag arbeitet, ist tabu.
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
-   `npx eslint src` + `npm test` + `npx playwright test`), nie zwischendurch.
-   Sicherheitsnetz = fünf Wächter (export / seRuntime / persistence /
-   e2e kanban-data / Export-Referenzabzug, fünfter per Nutzer-Go
-   2026-07-17) — Nutzer-Entscheidung, nicht ohne Absprache aufblähen.
+   `npx eslint src` + `npm run check:runtime` + `npm test` +
+   `npx playwright test`), nie zwischendurch.
+   Sicherheitsnetz = sechs Wächter (export / seRuntime / persistence /
+   e2e kanban-data / Export-Referenzabzug / Bündel-Wächter `check:runtime`,
+   fünfter per Nutzer-Go 2026-07-17, sechster per Nutzer-Go 2026-07-20) —
+   Nutzer-Entscheidung, nicht ohne Absprache aufblähen. Der Bündel-Wächter
+   (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
+   CLI-Weg neu und vergleicht es mit dem eingecheckten `ff-runtime.js`; bewusst
+   KEIN vitest-Test (In-Place-Bauen im vitest-Lauf würde die `?raw`-Leser
+   flaky machen), sondern eigener Schritt VOR vitest.
    **Test-Bremse (Nutzer-Entscheidung 2026-07-17, Variante B bei P-C):**
    neue Browser-Tests nur, wenn ein Paket Export/Laufzeit berührt — und
    dann EIN schlanker Kreislauf-Test statt vieler Einzeltests; reine
