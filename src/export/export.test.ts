@@ -109,50 +109,6 @@ describe('exportMask', () => {
     expect(preflightMask(tree, [], relations)).toEqual([])
   })
 
-  it('Quelle-speichern-Schritt: Quelle UND Vorlage reisen mit, GET-Vorlage blockt (2026-07-17)', () => {
-    const schritt = {
-      id: 's1', type: 'QUELLE_SPEICHERN' as const, resultKey: '',
-      dataSourceId: 'termine', relationId: 'rel-put',
-      pindex: { source: 'previous_result' as const, value: '' },
-    }
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
-      a: {
-        id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
-        events: { onClick: [schritt] },
-      },
-    }
-    const sources = [{
-      id: 'termine', name: 'Termine', kind: 'idb' as const,
-      idbId: 'IDBID0001', indexField: '0_10', fields: [],
-    }]
-    const relations = [{
-      id: 'rel-put', name: 'Schreiben', verb: 'PUT_RELATION', nr: '0174',
-      params: ['{FELD_POS}', '{FELD_LEN}', 'L', '{PINDEX}', '{RELID}', '{VALUE}'],
-      allowExtraParams: false,
-    }] as const
-
-    const { html, sevariablen } = exportMask(tree, 'Maske', sources, relations)
-    // Der Schritt reist vollständig im Ketten-Attribut (stabile Vorlagen-ids).
-    const attr = /data-ff-aktionen="([^"]*)"/.exec(html)?.[1] ?? ''
-    expect(attr).toContain('&quot;type&quot;:&quot;QUELLE_SPEICHERN&quot;')
-    expect(attr).toContain('&quot;dataSourceId&quot;:&quot;termine&quot;')
-    expect(attr).toContain('&quot;previous_result&quot;')
-    // Quelle reist auch OHNE angehängten Baustein: FF_DATA_SOURCES (Laufzeit-
-    // Auflösung) UND SEFILELOOP (ohne Push gäbe es nichts zu schreiben).
-    expect(html).toContain('window.FF_DATA_SOURCES = [{"id":"termine"')
-    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
-    ])
-    expect(html).toContain('window.FF_RELATIONS = [{"id":"rel-put"')
-    expect(preflightMask(tree, sources, relations)).toEqual([])
-
-    // Fachliche Grenze: GET-Vorlage kann nichts schreiben → Preflight blockt.
-    const getRelations = [{ ...relations[0], verb: 'GET_RELATION' as const }]
-    expect(preflightMask(tree, sources, getRelations).some((r) =>
-      r.detail.includes('Schreib-Vorlage'))).toBe(true)
-  })
-
   it('exportiert Kanban und Formularfeld mit eigenen Quellen gemeinsam', () => {
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board', 'field'] },

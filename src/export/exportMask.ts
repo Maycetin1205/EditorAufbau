@@ -173,13 +173,6 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
     if (getBlockDefinition(node.type)?.acceptsDataSource) {
       add(node.props.source)
     }
-    // „Quelle speichern" braucht seine Quelle auch OHNE angehängten
-    // Baustein in FF_DATA_SOURCES (die Laufzeit löst die id dort auf).
-    for (const event of getBlockDefinition(node.type)?.blockEvents ?? []) {
-      for (const step of node.events?.[event.key] ?? []) {
-        if (step.type === 'QUELLE_SPEICHERN') add(step.dataSourceId)
-      }
-    }
     node.childIds.forEach((id) => visit(tree[id]))
   }
   visit(tree[ROOT_ID])
@@ -212,7 +205,7 @@ function collectRelations(
     }
     for (const event of def?.blockEvents ?? []) {
       for (const step of node.events?.[event.key] ?? []) {
-        if (step.type === 'RELATION' || step.type === 'QUELLE_SPEICHERN') add(step.relationId)
+        if (step.type === 'RELATION') add(step.relationId)
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))

@@ -34,18 +34,8 @@ import { bootSe, seGlobal } from '../../softengine/bridge'
 import {
   executeRelation,
   findRuntimeRelation,
-  relIdFuer,
   resolveActionParam,
-  sendPut,
-  type RuntimeActionValues,
 } from '../../softengine/relations'
-import {
-  findRuntimeDataSource,
-  geaenderteFelder,
-  getField,
-  rowsFor,
-} from '../../softengine/data'
-import type { QuelleSpeichernStep } from '../../core/data/aktionen'
 
 // ---------- Pure Helfer (Node-testbar, kein DOM) ----------
 
@@ -98,33 +88,6 @@ export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean)
   }
 }
 
-// ---------- Quelle speichern (Nutzer-Go 2026-07-17) ----------
-
-// Schreibt alle seit dem letzten Daten-Push lokal geaenderten Felder der
-// ERSTEN Zeile der Quelle (dieselbe Zeile, aus der die Feld-Hydrierung
-// liest) ueber die gewaehlte Schreib-Vorlage — ein sendPut je Feld
-// (fire-and-forget, SE-Kontrakt). Bausteinneutral: die Aenderungs-Spur
-// fuehrt die SoftEngine-Schicht (setField), nicht ein Baustein; vorlagen-
-// neutral: sendPut loest die Platzhalter JEDER Vorlage auf. pos/len kommen
-// aus dem Feldcode, die relId aus der Quelle (ohne IDB-Praefix). Nichts
-// geaendert oder Quelle/Vorlage unaufloesbar -> stiller No-op (die
-// Preflight blockt kaputte Schritte schon im Export).
-// Exportiert fuer den Waechter-Test (Node/jsdom, Muster applyPopupStep).
-export function applyQuelleSpeichern(
-  step: Pick<QuelleSpeichernStep, 'dataSourceId' | 'relationId' | 'pindex'>,
-  values: RuntimeActionValues,
-): void {
-  const g = seGlobal()
-  const relation = findRuntimeRelation(g.FF_RELATIONS, step.relationId)
-  const source = findRuntimeDataSource(g.FF_DATA_SOURCES, step.dataSourceId)
-  if (!relation || !source) return
-  const pindex = resolveActionParam(step.pindex, values)
-  const row = rowsFor(g.SEDATA, source.name, source.tableId)[0]
-  for (const code of geaenderteFelder(row)) {
-    sendPut(relation, relIdFuer(source.tableId), code, pindex, getField(row, code))
-  }
-}
-
 // ---------- Ketten-Ausfuehrung ----------
 
 // Laufende Ketten je Element (Sperre gegen erneutes Ausloesen desselben
@@ -172,11 +135,6 @@ export async function runEvent(
       }
       if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
         applyPopupStep(el.ownerDocument ?? document, step.popup ?? '', step.type === 'POPUP_OPEN')
-        stepResults.push('')
-        continue
-      }
-      if (step.type === 'QUELLE_SPEICHERN') {
-        applyQuelleSpeichern(step, { context: values, previousResult, stepResults })
         stepResults.push('')
         continue
       }

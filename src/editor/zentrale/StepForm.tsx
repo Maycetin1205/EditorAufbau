@@ -190,8 +190,7 @@ function BindingRow({
   )
 }
 
-// Vorlagen-Suche + -Liste — EINE Stelle für Relation-Schritt und
-// „Quelle speichern" (dort fachlich auf Schreib-Vorlagen gefiltert).
+// Vorlagen-Suche + -Liste für den Relation-Schritt.
 function RelationAuswahl({
   label,
   eintraege,
@@ -260,17 +259,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     step?.type === 'POPUP_OPEN' || step?.type === 'POPUP_CLOSE' ? step.popupId : '',
   )
   const [relationId, setRelationId] = useState(
-    step?.type === 'RELATION' || step?.type === 'QUELLE_SPEICHERN' ? step.relationId : '',
-  )
-  // Quelle speichern: Quelle + Herkunft des PINDEX (Vorbelegung wie
-  // createStep — der gelebte Fluss ist GET davor -> vorheriges Ergebnis).
-  const [dataSourceId, setDataSourceId] = useState(
-    step?.type === 'QUELLE_SPEICHERN' ? step.dataSourceId : '',
-  )
-  const [pindexBinding, setPindexBinding] = useState<ActionParamBinding>(
-    step?.type === 'QUELLE_SPEICHERN'
-      ? { ...step.pindex }
-      : { source: 'previous_result', value: '' },
+    step?.type === 'RELATION' ? step.relationId : '',
   )
   const initialRelation = step?.type === 'RELATION' ? relations.get(step.relationId) : undefined
   const [relationParams, setRelationParams] = useState<ActionParamBinding[]>(() => {
@@ -288,12 +277,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const [zeigeFehler, setZeigeFehler] = useState(false)
 
   const relation = relations.get(relationId)
-  // Quelle speichern zeigt nur Schreib-Vorlagen (fachlicher Filter wie die
-  // Bibliothek: Lesen = GET, Schreiben = PUT/PUTADD).
-  const vorlagenBestand = typ === 'QUELLE_SPEICHERN'
-    ? relations.list.filter((entry) => entry.verb !== 'GET_RELATION')
-    : relations.list
-  const sichtbareRelationen = vorlagenBestand.filter((entry) => relationMatchesSearch(entry, suche))
+  const sichtbareRelationen = relations.list.filter((entry) => relationMatchesSearch(entry, suche))
   const defaultParams = relation ? defaultRelationParams(relation) : []
   const bindingFor = (index: number): ActionParamBinding =>
     relationParams[index] ?? defaultParams[index] ?? { source: 'fixed', value: '' }
@@ -326,16 +310,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
         resultKey: '',
         toolNr: toolNr.trim(),
         toolParams: [],
-      }
-    }
-    if (typ === 'QUELLE_SPEICHERN') {
-      return {
-        id,
-        type: 'QUELLE_SPEICHERN',
-        resultKey: '',
-        dataSourceId,
-        relationId,
-        pindex: { ...pindexBinding, value: pindexBinding.value.trim() },
       }
     }
     const normalizedParams = relation
@@ -408,48 +382,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
               />
             )}
           </Field>
-        )}
-
-        {typ === 'QUELLE_SPEICHERN' && (
-          <>
-            <Field label="Quelle">
-              {(field) => (
-                <select
-                  {...field}
-                  value={dataSourceId}
-                  onChange={(e) => setDataSourceId(e.target.value)}
-                  className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                >
-                  <option value="">
-                    {dataSources.list.length === 0 ? '(keine Datenquelle vorhanden)' : '— wählen —'}
-                  </option>
-                  {dataSources.list.map((source) => (
-                    <option key={source.id} value={source.id}>{source.name}</option>
-                  ))}
-                </select>
-              )}
-            </Field>
-            <RelationAuswahl
-              label="Schreib-Vorlage"
-              eintraege={sichtbareRelationen}
-              relationId={relationId}
-              suche={suche}
-              onSuche={setSuche}
-              onSelect={setRelationId}
-            />
-            <div className="flex flex-col gap-2">
-              <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <span>Parameter</span><span>Wert</span><span>Quelle</span><span />
-              </div>
-              <BindingRow
-                label="PINDEX"
-                binding={pindexBinding}
-                dataSources={dataSources.list}
-                schritte={ergebnisSchritte}
-                onChange={setPindexBinding}
-              />
-            </div>
-          </>
         )}
 
         {typ === 'RELATION' && (
@@ -526,7 +458,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
           </>
         )}
 
-        {zeigeFehler && problem && (typ === 'RELATION' || typ === 'QUELLE_SPEICHERN') && (
+        {zeigeFehler && problem && typ === 'RELATION' && (
           <p className="text-xs text-destructive">{problem}</p>
         )}
 

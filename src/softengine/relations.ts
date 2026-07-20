@@ -9,10 +9,7 @@
 // diese Schicht kennt NIE einen Baustein.
 
 import {
-  formatNowDate,
   RELATION_VERBS,
-  resolveParams,
-  splitFieldCode,
   type RelationTemplate,
   type RelationVerb,
 } from '../core/data/relations'
@@ -43,42 +40,6 @@ export function findRuntimeRelation(list: unknown, id: string): RuntimeRelation 
     return { id, verb: entry.verb as RelationVerb, nr: entry.nr, params: entry.params as string[] }
   }
   return undefined
-}
-
-// relId einer Quelle: SE-Kontrakt — OHNE IDB-Präfix ('ID0001', nicht
-// 'IDBID0001'; hart erarbeitet, s. CLAUDE.md SoftEngine-Kontrakte).
-export function relIdFuer(tableId: string): string {
-  return tableId.replace(/^IDB/, '')
-}
-
-// PUT über eine aufgelöste Vorlage. Bridge-Wächter: außerhalb von SoftEngine
-// (Vorschau, Tests ohne Stub) wird nichts gesendet. PUT ist fire-and-forget
-// (Spec 5.3b (c)). {DROP_PINDEX} erhält denselben Wert wie {PINDEX} — die
-// Bedeutung bestimmt der Aufrufer (beim Kanban-Drop ist die gezogene Karte
-// der betroffene Satz); {SELKEY} (Auswahl) füllt erst Kap. 8.
-export function sendPut(
-  template: RuntimeRelation,
-  relId: string,
-  fieldCode: string,
-  pindex: string,
-  value: string,
-): void {
-  const g = seGlobal()
-  if (typeof g.basisHTML_SND_MSG !== 'function') return
-  const field = splitFieldCode(fieldCode)
-  if (!field) return
-  g.basisHTML_SND_MSG(template.verb, {
-    NR: template.nr,
-    PARAMS: resolveParams(template, {
-      FELD_POS: field.pos,
-      FELD_LEN: field.len,
-      PINDEX: pindex,
-      DROP_PINDEX: pindex,
-      RELID: relId,
-      VALUE: value,
-      NOW_DATE: formatNowDate(new Date()),
-    }),
-  })
 }
 
 // ---------- Allgemeine Relations-Ausführung ----------
