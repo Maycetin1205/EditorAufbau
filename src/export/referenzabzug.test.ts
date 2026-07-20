@@ -32,8 +32,8 @@ describe('Export-Referenzabzug (Byte-Wächter)', () => {
   it('Referenzmaske exportiert Byte für Byte wie festgeschrieben', async () => {
     const { titel, tree, sources, relations } = referenzMaske()
     const { html, sevariablen } = exportMask(tree, titel, sources, relations)
-    // .snap-Endung mit Absicht: die Projektkarte scannt .html/.json auf
-    // Verweise — die Referenz ist ein Abzug, keine Quelldatei.
+    // .snap-Endung: die Referenz ist ein per toMatchFileSnapshot gefuehrter
+    // Abzug, keine Quelldatei.
     await expect(html).toMatchFileSnapshot('./referenz/maske.html.snap')
     await expect(sevariablen).toMatchFileSnapshot('./referenz/maske.sevariablen.json.snap')
   })

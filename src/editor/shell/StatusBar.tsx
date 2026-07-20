@@ -23,14 +23,6 @@ export function StatusBar() {
         )}
       </div>
       <div className="flex items-center gap-3">
-        <a
-          className="text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
-          href="/project-map.html"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Projektkarte
-        </a>
         {ed.canUndo && <span>Undo</span>}
         {ed.canRedo && <span>Redo</span>}
       </div>
