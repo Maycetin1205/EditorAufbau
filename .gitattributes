@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Generiertes Runtime-Bündel + Export-Referenzabzug fest auf LF: der
+# Windows-vite-Build schreibt sonst CRLF in die Working-Copy, wodurch der
+# Byte-Referenzabzug fälschlich rot wird (Nutzer-Go 2026-07-20).
+src/export/generated/* text eol=lf
+src/export/referenz/* text eol=lf

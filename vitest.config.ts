@@ -10,5 +10,9 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.ts'],
+    // 5s-Default flakte bei kaltem Parallel-Lauf am projectMap-Test (langsamer
+    // Import). 20s gibt den langsamen Tests Luft, ohne echte Hänger zu maskieren
+    // (Nutzer-Go 2026-07-20).
+    testTimeout: 20_000,
   },
 })
