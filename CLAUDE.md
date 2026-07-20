@@ -118,6 +118,45 @@ add_repo an die Session hängen).
 
 ## Stand (2026-07-15) + vereinbarte nächste Schritte
 
+### Fahrplan-Stand 2026-07-20 (beschlossen nach Fable-Architektur-Review mit 3 unabhängigen Prüfern)
+
+- **Heute erledigt:** TRIP-Workflow (`9ff133a`) · Zwischenspeicher-Paket
+  gesichert (`b46e02a`, „Ergebnis von Schritt N" als Parameterquelle) · dazu
+  die Aufräum-Pakete 2–4 + Huckepack-Härtung (s. u.).
+- **Gebündelte SE-Echttest-Warteschlange (EIN Test, Nutzer):** „Quelle
+  speichern" + „Ergebnis von Schritt N" + GET-Weg. Testmaske: Knopf „Termin
+  anlegen" → Popup öffnen; im Popup Formularfelder + Knopf mit Kette GET →
+  Quelle speichern → Popup schließen; zusätzlich ein PUT mit Quelle „Ergebnis
+  von Schritt 1". Klick-Anleitung ohne Fachbegriffe:
+  `docs/6-memo/se-echttest-klickanleitung.md` (ggf. um die Popup-Umrahmung
+  ergänzen).
+- **Aufräum-Reihenfolge** (je eigenes Paket: Plan → go → Prüfbündel → Commit →
+  Push): 1. Zwischenspeicher ✅ (`b46e02a`) · 2. Bündel-Wächter ✅ (`e2e4826`,
+  `npm run check:runtime` = 6. Wächter) · 3. TypeScript `strict:true` ✅
+  (`8ed33bd`, Beweis Prüfbündel + Referenzabzug grün) · 4. Hygiene ✅
+  (`f48aabc`: launch.json committet, tote Branches code-architecture-review-jxhdlt
+  + moin-aw5guv gelöscht) · 5. STOPP + Abschlussbericht ✅. Huckepack-Härtung ✅
+  (`3be7476`: ff-runtime.js/Referenzabzug fest auf LF + Test-Timeout hoch;
+  jq installiert).
+- **Nach bestandenem Echttest:** dieses Gleis → main mergen, Nebengleis
+  löschen, ab dann wieder EIN Gleis.
+- **Danach, NUR mit Fable-Plan + Doppel-Review:** (a) CLAUDE.md-Neuschnitt
+  (sortieren, nie umdeuten; Historie nach `docs/decisions`) · (b)
+  Schritt-Arten-Registry: Ketten-Schritte steckbar wie Bausteine, Unbekanntes
+  scheitert LAUT; huckepack Origin-Prüfung message-Fallback + Enum-Fixes
+  Referenzmaske → ein SE-Echttest.
+- **Danach:** Editor-Facelift (Farben/Icons/Dunkelmodus, nur Editor-UI, Export
+  unberührt) → Tabelle → Auswahl/Selektion (markierte Zeile als
+  Parameterquelle) → README/CI/Fehlerbild.
+- **Offene Klärung VOR dem Tabellen-Paket:** Betriebsleiter-Notizen/
+  Grid-Komponente vom Nutzer einholen — Grundsatzfrage freies Raster vs.
+  Fluss-Layout.
+- **Merkliste ergänzen (Review-Befunde 2026-07-20):** Export wirft unbekannte
+  Props still weg (Preflight-Meldung fehlt) · Maske meldet Schreib-/Lesefehler
+  dem Bediener nicht · Masken-Titel fest „Maske" · Editor-UI-Testabdeckung dünn.
+- **Später (App-Ausbau, blockiert nichts):** mehrere Masken verwalten ·
+  Server-Speicherung · Login · Rechte · Ein-Bearbeiter-Sperre · Versionsstände.
+
 - **Bibliothek:** Kanban (+ Spalte/Karte, Datenpfad in SoftEngine bestätigt;
   Karte seit 2026-07-16 nach der Empfang-Anatomie: acht bindbare Stellen —
   Avatar links neben Titel + Titel 2 (nebeneinander in EINER Zeile) mit
