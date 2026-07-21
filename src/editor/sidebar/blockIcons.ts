@@ -1,4 +1,4 @@
-// blockIcons — Baustein-Typ -> lucide-Icon fuer Bibliothek und Baustein-Baum.
+// blockIcons — Baustein-Typ -> lucide-Icon fuer die Baustein-Bibliothek.
 //
 // Reine Editor-seitige Zuordnungstabelle (Muster tierIcon.ts; Regel 2:
 // Daten-Tabelle statt `if typ === …`). Lucide lebt AUSSCHLIESSLICH in der

@@ -205,7 +205,7 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    Reiter als Segmente in der Leiste, Export = blauer Primärknopf, „Alle
    Blöcke löschen" ins „…"-Menü mit Bestätigung · Canvas als Blatt mit
    Schatten + Leerzustand-Hinweis · StatusBar mit Seiten-Anzeige) —
-   Screenshot-Abnahme durch den Nutzer AUSSTEHEND ·
+   vom Nutzer LIVE abgenommen (2026-07-21) ·
    R2 ✅ gebaut 2026-07-21 (Bibliothek oben Hauptdarsteller: kompakte
    Icon-Karten je Kategorie, Klick/Drag unverändert · Baustein-Baum „Aufbau"
    war zwischenzeitlich gebaut, auf Nutzer-Entscheidung 2026-07-21 aber
@@ -222,10 +222,17 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    `blockIcons.ts`, Lucide bleibt aus dem Runtime-Bündel — Bündel-Wächter
    „identisch". Genehmigte e2e-Ausnahme: drei Kopf-Assertions [formfeld/
    kanban/zwischenspeicher] von der Technik-Zeile auf die Kopf-Überschrift
-   umgestellt, Wächter-Zweck bleibt) —
-   Screenshot-Abnahme AUSSTEHEND · R3 Steuerung/
-   Formulare (Ereignis-Ketten wandern an den Baustein in den Inspector).
-   Detailplan je Paket, „go" je Paket, Abnahme per Screenshot.
+   umgestellt, Wächter-Zweck bleibt) — vom Nutzer LIVE begleitet und
+   abgenommen (2026-07-21, inkl. aller 9 Korrekturpunkte + Baum-Aus) ·
+   R3 Steuerung/Formulare — KORRIGIERTER ZUSCHNITT (Nutzer 2026-07-21):
+   NUR die Ereignis-Ketten wandern an den Baustein (Inspector-Abschnitt
+   „Aktionen"); die Steuerung STIRBT NICHT, sie bleibt als schlankes
+   Verwaltungsfenster für Datenquellen + Relationen (maskenweite, selten
+   angefasste Pflege) und bekommt nur die neue Optik.
+   Detailplan je Paket, „go" je Paket. **Abnahme: der Nutzer prüft LIVE
+   im Browser — KEINE Screenshot-/Galerie-Erzeugung mehr (Nutzer-
+   Entscheidung 2026-07-21, „frisst unnötig Tokens"); Beweis = Prüfbündel-
+   Ergebnis in Textform.**
 3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
    statische Bausteine (berühren den Export → gebündelte
    Echttest-Warteschlange, fachlich trivial).
