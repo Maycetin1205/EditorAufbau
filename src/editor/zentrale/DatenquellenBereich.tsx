@@ -14,6 +14,7 @@ import { idbIdAnzeige, type DataSource } from '../../core/data/dataSources'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { DataSourceForm } from './DataSourceForm'
+import { Gruppe } from './Gruppe'
 import { bausteinName, KIND_LABELS } from './helfer'
 
 export function DatenquellenBereich() {
@@ -111,10 +112,7 @@ export function DatenquellenBereich() {
               </p>
             </div>
 
-            <div>
-              <h4 className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-muted-foreground">
-                Felder
-              </h4>
+            <Gruppe titel="Felder">
               <div className="overflow-hidden rounded-md border border-border">
                 <table className="w-full">
                   <tbody>
@@ -132,12 +130,9 @@ export function DatenquellenBereich() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </Gruppe>
 
-            <div>
-              <h4 className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-muted-foreground">
-                Verwendung in dieser Maske
-              </h4>
+            <Gruppe titel="Verwendung in dieser Maske">
               {verwendungFor(auswahl.id).length === 0 ? (
                 <p className="text-muted-foreground">Von keinem Baustein verwendet.</p>
               ) : (
@@ -149,7 +144,7 @@ export function DatenquellenBereich() {
                   ))}
                 </ul>
               )}
-            </div>
+            </Gruppe>
 
             <div className="flex gap-2 border-t border-border pt-3">
               <Button size="sm" onClick={() => setModus('bearbeiten')}>Bearbeiten</Button>

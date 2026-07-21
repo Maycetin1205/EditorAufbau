@@ -1,9 +1,11 @@
 // Kommandozentrale (Z1; Gerüst-Neuschnitt 2026-07-15 nach der abgenommenen
-// Demo-Vorlage): der EINE übersichtliche Ort für alles Verdrahtete der
-// Maske. Drei Bereiche — Datenquellen | Relationen | Aktionen —
+// Demo-Vorlage): das schlanke Verwaltungsfenster für die maskenweite,
+// selten angefasste Pflege. Zwei Bereiche — Datenquellen | Relationen —
 // als Master-Detail, Bearbeiten inline im Detail (kein Modal im Modal).
-// Der Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT der
-// Selektions-Funktion (kein leerer Platzhalter-Bereich).
+// Die Ereignis-Ketten sind seit R3 (2026-07-21) an den Baustein umgezogen
+// (Inspector-Abschnitt „Aktionen"); der frühere Bereich „Aktionen" entfiel
+// dabei restlos. Der Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT
+// der Selektions-Funktion (kein leerer Platzhalter-Bereich).
 //
 // Öffnet über den Toolbar-Knopf „Steuerung". Optik: Editor-UI
 // (shadcn-Tokens) — bewusst KEINE Übernahme des alten Editors.
@@ -14,24 +16,20 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Database, Link2, ListChecks, X } from 'lucide-react'
+import { Database, Link2, X } from 'lucide-react'
 import { IconButton } from '@/ui/atoms/icon-button'
-import { ROOT_ID } from '../../core/blocks/BlockData'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { preflightMask } from '../../export/preflight'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
-import { AktionenBereich } from './AktionenBereich'
 import { DatenquellenBereich } from './DatenquellenBereich'
 import { RelationenBereich } from './RelationenBereich'
 
-type Bereich = 'datenquellen' | 'relationen' | 'aktionen'
+type Bereich = 'datenquellen' | 'relationen'
 
-const BEREICHE: ReadonlyArray<{ key: Bereich; name: string; icon: typeof ListChecks }> = [
+const BEREICHE: ReadonlyArray<{ key: Bereich; name: string; icon: typeof Database }> = [
   { key: 'datenquellen', name: 'Datenquellen', icon: Database },
   { key: 'relationen', name: 'Relationen', icon: Link2 },
-  { key: 'aktionen', name: 'Aktionen', icon: ListChecks },
 ]
 
 export function Kommandozentrale({ onClose }: { onClose: () => void }) {
@@ -49,34 +47,18 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   // Die VORHANDENE Export-Vorprüfung speist die Warn-Punkte in der Navigation
-  // — dieselben Meldungen, die sonst erst beim Export erscheinen.
+  // — dieselben Meldungen, die sonst erst beim Export erscheinen. Die
+  // Aktions-/Relations-Laufzeit-Warnungen wandern mit den Ketten an den
+  // Baustein (Schritt-Zeile im Inspector wird amber), nicht mehr hierher.
   const probleme = preflightMask(ed.tree, sources.list, relations.list)
   const warnt: Record<Bereich, boolean> = {
     datenquellen: probleme.some((p) => p.name === 'Datenquelle fehlt'),
     relationen: false,
-    aktionen: probleme.some((p) =>
-      p.name === 'Aktion unvollstaendig' || p.name === 'Relations-Laufzeit fehlt',
-    ),
   }
-
-  // Zähler für die Navigation (Bausteine mit Ereignissen in Baumreihenfolge).
-  let aktionenBausteine = 0
-  const zaehle = (id: string): void => {
-    for (const cid of ed.tree[id]?.childIds ?? []) {
-      const node = ed.tree[cid]
-      if (!node) continue
-      if (getBlockDefinition(node.type)?.blockEvents?.length) {
-        aktionenBausteine += 1
-      }
-      zaehle(cid)
-    }
-  }
-  zaehle(ROOT_ID)
 
   const navZahl: Record<Bereich, string> = {
     datenquellen: String(sources.list.length),
     relationen: String(relations.list.length),
-    aktionen: String(aktionenBausteine),
   }
 
   return createPortal(
@@ -124,7 +106,6 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
           </nav>
           {bereich === 'datenquellen' && <DatenquellenBereich />}
           {bereich === 'relationen' && <RelationenBereich />}
-          {bereich === 'aktionen' && <AktionenBereich />}
         </div>
       </div>
     </div>,

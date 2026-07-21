@@ -20,6 +20,7 @@ import {
 } from '../../core/data/relations'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
+import { Gruppe } from './Gruppe'
 import { RelationForm } from './RelationForm'
 import { bausteinName, parameterBedeutung, VERB_KURZ } from './helfer'
 
@@ -149,10 +150,7 @@ export function RelationenBereich() {
               <h3 className="text-sm font-semibold">{auswahl.name}</h3>
             </div>
 
-            <div>
-              <h4 className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-muted-foreground">
-                Parameter — in genau dieser Reihenfolge
-              </h4>
+            <Gruppe titel="Parameter — in genau dieser Reihenfolge">
               <div className="overflow-hidden rounded-md border border-border">
                 <table className="w-full">
                   <tbody>
@@ -173,21 +171,15 @@ export function RelationenBereich() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </Gruppe>
 
-            <div>
-              <h4 className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-muted-foreground">
-                Gespeicherte SoftEngine-Syntax
-              </h4>
+            <Gruppe titel="Gespeicherte SoftEngine-Syntax">
               <code className="block overflow-x-auto rounded-md bg-secondary px-2.5 py-1.5 font-mono text-[11px]">
                 {formatRelationSyntax(auswahl)}
               </code>
-            </div>
+            </Gruppe>
 
-            <div>
-              <h4 className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-muted-foreground">
-                Verwendung in dieser Maske
-              </h4>
+            <Gruppe titel="Verwendung in dieser Maske">
               {verwendungFor(auswahl.id).length === 0 ? (
                 <p className="text-muted-foreground">Von keinem Baustein verwendet.</p>
               ) : (
@@ -199,7 +191,7 @@ export function RelationenBereich() {
                   ))}
                 </ul>
               )}
-            </div>
+            </Gruppe>
 
             <div className="flex gap-2 border-t border-border pt-3">
               <Button size="sm" onClick={() => setModus('bearbeiten')}>Bearbeiten</Button>

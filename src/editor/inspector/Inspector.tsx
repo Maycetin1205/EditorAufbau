@@ -15,6 +15,7 @@ import { IconButton } from '@/ui/atoms/icon-button'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { cn } from '@/lib/utils'
 import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
+import { AktionenSektion } from './AktionenSektion'
 import { DataSection } from './DataSection'
 import { ColorTileControl } from './controls/ColorTileControl'
 import { SelectControl } from './controls/SelectControl'
@@ -213,6 +214,20 @@ export function Inspector() {
               ? <BindungsAnschluss block={block} />
               : def.acceptsDataSource && <DataSection block={block} />}
             {dataProps.map(renderPropControl)}
+          </div>
+        )}
+        {/* Aktionen (R3 2026-07-21): die Ereignis-Ketten des Bausteins wohnen
+            jetzt hier, nicht mehr in der Steuerung. Nur für Bausteine, die per
+            Registry Ereignisse deklarieren (blockEvents) — kein Typ-Check.
+            Feine Trennlinie, wenn Inhalt/Daten darüber stehen. */}
+        {def.blockEvents && def.blockEvents.length > 0 && (
+          <div
+            className={cn(
+              'flex flex-col gap-3',
+              (generalProps.length > 0 || showDataSection) && 'mt-4 border-t border-border pt-4',
+            )}
+          >
+            <AktionenSektion block={block} events={def.blockEvents} />
           </div>
         )}
         {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14, Bedienlogik 6):

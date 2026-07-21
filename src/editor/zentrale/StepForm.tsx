@@ -208,7 +208,7 @@ function RelationAuswahl({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-[11px] font-medium">{label}</span>
       <div className="relative">
         <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <TextInput
@@ -397,7 +397,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
 
             {relation && (
               <div className="flex flex-col gap-2">
-                <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[11px] text-muted-foreground">
                   <span>Parameter</span><span>Wert</span><span>Quelle</span><span />
                 </div>
                 {relation.params.map((raw, index) => (
@@ -419,7 +419,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
             {relation?.allowExtraParams && (
               <div className="flex flex-col gap-2 border-t border-border pt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Zusatzparameter</span>
+                  <span className="text-[11px] font-medium">Zusatzparameter</span>
                   <Button
                     variant="outline"
                     size="sm"

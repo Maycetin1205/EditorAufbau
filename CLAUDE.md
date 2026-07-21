@@ -233,6 +233,32 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    im Browser — KEINE Screenshot-/Galerie-Erzeugung mehr (Nutzer-
    Entscheidung 2026-07-21, „frisst unnötig Tokens"); Beweis = Prüfbündel-
    Ergebnis in Textform.**
+   R3 ✅ gebaut 2026-07-21: Inspector-Abschnitt „Aktionen"
+   (`src/editor/inspector/AktionenSektion.tsx`), registry-getrieben über
+   `blockEvents` (kein Typ-Check), erscheint nach Inhalt/Daten mit feiner
+   Trennlinie · je Ereignis EINE kompakte Kopfzeile (Name links, kleiner
+   „+"-Icon „Schritt hinzufügen" rechts), Schritte als dichte Zeilen direkt
+   darunter, KEIN Leerzustand-Text/keine eigene Knopf-Zeile (Punkt 10, Nutzer
+   2026-07-21: Leerzustände kosten null zusätzliche Höhe) ·
+   Sortieren/Bearbeiten/Duplizieren/Löschen + Undo (updateBlockEvents) exakt
+   wie zuvor im Bereich · StepForm im VERHALTEN unverändert wiederverwendet
+   (bleibt in `zentrale/`), öffnet als Karte AM PANEL
+   (Portal, überlagert den Inspector von rechts — die 340-px-Spalte ist für
+   die Relation-Parameterzeilen zu schmal; Plan-Entscheidung „Karte am
+   Panel", ausdrücklich KEIN Vollbild-Wechsel), Escape-Schichtung erhalten ·
+   Steuerung: Bereich „Aktionen" restlos raus (`AktionenBereich.tsx`
+   gelöscht, Kommandozentrale auf zwei Bereiche Datenquellen|Relationen,
+   Toolbar-Tooltip nachgezogen) · die Lese-Ansichten beider Bereiche teilen
+   jetzt EINE Label-Stelle (`src/editor/zentrale/Gruppe.tsx`) — löst die
+   kopierten Eyebrow-Überschriften + den R2-Hinweis „11-px-Labels" auf
+   (Stufen: 10 px Eyebrow / 11 px Field / 14 px Detail-Titel) · Formular-
+   Labels auf EINE Größe 11 px gezogen (Nutzer-Go 2026-07-21, „ruhiges
+   Bild": StepForm-Gruppenlabels + Parameter-Spaltenköpfe und DataSourceForm
+   „Felder" von 12/10 px → 11 px; Felder/Reihenfolge/Verhalten unberührt,
+   RelationForm lief schon über Field). Prüfbündel grün (tsc · eslint ·
+   check:runtime „identisch" · 103 vitest · 11 e2e), Export beweisbar
+   unberührt, keine Testdatei/keine neuen e2e — LIVE-Abnahme durch den
+   Nutzer steht aus.
 3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
    statische Bausteine (berühren den Export → gebündelte
    Echttest-Warteschlange, fachlich trivial).

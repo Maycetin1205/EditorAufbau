@@ -165,7 +165,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium">Felder</span>
+            <span className="text-[11px] font-medium">Felder</span>
             <Button
               variant="outline"
               size="sm"
