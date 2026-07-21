@@ -1,23 +1,24 @@
 // Datenanschluss im Inspector
-// Inspector-Sektion fuer Boards mit eigenem Datenanschluss-Dialog.
-// Der Dialog pflegt ausschliesslich Quelle + Einsortieren-Feld; sichtbare
-// Struktur/Feldstellen bleiben im Canvas, der Schreibweg bleibt im Inspector.
-// Alles kommt aus der Registry, ohne Typ-Sonderfall.
+// Inspector-Sektion fuer Boards mit eigenem Datenanschluss: Knopf + Kurz-
+// Zustand in Klartext. Der Klick blättert das Panel zur BindungsStrecke um
+// (onOpen — der Inspector besitzt den Zustand; kein Modal mehr, R3-Feinschliff
+// 2026-07-21). Gepflegt werden nur Quelle + Einsortieren-Feld; sichtbare
+// Struktur/Feldstellen bleiben im Canvas. Alles aus der Registry, ohne
+// Typ-Sonderfall.
 
-import { useState } from 'react'
 import { Button } from '@/ui/atoms/button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { bindungsStand } from '../../core/blocks/bindungsStand'
 import { useDataSources } from '../../state/useDataSources'
-import { BindungsStrecke } from './BindungsStrecke'
 
 interface BindungsAnschlussProps {
   block: BlockNode
+  // Blättert das Inspector-Panel zur Datenanschluss-Ansicht um.
+  onOpen: () => void
 }
 
-export function BindungsAnschluss({ block }: BindungsAnschlussProps) {
-  const [offen, setOffen] = useState(false)
+export function BindungsAnschluss({ block, onOpen }: BindungsAnschlussProps) {
   const sources = useDataSources().list
   const def = getBlockDefinition(block.type)
   const route = def?.bindingRoute
@@ -50,15 +51,12 @@ export function BindungsAnschluss({ block }: BindungsAnschlussProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <Button variant="outline" size="sm" onClick={() => setOffen(true)}>
+      <Button variant="outline" size="sm" onClick={onOpen}>
         Daten anschließen…
       </Button>
       <p className={warnung ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
         {zustand}
       </p>
-      {offen && (
-        <BindungsStrecke blockId={block.id} onClose={() => setOffen(false)} />
-      )}
     </div>
   )
 }

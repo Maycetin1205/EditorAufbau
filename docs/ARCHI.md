@@ -69,8 +69,8 @@ src/
 │   │               (SeitenLeiste/PopupSeite), Anfasser (zieheGroesse = DIE
 │   │               eine Zieh-Mechanik), useBindingPicker/useBlockResize
 │   ├── inspector/  Eigenschaften-Panel (nur für Unzeigbares)
-│   ├── zentrale/   Steuerung: Datenquellen | Relationen | Aktionen
-│   │               (Master-Detail; StepForm = Schritt-Formular)
+│   ├── zentrale/   Steuerung: Datenquellen | Relationen (Master-Detail);
+│   │               StepForm (Schritt-Formular) blättert im Inspector auf
 │   ├── sidebar/    Bausteine-Bibliothek
 │   ├── shell/      Rahmen, Kopfleiste
 │   └── strecke/    Führungslinien/Vermessung beim Ziehen

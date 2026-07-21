@@ -57,15 +57,16 @@ test('Export: Formularfeld hydriert aus der ersten Zeile, schreibt lokal und feu
   await page.getByRole('button', { name: 'Formularfeld', exact: true }).click()
   await selectFormfeld(page)
 
-  // Daten anschließen: Quelle + Feld über den generischen Dialog (Klarnamen).
+  // Daten anschließen: Quelle + Feld über die Panel-Ansicht (Klarnamen).
+  // R3-Feinschliff 2026-07-21: das Inspector-Panel blättert um (kein Modal
+  // mehr) — die Selektoren zielen auf die Gruppen der Panel-Ansicht.
   await page.getByRole('button', { name: /Daten anschlie/ }).click()
-  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
-  await dialog.getByRole('group', { name: 'Datenquelle' })
+  await page.getByRole('group', { name: 'Datenquelle' })
     .getByRole('button', { name: 'Terminplaner' }).click()
-  const feldGruppe = dialog.getByRole('group', { name: 'Feld' })
+  const feldGruppe = page.getByRole('group', { name: 'Feld' })
   await expect(feldGruppe.getByRole('button', { name: '78_30' })).toHaveCount(0) // nie Feldcodes
   await feldGruppe.getByRole('button', { name: 'Tiername' }).click()
-  await dialog.getByRole('button', { name: 'Fertig' }).click()
+  await page.getByRole('button', { name: 'Fertig' }).click()
 
   // Editor-Vorschau: gebundenes Feld zeigt den KLARNAMEN, nie erfundene Werte.
   await expect(page.locator('ff-formfeld input.ctrl')).toHaveValue('Tiername')

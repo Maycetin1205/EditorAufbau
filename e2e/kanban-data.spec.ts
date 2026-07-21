@@ -31,23 +31,23 @@ async function selectBoard(page: Page) {
   await expect(page.getByRole('heading', { name: 'Kanban' })).toBeVisible() // Inspector-Kopf
 }
 
+// R3-Feinschliff 2026-07-21: „Daten anschließen" blättert das Inspector-Panel
+// um (kein Modal mehr) — die Selektoren zielen auf die Panel-Ansicht.
 async function attachTerminplaner(page: Page) {
   await selectBoard(page)
   await page.getByRole('button', { name: /Daten anschlie/ }).click()
-  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
-  await dialog.getByRole('group', { name: 'Datenquelle' })
+  await page.getByRole('group', { name: 'Datenquelle' })
     .getByRole('button', { name: 'Terminplaner' }).click()
-  await dialog.getByRole('button', { name: 'Fertig' }).click()
+  await page.getByRole('button', { name: 'Fertig' }).click()
 }
 
 async function chooseEinsortierFeld(page: Page, field: string) {
   await selectBoard(page)
   await page.getByRole('button', { name: /Daten anschlie/ }).click()
-  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
-  const gruppe = dialog.getByRole('group', { name: 'Einsortieren nach' })
+  const gruppe = page.getByRole('group', { name: 'Einsortieren nach' })
   await expect(gruppe.getByRole('button', { name: '253_30' })).toHaveCount(0)
   await gruppe.getByRole('button', { name: field }).click()
-  await dialog.getByRole('button', { name: 'Fertig' }).click()
+  await page.getByRole('button', { name: 'Fertig' }).click()
 }
 
 // Spaltentitel per Doppelklick setzen — der TITEL ist seit 2026-07-14 der

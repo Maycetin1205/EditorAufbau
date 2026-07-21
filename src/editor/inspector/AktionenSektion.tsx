@@ -8,15 +8,12 @@
 // der Baustein hier schon feststeht). Ein Bedienschritt = EIN Undo-Eintrag
 // (editor.updateBlockEvents), Ctrl+Z gilt auch hier.
 //
-// Die Schritt-Bearbeitung nutzt die UNVERÄNDERTE StepForm (Regel: nichts neu
-// erfinden). Sie erscheint als Karte, die den Inspector überlagert: die
-// 340-px-Spalte ist für die Relation-Parameterzeilen zu schmal — Plan-
-// Entscheidung 2026-07-21 „Karte am Panel", ausdrücklich KEIN neuer
-// Vollbild-Weltwechsel. Escape-Schichtung erhalten (FormularKarte fängt sein
-// Escape per capture + stopPropagation ab).
+// Das Anlegen/Bearbeiten eines Schritts blättert das Inspector-Panel um
+// (R3-Feinschliff 2026-07-21): diese Sektion meldet den Wunsch nur über
+// `onEditStep` — den Zustand und die UNVERÄNDERTE StepForm besitzt der
+// Inspector (Rückzeile „← <Baustein>", 340 px, Escape blättert zurück).
+// Sortieren/Löschen/Duplizieren bleiben hier (kein Umblättern nötig).
 
-import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import { ArrowDown, ArrowUp, Copy, Pencil, Plus, X } from 'lucide-react'
 import { IconButton } from '@/ui/atoms/icon-button'
 import type { BlockNode } from '../../core/blocks/BlockData'
@@ -30,20 +27,19 @@ import {
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
-import { StepForm } from '../zentrale/StepForm'
 
 interface AktionenSektionProps {
   block: BlockNode
   events: readonly BlockEventSpec[]
+  // Schritt anlegen (step weggelassen) oder bearbeiten — der Inspector
+  // blättert daraufhin das Panel zur StepForm um.
+  onEditStep: (eventKey: string, step?: ActionStep) => void
 }
 
-export function AktionenSektion({ block, events }: AktionenSektionProps) {
+export function AktionenSektion({ block, events, onEditStep }: AktionenSektionProps) {
   const ed = useEditor()
   const relations = useRelations()
   const dataSources = useDataSources()
-  // Offenes Schritt-Formular: an welchem Ereignis, ggf. welcher Schritt
-  // (bearbeiten). null = kein Formular offen.
-  const [form, setForm] = useState<{ eventKey: string; step?: ActionStep } | null>(null)
 
   const kette = (eventKey: string): ActionStep[] => ed.tree[block.id]?.events?.[eventKey] ?? []
 
@@ -95,7 +91,7 @@ export function AktionenSektion({ block, events }: AktionenSektionProps) {
               <IconButton
                 aria-label="Schritt hinzufügen"
                 title="Schritt hinzufügen"
-                onClick={() => setForm({ eventKey: ev.key })}
+                onClick={() => onEditStep(ev.key)}
               >
                 <Plus size={14} />
               </IconButton>
@@ -144,7 +140,7 @@ export function AktionenSektion({ block, events }: AktionenSektionProps) {
                       </IconButton>
                       <IconButton
                         aria-label={`Schritt ${i + 1} bearbeiten`}
-                        onClick={() => setForm({ eventKey: ev.key, step: s })}
+                        onClick={() => onEditStep(ev.key, s)}
                       >
                         <Pencil size={12} />
                       </IconButton>
@@ -168,30 +164,6 @@ export function AktionenSektion({ block, events }: AktionenSektionProps) {
           </div>
         )
       })}
-
-      {/* Schritt-Formular als Karte am Panel: überlagert den Inspector von
-          rechts (dort, wo das Panel sitzt), breit genug für die Relation-
-          Parameterzeilen — kein Vollbild-Wechsel. Portal an den Body, damit
-          das overflow-hidden des Inspector-Asides die Karte nicht abschneidet. */}
-      {form && createPortal(
-        <div className="fixed bottom-0 right-0 top-10 z-40 w-[460px] max-w-[calc(100vw-2rem)] overflow-y-auto border-l border-border bg-background shadow-xl">
-          <div className="p-4">
-            <StepForm
-              step={form.step}
-              kette={kette(form.eventKey)}
-              onClose={() => setForm(null)}
-              onSave={(step) => {
-                const steps = kette(form.eventKey)
-                const next = form.step
-                  ? steps.map((s) => (s.id === step.id ? step : s))
-                  : [...steps, step]
-                setChain(form.eventKey, next)
-              }}
-            />
-          </div>
-        </div>,
-        document.body,
-      )}
     </div>
   )
 }

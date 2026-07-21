@@ -1,11 +1,13 @@
-// Datenanschluss-Dialog
-// Ein eigener Dialog fuer die Datenquelle und das Einsortierfeld des Boards.
-// Struktur und sichtbare Feldbindungen werden ausschliesslich direkt
-// an den echten Bausteinen im Canvas bearbeitet.
+// Datenanschluss — Quelle + Einsortierfeld des Boards.
+// Liefert seit dem R3-Feinschliff (2026-07-21) nur seinen Inhalt: der
+// Inspector blättert das Panel dorthin um (Rückzeile + Titel + Escape kommen
+// von der SidePanel-Hülle, kein Modal/keine Abdunklung mehr). Struktur und
+// sichtbare Feldbindungen werden weiterhin direkt an den echten Bausteinen
+// im Canvas bearbeitet. Die Schritt-Abschnitte bleiben role="group" (die
+// e2e-Wächter zielen darauf, jetzt in der Panel-Ansicht statt im Dialog).
 
 import type { ReactNode } from 'react'
 import { Button } from '@/ui/atoms/button'
-import { Modal } from '@/ui/molecules/modal'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { bindungsStand } from '../../core/blocks/bindungsStand'
 import { useDataSources } from '../../state/useDataSources'
@@ -95,73 +97,71 @@ export function BindungsStrecke({ blockId, onClose }: BindungsStreckeProps) {
     if (code !== feld) ed.updateProperty(blockId, route.fieldProp, code)
   }
   return (
-    <Modal title={'Daten anschlie\u00DFen'} onClose={onClose}>
-      <div className="flex flex-col gap-5">
-        <Schritt
-          nr={1}
-          titel="Datenquelle"
-          fertig={stand.quelleGewaehlt && stand.quelleBekannt}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            <Chip aktiv={sourceId === ''} onClick={() => setQuelle('')}>
-              &mdash; keine &mdash;
+    <div className="flex flex-col gap-5">
+      <Schritt
+        nr={1}
+        titel="Datenquelle"
+        fertig={stand.quelleGewaehlt && stand.quelleBekannt}
+      >
+        <div className="flex flex-wrap gap-1.5">
+          <Chip aktiv={sourceId === ''} onClick={() => setQuelle('')}>
+            &mdash; keine &mdash;
+          </Chip>
+          {sources.map((source) => (
+            <Chip
+              key={source.id}
+              aktiv={source.id === sourceId}
+              onClick={() => setQuelle(source.id)}
+            >
+              {source.name}
             </Chip>
-            {sources.map((source) => (
-              <Chip
-                key={source.id}
-                aktiv={source.id === sourceId}
-                onClick={() => setQuelle(source.id)}
-              >
-                {source.name}
-              </Chip>
-            ))}
-          </div>
-          {stand.quelleGewaehlt && !stand.quelleBekannt && (
-            <p className="text-xs text-destructive">
-              Die gew&auml;hlte Datenquelle fehlt in der Bibliothek.
-            </p>
-          )}
-          <p className="text-[11px] text-muted-foreground">
-            Vorlagen anlegen und bearbeiten: Steuerung &rarr; Datenquellen.
-          </p>
-        </Schritt>
-
-        <Schritt
-          nr={2}
-          titel={feldProp?.name ?? 'Einsortieren nach'}
-          fertig={stand.angeschlossen}
-        >
-          {!quelle ? (
-            <p className="text-xs text-muted-foreground">
-              Zuerst eine Datenquelle w&auml;hlen.
-            </p>
-          ) : (
-            <>
-              <p className="text-[11px] text-muted-foreground">
-                {feldProp?.description ?? ''}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <Chip aktiv={feld === ''} onClick={() => setFeld('')}>
-                  &mdash; keins &mdash;
-                </Chip>
-                {quelle.fields.map((field) => (
-                  <Chip
-                    key={field.code}
-                    aktiv={field.code === feld}
-                    onClick={() => setFeld(field.code)}
-                  >
-                    {field.label}
-                  </Chip>
-                ))}
-              </div>
-            </>
-          )}
-        </Schritt>
-
-        <div className="flex justify-end">
-          <Button onClick={onClose}>Fertig</Button>
+          ))}
         </div>
+        {stand.quelleGewaehlt && !stand.quelleBekannt && (
+          <p className="text-xs text-destructive">
+            Die gew&auml;hlte Datenquelle fehlt in der Bibliothek.
+          </p>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          Vorlagen anlegen und bearbeiten: Steuerung &rarr; Datenquellen.
+        </p>
+      </Schritt>
+
+      <Schritt
+        nr={2}
+        titel={feldProp?.name ?? 'Einsortieren nach'}
+        fertig={stand.angeschlossen}
+      >
+        {!quelle ? (
+          <p className="text-xs text-muted-foreground">
+            Zuerst eine Datenquelle w&auml;hlen.
+          </p>
+        ) : (
+          <>
+            <p className="text-[11px] text-muted-foreground">
+              {feldProp?.description ?? ''}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <Chip aktiv={feld === ''} onClick={() => setFeld('')}>
+                &mdash; keins &mdash;
+              </Chip>
+              {quelle.fields.map((field) => (
+                <Chip
+                  key={field.code}
+                  aktiv={field.code === feld}
+                  onClick={() => setFeld(field.code)}
+                >
+                  {field.label}
+                </Chip>
+              ))}
+            </div>
+          </>
+        )}
+      </Schritt>
+
+      <div className="flex justify-end">
+        <Button size="sm" onClick={onClose}>Fertig</Button>
       </div>
-    </Modal>
+    </div>
   )
 }

@@ -50,13 +50,14 @@ test('Export: GET-Ergebnis speist mehrere PUTs — als PINDEX, als vorheriger Sc
   // Formularfeld an Terminplaner/Tiername binden (Muster formfeld-data).
   await page.getByRole('button', { name: 'Formularfeld', exact: true }).click()
   await selectFormfeld(page)
+  // R3-Feinschliff 2026-07-21: „Daten anschließen" blättert das Inspector-
+  // Panel um (kein Modal mehr) — Selektoren zielen auf die Panel-Ansicht.
   await page.getByRole('button', { name: /Daten anschlie/ }).click()
-  const dialog = page.getByRole('dialog', { name: /Daten anschlie/ })
-  await dialog.getByRole('group', { name: 'Datenquelle' })
+  await page.getByRole('group', { name: 'Datenquelle' })
     .getByRole('button', { name: 'Terminplaner' }).click()
-  await dialog.getByRole('group', { name: 'Feld' })
+  await page.getByRole('group', { name: 'Feld' })
     .getByRole('button', { name: 'Tiername' }).click()
-  await dialog.getByRole('button', { name: 'Fertig' }).click()
+  await page.getByRole('button', { name: 'Fertig' }).click()
 
   await page.getByRole('button', { name: 'Schaltfläche', exact: true }).click()
   await expect(page.locator('ff-button')).toHaveCount(1)

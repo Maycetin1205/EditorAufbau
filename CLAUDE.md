@@ -242,10 +242,9 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    2026-07-21: Leerzustände kosten null zusätzliche Höhe) ·
    Sortieren/Bearbeiten/Duplizieren/Löschen + Undo (updateBlockEvents) exakt
    wie zuvor im Bereich · StepForm im VERHALTEN unverändert wiederverwendet
-   (bleibt in `zentrale/`), öffnet als Karte AM PANEL
-   (Portal, überlagert den Inspector von rechts — die 340-px-Spalte ist für
-   die Relation-Parameterzeilen zu schmal; Plan-Entscheidung „Karte am
-   Panel", ausdrücklich KEIN Vollbild-Wechsel), Escape-Schichtung erhalten ·
+   (bleibt in `zentrale/`); die Schritt-Bearbeitung öffnete zunächst als Karte
+   AM PANEL (Portal), seit dem R3-Feinschliff blättert stattdessen das
+   Inspector-Panel um (s. unten), Escape-Schichtung erhalten ·
    Steuerung: Bereich „Aktionen" restlos raus (`AktionenBereich.tsx`
    gelöscht, Kommandozentrale auf zwei Bereiche Datenquellen|Relationen,
    Toolbar-Tooltip nachgezogen) · die Lese-Ansichten beider Bereiche teilen
@@ -259,6 +258,27 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    check:runtime „identisch" · 103 vitest · 11 e2e), Export beweisbar
    unberührt, keine Testdatei/keine neuen e2e — LIVE-Abnahme durch den
    Nutzer steht aus.
+   R3-Feinschliff ✅ gebaut 2026-07-21 (Plan von Fable, „Panel blättert um"):
+   „Daten anschließen" UND das Schritt-Formular überlagern den Inspector nicht
+   mehr (kein Modal/kein 460-px-Portal) — der Inspector hält EINEN Zustand
+   `unteraufgabe` und wechselt seinen Inhalt komplett zur Aufgabe: SidePanel im
+   Rückzeilen-Modus („← <Baustein>" + Aufgaben-Titel), 340 px EXAKT, Controls
+   gestapelt (StepForm-Parameterzeilen: Name+Quelle in einer Zeile, Wert in
+   voller Breite darunter — geprüft mit dem 6-Parameter-PUT: kein Querlauf).
+   Escape/„Fertig"/„←" blättern zurück (capture+stopPropagation wie zuvor bei
+   FormularKarte/Modal); Baustein-Wechsel schließt die Unteraufgabe (Render-
+   Muster „State beim Auswahl-Wechsel anpassen", KEIN setState-im-Effekt).
+   BindungsStrecke/StepForm liefern nur noch ihren Inhalt (kein Modal/keine
+   FormularKarte-Hülle); die Schritt-Abschnitte bleiben role="group" — die e2e
+   (formfeld-/kanban-/zwischenspeicher-data) zielen auf die Panel-Ansicht statt
+   den Dialog (genehmigte Ausnahme, Flüsse + Assertions identisch). Beifang
+   (Nutzer-Brille): die handgebauten Schritt-Selects auf EINE Größe (12 px wie
+   die übrigen Controls; Labels bleiben 11 px), Popup-Select h-8→h-7, toter
+   Parameter-Spaltenkopf raus. `ui/molecules/modal.tsx` ist damit ungenutzt
+   (nur noch FieldPicker trägt sein eigenes role=dialog) — bewusst NICHT gelöscht
+   (nicht selbst angelegt; s. Aufgefallen). Prüfbündel grün (tsc · eslint ·
+   check:runtime „Bündel identisch" · 103 vitest · 11 e2e), Export beweisbar
+   unberührt, keine neuen Tests — LIVE-Abnahme durch den Nutzer steht aus.
 3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
    statische Bausteine (berühren den Export → gebündelte
    Echttest-Warteschlange, fachlich trivial).

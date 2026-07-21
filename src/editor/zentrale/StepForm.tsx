@@ -4,6 +4,13 @@
 // START_TOOL traegt nur die Nummer — KEINE Parameter im Formular
 // (Nutzer-Entscheidung 2026-07-15); toolParams bleibt im Modell fuer
 // Altbestaende und die Laufzeit, gespeichert wird leer.
+//
+// Wohnt seit dem R3-Feinschliff (2026-07-21) in der umgeblätterten
+// Inspector-Ansicht (kein Modal/Overlay mehr): Titel + Zurückblättern +
+// Escape stellt der Inspector über die SidePanel-Rückzeile, das Formular
+// liefert nur seinen Inhalt. Für die 340-px-Spalte stehen die
+// Parameterzeilen gestapelt (Name + Quelle, Wert in voller Breite darunter)
+// — Felder und Verhalten unverändert, nur das Layout ist schmaler.
 
 import { useState } from 'react'
 import { Plus, Search, X } from 'lucide-react'
@@ -34,7 +41,6 @@ import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { SelectControl } from '../inspector/controls/SelectControl'
-import { FormularKarte } from './FormularKarte'
 
 interface StepFormProps {
   step?: ActionStep
@@ -62,7 +68,7 @@ function BindingValue({
 }) {
   if (binding.source === 'previous_result') {
     return (
-      <div className="flex h-7 items-center rounded border border-input bg-secondary/50 px-2 text-[11px] text-muted-foreground">
+      <div className="flex h-7 items-center rounded border border-input bg-secondary/50 px-2 text-xs text-muted-foreground">
         Ergebnis des vorherigen Schritts
       </div>
     )
@@ -106,7 +112,7 @@ function BindingValue({
         <select
           value={binding.dataSourceId ?? ''}
           onChange={(e) => onChange({ ...binding, dataSourceId: e.target.value, value: '' })}
-          className="h-7 min-w-0 rounded border border-input bg-background px-1 text-[11px]"
+          className="h-7 min-w-0 rounded border border-input bg-background px-2 text-xs"
         >
           <option value="">— Quelle —</option>
           {dataSources.map((source) => (
@@ -116,7 +122,7 @@ function BindingValue({
         <select
           value={binding.value}
           onChange={(e) => onChange({ ...binding, value: e.target.value })}
-          className="h-7 min-w-0 rounded border border-input bg-background px-1 text-[11px]"
+          className="h-7 min-w-0 rounded border border-input bg-background px-2 text-xs"
         >
           <option value="">— Feld —</option>
           {selectedSource?.fields.map((field) => (
@@ -163,29 +169,34 @@ function BindingRow({
     onChange({ source, value })
   }
 
+  // Gestapelt für die 340-px-Spalte (R3-Feinschliff): Name + Quelle in einer
+  // Zeile, der Wert in voller Breite darunter — die frühere 4-Spalten-Zeile
+  // passte nicht in die schmale Panel-Ansicht. Felder/Verhalten unverändert.
   return (
-    <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] items-center gap-2">
-      <span className="truncate font-mono text-[11px]" title={label}>{label}</span>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate font-mono text-[11px]" title={label}>{label}</span>
+        <select
+          value={binding.source}
+          onChange={(e) => setSource(e.target.value as ActionParamSource)}
+          className="h-7 w-36 shrink-0 rounded border border-input bg-background px-2 text-xs"
+        >
+          {ACTION_PARAM_SOURCES.map((source) => (
+            <option
+              key={source.key}
+              value={source.key}
+              disabled={(source.key === 'data_field' && dataSources.length === 0)
+                || (source.key === 'step_result' && schritte.length === 0)}
+            >
+              {source.name}
+            </option>
+          ))}
+        </select>
+        {removable && onRemove && (
+          <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
+        )}
+      </div>
       <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
-      <select
-        value={binding.source}
-        onChange={(e) => setSource(e.target.value as ActionParamSource)}
-        className="h-7 rounded border border-input bg-background px-2 text-[11px]"
-      >
-        {ACTION_PARAM_SOURCES.map((source) => (
-          <option
-            key={source.key}
-            value={source.key}
-            disabled={(source.key === 'data_field' && dataSources.length === 0)
-              || (source.key === 'step_result' && schritte.length === 0)}
-          >
-            {source.name}
-          </option>
-        ))}
-      </select>
-      {removable && onRemove
-        ? <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
-        : <span />}
     </div>
   )
 }
@@ -342,131 +353,126 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   }
 
   return (
-    <FormularKarte title={step ? 'Schritt bearbeiten' : 'Neuer Schritt'} onClose={onClose}>
-      <div className="flex flex-col gap-3">
-        <SelectControl
-          label="Aktion"
-          value={typ}
-          options={STEP_TYPES.map((entry) => ({ value: entry.key, label: entry.name }))}
-          onChange={(value) => setTyp(value as StepTypeKey)}
-        />
+    <div className="flex flex-col gap-3">
+      <SelectControl
+        label="Aktion"
+        value={typ}
+        options={STEP_TYPES.map((entry) => ({ value: entry.key, label: entry.name }))}
+        onChange={(value) => setTyp(value as StepTypeKey)}
+      />
 
-        {(typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') && (
-          <Field label="Popup" error={zeigeFehler ? problem ?? '' : ''}>
-            {(field) => (
-              <select
-                {...field}
-                value={popupId}
-                onChange={(e) => setPopupId(e.target.value)}
-                className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-              >
-                <option value="">
-                  {popupSeiten.length === 0 ? '(keine Popup-Seite vorhanden)' : '— wählen —'}
-                </option>
-                {popupSeiten.map((seite) => (
-                  <option key={seite.id} value={seite.id}>{seite.name}</option>
-                ))}
-              </select>
-            )}
-          </Field>
-        )}
+      {(typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') && (
+        <Field label="Popup" error={zeigeFehler ? problem ?? '' : ''}>
+          {(field) => (
+            <select
+              {...field}
+              value={popupId}
+              onChange={(e) => setPopupId(e.target.value)}
+              className="h-7 w-full rounded border border-input bg-background px-2 text-xs"
+            >
+              <option value="">
+                {popupSeiten.length === 0 ? '(keine Popup-Seite vorhanden)' : '— wählen —'}
+              </option>
+              {popupSeiten.map((seite) => (
+                <option key={seite.id} value={seite.id}>{seite.name}</option>
+              ))}
+            </select>
+          )}
+        </Field>
+      )}
 
-        {typ === 'START_TOOL' && (
-          <Field label="Nummer" error={zeigeFehler ? problem ?? '' : ''}>
-            {(field) => (
-              <TextInput
-                {...field}
-                value={toolNr}
-                className="w-28"
-                onChange={(e) => setToolNr(e.target.value)}
-              />
-            )}
-          </Field>
-        )}
-
-        {typ === 'RELATION' && (
-          <>
-            <RelationAuswahl
-              label="Relation"
-              eintraege={sichtbareRelationen}
-              relationId={relationId}
-              suche={suche}
-              onSuche={setSuche}
-              onSelect={selectRelation}
+      {typ === 'START_TOOL' && (
+        <Field label="Nummer" error={zeigeFehler ? problem ?? '' : ''}>
+          {(field) => (
+            <TextInput
+              {...field}
+              value={toolNr}
+              className="w-28"
+              onChange={(e) => setToolNr(e.target.value)}
             />
+          )}
+        </Field>
+      )}
 
-            {relation && (
-              <div className="flex flex-col gap-2">
-                <div className="grid grid-cols-[minmax(80px,0.8fr)_minmax(120px,1.5fr)_130px_28px] gap-2 text-[11px] text-muted-foreground">
-                  <span>Parameter</span><span>Wert</span><span>Quelle</span><span />
-                </div>
-                {relation.params.map((raw, index) => (
-                  <BindingRow
-                    key={index}
-                    label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
-                    binding={bindingFor(index)}
-                    dataSources={dataSources.list}
-                    schritte={ergebnisSchritte}
-                    onChange={(binding) => setBinding(index, binding)}
-                  />
-                ))}
-                {relation.params.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Keine Parameter.</p>
-                )}
+      {typ === 'RELATION' && (
+        <>
+          <RelationAuswahl
+            label="Relation"
+            eintraege={sichtbareRelationen}
+            relationId={relationId}
+            suche={suche}
+            onSuche={setSuche}
+            onSelect={selectRelation}
+          />
+
+          {relation && (
+            <div className="flex flex-col gap-2">
+              {relation.params.map((raw, index) => (
+                <BindingRow
+                  key={index}
+                  label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
+                  binding={bindingFor(index)}
+                  dataSources={dataSources.list}
+                  schritte={ergebnisSchritte}
+                  onChange={(binding) => setBinding(index, binding)}
+                />
+              ))}
+              {relation.params.length === 0 && (
+                <p className="text-xs text-muted-foreground">Keine Parameter.</p>
+              )}
+            </div>
+          )}
+
+          {relation?.allowExtraParams && (
+            <div className="flex flex-col gap-2 border-t border-border pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium">Zusatzparameter</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExtraParams((current) => [...current, { source: 'fixed', value: '' }])}
+                >
+                  <Plus size={14} /> Parameter
+                </Button>
               </div>
-            )}
+              {extraParams.map((binding, index) => (
+                <BindingRow
+                  key={index}
+                  label={`${index + 1}.`}
+                  binding={binding}
+                  dataSources={dataSources.list}
+                  schritte={ergebnisSchritte}
+                  removable
+                  onChange={(next) => setExtraParams((current) => current.map((value, at) => at === index ? next : value))}
+                  onRemove={() => setExtraParams((current) => current.filter((_, at) => at !== index))}
+                />
+              ))}
+            </div>
+          )}
 
-            {relation?.allowExtraParams && (
-              <div className="flex flex-col gap-2 border-t border-border pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium">Zusatzparameter</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setExtraParams((current) => [...current, { source: 'fixed', value: '' }])}
-                  >
-                    <Plus size={14} /> Parameter
-                  </Button>
-                </div>
-                {extraParams.map((binding, index) => (
-                  <BindingRow
-                    key={index}
-                    label={`${index + 1}.`}
-                    binding={binding}
-                    dataSources={dataSources.list}
-                    schritte={ergebnisSchritte}
-                    removable
-                    onChange={(next) => setExtraParams((current) => current.map((value, at) => at === index ? next : value))}
-                    onRemove={() => setExtraParams((current) => current.filter((_, at) => at !== index))}
-                  />
-                ))}
-              </div>
-            )}
+          {relation?.verb === 'GET_RELATION' && (
+            <Field label="Ergebnisname">
+              {(field) => (
+                <TextInput
+                  {...field}
+                  value={resultKey}
+                  placeholder="optional"
+                  onChange={(e) => setResultKey(e.target.value)}
+                />
+              )}
+            </Field>
+          )}
+        </>
+      )}
 
-            {relation?.verb === 'GET_RELATION' && (
-              <Field label="Ergebnisname">
-                {(field) => (
-                  <TextInput
-                    {...field}
-                    value={resultKey}
-                    placeholder="optional"
-                    onChange={(e) => setResultKey(e.target.value)}
-                  />
-                )}
-              </Field>
-            )}
-          </>
-        )}
+      {zeigeFehler && problem && typ === 'RELATION' && (
+        <p className="text-xs text-destructive">{problem}</p>
+      )}
 
-        {zeigeFehler && problem && typ === 'RELATION' && (
-          <p className="text-xs text-destructive">{problem}</p>
-        )}
-
-        <div className="flex justify-end gap-2 border-t border-border pt-3">
-          <Button variant="outline" size="sm" onClick={onClose}>Abbrechen</Button>
-          <Button size="sm" onClick={speichern}>Speichern</Button>
-        </div>
+      <div className="flex justify-end gap-2 border-t border-border pt-3">
+        <Button variant="outline" size="sm" onClick={onClose}>Abbrechen</Button>
+        <Button size="sm" onClick={speichern}>Speichern</Button>
       </div>
-    </FormularKarte>
+    </div>
   )
 }
