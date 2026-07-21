@@ -289,7 +289,8 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    Parameterzeilen EINZEILIG (Name | Quelle | Wert — halbe Höhe beim
    6-Parameter-PUT) · totes `ui/molecules/modal.tsx` gelöscht ·
    Referenzmasken eingecheckt: `docs/chef-maske/` (empfang + behandlung).
-   LIVE-Abnahme R3 gesamt durch den Nutzer steht aus.
+   R3 gesamt vom Nutzer LIVE abgenommen (2026-07-21) — das
+   Editor-Redesign R1–R3 ist damit KOMPLETT abgeschlossen.
 3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
    statische Bausteine (berühren den Export → gebündelte
    Echttest-Warteschlange, fachlich trivial).
