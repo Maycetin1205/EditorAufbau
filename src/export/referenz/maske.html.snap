@@ -656,7 +656,41 @@ window.FF_RELATIONS = [{"id":"rel-put","verb":"PUT_RELATION","nr":"0174","params
         box-sizing: border-box;
       }
       .board slot { display: contents; }
-    `]}render(){return S`<div class="board"><slot></slot></div>`}connectedCallback(){super.connectedCallback(),Ln(this)}disconnectedCallback(){super.disconnectedCallback(),Rn(this)}};M.defineAndRegister(zn);var Bn=class extends M{static{this.blockType=`zeile`}static{this.tagName=`ff-zeile`}static{this.displayName=`Zeile`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.childDirection=`row`}static{this.defaultProps={width:`fill`}}static{this.customProperties=[]}static{this.styles=[M.styles,o`
+    `]}render(){return S`<div class="board"><slot></slot></div>`}connectedCallback(){super.connectedCallback(),Ln(this)}disconnectedCallback(){super.disconnectedCallback(),Rn(this)}};M.defineAndRegister(zn);var Bn=[`ueberschrift`,`normal`,`klein`];function Vn(e){return Bn.includes(e)?e:`normal`}var Hn=class extends M{constructor(...e){super(...e),this.groesse=`normal`,this.text=`Text`}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Text`}static{this.category=`anzeige`}static{this.defaultProps={width:`fill`,groesse:`normal`,text:`Text`}}static{this.customProperties=[{attributeName:`groesse`,name:`Gr\u00F6\u00DFe`,description:`\u00DCberschrift = gro\u00DF und fett, Normal = Flie\u00DFtext, Klein = kleiner und ged\u00E4mpft.`,isArray:!1,maxLength:0,kind:`select`,options:[{value:`ueberschrift`,label:`\u00DCberschrift`},{value:`normal`,label:`Normal`},{value:`klein`,label:`Klein`}]}]}static{this.styles=[M.styles,o`
+      .text {
+        font-family: var(--se-font);
+        font-size: var(--se-fs);
+        color: var(--se-ink);
+        line-height: 1.4;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .text.ueberschrift {
+        font-size: var(--se-fs-lg);
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .text.klein {
+        font-size: var(--se-fs-sm);
+        color: var(--se-muted);
+      }
+      /* Leerer Text bleibt im Editor ein greifbares Klick-Ziel (Regel 7:
+         Platzhalter statt erfundener Wert); die Maske zeigt bei leerem Text
+         schlicht nichts. */
+      :host([data-ff-editor]) .text:empty::before {
+        content: 'Text \u2026';
+        color: var(--se-faint);
+      }
+    `]}render(){let e=Vn(this.groesse);return S`<div
+      class=${e===`ueberschrift`?`text ueberschrift`:e===`klein`?`text klein`:`text`}
+      data-ff-editable
+      @dblclick=${e=>this.inlineEdit(e,`text`)}
+    >${this.text}</div>`}};j([A()],Hn.prototype,`groesse`,void 0),j([A()],Hn.prototype,`text`,void 0),M.defineAndRegister(Hn);var Un=class extends M{static{this.blockType=`trenner`}static{this.tagName=`ff-trenner`}static{this.displayName=`Trennlinie`}static{this.category=`layout`}static{this.defaultProps={width:`fill`}}static{this.resizableWidth=!1}static{this.customProperties=[]}static{this.styles=[M.styles,o`
+      /* Fester dezenter Aussenabstand (--se-gap-sm) ober-/unterhalb der Linie;
+         die Linie selbst ist ein 1px-Rand in der sichtbaren Linienfarbe. */
+      :host { padding: var(--se-gap-sm) 0; }
+      .linie { border-top: 1px solid var(--se-line); }
+    `]}render(){return S`<div class="linie"></div>`}};M.defineAndRegister(Un);var Wn=class extends M{static{this.blockType=`zeile`}static{this.tagName=`ff-zeile`}static{this.displayName=`Zeile`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.childDirection=`row`}static{this.defaultProps={width:`fill`}}static{this.customProperties=[]}static{this.styles=[M.styles,o`
       /* Wie die Maskenwurzel, nur waagerecht: Kinder beginnen oben
          (flex-start) und behalten ihre natuerliche Hoehe. min-width:0
          erlaubt der Zeile, in schmalen Umgebungen zu schrumpfen. */
@@ -668,7 +702,7 @@ window.FF_RELATIONS = [{"id":"rel-put","verb":"PUT_RELATION","nr":"0174","params
         min-width: 0;
       }
       .zeile slot { display: contents; }
-    `]}render(){return S`<div class="zeile"><slot></slot></div>`}};M.defineAndRegister(Bn)})();
+    `]}render(){return S`<div class="zeile"><slot></slot></div>`}};M.defineAndRegister(Wn)})();
 </script>
 </body>
 </html>

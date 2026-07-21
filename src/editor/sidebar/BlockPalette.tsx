@@ -79,27 +79,33 @@ export function BlockPalette() {
         <p className="text-xs text-muted-foreground">Keine Treffer.</p>
       )}
 
-      <div className="flex flex-col gap-4">
-        {CATEGORY_ORDER.map((cat) => {
-          const items = grouped[cat]
-          if (!items || items.length === 0) return null
-          return (
-            <section key={cat} className="flex flex-col gap-1.5">
-              <h3 className="px-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {CATEGORY_LABEL[cat]}
-              </h3>
-              <div className="flex flex-col gap-1">
-                {items.map((def) => (
-                  <PaletteCard
-                    key={def.type}
-                    def={def}
-                    onAdd={() => ed.addBlock(def.type, insertParentFor(def.type))}
-                  />
-                ))}
-              </div>
-            </section>
-          )
-        })}
+      {/* Kategorien deutlich voneinander abtrennen (Nutzer-Wunsch 2026-07-21):
+          feine Trennlinie + etwas mehr Abstand zwischen den Bloecken, gleiches
+          Muster wie die Trennlinien im Inspector (border-t border-border). Leere
+          Kategorien fallen vorher raus, damit die Linie nie ins Leere zeigt. */}
+      <div className="flex flex-col">
+        {CATEGORY_ORDER.filter((cat) => (grouped[cat]?.length ?? 0) > 0).map((cat, i) => (
+          <section
+            key={cat}
+            className={cn(
+              'flex flex-col gap-1.5',
+              i > 0 && 'mt-4 border-t border-border pt-4',
+            )}
+          >
+            <h3 className="px-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {CATEGORY_LABEL[cat]}
+            </h3>
+            <div className="flex flex-col gap-1">
+              {grouped[cat].map((def) => (
+                <PaletteCard
+                  key={def.type}
+                  def={def}
+                  onAdd={() => ed.addBlock(def.type, insertParentFor(def.type))}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   )

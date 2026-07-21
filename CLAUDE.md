@@ -186,9 +186,13 @@ ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
 GET-Weg + „Ergebnis von Schritt N": Kette „Schritt 1 (GET) holt eine neue
 Datensatz-Stelle → je Feld ein PUT mit Stelle aus ‚Ergebnis von
 Schritt 1'". Klick-Anleitung ohne Fachbegriffe:
-`docs/6-memo/se-echttest-klickanleitung.md`. Kein Termindruck — der Nutzer
-testet, wann er will. Nach bestandenem Echttest: dieses Gleis → main
-mergen, Nebengleis löschen, ab dann wieder EIN Gleis.
+`docs/6-memo/se-echttest-klickanleitung.md`.
+Dazu gebündelt (seit dem Atome-Paket 2026-07-21): Sichtprüfung der zwei
+statischen Atome (Text mit Größe Überschrift/Normal/Klein, Trennlinie) in
+einer echten Maske — rein „sieht es in SoftEngine aus wie im Editor", kein
+eigener Termin. Kein Termindruck — der Nutzer testet, wann er will. Nach
+bestandenem Echttest: dieses Gleis → main mergen, Nebengleis löschen, ab
+dann wieder EIN Gleis.
 
 ### Fahrplan (Nutzer-Entscheidungen 2026-07-20)
 
@@ -291,9 +295,29 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    Referenzmasken eingecheckt: `docs/chef-maske/` (empfang + behandlung).
    R3 gesamt vom Nutzer LIVE abgenommen (2026-07-21) — das
    Editor-Redesign R1–R3 ist damit KOMPLETT abgeschlossen.
-3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
-   statische Bausteine (berühren den Export → gebündelte
-   Echttest-Warteschlange, fachlich trivial).
+3. ✅ **Billig-Atome** gebaut 2026-07-21 (Plan `docs/1-plans/atome.plan.md`,
+   UMGEPLANT: EIN Text-Baustein statt zwei, Gruppe gestrichen). Zwei statische
+   Bausteine, registry-getrieben (Regel 2, kein `if typ`).
+   **Text** (`ff-text`, Anzeige): EIN Bibliothekseintrag; die Optik steuert die
+   sichtbare Auswahl `groesse` (Klarnamen): „Überschrift" (--se-fs-lg/700),
+   „Normal" (--se-fs), „Klein" (--se-fs-sm/--se-muted, gedämpft). Inhalt per
+   Doppelklick am Ding, Default-Text = überschreibbarer Platzhalter (Regel 7).
+   KEINE Art-Umschaltung / kein zweiter Eintrag (Nutzer 2026-07-21: „ich nehm
+   Text auch als Überschrift, wenn die Größe einstellbar ist") · **Trennlinie**
+   (`ff-trenner`, Layout): 1px-Linie in --se-line, volle Breite (kein Anfasser),
+   fester dezenter Abstand, KEINE Eigenschaften (Regel 10). Icons in
+   `blockIcons.ts` (Lucide bleibt aus dem Bündel). **Gruppe GESTRICHEN** (Nutzer
+   versteht ihren Nutzen nicht → Regel 10; kommt erst wieder, wenn sie beim
+   Popup-Bauen real vermisst wird). **Export berührt (absichtlich):**
+   `ff-runtime.js` neu gebaut (wächst um ff-text/ff-trenner), Referenzabzug
+   erneuert (nur das eingebettete Bündel ändert sich, Masken-HTML byte-gleich),
+   Veralten-Wächter-Positivliste um ff-text/ff-trenner ergänzt (der im Kahlschlag
+   2026-07-14 entfernte ff-text ist als statisches Atom NEU). export.test um je
+   einen Fall je Baustein erweitert (Text je Größe + Escaping, Trennlinie),
+   KEINE neuen e2e (Test-Bremse). **Beifang Bibliothek:** Kategorien durch feine
+   Trennlinie getrennt (Muster Inspector). Prüfbündel grün (tsc · eslint ·
+   check:runtime „identisch" · vitest · 11 e2e). LIVE-Abnahme + Sichtprüfung im
+   SE-Echttest stehen aus.
 4. **Tabelle** (der große fehlende Baustein). VORHER die Grundsatzfrage
    freies Raster vs. Fluss-Layout mit dem Nutzer entscheiden — das
    **Chef-Modell liegt seit 2026-07-20 vor** (Notiz-Fotos lokal beim

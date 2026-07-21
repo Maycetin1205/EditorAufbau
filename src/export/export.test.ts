@@ -8,6 +8,9 @@
 import { describe, expect, it } from 'vitest'
 // Side-Effect-Import: registriert den echten Popup-Baustein (Seiten-Test P-A).
 import '../blocks/popup/PopupBlock'
+// Side-Effect-Import: registriert die statischen Atome (Fahrplan 3).
+import '../blocks/text/TextBlock'
+import '../blocks/trenner/TrennerBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -239,13 +242,15 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-zeile']) {
+    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-text', 'ff-trenner', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
-    // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Text, Bereich, Infobox,
+    // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,
     // Status-Chip und Eingabefeld sind KOMPLETT entfernt — ein Bündel, das
-    // sie noch trägt, ist veraltet.
-    for (const tag of ['ff-text', 'ff-container', 'ff-infobox', 'ff-badge', 'ff-formfield']) {
+    // sie noch trägt, ist veraltet. (Der alte ff-text fiel damals mit; als
+    // statisches Atom ist ff-text am 2026-07-21 NEU gebaut worden — er steht
+    // deshalb jetzt oben in der Positivliste, nicht mehr hier.)
+    for (const tag of ['ff-container', 'ff-infobox', 'ff-badge', 'ff-formfield']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} ist abgeschafft`).not.toContain(tag)
     }
     // P1.1: der Vorlagen-Kasten ist abgeschafft — ein Bündel, das ihn noch
@@ -266,5 +271,36 @@ describe('Runtime-Bündel', () => {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — Diagnose ${marker} fehlt`)
         .toContain(marker)
     }
+  })
+})
+
+describe('Atome (statische Bausteine, Fahrplan 3)', () => {
+  it('Text: Größe + Inhalt reisen als Attribute; Sonderzeichen werden escaped', () => {
+    // Je Größe (Plan): der Technikwert reist als Attribut, der Inhalt escaped.
+    for (const groesse of ['ueberschrift', 'normal', 'klein']) {
+      const tree: BlockTree = {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
+        t: {
+          id: 't', type: 'text',
+          props: { groesse, text: 'A & B < C > "D" ä', width: 'fill' },
+          parentId: 'root', childIds: [],
+        },
+      }
+      const { html } = exportMask(tree)
+      expect(html).toContain('<ff-text ')
+      expect(html).toContain(`groesse="${groesse}"`)
+      // & -> &amp;, < -> &lt;, > -> &gt;, " -> &quot;, ä -> &#xE4; (serializer).
+      expect(html).toContain('text="A &amp; B &lt; C &gt; &quot;D&quot; &#xE4;"')
+      expect(failedChecks(validateMaskHtml(html))).toEqual([])
+    }
+  })
+
+  it('Trennlinie exportiert als leeres Element ohne Eigenschaften', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tr'] },
+      tr: { id: 'tr', type: 'trenner', props: { width: 'fill' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toMatch(/<ff-trenner[^>]*><\/ff-trenner>/)
   })
 })

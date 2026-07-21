@@ -19,9 +19,11 @@ import {
   CreditCard,
   FormInput,
   LayoutList,
+  Minus,
   MousePointerClick,
   SquareKanban,
   StretchHorizontal,
+  Text,
   type LucideIcon,
   type LucideProps,
 } from 'lucide-react'
@@ -35,6 +37,8 @@ const ICONS: Record<string, LucideIcon> = {
   'kanban-spalte': LayoutList,
   card: CreditCard,
   popup: AppWindow,
+  trenner: Minus,
+  text: Text,
 }
 
 // Fallback fuer unbekannte/neue Typen: ein neutraler Baustein.
