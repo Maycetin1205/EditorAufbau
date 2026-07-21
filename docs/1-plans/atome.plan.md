@@ -43,6 +43,13 @@ Anfasser-Sonderlocken. Fachlich trivial, aber sie berühren den Export
    Wird an irgendeiner Stelle doch eigene Drop-/Sonderlogik nötig →
    STOPPEN und Fable/Nutzer fragen, nicht erfinden.
 
+## Beifang Bibliothek (Nutzer-Wunsch 2026-07-21, Editor-only)
+
+Die Kategorien in der Bibliothek (LAYOUT / EINGABE / ANZEIGE) deutlicher
+voneinander abtrennen: feine Trennlinie zwischen den Kategorie-Blöcken
+(gleiches Muster wie die Trennlinien im Inspector), ggf. minimal mehr
+Abstand — kein neuer Look, nur Ordnung. Reine Editor-UI.
+
 ## Regeln (verbindlich)
 
 - Alles Registry (Regel 2): keine `if typ === …`-Stellen in Canvas/
