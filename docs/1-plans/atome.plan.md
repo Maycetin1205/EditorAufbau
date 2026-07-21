@@ -1,4 +1,4 @@
-# Billig-Atome — Text/Überschrift, Trennlinie, Gruppe (Fahrplan Punkt 3)
+# Billig-Atome — Text (mit Größe) + Trennlinie (Fahrplan Punkt 3)
 
 > Plan von Fable (2026-07-21) für die ausführende Sitzung (Opus).
 > R1–R3 sind abgeschlossen und LIVE abgenommen. CLAUDE.md gilt; bei
@@ -13,35 +13,28 @@ Export — Regel 1). Keine Datenbindung, keine Ereignisse, keine
 Anfasser-Sonderlocken. Fachlich trivial, aber sie berühren den Export
 (Runtime-Bündel wächst) — Verfahren s. unten.
 
-1. **Text** (`ff-text`): zeigt statischen Text. EINE Web Component,
-   ZWEI Bibliothekseinträge über zwei BlockDefinitions mit
-   vorbelegter Art-Eigenschaft:
-   - „Überschrift" (Kategorie ANZEIGE): größer/fett — Maßstab sind die
-     Abschnitts-Titel der chef-maske (h2/h3-Klasse, --se-ink).
-   - „Text" (Kategorie ANZEIGE): normaler Fließtext (--se-fs).
-   Eigenschaften: `text` (der Inhalt; Doppelklick am Ding editiert —
-   Muster Schaltflächen-Beschriftung), `art` (ueberschrift | text,
-   hiddenInInspector wenn per Definition fest? → NEIN: sichtbar als
-   Auswahl, damit man umschalten kann). Default-Texte: „Überschrift"
-   bzw. „Text" (Platzhalter-Charakter, sofort editierbar).
+⚠ UMGEPLANT (Nutzer-Entscheidungen 2026-07-21, ersetzen den ersten
+Schnitt): EIN Text-Baustein statt zwei (Nutzer: „ich kann Text auch als
+Überschrift nehmen, wenn Schriftgröße einstellbar ist") · die GRUPPE ist
+GESTRICHEN (Nutzer versteht ihren Nutzen nicht → Regel 10, nichts auf
+Verdacht; sie kommt erst wieder, wenn sie beim Popup-Bauen real vermisst
+wird). Falls Text/Überschrift/Gruppe schon als getrennte Bausteine
+gebaut wurden: konsolidieren bzw. RESTLOS entfernen (Definition,
+Komponente, Icon-Eintrag, Bibliothek, Tests, Bündel neu).
+
+1. **Text** (`ff-text`, Kategorie ANZEIGE, EIN Bibliothekseintrag):
+   zeigt statischen Text. Eigenschaften:
+   - `text` (der Inhalt; Doppelklick am Ding editiert — Muster
+     Schaltflächen-Beschriftung; Default „Text").
+   - `groesse` (Auswahl, sichtbar im Inspector): „Überschrift"
+     (groß + fett, Maßstab = Abschnitts-Titel der chef-maske) ·
+     „Normal" (--se-fs) · „Klein" (Hinweistext, gedämpft wie
+     --se-muted-Töne der Referenz). KEINE weiteren Einstellungen
+     (Regel 10).
 2. **Trennlinie** (`ff-trenner`, Kategorie LAYOUT): horizontale Linie
    in --se-line-Optik, volle Breite, fester dezenter Außenabstand.
    KEINE Eigenschaften (Regel 10 — erst wenn ein echter Fall mehr
    erzwingt).
-3. **Gruppe** (`ff-gruppe`, Kategorie LAYOUT): Container mit
-   Karten-Optik (Fläche --se-surface, Rahmen --se-line, kleiner
-   Radius wie die Masken-Welt ihn kennt) und OPTIONALEM Titel
-   (leer = keine Titelzeile, LEER-Regel wie bei der Karte).
-   `allowedChildTypes` wie die Zeile (alle Nicht-Seiten-Bausteine),
-   Kinder fließen als Spalte. Titel per Doppelklick am Ding.
-   ⚠ Bedienung: KEINE neue Drop-Logik bauen — der Canvas behandelt
-   Container GENERISCH über die Registry (Beweis: Zeile). Mitte =
-   hinein ans Ende, Randzone = davor/dahinter, Einfüge-Linie als
-   Vorschau, nie-in-sich-selbst — alles vorhanden. Die Gruppe
-   deklariert nur ihre Fähigkeiten; leer verhält sie sich exakt wie
-   eine leere Zeile heute (gleiche Editor-Hilfen, nichts Neues).
-   Wird an irgendeiner Stelle doch eigene Drop-/Sonderlogik nötig →
-   STOPPEN und Fable/Nutzer fragen, nicht erfinden.
 
 ## Beifang Bibliothek (Nutzer-Wunsch 2026-07-21, Editor-only)
 
@@ -70,7 +63,7 @@ Abstand — kein neuer Look, nur Ordnung. Reine Editor-UI.
    Commit macht die Bündel-Änderung sichtbar (das ist das dokumentierte
    Verfahren aus Regel 9 für absichtliche Export-Änderungen).
 3. `export.test` um je EINEN Fall je Baustein erweitern (HTML-Form:
-   Text mit Escaping-Sonderzeichen!, Trennlinie, Gruppe mit/ohne Titel).
+   Text mit Escaping-Sonderzeichen + je Größe, Trennlinie).
    KEINE neuen e2e (statische Bausteine, Test-Bremse).
 4. SE-Echttest: in die GEBÜNDELTE Warteschlange (Sichtprüfung der
    drei Bausteine in einer echten Maske, zusammen mit dem offenen
@@ -81,8 +74,8 @@ Abstand — kein neuer Look, nur Ordnung. Reine Editor-UI.
 Bestehende zugängliche Namen unverändert (`Zeile`, `Schaltfläche`,
 `Formularfeld`, `Datum`, `Kanban`, `Hauptseite`, `＋ Popup`,
 `Als SoftEngine-Maske exportieren` …). Neue Bibliotheks-Namen exakt:
-`Überschrift`, `Text`, `Trennlinie`, `Gruppe`. Falls ein bestehender
-Spec generisch über die Bibliothek iteriert: prüfen, nicht raten.
+`Text`, `Trennlinie`. Falls ein bestehender Spec generisch über die
+Bibliothek iteriert: prüfen, nicht raten.
 
 ## Prüfungen + Abschluss (Regel 9)
 
