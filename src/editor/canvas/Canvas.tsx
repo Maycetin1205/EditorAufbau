@@ -58,7 +58,14 @@ export function Canvas() {
           // Kante + zweistufiger Schatten geben die Tiefe, der Inhalt
           // selbst bleibt unverändert Masken-Welt (--se-bg).
           className="relative min-h-0 w-full flex-1 overflow-hidden rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.07),0_12px_28px_-14px_rgba(16,24,40,0.25)]"
-          style={{ minHeight: 400 }}
+          // Blatt = Masken-Welt: Schrift/Größe/Farbe wie der Export-body
+          // (WYSIWYG) — die Editor-Schrift (Inter) bleibt draußen.
+          style={{
+            minHeight: 400,
+            fontFamily: 'var(--se-font)',
+            fontSize: 'var(--se-fs)',
+            color: 'var(--se-ink)',
+          }}
         >
           <div
             // Wurzel-Fluss aus ROOT_FLOW — dieselben Werte benutzt der Export.
@@ -89,7 +96,7 @@ export function Canvas() {
               nie Teil des Baums; pointer-events-none lässt Drops durch. */}
           {hauptseite && ed.blockCount === 0 && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-8 py-6 text-center">
+              <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-8 py-6 text-center font-sans">
                 <MousePointerClick size={18} className="text-muted-foreground/60" />
                 <p className="text-[13px] font-medium text-foreground/80">Leere Maske</p>
                 <p className="text-xs text-muted-foreground">

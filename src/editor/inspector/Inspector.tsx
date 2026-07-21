@@ -2,6 +2,7 @@
 // Property-Editor des selektierten Blocks. Liest die PropertyDescription des
 // Blocks und baut daraus einfache Controls. Nutzt die gemeinsame SidePanel-Hülle.
 
+import { Copy, Trash } from 'lucide-react'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type {
   PropertyDescription,
@@ -10,6 +11,7 @@ import type {
 import { useDataSources } from '../../state/useDataSources'
 import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
+import { IconButton } from '@/ui/atoms/icon-button'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
 import { DataSection } from './DataSection'
@@ -147,6 +149,26 @@ export function Inspector() {
     <SidePanel
       title={def.displayName ?? def.type}
       description={`${def.type} · ${block.id.slice(0, 8)}`}
+      // Bedienung am Ding (Regel 7): Duplizieren/Löschen stehen bei der
+      // Auswahl, nicht in der globalen Top-Bar (R1-Feinschliff 2026-07-21).
+      actions={(
+        <>
+          <IconButton
+            aria-label="Duplizieren (Ctrl+D)"
+            title="Duplizieren"
+            onClick={() => ed.duplicateBlock(block.id)}
+          >
+            <Copy size={14} />
+          </IconButton>
+          <IconButton
+            aria-label="Löschen (Entf)"
+            title="Löschen"
+            onClick={() => ed.removeBlock(block.id)}
+          >
+            <Trash size={14} />
+          </IconButton>
+        </>
+      )}
     >
       <div className="flex flex-col gap-5">
         {generalProps.length > 0 && (

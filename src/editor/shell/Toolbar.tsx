@@ -5,12 +5,10 @@
 // gleichrangig neben dem Hauptweg, Bestätigung bleibt).
 
 import {
-  Copy,
   Download,
   MoreHorizontal,
   Redo2,
   SlidersHorizontal,
-  Trash,
   Trash2,
   Undo2,
 } from 'lucide-react'
@@ -36,7 +34,6 @@ function downloadFile(name: string, content: string, type: string): void {
 // onSteuerung: öffnet die Kommandozentrale (Z1) — Zustand hält die Shell.
 export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
   const ed = useEditor()
-  const hasSelection = ed.selectedId !== null
 
   const handleClear = () => {
     if (ed.blockCount === 0) return
@@ -73,47 +70,8 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
   }
 
   return (
-    <div className="flex items-center gap-1 justify-self-end">
-      <ToolGroup>
-        <IconButton
-          aria-label="Rückgängig (Ctrl+Z)"
-          title="Rückgängig"
-          onClick={() => ed.undo()}
-          disabled={!ed.canUndo}
-        >
-          <Undo2 size={15} />
-        </IconButton>
-        <IconButton
-          aria-label="Wiederholen (Ctrl+Shift+Z)"
-          title="Wiederholen"
-          onClick={() => ed.redo()}
-          disabled={!ed.canRedo}
-        >
-          <Redo2 size={15} />
-        </IconButton>
-      </ToolGroup>
-
-      <Divider />
-
-      <ToolGroup>
-        <IconButton
-          aria-label="Duplizieren (Ctrl+D)"
-          title="Duplizieren"
-          onClick={() => ed.selectedId && ed.duplicateBlock(ed.selectedId)}
-          disabled={!hasSelection}
-        >
-          <Copy size={15} />
-        </IconButton>
-        <IconButton
-          aria-label="Löschen (Entf)"
-          title="Löschen"
-          onClick={() => ed.selectedId && ed.removeBlock(ed.selectedId)}
-          disabled={!hasSelection}
-        >
-          <Trash size={15} />
-        </IconButton>
-        <MoreMenu onClearAll={handleClear} clearDisabled={ed.blockCount === 0} />
-      </ToolGroup>
+    <div className="flex items-center gap-1.5 justify-self-end">
+      <MoreMenu onClearAll={handleClear} clearDisabled={ed.blockCount === 0} />
 
       <Divider />
 
@@ -135,6 +93,32 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
       >
         <Download size={14} /> Exportieren
       </Button>
+    </div>
+  )
+}
+
+// Verlauf (Rückgängig/Wiederholen) — wohnt seit dem R1-Feinschliff LINKS
+// neben dem Logo (Figma-Muster), nicht mehr im Aktionen-Cluster rechts.
+export function VerlaufKnoepfe() {
+  const ed = useEditor()
+  return (
+    <div className="flex items-center">
+      <IconButton
+        aria-label="Rückgängig (Ctrl+Z)"
+        title="Rückgängig"
+        onClick={() => ed.undo()}
+        disabled={!ed.canUndo}
+      >
+        <Undo2 size={15} />
+      </IconButton>
+      <IconButton
+        aria-label="Wiederholen (Ctrl+Shift+Z)"
+        title="Wiederholen"
+        onClick={() => ed.redo()}
+        disabled={!ed.canRedo}
+      >
+        <Redo2 size={15} />
+      </IconButton>
     </div>
   )
 }
@@ -200,10 +184,6 @@ function MoreMenu({
       )}
     </div>
   )
-}
-
-function ToolGroup({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center">{children}</div>
 }
 
 function Divider() {

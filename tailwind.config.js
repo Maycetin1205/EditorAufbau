@@ -11,6 +11,15 @@ export default {
       padding: '1rem',
     },
     extend: {
+      fontFamily: {
+        sans: [
+          '"Inter Variable"',
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif',
+        ],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

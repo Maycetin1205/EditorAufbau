@@ -13,7 +13,7 @@ import { Inspector } from '../inspector/Inspector'
 import { Sidebar } from '../sidebar/Sidebar'
 import { Kommandozentrale } from '../zentrale/Kommandozentrale'
 import { StatusBar } from './StatusBar'
-import { Toolbar } from './Toolbar'
+import { Toolbar, VerlaufKnoepfe } from './Toolbar'
 
 export function EditorShell() {
   useKeyboardShortcuts()
@@ -24,10 +24,14 @@ export function EditorShell() {
     <div className="flex h-screen w-screen flex-col bg-background text-foreground">
       <header className="grid h-10 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-border bg-card px-2">
         <div className="flex min-w-0 items-center gap-2 pl-1">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <span
+            title="Aufbau-Editor"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
+          >
             <Wand2 size={13} />
           </span>
-          <h1 className="truncate text-[13px] font-semibold">Maske</h1>
+          <span className="h-4 w-px bg-border" />
+          <VerlaufKnoepfe />
         </div>
         <div className="justify-self-center">
           <SeitenLeiste />

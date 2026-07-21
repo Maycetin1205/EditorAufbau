@@ -1,3 +1,8 @@
+/* Editor-Schrift: Inter (variabel, selbst gehostet via @fontsource) —
+   NUR fürs Editor-Chrome. Die Masken-Welt nagelt ihre Schrift überall
+   selbst fest (--se-font), zusätzlich pinnt Canvas.tsx das Blatt. */
+@import '@fontsource-variable/inter';
+
 /* Tailwind-Basis + shadcn-CSS-Variablen.
    Wird in main.tsx importiert.
 
