@@ -1,32 +1,58 @@
 // TextBlock
 // Statisches Anzeige-Atom "Text": zeigt statischen Text an. EIN Bibliotheks-
-// eintrag; die Optik steuert die Eigenschaft `groesse` (Nutzer-Entscheidung
-// 2026-07-21: „ich kann Text auch als Ueberschrift nehmen, wenn die
-// Schriftgroesse einstellbar ist" — deshalb KEIN zweiter Baustein, keine
-// Art-Umschaltung). Groessen (Klarnamen sichtbar, Regel 3):
-//   - "Ueberschrift": gross + fett (Massstab = Abschnitts-Titel der chef-maske)
-//   - "Normal":       normaler Fliesstext (--se-fs)
-//   - "Klein":        Hinweistext, gedaempft (--se-muted)
+// eintrag; die Optik bestimmen DREI freie Stil-Eigenschaften (Nutzer-
+// Entscheidung 2026-07-21: „ich will entscheiden, WO es liegt, wie viele
+// Pixel groß, dünn, dick" — KEINE Größen-Auswahlstufen, kein zweiter
+// Baustein, keine Art-Umschaltung):
+//   - groesse:     Schriftgröße als freie Pixelzahl (Vorbild chef-maske:
+//                  dort sind Schriftgrößen ebenfalls Pixel-Literale)
+//   - gewicht:     Dünn / Normal / Fett
+//   - ausrichtung: Links / Mitte / Rechts
+// Alle drei teilen sich im Inspector EINE kompakte Zeile „Text-Stil"
+// (inspectorRow — Registry-Daten, kein Sondercode im Inspector).
 //
 // Der Text wird per Doppelklick DIREKT am Ding bearbeitet (Inline-Edit,
 // WYSIWYG — Muster Schaltflaechen-Beschriftung); der Default-Text ist
 // Platzhalter-Inhalt zum Ueberschreiben, keine erfundenen Daten (Regel 7).
 //
-// Keine Datenbindung, keine Ereignisse. Aussehen AUSSCHLIESSLICH aus
-// Masken-Tokens (--se-*); strukturelle Groessen als Literale wie bei Button.
+// Keine Datenbindung, keine Ereignisse. Farben aus Masken-Tokens (--se-*);
+// strukturelle Groessen als Literale wie bei Button.
 
 import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
+import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 
-// Groesse (Technikwerte) — der Bediener sieht nur die Klarnamen (customProperties).
-const GROESSEN = ['ueberschrift', 'normal', 'klein'] as const
-type Groesse = (typeof GROESSEN)[number]
+// Grenzen der freien Pixelgröße — großzügig, aber nie 0/negativ/absurd.
+const GROESSE_MIN = 6
+const GROESSE_MAX = 96
+const GROESSE_STANDARD = 14
 
-function coerceGroesse(v: unknown): Groesse {
-  return GROESSEN.includes(v as Groesse) ? (v as Groesse) : 'normal'
+// Gewicht/Ausrichtung (Technikwerte) — sichtbar sind nur die Klarnamen.
+const GEWICHTE = { duenn: '300', normal: '400', fett: '700' } as const
+type Gewicht = keyof typeof GEWICHTE
+const AUSRICHTUNGEN = { links: 'left', mitte: 'center', rechts: 'right' } as const
+type Ausrichtung = keyof typeof AUSRICHTUNGEN
+
+// Freie Pixelzahl; die Stufen-Werte der ersten Fassung (ueberschrift/
+// normal/klein) werden still auf ihre damaligen Pixel abgebildet, damit
+// heute angelegte Bloecke nicht kippen.
+function coerceGroesse(v: unknown): number {
+  if (v === 'ueberschrift') return 15
+  if (v === 'klein') return 12
+  const n = typeof v === 'number' ? v : Number.parseFloat(String(v ?? ''))
+  if (!Number.isFinite(n)) return GROESSE_STANDARD
+  return Math.min(GROESSE_MAX, Math.max(GROESSE_MIN, n))
+}
+
+function coerceGewicht(v: unknown): Gewicht {
+  return typeof v === 'string' && v in GEWICHTE ? (v as Gewicht) : 'normal'
+}
+
+function coerceAusrichtung(v: unknown): Ausrichtung {
+  return typeof v === 'string' && v in AUSRICHTUNGEN ? (v as Ausrichtung) : 'links'
 }
 
 export class TextBlock extends BasicBlock {
@@ -34,26 +60,59 @@ export class TextBlock extends BasicBlock {
   static readonly tagName = 'ff-text'
   static readonly displayName = 'Text'
   static readonly category: BlockCategory = 'anzeige'
-  // Volle Breite: Fliesstext bricht dann im Container um, eine Ueberschrift
-  // sitzt linksbuendig ueber der ganzen Breite. Der Breiten-Anfasser bleibt
-  // aktiv (Doppelklick stellt den Standard wieder her).
-  static readonly defaultProps = { width: 'fill', groesse: 'normal', text: 'Text' }
+  // Volle Breite: Fliesstext bricht dann im Container um, und die
+  // Ausrichtung (Mitte/Rechts) hat eine echte Bezugsflaeche. Der
+  // Breiten-Anfasser bleibt aktiv (Doppelklick stellt den Standard wieder her).
+  static readonly defaultProps = {
+    width: 'fill',
+    groesse: GROESSE_STANDARD,
+    gewicht: 'normal',
+    ausrichtung: 'links',
+    text: 'Text',
+  }
 
-  // Einziges Inspector-Feld: die Groesse (Klarnamen sichtbar). Der Text selbst
-  // laeuft ueber Inline-Edit, nicht ueber den Inspector.
+  // Inspector: EINE Zeile „Text-Stil" (Groesse | Gewicht | Ausrichtung).
+  // Der Text selbst laeuft ueber Inline-Edit, nicht ueber den Inspector.
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'groesse',
       name: 'Größe',
-      description: 'Überschrift = groß und fett, Normal = Fließtext, Klein = kleiner und gedämpft.',
+      description: 'Schriftgröße in Pixeln.',
       isArray: false,
       maxLength: 0,
-      kind: 'select',
+      kind: 'number',
+      unit: 'px',
+      min: GROESSE_MIN,
+      max: GROESSE_MAX,
+      inspectorRow: 'Text-Stil',
+    },
+    {
+      attributeName: 'gewicht',
+      name: 'Gewicht',
+      description: 'Strichstärke der Schrift.',
+      isArray: false,
+      maxLength: 0,
+      kind: 'segment',
       options: [
-        { value: 'ueberschrift', label: 'Überschrift' },
+        { value: 'duenn', label: 'Dünn' },
         { value: 'normal', label: 'Normal' },
-        { value: 'klein', label: 'Klein' },
+        { value: 'fett', label: 'Fett' },
       ],
+      inspectorRow: 'Text-Stil',
+    },
+    {
+      attributeName: 'ausrichtung',
+      name: 'Ausrichtung',
+      description: 'Wo der Text in seiner Breite sitzt.',
+      isArray: false,
+      maxLength: 0,
+      kind: 'segment',
+      options: [
+        { value: 'links', label: 'Links' },
+        { value: 'mitte', label: 'Mitte' },
+        { value: 'rechts', label: 'Rechts' },
+      ],
+      inspectorRow: 'Text-Stil',
     },
   ]
 
@@ -62,20 +121,10 @@ export class TextBlock extends BasicBlock {
     css`
       .text {
         font-family: var(--se-font);
-        font-size: var(--se-fs);
         color: var(--se-ink);
-        line-height: 1.4;
+        line-height: 1.35;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
-      }
-      .text.ueberschrift {
-        font-size: var(--se-fs-lg);
-        font-weight: 700;
-        line-height: 1.25;
-      }
-      .text.klein {
-        font-size: var(--se-fs-sm);
-        color: var(--se-muted);
       }
       /* Leerer Text bleibt im Editor ein greifbares Klick-Ziel (Regel 7:
          Platzhalter statt erfundener Wert); die Maske zeigt bei leerem Text
@@ -87,14 +136,21 @@ export class TextBlock extends BasicBlock {
     `,
   ]
 
-  @property() groesse: Groesse = 'normal'
+  @property({ type: Number }) groesse: number = GROESSE_STANDARD
+  @property() gewicht = 'normal'
+  @property() ausrichtung = 'links'
   @property() text = 'Text'
 
   render(): TemplateResult {
-    const g = coerceGroesse(this.groesse)
-    const klasse = g === 'ueberschrift' ? 'text ueberschrift' : g === 'klein' ? 'text klein' : 'text'
+    // Freie Werte als Inline-Stil (styleMap) — Klassen-Stufen gibt es nicht mehr.
+    const stil = {
+      fontSize: `${coerceGroesse(this.groesse)}px`,
+      fontWeight: GEWICHTE[coerceGewicht(this.gewicht)],
+      textAlign: AUSRICHTUNGEN[coerceAusrichtung(this.ausrichtung)],
+    }
     return html`<div
-      class=${klasse}
+      class="text"
+      style=${styleMap(stil)}
       data-ff-editable
       @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'text')}
     >${this.text}</div>`

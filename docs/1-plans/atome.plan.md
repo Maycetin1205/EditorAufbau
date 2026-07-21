@@ -22,6 +22,14 @@ wird). Falls Text/Überschrift/Gruppe schon als getrennte Bausteine
 gebaut wurden: konsolidieren bzw. RESTLOS entfernen (Definition,
 Komponente, Icon-Eintrag, Bibliothek, Tests, Bündel neu).
 
+⚠ 2. UMPLANUNG (Nutzer 2026-07-21, nach dem Bau umgesetzt im
+Feinschliff-Pass): die Größen-AUSWAHL (Überschrift/Normal/Klein) unter
+Punkt 1 ist ÜBERHOLT — „nicht per Auswahl: ich will entscheiden, wo es
+liegt, wie viele Pixel groß, dünn, dick". Der Text-Baustein hat drei
+freie Stil-Eigenschaften (groesse = Pixelzahl, gewicht = Dünn/Normal/
+Fett, ausrichtung = Links/Mitte/Rechts) in EINER kompakten
+Inspector-Zeile „Text-Stil". Stand + Details: CLAUDE.md, Fahrplan 3.
+
 1. **Text** (`ff-text`, Kategorie ANZEIGE, EIN Bibliothekseintrag):
    zeigt statischen Text. Eigenschaften:
    - `text` (der Inhalt; Doppelklick am Ding editiert — Muster
@@ -66,7 +74,7 @@ Abstand — kein neuer Look, nur Ordnung. Reine Editor-UI.
    Text mit Escaping-Sonderzeichen + je Größe, Trennlinie).
    KEINE neuen e2e (statische Bausteine, Test-Bremse).
 4. SE-Echttest: in die GEBÜNDELTE Warteschlange (Sichtprüfung der
-   drei Bausteine in einer echten Maske, zusammen mit dem offenen
+   zwei Bausteine in einer echten Maske, zusammen mit dem offenen
    GET-Test — kein eigener Termin).
 
 ## e2e-Verträge (nicht brechen)

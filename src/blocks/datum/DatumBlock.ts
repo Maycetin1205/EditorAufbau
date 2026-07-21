@@ -5,14 +5,14 @@
 // Vertrag und dieselbe Export-Runtime wie das Formularfeld; im Editor zeigt
 // BlockHost dafür generisch den Klarnamen des Felds.
 
-import { css, html, type TemplateResult } from 'lit'
+import { css, html, nothing, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { BindableSpotsFor, BindingRouteFor } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { BasicBlock } from '../base/BasicBlock'
 import { connectField, disconnectField } from '../formfeld/feldRuntime'
-import { currentDateDisplay } from './datumWert'
+import { datumAnzeige } from './datumWert'
 
 export class DatumBlock extends BasicBlock {
   static readonly blockType = 'datum'
@@ -55,13 +55,29 @@ export class DatumBlock extends BasicBlock {
     },
   ]
 
+  // Optik nach dem Empfang-Vorbild .vuhr (chef-maske, Nutzer 2026-07-21
+  // — „wie Windows 98" war die alte kleine Mono-Zeile): grosse Hauptzeile
+  // (Zeit bzw. Wert, mono/halbfett), kleines gedaempftes Datum darunter,
+  // KEIN Kasten. Pixelgroessen sind Literale wie in der Referenz (17/11.5).
   static styles = [
     BasicBlock.styles,
     css`
-      .datum {
-        color: var(--se-muted);
+      .vuhr {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+      .haupt {
+        color: var(--se-ink);
         font-family: var(--se-mono);
-        font-size: var(--se-fs-sm);
+        font-size: 17px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .neben {
+        color: var(--se-muted);
+        font-family: var(--se-font);
+        font-size: 11.5px;
         white-space: nowrap;
       }
     `,
@@ -73,14 +89,19 @@ export class DatumBlock extends BasicBlock {
   @property() valueField = ''
 
   render(): TemplateResult {
-    const display = this.valueField === ''
-      ? currentDateDisplay(this.zeigt, new Date())
-      : this.value
-    return html`<span
-      class="datum"
-      data-ff-spot="value"
-      ?data-ff-bound=${this.valueField !== ''}
-    >${display}</span>`
+    // Gebunden zeigt die Hauptzeile den Feldwert (eine Zeile); die
+    // Spot-Markierung bleibt wie zuvor auf der Hauptzeile (Feld-Picker).
+    const anzeige = this.valueField === ''
+      ? datumAnzeige(this.zeigt, new Date())
+      : { haupt: this.value }
+    return html`<div class="vuhr">
+      <span
+        class="haupt"
+        data-ff-spot="value"
+        ?data-ff-bound=${this.valueField !== ''}
+      >${anzeige.haupt}</span>
+      ${anzeige.neben ? html`<span class="neben">${anzeige.neben}</span>` : nothing}
+    </div>`
   }
 
   connectedCallback(): void {

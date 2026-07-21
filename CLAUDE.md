@@ -188,9 +188,10 @@ Datensatz-Stelle → je Feld ein PUT mit Stelle aus ‚Ergebnis von
 Schritt 1'". Klick-Anleitung ohne Fachbegriffe:
 `docs/6-memo/se-echttest-klickanleitung.md`.
 Dazu gebündelt (seit dem Atome-Paket 2026-07-21): Sichtprüfung der zwei
-statischen Atome (Text mit Größe Überschrift/Normal/Klein, Trennlinie) in
-einer echten Maske — rein „sieht es in SoftEngine aus wie im Editor", kein
-eigener Termin. Kein Termindruck — der Nutzer testet, wann er will. Nach
+statischen Atome (Text mit freiem Stil px/Gewicht/Ausrichtung, Trennlinie)
+und der neuen Datum-Optik (.vuhr-Vorbild: Zeit groß, Datum klein darunter)
+in einer echten Maske — rein „sieht es in SoftEngine aus wie im Editor",
+kein eigener Termin. Kein Termindruck — der Nutzer testet, wann er will. Nach
 bestandenem Echttest: dieses Gleis → main mergen, Nebengleis löschen, ab
 dann wieder EIN Gleis.
 
@@ -298,9 +299,13 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
 3. ✅ **Billig-Atome** gebaut 2026-07-21 (Plan `docs/1-plans/atome.plan.md`,
    UMGEPLANT: EIN Text-Baustein statt zwei, Gruppe gestrichen). Zwei statische
    Bausteine, registry-getrieben (Regel 2, kein `if typ`).
-   **Text** (`ff-text`, Anzeige): EIN Bibliothekseintrag; die Optik steuert die
-   sichtbare Auswahl `groesse` (Klarnamen): „Überschrift" (--se-fs-lg/700),
-   „Normal" (--se-fs), „Klein" (--se-fs-sm/--se-muted, gedämpft). Inhalt per
+   **Text** (`ff-text`, Anzeige): EIN Bibliothekseintrag; die Optik bestimmen
+   DREI freie Stil-Eigenschaften in EINER kompakten Inspector-Zeile
+   „Text-Stil" (2. Umplanung, Nutzer 2026-07-21: „nicht per Auswahl — ich
+   will entscheiden, wo es liegt, wie viele Pixel groß, dünn, dick"):
+   `groesse` = freie Pixelzahl (6–96, Standard 14; Stufen-Werte der ersten
+   Fassung werden still auf Pixel abgebildet) · `gewicht` = Dünn/Normal/Fett ·
+   `ausrichtung` = Links/Mitte/Rechts (Icons). Inhalt per
    Doppelklick am Ding, Default-Text = überschreibbarer Platzhalter (Regel 7).
    KEINE Art-Umschaltung / kein zweiter Eintrag (Nutzer 2026-07-21: „ich nehm
    Text auch als Überschrift, wenn die Größe einstellbar ist") · **Trennlinie**
@@ -312,12 +317,25 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    `ff-runtime.js` neu gebaut (wächst um ff-text/ff-trenner), Referenzabzug
    erneuert (nur das eingebettete Bündel ändert sich, Masken-HTML byte-gleich),
    Veralten-Wächter-Positivliste um ff-text/ff-trenner ergänzt (der im Kahlschlag
-   2026-07-14 entfernte ff-text ist als statisches Atom NEU). export.test um je
-   einen Fall je Baustein erweitert (Text je Größe + Escaping, Trennlinie),
+   2026-07-14 entfernte ff-text ist als statisches Atom NEU). export.test:
+   ein Fall je Baustein (Text-Stil-Attribute + Escaping, Trennlinie),
    KEINE neuen e2e (Test-Bremse). **Beifang Bibliothek:** Kategorien durch feine
-   Trennlinie getrennt (Muster Inspector). Prüfbündel grün (tsc · eslint ·
-   check:runtime „identisch" · vitest · 11 e2e). LIVE-Abnahme + Sichtprüfung im
-   SE-Echttest stehen aus.
+   Trennlinie getrennt (Muster Inspector).
+   **Feinschliff-Pass (Fable, 2026-07-21, nach Opus' Atome-Commit):**
+   Inspector-Zeilen-Mechanik generisch (`inspectorRow` + kinds
+   number/segment in PropertyDescription; NumberControl/SegmentControl,
+   Icon-Tabelle `segmentIcons.ts` — Registry-Daten, kein Sondercode) ·
+   **Datum-Optik nach Chef-Vorbild** `.vuhr` (Empfang): Zeit 17px/600/mono,
+   Datum 11.5px gedämpft darunter, KEIN Kasten — löst den „Windows 98"-Look
+   ab (Nutzer 2026-07-21); gebunden zeigt die Hauptzeile den Feldwert,
+   Spot-Markierung unverändert · **Farb-Kacheln repariert**: Haken IN der
+   Kachel statt Außen-Ring (der wurde am Panel-Rand abgeschnitten =
+   „passt nicht rein") · **Hinweiszeilen** für sonst leer wirkende
+   Inspector-Panels (Karte/Trennlinie/Zeile) über Editor-Tabelle
+   `blockHinweise.ts` — ein Satz, wo die Bedienung am Ding stattfindet.
+   Prüfbündel grün (tsc · eslint · check:runtime „identisch" · 105 vitest ·
+   11 e2e), Masken-Markup im Referenzabzug byte-gleich (nur Bündel).
+   LIVE-Abnahme + Sichtprüfung im SE-Echttest stehen aus.
 4. **Tabelle** (der große fehlende Baustein). VORHER die Grundsatzfrage
    freies Raster vs. Fluss-Layout mit dem Nutzer entscheiden — das
    **Chef-Modell liegt seit 2026-07-20 vor** (Notiz-Fotos lokal beim

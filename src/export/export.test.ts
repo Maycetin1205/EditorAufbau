@@ -275,24 +275,29 @@ describe('Runtime-Bündel', () => {
 })
 
 describe('Atome (statische Bausteine, Fahrplan 3)', () => {
-  it('Text: Größe + Inhalt reisen als Attribute; Sonderzeichen werden escaped', () => {
-    // Je Größe (Plan): der Technikwert reist als Attribut, der Inhalt escaped.
-    for (const groesse of ['ueberschrift', 'normal', 'klein']) {
-      const tree: BlockTree = {
-        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
-        t: {
-          id: 't', type: 'text',
-          props: { groesse, text: 'A & B < C > "D" ä', width: 'fill' },
-          parentId: 'root', childIds: [],
+  it('Text: Stil (Größe/Gewicht/Ausrichtung) + Inhalt reisen als Attribute; Sonderzeichen werden escaped', () => {
+    // Freier Stil statt Größen-Stufen (Nutzer 2026-07-21): Pixelzahl,
+    // Gewicht und Ausrichtung reisen als Technikwert-Attribute, der Inhalt
+    // wird escaped.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
+      t: {
+        id: 't', type: 'text',
+        props: {
+          groesse: 17, gewicht: 'fett', ausrichtung: 'mitte',
+          text: 'A & B < C > "D" ä', width: 'fill',
         },
-      }
-      const { html } = exportMask(tree)
-      expect(html).toContain('<ff-text ')
-      expect(html).toContain(`groesse="${groesse}"`)
-      // & -> &amp;, < -> &lt;, > -> &gt;, " -> &quot;, ä -> &#xE4; (serializer).
-      expect(html).toContain('text="A &amp; B &lt; C &gt; &quot;D&quot; &#xE4;"')
-      expect(failedChecks(validateMaskHtml(html))).toEqual([])
+        parentId: 'root', childIds: [],
+      },
     }
+    const { html } = exportMask(tree)
+    expect(html).toContain('<ff-text ')
+    expect(html).toContain('groesse="17"')
+    expect(html).toContain('gewicht="fett"')
+    expect(html).toContain('ausrichtung="mitte"')
+    // & -> &amp;, < -> &lt;, > -> &gt;, " -> &quot;, ä -> &#xE4; (serializer).
+    expect(html).toContain('text="A &amp; B &lt; C &gt; &quot;D&quot; &#xE4;"')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
   it('Trennlinie exportiert als leeres Element ohne Eigenschaften', () => {

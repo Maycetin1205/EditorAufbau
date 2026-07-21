@@ -13,9 +13,17 @@ function formatTime(date: Date): string {
   return `${hours}:${minutes}`
 }
 
-export function currentDateDisplay(zeigt: unknown, now: Date): string {
+// Anzeige-Zeilen nach dem Empfang-Vorbild (.vuhr der chef-maske): die
+// Hauptzeile traegt den grossen Wert, bei "Datum + Zeit" steht die Zeit
+// oben und das Datum als kleine Zeile darunter.
+export interface DatumAnzeige {
+  haupt: string
+  neben?: string
+}
+
+export function datumAnzeige(zeigt: unknown, now: Date): DatumAnzeige {
   const display = coerceAnzeige(zeigt)
-  if (display === 'time') return formatTime(now)
-  const date = formatNowDate(now)
-  return display === 'datetime' ? `${date} ${formatTime(now)}` : date
+  if (display === 'time') return { haupt: formatTime(now) }
+  if (display === 'date') return { haupt: formatNowDate(now) }
+  return { haupt: formatTime(now), neben: formatNowDate(now) }
 }

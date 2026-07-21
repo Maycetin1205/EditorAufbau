@@ -22,6 +22,7 @@ import { useDataSources } from '../../state/useDataSources'
 import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
+import { Field } from '@/ui/molecules/field'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { cn } from '@/lib/utils'
 import { BindungsStrecke } from '../strecke/BindungsStrecke'
@@ -30,9 +31,12 @@ import { StepForm } from '../zentrale/StepForm'
 import { AktionenSektion } from './AktionenSektion'
 import { DataSection } from './DataSection'
 import { ColorTileControl } from './controls/ColorTileControl'
+import { NumberControl } from './controls/NumberControl'
+import { SegmentControl } from './controls/SegmentControl'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
+import { blockHinweis } from './blockHinweise'
 import { allOptionsHaveColor } from './optionColors'
 
 // Offene Unteraufgabe des Inspector-Panels (null = normale Property-Ansicht).
@@ -48,6 +52,24 @@ function resolveKind(property: PropertyDescription, value: unknown): PropertyKin
   if (property.kind) return property.kind
   if (typeof value === 'string') return 'text'
   return 'text'
+}
+
+// Benachbarte Properties mit gleichem inspectorRow teilen sich EINE
+// Inspector-Zeile (ein Label, Controls nebeneinander) — Registry-Daten,
+// Regel 2: der Inspector kennt keinen Baustein, nur die Beschreibung.
+interface InspectorZeile {
+  row?: string
+  props: PropertyDescription[]
+}
+
+function inspectorZeilen(props: PropertyDescription[]): InspectorZeile[] {
+  const zeilen: InspectorZeile[] = []
+  for (const p of props) {
+    const letzte = zeilen[zeilen.length - 1]
+    if (p.inspectorRow && letzte?.row === p.inspectorRow) letzte.props.push(p)
+    else zeilen.push({ row: p.inspectorRow, props: [p] })
+  }
+  return zeilen
 }
 
 export function Inspector() {
@@ -170,6 +192,20 @@ export function Inspector() {
         return <TextControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
       case 'textarea':
         return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
+      case 'number':
+        return <NumberControl key={property.attributeName} label={property.name} property={property} value={value} onChange={set} />
+      case 'segment':
+        return (
+          <SegmentControl
+            key={property.attributeName}
+            label={property.name}
+            name={property.name}
+            description={property.description}
+            options={property.options ?? []}
+            value={String(value ?? '')}
+            onChange={set}
+          />
+        )
       case 'select': {
         const opts = property.options ?? []
         const gemeinsam = {
@@ -226,6 +262,32 @@ export function Inspector() {
     }
   }
 
+  // Kompakte Darstellung INNERHALB einer geteilten Zeile (inspectorRow):
+  // ohne eigenes Label — das Zeilen-Label steht schon, der Klarname bleibt
+  // als Tooltip/zugänglicher Name am Control.
+  const renderCompactControl = (property: PropertyDescription) => {
+    const value = block.props[property.attributeName]
+    const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
+    const kind = resolveKind(property, value)
+    if (kind === 'number') {
+      return <NumberControl key={property.attributeName} property={property} value={value} onChange={set} />
+    }
+    if (kind === 'segment') {
+      return (
+        <SegmentControl
+          key={property.attributeName}
+          name={property.name}
+          description={property.description}
+          options={property.options ?? []}
+          value={String(value ?? '')}
+          onChange={set}
+        />
+      )
+    }
+    // Andere Arten haben keine Kompakt-Form — normale volle Zeile.
+    return renderPropControl(property)
+  }
+
   // Im eigenen Datenanschluss-Dialog gepflegte Props bekommen kein
   // zweites Inspector-Control.
   const visibleProps = def.customProperties.filter((p) => {
@@ -278,7 +340,21 @@ export function Inspector() {
       <div className="flex flex-col">
         {generalProps.length > 0 && (
           <div className="flex flex-col gap-3">
-            {generalProps.map(renderPropControl)}
+            {/* Zeilen-Gruppierung (inspectorRow): z. B. „Text-Stil" =
+                Größe | Gewicht | Ausrichtung in EINER kompakten Zeile. */}
+            {inspectorZeilen(generalProps).map((zeile) =>
+              zeile.row ? (
+                <Field key={`zeile:${zeile.row}`} label={zeile.row}>
+                  {() => (
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      {zeile.props.map(renderCompactControl)}
+                    </div>
+                  )}
+                </Field>
+              ) : (
+                renderPropControl(zeile.props[0])
+              ),
+            )}
           </div>
         )}
         {/* Datenquelle anhängen (Kap. 5.1) + Daten-Controls (Kap. 5.3) —
@@ -316,6 +392,20 @@ export function Inspector() {
               onEditStep={(eventKey, step) => setUnteraufgabe({ art: 'schritt', eventKey, step })}
             />
           </div>
+        )}
+        {/* Hinweiszeile (blockHinweise, Editor-Tabelle): nur für Bausteine,
+            deren Panel sonst leer/fast leer aussieht — sagt in EINEM Satz,
+            wo die Bedienung stattdessen stattfindet (Regel 7). */}
+        {blockHinweis(block.type) && (
+          <p
+            className={cn(
+              'text-xs leading-relaxed text-muted-foreground',
+              (generalProps.length > 0 || showDataSection
+                || (def.blockEvents && def.blockEvents.length > 0)) && 'mt-3',
+            )}
+          >
+            {blockHinweis(block.type)}
+          </p>
         )}
         {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14, Bedienlogik 6):
             Breite und Höhe zeigen sich am Block selbst — Zieh-Anfasser am
