@@ -24,6 +24,8 @@ import {
   stepTypeName,
   type ActionStep,
 } from '../../core/data/aktionen'
+import { formatRelationSyntax } from '../../core/data/relations'
+import { istUngetaufteVorlage, relationAnzeige } from '../zentrale/relationAnzeige'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
@@ -117,10 +119,19 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                       }`}
                     >
                       <span className="w-4 shrink-0 text-right text-muted-foreground">{i + 1}.</span>
-                      <span className="min-w-0 flex-1 truncate" title={problem ?? undefined}>
-                        {stepTypeName(s.type)}
+                      {/* Nie die Syntax-Wurst als Zeilentext (Regel 3): Vorlagen
+                          zeigen Klarname bzw. „VERB · Nr."; die volle Syntax
+                          liegt im Tooltip (R3-Abschluss 2026-07-21). */}
+                      <span
+                        className="min-w-0 flex-1 truncate"
+                        title={problem ?? (relation ? formatRelationSyntax(relation) : undefined)}
+                      >
+                        {s.type === 'RELATION' && relation
+                          ? (istUngetaufteVorlage(relation)
+                              ? relationAnzeige(relation)
+                              : `${stepTypeName(s.type)} — ${relation.name}`)
+                          : stepTypeName(s.type)}
                         {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
-                        {s.type === 'RELATION' && relation ? ` — ${relation.name}` : ''}
                         {popupName ? ` — ${popupName}` : ''}
                         {problem !== null ? ' — unvollständig' : ''}
                       </span>

@@ -37,6 +37,7 @@ import {
   relationMatchesSearch,
   type RelationTemplate,
 } from '../../core/data/relations'
+import { istUngetaufteVorlage, relationAnzeige } from './relationAnzeige'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -169,34 +170,35 @@ function BindingRow({
     onChange({ source, value })
   }
 
-  // Gestapelt für die 340-px-Spalte (R3-Feinschliff): Name + Quelle in einer
-  // Zeile, der Wert in voller Breite darunter — die frühere 4-Spalten-Zeile
-  // passte nicht in die schmale Panel-Ansicht. Felder/Verhalten unverändert.
+  // EINE Zeile je Parameter (R3-Abschluss 2026-07-21): Name | Quelle | Wert
+  // nebeneinander — halbiert die Höhe der Parameterliste in der schmalen
+  // Panel-Ansicht. Lange Technikwerte kürzen sich, der Tooltip zeigt sie
+  // ganz. Felder/Verhalten unverändert.
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 truncate font-mono text-[11px]" title={label}>{label}</span>
-        <select
-          value={binding.source}
-          onChange={(e) => setSource(e.target.value as ActionParamSource)}
-          className="h-7 w-36 shrink-0 rounded border border-input bg-background px-2 text-xs"
-        >
-          {ACTION_PARAM_SOURCES.map((source) => (
-            <option
-              key={source.key}
-              value={source.key}
-              disabled={(source.key === 'data_field' && dataSources.length === 0)
-                || (source.key === 'step_result' && schritte.length === 0)}
-            >
-              {source.name}
-            </option>
-          ))}
-        </select>
-        {removable && onRemove && (
-          <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
-        )}
+    <div className="flex items-center gap-1.5">
+      <span className="w-16 shrink-0 truncate font-mono text-[11px]" title={label}>{label}</span>
+      <select
+        value={binding.source}
+        onChange={(e) => setSource(e.target.value as ActionParamSource)}
+        className="h-7 w-28 shrink-0 rounded border border-input bg-background px-1.5 text-xs"
+      >
+        {ACTION_PARAM_SOURCES.map((source) => (
+          <option
+            key={source.key}
+            value={source.key}
+            disabled={(source.key === 'data_field' && dataSources.length === 0)
+              || (source.key === 'step_result' && schritte.length === 0)}
+          >
+            {source.name}
+          </option>
+        ))}
+      </select>
+      <div className="min-w-0 flex-1">
+        <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
       </div>
-      <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
+      {removable && onRemove && (
+        <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
+      )}
     </div>
   )
 }
@@ -230,22 +232,31 @@ function RelationAuswahl({
           onChange={(e) => onSuche(e.target.value)}
         />
       </div>
+      {/* Je Zeile der Klarname (bzw. „VERB · Nr." bei ungetauften Vorlagen);
+          die volle Syntax ist NIE Anzeigetext — nur Hover-Tooltip + Suche
+          (R3-Abschluss 2026-07-21, Regel 3). */}
       <div className="max-h-36 overflow-y-auto border-y border-border py-1">
-        {eintraege.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            onClick={() => onSelect(entry.id)}
-            className={`w-full px-2 py-1.5 text-left text-xs ${
-              entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
-            }`}
-          >
-            <span className="block truncate">{entry.name}</span>
-            <span className="block truncate font-mono text-[10px] text-muted-foreground">
-              {formatRelationSyntax(entry)}
-            </span>
-          </button>
-        ))}
+        {eintraege.map((entry) => {
+          const ungetauft = istUngetaufteVorlage(entry)
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              title={formatRelationSyntax(entry)}
+              onClick={() => onSelect(entry.id)}
+              className={`w-full px-2 py-1.5 text-left text-xs ${
+                entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
+              }`}
+            >
+              <span className="block truncate">{relationAnzeige(entry)}</span>
+              {!ungetauft && (
+                <span className="block truncate text-[10px] text-muted-foreground">
+                  {entry.verb} · Nr. {entry.nr}
+                </span>
+              )}
+            </button>
+          )
+        })}
         {eintraege.length === 0 && (
           <p className="px-2 py-1 text-xs text-muted-foreground">Keine Treffer.</p>
         )}

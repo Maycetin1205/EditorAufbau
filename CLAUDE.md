@@ -19,8 +19,10 @@ Was im Editor zu sehen ist, IST der Export.
 
 Vorgänger: Repo `react--app` (funktioniert, aber unwartbar) = **nur
 Funktions-Checkliste**, nie Code- oder Optik-Vorlage. SoftEngine-Wahrheit:
-Repo `behandlung-umbau` (echte, dokumentierte Maske; bei Bedarf per
-add_repo an die Session hängen).
+echte Referenzmasken-Paare eingecheckt in `docs/chef-maske/` (empfang +
+behandlung — Zielklasse des Baukastens, Originalquellen für Regel 5;
+belegen auch ERPAPICALL + Stamm-Quellen ADR/ART/BEL); vertieft
+dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
 
 ## Die 10 Architektur-Regeln
 
@@ -278,7 +280,16 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    (nur noch FieldPicker trägt sein eigenes role=dialog) — bewusst NICHT gelöscht
    (nicht selbst angelegt; s. Aufgefallen). Prüfbündel grün (tsc · eslint ·
    check:runtime „Bündel identisch" · 103 vitest · 11 e2e), Export beweisbar
-   unberührt, keine neuen Tests — LIVE-Abnahme durch den Nutzer steht aus.
+   unberührt, keine neuen Tests.
+   R3-Abschluss ✅ (Fable, 2026-07-21): Vorlagen-Anzeige entschärft — die
+   volle Relations-Syntax ist NIE mehr Anzeigetext (Regel 3): Vorlagen-Liste
+   und Schritt-Zeilen zeigen den Klarnamen bzw. bei ungetauften Vorlagen
+   „<VERB> · Nr. <nr>" (`src/editor/zentrale/relationAnzeige.ts` = DIE eine
+   Stelle dafür), die Syntax lebt nur noch als Hover-Tooltip + Suchtreffer ·
+   Parameterzeilen EINZEILIG (Name | Quelle | Wert — halbe Höhe beim
+   6-Parameter-PUT) · totes `ui/molecules/modal.tsx` gelöscht ·
+   Referenzmasken eingecheckt: `docs/chef-maske/` (empfang + behandlung).
+   LIVE-Abnahme R3 gesamt durch den Nutzer steht aus.
 3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
    statische Bausteine (berühren den Export → gebündelte
    Echttest-Warteschlange, fachlich trivial).
