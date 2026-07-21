@@ -2,7 +2,7 @@
 // Property-Editor des selektierten Blocks. Liest die PropertyDescription des
 // Blocks und baut daraus einfache Controls. Nutzt die gemeinsame SidePanel-Hülle.
 
-import { Copy, Trash } from 'lucide-react'
+import { Copy, MousePointer2, Trash } from 'lucide-react'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type {
   PropertyDescription,
@@ -13,11 +13,14 @@ import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { SidePanel } from '@/ui/molecules/side-panel'
+import { cn } from '@/lib/utils'
 import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
 import { DataSection } from './DataSection'
+import { ColorTileControl } from './controls/ColorTileControl'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
+import { allOptionsHaveColor } from './optionColors'
 
 // Radix-Select verbietet '' als Option-Wert — interner Platzhalter für
 // "kein Feld gewählt" (die Prop bleibt dabei der Leer-String).
@@ -42,7 +45,16 @@ export function Inspector() {
   if (!block) {
     return (
       <SidePanel title="Inspector">
-        <p className="text-xs text-muted-foreground">Kein Block ausgewählt.</p>
+        {/* Leer-Zustand als kleine gestrichelte Hinweis-Karte — gleicher Stil
+            wie der Canvas-Leerzustand, damit die Fuehrung im Editor eine
+            Sprache spricht (R2 2026-07-21). */}
+        <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-6 py-6 text-center">
+          <MousePointer2 size={18} className="text-muted-foreground/60" />
+          <p className="text-[13px] font-medium text-foreground/80">Kein Block ausgewählt.</p>
+          <p className="text-xs text-muted-foreground">
+            Wähle einen Baustein auf der Fläche.
+          </p>
+        </div>
       </SidePanel>
     )
   }
@@ -75,17 +87,22 @@ export function Inspector() {
         return <TextControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
       case 'textarea':
         return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
-      case 'select':
-        return (
-          <SelectControl
-            key={property.attributeName}
-            label={property.name}
-            description={property.description}
-            options={property.options ?? []}
-            value={String(value ?? '')}
-            onChange={set}
-          />
-        )
+      case 'select': {
+        const opts = property.options ?? []
+        const gemeinsam = {
+          label: property.name,
+          description: property.description,
+          options: opts,
+          value: String(value ?? ''),
+          onChange: set,
+        }
+        // Sind ALLE Options-Werte in der Farb-Tabelle (optionColors)? Dann
+        // Farb-Kacheln statt Dropdown — rein Editor-seitig, Regel 2 (kein
+        // `if attr === 'variant'`). Sonst das normale Auswahl-Dropdown.
+        return allOptionsHaveColor(opts)
+          ? <ColorTileControl key={property.attributeName} {...gemeinsam} />
+          : <SelectControl key={property.attributeName} {...gemeinsam} />
+      }
       // Feld der Datenquelle in Reichweite (Kap. 5.3): Klarnamen sichtbar,
       // Feldcode (Technikwert) wird gespeichert — Muster DataSection/FieldPicker.
       case 'field':
@@ -148,7 +165,9 @@ export function Inspector() {
   return (
     <SidePanel
       title={def.displayName ?? def.type}
-      description={`${def.type} · ${block.id.slice(0, 8)}`}
+      // Keine Technik-Unterzeile mehr (Typ-Code · ID) — Technikwerte sind
+      // unsichtbar (Regel 3, Nutzer-Entscheidung 2026-07-21). Der Klarname
+      // im Kopf sagt dem Bediener, welcher Baustein gewählt ist.
       // Bedienung am Ding (Regel 7): Duplizieren/Löschen stehen bei der
       // Auswahl, nicht in der globalen Top-Bar (R1-Feinschliff 2026-07-21).
       actions={(
@@ -170,25 +189,31 @@ export function Inspector() {
         </>
       )}
     >
-      <div className="flex flex-col gap-5">
+      {/* Keine Abschnitts-Überschriften mehr (Nutzer-Entscheidung 2026-07-21):
+          erst Inhalt (generalProps), dann Daten — die feste Ordnung bleibt,
+          zwischen den Gruppen höchstens eine feine Trennlinie, sonst nichts. */}
+      <div className="flex flex-col">
         {generalProps.length > 0 && (
           <div className="flex flex-col gap-3">
             {generalProps.map(renderPropControl)}
           </div>
         )}
         {/* Datenquelle anhängen (Kap. 5.1) + Daten-Controls (Kap. 5.3) —
-            nur für Blöcke, die das per Registry deklarieren. Kein Typ-Check. */}
+            nur für Blöcke, die das per Registry deklarieren. Kein Typ-Check.
+            Feine Trennlinie NUR, wenn eine Inhalt-Gruppe darüber steht. */}
         {showDataSection && (
-          <section className="flex flex-col gap-3">
-            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Daten
-            </h3>
+          <div
+            className={cn(
+              'flex flex-col gap-3',
+              generalProps.length > 0 && 'mt-4 border-t border-border pt-4',
+            )}
+          >
             {/* Board-Datenanschluss: Quelle + Einsortieren-Feld im eigenen Dialog. */}
             {def.bindingRoute
               ? <BindungsAnschluss block={block} />
               : def.acceptsDataSource && <DataSection block={block} />}
             {dataProps.map(renderPropControl)}
-          </section>
+          </div>
         )}
         {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14, Bedienlogik 6):
             Breite und Höhe zeigen sich am Block selbst — Zieh-Anfasser am

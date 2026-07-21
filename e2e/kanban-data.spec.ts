@@ -28,7 +28,7 @@ async function insertBoard(page: Page) {
 // eine feste Klick-Position gibt es nicht mehr.
 async function selectBoard(page: Page) {
   await page.locator('ff-kanban').evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await expect(page.getByText('kanban ·')).toBeVisible() // Inspector-Kopf
+  await expect(page.getByRole('heading', { name: 'Kanban' })).toBeVisible() // Inspector-Kopf
 }
 
 async function attachTerminplaner(page: Page) {

@@ -206,7 +206,24 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    Blöcke löschen" ins „…"-Menü mit Bestätigung · Canvas als Blatt mit
    Schatten + Leerzustand-Hinweis · StatusBar mit Seiten-Anzeige) —
    Screenshot-Abnahme durch den Nutzer AUSSTEHEND ·
-   R2 Bibliothek + Inspector (+ Baustein-Baum links) · R3 Steuerung/
+   R2 ✅ gebaut 2026-07-21 (Bibliothek oben Hauptdarsteller: kompakte
+   Icon-Karten je Kategorie, Klick/Drag unverändert · Baustein-Baum „Aufbau"
+   war zwischenzeitlich gebaut, auf Nutzer-Entscheidung 2026-07-21 aber
+   RESTLOS wieder entfernt [BausteinBaum.tsx + blockLabels.ts gelöscht,
+   Sidebar-Einbindung raus; blockIcons.ts BLEIBT — die Bibliothek nutzt die
+   Icons weiter] ·
+   Inspector: feste Reihenfolge Inhalt→Daten mit feiner Trennlinie statt
+   Abschnitts-Überschriften, gestrichelte Leer-Karte im Canvas-Stil, Labels
+   11 px, Kopf OHNE Technik-Unterzeile [Regel 3], Beschreibungen als
+   Label-Tooltip statt angeklebtem ⓘ, Farb-Eigenschaft als dezente Kacheln
+   [echte --se-Farben, gewählte mit Ring, Tooltip = Klarname] statt Dropdown
+   über Editor-Tabelle `src/editor/inspector/optionColors.ts` [rein
+   Editor-seitig, Baustein-„select" unverändert] · Icons als Editor-Tabelle
+   `blockIcons.ts`, Lucide bleibt aus dem Runtime-Bündel — Bündel-Wächter
+   „identisch". Genehmigte e2e-Ausnahme: drei Kopf-Assertions [formfeld/
+   kanban/zwischenspeicher] von der Technik-Zeile auf die Kopf-Überschrift
+   umgestellt, Wächter-Zweck bleibt) —
+   Screenshot-Abnahme AUSSTEHEND · R3 Steuerung/
    Formulare (Ereignis-Ketten wandern an den Baustein in den Inspector).
    Detailplan je Paket, „go" je Paket, Abnahme per Screenshot.
 3. **Billig-Atome:** Text/Überschrift, Trennlinie, Gruppe/Karte —
@@ -242,8 +259,8 @@ Maske dauerhaft merken · Sortierung wie Windows (Zahl/Datum/ABC) ·
 Ankreuzfeld bindbar machen, sobald der SE-Wert-Kontrakt (J/N? 1/0?) an
 einer echten Maske belegt ist · Seiten-Leiste als kompakte Aufklappliste,
 falls viele Popups je Maske real werden · Vorlagen-Ablage: gespeicherte
-Popups/Baustein-Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, als
-Bereich im künftigen Baustein-Baum) · „Maske als Datei
+Popups/Baustein-Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, Ort
+offen) · „Maske als Datei
 speichern/laden" für Sicherung/zweiten Arbeitsplatz (heute nur
 Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus
 exportMask erst MIT dem Tabellen-Baustein herausziehen · Export wirft

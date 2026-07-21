@@ -32,7 +32,10 @@ links. NUR Editor-UI — Export unberührt (Beweis: `check:runtime` meldet
 1. **Bibliothek** (`src/editor/sidebar/`): kompakte Baustein-Karten mit
    Icon (lucide) + Namen, Kategorien LAYOUT/EINGABE/ANZEIGE bleiben,
    Suche bleibt. Klick-zum-Hinzufügen und Drag bleiben unverändert.
-2. **Baustein-Baum** (NEU, eigenes Panel im linken Bereich über der
+2. **Baustein-Baum** — ⚠ ÜBERSTIMMT (Nutzer-Entscheidung 2026-07-21): der
+   Baum wurde gebaut (erst über, dann unter der Bibliothek) und anschließend
+   KOMPLETT wieder entfernt — dieser Punkt ist hinfällig. Der ursprüngliche
+   Plan war (NEU, eigenes Panel im linken Bereich über der
    Bibliothek): zeigt die AKTIVE Seite als eingerückten Baum
    (`ed.childNodesOf` rekursiv ab `ed.rootId`), je Zeile Icon +
    Klarname (`displayName`), Klick = `selectBlock`, Auswahl deutlich

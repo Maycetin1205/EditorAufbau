@@ -24,31 +24,26 @@ export function Field({ label, description, error, className, children }: FieldP
   const id = useId()
   const descriptionId = description && !error ? `${id}-description` : undefined
   const errorId = error ? `${id}-error` : undefined
-  // Beschreibungen sind kein Dauertext: mit Label erscheinen sie am dezenten
-  // Info-Zeichen; fuer Screenreader bleibt aria-describedby unveraendert.
+  // Beschreibungen sind KEIN Dauertext: mit Label liegen sie als Hover-Tooltip
+  // (title) direkt auf dem Label — kein eigenes Icon, kein Extra-Platz
+  // (Nutzer-Korrektur 2026-07-21; loest das fruehere angeklebte ⓘ ab). Fuer
+  // Screenreader bleibt die Beschreibung als sr-only-Absatz verdrahtet
+  // (aria-describedby unveraendert). Felder OHNE Label zeigen die Beschreibung
+  // weiter sichtbar (ein title haette dort keinen sinnvollen Anker).
   const beschreibungAlsHinweis = Boolean(label) && typeof description === 'string'
-
-  // Beschreibungen sind KEIN Dauertext mehr (Nutzer-Korrektur 2026-07-13,
-  // V1b): neben dem Label sitzt ein dezentes ⓘ — der Text erscheint nur
-  // beim Daraufzeigen (title). Fuer Screenreader bleibt er als sr-only-
-  // Absatz verdrahtet (aria-describedby unveraendert). Felder OHNE Label
-  // zeigen die Beschreibung weiterhin sichtbar (das ⓘ haette keinen Anker).
-  // Die Berechnung steht direkt oberhalb und bleibt die einzige Quelle.
 
   return (
     <div className={cn('flex min-w-0 flex-col gap-1', className)}>
       {label && (
-        <label htmlFor={id} className="text-xs font-medium text-foreground">
-          {label}
-          {beschreibungAlsHinweis && !error && (
-            <span
-              title={description as string}
-              aria-hidden="true"
-              className="ml-1 cursor-help font-normal text-muted-foreground"
-            >
-              ⓘ
-            </span>
+        <label
+          htmlFor={id}
+          title={beschreibungAlsHinweis && !error ? (description as string) : undefined}
+          className={cn(
+            'text-[11px] leading-4 font-medium text-foreground',
+            beschreibungAlsHinweis && !error && 'cursor-help',
           )}
+        >
+          {label}
         </label>
       )}
       {children({

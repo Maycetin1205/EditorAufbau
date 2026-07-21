@@ -22,7 +22,7 @@ async function freshEditor(page: Page) {
 async function selectFormfeld(page: Page) {
   await page.locator('ff-formfeld').evaluate((el) =>
     el.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-  await expect(page.getByText('formfeld ·')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Formularfeld' })).toBeVisible() // Inspector-Kopf
 }
 
 async function exportMaskHtml(page: Page): Promise<string> {

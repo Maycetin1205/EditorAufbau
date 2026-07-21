@@ -8,6 +8,7 @@ import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefi
 import { setNewBlockDrag } from '../canvas/dnd'
 import { useEditor } from '../../state/useEditor'
 import { cn } from '@/lib/utils'
+import { blockIcon } from './blockIcons'
 
 const CATEGORY_LABEL: Record<BlockCategory, string> = {
   layout: 'Layout',
@@ -110,6 +111,10 @@ interface PaletteCardProps {
 }
 
 function PaletteCard({ def, onAdd }: PaletteCardProps) {
+  // Icon aus der Editor-Zuordnungstabelle (blockIcons, Regel 2). Der Text
+  // bleibt der EINZIGE Textknoten im Knopf — die Icons tragen keinen
+  // Textwert, der zugaengliche Name bleibt exakt der Klarname (e2e-Vertrag:
+  // `getByRole('button', { name: 'Zeile', exact: true })`).
   return (
     <button
       type="button"
@@ -121,12 +126,15 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
         e.dataTransfer.effectAllowed = 'copy'
       }}
       className={cn(
-        'group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-left text-xs',
+        'group grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-left text-xs',
         'transition-colors hover:border-primary/40 hover:bg-accent hover:text-accent-foreground',
       )}
     >
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground group-hover:bg-background group-hover:text-foreground">
+        {blockIcon(def.type, { size: 14 })}
+      </span>
       <span className="truncate font-medium">{def.displayName}</span>
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-muted-foreground group-hover:bg-background group-hover:text-foreground">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
         <Plus size={13} />
       </span>
     </button>
