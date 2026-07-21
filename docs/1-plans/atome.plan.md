@@ -34,6 +34,14 @@ Anfasser-Sonderlocken. Fachlich trivial, aber sie berühren den Export
    (leer = keine Titelzeile, LEER-Regel wie bei der Karte).
    `allowedChildTypes` wie die Zeile (alle Nicht-Seiten-Bausteine),
    Kinder fließen als Spalte. Titel per Doppelklick am Ding.
+   ⚠ Bedienung: KEINE neue Drop-Logik bauen — der Canvas behandelt
+   Container GENERISCH über die Registry (Beweis: Zeile). Mitte =
+   hinein ans Ende, Randzone = davor/dahinter, Einfüge-Linie als
+   Vorschau, nie-in-sich-selbst — alles vorhanden. Die Gruppe
+   deklariert nur ihre Fähigkeiten; leer verhält sie sich exakt wie
+   eine leere Zeile heute (gleiche Editor-Hilfen, nichts Neues).
+   Wird an irgendeiner Stelle doch eigene Drop-/Sonderlogik nötig →
+   STOPPEN und Fable/Nutzer fragen, nicht erfinden.
 
 ## Regeln (verbindlich)
 
