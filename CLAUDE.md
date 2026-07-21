@@ -199,7 +199,13 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
 2. **Editor-Redesign R1–R3** — Bedienung + Optik, NUR Editor-UI, Export
    unberührt (beweisbar über den Referenzabzug; Test-Bremse: keine neuen
    e2e). Blaupause = Internal-Tool-Builder (Retool & Co.), Nutzer-Wahl
-   2026-07-20: hell + Blau. R1 Skala/Top-Bar/Canvas-als-Blatt ·
+   2026-07-20: hell + Blau, dicht, EIN kleiner Radius (keine Bubbles),
+   keine verschwendete Fläche. R1 ✅ gebaut 2026-07-21 (Skala 4px-Radius/
+   28px-Dichte · Top-Bar 40px: Maskenname statt „MVP Editor", Seiten-
+   Reiter als Segmente in der Leiste, Export = blauer Primärknopf, „Alle
+   Blöcke löschen" ins „…"-Menü mit Bestätigung · Canvas als Blatt mit
+   Schatten + Leerzustand-Hinweis · StatusBar mit Seiten-Anzeige) —
+   Screenshot-Abnahme durch den Nutzer AUSSTEHEND ·
    R2 Bibliothek + Inspector (+ Baustein-Baum links) · R3 Steuerung/
    Formulare (Ereignis-Ketten wandern an den Baustein in den Inspector).
    Detailplan je Paket, „go" je Paket, Abnahme per Screenshot.
@@ -235,7 +241,9 @@ in `src/blocks/card/tierIcon.ts`) · Spaltenbreiten der Tabelle in der
 Maske dauerhaft merken · Sortierung wie Windows (Zahl/Datum/ABC) ·
 Ankreuzfeld bindbar machen, sobald der SE-Wert-Kontrakt (J/N? 1/0?) an
 einer echten Maske belegt ist · Seiten-Leiste als kompakte Aufklappliste,
-falls viele Popups je Maske real werden · „Maske als Datei
+falls viele Popups je Maske real werden · Vorlagen-Ablage: gespeicherte
+Popups/Baustein-Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, als
+Bereich im künftigen Baustein-Baum) · „Maske als Datei
 speichern/laden" für Sicherung/zweiten Arbeitsplatz (heute nur
 Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus
 exportMask erst MIT dem Tabellen-Baustein herausziehen · Export wirft

@@ -13,6 +13,7 @@
 // (SeitenLeiste) und Popup-Seitenansicht (PopupSeite). Hier bleibt nur
 // die Fläche selbst.
 
+import { MousePointerClick } from 'lucide-react'
 import { useMemo, useState, type DragEvent } from 'react'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
 import { useEditor } from '../../state/useEditor'
@@ -20,7 +21,6 @@ import { NodeList } from './CanvasNode'
 import { isNewBlockDrag } from './dnd'
 import { commitDrop, DndContext, type DndState, type DropTarget } from './dndState'
 import { PopupSeite } from './PopupSeite'
-import { SeitenLeiste } from './SeitenLeiste'
 
 export function Canvas() {
   const ed = useEditor()
@@ -52,10 +52,12 @@ export function Canvas() {
   return (
     <DndContext.Provider value={dnd}>
       <div className="flex h-full w-full flex-col">
-        <SeitenLeiste />
         <div
           onClick={() => ed.selectBlock(null)}
-          className="relative min-h-0 w-full flex-1 overflow-hidden rounded-lg border border-border bg-card shadow-sm"
+          // Das „Blatt" (R1): die Maske liegt sichtbar AUF dem Grund —
+          // Kante + zweistufiger Schatten geben die Tiefe, der Inhalt
+          // selbst bleibt unverändert Masken-Welt (--se-bg).
+          className="relative min-h-0 w-full flex-1 overflow-hidden rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.07),0_12px_28px_-14px_rgba(16,24,40,0.25)]"
           style={{ minHeight: 400 }}
         >
           <div
@@ -83,6 +85,19 @@ export function Canvas() {
           >
             {hauptseite && <NodeList parentId={ed.rootId} direction="column" />}
           </div>
+          {/* Leerzustand (R1): sagt, was zu tun ist — reine Editor-Hilfe,
+              nie Teil des Baums; pointer-events-none lässt Drops durch. */}
+          {hauptseite && ed.blockCount === 0 && (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-8 py-6 text-center">
+                <MousePointerClick size={18} className="text-muted-foreground/60" />
+                <p className="text-[13px] font-medium text-foreground/80">Leere Maske</p>
+                <p className="text-xs text-muted-foreground">
+                  Zieh einen Baustein aus der Bibliothek links hierher.
+                </p>
+              </div>
+            </div>
+          )}
           {!hauptseite && <PopupSeite popupId={ed.activePageId} />}
         </div>
       </div>

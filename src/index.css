@@ -31,7 +31,10 @@
     --border: 220 13% 85%;
     --input: 220 13% 85%;
     --ring: 221 83% 53%;
-    --radius: 0.5rem;
+    /* R1 (2026-07-21): EIN kleiner Radius (4px, fast kantig) statt Bubbles;
+       --canvas-bg = dunklerer Grund, auf dem die Maske als Blatt liegt. */
+    --radius: 0.25rem;
+    --canvas-bg: 220 14% 90%;
   }
 
   * {

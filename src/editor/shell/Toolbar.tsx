@@ -1,15 +1,20 @@
 // Toolbar
 // Werkzeugleiste im Header. Loest die wenigen MVP-Editor-Befehle aus.
+// R1 (2026-07-21): Exportieren = der EINE Primärknopf; „Alle Blöcke
+// löschen" raus aus der Reihe in ein „…"-Menü (Zerstörerisches steht nie
+// gleichrangig neben dem Hauptweg, Bestätigung bleibt).
 
 import {
   Copy,
   Download,
+  MoreHorizontal,
   Redo2,
   SlidersHorizontal,
   Trash,
   Trash2,
   Undo2,
 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { exportMask } from '../../export/exportMask'
 import { preflightMask } from '../../export/preflight'
 import { failedChecks, validateMaskHtml } from '../../export/validator'
@@ -68,7 +73,7 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 justify-self-end">
       <ToolGroup>
         <IconButton
           aria-label="Rückgängig (Ctrl+Z)"
@@ -107,41 +112,92 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
         >
           <Trash size={15} />
         </IconButton>
-        <IconButton
-          aria-label="Alle Blöcke löschen"
-          title="Alle Blöcke löschen"
-          onClick={handleClear}
-          disabled={ed.blockCount === 0}
-        >
-          <Trash2 size={15} />
-        </IconButton>
+        <MoreMenu onClearAll={handleClear} clearDisabled={ed.blockCount === 0} />
       </ToolGroup>
 
       <Divider />
 
-      <ToolGroup>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onSteuerung}
-          title="Steuerung — Aktionen, Datenquellen und Relationen der Maske"
-        >
-          <SlidersHorizontal size={14} /> Steuerung
-        </Button>
-      </ToolGroup>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onSteuerung}
+        title="Steuerung — Aktionen, Datenquellen und Relationen der Maske"
+      >
+        <SlidersHorizontal size={14} /> Steuerung
+      </Button>
 
-      <Divider />
+      <Button
+        size="sm"
+        aria-label="Als SoftEngine-Maske exportieren"
+        title="Export (SoftEngine-Maske)"
+        onClick={handleExport}
+        disabled={ed.blockCount === 0}
+      >
+        <Download size={14} /> Exportieren
+      </Button>
+    </div>
+  )
+}
 
-      <ToolGroup>
-        <IconButton
-          aria-label="Als SoftEngine-Maske exportieren"
-          title="Export (SoftEngine-Maske)"
-          onClick={handleExport}
-          disabled={ed.blockCount === 0}
+// „…"-Menü: Sammelplatz für seltene/zerstörerische Befehle. Bewusst von
+// Hand gebaut (kein Radix-Menu im Projekt) — schließt bei Klick daneben
+// und bei Escape.
+function MoreMenu({
+  onClearAll,
+  clearDisabled,
+}: {
+  onClearAll: () => void
+  clearDisabled: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const wrap = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={wrap} className="relative">
+      <IconButton
+        aria-label="Weitere Aktionen"
+        title="Weitere Aktionen"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <MoreHorizontal size={15} />
+      </IconButton>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[190px] rounded-md border border-border bg-popover p-1 shadow-md"
         >
-          <Download size={15} />
-        </IconButton>
-      </ToolGroup>
+          <button
+            role="menuitem"
+            type="button"
+            disabled={clearDisabled}
+            onClick={() => {
+              setOpen(false)
+              onClearAll()
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Trash2 size={13} /> Alle Blöcke löschen…
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -151,5 +207,5 @@ function ToolGroup({ children }: { children: React.ReactNode }) {
 }
 
 function Divider() {
-  return <span className="mx-1.5 h-5 w-px bg-border" />
+  return <span className="mx-1 h-4 w-px bg-border" />
 }
