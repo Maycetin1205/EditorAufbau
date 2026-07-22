@@ -21,6 +21,17 @@ interface PropChangeDetail {
   value: unknown
 }
 
+// Formular-Eingaben zeigen die Klarnamen-Vorschau als PLATZHALTER statt als
+// Wert (Nutzer-Go 2026-07-22): das Feld wirkt leer — so wie die Maske ohne
+// Daten startet — und verrät trotzdem grau, was angeschlossen ist. Das
+// Formularfeld bringt die Platzhalter-Optik selbst mit (eigener .ph-Text,
+// sichtbar solange value leer ist, alle Feldarten). Editor-Tabelle
+// „Baustein-Typ.Stelle → Ziel-Property"; reine Anzeige an dieser EINEN
+// Übergabestelle — Baum, Export und Bündel bleiben unberührt.
+const VORSCHAU_ALS_PLATZHALTER: Record<string, string> = {
+  'formfeld.value': 'placeholder',
+}
+
 interface LitElementArgs {
   editor: Editor
   // Aktueller Knoten in einer Ref, damit einmal registrierte Event-Listener
@@ -106,13 +117,14 @@ export function useLitElement({
       if (typeof code !== 'string' || code === '') continue
       const field = dataSource?.fields.find((f) => f.code === code)
       if (field) {
-        elAny[spot.prop] = field.label
+        const ziel = VORSCHAU_ALS_PLATZHALTER[`${block.type}.${spot.prop}`] ?? spot.prop
+        elAny[ziel] = field.label
       } else {
         elAny[bindingProp(spot.prop)] = ''
       }
     }
     elAny.editable = !!selected
-  }, [element, block.props, selected, bindableSpots, dataSource])
+  }, [element, block.type, block.props, selected, bindableSpots, dataSource])
 
   return { containerRef, elementRef, element }
 }

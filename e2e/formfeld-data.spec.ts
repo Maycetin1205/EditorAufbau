@@ -68,8 +68,11 @@ test('Export: Formularfeld hydriert aus der ersten Zeile, schreibt lokal und feu
   await feldGruppe.getByRole('button', { name: 'Tiername' }).click()
   await page.getByRole('button', { name: 'Fertig' }).click()
 
-  // Editor-Vorschau: gebundenes Feld zeigt den KLARNAMEN, nie erfundene Werte.
-  await expect(page.locator('ff-formfeld input.ctrl')).toHaveValue('Tiername')
+  // Editor-Vorschau: gebundenes Feld wirkt LEER, der Klarname steht in der
+  // grauen Platzhalter-Optik (Nutzer-Go 2026-07-22) — nie erfundene Werte,
+  // nie der Klarname als vermeintlicher Inhalt.
+  await expect(page.locator('ff-formfeld input.ctrl')).toHaveValue('')
+  await expect(page.locator('ff-formfeld .ph')).toHaveText('Tiername')
 
   const html = await exportMaskHtml(page)
   expect(html).toContain('valuefield="78_30"')

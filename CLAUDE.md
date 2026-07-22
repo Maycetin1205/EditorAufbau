@@ -103,9 +103,10 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
   Schlüssel-Scan: gleich / Präfix `code_` / Endung `_code` — gilt für
   Lesen UND Schreiben (setField patcht dieselben Schlüssel).
 - **Schreiben:** `basisHTML_SND_MSG('PUT_RELATION', { NR, PARAMS })`,
-  PARAMS = sechs Strings `[pos, len, 'L', pindex, relId, wert]`.
-  ⚠ `relId` OHNE `IDB`-Präfix (`ID0001`, nicht `IDBID0001`). Standard-PUT
-  NR 174 ist nur die mitgelieferte Vorlage.
+  PARAMS = sechs Strings `[pos, len, art, pindex, relId, wert]` — `art` =
+  Feld-Art: `'L'` (Text), `'D'` (Datum; Nutzer-Praxis, belegt im Echttest
+  2026-07-22). ⚠ `relId` OHNE `IDB`-Präfix (`ID0001`, nicht `IDBID0001`).
+  Standard-PUT NR 174 ist nur die mitgelieferte Vorlage.
 - **GET-Antworten:** Das offizielle `basisHTML_REGISTER` vereinheitlicht
   `BWMSG` (BüroWARE/WinUI) und `WWMSG` (WEBWARE) zu demselben Callback.
   Dieser Callback ist der Hauptweg; neue `SEDATA.Message<N>` sind nur der
@@ -150,7 +151,9 @@ ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
 - **Bausteine:** Kanban (+ Spalte/Karte — Karten-Anatomie, LEER-Regel und
   Avatar-Regeln: `docs/decisions/2026-07-16-karte-empfang-anatomie.md`),
   Schaltfläche, Formularfeld (Text + Auswahl; Ankreuzfeld bewusst
-  unbindbar, bis der SE-Wert-Kontrakt belegt ist), Datumsanzeige
+  unbindbar, bis der SE-Wert-Kontrakt belegt ist; gebundene Felder zeigen
+  den Klarnamen im Editor in PLATZHALTER-Optik — grau, Feld wirkt leer,
+  Nutzer-Go 2026-07-22 — nie wie ein Wert), Datumsanzeige
   (ungebunden echte Uhr, gebunden Feldwert), Zeile, Popup-Seiten
   (Seiten-Reiter am Canvas; X + Abdunklung gehören zum Baustein;
   Popup-Klarnamen müssen je Maske EINDEUTIG sein — Laufzeit-Identität,
@@ -175,7 +178,9 @@ ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
   belegt: jedes Feld wählt seine Quelle, der Export sammelt alle.
 - **SE-Echttests bestanden:** Formularfeld-Kette schreibt echt (PUT,
   2026-07-16) · Popup-Kreislauf (2026-07-17) · Kanban-Datenpfad +
-  Aktionsketten Z2/START_TOOL. Offen: GET-Weg (s. Warteschlange).
+  Aktionsketten Z2/START_TOOL · GET-Weg + „Ergebnis von Schritt N" samt
+  Wert-Zufluss und Anlegen über ZWEI Quellen/Indizes gleichzeitig
+  (2026-07-22). **Kein offener SE-Kontrakt mehr.**
 - **Steuerung (Zentrale):** Master-Detail mit Bereichen Datenquellen |
   Relationen | Aktionen; Bearbeiten inline (FormularKarte),
   Escape-Schichtung erhalten.
@@ -185,26 +190,23 @@ ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
   (`fc5d786`) · dashboard/-Klickmodelle (`2c2d944`). Nichts davon ohne
   neue Nutzer-Entscheidung wieder einbauen.
 
-### SE-Echttest-Warteschlange (EIN gebündelter Test durch den Nutzer)
+### SE-Echttest 2026-07-22: BESTANDEN — Warteschlange leer
 
-GET-Weg + „Ergebnis von Schritt N": Kette „Schritt 1 (GET) holt eine neue
-Datensatz-Stelle → je Feld ein PUT mit Stelle aus ‚Ergebnis von
-Schritt 1'". Klick-Anleitung ohne Fachbegriffe:
-`docs/6-memo/se-echttest-klickanleitung.md`.
-**Zwischenstand 2026-07-22 (erster Lauf, echtes SE-Log):** GET 640 liefert
-(→ 271) und der PUT übernimmt die Stelle aus Schritt 1 korrekt
-(`…!L!271!…`) — der Kern des offenen Kontrakts ist damit belegt. Der WERT
-kam leer an: Masken-Konfiguration, kein Code-Fehler (Formularfeld war
-ungebunden `source=""`, und der Wert-Parameter las Feld 319_12, während
-Position/Länge 78/30 beschrieben). Wiederholung mit gebundenem Feld +
-deckungsgleichem Feld steht aus.
-Dazu gebündelt (seit dem Atome-Paket 2026-07-21): Sichtprüfung der zwei
-statischen Atome (Text mit freiem Stil px/Gewicht/Ausrichtung, Trennlinie)
-und der neuen Datum-Optik (.vuhr-Vorbild: Zeit groß, Datum klein darunter)
-in einer echten Maske — rein „sieht es in SoftEngine aus wie im Editor",
-kein eigener Termin. Kein Termindruck — der Nutzer testet, wann er will. Nach
-bestandenem Echttest: dieses Gleis → main mergen, Nebengleis löschen, ab
-dann wieder EIN Gleis.
+In EINEM Lauf bestätigt (echte SE-Logs des Nutzers): GET-Weg liefert
+(640 → neuer Satz-Index) · „Ergebnis von Schritt N" trägt die Stelle
+korrekt in die PUTs — auch mit ZWEI Quellen/Indizes GLEICHZEITIG
+(Anlegen-Muster live: GET ID0001→277 + GET ID0004→230, jeder PUT trifft
+die richtige Tabelle) · getippte Werte fließen über das gebundene Feld in
+den PUT · Sichtprüfung Text/Trennlinie/Datum-Optik: sieht in SoftEngine
+aus wie im Editor (Nutzer-Abnahme 2026-07-22).
+Lehre aus dem ersten Fehlversuch (dokumentiert, damit sie nie wieder Zeit
+kostet): Formularfeld war ungebunden und der Wert-Parameter las ein
+anderes Feld, als Position/Länge beschrieben — Masken-Konfiguration, kein
+Code-Fehler. Merksatz **„Dreier-Regel": Wert, Position, Länge = dreimal
+dasselbe Feld;** nur die Stelle kommt aus Schritt 1.
+**Damit fällig: dieses Gleis → main mergen, Nebengleis löschen, ab dann
+wieder EIN Gleis** (Merge macht die lokale Sitzung auf Nutzer-Auftrag,
+2026-07-22).
 
 ### Fahrplan (Nutzer-Entscheidungen 2026-07-20)
 
@@ -346,7 +348,17 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    `blockHinweise.ts` — ein Satz, wo die Bedienung am Ding stattfindet.
    Prüfbündel grün (tsc · eslint · check:runtime „identisch" · 105 vitest ·
    11 e2e), Masken-Markup im Referenzabzug byte-gleich (nur Bündel).
-   LIVE-Abnahme + Sichtprüfung im SE-Echttest stehen aus.
+   LIVE-Abnahme + SE-Sichtprüfung BESTANDEN (2026-07-22).
+3b. **Nach dem Merge, kleine Pakete (je Plan + „go"):** „Feld übernehmen"
+   am Schreib-Schritt — Formularfeld/Feld EINMAL wählen, Position/Länge/
+   Wert füllen sich zusammen (Nutzer-Wunsch 2026-07-22, entschärft die
+   Dreier-Regel-Falle; rein Editor-UI) · Größen-Paket „Höhe an jedem
+   Baustein ziehbar + Startgrößen" (erfüllt Tobis GridComponent-Skizze
+   wörtlich). **Grundsatz-Entscheidung 2026-07-22 (Nutzer, nach
+   Skizzen-Abgleich):** das Fundament bleibt Fluss/Nachrücken — Tobis
+   Skizze fordert nur einstellbare GRÖSSEN, keine festen Plätze; freies
+   Raster nur, falls je ein echter Fall es erzwingt (Preisschild:
+   Canvas-Neubau).
 4. **Tabelle** (der große fehlende Baustein). VORHER die Grundsatzfrage
    freies Raster vs. Fluss-Layout mit dem Nutzer entscheiden — das
    **Chef-Modell liegt seit 2026-07-20 vor** (Notiz-Fotos lokal beim
@@ -384,7 +396,12 @@ Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus
 exportMask erst MIT dem Tabellen-Baustein herausziehen · Export wirft
 unbekannte Props still weg (Preflight-Meldung fehlt) · Maske meldet
 Schreib-/Lesefehler dem Bediener nicht · Masken-Titel fest „Maske" ·
-Editor-UI-Testabdeckung dünn.
+Editor-UI-Testabdeckung dünn · Formularfeld-Option „startet leer" für
+Anlege-Masken (gebunden fürs Schreiben, zeigt keinen Bestandswert;
+Kontrakt seit 2026-07-22 belegt, Nutzer-Bedenken notiert) ·
+Steuerung zeigt Vorlagen-Parameter nur als „Fester Wert" ohne den Wert
+selbst (besser: „Fester Wert: ‚X'") · Preflight warnt nicht, wenn eine
+Kette ein Datenfeld liest, das kein Baustein der Maske pflegt.
 
 ## Wichtige Stellen
 
