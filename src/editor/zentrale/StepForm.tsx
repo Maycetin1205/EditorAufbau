@@ -224,10 +224,10 @@ function BindingRow({
   // Panel-Ansicht. Lange Technikwerte kürzen sich, der Tooltip zeigt sie
   // ganz. Felder/Verhalten unverändert.
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="w-16 shrink-0 truncate font-mono text-[11px]" title={label}>{label}</span>
+    <div className="flex items-center gap-1">
+      <span className="w-14 shrink-0 truncate font-mono text-[11px]" title={label}>{label}</span>
       <SchrittSelect
-        className="w-32 shrink-0"
+        className="w-24 shrink-0"
         value={binding.source}
         onChange={(e) => setSource(e.target.value as ActionParamSource)}
       >
@@ -329,7 +329,7 @@ function RelationAuswahl({
           die volle Syntax ist NIE Anzeigetext — nur Hover-Tooltip + Suche
           (R3-Abschluss 2026-07-21, Regel 3). Nur der aktive Tab; leere Gruppe
           zeigt „Keine Treffer" (die Suche darüber bleibt aktiv). */}
-      <div className="max-h-36 overflow-y-auto border-y border-border py-1">
+      <div className="max-h-36 divide-y divide-border overflow-y-auto border-y border-border">
         {sichtbar.map((entry) => {
           const ungetauft = istUngetaufteVorlage(entry)
           return (

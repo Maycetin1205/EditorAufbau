@@ -2,11 +2,14 @@
 
 | Version | Week | Commit Message |
 | ------- | ---- | -------------- |
+| `0.1.1` | 1    | fix: StepForm-Feinschliff — schmalere Quelle-Box, Trennlinien in der Relations-Liste (Nutzer-Fund) |
 | `0.1.0` | 1    | feat: „Feld übernehmen" am Schreib-Schritt (Auslöser am Parameter, V2) + sprechende Namen + Kleinputz |
 | `0.0.1` | 1    | chore: TRIP-Workflow eingerichtet (Skills, ARCHI.md, Codex-Anbindung) |
 
 # Changelog Summary
 
+- **v0.1.1 (StepForm-Feinschliff — Woche 1, 22-07-2026)**:
+  - **Fix (Nutzer-Fund „1995-Look")**: Parameterzeilen passen jetzt in die 340-px-Spalte — Quelle-Box `w-32`→`w-24`, Label enger, Gaps kleiner (die „Fest"-Boxen waren viel zu breit). Relations-Einträge mit feinen Trennlinien (`divide-y`) getrennt. Rein Editor-UI, Export „identisch", keine neuen Tests.
 - **v0.1.0 („Feld übernehmen" V2 + sprechende Namen + Kleinputz — Woche 1, 22-07-2026)**:
   - **Feld übernehmen (V2)**: Auslöser AN der Parameter-Zeile, erkennt POS/LEN/IDBID mit UND ohne `{}` (behebt: bei der echten Nutzer-Vorlage mit nackten Wörtern erschien er nie); POS füllt Position+Länge, IDBID die Tabelle; Wert/Satz-Nummer bleiben beim Bediener. Zweistufiger Picker mit Viewport-Einklemmung (Nutzer-Fund) + Escape-Schichtung.
   - **Sprechende Namen**: `eigenerText` liest `placeholder`, default-bewusst (frisches Formularfeld bleibt „Formularfeld").
