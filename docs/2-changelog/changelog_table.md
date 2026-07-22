@@ -2,10 +2,16 @@
 
 | Version | Week | Commit Message |
 | ------- | ---- | -------------- |
+| `0.1.0` | 1    | feat: „Feld übernehmen" am Schreib-Schritt (Auslöser am Parameter, V2) + sprechende Namen + Kleinputz |
 | `0.0.1` | 1    | chore: TRIP-Workflow eingerichtet (Skills, ARCHI.md, Codex-Anbindung) |
 
 # Changelog Summary
 
+- **v0.1.0 („Feld übernehmen" V2 + sprechende Namen + Kleinputz — Woche 1, 22-07-2026)**:
+  - **Feld übernehmen (V2)**: Auslöser AN der Parameter-Zeile, erkennt POS/LEN/IDBID mit UND ohne `{}` (behebt: bei der echten Nutzer-Vorlage mit nackten Wörtern erschien er nie); POS füllt Position+Länge, IDBID die Tabelle; Wert/Satz-Nummer bleiben beim Bediener. Zweistufiger Picker mit Viewport-Einklemmung (Nutzer-Fund) + Escape-Schichtung.
+  - **Sprechende Namen**: `eigenerText` liest `placeholder`, default-bewusst (frisches Formularfeld bleibt „Formularfeld").
+  - **Kleinputz**: tote Exporte (`getRegisteredBlockTypes`, `RelationPlaceholder`, `VERB_LABELS`, `Panel`/panel.tsx), `dashboard/`-Kommentare entschärft, Testname „Buddy"→„Testname", 2 Roh-Bilder (~6 MB) entfernt; Import-Zyklen waren schon `import type`.
+  - **Nachweis**: editor-only, Prüfbündel grün (tsc·eslint·check:runtime „identisch"·115 vitest·11 e2e), kein SE-Echttest.
 - **v0.0.1 (TRIP-Einrichtung — Woche 1, 20-07-2026)**:
   - **Setup**: TRIP-Workflow eingezogen — docs-Struktur, 14 Skills unter `.claude/skills/`, alle Platzhalter auf die Projektregeln zugeschnitten (Prüfbündel als Testing-Gate, Test-Bremse, Referenzabzug, SE-Echttest gebündelt, Klartext-go statt Datei-Reviews)
   - **Dokumentation**: `docs/ARCHI.md` erzeugt (Architektur-Karte: Web-Frontend + Export-Pipeline als gleichwertige Säule); Pflegeregeln `docs/ARCHI-rules.md`; `docs/4-unit-tests/TESTING.md`

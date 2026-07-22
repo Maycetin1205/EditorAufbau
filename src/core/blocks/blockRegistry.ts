@@ -18,10 +18,6 @@ export function getBlockDefinition(type: string): BlockDefinition | undefined {
   return registry.get(type)
 }
 
-export function getRegisteredBlockTypes(): string[] {
-  return Array.from(registry.keys())
-}
-
 export function getAllBlockDefinitions(): BlockDefinition[] {
   return Array.from(registry.values())
 }

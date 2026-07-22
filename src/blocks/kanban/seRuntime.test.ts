@@ -148,7 +148,7 @@ describe('formatNowDate ({NOW_DATE}-Platzhalter)', () => {
 describe('getField (Feldcode -> Wert)', () => {
   it('liest direkte Properties und trimmt', () => {
     expect(getField({ '78_30': ' Minka ' }, '78_30')).toBe('Minka')
-    expect(getField({ name: 'Buddy' }, 'name')).toBe('Buddy')
+    expect(getField({ name: 'Testname' }, 'name')).toBe('Testname')
   })
 
   it('faellt auf pos_len aus dem SATZ-Rohstring zurueck (SATZNEU vor SATZ)', () => {

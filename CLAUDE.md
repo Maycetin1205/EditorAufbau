@@ -358,22 +358,30 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    Prüfbündel grün (tsc · eslint · check:runtime „identisch" · 105 vitest ·
    11 e2e), Masken-Markup im Referenzabzug byte-gleich (nur Bündel).
    LIVE-Abnahme + SE-Sichtprüfung BESTANDEN (2026-07-22).
-3b. **Nach dem Merge, kleine Pakete (je Plan + „go"):** „Feld übernehmen"
-   am Schreib-Schritt — Formularfeld/Feld EINMAL wählen, Position/Länge/
-   Wert füllen sich zusammen (Nutzer-Wunsch 2026-07-22, entschärft die
-   Dreier-Regel-Falle; rein Editor-UI). Dazu gehören SPRECHENDE NAMEN
-   (Nutzer 2026-07-22): der Eigenname eines Bausteins — beim Formularfeld
-   sein Platzhalter-Text („Vorname") — ist sein Anzeigename in Picker,
-   Listen und Inspector-Kopf, nie „Formularfeld 3"; Ansatz: `eigenerText`
-   (zentrale/helfer.ts) um `placeholder` ergänzen; intern bleiben stabile
-   IDs (Regel 3); Doppelnamen → Anzeige mit Zusatz, kein
-   Eindeutigkeits-Zwang · Größen-Paket „Höhe an jedem
-   Baustein ziehbar + Startgrößen" (erfüllt Tobis GridComponent-Skizze
-   wörtlich). **Grundsatz-Entscheidung 2026-07-22 (Nutzer, nach
-   Skizzen-Abgleich):** das Fundament bleibt Fluss/Nachrücken — Tobis
-   Skizze fordert nur einstellbare GRÖSSEN, keine festen Plätze; freies
-   Raster nur, falls je ein echter Fall es erzwingt (Preisschild:
-   Canvas-Neubau).
+3b. **„Feld übernehmen" + sprechende Namen ✅ gebaut 2026-07-22** (v0.1.0,
+   Plan `docs/1-plans/feld-uebernehmen.plan.md`; Codex-Implementierung +
+   Claude-Gegencheck, editor-only, Prüfbündel grün, kein SE-Echttest).
+   „Feld übernehmen" am Schreib-Schritt: der Auslöser sitzt AN der
+   Parameter-Zeile (Symbol + Enter im Wert-Feld) und erkennt POS/LEN/IDBID
+   als Ganz-String MIT und OHNE `{}` — behebt, dass er bei der echten
+   Nutzer-Vorlage mit nackten Wörtern nie erschien. POS füllt
+   Position+Länge, IDBID die Tabelle; **der WERT füllt sich NICHT
+   automatisch** und die Satz-Nummer bleibt beim Bediener
+   (Nutzer-Entscheidung 2026-07-22). Zweistufiger Picker (Quelle → Feld)
+   mit Viewport-Einklemmung (Nutzer-Fund) + Escape-Schichtung.
+   Sprechende Namen: `eigenerText` (zentrale/helfer.ts) liest zusätzlich
+   `placeholder`, default-bewusst (frisches Formularfeld bleibt
+   „Formularfeld", stabile IDs unverändert, Regel 3).
+   **Reihenfolge festgeschrieben (Nutzer 2026-07-22):** V2+Kleinputz (fertig)
+   → Tabelle + QUELLDATEN-Wertquelle (gebündelt, EIN SE-Echttest) →
+   Größen-Paket. QUELLDATEN-Wertquelle = „Wert aus Formularfeld X ohne
+   Datenquellen-Bindung" ist der nächste Folgeplan (braucht Laufzeit/Export).
+   **Offen — Größen-Paket** „Höhe an jedem Baustein ziehbar + Startgrößen"
+   (erfüllt Tobis GridComponent-Skizze wörtlich). **Grundsatz-Entscheidung
+   2026-07-22 (Nutzer, nach Skizzen-Abgleich):** das Fundament bleibt
+   Fluss/Nachrücken — Tobis Skizze fordert nur einstellbare GRÖSSEN, keine
+   festen Plätze; freies Raster nur, falls je ein echter Fall es erzwingt
+   (Preisschild: Canvas-Neubau).
 4. **Tabelle** (der große fehlende Baustein). VORHER die Grundsatzfrage
    freies Raster vs. Fluss-Layout mit dem Nutzer entscheiden — das
    **Chef-Modell liegt seit 2026-07-20 vor** (Notiz-Fotos lokal beim
@@ -416,12 +424,10 @@ als notiert: auch Migrationen/Baum/Undo/SE-Datenschicht ohne eigene Tests,
 und `relations.test.ts` testet nur das Modell, nicht die gleichnamige
 Laufzeit-Datei (Nachzieh-Paket ~½ Tag, kein Export) · TRIP-Skills
 (~4.000 Zeilen in `.claude/`): testen, sobald Codex-Kontingent frei,
-sonst abspecken — Entscheidung offen · Kleinputz huckepack mit dem
-nächsten Export-Paket: doppelter Schlüssel-Scan in `softengine/data.ts`
-(getField/setField), tote `dashboard/`-Verweise in Kommentaren
-(statusVariant, KanbanSpalteBlock), Karten-Fallbackname „Buddy" ·
-6 MB Roh-Bilder in `docs/` (logo-/avatare-rohsatz.png) raus oder bewusst
-behalten · Formularfeld-Option „startet leer" für
+sonst abspecken — Entscheidung offen · doppelter Schlüssel-Scan in
+`softengine/data.ts` (getField/setField) noch offen (war NICHT Teil des
+Kleinputz-Pakets v0.1.0) · Feld-übernehmen für Stammtabellen (ADR/ART/BEL)
+wartet auf belegten Stamm-PUT-Kontrakt · Formularfeld-Option „startet leer" für
 Anlege-Masken (gebunden fürs Schreiben, zeigt keinen Bestandswert;
 Kontrakt seit 2026-07-22 belegt, Nutzer-Bedenken notiert) ·
 Steuerung zeigt Vorlagen-Parameter nur als „Fester Wert" ohne den Wert

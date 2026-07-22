@@ -7,7 +7,7 @@
 //  - StatusVariant/coerceStatusVariant: der unsichtbare Technikwert.
 //  - statusVariantProperty: die "Art"-Select-Beschreibung fuer den Inspector.
 //  - chipStyles: das Chip-Aussehen (.zb-chip im Zielbild
-//    dashboard/stilprobe.html) fuer den Chip innerhalb von ff-card.
+//    der Referenzmaske) fuer den Chip innerhalb von ff-card.
 
 import { css } from 'lit'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
@@ -55,7 +55,7 @@ export function statusVariantProperty(
 // Chip-Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Strukturelle
 // Groessen (padding, letter-spacing, font-weight) als Literale wie bei
 // Button/Infobox; Farben + Radius + font-size kommen aus Tokens.
-// Verbindliches Zielbild: dashboard/stilprobe.html (.zb-chip).
+// Verbindliches Zielbild: die Referenzmaske (.zb-chip).
 export const chipStyles = css`
   .chip {
     display: inline-block;

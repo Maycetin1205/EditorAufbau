@@ -15,14 +15,6 @@ export const KIND_LABELS: Record<DataSourceKind, string> = {
   beleg: 'Beleg',
 }
 
-// Anzeige-Namen der Verben = die SE-Fachbegriffe selbst (Nutzer-
-// Entscheidung 2026-07-15: keine Klarname-Kombis wie „Lesen (GET)").
-export const VERB_LABELS: Record<RelationTemplate['verb'], string> = {
-  GET_RELATION: 'GET_RELATION',
-  PUT_RELATION: 'PUT_RELATION',
-  PUTADD_RELATION: 'PUTADD_RELATION',
-}
-
 // Kürzel für kompakte Listenzeilen (Kontext, kein Anzeigename).
 export const VERB_KURZ: Record<RelationTemplate['verb'], string> = {
   GET_RELATION: 'GET',
@@ -66,15 +58,24 @@ export function parameterBedeutung(param: string): string {
 
 // Der Anzeigename allein ist für mehrere gleichartige Bausteine nicht
 // eindeutig — ein kurzer Eigentext macht Listeneinträge sprechend.
-const TEXT_PROPS = ['label', 'heading', 'title', 'text'] as const
+// `placeholder` gehört dazu: das Formularfeld trägt seinen Namen dort
+// („Vorname"), nicht in label/heading/title/text.
+const TEXT_PROPS = ['label', 'heading', 'title', 'text', 'placeholder'] as const
 
-export function eigenerText(props: Record<string, unknown>): string {
+// `defaults` (die Registry-Default-Props des Bausteins) sind optional: ist ein
+// Text noch unverändert Default (z. B. das Formularfeld-„Feldname"), gilt er
+// NICHT als Eigenname — dann bleibt der Baustein-Typ der Anzeigename. Das
+// läuft generisch über die Defaults, nicht an „Feldname" verdrahtet (Regel 2).
+export function eigenerText(
+  props: Record<string, unknown>,
+  defaults?: Record<string, unknown>,
+): string {
   for (const key of TEXT_PROPS) {
     const value = props[key]
-    if (typeof value === 'string' && value.trim() !== '') {
-      const text = value.trim()
-      return text.length > 28 ? `${text.slice(0, 27)}…` : text
-    }
+    if (typeof value !== 'string' || value.trim() === '') continue
+    if (defaults && value === defaults[key]) continue
+    const text = value.trim()
+    return text.length > 28 ? `${text.slice(0, 27)}…` : text
   }
   return ''
 }
@@ -83,6 +84,6 @@ export function eigenerText(props: Record<string, unknown>): string {
 export function bausteinName(node: BlockNode): string {
   const def = getBlockDefinition(node.type)
   const basis = def?.displayName ?? node.type
-  const text = eigenerText(node.props)
+  const text = eigenerText(node.props, def?.defaultProps)
   return text === '' ? basis : `${basis} — ${text}`
 }

@@ -16,7 +16,7 @@
 // --se-Token auf (dasselbe Muster wie --zw-* im Zielbild-Mockup).
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Farb-Literale,
-// keine Fallbacks. Verbindliches Zielbild: dashboard/stilprobe.html (.zb-col).
+// keine Fallbacks. Verbindliches Zielbild: die Referenzmaske (.zb-col).
 
 import { css, html, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'

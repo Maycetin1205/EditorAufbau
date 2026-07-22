@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) + Playwright (e2e, echter Browser) | sechs Wächter + Prüfbündel |
-| Version | `package.json` (`0.0.0`) | SemVer, bisher nie erhöht |
+| Version | `package.json` (`0.1.0`) | SemVer |
 
 ## 3. Projektstruktur
 
@@ -70,7 +70,10 @@ src/
 │   │               eine Zieh-Mechanik), useBindingPicker/useBlockResize
 │   ├── inspector/  Eigenschaften-Panel (nur für Unzeigbares)
 │   ├── zentrale/   Steuerung: Datenquellen | Relationen (Master-Detail);
-│   │               StepForm (Schritt-Formular) blättert im Inspector auf
+│   │               StepForm (Schritt-Formular) blättert im Inspector auf;
+│   │               feldUebernahme.ts + FeldUebernahmePicker.tsx = „Feld
+│   │               übernehmen" (Pos/Länge/Tabelle aus gewähltem Feld,
+│   │               Auslöser an der Parameter-Zeile, editor-only)
 │   ├── sidebar/    Bausteine-Bibliothek
 │   ├── shell/      Rahmen, Kopfleiste
 │   └── strecke/    Führungslinien/Vermessung beim Ziehen

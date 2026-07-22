@@ -42,8 +42,6 @@ export const RELATION_PLACEHOLDERS = [
   'RELID', 'VALUE', 'NOW_DATE',
 ] as const
 
-export type RelationPlaceholder = (typeof RELATION_PLACEHOLDERS)[number]
-
 // Werte, die ein Konsument zur Laufzeit liefert. Neben den Standardnamen sind
 // benutzerdefinierte Platzhalter erlaubt. Nicht gelieferte Namen werden leer.
 export type RelationContext = Readonly<Record<string, string | undefined>>

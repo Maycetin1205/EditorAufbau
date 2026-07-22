@@ -18,7 +18,7 @@
        wuerden die Werte duplizieren (DRY-Bruch).
      - Design-Entscheidung (2026-07-02, mit Nutzer): kantig + funktional
        ("Werkhalle"-Dichte), Gruen als Hausfarbe. Referenzbild:
-       dashboard/stilprobe.html. Statusfarben haben feste Bedeutung.
+     die SoftEngine-Referenzmaske. Statusfarben haben feste Bedeutung.
    ================================================================ */
 
 :root {

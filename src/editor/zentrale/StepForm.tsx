@@ -13,7 +13,7 @@
 // — Felder und Verhalten unverändert, nur das Layout ist schmaler.
 
 import { useState, type SelectHTMLAttributes } from 'react'
-import { ChevronDown, Plus, Search, X } from 'lucide-react'
+import { ChevronDown, Link2, Plus, Search, X } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
@@ -41,6 +41,14 @@ import {
   type RelationTemplate,
 } from '../../core/data/relations'
 import { istUngetaufteVorlage, relationAnzeige } from './relationAnzeige'
+import { FeldUebernahmePicker } from './FeldUebernahmePicker'
+import {
+  feldUebernahmeArt,
+  feldUebernehmen,
+  type FeldUebernahmeZiel,
+  uebernahmeIdbQuellen,
+  uebernahmeQuellen,
+} from './feldUebernahme'
 import { RELATION_GRUPPEN } from './helfer'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
@@ -185,7 +193,9 @@ function BindingRow({
   dataSources,
   schritte,
   removable = false,
+  ausloeser,
   onChange,
+  onAusloeser,
   onRemove,
 }: {
   label: string
@@ -193,7 +203,9 @@ function BindingRow({
   dataSources: readonly DataSource[]
   schritte: readonly ErgebnisSchritt[]
   removable?: boolean
+  ausloeser?: FeldUebernahmeZiel
   onChange: (binding: ActionParamBinding) => void
+  onAusloeser?: (anchor: HTMLElement) => void
   onRemove?: () => void
 }) {
   const setSource = (source: ActionParamSource) => {
@@ -230,9 +242,24 @@ function BindingRow({
           </option>
         ))}
       </SchrittSelect>
-      <div className="min-w-0 flex-1">
+      <div
+        className="min-w-0 flex-1"
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || !ausloeser || !onAusloeser) return
+          e.preventDefault()
+          onAusloeser(e.currentTarget)
+        }}
+      >
         <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
       </div>
+      {ausloeser && onAusloeser && (
+        <IconButton
+          aria-label={ausloeser === 'feld' ? 'Feld übernehmen' : 'Tabelle übernehmen'}
+          onClick={(e) => onAusloeser(e.currentTarget)}
+        >
+          <Link2 size={13} />
+        </IconButton>
+      )}
       {removable && onRemove && (
         <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
       )}
@@ -363,13 +390,19 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   )
   const [suche, setSuche] = useState('')
   const [zeigeFehler, setZeigeFehler] = useState(false)
+  const [pickerZiel, setPickerZiel] = useState<FeldUebernahmeZiel | null>(null)
+  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 })
+  const [uebernahmeBestaetigung, setUebernahmeBestaetigung] = useState('')
 
   const relation = relations.get(relationId)
   const sichtbareRelationen = relations.list.filter((entry) => relationMatchesSearch(entry, suche))
+  const uebernahmeFelder = uebernahmeQuellen(dataSources.list)
+  const uebernahmeQuellenListe = uebernahmeIdbQuellen(dataSources.list)
   const defaultParams = relation ? defaultRelationParams(relation) : []
   const bindingFor = (index: number): ActionParamBinding =>
     relationParams[index] ?? defaultParams[index] ?? { source: 'fixed', value: '' }
   const setBinding = (index: number, binding: ActionParamBinding) => {
+    setUebernahmeBestaetigung('')
     setRelationParams((current) => {
       const next = relation ? defaultRelationParams(relation) : [...current]
       current.forEach((value, at) => { if (at < next.length) next[at] = value })
@@ -381,10 +414,55 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   function selectRelation(id: string) {
     const selected = relations.get(id)
     setRelationId(id)
+    setPickerZiel(null)
+    setUebernahmeBestaetigung('')
     if (!selected) return
     setRelationParams(defaultRelationParams(selected))
     if (!selected.allowExtraParams) setExtraParams([])
   }
+
+  // Auslöser sitzt an der Positions-Zeile (Nutzer-Entscheidung 2026-07-22):
+  // der Picker öffnet direkt unter dem angeklickten „Feld wählen"-Link.
+  function oeffneUebernahmePicker(ziel: FeldUebernahmeZiel, anchor: HTMLElement) {
+    const rect = anchor.getBoundingClientRect()
+    setPickerPosition({ top: rect.bottom + 4, left: rect.left })
+    setPickerZiel(ziel)
+  }
+
+  function uebernehmeFeld(sourceId: string, code: string) {
+    if (!relation || !pickerZiel) return
+    const source = dataSources.list.find((entry) => entry.id === sourceId)
+    if (!source) return
+    const field = pickerZiel === 'feld'
+      ? source.fields.find((entry) => entry.code === code)
+      : undefined
+    if (pickerZiel === 'feld' && !field) return
+    const aktuelleBindungen = relation.params.map((_, index) => bindingFor(index))
+    const result = feldUebernehmen(aktuelleBindungen, relation, source, code, pickerZiel)
+    const details = result.gesetzt.map((treffer) => {
+      const name = treffer.art === 'pos'
+        ? 'Position'
+        : treffer.art === 'len'
+          ? 'Länge'
+          : 'Tabelle'
+      return `${name} ${treffer.wert}`
+    })
+    setRelationParams(result.params)
+    setPickerZiel(null)
+    const suffix = details.length > 0 ? ' - ' + details.join(' - ') : ''
+    setUebernahmeBestaetigung((field?.label ?? source.name) + ' übernommen' + suffix)
+  }
+
+  const feldAusloeserAktiv = relation
+    ? relation.params.some((raw) => feldUebernahmeArt(raw) === 'pos')
+      && relation.params.some((raw) => feldUebernahmeArt(raw) === 'len')
+    : false
+
+  const currentUebernahmeCode = relation
+    ? relation.params
+        .map((_, index) => bindingFor(index))
+        .find((binding) => binding.source === 'data_field')?.value ?? ''
+    : ''
 
   function candidate(): ActionStep {
     const id = step?.id ?? crypto.randomUUID()
@@ -438,7 +516,11 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
         label="Aktion"
         value={typ}
         options={STEP_TYPES.map((entry) => ({ value: entry.key, label: entry.name }))}
-        onChange={(value) => setTyp(value as StepTypeKey)}
+        onChange={(value) => {
+          setTyp(value as StepTypeKey)
+          setPickerZiel(null)
+          setUebernahmeBestaetigung('')
+        }}
       />
 
       {(typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') && (
@@ -485,21 +567,50 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
           />
 
           {relation && (
-            <div className="flex flex-col gap-2">
-              {relation.params.map((raw, index) => (
-                <BindingRow
-                  key={index}
-                  label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
-                  binding={bindingFor(index)}
-                  dataSources={dataSources.list}
-                  schritte={ergebnisSchritte}
-                  onChange={(binding) => setBinding(index, binding)}
-                />
-              ))}
-              {relation.params.length === 0 && (
-                <p className="text-xs text-muted-foreground">Keine Parameter.</p>
+            <>
+              <div className="flex flex-col gap-2">
+                {relation.params.map((raw, index) => {
+                  const parameterArt = feldUebernahmeArt(raw)
+                  const ausloeser = parameterArt === 'relid'
+                    ? 'idb'
+                    : parameterArt === 'pos' && feldAusloeserAktiv
+                      ? 'feld'
+                      : undefined
+                  const row = (
+                    <BindingRow
+                      label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
+                      binding={bindingFor(index)}
+                      dataSources={dataSources.list}
+                      schritte={ergebnisSchritte}
+                      ausloeser={ausloeser}
+                      onChange={(binding) => setBinding(index, binding)}
+                      onAusloeser={ausloeser
+                        ? (anchor) => oeffneUebernahmePicker(ausloeser, anchor)
+                        : undefined}
+                    />
+                  )
+                  return <div key={index}>{row}</div>
+                })}
+                {relation.params.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Keine Parameter.</p>
+                )}
+              </div>
+              {uebernahmeBestaetigung && (
+                <p className="text-xs text-muted-foreground">{uebernahmeBestaetigung}</p>
               )}
-            </div>
+              {pickerZiel && (
+                <FeldUebernahmePicker
+                  sources={uebernahmeQuellenListe}
+                  fields={uebernahmeFelder}
+                  ziel={pickerZiel}
+                  current={currentUebernahmeCode}
+                  top={pickerPosition.top}
+                  left={pickerPosition.left}
+                  onPick={uebernehmeFeld}
+                  onClose={() => setPickerZiel(null)}
+                />
+              )}
+            </>
           )}
 
           {relation?.allowExtraParams && (

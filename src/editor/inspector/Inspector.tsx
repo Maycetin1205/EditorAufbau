@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { BindungsStrecke } from '../strecke/BindungsStrecke'
 import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
 import { StepForm } from '../zentrale/StepForm'
+import { eigenerText } from '../zentrale/helfer'
 import { AktionenSektion } from './AktionenSektion'
 import { DataSection } from './DataSection'
 import { ColorTileControl } from './controls/ColorTileControl'
@@ -137,7 +138,11 @@ export function Inspector() {
     )
   }
 
-  const blockName = def.displayName ?? def.type
+  // Sprechender Name im Kopf: der Eigentext des Bausteins (z. B. der
+  // Formularfeld-Platzhalter „Vorname"), sonst der Baustein-Typ. Ein noch
+  // unveränderter Default-Text zählt nicht als Eigenname (eigenerText mit
+  // defaultProps), damit ein frisches Feld weiter „Formularfeld" heißt.
+  const blockName = eigenerText(block.props, def.defaultProps) || (def.displayName ?? def.type)
 
   // Schritt speichern: dieselbe „ersetzen oder anhängen"-Regel wie zuvor in
   // der AktionenSektion — ein Bedienschritt = EIN Undo-Eintrag
