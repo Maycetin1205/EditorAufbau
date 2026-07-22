@@ -361,7 +361,13 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
 3b. **Nach dem Merge, kleine Pakete (je Plan + „go"):** „Feld übernehmen"
    am Schreib-Schritt — Formularfeld/Feld EINMAL wählen, Position/Länge/
    Wert füllen sich zusammen (Nutzer-Wunsch 2026-07-22, entschärft die
-   Dreier-Regel-Falle; rein Editor-UI) · Größen-Paket „Höhe an jedem
+   Dreier-Regel-Falle; rein Editor-UI). Dazu gehören SPRECHENDE NAMEN
+   (Nutzer 2026-07-22): der Eigenname eines Bausteins — beim Formularfeld
+   sein Platzhalter-Text („Vorname") — ist sein Anzeigename in Picker,
+   Listen und Inspector-Kopf, nie „Formularfeld 3"; Ansatz: `eigenerText`
+   (zentrale/helfer.ts) um `placeholder` ergänzen; intern bleiben stabile
+   IDs (Regel 3); Doppelnamen → Anzeige mit Zusatz, kein
+   Eindeutigkeits-Zwang · Größen-Paket „Höhe an jedem
    Baustein ziehbar + Startgrößen" (erfüllt Tobis GridComponent-Skizze
    wörtlich). **Grundsatz-Entscheidung 2026-07-22 (Nutzer, nach
    Skizzen-Abgleich):** das Fundament bleibt Fluss/Nachrücken — Tobis
@@ -405,7 +411,17 @@ Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus
 exportMask erst MIT dem Tabellen-Baustein herausziehen · Export wirft
 unbekannte Props still weg (Preflight-Meldung fehlt) · Maske meldet
 Schreib-/Lesefehler dem Bediener nicht · Masken-Titel fest „Maske" ·
-Editor-UI-Testabdeckung dünn · Formularfeld-Option „startet leer" für
+Editor-UI-Testabdeckung dünn — laut Architektur-Review 2026-07-21 tiefer
+als notiert: auch Migrationen/Baum/Undo/SE-Datenschicht ohne eigene Tests,
+und `relations.test.ts` testet nur das Modell, nicht die gleichnamige
+Laufzeit-Datei (Nachzieh-Paket ~½ Tag, kein Export) · TRIP-Skills
+(~4.000 Zeilen in `.claude/`): testen, sobald Codex-Kontingent frei,
+sonst abspecken — Entscheidung offen · Kleinputz huckepack mit dem
+nächsten Export-Paket: doppelter Schlüssel-Scan in `softengine/data.ts`
+(getField/setField), tote `dashboard/`-Verweise in Kommentaren
+(statusVariant, KanbanSpalteBlock), Karten-Fallbackname „Buddy" ·
+6 MB Roh-Bilder in `docs/` (logo-/avatare-rohsatz.png) raus oder bewusst
+behalten · Formularfeld-Option „startet leer" für
 Anlege-Masken (gebunden fürs Schreiben, zeigt keinen Bestandswert;
 Kontrakt seit 2026-07-22 belegt, Nutzer-Bedenken notiert) ·
 Steuerung zeigt Vorlagen-Parameter nur als „Fester Wert" ohne den Wert
