@@ -9,15 +9,16 @@
 // Inspector-Ansicht (kein Modal/Overlay mehr): Titel + Zurückblättern +
 // Escape stellt der Inspector über die SidePanel-Rückzeile, das Formular
 // liefert nur seinen Inhalt. Für die 340-px-Spalte stehen die
-// Parameterzeilen gestapelt (Name + Quelle, Wert in voller Breite darunter)
+// Parameterzeilen einzeilig (Name | Quelle | Wert, R3-Abschluss 2026-07-21)
 // — Felder und Verhalten unverändert, nur das Layout ist schmaler.
 
-import { useState } from 'react'
-import { Plus, Search, X } from 'lucide-react'
+import { useState, type SelectHTMLAttributes } from 'react'
+import { ChevronDown, Plus, Search, X } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
+import { cn } from '@/lib/utils'
 import {
   ACTION_PARAM_SOURCES,
   AKTIONS_PLATZHALTER,
@@ -34,6 +35,7 @@ import {
 import type { DataSource } from '../../core/data/dataSources'
 import {
   formatRelationSyntax,
+  relationGroup,
   relationMatchesSearch,
   type RelationTemplate,
 } from '../../core/data/relations'
@@ -55,6 +57,28 @@ interface StepFormProps {
 // Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
 // (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen).
 const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({ value, label: value }))
+
+// Das EINE handgebaute Auswahlfeld der Schritt-Bedienung: eigener Pfeil mit
+// reserviertem Platz rechts (pr-6), damit der gewählte Text NIE unter dem
+// Aufklapp-Pfeil verschwindet (Nutzer-Korrektur 2026-07-22 — der Browser-
+// Pfeil liegt sonst AUF dem Text). Layout-Klassen (Breite/Flex) gehören auf
+// die Hülle; das <select> füllt sie immer ganz.
+function SchrittSelect({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className={cn('relative', className)}>
+      <select
+        {...props}
+        className="h-7 w-full appearance-none rounded border border-input bg-background pl-2 pr-6 text-xs"
+      >
+        {children}
+      </select>
+      <ChevronDown
+        size={12}
+        className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+      />
+    </div>
+  )
+}
 
 function BindingValue({
   binding,
@@ -78,10 +102,9 @@ function BindingValue({
     // Der Zwischenspeicher des Nutzers (2026-07-17): GET-Schritte davor,
     // per Position angeboten — kein Namen-Vergeben, nur anklicken.
     return (
-      <select
+      <SchrittSelect
         value={binding.value}
         onChange={(e) => onChange({ ...binding, value: e.target.value })}
-        className="h-7 w-full rounded border border-input bg-background px-2 text-xs"
       >
         <option value="">
           {schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
@@ -89,47 +112,46 @@ function BindingValue({
         {schritte.map((s) => (
           <option key={s.id} value={s.id}>{`Schritt ${s.nr} — ${s.name}`}</option>
         ))}
-      </select>
+      </SchrittSelect>
     )
   }
   if (binding.source === 'context') {
     return (
-      <select
+      <SchrittSelect
         value={binding.value}
         onChange={(e) => onChange({ ...binding, value: e.target.value })}
-        className="h-7 w-full rounded border border-input bg-background px-2 text-xs"
       >
         <option value="">— wählen —</option>
         {CONTEXT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>{option.label}</option>
         ))}
-      </select>
+      </SchrittSelect>
     )
   }
   if (binding.source === 'data_field') {
     const selectedSource = dataSources.find((source) => source.id === binding.dataSourceId)
     return (
       <div className="grid grid-cols-2 gap-1">
-        <select
+        <SchrittSelect
+          className="min-w-0"
           value={binding.dataSourceId ?? ''}
           onChange={(e) => onChange({ ...binding, dataSourceId: e.target.value, value: '' })}
-          className="h-7 min-w-0 rounded border border-input bg-background px-2 text-xs"
         >
           <option value="">— Quelle —</option>
           {dataSources.map((source) => (
             <option key={source.id} value={source.id}>{source.name}</option>
           ))}
-        </select>
-        <select
+        </SchrittSelect>
+        <SchrittSelect
+          className="min-w-0"
           value={binding.value}
           onChange={(e) => onChange({ ...binding, value: e.target.value })}
-          className="h-7 min-w-0 rounded border border-input bg-background px-2 text-xs"
         >
           <option value="">— Feld —</option>
           {selectedSource?.fields.map((field) => (
             <option key={field.code} value={field.code}>{field.label}</option>
           ))}
-        </select>
+        </SchrittSelect>
       </div>
     )
   }
@@ -177,10 +199,10 @@ function BindingRow({
   return (
     <div className="flex items-center gap-1.5">
       <span className="w-16 shrink-0 truncate font-mono text-[11px]" title={label}>{label}</span>
-      <select
+      <SchrittSelect
+        className="w-32 shrink-0"
         value={binding.source}
         onChange={(e) => setSource(e.target.value as ActionParamSource)}
-        className="h-7 w-28 shrink-0 rounded border border-input bg-background px-1.5 text-xs"
       >
         {ACTION_PARAM_SOURCES.map((source) => (
           <option
@@ -192,7 +214,7 @@ function BindingRow({
             {source.name}
           </option>
         ))}
-      </select>
+      </SchrittSelect>
       <div className="min-w-0 flex-1">
         <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
       </div>
@@ -219,6 +241,13 @@ function RelationAuswahl({
   onSuche: (value: string) => void
   onSelect: (id: string) => void
 }) {
+  // Lesen (GET) und Schreiben (PUT/PUTADD) stehen NIE gemischt in einer
+  // Liste (Nutzer 2026-07-22) — dieselbe fachliche Zweiteilung wie der
+  // Steuerungs-Filter (relationGroup). Lesen zuerst; leere Gruppen fallen weg.
+  const gruppen = [
+    { titel: 'Lesen', eintraege: eintraege.filter((entry) => relationGroup(entry) === 'lesen') },
+    { titel: 'Schreiben', eintraege: eintraege.filter((entry) => relationGroup(entry) === 'schreiben') },
+  ].filter((gruppe) => gruppe.eintraege.length > 0)
   return (
     <div className="flex flex-col gap-2">
       <span className="text-[11px] font-medium">{label}</span>
@@ -236,27 +265,36 @@ function RelationAuswahl({
           die volle Syntax ist NIE Anzeigetext — nur Hover-Tooltip + Suche
           (R3-Abschluss 2026-07-21, Regel 3). */}
       <div className="max-h-36 overflow-y-auto border-y border-border py-1">
-        {eintraege.map((entry) => {
-          const ungetauft = istUngetaufteVorlage(entry)
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              title={formatRelationSyntax(entry)}
-              onClick={() => onSelect(entry.id)}
-              className={`w-full px-2 py-1.5 text-left text-xs ${
-                entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
-              }`}
-            >
-              <span className="block truncate">{relationAnzeige(entry)}</span>
-              {!ungetauft && (
-                <span className="block truncate text-[10px] text-muted-foreground">
-                  {entry.verb} · Nr. {entry.nr}
-                </span>
-              )}
-            </button>
-          )
-        })}
+        {gruppen.map((gruppe, index) => (
+          <div key={gruppe.titel} className={index > 0 ? 'mt-1 border-t border-border pt-1' : undefined}>
+            {/* Eyebrow-Stufe (10 px, Muster Gruppe.tsx) + feine Linie zwischen
+                den Gruppen — dezent, keine Karten/Kästen. */}
+            <p className="px-2 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {gruppe.titel}
+            </p>
+            {gruppe.eintraege.map((entry) => {
+              const ungetauft = istUngetaufteVorlage(entry)
+              return (
+                <button
+                  key={entry.id}
+                  type="button"
+                  title={formatRelationSyntax(entry)}
+                  onClick={() => onSelect(entry.id)}
+                  className={`w-full px-2 py-1.5 text-left text-xs ${
+                    entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
+                  }`}
+                >
+                  <span className="block truncate">{relationAnzeige(entry)}</span>
+                  {!ungetauft && (
+                    <span className="block truncate text-[10px] text-muted-foreground">
+                      {entry.verb} · Nr. {entry.nr}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        ))}
         {eintraege.length === 0 && (
           <p className="px-2 py-1 text-xs text-muted-foreground">Keine Treffer.</p>
         )}
@@ -375,11 +413,10 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
       {(typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') && (
         <Field label="Popup" error={zeigeFehler ? problem ?? '' : ''}>
           {(field) => (
-            <select
+            <SchrittSelect
               {...field}
               value={popupId}
               onChange={(e) => setPopupId(e.target.value)}
-              className="h-7 w-full rounded border border-input bg-background px-2 text-xs"
             >
               <option value="">
                 {popupSeiten.length === 0 ? '(keine Popup-Seite vorhanden)' : '— wählen —'}
@@ -387,7 +424,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
               {popupSeiten.map((seite) => (
                 <option key={seite.id} value={seite.id}>{seite.name}</option>
               ))}
-            </select>
+            </SchrittSelect>
           )}
         </Field>
       )}
