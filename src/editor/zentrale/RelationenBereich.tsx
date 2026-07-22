@@ -20,22 +20,38 @@ import {
 } from '../../core/data/relations'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
+import { SegmentControl } from '../inspector/controls/SegmentControl'
 import { Gruppe } from './Gruppe'
 import { RelationForm } from './RelationForm'
-import { bausteinName, parameterBedeutung, VERB_KURZ } from './helfer'
+import { bausteinName, parameterBedeutung, RELATION_GRUPPEN, VERB_KURZ } from './helfer'
 
 export function RelationenBereich() {
   const store = useRelations()
   const ed = useEditor()
   const [suche, setSuche] = useState('')
-  const [filter, setFilter] = useState<'alle' | RelationGroup>('alle')
+  // „Alle" gestrichen (Nutzer 2026-07-22): nur noch Lesen | Schreiben, Start
+  // auf Lesen — derselbe Umschalter wie im Schritt-Formular (SegmentControl).
+  const [filter, setFilter] = useState<RelationGroup>('lesen')
   const [auswahlId, setAuswahlId] = useState<string | null>(store.list[0]?.id ?? null)
   const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu'>('lesen')
 
-  const sichtbareRelationen = store.list.filter((relation) =>
-    (filter === 'alle' || relationGroup(relation) === filter)
-    && relationMatchesSearch(relation, suche),
-  )
+  // Die Suche findet in BEIDEN Gruppen (Nutzer 2026-07-22): erst alle
+  // Such-Treffer, dann je Gruppe zählen und — wenn der aktive Tab leer ist —
+  // zum Tab mit Treffern springen. Lesen/Schreiben bleiben getrennt.
+  const trefferAlle = store.list.filter((relation) => relationMatchesSearch(relation, suche))
+  const zaehler: Record<RelationGroup, number> = {
+    lesen: trefferAlle.filter((r) => relationGroup(r) === 'lesen').length,
+    schreiben: trefferAlle.filter((r) => relationGroup(r) === 'schreiben').length,
+  }
+  const anderer: RelationGroup = filter === 'lesen' ? 'schreiben' : 'lesen'
+  const aktiverFilter: RelationGroup = zaehler[filter] === 0 && zaehler[anderer] > 0 ? anderer : filter
+  const sichtbareRelationen = trefferAlle.filter((r) => relationGroup(r) === aktiverFilter)
+  // Trefferzahl nur bei aktiver Suche an die Tabs (sonst nur Lesen | Schreiben).
+  const sucht = suche.trim().length > 0
+  const filterOptionen = RELATION_GRUPPEN.map((gruppe) => ({
+    ...gruppe,
+    label: sucht ? `${gruppe.label} · ${zaehler[gruppe.value as RelationGroup]}` : gruppe.label,
+  }))
   const auswahl = sichtbareRelationen.find((r) => r.id === auswahlId) ?? sichtbareRelationen[0]
 
   // Bausteine der Maske, die diese Vorlage benutzen (Klarnamen).
@@ -79,26 +95,12 @@ export function RelationenBereich() {
               onChange={(e) => setSuche(e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-3 gap-1">
-            {([
-              ['alle', 'Alle'],
-              ['lesen', 'Lesen'],
-              ['schreiben', 'Schreiben'],
-            ] as const).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key)}
-                className={`rounded-md border px-1.5 py-1 text-[10px] font-medium transition-colors ${
-                  filter === key
-                    ? 'border-ring bg-secondary text-foreground'
-                    : 'border-border text-muted-foreground hover:bg-secondary/60'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <SegmentControl
+            name="Lesen oder Schreiben"
+            value={aktiverFilter}
+            options={filterOptionen}
+            onChange={(value) => setFilter(value as RelationGroup)}
+          />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {sichtbareRelationen.map((r) => {

@@ -37,12 +37,15 @@ import {
   formatRelationSyntax,
   relationGroup,
   relationMatchesSearch,
+  type RelationGroup,
   type RelationTemplate,
 } from '../../core/data/relations'
 import { istUngetaufteVorlage, relationAnzeige } from './relationAnzeige'
+import { RELATION_GRUPPEN } from './helfer'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
+import { SegmentControl } from '../inspector/controls/SegmentControl'
 import { SelectControl } from '../inspector/controls/SelectControl'
 
 interface StepFormProps {
@@ -253,13 +256,29 @@ function RelationAuswahl({
   onSuche: (value: string) => void
   onSelect: (id: string) => void
 }) {
-  // Lesen (GET) und Schreiben (PUT/PUTADD) stehen NIE gemischt in einer
-  // Liste (Nutzer 2026-07-22) — dieselbe fachliche Zweiteilung wie der
-  // Steuerungs-Filter (relationGroup). Lesen zuerst; leere Gruppen fallen weg.
-  const gruppen = [
-    { titel: 'Lesen', eintraege: eintraege.filter((entry) => relationGroup(entry) === 'lesen') },
-    { titel: 'Schreiben', eintraege: eintraege.filter((entry) => relationGroup(entry) === 'schreiben') },
-  ].filter((gruppe) => gruppe.eintraege.length > 0)
+  // Lesen (GET) und Schreiben (PUT/PUTADD) stehen NIE gemischt (Nutzer
+  // 2026-07-22): zwei Mini-Tabs statt gestapelter Abschnitte — derselbe
+  // Umschalter (SegmentControl) wie im Inspector und im Steuerungs-Filter.
+  // Startwert = Gruppe der gewählten Vorlage (beim Bearbeiten), sonst „Lesen".
+  const [tab, setTab] = useState<RelationGroup>(() => {
+    const gewaehlt = eintraege.find((entry) => entry.id === relationId)
+    return gewaehlt ? relationGroup(gewaehlt) : 'lesen'
+  })
+  // Die Suche findet in BEIDEN Gruppen (Nutzer 2026-07-22): eintraege ist
+  // schon suchgefiltert; wir zählen je Gruppe und springen zum Tab mit
+  // Treffern, wenn der aktive leer ist — Lesen/Schreiben bleiben getrennt.
+  const lesen = eintraege.filter((entry) => relationGroup(entry) === 'lesen')
+  const schreiben = eintraege.filter((entry) => relationGroup(entry) === 'schreiben')
+  const zaehler: Record<RelationGroup, number> = { lesen: lesen.length, schreiben: schreiben.length }
+  const anderer: RelationGroup = tab === 'lesen' ? 'schreiben' : 'lesen'
+  const aktiv: RelationGroup = zaehler[tab] === 0 && zaehler[anderer] > 0 ? anderer : tab
+  const sichtbar = aktiv === 'lesen' ? lesen : schreiben
+  // Trefferzahl nur bei aktiver Suche an die Tabs (sonst nur Lesen | Schreiben).
+  const sucht = suche.trim().length > 0
+  const tabOptionen = RELATION_GRUPPEN.map((gruppe) => ({
+    ...gruppe,
+    label: sucht ? `${gruppe.label} · ${zaehler[gruppe.value as RelationGroup]}` : gruppe.label,
+  }))
   return (
     <div className="flex flex-col gap-2">
       <span className="text-[11px] font-medium">{label}</span>
@@ -273,41 +292,39 @@ function RelationAuswahl({
           onChange={(e) => onSuche(e.target.value)}
         />
       </div>
+      <SegmentControl
+        name="Lesen oder Schreiben"
+        value={aktiv}
+        options={tabOptionen}
+        onChange={(value) => setTab(value as RelationGroup)}
+      />
       {/* Je Zeile der Klarname (bzw. „VERB · Nr." bei ungetauften Vorlagen);
           die volle Syntax ist NIE Anzeigetext — nur Hover-Tooltip + Suche
-          (R3-Abschluss 2026-07-21, Regel 3). */}
+          (R3-Abschluss 2026-07-21, Regel 3). Nur der aktive Tab; leere Gruppe
+          zeigt „Keine Treffer" (die Suche darüber bleibt aktiv). */}
       <div className="max-h-36 overflow-y-auto border-y border-border py-1">
-        {gruppen.map((gruppe, index) => (
-          <div key={gruppe.titel} className={index > 0 ? 'mt-1 border-t border-border pt-1' : undefined}>
-            {/* Eyebrow-Stufe (10 px, Muster Gruppe.tsx) + feine Linie zwischen
-                den Gruppen — dezent, keine Karten/Kästen. */}
-            <p className="px-2 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {gruppe.titel}
-            </p>
-            {gruppe.eintraege.map((entry) => {
-              const ungetauft = istUngetaufteVorlage(entry)
-              return (
-                <button
-                  key={entry.id}
-                  type="button"
-                  title={formatRelationSyntax(entry)}
-                  onClick={() => onSelect(entry.id)}
-                  className={`w-full px-2 py-1.5 text-left text-xs ${
-                    entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
-                  }`}
-                >
-                  <span className="block truncate">{relationAnzeige(entry)}</span>
-                  {!ungetauft && (
-                    <span className="block truncate text-[10px] text-muted-foreground">
-                      {entry.verb} · Nr. {entry.nr}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        ))}
-        {eintraege.length === 0 && (
+        {sichtbar.map((entry) => {
+          const ungetauft = istUngetaufteVorlage(entry)
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              title={formatRelationSyntax(entry)}
+              onClick={() => onSelect(entry.id)}
+              className={`w-full px-2 py-1.5 text-left text-xs ${
+                entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
+              }`}
+            >
+              <span className="block truncate">{relationAnzeige(entry)}</span>
+              {!ungetauft && (
+                <span className="block truncate text-[10px] text-muted-foreground">
+                  {entry.verb} · Nr. {entry.nr}
+                </span>
+              )}
+            </button>
+          )
+        })}
+        {sichtbar.length === 0 && (
           <p className="px-2 py-1 text-xs text-muted-foreground">Keine Treffer.</p>
         )}
       </div>

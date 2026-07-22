@@ -184,6 +184,15 @@ ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
 - **Steuerung (Zentrale):** Master-Detail mit Bereichen Datenquellen |
   Relationen | Aktionen; Bearbeiten inline (FormularKarte),
   Escape-Schichtung erhalten.
+- **Relation-Auswahl vereinheitlicht (Nutzer 2026-07-22):** Der Vorlagen-
+  Filter im Schritt-Formular UND in der Steuerung läuft über EINEN Umschalter
+  (`SegmentControl`, Optionen `RELATION_GRUPPEN` in `zentrale/helfer.ts` =
+  die eine Ablage): Mini-Tabs **Lesen | Schreiben**, „Alle" gestrichen
+  („ist dumm"). Die Suche findet in BEIDEN Gruppen — bei aktiver Suche steht
+  die Trefferzahl je Tab (`Lesen · 0` / `Schreiben · 2`) und die Ansicht
+  springt zum Tab mit Treffern, wenn der aktive leer ist; Lesen/Schreiben
+  bleiben getrennt (nie gemischt). Reine Editor-UI, Export unberührt
+  (Bündel-Wächter „identisch", Referenzabzug byte-gleich, keine neuen Tests).
 - **Entfernt (Nutzer 2026-07-20, restlos):** „Quelle speichern" samt
   Änderungs-Spur/Schreib-Helfern (`f9a5af9`) · „Neuen Satz
   anlegen"/CREATE_RECORD (`24fbe54`) · Projektkarte/project-map

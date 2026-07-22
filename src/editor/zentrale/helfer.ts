@@ -3,6 +3,7 @@
 
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'
 import type { DataSourceKind } from '../../core/data/dataSources'
 import type { RelationTemplate } from '../../core/data/relations'
 
@@ -28,6 +29,16 @@ export const VERB_KURZ: Record<RelationTemplate['verb'], string> = {
   PUT_RELATION: 'PUT',
   PUTADD_RELATION: 'PUTADD',
 }
+
+// Lesen/Schreiben als Optionen für den gemeinsamen Umschalter (SegmentControl):
+// EINE Ablage für beide Stellen — Steuerungs-Filter (RelationenBereich) UND
+// Schritt-Vorlagenauswahl (StepForm), Nutzer-Entscheidung 2026-07-22 („Alle"
+// gestrichen, nur diese zwei). Die Werte sind die RelationGroup-Schlüssel
+// (siehe relationGroup in core/data/relations).
+export const RELATION_GRUPPEN: PropertySelectOption[] = [
+  { value: 'lesen', label: 'Lesen' },
+  { value: 'schreiben', label: 'Schreiben' },
+]
 
 // Klartext je Laufzeit-Platzhalter (reine Anzeige — das verbindliche
 // Vokabular ist RELATION_PLACEHOLDERS in core/data/relations).
