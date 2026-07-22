@@ -163,9 +163,13 @@ ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
   `indexField` läuft unsichtbar.
 - **Aktionsketten:** Baustein → Ereignis → Schritte. Arten: START_TOOL ·
   RELATION (GET/PUT/PUTADD über Vorlagen = Daten) · POPUP_OPEN/POPUP_CLOSE
-  (Anzeige in Klarnamen). Parameterquellen: Fest / Ereignis
+  (Anzeige in Klarnamen). Parameterquellen: Fest / Ereigniswert
   ({VALUE}/{PINDEX}) / Datenfeld / Vorheriger Schritt / „Ergebnis von
-  Schritt N" / SE-VAR-Array.
+  Schritt N" / SE-VAR-Array — Kurz-Klarnamen seit 2026-07-22 exakt so im
+  Formular; die Namen leben NUR im Editor (Tabelle im StepForm), nicht im
+  Runtime-Bündel. Das freie Feld „Ergebnisname" ist ENTFERNT (Nutzer
+  2026-07-22): „Ergebnis von Schritt N" ersetzt es; Alt-Namen bleiben beim
+  Bearbeiten erhalten, die Laufzeit liest sie unverändert.
   Schreiben läuft NUR über sichtbare Ketten (kein Auto-PUT); Lesen
   hydriert automatisch aus der ERSTEN Zeile der Quelle. Multi-Datenquelle
   belegt: jedes Feld wählt seine Quelle, der Export sammelt alle.
@@ -187,6 +191,13 @@ GET-Weg + „Ergebnis von Schritt N": Kette „Schritt 1 (GET) holt eine neue
 Datensatz-Stelle → je Feld ein PUT mit Stelle aus ‚Ergebnis von
 Schritt 1'". Klick-Anleitung ohne Fachbegriffe:
 `docs/6-memo/se-echttest-klickanleitung.md`.
+**Zwischenstand 2026-07-22 (erster Lauf, echtes SE-Log):** GET 640 liefert
+(→ 271) und der PUT übernimmt die Stelle aus Schritt 1 korrekt
+(`…!L!271!…`) — der Kern des offenen Kontrakts ist damit belegt. Der WERT
+kam leer an: Masken-Konfiguration, kein Code-Fehler (Formularfeld war
+ungebunden `source=""`, und der Wert-Parameter las Feld 319_12, während
+Position/Länge 78/30 beschrieben). Wiederholung mit gebundenem Feld +
+deckungsgleichem Feld steht aus.
 Dazu gebündelt (seit dem Atome-Paket 2026-07-21): Sichtprüfung der zwei
 statischen Atome (Text mit freiem Stil px/Gewicht/Ausrichtung, Trennlinie)
 und der neuen Datum-Optik (.vuhr-Vorbild: Zeit groß, Datum klein darunter)

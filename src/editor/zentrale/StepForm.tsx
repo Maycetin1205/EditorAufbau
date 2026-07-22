@@ -58,6 +58,18 @@ interface StepFormProps {
 // (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen).
 const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({ value, label: value }))
 
+// Klarnamen der Parameterquellen — Editor-Tabelle (Muster optionColors):
+// kurz genug für die schmale Quelle-Spalte (Nutzer-Go 2026-07-22), und die
+// Namen bleiben aus dem Runtime-Bündel heraus (dort zählen nur die Keys).
+const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
+  fixed: 'Fest',
+  context: 'Ereigniswert',
+  data_field: 'Datenfeld',
+  previous_result: 'Vorheriger Schritt',
+  step_result: 'Ergebnis von Schritt',
+  se_variable: 'SE VAR-Array',
+}
+
 // Das EINE handgebaute Auswahlfeld der Schritt-Bedienung: eigener Pfeil mit
 // reserviertem Platz rechts (pr-6), damit der gewählte Text NIE unter dem
 // Aufklapp-Pfeil verschwindet (Nutzer-Korrektur 2026-07-22 — der Browser-
@@ -206,12 +218,12 @@ function BindingRow({
       >
         {ACTION_PARAM_SOURCES.map((source) => (
           <option
-            key={source.key}
-            value={source.key}
-            disabled={(source.key === 'data_field' && dataSources.length === 0)
-              || (source.key === 'step_result' && schritte.length === 0)}
+            key={source}
+            value={source}
+            disabled={(source === 'data_field' && dataSources.length === 0)
+              || (source === 'step_result' && schritte.length === 0)}
           >
-            {source.name}
+            {QUELLEN_NAMEN[source]}
           </option>
         ))}
       </SchrittSelect>
@@ -332,7 +344,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const [extraParams, setExtraParams] = useState<ActionParamBinding[]>(
     step?.type === 'RELATION' ? step.extraParams.map((binding) => ({ ...binding })) : [],
   )
-  const [resultKey, setResultKey] = useState(step?.resultKey ?? '')
   const [suche, setSuche] = useState('')
   const [zeigeFehler, setZeigeFehler] = useState(false)
 
@@ -384,7 +395,10 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
       relationId,
       params: normalizedParams,
       extraParams: extraParams.map((binding) => ({ ...binding, value: binding.value.trim() })),
-      resultKey: relation?.verb === 'GET_RELATION' ? resultKey.trim() : '',
+      // Das freie Feld „Ergebnisname" ist entfernt (Nutzer 2026-07-22 —
+      // „Ergebnis von Schritt" ersetzt es); ein vorhandener Alt-Name bleibt
+      // beim Bearbeiten erhalten, die Laufzeit liest ihn unverändert.
+      resultKey: step?.resultKey ?? '',
     }
   }
 
@@ -498,18 +512,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
             </div>
           )}
 
-          {relation?.verb === 'GET_RELATION' && (
-            <Field label="Ergebnisname">
-              {(field) => (
-                <TextInput
-                  {...field}
-                  value={resultKey}
-                  placeholder="optional"
-                  onChange={(e) => setResultKey(e.target.value)}
-                />
-              )}
-            </Field>
-          )}
         </>
       )}
 

@@ -29,20 +29,26 @@ export function stepTypeName(typeKey: string): string {
 
 // ---------- Parameterquellen fuer Relationsschritte ----------
 
+// Erlaubte Parameterquellen (Technikwerte) — die Laufzeit prüft beim Lesen
+// der Kette nur diese Keys. Die Klarnamen dazu sind reine Editor-Sache
+// (QUELLEN_NAMEN im StepForm, Kurz-Klarnamen per Nutzer-Go 2026-07-22) und
+// reisen damit NICHT mehr im Runtime-Bündel mit.
+// step_result = Zwischenspeicher (Nutzer-Befund + -Vorschlag 2026-07-17):
+// das Ergebnis eines FRÜHEREN GET-Schritts der Kette, per Auswahl
+// „Schritt N" — kein Namen-Vergeben. Referenz-Beleg: SE-Log „Termin
+// anlegen" (GET 640 → PUTs auf den Index; ZWEI GET-Ergebnisse
+// gleichzeitig in Gebrauch). SE-Echttest 2026-07-22: die Stelle aus
+// Schritt 1 kam im echten PUT an (…!L!271!…).
 export const ACTION_PARAM_SOURCES = [
-  { key: 'fixed', name: 'Fester Wert' },
-  { key: 'context', name: 'Ereigniswert' },
-  { key: 'data_field', name: 'Feld der Datenquelle' },
-  { key: 'previous_result', name: 'Vorheriger Schritt' },
-  // Zwischenspeicher (Nutzer-Befund + -Vorschlag 2026-07-17): das Ergebnis
-  // eines FRÜHEREN GET-Schritts der Kette, per Auswahl „Schritt N" — kein
-  // Namen-Vergeben. Referenz-Beleg: SE-Log „Termin anlegen" (GET 640 →
-  // PUTs auf den Index; ZWEI GET-Ergebnisse gleichzeitig in Gebrauch).
-  { key: 'step_result', name: 'Ergebnis von Schritt' },
-  { key: 'se_variable', name: 'SE VAR-Array' },
+  'fixed',
+  'context',
+  'data_field',
+  'previous_result',
+  'step_result',
+  'se_variable',
 ] as const
 
-export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number]['key']
+export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number]
 
 export interface ActionParamBinding {
   source: ActionParamSource
@@ -191,7 +197,7 @@ function bindingFields(raw: unknown): ActionParamBinding | null {
   if (!isRecord(raw)) return null
   if (
     typeof raw.source !== 'string'
-    || !ACTION_PARAM_SOURCES.some((source) => source.key === raw.source)
+    || !(ACTION_PARAM_SOURCES as readonly string[]).includes(raw.source)
     || typeof raw.value !== 'string'
   ) return null
   if (raw.dataSourceId !== undefined && typeof raw.dataSourceId !== 'string') return null
