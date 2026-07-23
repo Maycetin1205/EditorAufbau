@@ -29,6 +29,10 @@ export function stepTypeName(typeKey: string): string {
 
 // ---------- Parameterquellen fuer Relationsschritte ----------
 
+// Gemeinsame Export-/Laufzeit-Kennung fuer auslesbare Bausteine. Nur
+// Registry-freigegebene Bausteine tragen sie im exportierten HTML.
+export const ACTION_VALUE_ID_ATTR = 'data-ff-block-id'
+
 // Erlaubte Parameterquellen (Technikwerte) — die Laufzeit prüft beim Lesen
 // der Kette nur diese Keys. Die Klarnamen dazu sind reine Editor-Sache
 // (QUELLEN_NAMEN im StepForm, Kurz-Klarnamen per Nutzer-Go 2026-07-22) und
@@ -43,6 +47,7 @@ export const ACTION_PARAM_SOURCES = [
   'fixed',
   'context',
   'data_field',
+  'block_value',
   'previous_result',
   'step_result',
   'se_variable',
@@ -53,6 +58,7 @@ export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number]
 export interface ActionParamBinding {
   source: ActionParamSource
   // fixed: Wert, context: PINDEX/VALUE/NOW_DATE, data_field: Feldcode,
+  // block_value: freigegebene Prop eines Bausteins,
   // se_variable: Variablenname. previous_result braucht keinen Wert.
   // step_result: im EDITOR die stabile Schritt-id (übersteht Umsortieren,
   // Muster popupId), in der MASKE die Position in der Kette (Editor-ids
@@ -61,6 +67,9 @@ export interface ActionParamBinding {
   // Nur data_field: stabile ID der Datenquellen-Vorlage. Der Feldcode allein
   // ist zwischen verschiedenen Tabellen nicht eindeutig.
   dataSourceId?: string
+  // Nur block_value: stabile ID des Bausteins. Sein Klarname darf sich
+  // aendern; `value` traegt die Registry-freigegebene Prop.
+  blockId?: string
 }
 
 // GET-Schritte VOR einer Position — die Auswahl „Ergebnis von Schritt N"
@@ -201,10 +210,12 @@ function bindingFields(raw: unknown): ActionParamBinding | null {
     || typeof raw.value !== 'string'
   ) return null
   if (raw.dataSourceId !== undefined && typeof raw.dataSourceId !== 'string') return null
+  if (raw.blockId !== undefined && typeof raw.blockId !== 'string') return null
   return {
     source: raw.source as ActionParamSource,
     value: raw.value,
     ...(typeof raw.dataSourceId === 'string' ? { dataSourceId: raw.dataSourceId } : {}),
+    ...(typeof raw.blockId === 'string' ? { blockId: raw.blockId } : {}),
   }
 }
 
@@ -386,6 +397,9 @@ function bindingProblem(binding: ActionParamBinding | undefined): boolean {
   if (binding.source === 'data_field') {
     return !binding.dataSourceId?.trim() || binding.value.trim() === ''
   }
+  if (binding.source === 'block_value') {
+    return !binding.blockId?.trim() || binding.value.trim() === ''
+  }
   return binding.value.trim() === ''
 }
 
@@ -399,6 +413,9 @@ export function stepProblem(
   // Gültige „Ergebnis von Schritt"-Ziele für DIESEN Schritt (ids der GET-
   // Schritte davor, ergebnisSchritteVor) — nur wer die Kette kennt, prüft.
   ergebnisIds?: readonly string[],
+  // Gueltige auslesbare Bausteinwerte der Maske. Nur Aufrufer mit Baumblick
+  // (Editor/Preflight) pruefen geloeschte oder nicht mehr freigegebene Ziele.
+  actionValues?: readonly { blockId: string; prop: string }[],
 ): string | null {
   // step_result muss auf einen GET-Schritt DAVOR zeigen — ein gelöschter,
   // späterer oder Nicht-GET-Schritt liefe in der Maske still auf ''.
@@ -453,6 +470,13 @@ export function stepProblem(
     && !dataSources.some((source) => source.id === binding.dataSourceId),
   )
   if (missingSource) return 'Schritt "Relation" verweist auf eine geloeschte Datenquelle.'
+  const missingBlock = allBindings.find((binding) =>
+    binding?.source === 'block_value'
+    && actionValues
+    && !actionValues.some((target) =>
+      target.blockId === binding.blockId && target.prop === binding.value),
+  )
+  if (missingBlock) return 'Schritt "Relation" verweist auf einen geloeschten Baustein.'
   if (allBindings.some(ergebnisKaputt)) {
     return 'Schritt "Relation": ein Parameter zeigt auf keinen GET-Schritt davor.'
   }

@@ -6,7 +6,13 @@
 // Instanzierung gelesen — `customElements.define` darf erst registrieren,
 // bevor irgendjemand `new` auf dem Konstruktor aufruft.
 
-import type { BindableSpot, BindingRoute, BlockEventSpec, DefaultChildSpec } from './BlockDefinition'
+import type {
+  ActionValueSpot,
+  BindableSpot,
+  BindingRoute,
+  BlockEventSpec,
+  DefaultChildSpec,
+} from './BlockDefinition'
 import type { FlowDirection, FlowWidth } from './flowLayout'
 import type { PropertyDescription } from './PropertyDescription'
 
@@ -49,6 +55,8 @@ export interface BlockComponentStatic {
   readonly acceptsDataSource?: boolean
   // Bindbare Stellen aus Kap. 5.2 — Bedeutung siehe BlockDefinition.
   readonly bindableSpots?: readonly BindableSpot[]
+  // Als Aktionsparameter auslesbare Stellen — Bedeutung siehe BlockDefinition.
+  readonly actionValueSpots?: readonly ActionValueSpot[]
   // Eigener Datenanschluss-Dialog — Bedeutung siehe BlockDefinition.
   readonly bindingRoute?: BindingRoute
   // Ereignisse des Blocks (Z1) — Bedeutung siehe BlockDefinition.

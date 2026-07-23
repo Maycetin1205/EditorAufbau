@@ -44,7 +44,7 @@ describe('Aktionsmodell', () => {
       params: [
         { source: 'fixed', value: 'fest' },
         { source: 'context', value: 'PINDEX' },
-        { source: 'fixed', value: 'A' },
+        { source: 'block_value', value: 'value', blockId: 'feld-tiername' },
       ],
       extraParams: [{ source: 'previous_result', value: '' }],
     }
@@ -97,6 +97,25 @@ describe('Aktionsmodell', () => {
     step.params[2] = { source: 'se_variable', value: '' }
     expect(stepProblem(step, [relation])).toContain('Parameter 3')
     expect(stepProblem({ ...step, relationId: 'weg' }, [relation])).toContain('geloeschte')
+  })
+
+  it('prueft Bausteinwerte auf vollstaendige und noch vorhandene Ziele', () => {
+    const step: RelationStep = {
+      id: 'r1', type: 'RELATION', resultKey: '', relationId: relation.id,
+      params: [
+        { source: 'fixed', value: 'fest' },
+        { source: 'fixed', value: '1' },
+        { source: 'block_value', value: 'value', blockId: 'feld-tiername' },
+      ],
+      extraParams: [],
+    }
+    expect(stepProblem(step, [relation], [], [], [], [
+      { blockId: 'feld-tiername', prop: 'value' },
+    ])).toBeNull()
+    expect(stepProblem(step, [relation], [], [], [], []))
+      .toContain('geloeschten Baustein')
+    step.params[2] = { source: 'block_value', value: '', blockId: '' }
+    expect(stepProblem(step, [relation])).toContain('Parameter 3')
   })
 })
 

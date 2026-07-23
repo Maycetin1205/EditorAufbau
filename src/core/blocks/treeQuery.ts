@@ -5,7 +5,29 @@
 // der Editor (Muster-Markierung + Löschschutz), der Export (<template>-
 // Verpackung) und die Laufzeit (seRuntime klont das template-Element).
 
-import type { BlockTree } from './BlockData'
+import { ROOT_ID, type BlockNode, type BlockTree } from './BlockData'
+import type { ActionValueSpot } from './BlockDefinition'
+import { getBlockDefinition } from './blockRegistry'
+
+export interface ActionValueTarget {
+  node: BlockNode
+  spot: ActionValueSpot
+}
+
+// Alle explizit freigegebenen Bausteinwerte in Baum-Reihenfolge. Hauptseite
+// und Popup-Seiten liegen beide unter ROOT_ID. Editor und Preflight benutzen
+// dadurch dieselbe Wahrheit.
+export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
+  const result: ActionValueTarget[] = []
+  const visit = (node: BlockNode | undefined): void => {
+    if (!node) return
+    const spots = getBlockDefinition(node.type)?.actionValueSpots ?? []
+    for (const spot of spots) result.push({ node, spot })
+    for (const childId of node.childIds) visit(tree[childId])
+  }
+  visit(tree[ROOT_ID])
+  return result
+}
 
 export function firstDescendantOfType(
   tree: BlockTree,

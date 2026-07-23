@@ -18,6 +18,7 @@ import { ArrowDown, ArrowUp, Copy, Pencil, Plus, X } from 'lucide-react'
 import { IconButton } from '@/ui/atoms/icon-button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'
+import { actionValueTargets } from '../../core/blocks/treeQuery'
 import {
   ergebnisSchritteVor,
   stepProblem,
@@ -77,6 +78,10 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
   }
 
   const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
+  const actionValueRefs = actionValueTargets(ed.tree).map(({ node, spot }) => ({
+    blockId: node.id,
+    prop: spot.prop,
+  }))
 
   return (
     <div className="flex flex-col gap-2">
@@ -104,6 +109,7 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                   const problem = stepProblem(
                     s, relations.list, dataSources.list, popupSeiten.map((seite) => seite.id),
                     ergebnisSchritteVor(steps, s.id, relations.list).map((g) => g.id),
+                    actionValueRefs,
                   )
                   const relation = s.type === 'RELATION' ? relations.get(s.relationId) : undefined
                   const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'

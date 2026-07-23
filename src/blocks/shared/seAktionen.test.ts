@@ -75,4 +75,24 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
     // Mit Ereignis-Index (Kanban-Karte) weiterhin die passende Zeile.
     expect(resolveActionParam(binding, { context: { PINDEX: '2' }, previousResult: '' }, runtime)).toBe('Minka')
   })
+
+  it('block_value liest den aktuellen Formularfeld-Wert ohne Datenquelle', () => {
+    const field = {
+      value: 'Rex',
+      getAttribute: (name: string) => name === 'data-ff-block-id' ? 'feld-tiername' : null,
+    }
+    const runtime = {
+      document: {
+        querySelectorAll: (selector: string) => selector === '[data-ff-block-id]' ? [field] : [],
+      },
+    }
+    const binding: ActionParamBinding = {
+      source: 'block_value', blockId: 'feld-tiername', value: 'value',
+    }
+    const values = { context: {}, previousResult: '' }
+    expect(resolveActionParam(binding, values, runtime)).toBe('Rex')
+    field.value = 'Minka'
+    expect(resolveActionParam(binding, values, runtime)).toBe('Minka')
+    expect(resolveActionParam({ ...binding, blockId: 'weg' }, values, runtime)).toBe('')
+  })
 })

@@ -50,6 +50,15 @@ export function validateMaskHtml(html: string): CheckResult[] {
   check('genau 2 <script>', scripts === 2, `gefunden: ${scripts}`)
   check('SoftEngine-Interface vorhanden', interfaceScripts === 1, `gefunden: ${interfaceScripts}`)
   check('genau 1 eigene Runtime', inlineScripts === 1, `gefunden: ${inlineScripts}`)
+  // Ein formal vorhandener, aber leerer Inline-Skriptblock liess 2026-07-22
+  // alle <ff-...>-Elemente unsichtbar. Die Komponenten-Registrierung ist ein
+  // stabiler Marker des echten Runtime-Buendels; Globals allein reichen nicht.
+  const inlineBody = /<script>\n([\s\S]*?)\n<\/script>/.exec(html)?.[1] ?? ''
+  check(
+    'Runtime-Buendel eingebettet',
+    inlineBody.includes('customElements.define'),
+    'Web-Component-Registrierung fehlt',
+  )
 
   // 5. Grundgerüst
   check('DOCTYPE vorhanden', html.includes('<!DOCTYPE html>'))

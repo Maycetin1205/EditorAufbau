@@ -34,6 +34,18 @@ export interface BindableSpot {
   label: string
 }
 
+export interface ActionValueSpot {
+  prop: string
+  label: string
+}
+
+// Auslesbare Stellen liefern aktuelle Laufzeitwerte an Aktionsparameter.
+// Registry-Opt-in statt fest verdrahteter Bausteintypen im Schritt-Editor.
+export type ActionValueSpotsFor<Props> = ReadonlyArray<{
+  prop: keyof Props & string
+  label: string
+}>
+
 // ---------------------------------------------------------------------------
 // Bindungs-Konvention (Aufräumen A5) — DIE eine, typgeprüfte Definition.
 // Die Bindung einer Stelle liegt in der Prop `<prop>Field` (Feldcode =
@@ -158,6 +170,8 @@ export interface BlockDefinition {
   acceptsDataSource?: boolean
   // Bindbare Stellen des Blocks (Kap. 5.2) — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
+  // Aktuelle Bausteinwerte, die als Parameterquelle angeboten werden.
+  actionValueSpots?: readonly ActionValueSpot[]
   // Eigener Datenanschluss-Dialog fuer source + Einsortieren-Feld.
   // Das dort gepflegte Feld-Control ist hiddenInInspector.
   bindingRoute?: BindingRoute

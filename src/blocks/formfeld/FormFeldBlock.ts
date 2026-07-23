@@ -35,7 +35,11 @@ import { css, html, nothing, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { BindableSpotsFor, BindingRouteFor } from '../../core/blocks/BlockDefinition'
+import type {
+  ActionValueSpotsFor,
+  BindableSpotsFor,
+  BindingRouteFor,
+} from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import {
   connectField,
@@ -66,6 +70,10 @@ export class FormFeldBlock extends BasicBlock {
   // Typgeprüft gegen die eigenen defaultProps (Bindungs-Konvention, A5).
   static readonly bindingRoute: BindingRouteFor<typeof FormFeldBlock.defaultProps> = { fieldProp: 'valueField' }
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [{ prop: 'value', label: 'Wert' }]
+  // Aktueller Eingabewert - ausdruecklich auch ohne Datenquellen-Bindung.
+  static readonly actionValueSpots: ActionValueSpotsFor<typeof FormFeldBlock.defaultProps> = [
+    { prop: 'value', label: 'Wert' },
+  ]
   static readonly blockEvents = [{ key: 'onChange', name: 'Wert geändert' }]
   // Standardbreite fest (240px) — der Breiten-Anfasser bleibt aktiv,
   // Doppelklick auf den Anfasser stellt den Standard wieder her.

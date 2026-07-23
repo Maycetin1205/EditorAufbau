@@ -19,7 +19,10 @@ export default defineConfig({
       fileName: () => 'ff-runtime.js',
     },
     outDir: 'src/export/generated',
-    emptyOutDir: true,
+    // Nicht vor dem Schreiben leeren: ein parallel geoeffneter Vite-Editor
+    // koennte sonst den kurzen leeren Zustand per HMR uebernehmen und eine
+    // Maske ohne Runtime exportieren. Es gibt hier ohnehin nur diese Datei.
+    emptyOutDir: false,
     minify: true,
   },
 })

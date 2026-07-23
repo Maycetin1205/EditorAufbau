@@ -33,6 +33,8 @@ import {
   type StepTypeKey,
 } from '../../core/data/aktionen'
 import type { DataSource } from '../../core/data/dataSources'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { actionValueTargets } from '../../core/blocks/treeQuery'
 import {
   formatRelationSyntax,
   relationGroup,
@@ -49,7 +51,7 @@ import {
   uebernahmeIdbQuellen,
   uebernahmeQuellen,
 } from './feldUebernahme'
-import { RELATION_GRUPPEN } from './helfer'
+import { eigenerText, RELATION_GRUPPEN } from './helfer'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -76,9 +78,21 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   fixed: 'Fest',
   context: 'Ereigniswert',
   data_field: 'Datenfeld',
+  block_value: 'Baustein',
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
+}
+
+interface BlockValueOption {
+  key: string
+  blockId: string
+  prop: string
+  label: string
+}
+
+function blockValueKey(blockId: string, prop: string): string {
+  return `${encodeURIComponent(blockId)}:${encodeURIComponent(prop)}`
 }
 
 // Das EINE handgebaute Auswahlfeld der Schritt-Bedienung: eigener Pfeil mit
@@ -106,11 +120,13 @@ function SchrittSelect({ className, children, ...props }: SelectHTMLAttributes<H
 function BindingValue({
   binding,
   dataSources,
+  blockValues,
   schritte,
   onChange,
 }: {
   binding: ActionParamBinding
   dataSources: readonly DataSource[]
+  blockValues: readonly BlockValueOption[]
   schritte: readonly ErgebnisSchritt[]
   onChange: (binding: ActionParamBinding) => void
 }) {
@@ -178,6 +194,25 @@ function BindingValue({
       </div>
     )
   }
+  if (binding.source === 'block_value') {
+    const current = binding.blockId ? blockValueKey(binding.blockId, binding.value) : ''
+    return (
+      <SchrittSelect
+        value={current}
+        onChange={(e) => {
+          const selected = blockValues.find((option) => option.key === e.target.value)
+          onChange(selected
+            ? { source: 'block_value', blockId: selected.blockId, value: selected.prop }
+            : { source: 'block_value', blockId: '', value: '' })
+        }}
+      >
+        <option value="">— Baustein —</option>
+        {blockValues.map((option) => (
+          <option key={option.key} value={option.key}>{option.label}</option>
+        ))}
+      </SchrittSelect>
+    )
+  }
   return (
     <TextInput
       value={binding.value}
@@ -191,6 +226,7 @@ function BindingRow({
   label,
   binding,
   dataSources,
+  blockValues,
   schritte,
   removable = false,
   ausloeser,
@@ -201,6 +237,7 @@ function BindingRow({
   label: string
   binding: ActionParamBinding
   dataSources: readonly DataSource[]
+  blockValues: readonly BlockValueOption[]
   schritte: readonly ErgebnisSchritt[]
   removable?: boolean
   ausloeser?: FeldUebernahmeZiel
@@ -209,6 +246,11 @@ function BindingRow({
   onRemove?: () => void
 }) {
   const setSource = (source: ActionParamSource) => {
+    if (source === 'block_value' && blockValues.length === 1) {
+      const target = blockValues[0]
+      onChange({ source, blockId: target.blockId, value: target.prop })
+      return
+    }
     const value = source === 'context'
       ? 'VALUE'
       // Genau EIN GET davor: direkt vorwählen — der häufigste Fall
@@ -236,6 +278,7 @@ function BindingRow({
             key={source}
             value={source}
             disabled={(source === 'data_field' && dataSources.length === 0)
+              || (source === 'block_value' && blockValues.length === 0)
               || (source === 'step_result' && schritte.length === 0)}
           >
             {QUELLEN_NAMEN[source]}
@@ -250,7 +293,13 @@ function BindingRow({
           onAusloeser(e.currentTarget)
         }}
       >
-        <BindingValue binding={binding} dataSources={dataSources} schritte={schritte} onChange={onChange} />
+        <BindingValue
+          binding={binding}
+          dataSources={dataSources}
+          blockValues={blockValues}
+          schritte={schritte}
+          onChange={onChange}
+        />
       </div>
       {ausloeser && onAusloeser && (
         <IconButton
@@ -369,6 +418,18 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   // Popup-Seiten der Maske (P-B): Auswahl per Klarname, gespeichert wird
   // die stabile Seiten-id (übersteht Umbenennen).
   const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
+  const blockValues: BlockValueOption[] = actionValueTargets(ed.tree).map(({ node, spot }) => {
+    const def = getBlockDefinition(node.type)
+    const name = eigenerText(node.props, def?.defaultProps) || def?.displayName || node.type
+    const mehrereStellen = (def?.actionValueSpots?.length ?? 0) > 1
+    return {
+      key: blockValueKey(node.id, spot.prop),
+      blockId: node.id,
+      prop: spot.prop,
+      label: mehrereStellen ? `${name} — ${spot.label}` : name,
+    }
+  })
+  const actionValueRefs = blockValues.map(({ blockId, prop }) => ({ blockId, prop }))
   const [typ, setTyp] = useState<StepTypeKey>(step?.type ?? 'START_TOOL')
   const [toolNr, setToolNr] = useState(step?.type === 'START_TOOL' ? step.toolNr : '')
   const [popupId, setPopupId] = useState(
@@ -498,11 +559,13 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   }
 
   const popupIds = popupSeiten.map((seite) => seite.id)
-  const problem = stepProblem(candidate(), relations.list, dataSources.list, popupIds, ergebnisIds)
+  const problem = stepProblem(
+    candidate(), relations.list, dataSources.list, popupIds, ergebnisIds, actionValueRefs,
+  )
 
   function speichern() {
     const next = candidate()
-    if (stepProblem(next, relations.list, dataSources.list, popupIds, ergebnisIds)) {
+    if (stepProblem(next, relations.list, dataSources.list, popupIds, ergebnisIds, actionValueRefs)) {
       setZeigeFehler(true)
       return
     }
@@ -581,6 +644,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                       label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
                       binding={bindingFor(index)}
                       dataSources={dataSources.list}
+                      blockValues={blockValues}
                       schritte={ergebnisSchritte}
                       ausloeser={ausloeser}
                       onChange={(binding) => setBinding(index, binding)}
@@ -631,6 +695,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                   label={`${index + 1}.`}
                   binding={binding}
                   dataSources={dataSources.list}
+                  blockValues={blockValues}
                   schritte={ergebnisSchritte}
                   removable
                   onChange={(next) => setExtraParams((current) => current.map((value, at) => at === index ? next : value))}

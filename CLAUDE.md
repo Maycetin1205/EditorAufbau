@@ -372,10 +372,16 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    Sprechende Namen: `eigenerText` (zentrale/helfer.ts) liest zusätzlich
    `placeholder`, default-bewusst (frisches Formularfeld bleibt
    „Formularfeld", stabile IDs unverändert, Regel 3).
-   **Reihenfolge festgeschrieben (Nutzer 2026-07-22):** V2+Kleinputz (fertig)
-   → Tabelle + QUELLDATEN-Wertquelle (gebündelt, EIN SE-Echttest) →
-   Größen-Paket. QUELLDATEN-Wertquelle = „Wert aus Formularfeld X ohne
-   Datenquellen-Bindung" ist der nächste Folgeplan (braucht Laufzeit/Export).
+   **QUELLDATEN-Wertquelle ✅ gebaut 2026-07-22, SE-Echttest BESTANDEN
+   (Nutzer 2026-07-23):** neue Parameterquelle „Baustein"; wählbar sind
+   vorerst Formularfelder mit ihrem Inline-Namen. Geschrieben wird ihr
+   aktueller Wert, ausdrücklich OHNE Datenquellen-Bindung; gespeichert wird
+   die stabile Baustein-ID. Registry-Opt-in (`actionValueSpots`) hält
+   weitere Bausteine später erweiterbar. Laufzeit/Export + Lösch-Preflight
+   sind gebaut. Beim ersten Nutzerexport fehlte wegen Runtime-Build/HMR-Race
+   das ganze Bundle (HTML unsichtbar): Runtime-Build leert den Zielordner
+   nicht mehr, Validator blockt leere Runtime jetzt ausdrücklich.
+   **Aktuelle Reihenfolge:** Tabelle → Größen-Paket.
    **Offen — Größen-Paket** „Höhe an jedem Baustein ziehbar + Startgrößen"
    (erfüllt Tobis GridComponent-Skizze wörtlich). **Grundsatz-Entscheidung
    2026-07-22 (Nutzer, nach Skizzen-Abgleich):** das Fundament bleibt

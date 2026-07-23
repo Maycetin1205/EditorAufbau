@@ -13,7 +13,7 @@ import {
   type RelationTemplate,
   type RelationVerb,
 } from '../core/data/relations'
-import type { ActionParamBinding } from '../core/data/aktionen'
+import { ACTION_VALUE_ID_ATTR, type ActionParamBinding } from '../core/data/aktionen'
 import { bootSe, onSeAntwort, seGlobal } from './bridge'
 import {
   findRuntimeDataSource,
@@ -219,6 +219,17 @@ export interface RuntimeActionValues {
   stepResults?: readonly string[]
 }
 
+function resolveBlockValue(binding: ActionParamBinding, runtime: unknown): string {
+  if (!isRecord(runtime)) return ''
+  const doc = runtime.document as ParentNode | undefined
+  if (!doc || typeof doc.querySelectorAll !== 'function') return ''
+  const element = Array.from(doc.querySelectorAll<HTMLElement>(`[${ACTION_VALUE_ID_ATTR}]`))
+    .find((candidate) => candidate.getAttribute(ACTION_VALUE_ID_ATTR) === binding.blockId)
+  if (!element) return ''
+  const raw = (element as unknown as Record<string, unknown>)[binding.value]
+  return raw == null ? '' : String(raw)
+}
+
 export function resolveActionParam(
   binding: ActionParamBinding,
   values: RuntimeActionValues,
@@ -233,6 +244,7 @@ export function resolveActionParam(
     const idx = Number(binding.value)
     return Number.isInteger(idx) && idx >= 0 ? values.stepResults?.[idx] ?? '' : ''
   }
+  if (binding.source === 'block_value') return resolveBlockValue(binding, runtime)
   if (!isRecord(runtime)) return ''
 
   if (binding.source === 'se_variable') {

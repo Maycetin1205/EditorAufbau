@@ -21,7 +21,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { firstDescendantOfType } from '../core/blocks/treeQuery'
-import { serializeBlockEvents } from '../core/data/aktionen'
+import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import { dataSourceStore } from '../state/DataSourceStore'
@@ -120,15 +120,18 @@ function nodeToHtml(
     })
     .join('')
 
-  // Aktionsketten (Z2) reisen als EIN data-Attribut mit dem Element — der
-  // Export kennt keine Block-ids, ein FF_-Global (Muster FF_RELATIONS)
-  // schiede damit aus. Deterministisch: Ereignis-Reihenfolge = Registry
-  // (blockEvents), Editor-ids reisen nicht mit (serializeBlockEvents).
+  // Aktionsketten (Z2) reisen als EIN data-Attribut mit dem Element.
+  // Schritt-ids reisen nicht mit; nur Registry-freigegebene Wert-Bausteine
+  // behalten gezielt ihre stabile id, damit andere Aktionen sie auslesen.
+  // Deterministisch: Ereignis-Reihenfolge = Registry (blockEvents).
   // Die Laufzeit (seAktionen) liest das Attribut zurück.
   const aktionen = serializeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key), popupName)
   const aktionenAttr = aktionen ? ` data-ff-aktionen="${escapeHtmlAttr(aktionen)}"` : ''
+  const actionValueIdAttr = (def.actionValueSpots?.length ?? 0) > 0
+    ? ` ${ACTION_VALUE_ID_ATTR}="${escapeHtmlAttr(node.id)}"`
+    : ''
 
-  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${styleAttr(node, parentDirection, def.lockedWidth)}>`
+  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${styleAttr(node, parentDirection, def.lockedWidth)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }

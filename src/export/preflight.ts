@@ -11,6 +11,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { actionValueTargets } from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor, stepProblem } from '../core/data/aktionen'
 import type { DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
@@ -27,6 +28,10 @@ export function preflightMask(
   relations: readonly RelationTemplate[],
 ): CheckResult[] {
   const results: CheckResult[] = []
+  const actionValues = actionValueTargets(tree).map(({ node, spot }) => ({
+    blockId: node.id,
+    prop: spot.prop,
+  }))
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
     const def = getBlockDefinition(node.type)
@@ -73,7 +78,7 @@ export function preflightMask(
       const eventName = def?.blockEvents?.find((e) => e.key === eventKey)?.name ?? eventKey
       for (const step of steps) {
         const problem = stepProblem(step, relations, sources, popupIds,
-          ergebnisSchritteVor(steps, step.id, relations).map((g) => g.id))
+          ergebnisSchritteVor(steps, step.id, relations).map((g) => g.id), actionValues)
         if (problem) {
           results.push({
             name: 'Aktion unvollstaendig',
