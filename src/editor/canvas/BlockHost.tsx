@@ -25,6 +25,7 @@ import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { rasterSpecOf } from '../../core/blocks/rasterLayout'
 import { useEditorInstance } from '../../state/EditorContext'
 import { useDataSources } from '../../state/useDataSources'
 import { FieldPicker } from './FieldPicker'
@@ -36,6 +37,10 @@ interface BlockHostProps {
   block: BlockNode
   selected?: boolean
   onSelect?: () => void
+  // true = der Block sitzt auf einer Rasterfläche (oberste Ebene / Popup-Rumpf):
+  // die Größe-Anfasser ziehen dann rasterW/rasterH mit Zellen-Snap statt der
+  // Fluss-Maße width/height. INNERHALB von Containern (Fluss) false.
+  raster?: boolean
   // Kind-Hosts (nur für Container-Blöcke; vom Canvas rekursiv erzeugt).
   children?: ReactNode
 }
@@ -44,7 +49,7 @@ interface BlockHostProps {
 // läuft, nur weil `?? []` eine frische Referenz erzeugt hätte.
 const KEINE_SPOTS: readonly BindableSpot[] = []
 
-export function BlockHost({ block, selected, onSelect, children }: BlockHostProps) {
+export function BlockHost({ block, selected, onSelect, raster = false, children }: BlockHostProps) {
   // A2 (Aufräum.md): Instanz aus dem Versorger statt Weltvariable — bewusst
   // OHNE Abo (useEditorInstance): der Host rendert wie bisher über den
   // Canvas neu, exakt die alte Semantik des direkten Imports.
@@ -74,6 +79,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
     selected,
     bindableSpots,
     dataSource,
+    raster,
   })
 
   // ---- Klick-auf-Stelle-Binding (Kap. 5.2, Bedienlogik 3) ----
@@ -87,7 +93,9 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
   })
 
   // Breite/Höhe ziehen (Anfasser rechts bzw. unten) — useBlockResize.
-  const startResize = useBlockResize(editor, blockRef, elementRef)
+  // startResize = Fluss (px, misst das Element); startRasterResize = Raster
+  // (Zellen-Snap, misst den Grid-Platz über rootRef).
+  const { startResize, startRasterResize } = useBlockResize(editor, blockRef, elementRef, rootRef)
 
   const resizable = def?.resizableWidth ?? true
   const heightResizable = def?.resizableHeight === true
@@ -220,7 +228,60 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           ×
         </button>
       )}
-      {selected && resizable && (
+      {/* Raster-Anfasser (E1-Nachtrag Fix 2): auf der Rasterfläche ziehen
+          rechts = Breite, unten = Höhe je in GANZEN Zellen (rasterW/rasterH),
+          Doppelklick setzt die Startgröße des Bausteins. Alle Blöcke sind hier
+          in Breite UND Höhe ziehbar — das ist der Sinn des Rasters; die
+          Fluss-Beschränkungen (resizableWidth/Height) gelten nur im Fluss. */}
+      {selected && raster && (
+        <>
+          <div
+            draggable={false}
+            onPointerDown={(e) => startRasterResize(e, 'x')}
+            onDragStart={(e) => e.preventDefault()}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              const spec = rasterSpecOf(getBlockDefinition(blockRef.current.type))
+              editor.updateProperty(blockRef.current.id, 'rasterW', spec.startW)
+            }}
+            title="Breite ziehen (rastet auf Zellen) · Doppelklick: Startgröße"
+            style={{
+              position: 'absolute',
+              right: -4,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 7,
+              height: 26,
+              borderRadius: 4,
+              background: 'hsl(var(--ring))',
+              cursor: 'ew-resize',
+            }}
+          />
+          <div
+            draggable={false}
+            onPointerDown={(e) => startRasterResize(e, 'y')}
+            onDragStart={(e) => e.preventDefault()}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              const spec = rasterSpecOf(getBlockDefinition(blockRef.current.type))
+              editor.updateProperty(blockRef.current.id, 'rasterH', spec.startH)
+            }}
+            title="Höhe ziehen (rastet auf Zellen) · Doppelklick: Startgröße"
+            style={{
+              position: 'absolute',
+              bottom: -4,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 26,
+              height: 7,
+              borderRadius: 4,
+              background: 'hsl(var(--ring))',
+              cursor: 'ns-resize',
+            }}
+          />
+        </>
+      )}
+      {selected && !raster && resizable && (
         <div
           draggable={false}
           onPointerDown={(e) => startResize(e, 'width', 40)}
@@ -249,7 +310,7 @@ export function BlockHost({ block, selected, onSelect, children }: BlockHostProp
           }}
         />
       )}
-      {selected && heightResizable && (
+      {selected && !raster && heightResizable && (
         <div
           draggable={false}
           onPointerDown={(e) => startResize(e, 'height', 120)}

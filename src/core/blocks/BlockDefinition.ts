@@ -5,6 +5,7 @@
 
 import type { BlockCategory } from './BlockComponent'
 import type { FlowDirection, FlowWidth } from './flowLayout'
+import type { RasterSpec } from './rasterLayout'
 import type { PropertyDescription } from './PropertyDescription'
 
 export type { BlockCategory }
@@ -184,4 +185,10 @@ export interface BlockDefinition {
   // nur als eigenen Seiten-Reiter. Kein `if type===`: Editor.childNodesOf
   // und die Seitenleiste lesen ausschließlich dieses Kennzeichen.
   pageBlock?: boolean
+  // Raster-Start-/Mindestgröße auf der Maskenfläche (opt-in, Regel 2): der
+  // Store vergibt beim Einfügen die Startgröße, Canvas/Export lesen die
+  // Position generisch über rasterLayout. Fehlt die Deklaration, gilt der
+  // generische RASTER_FALLBACK. Wirkt NUR auf der Rasterfläche (oberste Ebene
+  // + Popup-Rumpf) — INNERHALB von Containern gilt weiter flowLayout.
+  raster?: Partial<RasterSpec>
 }

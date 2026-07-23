@@ -10,6 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '../blocks/kanban/KanbanBlock'
 // … und den echten Popup-Baustein für die Seiten-Tests (P-A).
 import '../blocks/popup/PopupBlock'
+// Echte Atome mit Registry-Startbreiten für die Raster-Reparatur (Schema 4):
+// formfeld startW 6, button startW 4, trenner startW 24 (Vollbreite).
+import '../blocks/formfeld/FormFeldBlock'
+import '../blocks/button/ButtonBlock'
+import '../blocks/trenner/TrennerBlock'
 import { BACKUP_KEY, Editor } from './Editor'
 import {
   registerTestBlocks,
@@ -343,6 +348,56 @@ describe('Migration (Schema 2: Root-Kanban nutzt die Maskenfläche)', () => {
       selectedId: null,
     })
     expect(ed.getNode('board')?.props.height).toBe(500)
+  })
+})
+
+describe('Migration (Schema 4: Reparatur der Riesen-Rahmen)', () => {
+  // Die erste (kaputte) Raster-Migration setzte JEDEN Block auf Vollbreite
+  // (rasterX=0, rasterW=24). Bei Nutzern mit Speicherstand auf Schema 3 heilt
+  // erst diese Folge-Migration die schmalen Bausteine wieder.
+  it('gibt schmalen Bausteinen die Startbreite zurück, Vollbreite bleibt, überlappungsfrei neu gestapelt', () => {
+    const ed = load({
+      schemaVersion: 3,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['ff', 'btn', 'tr'] },
+        ff: { id: 'ff', type: 'formfeld', props: { rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: [] },
+        btn: { id: 'btn', type: 'button', props: { rasterX: 0, rasterY: 3, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: [] },
+        tr: { id: 'tr', type: 'trenner', props: { rasterX: 0, rasterY: 6, rasterW: 24, rasterH: 1 }, parentId: 'root', childIds: [] },
+      },
+      selectedId: null,
+    })
+    // Schmale Bausteine bekommen ihre Registry-Startbreite zurück …
+    expect(ed.getNode('ff')?.props.rasterW).toBe(6)
+    expect(ed.getNode('btn')?.props.rasterW).toBe(4)
+    // … der zu Recht volle Trenner (Startbreite 24) bleibt Vollbreite.
+    expect(ed.getNode('tr')?.props.rasterW).toBe(24)
+    // Höhe: Schema 5 kappt die zu grosse Alt-Höhe auf die kalibrierte
+    // Registry-Starthöhe (formfeld 2); der Vollbreiten-Trenner bleibt 1 hoch.
+    expect(ed.getNode('ff')?.props.rasterH).toBe(2)
+    expect(ed.getNode('tr')?.props.rasterH).toBe(1)
+    // Überlappungsfrei untereinander gestapelt (x=0, y fortlaufend nach Höhe).
+    expect(ed.getNode('ff')?.props.rasterX).toBe(0)
+    expect(ed.getNode('ff')?.props.rasterY).toBe(0)
+    expect(ed.getNode('btn')?.props.rasterY).toBe(3)
+    expect(ed.getNode('tr')?.props.rasterY).toBe(6)
+  })
+
+  it('lässt bereits geheilte/frische Stände unberührt (idempotent)', () => {
+    const ed = load({
+      schemaVersion: 3,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'b'] },
+        // Schon schmal + frei platziert: kein Fehler-Muster → nichts anfassen.
+        a: { id: 'a', type: 'formfeld', props: { rasterX: 2, rasterY: 1, rasterW: 6, rasterH: 3 }, parentId: 'root', childIds: [] },
+        b: { id: 'b', type: 'button', props: { rasterX: 8, rasterY: 1, rasterW: 4, rasterH: 3 }, parentId: 'root', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('a')?.props.rasterX).toBe(2)
+    expect(ed.getNode('a')?.props.rasterY).toBe(1)
+    expect(ed.getNode('a')?.props.rasterW).toBe(6)
+    expect(ed.getNode('b')?.props.rasterX).toBe(8)
+    expect(ed.getNode('b')?.props.rasterW).toBe(4)
   })
 })
 

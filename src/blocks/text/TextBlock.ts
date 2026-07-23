@@ -71,6 +71,11 @@ export class TextBlock extends BasicBlock {
     text: 'Text',
   }
 
+  // Raster-Startgröße auf der Maskenfläche (im Browser gemessen 2026-07-23:
+  // eine Textzeile ~19px). Feste Zeilen (je 12px) → 2 Zellen = 32px, damit die
+  // Zeile nicht abschneidet. Mehr Text → Baustein größer ziehen.
+  static readonly raster = { startW: 6, startH: 2, minW: 1, minH: 1 }
+
   // Inspector: EINE Zeile „Text-Stil" (Groesse | Gewicht | Ausrichtung).
   // Der Text selbst laeuft ueber Inline-Edit, nicht ueber den Inspector.
   static override readonly customProperties: PropertyDescription[] = [

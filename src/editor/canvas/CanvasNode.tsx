@@ -1,8 +1,10 @@
 // CanvasNode
-// Rekursive Knoten-Darstellung der Arbeitsfläche (Aufräumen A3 — wörtlich
-// aus Canvas.tsx gezogen): geordnete Kinderliste mit Einfüge-Linie als
-// Drop-Vorschau und der Drag-Logik je Knoten (umsortieren, in Bereiche
-// hinein/heraus, Randzone = davor/dahinter, Mitte = hinein ans Ende).
+// Rekursive Knoten-Darstellung der Arbeitsfläche. Zwei Welten (V1-Schnitt,
+// s. rasterLayout): OBERSTE EBENE (raster=true) liegt im CSS-Grid und wird per
+// POINTER bewegt (rasterMove) — KEIN HTML5-draggable, das den Pointer-Zug
+// verschlucken würde. INNERHALB von Containern (raster=false, Spalte/Karte/
+// Zeile) gilt weiter der Fluss mit HTML5-Drag: umsortieren, in Bereiche hinein/
+// heraus, Randzone = davor/dahinter, Einfüge-Linie als Vorschau — unverändert.
 
 import { Fragment, type DragEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
@@ -15,10 +17,12 @@ import {
   resolveChildDirection,
   type FlowDirection,
 } from '../../core/blocks/flowLayout'
+import { parseRasterPos, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
 import { isNewBlockDrag, newBlockDragType } from './dnd'
 import { commitDrop, useDnd } from './dndState'
+import { ziehePosition } from './rasterMove'
 
 // Randzonen-Breite in px: so nah am Rand eines Bereichs gilt der Drop als
 // "davor/dahinter" (Geschwister), sonst als "hinein".
@@ -40,18 +44,28 @@ function InsertionLine({ direction }: { direction: FlowDirection }) {
 }
 
 // Geordnete Kinder eines Containers inkl. Einfüge-Linie an der Vorschau-Stelle.
-export function NodeList({ parentId, direction }: { parentId: string; direction: FlowDirection }) {
+// `raster` = die Kinder liegen auf einer Rasterfläche (oberste Ebene): dort
+// bestimmt die Zelle den Platz, nicht die Reihenfolge — es gibt keine Einfüge-
+// Linie (die Zell-Vorschau „Geist" rendert der Canvas), nur die Fluss-Liste in
+// Containern zeigt sie (kind:'flow').
+export function NodeList(
+  { parentId, direction, raster = false }:
+  { parentId: string; direction: FlowDirection; raster?: boolean },
+) {
   const ed = useEditor()
   const dnd = useDnd()
   const nodes = ed.childNodesOf(parentId)
   const lineAt = (i: number) =>
-    dnd.dropTarget?.parentId === parentId && dnd.dropTarget.index === i
+    !raster
+    && dnd.dropTarget?.kind === 'flow'
+    && dnd.dropTarget.parentId === parentId
+    && dnd.dropTarget.index === i
   return (
     <>
       {nodes.map((node, i) => (
         <Fragment key={node.id}>
           {lineAt(i) && <InsertionLine direction={direction} />}
-          <CanvasNode node={node} index={i} parentId={parentId} listDirection={direction} />
+          <CanvasNode node={node} index={i} parentId={parentId} listDirection={direction} raster={raster} />
         </Fragment>
       ))}
       {lineAt(nodes.length) && <InsertionLine direction={direction} />}
@@ -64,9 +78,12 @@ interface CanvasNodeProps {
   index: number
   parentId: string
   listDirection: FlowDirection
+  // true = der Block sitzt auf einer Rasterfläche (Zellen-Platzierung, Pointer-
+  // Bewegen); false = im Fluss eines Containers (HTML5-Drag).
+  raster?: boolean
 }
 
-function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
+function CanvasNode({ node, index, parentId, listDirection, raster = false }: CanvasNodeProps) {
   const ed = useEditor()
   const dnd = useDnd()
   const def = getBlockDefinition(node.type)
@@ -77,6 +94,7 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
   const invalidTarget = (targetParentId: string) =>
     dnd.dragId !== null && ed.isInSubtree(dnd.dragId, targetParentId)
 
+  // --- Fluss-Drag (nur in Containern, raster=false) — unverändert HTML5 ---
   const onDragStart = (e: DragEvent) => {
     e.stopPropagation()
     dnd.setDragId(node.id)
@@ -111,11 +129,11 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
         ? e.clientX > rect.right - CONTAINER_EDGE
         : e.clientY > rect.bottom - CONTAINER_EDGE
       if (!before && !after) {
-        dnd.setDropTarget({ parentId: node.id, index: ed.childNodesOf(node.id).length })
+        dnd.setDropTarget({ kind: 'flow', parentId: node.id, index: ed.childNodesOf(node.id).length })
         return
       }
       if (invalidTarget(parentId) || !allowedIn(parentType)) return dnd.setDropTarget(null)
-      dnd.setDropTarget({ parentId, index: before ? index : index + 1 })
+      dnd.setDropTarget({ kind: 'flow', parentId, index: before ? index : index + 1 })
       return
     }
 
@@ -123,9 +141,40 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
     const after = listDirection === 'row'
       ? e.clientX > rect.left + rect.width / 2
       : e.clientY > rect.top + rect.height / 2
-    dnd.setDropTarget({ parentId, index: after ? index + 1 : index })
+    dnd.setDropTarget({ kind: 'flow', parentId, index: after ? index + 1 : index })
   }
 
+  // Der Baustein selbst (BlockHost) + rekursive Kinder — in beiden Welten gleich.
+  // Auswahl = Aufklapp-Auswahl (selectDrillDown): ein Klick wählt zuerst den
+  // obersten Baustein, der nächste steigt eine Ebene tiefer (Regel Step 4).
+  const inhalt = (
+    <BlockHost
+      block={node}
+      selected={ed.selectedId === node.id}
+      onSelect={() => ed.selectDrillDown(node.id)}
+      raster={raster}
+    >
+      {isContainer && <NodeList parentId={node.id} direction={childDirection} />}
+    </BlockHost>
+  )
+
+  // Rasterfläche: Zelle bestimmt Platz+Größe (rasterItemStyle, DIESELBE Quelle
+  // wie der Export). Bewegt wird per Pointer (ziehePosition) — KEIN draggable.
+  if (raster) {
+    return (
+      <div
+        onPointerDown={(e) => ziehePosition(ed, dnd, e, node, parentId)}
+        style={{
+          opacity: dnd.dragId === node.id ? 0.4 : 1,
+          ...rasterItemStyle(parseRasterPos(node.props)),
+        }}
+      >
+        {inhalt}
+      </div>
+    )
+  }
+
+  // Fluss (in Containern): Breite + Höhe wie bisher, HTML5-Drag unverändert.
   return (
     <div
       draggable
@@ -139,18 +188,11 @@ function CanvasNode({ node, index, parentId, listDirection }: CanvasNodeProps) {
       onDragEnd={dnd.reset}
       style={{
         opacity: dnd.dragId === node.id ? 0.4 : 1,
-        // Breite + Höhe im Fluss: dieselbe Logik, die der Export benutzt.
         ...flowItemStyle(parseFlowWidth(node.props.width), listDirection, def?.lockedWidth),
         ...flowItemHeightStyle(parseFlowHeight(node.props.height), listDirection),
       }}
     >
-      <BlockHost
-        block={node}
-        selected={ed.selectedId === node.id}
-        onSelect={() => ed.selectBlock(node.id)}
-      >
-        {isContainer && <NodeList parentId={node.id} direction={childDirection} />}
-      </BlockHost>
+      {inhalt}
     </div>
   )
 }

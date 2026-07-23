@@ -22,7 +22,7 @@ export interface ReferenzMaske {
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'p1'] },
-    z1: { id: 'z1', type: 'zeile', props: { width: 'fill' }, parentId: 'root', childIds: ['datum1', 'knopf'] },
+    z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
     datum1: { id: 'datum1', type: 'datum', props: { zeigt: 'datum' }, parentId: 'z1', childIds: [] },
     knopf: {
       id: 'knopf', type: 'button', props: { label: 'Nachfaß öffnen — ätsch' }, parentId: 'z1', childIds: [],
@@ -34,7 +34,8 @@ export function referenzMaske(): ReferenzMaske {
       },
     },
     board: {
-      id: 'board', type: 'kanban', props: { source: 'q-termine', statusField: '20_10', height: 'fill' },
+      id: 'board', type: 'kanban',
+      props: { source: 'q-termine', statusField: '20_10', height: 'fill', rasterX: 0, rasterY: 3, rasterW: 24, rasterH: 20 },
       parentId: 'root', childIds: ['sp1', 'sp2', 'sp3'],
       events: {
         onCardDrop: [{
@@ -61,7 +62,10 @@ export function referenzMaske(): ReferenzMaske {
     sp2: { id: 'sp2', type: 'kanban-spalte', props: { heading: 'Erledigt' }, parentId: 'board', childIds: [] },
     sp3: { id: 'sp3', type: 'kanban-spalte', props: { heading: 'Auffang', auffang: 'ja' }, parentId: 'board', childIds: [] },
     feld: {
-      id: 'feld', type: 'formfeld', props: { label: 'Tiername', source: 'q-adressen', valueField: '10_30' },
+      id: 'feld', type: 'formfeld',
+      // Bewusst eingerückt + halbe Breite: der Byte-Wächter sichert damit auch
+      // x != 0 / w != volle Breite ab (nicht nur den Trivialfall untereinander).
+      props: { label: 'Tiername', source: 'q-adressen', valueField: '10_30', rasterX: 6, rasterY: 23, rasterW: 12, rasterH: 3 },
       parentId: 'root', childIds: [],
       events: {
         onChange: [{

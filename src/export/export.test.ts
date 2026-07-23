@@ -30,8 +30,10 @@ registerTestBlocks()
 function demoTree(): BlockTree {
   return {
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'c1'] },
-    t1: { id: 't1', type: TEST_BLOCK, props: { text: 'Übersicht — Empfang', width: 'auto' }, parentId: 'root', childIds: [] },
-    c1: { id: 'c1', type: TEST_BOX, props: { direction: 'row', width: 'fill' }, parentId: 'root', childIds: ['t2'] },
+    // Wurzel-Kinder liegen auf dem Raster (Position/Größe als Zellen).
+    t1: { id: 't1', type: TEST_BLOCK, props: { text: 'Übersicht — Empfang', width: 'auto', rasterX: 0, rasterY: 0, rasterW: 12, rasterH: 2 }, parentId: 'root', childIds: [] },
+    c1: { id: 'c1', type: TEST_BOX, props: { direction: 'row', width: 'fill', rasterX: 0, rasterY: 2, rasterW: 24, rasterH: 4 }, parentId: 'root', childIds: ['t2'] },
+    // t2 liegt IM Container c1 → weiterhin Fluss (flowItemStyle).
     t2: { id: 't2', type: TEST_BLOCK, props: { text: 'Spalte', width: 240 }, parentId: 'c1', childIds: [] },
   }
 }
@@ -63,18 +65,35 @@ describe('exportMask', () => {
     expect(html).toContain('text="Spalte"')
   })
 
-  it('Breite wirkt als Flex-Item-Style (dieselbe flowLayout-Quelle)', () => {
+  it('Fluss-Breite in Containern wirkt als Flex-Item-Style; Wurzel-Kinder als Grid-Item', () => {
     const { html } = exportMask(demoTree())
-    expect(html).toContain('style="width:240px;flex-shrink:0"') // width fest
-    expect(html).toContain('align-self:stretch')                 // fill in Spalte
+    // Fluss INNERHALB eines Containers (t2 fest 240px in der Zeile c1) — die
+    // flowLayout-Quelle gilt dort unverändert.
+    expect(html).toContain('style="width:240px;flex-shrink:0"')
+    // Raster-Ebene (direkte Wurzel-Kinder): Platz + Größe als grid-column/row
+    // aus der rasterLayout-Quelle (dieselbe wie der Canvas).
+    expect(html).toContain('grid-column:1 / span 12') // t1 (x0/w12)
+    expect(html).toContain('grid-row:3 / span 4')      // c1 (y2/h4)
   })
 
-  it('exportiert eine Vollbildhülle und fill als verbleibende Höhe', () => {
-    const tree = demoTree()
-    tree.c1.props.height = 'fill'
-    const { html } = exportMask(tree)
+  it('exportiert eine Vollbildhülle; die Wurzel ist die Rasterfläche (Grid)', () => {
+    const { html } = exportMask(demoTree())
     expect(html).toContain('html, body { width: 100%; height: 100%;')
     expect(html).toContain('.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto;')
+    // Wurzel = CSS-Grid mit fester Spaltenzahl (rasterFlaecheStyle) statt Flex.
+    expect(html).toContain('display:grid')
+    expect(html).toContain('grid-template-columns:repeat(24, 1fr)')
+  })
+
+  it('fill-Höhe wirkt in einer Spalte als flex-grow (Fluss lebt in Containern weiter)', () => {
+    // Der Fluss lebt INNERHALB von Containern: ein height:fill-Kind in einer
+    // Spalte nimmt die verbleibende Höhe (flowItemHeightStyle, unverändert).
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['box'] },
+      box: { id: 'box', type: TEST_BOX, props: { direction: 'column', width: 'fill' }, parentId: 'root', childIds: ['kind'] },
+      kind: { id: 'kind', type: TEST_BLOCK, props: { text: 'x', height: 'fill' }, parentId: 'box', childIds: [] },
+    }
+    const { html } = exportMask(tree)
     expect(html).toContain('flex-grow:1;flex-basis:0;min-height:0')
   })
 

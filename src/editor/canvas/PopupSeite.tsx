@@ -82,7 +82,7 @@ export function PopupSeite({ popupId }: { popupId: string }) {
         // Freie Fläche der Popup-Seite: Drop ans Ende des Popup-Rumpfs.
         if (dnd.dragId === null && !isNewBlockDrag(e.dataTransfer)) return
         e.preventDefault()
-        dnd.setDropTarget({ parentId: node.id, index: ed.childNodesOf(node.id).length })
+        dnd.setDropTarget({ kind: 'flow', parentId: node.id, index: ed.childNodesOf(node.id).length })
       }}
       onDrop={(e) => {
         e.preventDefault()

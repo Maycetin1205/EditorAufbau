@@ -36,6 +36,11 @@ import {
   type FlowDirection,
   type FlowWidth,
 } from '../core/blocks/flowLayout'
+import {
+  parseRasterPos,
+  rasterFlaecheStyle,
+  rasterItemStyle,
+} from '../core/blocks/rasterLayout'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import {
@@ -52,6 +57,12 @@ import {
 // verdrahten. Der EditorPfad-Platzhalter wird von SoftEngine aufgelöst.
 const SE_INTERFACE_SCRIPT = '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>'
 
+// Layout-Props reisen NICHT als Element-Attribut, sondern als style (Fluss:
+// width/height über flowItemStyle; Raster: rasterX/Y/W/H über rasterItemStyle
+// = grid-column/row). Ohne diese Ausnahme landeten sie doppelt und unnütz als
+// rasterx="0" … im Markup.
+const LAYOUT_ATTR_AUSNAHME = new Set(['width', 'height', 'rasterX', 'rasterY', 'rasterW', 'rasterH'])
+
 export interface MaskExport {
   html: string
   sevariablen: string
@@ -61,19 +72,39 @@ export interface MaskExport {
 // (Zeichen-Regeln — ASCII-Escaping, Skript-Schutz, CSS-Bereinigung —
 // wohnen seit A6 im serializer; hier entstehen Markup und Reihenfolge.)
 
+// camelCase-Style-Objekt → CSS-Deklarationen (kebab-case). EINE Stelle für
+// das Block-style-Attribut UND die Wurzel-Grid-Regel.
+function styleToCss(style: Record<string, string | number>): string {
+  return Object.entries(style)
+    .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
+    .join(';')
+}
+
+// Layout-Style eines Blocks als HTML-style-Attribut — DIESELBE Quelle wie der
+// Canvas-Wrapper (WYSIWYG). Auf der Rasterebene (direkte Wurzel-Kinder)
+// bestimmt die Zelle Platz+Größe (rasterItemStyle); Popup-Overlays (pageBlock)
+// positionieren sich selbst über position:absolute (kein Layout-Style);
+// INNERHALB von Containern gilt weiter der Fluss (flowItemStyle).
 function styleAttr(
   node: BlockNode,
   parentDirection: FlowDirection,
-  lockedWidth?: FlowWidth,
+  lockedWidth: FlowWidth | undefined,
+  rasterEbene: boolean,
+  istPage: boolean,
 ): string {
-  const style = {
-    ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
-    // Feste Höhe (P1.3) — DIESELBE Quelle wie der Canvas-Wrapper.
-    ...flowItemHeightStyle(parseFlowHeight(node.props.height), parentDirection),
+  let style: Record<string, string | number>
+  if (istPage) {
+    style = {}
+  } else if (rasterEbene) {
+    style = rasterItemStyle(parseRasterPos(node.props))
+  } else {
+    style = {
+      ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
+      // Feste Höhe (P1.3) — DIESELBE Quelle wie der Canvas-Wrapper.
+      ...flowItemHeightStyle(parseFlowHeight(node.props.height), parentDirection),
+    }
   }
-  const css = Object.entries(style)
-    .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
-    .join(';')
+  const css = styleToCss(style)
   return css ? ` style="${escapeHtmlAttr(css)}"` : ''
 }
 
@@ -98,6 +129,10 @@ function nodeToHtml(
   // EINMAL in exportMask, die Rekursion reicht ihn nur durch.
   popupName: (id: string) => string,
   templateCtx?: TemplateCtx,
+  // true = dieser Knoten liegt auf der Raster-Ebene (direktes Wurzel-Kind der
+  // Hauptseite). Die Rekursion in Container/Popups reicht false weiter (Fluss);
+  // die Popup-Innenfläche folgt in einer späteren Etappe.
+  rasterEbene = false,
 ): string {
   const def = getBlockDefinition(node.type)
   if (!def) return '' // unbekannte Typen exportieren wir nicht (sanitize verhindert das ohnehin)
@@ -110,10 +145,11 @@ function nodeToHtml(
   }
 
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
-  // width/height werden NICHT als Attribut exportiert — sie wirken als
-  // style aufs Flex-Item (styleAttr, dieselbe flowLayout-Quelle wie Canvas).
+  // Layout-Props (width/height im Fluss, rasterX/Y/W/H auf dem Raster) werden
+  // NICHT als Attribut exportiert — sie wirken als style aufs Item (styleAttr,
+  // dieselbe flowLayout/rasterLayout-Quelle wie der Canvas).
   const attrs = Object.keys(def.defaultProps)
-    .filter((key) => key !== 'width' && key !== 'height')
+    .filter((key) => !LAYOUT_ATTR_AUSNAHME.has(key))
     .map((key) => {
       const value = node.props[key] ?? def.defaultProps[key]
       return ` ${key.toLowerCase()}="${escapeHtmlAttr(String(value ?? ''))}"`
@@ -131,7 +167,11 @@ function nodeToHtml(
     ? ` ${ACTION_VALUE_ID_ATTR}="${escapeHtmlAttr(node.id)}"`
     : ''
 
-  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${styleAttr(node, parentDirection, def.lockedWidth)}>`
+  // Rasterflaeche: das Wurzel-Kind fuellt seine Zelle (DIESELBE Marke wie im
+  // Editor, useLitElement/'fuellt') — sein Baustein-CSS streckt den Inhalt auf
+  // die Zellhoehe. Popup-Overlays (pageBlock) sind kein Rasterkind.
+  const fuelltAttr = rasterEbene && def.pageBlock !== true ? ' fuellt' : ''
+  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${fuelltAttr}${styleAttr(node, parentDirection, def.lockedWidth, rasterEbene, def.pageBlock === true)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }
@@ -243,7 +283,8 @@ export function exportMask(
   const blocks = (root?.childIds ?? [])
     .map((id) => tree[id])
     .filter((n): n is BlockNode => Boolean(n))
-    .map((n) => nodeToHtml(tree, n, 'column', 2, popupName))
+    // Direkte Wurzel-Kinder = Raster-Ebene (rasterEbene=true).
+    .map((n) => nodeToHtml(tree, n, 'column', 2, popupName, undefined, true))
     .join('\n')
 
   const used = collectDataSources(tree, sources)
@@ -297,10 +338,10 @@ export function exportMask(
     '<style>',
     tokensCss,
     '',
-    '/* Grundgeruest + Wurzel-Fluss (identisch zum Editor-Canvas, ROOT_FLOW) */',
+    '/* Grundgeruest + Wurzel-Raster (identisch zum Editor-Canvas, rasterFlaecheStyle) */',
     'html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }',
     'body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); color: var(--se-ink); }',
-    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; display: flex; flex-direction: column; align-items: flex-start; gap: ${ROOT_FLOW.gap}px; padding: ${ROOT_FLOW.padding}px; }`,
+    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; ${styleToCss(rasterFlaecheStyle())}; padding: ${ROOT_FLOW.padding}px; }`,
     '</style>',
     '</head>',
     '<body>',

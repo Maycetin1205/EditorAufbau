@@ -21,7 +21,11 @@ Vorgänger: Repo `react--app` (funktioniert, aber unwartbar) = **nur
 Funktions-Checkliste**, nie Code- oder Optik-Vorlage. SoftEngine-Wahrheit:
 echte Referenzmasken-Paare eingecheckt in `docs/chef-maske/` (empfang +
 behandlung — Zielklasse des Baukastens, Originalquellen für Regel 5;
-belegen auch ERPAPICALL + Stamm-Quellen ADR/ART/BEL); vertieft
+belegen auch ERPAPICALL + Stamm-Quellen ADR/ART/BEL). **Wichtig
+(Nutzer-Klarstellung 2026-07-23):** diese Masken LAUFEN echt in SoftEngine
+(darum bleibt der Kontrakt-Beleg für Anschluss/ERPAPICALL/Stamm gültig),
+sind aber KI-gebaut — als Layout-/Bauart- oder Optik-Vorbild UNGEEIGNET
+(Regel 5 gilt nur für die SE-Kontrakte, nicht für Aufbau/Aussehen). Vertieft
 dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
 
 ## Die 10 Architektur-Regeln
@@ -380,18 +384,23 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    sind gebaut. Beim ersten Nutzerexport fehlte wegen Runtime-Build/HMR-Race
    das ganze Bundle (HTML unsichtbar): Runtime-Build leert den Zielordner
    nicht mehr, Validator blockt leere Runtime jetzt ausdrücklich.
-   **Aktuelle Reihenfolge:** Tabelle → Größen-Paket.
-   **Offen — Größen-Paket** „Höhe an jedem Baustein ziehbar + Startgrößen"
-   (erfüllt Tobis GridComponent-Skizze wörtlich). **Grundsatz-Entscheidung
-   2026-07-22 (Nutzer, nach Skizzen-Abgleich):** das Fundament bleibt
-   Fluss/Nachrücken — Tobis Skizze fordert nur einstellbare GRÖSSEN, keine
-   festen Plätze; freies Raster nur, falls je ein echter Fall es erzwingt
-   (Preisschild: Canvas-Neubau).
-4. **Tabelle** (der große fehlende Baustein). VORHER die Grundsatzfrage
-   freies Raster vs. Fluss-Layout mit dem Nutzer entscheiden — das
-   **Chef-Modell liegt seit 2026-07-20 vor** (Notiz-Fotos lokal beim
-   Nutzer, `docs/Test-note*`, bewusst NICHT eingecheckt, s. .gitignore):
-   `GridComponent` mit fester Breite×Höhe = freies Raster;
+   **Aktuelle Reihenfolge:** Raster-Canvas/Größen-Paket (jetzt) → Tabelle.
+   **Größen-Paket → GEHT IM RASTER-PAKET AUF** (Nutzer-Entscheidung
+   2026-07-23): „Höhe/Breite an jedem Baustein ziehbar + Startgrößen" ist
+   Teil des Raster-Canvas (Plan `docs/1-plans/raster-canvas.plan.md`), kein
+   eigenes Paket mehr. **Grundsatz-Entscheidung 2026-07-23 ERSETZT die vom
+   2026-07-22:** die Maskenfläche wird ein Raster mit Einrasten (Retool-
+   „Lego"), NICHT mehr reiner Fluss — der echte Fall (Regel 10) ist da, vom
+   Nutzer wörtlich benannt (frei bewegen, Größe ändern, nebeneinander
+   packen, platzieren wie ich will). Spalten wachsen mit dem SE-Fenster
+   (1fr, responsiv — SE zeigt die Maske in einem mitwachsenden Rahmen),
+   Zeilenhöhe fest. Stand: gebaut, SE-Sichtprüfung Layout bestanden
+   2026-07-23; volle Bedien-Abnahme + großer SE-Echttest (E4) stehen aus.
+4. **Tabelle** (der große fehlende Baustein). Die Grundsatzfrage freies
+   Raster vs. Fluss ist ENTSCHIEDEN (Raster, 2026-07-23) — die Tabelle
+   kommt als Raster-Block. Das **Chef-Modell** (Notiz-Fotos lokal beim
+   Nutzer, `docs/Test-note*`, bewusst NICHT eingecheckt, s. .gitignore)
+   bleibt die Vorlage: `GridComponent` mit fester Breite×Höhe;
    `PropertyDescription`-Eigenschafts-Registry (deckungsgleich mit
    Regel 2); Beispiel `KanbanBoard` 500×200 mit Swimlane-Status
    „Offen/Bearbeitet/Geschlossen".

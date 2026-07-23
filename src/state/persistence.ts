@@ -9,7 +9,10 @@ import { sanitizeBlockEvents } from '../core/data/aktionen'
 import {
   CURRENT_SCHEMA_VERSION,
   migrateFlatBlocks,
+  migrateFlowToRaster,
   migrateKanbanVorlage,
+  migrateRasterBreitenReparatur,
+  migrateRasterHoehenReset,
   migrateRootKanbanToViewportFill,
   putzeAlteKartenDemos,
 } from './migrations'
@@ -139,10 +142,21 @@ export function loadFromStorage(): LoadedState | null {
       backupUnreadableState(raw)
       return null
     }
+    // Gestufte Migrationen: jede läuft nur beim Aufstieg über IHRE
+    // Schwellenversion, damit ein schon migrierter Stand nicht erneut
+    // umgeschrieben wird (z. B. bewusst gesetzte Kanban-Pixelhöhen aus Schema 2
+    // rührt die 1→2-Migration nicht mehr an).
     const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-    const migrated = schemaVersion < CURRENT_SCHEMA_VERSION
-      ? migrateRootKanbanToViewportFill(tree)
-      : false
+    let migrated = false
+    if (schemaVersion < 2) migrated = migrateRootKanbanToViewportFill(tree) || migrated
+    if (schemaVersion < 3) migrated = migrateFlowToRaster(tree) || migrated
+    // Schema 4: heilt die Riesen-Rahmen aus der ersten (kaputten) Raster-
+    // Migration bei Nutzern, deren Speicher schon auf Schema 3 stand.
+    if (schemaVersion < 4) migrated = migrateRasterBreitenReparatur(tree) || migrated
+    // Schema 5: setzt zu grosse Alt-Starthoehen (aus der ersten Raster-
+    // Migration) auf die neuen, engen Registry-Starthoehen zurueck — jetzt, wo
+    // der Baustein seine Zelle fuellt, liegt der Rahmen damit eng am Inhalt.
+    if (schemaVersion < 5) migrated = migrateRasterHoehenReset(tree) || migrated
     if (verworfen.size > 0 && typeof alert === 'function') {
       const anzahl = [...verworfen.values()].reduce((a, b) => a + b, 0)
       const typen = [...verworfen.keys()].map((t) => `"${t}"`).join(', ')

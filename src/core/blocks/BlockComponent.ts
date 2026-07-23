@@ -14,6 +14,7 @@ import type {
   DefaultChildSpec,
 } from './BlockDefinition'
 import type { FlowDirection, FlowWidth } from './flowLayout'
+import type { RasterSpec } from './rasterLayout'
 import type { PropertyDescription } from './PropertyDescription'
 
 export type BlockCategory = 'eingabe' | 'anzeige' | 'layout'
@@ -63,5 +64,7 @@ export interface BlockComponentStatic {
   readonly blockEvents?: readonly BlockEventSpec[]
   // Seiten-Baustein (Popup, P-A) — Bedeutung siehe BlockDefinition.
   readonly pageBlock?: boolean
+  // Raster-Start-/Mindestgröße (opt-in) — Bedeutung siehe BlockDefinition.
+  readonly raster?: Partial<RasterSpec>
   new(): BlockComponent
 }

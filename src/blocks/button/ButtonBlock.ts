@@ -23,6 +23,9 @@ export class ButtonBlock extends BasicBlock {
   // Ereignis der Schaltfläche (Kommandozentrale Z1): „Klick" — Technikwert
   // onClick wie im alten Editor; Aktionsketten hängen ab Z2 daran.
   static readonly blockEvents = [{ key: 'onClick', name: 'Klick' }]
+  // Raster-Startgröße auf der Maskenfläche (kalibriert im Browser 2026-07-23):
+  // kompakter Knopf, Zelle eng am Inhalt.
+  static readonly raster = { startW: 4, startH: 2, minW: 2, minH: 2 }
 
   // Keine Inspector-Felder: die Beschriftung wird per Doppelklick direkt auf dem
   // Button bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
@@ -48,6 +51,10 @@ export class ButtonBlock extends BasicBlock {
       }
       button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
+      /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
+         groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt
+         er naturgross. */
+      :host([fuellt]) button { width: 100%; height: 100%; }
     `,
   ]
 

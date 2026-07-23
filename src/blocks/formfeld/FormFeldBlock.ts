@@ -87,6 +87,10 @@ export class FormFeldBlock extends BasicBlock {
     valueField: '',
   }
 
+  // Raster-Startgröße auf der Maskenfläche (kalibriert im Browser 2026-07-23):
+  // ein Eingabefeld, Zelle eng am Inhalt.
+  static readonly raster = { startW: 6, startH: 2, minW: 2, minH: 2 }
+
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'fieldType',
@@ -221,6 +225,12 @@ export class FormFeldBlock extends BasicBlock {
       /* N1: in der MASKE schaltet die Beschriftung den Haken (Windows-
          Gewohnheit) — klickbar zeigen, Textauswahl beim Klicken vermeiden. */
       :host(:not([data-ff-editor])) .zeile .text { cursor: pointer; user-select: none; }
+      /* Rasterflaeche: das Eingabefeld fuellt seine Zelle in Breite und Hoehe
+         (Ziehen macht das FELD groesser). Nur die Text-artigen Felder in der
+         .huelle strecken sich; das Ankreuzfeld (.zeile) bleibt 15px. */
+      :host([fuellt]) .feld,
+      :host([fuellt]) .huelle { height: 100%; }
+      :host([fuellt]) .huelle .ctrl { height: 100%; }
     `,
   ]
 

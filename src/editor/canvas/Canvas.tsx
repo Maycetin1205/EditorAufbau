@@ -16,10 +16,12 @@
 import { MousePointerClick } from 'lucide-react'
 import { useMemo, useState, type DragEvent } from 'react'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
+import { rasterFlaecheStyle, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { NodeList } from './CanvasNode'
 import { isNewBlockDrag } from './dnd'
 import { commitDrop, DndContext, type DndState, type DropTarget } from './dndState'
+import { rasterZiel } from './rasterDnd'
 import { PopupSeite } from './PopupSeite'
 
 export function Canvas() {
@@ -38,11 +40,14 @@ export function Canvas() {
     },
   }), [dragId, dropTarget])
 
-  // Freie Fläche unter den Blöcken: Drop ans Ende der Wurzel.
-  const onCanvasDragOver = (e: DragEvent) => {
+  // Rasterfläche: die Zielzelle unter dem Zeiger bestimmen (Bibliothek-Drag oder
+  // Block aus einem Container) — das ersetzt die frühere Einfüge-Linie „ans Ende
+  // der Wurzel". null = kein gültiges Ziel (Typ passt nicht). Das POINTER-Bewegen
+  // vorhandener Rasterblöcke läuft NICHT hierüber (rasterMove).
+  const onGridDragOver = (e: DragEvent) => {
     if (dragId === null && !isNewBlockDrag(e.dataTransfer)) return
     e.preventDefault()
-    setDropTarget({ parentId: ed.rootId, index: ed.childNodesOf(ed.rootId).length })
+    setDropTarget(rasterZiel(e, ed, dnd, ed.rootId, e.currentTarget as HTMLElement))
   }
 
   // Aktive Seite (P-A): Hauptseite = Wurzel-Fluss; Popup-Seite = das eine
@@ -68,17 +73,18 @@ export function Canvas() {
           }}
         >
           <div
-            // Wurzel-Fluss aus ROOT_FLOW — dieselben Werte benutzt der Export.
-            // Hintergrund = Masken-Grundfarbe (--se-bg), NICHT Editor-Chrome:
-            // die Fläche zeigt die Maske, wie sie exportiert wird (WYSIWYG).
-            className="flex h-full min-h-0 flex-col items-start overflow-auto"
+            // Wurzel = Rasterfläche (CSS-Grid): dieselben Werte benutzt der
+            // Export (rasterFlaecheStyle) — WYSIWYG. Außen-Padding weiter aus
+            // ROOT_FLOW. Hintergrund = Masken-Grundfarbe (--se-bg), NICHT
+            // Editor-Chrome: die Fläche zeigt die Maske, wie sie exportiert wird.
+            className="h-full min-h-0 overflow-auto"
             style={{
-              gap: ROOT_FLOW.gap,
+              ...rasterFlaecheStyle(),
               padding: ROOT_FLOW.padding,
               boxSizing: 'border-box',
               background: 'var(--se-bg)',
             }}
-            onDragOver={onCanvasDragOver}
+            onDragOver={onGridDragOver}
             onDrop={(e) => {
               e.preventDefault()
               commitDrop(e, ed, dnd)
@@ -90,7 +96,28 @@ export function Canvas() {
               }
             }}
           >
-            {hauptseite && <NodeList parentId={ed.rootId} direction="column" />}
+            {hauptseite && <NodeList parentId={ed.rootId} direction="column" raster />}
+            {/* „Geist" (E2/E3): halbtransparente Vorschau der Zielzelle beim
+                Bewegen (rasterMove) UND beim Einfügen aus der Bibliothek — rastet
+                auf ganze Zellen. Reine Editor-Hilfe, nie Teil des Baums. */}
+            {hauptseite && dropTarget?.kind === 'raster' && dropTarget.parentId === ed.rootId && (
+              <div
+                aria-hidden
+                data-ff-editor-helper
+                style={{
+                  ...rasterItemStyle({
+                    x: dropTarget.x,
+                    y: dropTarget.y,
+                    w: dropTarget.w,
+                    h: dropTarget.h,
+                  }),
+                  pointerEvents: 'none',
+                  background: 'hsl(var(--ring) / 0.16)',
+                  border: '2px dashed hsl(var(--ring))',
+                  borderRadius: 4,
+                }}
+              />
+            )}
           </div>
           {/* Leerzustand (R1): sagt, was zu tun ist — reine Editor-Hilfe,
               nie Teil des Baums; pointer-events-none lässt Drops durch. */}

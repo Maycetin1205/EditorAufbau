@@ -41,6 +41,10 @@ interface LitElementArgs {
   selected: boolean | undefined
   bindableSpots: readonly BindableSpot[]
   dataSource: DataSource | undefined
+  // true = der Block sitzt auf einer Rasterflaeche (oberste Ebene / Popup-
+  // Rumpf): das Element bekommt das Attribut 'fuellt', damit sein Baustein-CSS
+  // die Zelle fuellt (DIESELBE Marke setzt der Export am Wurzel-Kind, WYSIWYG).
+  raster: boolean
 }
 
 export function useLitElement({
@@ -50,6 +54,7 @@ export function useLitElement({
   selected,
   bindableSpots,
   dataSource,
+  raster,
 }: LitElementArgs) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
@@ -124,7 +129,11 @@ export function useLitElement({
       }
     }
     elAny.editable = !!selected
-  }, [element, block.type, block.props, selected, bindableSpots, dataSource])
+    // Rasterflaeche: 'fuellt' schaltet das Fuell-CSS des Bausteins frei
+    // (:host([fuellt]) — der sichtbare Inhalt fuellt die Zelle). In Containern
+    // (raster=false) bleibt es aus, der Baustein behaelt seine Naturgroesse.
+    el.toggleAttribute('fuellt', !!raster)
+  }, [element, block.type, block.props, selected, bindableSpots, dataSource, raster])
 
   return { containerRef, elementRef, element }
 }

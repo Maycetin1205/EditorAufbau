@@ -25,6 +25,7 @@ import type { BlockComponent, BlockComponentStatic } from '../../core/blocks/Blo
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { registerBlockType } from '../../core/blocks/blockRegistry'
 import { FLOW_DEFAULTS } from '../../core/blocks/flowLayout'
+import { RASTER_DEFAULTS } from '../../core/blocks/rasterLayout'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
   // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
@@ -36,6 +37,14 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
   // der BlockHost (wie data-editable), im Export bleibt die Maske sauber.
   static override styles: CSSResultGroup = css`
     :host { display: block; }
+    /* Rasterflaeche (Attribut 'fuellt' — im Editor von useLitElement gesetzt,
+       im Export vom Wurzel-Kind): der Baustein fuellt seine Zelle in der Hoehe
+       (die Breite fuellt display:block ohnehin). NUR auf der Maskenflaeche
+       gesetzt — in Containern (Fluss) fehlt das Attribut, der Baustein behaelt
+       seine Naturgroesse. Editor UND Export setzen es identisch (WYSIWYG,
+       Regel 1); je Baustein-CSS fuellt der sichtbare Inhalt (Knopf/Feld) dann
+       die Hostflaeche. */
+    :host([fuellt]) { height: 100%; box-sizing: border-box; }
     [data-ff-editable] { cursor: text; }
     :host(:not([data-editable])) [data-ff-editable] { cursor: inherit; }
     :host([data-ff-editor]) [data-ff-bound] {
@@ -138,9 +147,10 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       tagName: BlockClass.tagName,
       displayName: BlockClass.displayName,
       category: BlockClass.category,
-      // Universelle Flow-Props (width) liegen unter den Block-Defaults,
-      // damit Persistenz sie kennt; Block-eigene Defaults gewinnen.
-      defaultProps: { ...FLOW_DEFAULTS, ...BlockClass.defaultProps },
+      // Universelle Flow-Props (width) UND Raster-Props (rasterX/Y/W/H) liegen
+      // unter den Block-Defaults, damit Persistenz sie kennt; Block-eigene
+      // Defaults gewinnen.
+      defaultProps: { ...FLOW_DEFAULTS, ...RASTER_DEFAULTS, ...BlockClass.defaultProps },
       customProperties: BlockClass.customProperties,
       acceptsChildren: BlockClass.acceptsChildren ?? false,
       resizableWidth: BlockClass.resizableWidth ?? true,
@@ -160,6 +170,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       bindingRoute: BlockClass.bindingRoute,
       blockEvents: BlockClass.blockEvents,
       pageBlock: BlockClass.pageBlock,
+      raster: BlockClass.raster,
     })
   }
 }

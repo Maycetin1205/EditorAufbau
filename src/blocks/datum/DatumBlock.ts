@@ -30,6 +30,11 @@ export class DatumBlock extends BasicBlock {
     valueField: '',
   }
 
+  // Raster-Startgröße auf der Maskenfläche (im Browser gemessen 2026-07-23:
+  // Haupt- + Nebenzeile ~36px). Feste Zeilen (je 12px) → 3 Zellen = 52px, damit
+  // beide Zeilen hineinpassen.
+  static readonly raster = { startW: 4, startH: 3, minW: 2, minH: 2 }
+
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'zeigt',

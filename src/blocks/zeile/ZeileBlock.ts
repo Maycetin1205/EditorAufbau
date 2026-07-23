@@ -31,6 +31,9 @@ export class ZeileBlock extends BasicBlock {
   // Volle Breite als Standard: die Zeile verteilt die Maskenbreite unter
   // ihren Kindern (jedes Kind behaelt sein eigenes Breitenverhalten).
   static readonly defaultProps = { width: 'fill' }
+  // Raster-Startgröße auf der Maskenfläche (kalibriert im Browser 2026-07-23):
+  // volle Breite, nimmt Bausteine nebeneinander auf.
+  static readonly raster = { startW: 24, startH: 2, minW: 2, minH: 1 }
   static override readonly customProperties: PropertyDescription[] = []
 
   static styles = [
@@ -47,6 +50,9 @@ export class ZeileBlock extends BasicBlock {
         min-width: 0;
       }
       .zeile slot { display: contents; }
+      /* Rasterflaeche: die Zeile fuellt ihre Zelle in der Hoehe; die Kinder
+         bleiben oben (flex-start) und behalten ihre Naturhoehe. */
+      :host([fuellt]) .zeile { height: 100%; }
     `,
   ]
 

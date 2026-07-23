@@ -67,6 +67,9 @@ export class KanbanBlock extends BasicBlock {
     width: 'fill', height: 'fill' as const,
     source: '', statusField: '',
   }
+  // Raster-Startgröße auf der Maskenfläche (kalibrierbar): das Board ist die
+  // grosse Hauptfläche seiner Maske (breit + hoch).
+  static readonly raster = { startW: 24, startH: 20, minW: 6, minH: 8 }
   // Typgeprüft gegen die eigenen defaultProps (Bindungs-Konvention, A5).
   static readonly bindingRoute: BindingRouteFor<typeof KanbanBlock.defaultProps> = {
     fieldProp: 'statusField',
