@@ -66,20 +66,19 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    ansehen und zusammenführen, dann bauen/pushen. NIE force-pushen. Ein
    Branch, an dem der jeweils andere Agent laut Auftrag arbeitet, ist tabu.
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
-   `npx eslint src` + `npm run check:runtime` + `npm test` +
-   `npx playwright test`), nie zwischendurch.
-   Sicherheitsnetz = sechs Wächter (export / seRuntime / persistence /
-   e2e kanban-data / Export-Referenzabzug / Bündel-Wächter `check:runtime`,
-   fünfter per Nutzer-Go 2026-07-17, sechster per Nutzer-Go 2026-07-20) —
+   `npx eslint src` + `npm run check:runtime` + `npm test`), nie
+   zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
+   die langsamen Browser-Tests fraßen Tokens und Zeit; der Nutzer prüft die
+   Bedienung selbst live, und der bauende Agent prüft VOR jedem „fertig"
+   selbst im Browser-Preview (Port 5173) — nie mehr den Nutzer als einzigen
+   Tester. Sicherheitsnetz = fünf Wächter (export / seRuntime / persistence /
+   Export-Referenzabzug / Bündel-Wächter `check:runtime`): sie prüfen genau
+   das, was im Browser NICHT sichtbar ist — Export-Bytes + SE-Anschluss.
    Nutzer-Entscheidung, nicht ohne Absprache aufblähen. Der Bündel-Wächter
    (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
    CLI-Weg neu und vergleicht es mit dem eingecheckten `ff-runtime.js`; bewusst
    KEIN vitest-Test (In-Place-Bauen im vitest-Lauf würde die `?raw`-Leser
    flaky machen), sondern eigener Schritt VOR vitest.
-   **Test-Bremse (Nutzer-Entscheidung 2026-07-17, Variante B bei P-C):**
-   neue Browser-Tests nur, wenn ein Paket Export/Laufzeit berührt — und
-   dann EIN schlanker Kreislauf-Test statt vieler Einzeltests; reine
-   Editor-Bedienpakete (z. B. Zieh-Mechanik) bekommen KEINE neuen e2e.
    Der Referenzabzug (`src/export/referenzabzug.test.ts` + Referenz in
    `src/export/referenz/`) vergleicht den Export einer festen
    Referenzmaske Byte für Byte: Umbauten müssen ihn grün lassen; ändert
@@ -396,10 +395,18 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
    `PropertyDescription`-Eigenschafts-Registry (deckungsgleich mit
    Regel 2); Beispiel `KanbanBoard` 500×200 mit Swimlane-Status
    „Offen/Bearbeitet/Geschlossen".
-5. Danach: Feld-Extras (Pflichtfeld/Prüfung/Standardwert/Hilfetext) ·
-   Auswahl/Selektion (markierte Zeile als Parameterquelle) ·
+5. Danach (Reihenfolge = Nutzer-Entscheidung 2026-07-23):
+   **Zeilen-Auswahl/Nachschlagen** — markierte Zeile als Parameterquelle
+   UND der vom Nutzer benannte Lookup-Fall („ganz wichtig"): Formularfeld
+   anklicken → Enter → Popup mit z. B. Tabelle öffnet sich → Bediener
+   wählt eine Zeile → der gewollte Wert wird ins Feld übernommen.
+   Baut auf Tabelle + Popups + Ketten auf — Tabelle MUSS davor fertig
+   sein · **Wizard** (Nutzer 2026-07-23 angemeldet, Zuschnitt offen —
+   mehrstufige Maske; braucht eigenen Fable-Plan, Fragen erst wenn dran) ·
    README/CI/Fehlerbild · Meilenstein: **Demo beim Chef** mit einer
-   echten Maske.
+   echten Maske. **Feld-Extras (Pflichtfeld/Prüfung/Standardwert/
+   Hilfetext): zurückgestuft auf „irgendwann vielleicht"**
+   (Nutzer 2026-07-23), nicht mehr Teil der nahen Reihenfolge.
 - Später, NUR mit Fable-Plan + Doppel-Review: Schritt-Arten-Registry
   (Ketten-Schritte steckbar wie Bausteine, Unbekanntes scheitert LAUT;
   huckepack Origin-Prüfung message-Fallback + Enum-Fixes Referenzmaske →

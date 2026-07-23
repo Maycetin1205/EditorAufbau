@@ -24,12 +24,6 @@ dist-ssr
 *.sw?
 grundlast/
 
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-
 # Notiz-Fotos des Nutzers (Chef-Skizze + Lernnotizen) — bewusst NUR lokal,
 # Nutzer-Entscheidung 2026-07-20. Kurzfassung des Inhalts: CLAUDE.md, Fahrplan Punkt 4.
 docs/Test-note*
