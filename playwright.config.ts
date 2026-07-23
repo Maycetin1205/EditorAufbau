@@ -15,7 +15,9 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  // Ein rausgerutschter Test (z. B. kalter Dev-Server/HMR-Fenster) bekommt
+  // EINEN zweiten Versuch; ein echter Fehler faellt zweimal durch = bleibt rot.
+  retries: 1,
   reporter: 'list',
   use: {
     baseURL,
