@@ -31,7 +31,7 @@ Editor-Oberfläche.
 | Build | Vite 8 (`vite.config` + `vite.runtime.config`) | Dev-Server, App-Build, Runtime-Bündel |
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
-| Tests | Vitest 4 (Unit/Snapshot) + Playwright (e2e, echter Browser) | sechs Wächter + Prüfbündel |
+| Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
 | Version | `package.json` (`0.1.0`) | SemVer |
 
 ## 3. Projektstruktur
@@ -87,11 +87,9 @@ src/
 ├── design/         masken-tokens.css (--se-*) — Masken-Welt
 ├── ui/             Editor-Kleinteile (atoms/molecules, shadcn-Stil)
 ├── lib/ · test/    Helfer · Test-Aufbau
-e2e/                Playwright-Kreisläufe (kanban-, formfeld-, popup-,
-                    zwischenspeicher-data u. a.)
 docs/               ARCHI.md (diese Datei), TRIP-Ordner (1-plans …), decisions/,
                     softengine-wiki/ (SE-Kontrakte)
-scripts/            check-runtime-bundle.mjs (Bündel-Wächter, 6. Wächter)
+scripts/            check-runtime-bundle.mjs (Bündel-Wächter)
 ```
 
 ## 4. Kern-Architekturprinzipien (Kurzfassung der 10 Regeln)
@@ -104,7 +102,7 @@ Verbindlicher Wortlaut in `CLAUDE.md`. Für die tägliche Arbeit:
 4. **Ein Export, nichts scheitert still** — Validator + Preflight blocken mit Klartext.
 5. **SE-Kontrakte nur aus Originalquellen** — Installations-Individuelles ist DATEN (Vorlagen), nie Code.
 7. **Bedienung am Ding** — der Editor erfindet nie Daten (Striche statt Demo-Werte).
-9. **Prüfungen gebündelt vor dem Commit** — sechs Wächter + Test-Bremse (s. Abschnitt 9).
+9. **Prüfungen gebündelt vor dem Commit** — fünf Wächter + Test-Bremse (s. Abschnitt 9).
 10. **Nichts auf Verdacht bauen** — erst der echte zweite Fall erzwingt Gemeinsames.
 
 ## 5. Zustand, Seiten & Persistenz
@@ -188,29 +186,29 @@ gebündelte Laufzeit] --> E
   Absichtliche Export-Änderung → Referenz mit `npx vitest run -u` erneuern
   (Diff macht die Maskenänderung im Commit sichtbar).
 
-## 9. Test-Strategie (sechs Wächter + Prüfbündel)
+## 9. Test-Strategie (fünf Wächter + Prüfbündel)
 
 **Prüfbündel — EINMAL gebündelt vor dem Commit, nie zwischendurch:**
 
 ```bash
-npx tsc -b && npx eslint src && npm run check:runtime && npm test && npx playwright test
+npx tsc -b && npx eslint src && npm run check:runtime && npm test
 ```
 
-- Wächter 1–5: export.test · seRuntime.test · persistence.test ·
-  e2e kanban-data · Export-Referenzabzug. Nicht ohne Absprache aufblähen.
-- Sechster Wächter (Nutzer-Go 2026-07-20): `npm run check:runtime`
+- Fünf Wächter: export.test · seRuntime.test · persistence.test ·
+  Export-Referenzabzug · Bündel-Wächter `check:runtime`. Nicht ohne Absprache
+  aufblähen. (Playwright/e2e am 2026-07-23 entfernt — Nutzer-Entscheidung;
+  der Nutzer prüft die Bedienung live, der bauende Agent im Browser-Preview.)
+- Bündel-Wächter (Nutzer-Go 2026-07-20): `npm run check:runtime`
   (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
   CLI-Weg neu und vergleicht es inhaltlich mit dem eingecheckten
   `ff-runtime.js` — fängt BELIEBIGE Bündel-Drift, nicht nur die bekannten
-  Marker des Wächters in export.test.ts (der bleibt als billiger Sanity-Check).
+  Marker des Sanity-Checks in export.test.ts (der bleibt billig daneben).
   BEWUSST kein vitest-Test: In-Place-Bauen im vitest-Lauf würde die
   `?raw`-Leser (export.test.ts) flaky machen; darum eigener Schritt VOR vitest.
-- **Test-Bremse:** neue Browser-Tests NUR, wenn ein Paket Export/Laufzeit
-  berührt — dann EIN schlanker Kreislauf-Test. Reine Editor-Bedienpakete
-  bekommen KEINE neuen e2e.
-- e2e-Tests fahren den ECHTEN Browser (z. B. tippt formfeld-data echt, weil
-  `fill()` kein natives change feuert; 'change' ist nicht composed und stirbt
-  an der Schattengrenze — Eingabe-Bausteine lösen es am Host neu aus).
+- **Test-Bremse:** KEINE neuen Browser-/e2e-Tests (die Playwright-Suite ist
+  2026-07-23 entfernt). Berührt ein Paket Export/Laufzeit, deckt ein schlanker
+  vitest-Fall die Byte-/Kontrakt-Seite ab; die Bedienung prüft der bauende
+  Agent im Browser-Preview (Port 5173) und der Nutzer live.
 - Berührt ein Paket den Export → zusätzlich **SE-Echttest durch den Nutzer**
   in echter SoftEngine-Umgebung (wird auf Nutzer-Wunsch gebündelt).
 
@@ -251,8 +249,8 @@ bleibt bis zum nächsten Push liegen).
 | `npm run dev` | Dev-Server (Vite; Browser-Vorschau über `.claude/launch.json`) |
 | `npm run build` | `tsc -b` + App-Build |
 | `npm run build:runtime` | ff-runtime-Bündel erneuern (nach Laufzeit-Änderungen Pflicht) |
-| `npm test` / `npm run test:e2e` | Vitest / Playwright |
-| `npm run check:runtime` | Bündel-Wächter (6. Wächter, läuft VOR vitest) |
+| `npm test` | Vitest (Unit/Snapshot) |
+| `npm run check:runtime` | Bündel-Wächter (läuft VOR vitest) |
 
 ## 13. Bewusste Grenzen (Stand 2026-07-20)
 
