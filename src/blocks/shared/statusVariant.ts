@@ -39,10 +39,7 @@ export function statusVariantProperty(
   return {
     attributeName,
     name: 'Farbe',
-    description,
-    isArray: false,
-    maxLength: 0,
-    kind: 'select',
+    description,    kind: 'select',
     options: [
       { value: 'info', label: 'Hinweis' },
       { value: 'success', label: 'Erfolg' },

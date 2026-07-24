@@ -95,10 +95,7 @@ export class FormFeldBlock extends BasicBlock {
     {
       attributeName: 'fieldType',
       name: 'Feldtyp',
-      description: 'Welche Art Eingabe das Feld annimmt.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'select',
+      description: 'Welche Art Eingabe das Feld annimmt.',      kind: 'select',
       options: [
         { value: 'text', label: 'Text' },
         { value: 'number', label: 'Zahl' },
@@ -111,19 +108,13 @@ export class FormFeldBlock extends BasicBlock {
     {
       attributeName: 'options',
       name: 'Auswahl-Optionen',
-      description: 'Nur bei Feldtyp "Auswahl": Einträge durch Komma getrennt (z. B. "Zimmer 1, Zimmer 2") — jeder Eintrag wird eine Dropdown-Zeile.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'text',
+      description: 'Nur bei Feldtyp "Auswahl": Einträge durch Komma getrennt (z. B. "Zimmer 1, Zimmer 2") — jeder Eintrag wird eine Dropdown-Zeile.',      kind: 'text',
       visibleWhen: { attributeName: 'fieldType', equals: 'select' },
     },
     {
       attributeName: 'valueField',
       name: 'Feld',
-      description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'field',
+      description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',      kind: 'field',
       hiddenInInspector: true,
     },
   ]

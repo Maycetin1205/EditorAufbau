@@ -13,10 +13,7 @@
 import { useEffect, useState } from 'react'
 import { Copy, MousePointer2, Trash } from 'lucide-react'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import type {
-  PropertyDescription,
-  PropertyKind,
-} from '../../core/blocks/PropertyDescription'
+import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
 import { useRelations } from '../../state/useRelations'
@@ -48,12 +45,6 @@ type Unteraufgabe =
 // Radix-Select verbietet '' als Option-Wert — interner Platzhalter für
 // "kein Feld gewählt" (die Prop bleibt dabei der Leer-String).
 const KEIN_FELD = '__keins__'
-
-function resolveKind(property: PropertyDescription, value: unknown): PropertyKind {
-  if (property.kind) return property.kind
-  if (typeof value === 'string') return 'text'
-  return 'text'
-}
 
 // Benachbarte Properties mit gleichem inspectorRow teilen sich EINE
 // Inspector-Zeile (ein Label, Controls nebeneinander) — Registry-Daten,
@@ -186,7 +177,7 @@ export function Inspector() {
 
   const renderPropControl = (property: PropertyDescription) => {
     const value = block.props[property.attributeName]
-    const kind = resolveKind(property, value)
+    const kind = property.kind
     const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
     // Ohne Quelle in Reichweite bleiben Daten-Controls unsichtbar — die
     // gespeicherten Werte bleiben erhalten und leben mit der Quelle wieder auf.
@@ -273,7 +264,7 @@ export function Inspector() {
   const renderCompactControl = (property: PropertyDescription) => {
     const value = block.props[property.attributeName]
     const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
-    const kind = resolveKind(property, value)
+    const kind = property.kind
     if (kind === 'number') {
       return <NumberControl key={property.attributeName} property={property} value={value} onChange={set} />
     }

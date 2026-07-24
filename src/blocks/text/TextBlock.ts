@@ -82,10 +82,7 @@ export class TextBlock extends BasicBlock {
     {
       attributeName: 'groesse',
       name: 'Größe',
-      description: 'Schriftgröße in Pixeln.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'number',
+      description: 'Schriftgröße in Pixeln.',      kind: 'number',
       unit: 'px',
       min: GROESSE_MIN,
       max: GROESSE_MAX,
@@ -94,10 +91,7 @@ export class TextBlock extends BasicBlock {
     {
       attributeName: 'gewicht',
       name: 'Gewicht',
-      description: 'Strichstärke der Schrift.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'segment',
+      description: 'Strichstärke der Schrift.',      kind: 'segment',
       options: [
         { value: 'duenn', label: 'Dünn' },
         { value: 'normal', label: 'Normal' },
@@ -108,10 +102,7 @@ export class TextBlock extends BasicBlock {
     {
       attributeName: 'ausrichtung',
       name: 'Ausrichtung',
-      description: 'Wo der Text in seiner Breite sitzt.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'segment',
+      description: 'Wo der Text in seiner Breite sitzt.',      kind: 'segment',
       options: [
         { value: 'links', label: 'Links' },
         { value: 'mitte', label: 'Mitte' },

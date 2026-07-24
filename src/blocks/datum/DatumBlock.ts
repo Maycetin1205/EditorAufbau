@@ -39,10 +39,7 @@ export class DatumBlock extends BasicBlock {
     {
       attributeName: 'zeigt',
       name: 'Zeigt',
-      description: 'Welche Zeitangabe ohne Datenbindung angezeigt wird.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'select',
+      description: 'Welche Zeitangabe ohne Datenbindung angezeigt wird.',      kind: 'select',
       options: [
         { value: 'date', label: 'Datum' },
         { value: 'time', label: 'Zeit' },
@@ -52,10 +49,7 @@ export class DatumBlock extends BasicBlock {
     {
       attributeName: 'valueField',
       name: 'Feld',
-      description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt wird.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'field',
+      description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt wird.',      kind: 'field',
       hiddenInInspector: true,
     },
   ]

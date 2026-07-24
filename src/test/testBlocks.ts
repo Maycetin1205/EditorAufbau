@@ -119,10 +119,7 @@ export function registerTestBlocks(): void {
       {
         attributeName: 'aktiv',
         name: 'Aktiv',
-        description: 'Exklusives Testkennzeichen.',
-        isArray: false,
-        maxLength: 0,
-        kind: 'select',
+        description: 'Exklusives Testkennzeichen.',        kind: 'select',
         options: [
           { value: 'nein', label: 'Nein' },
           { value: 'ja', label: 'Ja' },

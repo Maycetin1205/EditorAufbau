@@ -34,9 +34,8 @@ export interface PropertyDescription {
   attributeName: string
   name: string
   description: string
-  isArray: boolean
-  maxLength: number
-  kind?: PropertyKind
+  maxLength?: number
+  kind: PropertyKind
   options?: PropertySelectOption[]
   /** Nur kind 'number': angezeigte Einheit (z. B. 'px') und erlaubte Grenzen. */
   unit?: string

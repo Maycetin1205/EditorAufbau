@@ -78,10 +78,7 @@ export class KanbanBlock extends BasicBlock {
     {
       attributeName: 'statusField',
       name: 'Einsortieren nach',
-      description: 'Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt. Leer = alle Einträge in der Auffang-Spalte.',
-      isArray: false,
-      maxLength: 0,
-      kind: 'field',
+      description: 'Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt. Leer = alle Einträge in der Auffang-Spalte.',      kind: 'field',
       hiddenInInspector: true,
     },
   ]

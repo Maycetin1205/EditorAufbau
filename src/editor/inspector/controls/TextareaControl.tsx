@@ -19,7 +19,7 @@ export function TextareaControl({ property, value, onChange }: TextareaControlPr
         <Textarea
           {...field}
           value={value ?? ''}
-          maxLength={property.maxLength > 0 ? property.maxLength : undefined}
+          maxLength={property.maxLength || undefined}
           onChange={(e) => onChange(e.currentTarget.value)}
         />
       )}

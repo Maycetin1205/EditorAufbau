@@ -19,10 +19,7 @@ export function jaNeinProperty(
   return {
     attributeName,
     name,
-    description,
-    isArray: false,
-    maxLength: 0,
-    kind: 'select',
+    description,    kind: 'select',
     options: [
       { value: 'nein', label: 'Nein' },
       { value: 'ja', label: 'Ja' },
