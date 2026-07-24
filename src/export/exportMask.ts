@@ -1,9 +1,9 @@
 // exportMask
-// Kap. 3 Mini-Export: deterministischer Baum-Durchlauf → SoftEngine-Maske.
+// Mini-Export: deterministischer Baum-Durchlauf → SoftEngine-Maske.
 //
 // Export-Grundsätze:
 //  (a) HTML + SEvariablen-JSON entstehen aus DERSELBEN Quelle (Baum +
-//      Datenquellen-Modell). Solange es keine Datenquellen gibt (Kap. 5),
+//      Datenquellen-Modell). Solange es keine Datenquellen gibt,
 //      ist die JSON das leere, gültige Gerüst.
 //  (b) Jeder Export wird maschinell geprüft (validator.ts), bevor er
 //      SoftEngine sieht.
@@ -100,7 +100,7 @@ function styleAttr(
   } else {
     style = {
       ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
-      // Feste Höhe (P1.3) — DIESELBE Quelle wie der Canvas-Wrapper.
+      // Feste Höhe — DIESELBE Quelle wie der Canvas-Wrapper.
       ...flowItemHeightStyle(parseFlowHeight(node.props.height), parentDirection),
     }
   }
@@ -125,7 +125,7 @@ function nodeToHtml(
   node: BlockNode,
   parentDirection: FlowDirection,
   depth: number,
-  // Übersetzt Popup-Schritt-ids in Klarnamen (P-B): der Baumblick entsteht
+  // Übersetzt Popup-Schritt-ids in Klarnamen: der Baumblick entsteht
   // EINMAL in exportMask, die Rekursion reicht ihn nur durch.
   popupName: (id: string) => string,
   templateCtx?: TemplateCtx,
@@ -161,7 +161,7 @@ function nodeToHtml(
     })
     .join('')
 
-  // Aktionsketten (Z2) reisen als EIN data-Attribut mit dem Element.
+  // Aktionsketten reisen als EIN data-Attribut mit dem Element.
   // Schritt-ids reisen nicht mit; nur Registry-freigegebene Wert-Bausteine
   // behalten gezielt ihre stabile id, damit andere Aktionen sie auslesen.
   // Deterministisch: Ereignis-Reihenfolge = Registry (blockEvents).
@@ -198,14 +198,14 @@ function nodeToHtml(
     : `${open}\n${children}\n${pad}</${def.tagName}>`
 }
 
-// ---------- Datenquellen → SEFILELOOP (Kap. 5.1) ----------
+// ---------- Datenquellen → SEFILELOOP ----------
 
 // Sammelt die im Baum angehängten Datenquellen (source-Prop von Blöcken mit
 // acceptsDataSource) in Baum-Reihenfolge, dedupliziert — deterministisch.
 // Unbekannte Vorlagen-ids werden hier als Fallback übersprungen; im echten
 // Export-Fluss fängt die Preflight (preflight.ts, S1a) eine gelöschte Quelle
 // jedoch VORHER ab und blockiert den Export (Toolbar).
-// `sources` = die Vorlagen-Bibliothek (Kap. 5.4: benutzerdefiniert).
+// `sources` = die Vorlagen-Bibliothek.
 function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): DataSource[] {
   const seen = new Set<string>()
   const acc: DataSource[] = []
@@ -227,7 +227,7 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
   return acc
 }
 
-// ---------- Relation-Vorlagen → FF_RELATIONS (Kap. 5.5) ----------
+// ---------- Relation-Vorlagen → FF_RELATIONS ----------
 
 // Sammelt benutzte Vorlagen aus registry-getriebenen Relation-Properties
 // UND aus Relationsschritten. Baum-, Ereignis- und Schritt-Reihenfolge sind
@@ -267,14 +267,14 @@ function collectRelations(
 export function exportMask(
   tree: BlockTree,
   title = 'Maske',
-  // Vorlagen-Bibliothek (Kap. 5.4): standardmäßig der gelebte Bestand des
+  // Vorlagen-Bibliothek: standardmäßig der gelebte Bestand des
   // DataSourceStore; Tests dürfen eine feste Liste stellen (Determinismus).
   sources: readonly DataSource[] = dataSourceStore.list,
-  // Relation-Vorlagen (Kap. 5.5): analog, gelebter Bestand des RelationStore.
+  // Relation-Vorlagen: analog, gelebter Bestand des RelationStore.
   relations: readonly RelationTemplate[] = relationStore.list,
 ): MaskExport {
   const root = tree[ROOT_ID]
-  // Popup-Klarnamen je Seiten-id (P-B): Popup-Schritte reisen mit dem NAMEN
+  // Popup-Klarnamen je Seiten-id: Popup-Schritte reisen mit dem NAMEN
   // der Seite (Editor-ids nie); die Preflight erzwingt eindeutige Namen.
   const popupNameById = new Map<string, string>()
   for (const id of root?.childIds ?? []) {
@@ -298,7 +298,7 @@ export function exportMask(
   const tokensCss = stripCssComments(tokensCssRaw)
   const runtimeJs = guardScriptContent(escapeNonAsciiJs(runtimeJsRaw.trim()))
   // Die benutzten Quellen-Definitionen reisen als DATEN mit der Maske
-  // (Kap. 5.4): die Vorlagen liegen im Editor-localStorage, den die
+  // die Vorlagen liegen im Editor-localStorage, den die
   // exportierte Maske nie sieht — seRuntime löst source-ids über dieses
   // Global auf. DIESELBE collectDataSources-Quelle wie die SEFILELOOP
   // (Export-Grundsatz a); nur was die Runtime braucht (kein Feld-Wörterbuch:
@@ -319,7 +319,7 @@ export function exportMask(
       indexField: s.indexField ?? '',
     }))) + ';',
   ))
-  // Die benutzten Relation-Vorlagen reisen ebenso als DATEN mit (Kap. 5.5):
+  // Die benutzten Relation-Vorlagen reisen ebenso als DATEN mit:
   // die Aktionsketten lösen ihre relationId über dieses Global auf. Nur
   // Technikwerte (Verb/NR/Params) — der Anzeigename bleibt im Editor.
   const relationsJs = guardScriptContent(escapeNonAsciiJs(
@@ -366,7 +366,7 @@ export function exportMask(
   // SEvariablen: aus DEMSELBEN Baum erzeugt wie das HTML (Grundsatz a).
   // SEFILELOOP-Einträge nach Vorbild der echten behandlung-umbau-Masken:
   // INDEX_NR 0, ALIAS = Anzeigename, ID/FELDER je Quellen-ART (IDB → eigene
-  // ID + '*', Stammtabellen → feste ID + explizite pos_len-Liste, Kap. 5.4).
+  // ID + '*', Stammtabellen → feste ID + explizite pos_len-Liste).
   // Nicht-ASCII wird \uXXXX-escaped (gültiges JSON, ASCII-Regel wie beim HTML).
   const sefileloop = used.map((s) => ({
     INDEX_NR: 0,

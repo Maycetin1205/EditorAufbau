@@ -1,5 +1,5 @@
 // useBlockResize
-// Größenziehen am Block (Aufräumen A3 — wörtlich aus BlockHost.tsx gezogen):
+// Größenziehen am Block (wörtlich aus BlockHost.tsx gezogen):
 // Breite/Höhe ziehen (Anfasser rechts bzw. unten): eine Geste = eine
 // Transaktion = 1 Undo. Die Geste selbst lebt seit dem Zieh-Mechanik-Paket
 // (2026-07-17) in zieheGroesse — der Popup-Anfasser (PopupSeite) war der

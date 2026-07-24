@@ -1,5 +1,5 @@
 // relations
-// Kap. 5.5 (Fundament seit 5.3b): GET/PUT-Relations sind BENUTZERDEFINIERTE
+// (Fundament seit 5.3b): GET/PUT-Relations sind BENUTZERDEFINIERTE
 // VORLAGEN — Daten, kein Code (5.3b (d): NR '174' NICHT
 // festverdrahten; es gibt >1000 Relations, je Installation individuell).
 // Eine Vorlage beschreibt Verb, NR und die Parameter-Syntax mit
@@ -31,7 +31,7 @@ export const RELATION_VERBS: readonly RelationVerb[] = [
 // deren Wertquelle wird erst beim Aktionsschritt zugeordnet.
 //  FELD_POS/FELD_LEN  Position/Länge des Ziel-Felds (Feldcode gesplittet)
 //  PINDEX             Nummer des betroffenen Datensatzes
-//  SELKEY             Nummer des gewählten Datensatzes (füllt erst Kap. 8 —
+//  SELKEY             Nummer des gewählten Datensatzes (füllt erst —
 //                     bis dahin liefert kein Konsument einen Wert, Auflösung ergibt '')
 //  DROP_PINDEX        Nummer der gezogenen Karte (Kanban-Drop)
 //  RELID              Relations-ID der Tabelle OHNE 'IDB'-Präfix
@@ -47,7 +47,7 @@ export const RELATION_PLACEHOLDERS = [
 export type RelationContext = Readonly<Record<string, string | undefined>>
 
 export interface RelationTemplate {
-  // Stabiler Technikwert — Konsumenten (Kanban-Schreibweg, später Kap. 8)
+  // Stabiler Technikwert — Konsumenten (Kanban-Schreibweg, später)
   // referenzieren die Vorlage darüber.
   id: string
   // Anzeigename für den Bediener.
@@ -68,7 +68,7 @@ export type ParsedRelationSyntax = Pick<
   'verb' | 'nr' | 'params' | 'allowExtraParams'
 >
 
-// Mitgelieferter Startbestand (Kap. 5.5: nur noch der SEED des
+// Mitgelieferter Startbestand (nur noch der SEED des
 // RelationStore — danach gehören die Vorlagen dem Bediener). Seit
 // 2026-07-15 benutzt sie KEIN Baustein mehr automatisch: sie ist eine
 // normale, löschbare Bibliotheks-Vorlage für Aktionsketten.
@@ -91,7 +91,7 @@ export function relIdFromIdbId(idbId: string): string {
 // Deutsches Datum für den Platzhalter {NOW_DATE} ('08.07.2026' — dieselbe
 // Form wie die Datums-Felder der Referenzmaske). Pur: der Aufrufer stellt
 // das Datum (Laufzeit das echte, Tests ein festes). Hierher gezogen aus
-// seRuntime (Z2): das Vokabular {NOW_DATE} gehört diesem Modul, und mit
+// seRuntime: das Vokabular {NOW_DATE} gehört diesem Modul, und mit
 // seAktionen gibt es den zweiten Konsumenten.
 export function formatNowDate(d: Date): string {
   const dd = String(d.getDate()).padStart(2, '0')

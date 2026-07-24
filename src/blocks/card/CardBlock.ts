@@ -15,7 +15,7 @@
 // nie erfundene Daten).
 //
 // Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
-// (Inline-Edit, WYSIWYG) und sind bindbare Stellen (Kap. 5.2); der Avatar
+// (Inline-Edit, WYSIWYG) und sind bindbare Stellen; der Avatar
 // ist eine reine Daten-Stelle (kein Text, nur Bindung — Wert -> Icon ueber
 // tierIcon, Zuordnung aus der Empfang-Referenz). Einziges Inspector-Feld
 // ist die Chip-Art (Bedeutung -> Farbe, Regel "Technikwert != Anzeigename").
@@ -23,7 +23,7 @@
 // shared/statusVariant. Der Chip ist bewusst KEIN eigenes Element im
 // Licht-DOM: dessen Inline-Edit-Event wuerde an der Schattengrenze zur
 // Karte umadressiert und die falsche Prop beschreiben. KEINE Aktions-
-// Knoepfe (Kap. 8).
+// Knoepfe.
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Literale,
 // keine Fallbacks. Zielbild: die Empfang-Referenzmaske (vkarte) — Avatar
@@ -82,7 +82,7 @@ export class CardBlock extends BasicBlock {
     meta: '',
     text: '',
     chipText: '',
-    // Bindungen der Stellen (Kap. 5.2): Feldcode der Datenquelle in
+    // Bindungen der Stellen: Feldcode der Datenquelle in
     // Reichweite (Technikwert, unsichtbar) — '' = ungebunden, die Stelle
     // zeigt ihren statischen Text.
     headingField: '',
@@ -95,7 +95,7 @@ export class CardBlock extends BasicBlock {
     chipTextField: '',
   }
 
-  // Bindbare Stellen (Kap. 5.2, Bedienlogik 3): Klick auf die Stelle bindet
+  // Bindbare Stellen: Klick auf die Stelle bindet
   // sie an ein Feld der Datenquelle in Reichweite (Kanban). Klarnamen für
   // den Feld-Picker; die Bindung liegt in `<prop>Field` (siehe defaultProps,
   // typgeprüft über die Bindungs-Konvention, A5).

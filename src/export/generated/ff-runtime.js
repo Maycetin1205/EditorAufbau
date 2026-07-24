@@ -578,7 +578,7 @@
          werden gleich hoch (stretch); Karten scrollen senkrecht IM
          Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
          Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
-      /* height:100% laesst das Board eine feste Hoehe (P1.3) ausfuellen —
+      /* height:100% laesst das Board eine feste Hoehe ausfuellen —
          im Editor traegt sie der Canvas-Wrapper, im Export das Element
          selbst (Inline-Style schlaegt die 100%). Ohne feste Hoehe loest
          sich 100% zu auto auf (Elternhoehe haengt vom Inhalt ab) —

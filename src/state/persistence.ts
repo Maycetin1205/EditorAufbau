@@ -1,5 +1,5 @@
 // persistence — Laden, Verteidigen, Retten und Speichern des Editor-Stands.
-// A1-Umzug 2026-07-16 (Aufräum.md), verhaltensgleich aus Editor.ts.
+// Verhaltensgleich herausgezogen aus Editor.ts.
 // Hier wohnt der komplette Lade-Weg (sanitize + Migrationen + Notfallkopie)
 // und der Speicher-Rumpf; der Store ruft nur noch loadFromStorage/persistState.
 
@@ -19,7 +19,7 @@ import {
 import { createEmptyTree, normalizeProps } from './treeOps'
 
 export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
-// Notfallkopie eines UNLESBAREN Speicherstands (U1): getrennter Schlüssel,
+// Notfallkopie eines UNLESBAREN Speicherstands: getrennter Schlüssel,
 // den der Autosave (STORAGE_KEY) nie anfasst — die beschädigten Rohdaten
 // bleiben damit erhalten, auch nachdem der Editor leer weiterläuft und beim
 // ersten Speichern den kaputten STORAGE_KEY überschreibt.
@@ -68,7 +68,7 @@ export function sanitizeTree(
       for (const k of kids) addChild(parentId, k)
       return
     }
-    // Aktionsketten (Z2) laufen durch den eigenen strengen Lader — nur
+    // Aktionsketten laufen durch den eigenen strengen Lader — nur
     // Ereignis-Keys, die der Typ in der Registry deklariert.
     const events = sanitizeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key))
     tree[childId] = {

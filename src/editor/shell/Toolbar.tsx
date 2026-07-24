@@ -31,7 +31,7 @@ function downloadFile(name: string, content: string, type: string): void {
   URL.revokeObjectURL(url)
 }
 
-// onSteuerung: öffnet die Kommandozentrale (Z1) — Zustand hält die Shell.
+// onSteuerung: öffnet die Kommandozentrale — Zustand hält die Shell.
 export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
   const ed = useEditor()
 
@@ -41,7 +41,7 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     ed.clear()
   }
 
-  // Kap. 3 Mini-Export: Baum → Maske (HTML + SEvariablen-JSON), maschinell
+  // Mini-Export: Baum → Maske (HTML + SEvariablen-JSON), maschinell
   // geprüft BEVOR eine Datei entsteht. Schlägt die Prüfung fehl, gibt es
   // keine Datei — SoftEngine sieht nie ungeprüftes HTML.
   const handleExport = () => {
@@ -49,7 +49,7 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     const sources = dataSourceStore.list
     const relations = relationStore.list
     const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations)
-    // Semantische Preflight (Stabilisierung S1: kaputte Datenquellen-Referenz)
+    // Semantische Preflight (kaputte Datenquellen-Referenz)
     // + Dateiform-Pruefung — beide muessen gruen sein, sonst kein Download.
     const failed = [
       ...failedChecks(preflightMask(ed.tree, sources, relations)),

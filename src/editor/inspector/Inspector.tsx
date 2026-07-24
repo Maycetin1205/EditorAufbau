@@ -66,10 +66,10 @@ function inspectorZeilen(props: PropertyDescription[]): InspectorZeile[] {
 
 export function Inspector() {
   const ed = useEditor()
-  // Vorlagen-Änderungen (Kap. 5.4) müssen Feldlisten/Sichtbarkeit sofort
+  // Vorlagen-Änderungen müssen Feldlisten/Sichtbarkeit sofort
   // nachziehen — dataSourceFor liest aus dem DataSourceStore.
   useDataSources()
-  // Relation-Vorlagen (Kap. 5.5): die Auswahl im kind-'relation'-Control muss
+  // Relation-Vorlagen: die Auswahl im kind-'relation'-Control muss
   // neue/umbenannte Vorlagen sofort zeigen — liest aus dem RelationStore.
   const relations = useRelations()
   const block = ed.selectedNode
@@ -171,7 +171,7 @@ export function Inspector() {
     )
   }
 
-  // Datenquelle in Reichweite (Kap. 5.3): steuert die Sichtbarkeit von
+  // Datenquelle in Reichweite: steuert die Sichtbarkeit von
   // requiresDataSource-Controls und liefert die Feldliste für kind 'field'.
   const sourceInReach = ed.dataSourceFor(block.id)
 
@@ -218,7 +218,7 @@ export function Inspector() {
           ? <ColorTileControl key={property.attributeName} {...gemeinsam} />
           : <SelectControl key={property.attributeName} {...gemeinsam} />
       }
-      // Feld der Datenquelle in Reichweite (Kap. 5.3): Klarnamen sichtbar,
+      // Feld der Datenquelle in Reichweite: Klarnamen sichtbar,
       // Feldcode (Technikwert) wird gespeichert — Muster DataSection/FieldPicker.
       case 'field':
         return (
@@ -234,7 +234,7 @@ export function Inspector() {
             onChange={(v) => set(v === KEIN_FELD ? '' : v)}
           />
         )
-      // Relation-Vorlage aus der Bibliothek (Kap. 5.5): Anzeigenamen sichtbar,
+      // Relation-Vorlage aus der Bibliothek: Anzeigenamen sichtbar,
       // Vorlagen-id (Technikwert) wird gespeichert. '— keine —' schaltet den
       // Schreibweg ab. Gelöschte/unbekannte ids fallen auf '— keine —' zurück.
       case 'relation':
@@ -291,7 +291,7 @@ export function Inspector() {
     if (!p.visibleWhen) return true
     return Object.is(block.props[p.visibleWhen.attributeName], p.visibleWhen.equals)
   })
-  // Daten-Controls (Kap. 5.3/5.5) gehören in die Sektion "Daten", nicht in
+  // Daten-Controls gehören in die Sektion "Daten", nicht in
   // die allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
   const dataProps = visibleProps.filter(
     (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'relation',
@@ -403,7 +403,7 @@ export function Inspector() {
             {blockHinweis(block.type)}
           </p>
         )}
-        {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14, Bedienlogik 6):
+        {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14):
             Breite und Höhe zeigen sich am Block selbst — Zieh-Anfasser am
             selektierten Block, Doppelklick auf den Anfasser = Standard. */}
       </div>

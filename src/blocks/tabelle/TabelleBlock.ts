@@ -57,7 +57,7 @@ export class TabelleBlock extends BasicBlock {
   static readonly tagName = 'ff-tabelle'
   static readonly displayName = 'Tabelle'
   static readonly category: BlockCategory = 'anzeige'
-  // Kap. 5.1: Datenquelle anhaengbar (Inspector-Sektion „Daten"); der Export
+  // Datenquelle anhaengbar (Inspector-Sektion „Daten"); der Export
   // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
   // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
   static readonly acceptsDataSource = true

@@ -1,5 +1,5 @@
 // DataSourceForm
-// Kap. 5.4b: Anlegen/Bearbeiten einer Datenquellen-Vorlage. Der Bediener
+// Anlegen/Bearbeiten einer Datenquellen-Vorlage. Der Bediener
 // gibt Klarnamen + Positionen/Längen und die IDB-ID im SoftEngine-Format
 // ('ID0004') ein — der Technikwert ('IDBID0004', Feldcode 'pos_len')
 // entsteht unsichtbar (pure Helfer in dataSources.ts).

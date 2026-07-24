@@ -1,5 +1,5 @@
 // preflight
-// Semantische Export-Vorpruefung (Stabilisierung S1). Anders als validator.ts
+// Semantische Export-Vorpruefung. Anders als validator.ts
 // (prueft nur die Dateiform: Marker/LF/ASCII/Grundgeruest) sieht die Preflight
 // den BAUM + die Vorlagen-Bibliothek und blockiert den Export bei kaputten
 // Referenzen, statt sie still zu ueberspringen. Grund (Nordstern): der Export

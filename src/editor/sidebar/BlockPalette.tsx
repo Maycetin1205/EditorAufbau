@@ -46,7 +46,7 @@ export function BlockPalette() {
   }, [filtered])
 
   // Einfüge-Ziel beim Klick: vom ausgewählten Block aufwärts der NÄCHSTE
-  // Container, der den Typ aufnimmt (canContain, Kap. 4K.4) — ist eine Karte
+  // Container, der den Typ aufnimmt (canContain) — ist eine Karte
   // in einer Kanban-Spalte gewählt, landet "Karte" in der Spalte; passt
   // nichts, fällt die Suche auf die Wurzel zurück.
   const insertParentFor = (type: string): string | undefined => {

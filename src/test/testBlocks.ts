@@ -10,11 +10,11 @@ let registered = false
 
 export const TEST_BLOCK = 't-block'
 export const TEST_BOX = 't-box'
-// Container, der NUR t-block aufnimmt (allowedChildTypes, Kap. 4K.4).
+// Container, der NUR t-block aufnimmt (allowedChildTypes).
 export const TEST_STRICT_BOX = 't-strict-box'
 // Block, der mit Beispieldaten-Teilbaum eingefügt wird (defaultChildren).
 export const TEST_BOARD = 't-board'
-// Container mit Datenquellen-Fähigkeit (acceptsDataSource, Kap. 5.1/5.2).
+// Container mit Datenquellen-Fähigkeit (acceptsDataSource,/5.2).
 export const TEST_DATA_BOX = 't-daten-box'
 // Block mit Ereignissen (blockEvents, Z1/Z2) — für Aktionsketten-Tests.
 export const TEST_EVENT_BLOCK = 't-event-block'

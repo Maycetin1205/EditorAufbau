@@ -47,7 +47,7 @@ export class KanbanBlock extends BasicBlock {
   // Standard fill = verbleibende Maskenhöhe (Empfang-Vorbild). Ziehen setzt
   // bewusst eine feste Pixelhöhe; Doppelklick kehrt zu fill zurück.
   static readonly resizableHeight = true
-  // Kap. 5.1: an das Board lässt sich eine Datenquelle hängen (Inspector-
+  // an das Board lässt sich eine Datenquelle hängen (Inspector-
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
   static readonly acceptsDataSource = true
@@ -58,7 +58,7 @@ export class KanbanBlock extends BasicBlock {
     { key: 'onCardClick', name: 'Karte angeklickt' },
     { key: 'onCardDrop', name: 'Karte verschoben' },
   ]
-  // statusField (Kap. 5.3): Feldcode des Spalten-Felds (Technikwert,
+  // statusField: Feldcode des Spalten-Felds (Technikwert,
   // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. OPTIONAL:
   // ohne Feld landen alle Zeilen in der Auffang- bzw. einer Auto-Spalte.
   // Was ein Drop tut, bestimmt allein die Aktionskette „Karte verschoben"
@@ -107,7 +107,7 @@ export class KanbanBlock extends BasicBlock {
          werden gleich hoch (stretch); Karten scrollen senkrecht IM
          Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
          Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
-      /* height:100% laesst das Board eine feste Hoehe (P1.3) ausfuellen —
+      /* height:100% laesst das Board eine feste Hoehe ausfuellen —
          im Editor traegt sie der Canvas-Wrapper, im Export das Element
          selbst (Inline-Style schlaegt die 100%). Ohne feste Hoehe loest
          sich 100% zu auto auf (Elternhoehe haengt vom Inhalt ab) —
@@ -129,7 +129,7 @@ export class KanbanBlock extends BasicBlock {
     return html`<div class="board"><slot></slot></div>`
   }
 
-  // Kap. 5.3: in der EXPORTIERTEN Maske meldet sich das Board bei der
+  // in der EXPORTIERTEN Maske meldet sich das Board bei der
   // SoftEngine-Anbindung an (Zeilen -> Karten, Spalten-Feld -> Spalte).
   // Editor-Boards tragen data-ff-editor und werden dort sofort abgewiesen.
   connectedCallback(): void {

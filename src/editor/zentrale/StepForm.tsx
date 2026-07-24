@@ -415,7 +415,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   // Wählbare GET-Ergebnisse: nur Schritte VOR diesem (neuer Schritt = Ende).
   const ergebnisSchritte = ergebnisSchritteVor(kette, step?.id, relations.list)
   const ergebnisIds = ergebnisSchritte.map((s) => s.id)
-  // Popup-Seiten der Maske (P-B): Auswahl per Klarname, gespeichert wird
+  // Popup-Seiten der Maske: Auswahl per Klarname, gespeichert wird
   // die stabile Seiten-id (übersteht Umbenennen).
   const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
   const blockValues: BlockValueOption[] = actionValueTargets(ed.tree).map(({ node, spot }) => {

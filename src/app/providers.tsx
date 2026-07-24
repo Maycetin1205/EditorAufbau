@@ -1,5 +1,5 @@
 // Providers — App-weite Versorger.
-// A2 (Aufräum.md 2026-07-16): HIER entsteht die eine Editor-Instanz der App
+// HIER entsteht die eine Editor-Instanz der App
 // und wird über den EditorProvider bereitgestellt — es gibt keine
 // Weltvariable mehr. (Tests bauen sich ihre Instanzen weiterhin selbst
 // mit `new Editor()`.)

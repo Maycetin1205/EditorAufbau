@@ -40,9 +40,9 @@ export interface BlockComponentStatic {
   // false = kein Breite-Zieh-Anfasser im Editor (z.B. Button: Breite folgt
   // der Beschriftung). Default true.
   readonly resizableWidth?: boolean
-  // true = einstellbare Höhe (P1.3) — Bedeutung siehe BlockDefinition.
+  // true = einstellbare Höhe — Bedeutung siehe BlockDefinition.
   readonly resizableHeight?: boolean
-  // Registry-Konzepte aus Kap. 4K.4 — Bedeutung siehe BlockDefinition.
+  // Registry-Konzepte — Bedeutung siehe BlockDefinition.
   readonly allowedChildTypes?: readonly string[]
   // Registry-Konzepte aus S3/K0/P1.1 — Bedeutung siehe BlockDefinition.
   readonly allowedParentTypes?: readonly string[]
@@ -53,9 +53,9 @@ export interface BlockComponentStatic {
   readonly templateChild?: { type: string; label: string }
   readonly containerHint?: boolean
   readonly addChildButton?: { label: string; childType: string }
-  // Datenquellen-Fähigkeit aus Kap. 5.1 — Bedeutung siehe BlockDefinition.
+  // Datenquellen-Fähigkeit — Bedeutung siehe BlockDefinition.
   readonly acceptsDataSource?: boolean
-  // Bindbare Stellen aus Kap. 5.2 — Bedeutung siehe BlockDefinition.
+  // Bindbare Stellen — Bedeutung siehe BlockDefinition.
   readonly bindableSpots?: readonly BindableSpot[]
   // Als Aktionsparameter auslesbare Stellen — Bedeutung siehe BlockDefinition.
   readonly actionValueSpots?: readonly ActionValueSpot[]
@@ -63,7 +63,7 @@ export interface BlockComponentStatic {
   readonly listenBindung?: ListenBindung
   // Eigener Datenanschluss-Dialog — Bedeutung siehe BlockDefinition.
   readonly bindingRoute?: BindingRoute
-  // Ereignisse des Blocks (Z1) — Bedeutung siehe BlockDefinition.
+  // Ereignisse des Blocks — Bedeutung siehe BlockDefinition.
   readonly blockEvents?: readonly BlockEventSpec[]
   // Seiten-Baustein (Popup, P-A) — Bedeutung siehe BlockDefinition.
   readonly pageBlock?: boolean

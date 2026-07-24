@@ -14,7 +14,7 @@ export function isRecord(v: unknown): v is UnknownRecord {
   return typeof v === 'object' && v !== null
 }
 
-// Quellen-Definition in der EXPORTIERTEN Maske (Kap. 5.4): die Vorlagen
+// Quellen-Definition in der EXPORTIERTEN Maske: die Vorlagen
 // sind benutzerdefiniert und leben im Editor-localStorage — exportMask
 // bettet die benutzten Definitionen deshalb als `window.FF_DATA_SOURCES = […]`
 // in die Maske ein (window. statt var wegen WebUI-Kapselung, s. exportMask;

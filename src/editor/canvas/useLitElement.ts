@@ -1,5 +1,5 @@
 // useLitElement
-// Die EINE React↔Lit-Übergabestelle (Aufräumen A4 — wörtlich aus
+// Die EINE React↔Lit-Übergabestelle (wörtlich aus
 // BlockHost.tsx gezogen). Erzeugen, Props setzen und Aufräumen des Custom
 // Elements passieren ausschließlich hier:
 //   - Erzeugen: Element zum Block-Typ, mit Editor-Kennung (data-ff-editor)
@@ -71,7 +71,7 @@ export function useLitElement({
     const container = containerRef.current
     if (!container) return
     const el = document.createElement(def.tagName)
-    // Editor-Kennung (Kap. 5.2): schaltet editor-exklusives Block-CSS frei
+    // Editor-Kennung: schaltet editor-exklusives Block-CSS frei
     // (Daten-Markierung gebundener Stellen). Der Export setzt sie nie.
     el.setAttribute('data-ff-editor', '')
     container.appendChild(el)
@@ -110,7 +110,7 @@ export function useLitElement({
     for (const [key, value] of Object.entries(block.props)) {
       elAny[key] = value
     }
-    // Bindungs-Vorschau (Kap. 5.2, revidiert 2026-07-10): gebundene Stellen
+    // Bindungs-Vorschau: gebundene Stellen
     // zeigen den KLARNAMEN ihres Felds statt des statischen Texts — keine
     // erfundenen Beispielwerte. Nur die ANZEIGE (DOM-Properties), der Baum
     // bleibt unberührt. Ist die Bindung nicht auflösbar (keine Quelle in

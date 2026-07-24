@@ -76,7 +76,7 @@ export function zelleAusZeiger(
 }
 
 // Zellmaße des gerade Gezogenen für die Fläche parentId — oder null, wenn der
-// Drop dort nicht erlaubt ist (canContain, Kap. 4K.4) → kein Ziel/keine
+// Drop dort nicht erlaubt ist (canContain) → kein Ziel/keine
 // Vorschau. HTML5-Drops auf die Rasterfläche sind immer „von woanders" (neu aus
 // der Bibliothek ODER ein Block aus einem Container): beide bekommen die
 // Registry-Startgröße, nie Vollbreite (der Block hatte außerhalb des Rasters

@@ -1,5 +1,5 @@
 // serializer
-// Die EINE Stelle für die Zeichen-Regeln des Exports (Aufräumen A6 —
+// Die EINE Stelle für die Zeichen-Regeln des Exports (
 // wörtlich aus exportMask.ts gezogen). Hier ist festgelegt, WIE Text in
 // die SoftEngine-Maske serialisiert wird:
 //   - ASCII-Regel: Nicht-ASCII wird maschinell escaped — Umlaute als

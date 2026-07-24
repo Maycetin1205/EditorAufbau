@@ -1,5 +1,5 @@
 // PopupSeite
-// Die Popup-Seitenansicht des Canvas (P-A; Aufräumen A3 — wörtlich aus
+// Die Popup-Seitenansicht des Canvas (wörtlich aus
 // Canvas.tsx gezogen): das Popup-Element füllt die Fläche (Abdunklung +
 // Fenster kommen aus dem Baustein selbst — 1 Render-Quelle); dazu
 // Editor-Anfasser für breite/hoehe am zentrierten Fenster. Das Fenster ist

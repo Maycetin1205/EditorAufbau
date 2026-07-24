@@ -17,7 +17,7 @@ import { Toolbar, VerlaufKnoepfe } from './Toolbar'
 
 export function EditorShell() {
   useKeyboardShortcuts()
-  // Kommandozentrale (Z1): öffnet über den Toolbar-Knopf „Steuerung".
+  // Kommandozentrale: öffnet über den Toolbar-Knopf „Steuerung".
   const [steuerungOffen, setSteuerungOffen] = useState(false)
 
   return (

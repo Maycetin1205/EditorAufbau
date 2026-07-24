@@ -1,5 +1,5 @@
 // Editor
-// Zentraler Store für den Editor — nach dem A1-Umzug (Aufräum.md 2026-07-16)
+// Zentraler Store für den Editor — nach dem Umzug
 // NUR noch Zustand + öffentliche Methoden. Die Handwerksfächer liegen daneben:
 //   treeOps       — reine Baum-Helfer (leerer Baum, Props, Klonen, Teilbaum)
 //   history       — Verlauf/Undo/Redo + Gesten-Transaktionen
@@ -49,7 +49,7 @@ export { BACKUP_KEY } from './persistence'
 export class Editor extends Subject<Editor> {
   private _tree: BlockTree = createEmptyTree()
   private _selectedId: string | null = null
-  // Aktive SEITE der Maske (P-A): ROOT_ID = Hauptseite, sonst die id eines
+  // Aktive SEITE der Maske: ROOT_ID = Hauptseite, sonst die id eines
   // Seiten-Bausteins (pageBlock, z.B. Popup) unter der Wurzel. Bewusst NICHT
   // persistiert — welche Seite offen ist, ist Arbeitszustand wie die Auswahl.
   private _activePageId: string = ROOT_ID
@@ -69,7 +69,7 @@ export class Editor extends Subject<Editor> {
 
   get tree(): Readonly<BlockTree> { return this._tree }
 
-  // Wurzel der AKTIVEN Seite (P-A): Canvas, Bibliothek und Drag-Ziele
+  // Wurzel der AKTIVEN Seite: Canvas, Bibliothek und Drag-Ziele
   // arbeiten dadurch automatisch auf der Seite, die gerade offen ist.
   // Verschwindet die Seite (Undo, Löschen), fällt alles auf die Hauptseite.
   get rootId(): string {
@@ -191,7 +191,7 @@ export class Editor extends Subject<Editor> {
   // Beispieldaten (defaultChildren) kommen als kompletter Teilbaum mit —
   // ein Undo entfernt alles wieder. Verweigert Typen, die der Zielcontainer
   // nicht aufnimmt (allowedChildTypes) — dann kein History-Eintrag, null.
-  // Ohne parentId landet der Block auf der AKTIVEN Seite (P-A) — die
+  // Ohne parentId landet der Block auf der AKTIVEN Seite — die
   // Bibliothek bestückt damit automatisch die Seite, die gerade offen ist.
   // Rasterfläche = die oberste Ebene (Wurzel) oder ein Popup-Rumpf
   // (pageBlock): dort liegen die Blöcke im Raster, nicht im Fluss. Registry-
@@ -299,7 +299,7 @@ export class Editor extends Subject<Editor> {
     this.selectBlock(ziel)
   }
 
-  // Datenquelle in Reichweite eines Blocks (Kap. 5.2, Bedienlogik 2):
+  // Datenquelle in Reichweite eines Blocks:
   // der NÄCHSTE Vorfahr (inkl. des Blocks selbst) mit acceptsDataSource
   // bestimmt die Quelle — die Karte bekommt ihre Felder von IHREM Kanban.
   // Trägt er keine (auflösbare) Quelle, gibt es keine Felder; weiter oben
@@ -354,7 +354,7 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Aktionsketten eines Bausteins ersetzen (Z2): Ereignis-Key → Schritte.
+  // Aktionsketten eines Bausteins ersetzen: Ereignis-Key → Schritte.
   // Leere Ketten werden abgeräumt; ganz ohne Ketten entfällt das Feld.
   // Ein Aufruf = EIN History-Eintrag (die Zentrale schreibt pro
   // Bedienschritt, Muster updateProperty) — Ctrl+Z gilt damit auch für
@@ -402,7 +402,7 @@ export class Editor extends Subject<Editor> {
     if (!node || !newParent || id === ROOT_ID) return
     // Niemals in den eigenen Teilbaum einhängen (Zyklus).
     if (collectSubtree(this._tree, id).includes(newParentId)) return
-    // Ziel muss den Typ aufnehmen (allowedChildTypes, Kap. 4K.4).
+    // Ziel muss den Typ aufnehmen (allowedChildTypes).
     if (!canContain(newParent.type, node.type)) return
     const oldParentId = node.parentId
     if (!oldParentId) return
@@ -554,6 +554,6 @@ export class Editor extends Subject<Editor> {
   }
 }
 
-// A2 (Aufräum.md 2026-07-16): Es gibt KEINE Weltvariable mehr — die eine
+// Es gibt KEINE Weltvariable mehr — die eine
 // App-Instanz entsteht in src/app/providers.tsx und reist über den
 // EditorProvider; Tests bauen sich ihre Instanzen selbst (`new Editor()`).

@@ -1,5 +1,5 @@
 // FieldPicker
-// Kap. 5.2 (Bedienlogik 3): "Stelle anklicken → Feld wählen". Kleines
+// "Stelle anklicken → Feld wählen". Kleines
 // Auswahlfeld direkt an der angeklickten Stelle — zeigt AUSSCHLIESSLICH
 // Klarnamen aus dem Feld-Wörterbuch (nie Feldcodes, keine erfundenen
 // Beispielwerte); der Feldcode (Technikwert) wird unsichtbar in die

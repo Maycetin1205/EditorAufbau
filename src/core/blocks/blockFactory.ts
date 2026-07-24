@@ -28,7 +28,7 @@ export function createBlockNode(type: string, id?: string): BlockNode {
 }
 
 // Erzeugt einen Block MITSAMT seiner Beispieldaten (defaultChildren aus der
-// Registry, Kap. 4K.4) als losgelösten Teilbaum. Ein Spec mit eigenem
+// Registry) als losgelösten Teilbaum. Ein Spec mit eigenem
 // `children` gewinnt; ohne Spec gelten die defaultChildren des Typs — so
 // bringt eine per "+ Spalte" erzeugte Kanban-Spalte NICHT die Beispielkarten
 // des Boards mit, ein frisches Board aber schon.

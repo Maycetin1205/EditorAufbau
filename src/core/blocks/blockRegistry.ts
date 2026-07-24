@@ -22,7 +22,7 @@ export function getAllBlockDefinitions(): BlockDefinition[] {
   return Array.from(registry.values())
 }
 
-// Erlaubte-Kind-Typen-Regel (Kap. 4K.4) an EINER Stelle: Store, Drag-Vorschau
+// Erlaubte-Kind-Typen-Regel an EINER Stelle: Store, Drag-Vorschau
 // und Palette fragen alle hier. Unbekannte Elterntypen (z. B. die implizite
 // Wurzel) beschränken nichts; Nicht-Container nehmen nie Kinder auf.
 // S3 ergänzt die Gegenrichtung: deklariert das KIND erlaubte Eltern-Typen

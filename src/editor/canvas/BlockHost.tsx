@@ -15,7 +15,7 @@
 // etwas vom Editor weiß. Gestrichelter Rahmen + Platzhalter sind reine
 // Editor-Hilfen und leben hier, NICHT im Baustein (WYSIWYG).
 //
-// Aufräumen A3/A4: Bindungs-Picker (useBindingPicker), Größenziehen
+// Bindungs-Picker (useBindingPicker), Größenziehen
 // (useBlockResize) und die React↔Lit-Übergabestelle (useLitElement)
 // wohnen in eigenen Hooks daneben.
 
@@ -77,16 +77,16 @@ function listeLesen(roh: unknown, b: ListenBindung): Record<string, unknown>[] {
 }
 
 export function BlockHost({ block, selected, onSelect, raster = false, children }: BlockHostProps) {
-  // A2 (Aufräum.md): Instanz aus dem Versorger statt Weltvariable — bewusst
+  // Instanz aus dem Versorger statt Weltvariable — bewusst
   // OHNE Abo (useEditorInstance): der Host rendert wie bisher über den
   // Canvas neu, exakt die alte Semantik des direkten Imports.
   const editor = useEditorInstance()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const def = getBlockDefinition(block.type)
   const isContainer = def?.acceptsChildren ?? false
-  // Datenquelle in Reichweite (Kap. 5.2) — nur für Blöcke mit bindbaren
+  // Datenquelle in Reichweite — nur für Blöcke mit bindbaren
   // Stellen relevant. BlockHost rendert bei jeder Store-Änderung neu (Canvas
-  // abonniert den Store) UND bei Vorlagen-Änderungen (Kap. 5.4: Bibliothek
+  // abonniert den Store) UND bei Vorlagen-Änderungen (die Bibliothek
   // ist editierbar — die Klarnamen-Vorschau muss sofort nachziehen).
   useDataSources()
   const bindableSpots = def?.bindableSpots ?? KEINE_SPOTS
@@ -100,7 +100,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
     blockRef.current = block
   })
 
-  // React↔Lit-Übergabestelle (A4): Erzeugen/Props/Aufräumen — useLitElement.
+  // React↔Lit-Übergabestelle: Erzeugen/Props/Aufräumen — useLitElement.
   const { containerRef, elementRef, element } = useLitElement({
     editor,
     blockRef,
@@ -111,7 +111,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
     raster,
   })
 
-  // ---- Klick-auf-Stelle-Binding (Kap. 5.2, Bedienlogik 3) ----
+  // ---- Klick-auf-Stelle-Binding ----
   const { picker, closePicker, onClick, onDoubleClick } = useBindingPicker({
     editor,
     blockRef,
@@ -166,13 +166,13 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   const resizable = def?.resizableWidth ?? true
   const heightResizable = def?.resizableHeight === true
 
-  // Musterkarte (P1.1, templateChild in der Registry): KEIN sichtbares
+  // Musterkarte (templateChild in der Registry): KEIN sichtbares
   // Etikett (docs/decisions/2026-07-16-karte-empfang-anatomie.md). Die
   // Markierung steuert nur das Kreuzchen: die Musterkarte hat keins
   // (Löschschutz, s. onRemoveClick).
   const templateMark = editor.templateMarkFor(block.id)
 
-  // Kreuzchen (Bedienlogik 5): Entfernen direkt am Block, Rückfrage nur wenn
+  // Kreuzchen: Entfernen direkt am Block, Rückfrage nur wenn
   // er Inhalte trägt. Die Musterkarte selbst zeigt gar kein Kreuzchen (s. u.);
   // ein Teilbaum, der sie enthält (Spalte), erklärt den Schutz statt still
   // nichts zu tun — der Store erzwingt ihn zusätzlich (removeBlock).
@@ -207,7 +207,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
         // (Kanban-Spalte) schmaler sitzen als der Export (WYSIWYG-Bruch).
         display: 'block',
         position: 'relative',
-        // height:100% reicht eine feste Höhe (P1.3) vom Canvas-Wrapper bis
+        // height:100% reicht eine feste Höhe vom Canvas-Wrapper bis
         // zum Element durch (:host{height:100%} beim Kanban). Ohne feste
         // Höhe löst sich 100% zu auto auf — kein Block ändert sich.
         height: '100%',
@@ -392,7 +392,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
           onDoubleClick={(e) => {
             // Zurück zur Standard-Breite des Bausteins direkt am Anfasser —
             // die Breite hat seit 2026-07-14 KEIN Inspector-Feld mehr
-            // (Nutzer-Anweisung + Bedienlogik 6: nur was sich nicht zeigen
+            // (Nutzer-Anweisung: nur was sich nicht zeigen
             // lässt, steht im Inspector). Ohne das Zurücksetzen käme ein
             // einmal gezogener Block nie wieder auf "Füllen"/"Automatisch".
             e.stopPropagation()
@@ -443,7 +443,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   )
 }
 
-// Editor-Hilfe "Plus-Knopf" (Bedienlogik 5, aus der Registry: addChildButton).
+// Editor-Hilfe "Plus-Knopf" (aus der Registry: addChildButton).
 // Ein kleiner Anstecker am Wrapper-Rand (Muster Kreuzchen), bewusst NIE im
 // Baustein selbst (er stähle dem Baustein Platz — WYSIWYG-Bruch; Herkunft:
 // docs/decisions/2026-07-10-editor-hilfen.md), sichtbar NUR wenn die

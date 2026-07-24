@@ -1,4 +1,4 @@
-// Export-Tests (Kap. 3 Mini-Export)
+// Export-Tests
 // Prüfen die Export-Grundsätze maschinell: Determinismus (gleicher Baum →
 // identische Datei), SE-Regeln (Marker/ASCII/LF via Validator), Breite als
 // Flex-Item-Style aus derselben flowLayout-Quelle, und dass das eingebettete
@@ -231,7 +231,7 @@ describe('exportMask', () => {
     expect(tag).toContain('name="Neue Behandlung"')
     expect(tag).toContain('breite="400"')
     expect(tag).toContain('hoehe="300"')
-    // Geschlossen bis eine Kette öffnet (P-B): NIE mit offen-Attribut exportieren.
+    // Geschlossen bis eine Kette öffnet: NIE mit offen-Attribut exportieren.
     expect(tag).not.toContain('offen')
     expect(html).toMatch(/<ff-popup[^>]*>\n\s+<ff-t-block[^>]*text="Im Popup"/)
   })

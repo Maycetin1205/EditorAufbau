@@ -1,6 +1,6 @@
 // flowLayout
 // EINE Quelle für die Breiten-Logik eines Blocks im Fluss seines Containers.
-// Wird vom Editor (CanvasNode-Wrapper) benutzt und in Kap. 3 vom Export —
+// Wird vom Editor (CanvasNode-Wrapper) benutzt und in vom Export —
 // beide leiten aus demselben Mapping ab, damit Editor und Maske identisch
 // sitzen (WYSIWYG).
 //
@@ -14,7 +14,7 @@ import type { BlockDefinition } from './BlockDefinition'
 
 export type FlowDirection = 'column' | 'row'
 export type FlowWidth = 'auto' | 'fill' | number
-// Höhe (P1.3, opt-in): nur Blöcke mit resizableHeight in der Registry
+// Höhe (opt-in): nur Blöcke mit resizableHeight in der Registry
 // deklarieren eine height-Prop (Kanban: Karten scrollen dann IN der
 // Spalte statt das Board endlos wachsen zu lassen — Empfang-Vorbild).
 //   'auto'  → natürliche Höhe
@@ -79,7 +79,7 @@ export function flowItemHeightStyle(
 // Block-Element selbst). camelCase-Schlüssel; der Export wandelt in
 // kebab-case um.
 //
-// lockedWidth (K0, opt-in per Registry — ersetzt fillMinWidth): die Registry
+// lockedWidth (opt-in per Registry — ersetzt fillMinWidth): die Registry
 // legt das Breitenverhalten des Blocks FEST, die width-Prop des Knotens wird
 // ignoriert (kein Breite-Anfasser, keine Inspector-Breite). Kanban-Spalte:
 // 'fill' → alle Spalten teilen sich die Zeile IMMER gleichmäßig

@@ -1,5 +1,5 @@
 // RelationStore
-// Kap. 5.5: Relation-Vorlagen sind BENUTZERDEFINIERT — GET/PUT-Relations
+// Relation-Vorlagen sind BENUTZERDEFINIERT — GET/PUT-Relations
 // sind je SoftEngine-Installation individuell (>1000 möglich). Dieser Store
 // ist die gelebte Wahrheit der Vorlagen-Bibliothek: persistiert in
 // localStorage NEBEN den Bäumen und Datenquellen (Muster: DataSourceStore).
@@ -9,7 +9,7 @@
 // Reload — es wird nie ungefragt neu eingespielt).
 //
 // Bewusst KEIN Undo/Redo: die Bibliothek ist kein Canvas-Gestenraum; vor
-// destruktiven Aktionen fragt die UI nach (Bedienlogik 5, wie das Kreuzchen).
+// destruktiven Aktionen fragt die UI nach (wie das Kreuzchen).
 
 import {
   BUILTIN_RELATION_TEMPLATES,

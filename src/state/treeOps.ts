@@ -1,5 +1,5 @@
 // treeOps — reine Baum-Helfer des Editor-Stores.
-// A1-Umzug 2026-07-16 (Aufräum.md), verhaltensgleich aus Editor.ts:
+// Verhaltensgleich herausgezogen aus Editor.ts:
 // kein Zustand, kein DOM — alle Funktionen bekommen alles hereingereicht.
 
 import {
@@ -49,7 +49,7 @@ export function cloneSubtree(
       id: newId,
       type: src.type,
       props: deepClone(src.props),
-      // Aktionsketten (Z2) gehören zum Baustein — die Kopie behält sie.
+      // Aktionsketten gehören zum Baustein — die Kopie behält sie.
       ...(src.events ? { events: deepClone(src.events) } : {}),
       parentId,
       childIds,

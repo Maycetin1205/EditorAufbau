@@ -1,5 +1,5 @@
 // validator
-// Eingebaute Export-Prüfung (Kap. 3, Vorbild: behandlung-umbau/pruefung.mjs).
+// Eingebaute Export-Prüfung.
 // JEDER Export läuft hier durch, BEVOR er SoftEngine sieht — schlägt ein
 // Check fehl, wird keine Datei ausgegeben. Die Checks spiegeln die
 // NO-TOUCH-Regeln aus SE-INVENTAR.md.

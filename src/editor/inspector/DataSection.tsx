@@ -1,5 +1,5 @@
 // DataSection
-// Kap. 5.1: Datenquelle an den selektierten Block hängen (Bedienlogik 2).
+// Datenquelle an den selektierten Block hängen.
 // Erscheint nur für Blöcke, deren Registry-Eintrag acceptsDataSource setzt
 // (kein `if type===`). Der Bediener sieht Anzeigenamen der Vorlagen;
 // gespeichert wird der Technikwert (Vorlagen-id) in der source-Prop.

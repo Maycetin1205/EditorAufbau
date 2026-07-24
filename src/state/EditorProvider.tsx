@@ -1,4 +1,4 @@
-// EditorProvider (A2, Aufräum.md 2026-07-16)
+// EditorProvider
 // Trägt die EINE Editor-Instanz der App über React-Context — ersetzt die
 // frühere Weltvariable (`export const editor`). Die Instanz entsteht genau
 // einmal im App-Einstieg (src/app/providers.tsx); Komponenten holen sie

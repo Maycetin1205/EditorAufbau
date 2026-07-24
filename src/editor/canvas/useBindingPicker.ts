@@ -1,5 +1,5 @@
 // useBindingPicker
-// Klick-auf-Stelle-Binding (Kap. 5.2, Bedienlogik 3; Aufräumen A3 —
+// Klick-auf-Stelle-Binding (
 // wörtlich aus BlockHost.tsx gezogen). Klick auf eine bindbare Stelle des
 // SCHON selektierten Blocks öffnet den Feld-Picker. Verzögert (Timer),
 // damit ein Doppelklick (= Inline-Edit einer ungebundenen Stelle) den

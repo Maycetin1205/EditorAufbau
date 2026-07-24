@@ -1,5 +1,5 @@
 // DataSourceStore
-// Kap. 5.4: Datenquellen-Vorlagen sind BENUTZERDEFINIERT — Felder sind je
+// Datenquellen-Vorlagen sind BENUTZERDEFINIERT — Felder sind je
 // SoftEngine-Installation individuell. Dieser Store ist die gelebte Wahrheit
 // der Vorlagen-Bibliothek: persistiert in localStorage NEBEN den Bäumen
 // (Muster: Editor.ts — Subject + sanitize beim Laden + entprelltes Speichern).
@@ -9,7 +9,7 @@
 // nie ungefragt neu eingespielt).
 //
 // Bewusst KEIN Undo/Redo: die Bibliothek ist kein Canvas-Gestenraum; vor
-// destruktiven Aktionen fragt die UI nach (Bedienlogik 5, wie das Kreuzchen).
+// destruktiven Aktionen fragt die UI nach (wie das Kreuzchen).
 
 import {
   BUILTIN_DATA_SOURCES,

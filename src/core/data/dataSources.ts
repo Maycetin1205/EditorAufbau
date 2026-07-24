@@ -1,6 +1,6 @@
 // dataSources
-// Kap. 5.1: Datenquellen sind eigenständige, benannte VORLAGEN
-// (Kap. 5): einmal definiert, in jeder Maske wiederverwendbar. Aus ihnen wird
+// Datenquellen sind eigenständige, benannte VORLAGEN
+// einmal definiert, in jeder Maske wiederverwendbar. Aus ihnen wird
 // die SEvariablen-JSON des Exports erzeugt (SEFILELOOP) — nie von Hand.
 //
 // VERBINDLICHE QUELLE (korrigiert 2026-07-07): die FELD-Map der echten,
@@ -17,7 +17,7 @@
 // sieht ausschließlich `name` und `label` (maschinell erzwungen in
 // dataSources.test.ts).
 
-// Quellen-ARTEN (Kap. 5.4, Nutzer-Klarstellung 2026-07-07): nicht nur
+// Quellen-ARTEN (Nutzer-Klarstellung 2026-07-07): nicht nur
 // IDB-Tabellen — auch Adressstamm, Artikelstamm, Belege (später MEMTAB/
 // ERPAPICALL). Die Art bestimmt die SEvariablen-Form: IDB → SEFILELOOP mit
 // FELDER '*', Stammtabellen → feste Tabellen-ID (ADR/ART/BEL) + explizite
@@ -44,7 +44,7 @@ export interface DataSourceField {
   // Klarname für den Bediener (z. B. 'Vorname'). Er ist zugleich die
   // Vorschau des Editors: eine gebundene Stelle zeigt den Klarnamen —
   // erfundene Beispielwerte gibt es NICHT (Nutzer-Entscheidung 2026-07-10,
-  // ersetzt das sample-Feld aus Kap. 5.2).
+  // ersetzt das sample-Feld aus).
   label: string
 }
 
@@ -58,7 +58,7 @@ export interface DataSource {
   // SoftEngine-Tabellen-ID, z. B. 'IDBID0001' — NUR bei kind 'idb'
   // (Stammtabellen haben feste IDs, siehe tableIdFor).
   idbId?: string
-  // Feldcode der Datensatz-Nummer (pindex) — braucht der Schreibweg (Kap. 5.3b):
+  // Feldcode der Datensatz-Nummer (pindex) — braucht der Schreibweg:
   // PUT_RELATION adressiert den Satz über diese Nummer. Kein Anzeige-Feld.
   indexField?: string
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
@@ -77,7 +77,7 @@ export function felderFor(source: DataSource): string {
   return source.kind === 'idb' ? '*' : source.fields.map((f) => f.code).join(',')
 }
 
-// Mitgelieferter Startbestand (Kap. 5.4: bleibt als Vorlage; ab jetzt nur
+// Mitgelieferter Startbestand (bleibt als Vorlage; ab jetzt nur
 // noch der SEED des DataSourceStore — die gelebte Wahrheit liegt im Store).
 export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
   {
@@ -120,7 +120,7 @@ export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
   },
 ]
 
-// ---------- Pure Helfer für das Eingabe-Formular (Kap. 5.4b) ----------
+// ---------- Pure Helfer für das Eingabe-Formular ----------
 // Regel Technikwert ≠ Anzeigename: der Bediener gibt Klarname + Position +
 // Länge bzw. die IDB-ID im SoftEngine-Format ('ID0004') ein — die
 // Technikwerte ('pos_len', 'IDBIDnnnn') entstehen daraus unsichtbar.

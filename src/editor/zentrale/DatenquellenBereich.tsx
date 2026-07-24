@@ -3,7 +3,7 @@
 // Links die Vorlagen mit Art-Etikett und Verwendungs-Zähler, rechts das
 // Detail: Felder, „Verwendung in dieser Maske". Bearbeiten
 // läuft inline im Detail (FormularKarte) — kein Modal im Modal.
-// Löschen fragt nach (Bedienlogik 5), mit deutlicher Warnung, wenn die
+// Löschen fragt nach, mit deutlicher Warnung, wenn die
 // Quelle in der Maske benutzt wird (Registry-getrieben, kein `if type===`).
 
 import { useState } from 'react'

@@ -1,5 +1,5 @@
 // history — Verlauf (Undo/Redo) + Gesten-Transaktionen des Editor-Stores.
-// A1-Umzug 2026-07-16 (Aufräum.md), verhaltensgleich aus Editor.ts:
+// Verhaltensgleich herausgezogen aus Editor.ts:
 // exakt die frühere pushHistory/beginTransaction/endTransaction/undo/redo-
 // Logik, nur als eigenes Fach gekapselt. Snapshots kommen als Fabrik-
 // Funktion herein (lazy) — genau wie früher wird bei laufender Geste

@@ -8,7 +8,7 @@ export const NEW_BLOCK_MIME = 'application/x-ff-new-block'
 
 // Während `dragover` dürfen Daten NICHT gelesen werden (Browser-Schutz),
 // die Typenliste schon. Damit die Drag-Vorschau erlaubte Kind-Typen prüfen
-// kann (Kap. 4K.4), reist der Block-Typ zusätzlich IM MIME-Namen mit.
+// kann, reist der Block-Typ zusätzlich IM MIME-Namen mit.
 // (Browser normalisieren MIME-Namen zu Kleinbuchstaben — Block-Typen sind
 // per Konvention bereits klein.)
 const TYPED_PREFIX = `${NEW_BLOCK_MIME}--`

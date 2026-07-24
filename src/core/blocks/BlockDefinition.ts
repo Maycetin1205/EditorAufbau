@@ -10,7 +10,7 @@ import type { PropertyDescription } from './PropertyDescription'
 
 export type { BlockCategory }
 
-// Beispieldaten-Bauplan (Kap. 4K.4): beschreibt, mit welchem Teilbaum ein
+// Beispieldaten-Bauplan: beschreibt, mit welchem Teilbaum ein
 // Block eingefügt wird ("nie ein leeres Gerippe"). Reine Daten — die Factory
 // materialisiert daraus BlockNodes. `children` überschreibt die
 // defaultChildren des Kind-Typs; fehlt es, gelten dessen eigene.
@@ -20,7 +20,7 @@ export interface DefaultChildSpec {
   children?: readonly DefaultChildSpec[]
 }
 
-// Bindbare Stelle (Kap. 5.2, Bedienlogik 3): eine Text-Stelle des Blocks,
+// Bindbare Stelle: eine Text-Stelle des Blocks,
 // die per Klick an ein Feld der Datenquelle in Reichweite gebunden werden
 // kann. `prop` = die Anzeige-Prop der Stelle (z. B. 'heading'); die Bindung
 // selbst (Feldcode = Technikwert) liegt in der Prop `<prop>Field` und muss
@@ -72,7 +72,7 @@ export type ActionValueSpotsFor<Props> = ReadonlyArray<{
 }>
 
 // ---------------------------------------------------------------------------
-// Bindungs-Konvention (Aufräumen A5) — DIE eine, typgeprüfte Definition.
+// Bindungs-Konvention — DIE eine, typgeprüfte Definition.
 // Die Bindung einer Stelle liegt in der Prop `<prop>Field` (Feldcode =
 // Technikwert, '' = ungebunden); im exportierten HTML normalisiert sie der
 // Browser zum kleingeschriebenen Attribut `<prop>field`. Alle Leser gehen
@@ -127,7 +127,7 @@ export interface BindingRoute {
   fieldProp: string
 }
 
-// Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff Kap. 8): was bei
+// Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff): was bei
 // diesem Baustein passieren kann. `name` = Klarname für den Bediener
 // („Karte angeklickt"), `key` = Technikwert — das Vokabular des alten
 // Editors (onClick/onCardClick/onCardDrop), an dem ab Z2 die
@@ -146,22 +146,22 @@ export interface BlockDefinition {
   customProperties: PropertyDescription[]
   acceptsChildren: boolean
   resizableWidth: boolean
-  // true = der Block hat eine einstellbare HÖHE (P1.3, opt-in): Zieh-
+  // true = der Block hat eine einstellbare HÖHE (opt-in): Zieh-
   // Anfasser an der Unterkante; Doppelklick setzt den Block-Standard
   // (z. B. Kanban = verbleibende Höhe/fill) zurück.
   // Der Block muss dafür `height` in seinen defaultProps deklarieren
   // (Kanban: feste Höhe = Karten scrollen im Spaltenrumpf). Default false.
   resizableHeight: boolean
-  // Erlaubte Kind-Typen (Kap. 4K.4): undefined = alle Typen erlaubt.
+  // Erlaubte Kind-Typen: undefined = alle Typen erlaubt.
   // Kanban-Spalte nimmt z. B. NUR Karten. Durchgesetzt im Store (addBlock/
   // moveNode) und in der Drag-Vorschau — nie per `if type===` in der UI.
   allowedChildTypes?: readonly string[]
-  // Gegenrichtung (S3): erlaubte ELTERN-Typen. undefined = überall erlaubt.
+  // Gegenrichtung: erlaubte ELTERN-Typen. undefined = überall erlaubt.
   // Karten existieren NUR in Kanban-Spalten, Spalten NUR in Boards — eine
   // Karte lässt sich damit nicht mehr aus dem Kanban auf die Fläche ziehen.
   // Durchgesetzt an derselben EINEN Stelle wie allowedChildTypes (canContain).
   allowedParentTypes?: readonly string[]
-  // Festgelegtes Breitenverhalten (K0, opt-in — ersetzt fillMinWidth): die
+  // Festgelegtes Breitenverhalten (opt-in — ersetzt fillMinWidth): die
   // Registry pinnt die Fluss-Breite, die width-Prop des Knotens wird
   // ignoriert; Breite-Anfasser/Inspector-Breite entfallen. Kanban-Spalte:
   // 'fill' (alle Spalten teilen sich die Zeile IMMER gleichmäßig,
@@ -177,7 +177,7 @@ export interface BlockDefinition {
   // false = erscheint nicht in der Bibliothek (Kanban-Spalte entsteht nur
   // über das Board). undefined/true = sichtbar.
   showInPalette?: boolean
-  // Laufzeit-Vorlage (P1.1): der Container erzeugt seine Laufzeit-Kinder
+  // Laufzeit-Vorlage: der Container erzeugt seine Laufzeit-Kinder
   // aus der ERSTEN Nachfahren-Karte dieses Typs (Baumreihenfolge; seRuntime
   // klont sie je Datenzeile). Der Editor markiert genau diese Karte dezent
   // mit dem Label (Editor-Hilfe im BlockHost, nie im Export).
@@ -188,12 +188,12 @@ export interface BlockDefinition {
   // Editor-Hilfe "Plus-Knopf" am Container: fügt einen Kind-Block dieses
   // Typs ans Ende ein (Kanban: "+ Spalte", Spalte: "+ Karte").
   addChildButton?: { label: string; childType: string }
-  // true = an den Block lässt sich eine Datenquelle hängen (Kap. 5.1,
-  // Bedienlogik 2). Der Block trägt dann eine `source`-Prop (Technikwert =
+  // true = an den Block lässt sich eine Datenquelle hängen. Der Block
+  // trägt dann eine `source`-Prop (Technikwert =
   // Vorlagen-id aus core/data/dataSources); der Inspector zeigt die Sektion
   // "Daten", der Export erzeugt daraus den SEFILELOOP. Kein `if type===`.
   acceptsDataSource?: boolean
-  // Bindbare Stellen des Blocks (Kap. 5.2) — siehe BindableSpot.
+  // Bindbare Stellen des Blocks — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
   // Aktuelle Bausteinwerte, die als Parameterquelle angeboten werden.
   actionValueSpots?: readonly ActionValueSpot[]
@@ -202,10 +202,10 @@ export interface BlockDefinition {
   // Eigener Datenanschluss-Dialog fuer source + Einsortieren-Feld.
   // Das dort gepflegte Feld-Control ist hiddenInInspector.
   bindingRoute?: BindingRoute
-  // Ereignisse des Blocks (Z1) — siehe BlockEventSpec. undefined = der
+  // Ereignisse des Blocks — siehe BlockEventSpec. undefined = der
   // Baustein löst keine Ereignisse aus (erscheint nicht in der Zentrale).
   blockEvents?: readonly BlockEventSpec[]
-  // true = der Block ist eine SEITE der Maske (Popup, Kap. P-A): er liegt
+  // true = der Block ist eine SEITE der Maske (Popup): er liegt
   // als Kind der Wurzel im Baum (Persistenz/Undo/Export laufen generisch
   // mit), erscheint aber NIE im Fluss der Hauptseite — der Canvas zeigt ihn
   // nur als eigenen Seiten-Reiter. Kein `if type===`: Editor.childNodesOf

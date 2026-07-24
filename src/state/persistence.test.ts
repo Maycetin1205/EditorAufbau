@@ -1,4 +1,4 @@
-// Persistenz-Tests (Kap. 2.5 Sicherheitsnetz)
+// Persistenz-Tests
 // Prüfen den Lade-Weg: kaputte/fremde Speicherstände dürfen den Editor nie
 // zerlegen (sanitize), alte Formate werden migriert, und Inline-Edit-Werte
 // überleben das Neuladen (der am 2026-07-02 gefixte Bug).
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Side-Effect-Import: registriert die echten Kanban-Blöcke (kanban,
 // kanban-spalte, card) für die P1.1-Migrationstests.
 import '../blocks/kanban/KanbanBlock'
-// … und den echten Popup-Baustein für die Seiten-Tests (P-A).
+// … und den echten Popup-Baustein für die Seiten-Tests.
 import '../blocks/popup/PopupBlock'
 // Echte Atome mit Registry-Startbreiten für die Raster-Reparatur (Schema 4):
 // formfeld startW 6, button startW 4, trenner startW 24 (Vollbreite).

@@ -1,4 +1,4 @@
-// statusVariant (Kap. 4K.3)
+// statusVariant
 // Geteiltes Status-Vokabular (Regel "Technikwert != Anzeigename": der
 // Bediener waehlt den Klarnamen Hinweis/Erfolg/Warnung/Fehler, NIE die
 // Farbe — die Farbe ergibt sich fest aus der Bedeutung ueber die

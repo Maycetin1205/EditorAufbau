@@ -17,7 +17,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function useKeyboardShortcuts() {
-  // A2 (Aufräum.md): Instanz aus dem Versorger statt Weltvariable —
+  // Instanz aus dem Versorger statt Weltvariable —
   // die Instanz ist app-lebenslang stabil, der Effekt läuft weiter einmal.
   const editor = useEditorInstance()
   useEffect(() => {

@@ -1,4 +1,4 @@
-// seAktionen (Z2)
+// seAktionen
 // Ausfuehrung der Aktionsketten in der EXPORTIERTEN SoftEngine-Maske.
 // Die Ketten reisen als data-ff-aktionen-Attribut am Element (exportMask);
 // hier werden sie gelesen (parseBlockEvents) und Schritt fuer Schritt
@@ -71,7 +71,7 @@ function seStartTool(nr: string, params: readonly string[]): void {
   } catch { /* nicht in SE */ }
 }
 
-// ---------- Popup-Schritte (P-B) ----------
+// ---------- Popup-Schritte ----------
 
 // Schaltet das offen-Attribut des Popups mit dem Klarnamen `name` (die
 // Preflight erzwingt eindeutige Namen). Darstellung/Lebenszyklus bleiben
@@ -116,7 +116,7 @@ export async function runEvent(
   try {
     // Der ZWISCHENSPEICHER (benannte Schritt-Ergebnisse via resultKey,
     // Nutzer-Kernanforderung) steckt ab Tag 1 im MODELL; hier ausgefuehrt
-    // wird er erst mit „Relation ausfuehren" (Z3, seGetNewIndex-Muster) —
+    // wird er erst mit „Relation ausfuehren" (seGetNewIndex-Muster) —
     // „Werkzeug starten" liefert kein Ergebnis.
     const values: Record<string, string | undefined> = {
       ...context,

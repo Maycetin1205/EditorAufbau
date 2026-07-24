@@ -1,5 +1,5 @@
 // migrations — Übernahme alter Speicherstände in die aktuelle Form.
-// A1-Umzug 2026-07-16 (Aufräum.md), verhaltensgleich aus Editor.ts.
+// Verhaltensgleich herausgezogen aus Editor.ts.
 // Jede Migration ist eine dokumentierte Einbahnstraße: sie läuft beim Laden
 // und macht aus Altbestand den heutigen Vertrag — Verluste passieren nie still.
 
@@ -15,7 +15,7 @@ import { createEmptyTree, normalizeProps } from './treeOps'
 
 export const CURRENT_SCHEMA_VERSION = 5
 
-// Migration alter Stände (P1.1): der Vorlagen-Kasten (kanban-vorlage) ist
+// Migration alter Stände: der Vorlagen-Kasten (kanban-vorlage) ist
 // abgeschafft — seine Karten wandern an den ANFANG der ersten Spalte des
 // Boards (die erste Karte des Boards ist jetzt die Musterkarte), der Kasten
 // selbst verschwindet. Ohne den Umzug würde sanitizeTree den unbekannten

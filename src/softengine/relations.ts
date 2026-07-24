@@ -22,7 +22,7 @@ import {
   rowsFor,
 } from './data'
 
-// Relation-Vorlage in der EXPORTIERTEN Maske (Kap. 5.5): die Vorlagen sind
+// Relation-Vorlage in der EXPORTIERTEN Maske: die Vorlagen sind
 // benutzerdefiniert und leben im Editor-localStorage — exportMask bettet die
 // benutzten Vorlagen als `window.FF_RELATIONS = […]` ein (Muster
 // FF_DATA_SOURCES; window. statt var wegen WebUI-Kapselung, s. exportMask).

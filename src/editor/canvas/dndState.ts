@@ -1,5 +1,5 @@
 // dndState
-// Geteilter Drag-and-Drop-Zustand des Canvas (Aufräumen A3 — wörtlich aus
+// Geteilter Drag-and-Drop-Zustand des Canvas (wörtlich aus
 // Canvas.tsx gezogen): Context + Hook + der eine Drop-Vollzug. Die Fläche
 // (Canvas) stellt den Provider, Knotenliste und Popup-Seite lesen ihn.
 //

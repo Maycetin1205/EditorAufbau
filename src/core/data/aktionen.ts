@@ -18,7 +18,7 @@ export const STEP_TYPES: readonly StepTypeSpec[] = [
   // Anzeige-Name = SE-Fachbegriff selbst (Nutzer-Entscheidung 2026-07-15).
   { key: 'START_TOOL', name: 'START_TOOL' },
   { key: 'RELATION', name: 'Relation' },
-  // Popup-Schritte (P-B) sind KEINE SE-Fachbegriffe — sie bekommen Klarnamen.
+  // Popup-Schritte sind KEINE SE-Fachbegriffe — sie bekommen Klarnamen.
   { key: 'POPUP_OPEN', name: 'Popup öffnen' },
   { key: 'POPUP_CLOSE', name: 'Popup schließen' },
 ]

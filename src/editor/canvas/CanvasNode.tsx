@@ -114,7 +114,7 @@ function CanvasNode({ node, index, parentId, listDirection, raster = false }: Ca
     const draggedType = dnd.dragId !== null
       ? ed.getNode(dnd.dragId)?.type ?? null
       : newBlockDragType(e.dataTransfer)
-    // Erlaubte Kind-Typen (Kap. 4K.4): nur dort eine Einfüge-Vorschau
+    // Erlaubte Kind-Typen: nur dort eine Einfüge-Vorschau
     // anbieten, wo der Container den Typ auch aufnimmt.
     const allowedIn = (containerType: string) =>
       draggedType !== null && canContain(containerType, draggedType)

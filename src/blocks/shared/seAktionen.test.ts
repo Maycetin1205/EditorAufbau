@@ -1,4 +1,4 @@
-// Wächter für die Popup-Schritte der Ketten-Laufzeit (P-B): applyPopupStep
+// Wächter für die Popup-Schritte der Ketten-Laufzeit: applyPopupStep
 // schaltet GENAU das Popup mit dem Klarnamen — mehr nicht. DOM-frei getestet
 // über einen Attrappen-Wurzelknoten (Node-Umgebung, Muster seRuntime.test).
 

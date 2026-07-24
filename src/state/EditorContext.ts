@@ -1,4 +1,4 @@
-// EditorContext (A2, Aufräum.md 2026-07-16)
+// EditorContext
 // Der Context + Zugriffs-Hook für die eine Editor-Instanz der App.
 // Bewusst getrennt von der Provider-KOMPONENTE (EditorProvider.tsx):
 // eine Datei = nur Komponenten ODER nur Helfer (Fast-Refresh-Regel).

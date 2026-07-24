@@ -16,7 +16,7 @@ export interface BlockNode {
   id: string
   type: string
   props: Record<string, unknown>
-  // Aktionsketten am Baustein je Ereignis (Z2, Vorgriff Kap. 8): Schlüssel =
+  // Aktionsketten am Baustein je Ereignis (Vorgriff): Schlüssel =
   // Ereignis-Key aus der Registry (blockEvents), Wert = Schrittkette.
   // undefined = keine Ketten. Bewusst NICHT in props: props speisen
   // Export-Attribute + Lit-Properties — Ketten reisen als eigenes Feld

@@ -31,7 +31,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
   // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
   // im Container-Fluss seine natürliche Größe ein.
   //
-  // Daten-Markierung (Kap. 5.2): gebundene Stellen (data-ff-bound, vom Block
+  // Daten-Markierung: gebundene Stellen (data-ff-bound, vom Block
   // aus seiner Bindungs-Prop gerendert) bekommen eine gepunktete Linie in
   // der Hausfarbe — aber NUR im Editor: data-ff-editor setzt ausschließlich
   // der BlockHost (wie data-editable), im Export bleibt die Maske sauber.
@@ -77,7 +77,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
     if (!this.editable) return
     const target = event.currentTarget as HTMLElement | null
     if (!target) return
-    // Gebundene Stellen (Kap. 5.2) zeigen Daten, nicht Text — kein Inline-
+    // Gebundene Stellen zeigen Daten, nicht Text — kein Inline-
     // Edit. Das Event läuft weiter zum BlockHost, der den Feld-Picker öffnet.
     if (target.hasAttribute('data-ff-bound')) return
     event.stopPropagation()
@@ -87,7 +87,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
     // Für den Verwerfen-Fall werden die Originalknoten samt Inhalt gesichert:
     // ein nacktes `textContent = original` würde Lits Marker zerstören, und
     // die Stelle bekäme danach NIE wieder ein Update (z. B. die Klarnamen-
-    // Vorschau nach einer Bindung, Kap. 5.2).
+    // Vorschau nach einer Bindung).
     const originalNodes = Array.from(target.childNodes)
     const originalData = originalNodes.map((n) => n.textContent ?? '')
     target.setAttribute('contenteditable', 'plaintext-only')

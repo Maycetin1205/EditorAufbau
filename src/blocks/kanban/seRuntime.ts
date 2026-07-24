@@ -1,4 +1,4 @@
-// seRuntime (Kap. 5.3) — das KANBAN-Datenverhalten in der exportierten Maske
+// seRuntime — das KANBAN-Datenverhalten in der exportierten Maske
 //
 // Hier liegt NUR Kanban: Zeilen werden Karten (Vorlage = die Musterkarte
 // des Boards), der Wert des Spalten-Felds bestimmt die Spalte (exakter
@@ -49,7 +49,7 @@ export function catchColumnIndex(flags: readonly (string | null | undefined)[]):
 
 // Musterkarte je Board: VOR dem ersten Befüllen geklont, damit jede
 // Neu-Hydrierung (ReloadData) wieder von der gestalteten Karte ausgeht.
-// Quelle = die ERSTE Karte des Boards in Dokumentreihenfolge (P1.1,
+// Quelle = die ERSTE Karte des Boards in Dokumentreihenfolge (
 // templateChild in der Registry — dieselbe Definition wie die dezente
 // "Muster"-Markierung des Editors).
 const templates = new WeakMap<HTMLElement, HTMLElement>()

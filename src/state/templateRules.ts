@@ -1,5 +1,5 @@
 // templateRules — Musterkarten-Regeln (Markierung + Löschschutz).
-// A1-Umzug 2026-07-16 (Aufräum.md), verhaltensgleich aus Editor.ts:
+// Verhaltensgleich herausgezogen aus Editor.ts:
 // reine Funktionen über den Baum; Export (<template>) und Laufzeit
 // (seRuntime) nutzen DIESELBE Definition (treeQuery). Registry-getrieben,
 // kein `if type===`.
@@ -25,7 +25,7 @@ export function owningTemplateBoardId(tree: BlockTree, id: string): string | und
   return undefined
 }
 
-// Musterkarten-Markierung (P1.1, templateChild in der Registry): liefert
+// Musterkarten-Markierung (templateChild in der Registry): liefert
 // das Label, wenn der Block die ERSTE Nachfahren-Karte des deklarierten
 // Typs unter dem nächsten passenden Vorfahren ist.
 export function templateMarkFor(tree: BlockTree, id: string): string | undefined {

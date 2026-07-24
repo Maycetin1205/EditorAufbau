@@ -1,5 +1,5 @@
 // useDataSources
-// React-Hook für die Datenquellen-Bibliothek (Kap. 5.4) — dasselbe Muster
+// React-Hook für die Datenquellen-Bibliothek — dasselbe Muster
 // wie useEditor: useSyncExternalStore bindet den Store-Singleton an React,
 // bei version-Änderung rendert die nutzende Komponente neu.
 

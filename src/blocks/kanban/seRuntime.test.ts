@@ -1,4 +1,4 @@
-// Unit-Tests für die puren Helfer der SoftEngine-Anbindung (Kap. 5.3):
+// Unit-Tests für die puren Helfer der SoftEngine-Anbindung:
 // Feldcode-Auflösung (direkt + pos_len aus dem SATZ), Zeilen aus den
 // SEDATA-Formen der Referenzmaske, Spalten-Zuordnung mit Auffang.
 // Die DOM-Hydrierung selbst prüft e2e/kanban-data.spec.ts im echten Browser.
@@ -27,7 +27,7 @@ import {
 } from '../../softengine/relations'
 import { columnIndexFor } from './seRuntime'
 
-// Kap. 5.4: die exportierte Maske traegt ihre Quellen-Definitionen selbst
+// die exportierte Maske traegt ihre Quellen-Definitionen selbst
 // (window.FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.
 describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
   const liste = [
@@ -54,7 +54,7 @@ describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
   })
 })
 
-// Kap. 5.5: die exportierte Maske traegt ihre Relation-Vorlagen selbst
+// die exportierte Maske traegt ihre Relation-Vorlagen selbst
 // (window.FF_RELATIONS aus exportMask) — hier die pure Aufloesung dazu.
 describe('findRuntimeRelation (FF_RELATIONS -> Vorlage)', () => {
   const liste = [

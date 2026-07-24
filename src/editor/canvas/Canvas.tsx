@@ -1,6 +1,6 @@
 // Canvas
 // Sichtbare Arbeitsfläche. Rendert den Block-Baum REKURSIV im Fluss und
-// trägt die komplette Drag-and-Drop-Platzierung (Kap. 2.3):
+// trägt die komplette Drag-and-Drop-Platzierung:
 //   - vorhandene Blöcke ziehen: umsortieren, in Bereiche hinein, heraus —
 //     auf jeder Verschachtelungsebene, mit Einfüge-Linie als Vorschau.
 //   - neue Blöcke aus der Bibliothek ziehen (MIME-Typ, siehe dnd.ts).
@@ -8,7 +8,7 @@
 //     Mitte = hinein ans Ende. Ein Bereich kann nie in sich selbst fallen.
 // Klick auf leere Stelle = Auswahl aufheben.
 //
-// Aufräumen A3: die Handgriffe wohnen in eigenen Dateien daneben —
+// die Handgriffe wohnen in eigenen Dateien daneben —
 // Knoten-Rekursion (CanvasNode), Dnd-Zustand (dndState), Seiten-Reiter
 // (SeitenLeiste) und Popup-Seitenansicht (PopupSeite). Hier bleibt nur
 // die Fläche selbst.
@@ -50,7 +50,7 @@ export function Canvas() {
     setDropTarget(rasterZiel(e, ed, dnd, ed.rootId, e.currentTarget as HTMLElement))
   }
 
-  // Aktive Seite (P-A): Hauptseite = Wurzel-Fluss; Popup-Seite = das eine
+  // Aktive Seite: Hauptseite = Wurzel-Fluss; Popup-Seite = das eine
   // Popup-Element über der abgedunkelten Maskenfläche (Seiten-Leiste oben).
   const hauptseite = ed.activePageId === ed.pages[0].id
 
@@ -139,7 +139,7 @@ export function Canvas() {
   )
 }
 
-// Außen-Vertrag (Aufräumen A3): diese Namen waren immer von hier
+// Außen-Vertrag: diese Namen waren immer von hier
 // importierbar — sie wohnen jetzt in dndState, bleiben aber re-exportiert.
 export type { DropTarget }
 export { DndContext }
