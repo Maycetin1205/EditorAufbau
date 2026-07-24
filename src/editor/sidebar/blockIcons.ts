@@ -23,6 +23,7 @@ import {
   MousePointerClick,
   SquareKanban,
   StretchHorizontal,
+  Table,
   Text,
   type LucideIcon,
   type LucideProps,
@@ -39,6 +40,7 @@ const ICONS: Record<string, LucideIcon> = {
   popup: AppWindow,
   trenner: Minus,
   text: Text,
+  tabelle: Table,
 }
 
 // Fallback fuer unbekannte/neue Typen: ein neutraler Baustein.

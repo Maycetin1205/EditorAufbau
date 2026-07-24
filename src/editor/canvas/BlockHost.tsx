@@ -370,20 +370,22 @@ function AddChildButton({ label, childType, parentId }: AddChildButtonProps) {
         top: -9,
         right: 14,
         height: 18,
-        padding: '0 8px',
-        border: 'none',
-        borderRadius: 9999,
-        background: 'hsl(var(--ring))',
-        color: '#fff',
-        fontSize: 10,
-        fontWeight: 700,
-        lineHeight: '18px',
-        letterSpacing: '0.05em',
-        textTransform: 'uppercase',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        padding: '0 7px',
+        border: '1px solid hsl(var(--border))',
+        borderRadius: 4,
+        background: 'hsl(var(--card))',
+        color: 'hsl(var(--muted-foreground))',
+        fontSize: 11,
+        fontWeight: 500,
+        lineHeight: 1,
         cursor: 'pointer',
+        boxShadow: '0 1px 2px hsl(var(--foreground) / 0.06)',
       }}
     >
-      ＋ {label}
+      + {label}
     </button>
   )
 }
