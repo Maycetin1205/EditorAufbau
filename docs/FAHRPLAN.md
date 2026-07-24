@@ -288,6 +288,25 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
   Server-Speicherung · Login · Rechte · Ein-Bearbeiter-Sperre ·
   Versionsstände.
 
+### Angemeldet: Verknüpfte Quellen (Nutzer 2026-07-24)
+
+**Mehrere Datenquellen gleichzeitig anzeigen und über gleiche Felder
+verbinden** — ein Baustein zeigt einen Wert aus einer ZWEITEN Quelle,
+zusammengeführt über Schlüsselfelder (wie „Kunde zu Auftrag"). Der Nutzer
+hat das ausdrücklich auf die Liste gesetzt, Zuschnitt noch offen.
+
+Es gab dazu einen halbfertigen Bau (Zweigname `feat/verknuepfte-quellen`),
+der in einer git-Schublade lag und am 2026-07-24 verworfen wurde: er war
+NICHT anwendbar, weil zwei Dateien fehlten, die er importiert
+(`state/SourceLinkStore.ts`, `core/data/sourceLinks.ts`). Der Torso ist
+als Vorlage gesichert: `docs/decisions/2026-07-24-verknuepfte-quellen-torso.patch`
+(440 Zeilen). Darin steckt bereits durchdacht: qualifizierte Bindung
+`"quelleId::feldcode"`, ein geteilter Wert-Auflöser (`aufloeseWert`), das
+Zusammenführen über 1–3 Schlüsselpaare (`verbinde`), Export der benutzten
+Verknüpfungen als `window.FF_SOURCE_LINKS`, und eine Preflight-Sperre,
+wenn eine Verknüpfung fehlt. **Nicht ungeprüft übernehmen** — als
+Ideengeber lesen, dann mit eigenem Plan neu bauen.
+
 ### Merkliste
 
 Tabellen-Spalten aus verschiedenen Quellen · bausteinübergreifende

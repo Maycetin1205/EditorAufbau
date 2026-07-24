@@ -1,0 +1,440 @@
+﻿diff --git a/src/blocks/formfeld/feldRuntime.ts b/src/blocks/formfeld/feldRuntime.ts
+index 2e51d14..97bb66b 100644
+--- a/src/blocks/formfeld/feldRuntime.ts
++++ b/src/blocks/formfeld/feldRuntime.ts
+@@ -7,7 +7,14 @@
+ 
+ import { bindingAttr } from '../../core/blocks/BlockDefinition'
+ import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
+-import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
++import {
++  aufloeseWert,
++  findRuntimeDataSource,
++  getField,
++  rowsFor,
++  setField,
++  splitBindung,
++} from '../../softengine/data'
+ import { runEvent } from '../shared/seAktionen'
+ 
+ export interface RuntimeFieldElement extends HTMLElement {
+@@ -45,8 +52,8 @@ function currentValue(field: RuntimeFieldElement): string {
+ // (Attribut-Form der Bindungs-Konvention — bindingAttr = die eine Stelle).
+ export function hydrateField(field: RuntimeFieldElement): void {
+   const sourceId = field.getAttribute('source') ?? ''
+-  const code = field.getAttribute(bindingAttr('value')) ?? ''
+-  if (sourceId === '' || code === '') {
++  const bindung = field.getAttribute(bindingAttr('value')) ?? ''
++  if (sourceId === '' || bindung === '') {
+     fieldData.delete(field)
+     return
+   }
+@@ -65,8 +72,20 @@ export function hydrateField(field: RuntimeFieldElement): void {
+   }
+ 
+   const pindex = source.indexField === '' ? '' : getField(row, source.indexField)
+-  fieldData.set(field, { row, code, pindex })
+-  field.value = getField(row, code)
++  // Nur eine Bindung an die EIGENE Quelle ist rueckschreibbar; eine
++  // Zusatz-Quellen-Bindung ("sourceId::code") zeigt nur an (MVP lesend) —
++  // writeLocal ignoriert einen leeren code.
++  const parsed = splitBindung(bindung)
++  const writeCode = (!parsed.sourceId || parsed.sourceId === sourceId) ? parsed.code : ''
++  fieldData.set(field, { row, code: writeCode, pindex })
++  field.value = aufloeseWert({
++    hauptzeile: row,
++    hauptSourceId: sourceId,
++    bindung,
++    dataSources: seGlobal().FF_DATA_SOURCES,
++    links: seGlobal().FF_SOURCE_LINKS,
++    seData: seGlobal().SEDATA,
++  })
+ }
+ 
+ function writeLocal(field: RuntimeFieldElement): FieldData | undefined {
+diff --git a/src/blocks/kanban/seRuntime.ts b/src/blocks/kanban/seRuntime.ts
+index a38b460..0b4cd7b 100644
+--- a/src/blocks/kanban/seRuntime.ts
++++ b/src/blocks/kanban/seRuntime.ts
+@@ -19,7 +19,7 @@
+ import { bindingAttr } from '../../core/blocks/BlockDefinition'
+ import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
+ import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
+-import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
++import { aufloeseWert, findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+ import { runEvent } from '../shared/seAktionen'
+ import { CardBlock } from '../card/CardBlock'
+ import { KanbanSpalteBlock } from './KanbanSpalteBlock'
+@@ -147,9 +147,19 @@ function hydrate(board: HTMLElement): void {
+     // (Element ist dann sicher upgegradet, Lit übernimmt das Rendern).
+     for (const spot of spots) {
+       // Attribut-Form der Bindungs-Konvention (bindingAttr = die eine Stelle).
+-      const code = card.getAttribute(bindingAttr(spot.prop)) ?? ''
+-      if (code !== '') {
+-        (card as unknown as Record<string, unknown>)[spot.prop] = getField(row, code)
++      // Der Wert wird ueber den geteilten Resolver geholt: Feld der Board-Quelle
++      // direkt, oder ueber eine Verknuepfung aus der passenden Zusatz-Zeile
++      // (bindung kann "sourceId::code" tragen). Verbund pro Karte.
++      const bindung = card.getAttribute(bindingAttr(spot.prop)) ?? ''
++      if (bindung !== '') {
++        (card as unknown as Record<string, unknown>)[spot.prop] = aufloeseWert({
++          hauptzeile: row,
++          hauptSourceId: sourceId,
++          bindung,
++          dataSources: seGlobal().FF_DATA_SOURCES,
++          links: seGlobal().FF_SOURCE_LINKS,
++          seData: seGlobal().SEDATA,
++        })
+       }
+     }
+     // Jede Daten-Karte ist ziehbar. Der Drop ist nur ein Auslöser für die
+diff --git a/src/editor/shell/Toolbar.tsx b/src/editor/shell/Toolbar.tsx
+index 9e0c89f..65f2f1c 100644
+--- a/src/editor/shell/Toolbar.tsx
++++ b/src/editor/shell/Toolbar.tsx
+@@ -18,6 +18,7 @@ import { preflightMask } from '../../export/preflight'
+ import { failedChecks, validateMaskHtml } from '../../export/validator'
+ import { dataSourceStore } from '../../state/DataSourceStore'
+ import { relationStore } from '../../state/RelationStore'
++import { sourceLinkStore } from '../../state/SourceLinkStore'
+ import { useEditor } from '../../state/useEditor'
+ import { Button } from '@/ui/atoms/button'
+ import { IconButton } from '@/ui/atoms/icon-button'
+@@ -48,11 +49,12 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
+     // Dieselbe Vorlagen-Bibliothek fuer Preflight UND Export (Konsistenz).
+     const sources = dataSourceStore.list
+     const relations = relationStore.list
+-    const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations)
++    const links = sourceLinkStore.list
++    const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations, links)
+     // Semantische Preflight (Stabilisierung S1: kaputte Datenquellen-Referenz)
+     // + Dateiform-Pruefung — beide muessen gruen sein, sonst kein Download.
+     const failed = [
+-      ...failedChecks(preflightMask(ed.tree, sources, relations)),
++      ...failedChecks(preflightMask(ed.tree, sources, relations, links)),
+       ...failedChecks(validateMaskHtml(html)),
+     ]
+     if (failed.length > 0) {
+diff --git a/src/export/exportMask.ts b/src/export/exportMask.ts
+index 18b9077..aae7a9d 100644
+--- a/src/export/exportMask.ts
++++ b/src/export/exportMask.ts
+@@ -26,6 +26,10 @@ import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources
+ import type { RelationTemplate } from '../core/data/relations'
+ import { dataSourceStore } from '../state/DataSourceStore'
+ import { relationStore } from '../state/RelationStore'
++import { sourceLinkStore } from '../state/SourceLinkStore'
++import { findLink, type SourceLink } from '../core/data/sourceLinks'
++import { bindingProp } from '../core/blocks/BlockDefinition'
++import { splitBindung } from '../softengine/data'
+ import {
+   flowItemHeightStyle,
+   flowItemStyle,
+@@ -262,6 +266,56 @@ function collectRelations(
+   return acc
+ }
+ 
++// ---------- Verknuepfte Quellen -> FF_SOURCE_LINKS (verknuepfte Quellen) ----------
++
++// Zusatzquellen (aus qualifizierten Bindungen "sourceId::code") + die dazu
++// benutzten Verknuepfungen einsammeln. Deterministisch (Baum-Reihenfolge,
++// dedupliziert). `primaer` = die schon gesammelten Primaerquellen, damit eine
++// Zusatzquelle nicht doppelt in die SEFILELOOP geraet. Die "Primaerquelle" je
++// Bindung ist die naechste acceptsDataSource-Vorfahrin (Board fuer Karten,
++// Feld fuer sich selbst) — sie wird beim Abstieg mitgereicht.
++function collectVerbund(
++  tree: BlockTree,
++  sources: readonly DataSource[],
++  links: readonly SourceLink[],
++  primaer: readonly DataSource[],
++): { extraSources: DataSource[]; usedLinks: SourceLink[] } {
++  const schon = new Set(primaer.map((s) => s.id))
++  const extraSources: DataSource[] = []
++  const seenLink = new Set<string>()
++  const usedLinks: SourceLink[] = []
++  const addSource = (id: string): void => {
++    if (schon.has(id)) return
++    const src = sources.find((s) => s.id === id)
++    if (src) { schon.add(id); extraSources.push(src) }
++  }
++  const addLink = (a: string, b: string): void => {
++    const link = findLink(links, a, b)
++    if (link && !seenLink.has(link.id)) { seenLink.add(link.id); usedLinks.push(link) }
++  }
++  const visit = (node: BlockNode | undefined, primaerId: string): void => {
++    if (!node) return
++    const def = getBlockDefinition(node.type)
++    let aktuell = primaerId
++    if (def?.acceptsDataSource) {
++      const s = typeof node.props.source === 'string' ? node.props.source : ''
++      if (s !== '') aktuell = s
++    }
++    for (const spot of def?.bindableSpots ?? []) {
++      const raw = node.props[bindingProp(spot.prop)]
++      if (typeof raw !== 'string' || raw === '') continue
++      const { sourceId } = splitBindung(raw)
++      if (sourceId && sourceId !== aktuell) {
++        addSource(sourceId)
++        if (aktuell !== '') addLink(aktuell, sourceId)
++      }
++    }
++    node.childIds.forEach((id) => visit(tree[id], aktuell))
++  }
++  visit(tree[ROOT_ID], '')
++  return { extraSources, usedLinks }
++}
++
+ // ---------- Maske zusammensetzen ----------
+ 
+ export function exportMask(
+@@ -272,6 +326,8 @@ export function exportMask(
+   sources: readonly DataSource[] = dataSourceStore.list,
+   // Relation-Vorlagen (Kap. 5.5): analog, gelebter Bestand des RelationStore.
+   relations: readonly RelationTemplate[] = relationStore.list,
++  // Verknuepfungen (verknuepfte Quellen): analog, gelebter Bestand.
++  links: readonly SourceLink[] = sourceLinkStore.list,
+ ): MaskExport {
+   const root = tree[ROOT_ID]
+   // Popup-Klarnamen je Seiten-id (P-B): Popup-Schritte reisen mit dem NAMEN
+@@ -294,6 +350,11 @@ export function exportMask(
+ 
+   const used = collectDataSources(tree, sources)
+   const usedRelations = collectRelations(tree, relations)
++  // Verknuepfte Quellen: Zusatzquellen (aus qualifizierten Bindungen) an die
++  // Primaerquellen ANHAENGEN — die Reihenfolge der Primaerquellen bleibt
++  // unveraendert, darum sind Referenzmasken OHNE Verknuepfung byte-gleich.
++  const { extraSources, usedLinks } = collectVerbund(tree, sources, links, used)
++  const allSources = [...used, ...extraSources]
+ 
+   const tokensCss = stripCssComments(tokensCssRaw)
+   const runtimeJs = guardScriptContent(escapeNonAsciiJs(runtimeJsRaw.trim()))
+@@ -312,7 +373,7 @@ export function exportMask(
+   // Karten fehlen. Die Referenz JWHtmlEnde.html hängt aus genau diesem Grund
+   // window.Erstellen/window.HTMLFarbe explizit an (nicht bloß deklariert).
+   const sourcesJs = guardScriptContent(escapeNonAsciiJs(
+-    'window.FF_DATA_SOURCES = ' + JSON.stringify(used.map((s) => ({
++    'window.FF_DATA_SOURCES = ' + JSON.stringify(allSources.map((s) => ({
+       id: s.id,
+       name: s.name,
+       tableId: tableIdFor(s),
+@@ -331,6 +392,17 @@ export function exportMask(
+       allowExtraParams: r.allowExtraParams === true,
+     }))) + ';',
+   ))
++  // Die benutzten Verknuepfungen reisen als DATEN mit (verknuepfte Quellen):
++  // der Laufzeit-Verbund (aufloeseWert/findRuntimeLink) loest die
++  // Zusatzquelle je Zeile darueber auf. Nur Technikwerte (Quell-ids +
++  // Feldcodes) — die Anzeigenamen bleiben im Editor.
++  const linksJs = guardScriptContent(escapeNonAsciiJs(
++    'window.FF_SOURCE_LINKS = ' + JSON.stringify(usedLinks.map((l) => ({
++      fromId: l.fromSourceId,
++      toId: l.toSourceId,
++      keys: l.keyPairs.map((k) => ({ from: k.fromField, to: k.toField })),
++    }))) + ';',
++  ))
+ 
+   const html = [
+     '<!--SOFTENGINE-VAR!JWHtmlStart-->',
+@@ -356,6 +428,7 @@ export function exportMask(
+     '<script>',
+     sourcesJs,
+     relationsJs,
++    linksJs,
+     runtimeJs,
+     '</script>',
+     '</body>',
+@@ -368,7 +441,7 @@ export function exportMask(
+   // INDEX_NR 0, ALIAS = Anzeigename, ID/FELDER je Quellen-ART (IDB → eigene
+   // ID + '*', Stammtabellen → feste ID + explizite pos_len-Liste, Kap. 5.4).
+   // Nicht-ASCII wird \uXXXX-escaped (gültiges JSON, ASCII-Regel wie beim HTML).
+-  const sefileloop = used.map((s) => ({
++  const sefileloop = allSources.map((s) => ({
+     INDEX_NR: 0,
+     ALIAS: s.name,
+     ID: tableIdFor(s),
+diff --git a/src/export/preflight.ts b/src/export/preflight.ts
+index 0194f63..cfe567a 100644
+--- a/src/export/preflight.ts
++++ b/src/export/preflight.ts
+@@ -10,11 +10,14 @@
+ // damit die Toolbar beide Pruefungen identisch behandelt (failedChecks + alert).
+ 
+ import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
++import { bindingProp } from '../core/blocks/BlockDefinition'
+ import { getBlockDefinition } from '../core/blocks/blockRegistry'
+ import { actionValueTargets } from '../core/blocks/treeQuery'
+ import { ergebnisSchritteVor, stepProblem } from '../core/data/aktionen'
+ import type { DataSource } from '../core/data/dataSources'
+ import type { RelationTemplate } from '../core/data/relations'
++import { findLink, type SourceLink } from '../core/data/sourceLinks'
++import { splitBindung } from '../softengine/data'
+ import type { CheckResult } from './validator'
+ 
+ // S1a: Ein Block mit acceptsDataSource, dessen source-Prop auf eine nicht (mehr)
+@@ -26,6 +29,9 @@ export function preflightMask(
+   tree: BlockTree,
+   sources: readonly DataSource[],
+   relations: readonly RelationTemplate[],
++  // Verknuepfte Quellen: leer = keine Verknuepfungen (Default haelt Tests/
++  // Referenzabzug rein). Die Toolbar reicht den gelebten Bestand herein.
++  links: readonly SourceLink[] = [],
+ ): CheckResult[] {
+   const results: CheckResult[] = []
+   const actionValues = actionValueTargets(tree).map(({ node, spot }) => ({
+@@ -112,5 +118,33 @@ export function preflightMask(
+     }
+   }
+   visit(tree[ROOT_ID])
++  // Verknuepfte Quellen: eine Bindung auf eine ZUSATZquelle ("sourceId::code")
++  // ohne Verknuepfung zur Quelle des Bausteins liesse den Wert zur Laufzeit
++  // still leer -> blocken (Regel 4). Die "Quelle des Bausteins" ist die
++  // naechste acceptsDataSource-Vorfahrin (Board fuer Karten, Feld fuer sich).
++  const pruefeBindung = (node: BlockNode | undefined, primaerId: string): void => {
++    if (!node) return
++    const def = getBlockDefinition(node.type)
++    let aktuell = primaerId
++    if (def?.acceptsDataSource) {
++      const s = typeof node.props.source === 'string' ? node.props.source : ''
++      if (s !== '') aktuell = s
++    }
++    for (const spot of def?.bindableSpots ?? []) {
++      const raw = node.props[bindingProp(spot.prop)]
++      if (typeof raw !== 'string' || raw === '') continue
++      const { sourceId } = splitBindung(raw)
++      if (sourceId && sourceId !== aktuell && aktuell !== '' && !findLink(links, aktuell, sourceId)) {
++        const ziel = sources.find((s) => s.id === sourceId)?.name ?? '(unbekannte Quelle)'
++        results.push({
++          name: 'Verknuepfung fehlt',
++          ok: false,
++          detail: `Baustein "${def?.displayName ?? node.type}", Stelle "${spot.label}": Feld aus Quelle "${ziel}", aber es gibt keine Verknuepfung zur Quelle des Bausteins.`,
++        })
++      }
++    }
++    node.childIds.forEach((id) => pruefeBindung(tree[id], aktuell))
++  }
++  pruefeBindung(tree[ROOT_ID], '')
+   return results
+ }
+diff --git a/src/softengine/data.ts b/src/softengine/data.ts
+index ca35970..3feff35 100644
+--- a/src/softengine/data.ts
++++ b/src/softengine/data.ts
+@@ -214,3 +214,118 @@ export function messagePayload(eventData: unknown): unknown {
+   if (!isRecord(d) || !isRecord(d.MSG)) return undefined
+   return d.MSG.DATA
+ }
++
++// ---------- Verknuepfte Quellen (maskenweiter Verbund) ----------
++//
++// Eine Verknuepfung koppelt zwei Quellen ueber 1-3 Schluesselpaare (Feldcodes,
++// UND-verknuepft). Die benutzten Verknuepfungen reisen als
++// window.FF_SOURCE_LINKS mit der Maske; hier wird ausschliesslich darueber
++// aufgeloest. Wie der Rest der Schicht: kein DOM, kein Baustein.
++
++// Laufzeit-Form einer Verknuepfung (analog RuntimeDataSource): nur die
++// Technikwerte, die der Verbund braucht.
++export interface RuntimeSourceLink {
++  fromId: string
++  toId: string
++  keys: { from: string; to: string }[]
++}
++
++// Verknuepfung zwischen zwei Quellen-ids aus einer FF_SOURCE_LINKS-Liste
++// (pur, testbar). Richtungsunabhaengig: passt fuer {a,b} UND {b,a}. Kaputte/
++// unvollstaendige Eintraege werden ignoriert (nie raten).
++export function findRuntimeLink(list: unknown, aId: string, bId: string): RuntimeSourceLink | undefined {
++  if (!Array.isArray(list) || aId === '' || bId === '') return undefined
++  for (const entry of list) {
++    if (!isRecord(entry)) continue
++    if (typeof entry.fromId !== 'string' || typeof entry.toId !== 'string') continue
++    const passt = (entry.fromId === aId && entry.toId === bId)
++      || (entry.fromId === bId && entry.toId === aId)
++    if (!passt || !Array.isArray(entry.keys)) continue
++    const keys: { from: string; to: string }[] = []
++    for (const k of entry.keys) {
++      if (isRecord(k) && typeof k.from === 'string' && typeof k.to === 'string') {
++        keys.push({ from: k.from, to: k.to })
++      }
++    }
++    if (keys.length === 0) continue
++    return { fromId: entry.fromId, toId: entry.toId, keys }
++  }
++  return undefined
++}
++
++// Bindungswert zerlegen: "sourceId::code" -> {sourceId, code}; "code" -> {code}.
++// DIE eine Stelle, die den qualifizierten Bindungsstring liest (Editor UND
++// Laufzeit). Kein '::' -> Feld der Haupt-Quelle des Bausteins (abwaertskompat).
++export interface ParsedBinding {
++  sourceId?: string
++  code: string
++}
++export function splitBindung(value: string): ParsedBinding {
++  const at = value.indexOf('::')
++  if (at < 0) return { code: value }
++  return { sourceId: value.slice(0, at), code: value.slice(at + 2) }
++}
++
++// Bindungswert bauen (Gegenstueck zu splitBindung): Feld der Haupt-Quelle ->
++// nur der Code; Feld einer Zusatz-Quelle -> "sourceId::code". Leerer Code =
++// ungebunden.
++export function baueBindung(sourceId: string, code: string, hauptSourceId: string): string {
++  if (code === '') return ''
++  return sourceId === '' || sourceId === hauptSourceId ? code : `${sourceId}::${code}`
++}
++
++// Erste Zusatzzeile, deren ALLE Schluesselpaare gleich sind (getrimmt, Gross/
++// klein egal, wie columnIndexFor). Leere Schluesselwerte treffen nie -> kein
++// versehentliches Zusammenfallen. Das generische petMasterOf der Referenzmaske.
++export function verbinde(
++  hauptzeile: unknown,
++  zusatzzeilen: readonly unknown[],
++  schluesselpaare: readonly { haupt: string; zusatz: string }[],
++): unknown | undefined {
++  if (schluesselpaare.length === 0) return undefined
++  const hauptWerte = schluesselpaare.map((p) => getField(hauptzeile, p.haupt).trim().toLowerCase())
++  if (hauptWerte.some((w) => w === '')) return undefined
++  for (const zeile of zusatzzeilen) {
++    let alle = true
++    for (let i = 0; i < schluesselpaare.length; i++) {
++      const zw = getField(zeile, schluesselpaare[i].zusatz).trim().toLowerCase()
++      if (zw === '' || zw !== hauptWerte[i]) { alle = false; break }
++    }
++    if (alle) return zeile
++  }
++  return undefined
++}
++
++// Wert einer gebundenen Stelle aufloesen -- Haupt-Quelle direkt, sonst ueber
++// eine Verknuepfung aus der passenden Zusatz-Zeile. DER geteilte Resolver, den
++// beide Hydrierungen (Kanban-Karte, Formularfeld) rufen -- damit erbt jeder
++// bindbare Baustein den Mehrquellen-Zugriff ohne Sondercode (Regel 2). Kein
++// Treffer / kein Link / keine Zusatzzeile -> '' (nie raten; Preflight warnt
++// bereits im Editor).
++export function aufloeseWert(args: {
++  hauptzeile: unknown
++  hauptSourceId: string
++  bindung: string
++  dataSources: unknown
++  links: unknown
++  seData: unknown
++}): string {
++  const { sourceId, code } = splitBindung(args.bindung)
++  if (code === '') return ''
++  if (!sourceId || sourceId === args.hauptSourceId) {
++    return getField(args.hauptzeile, code)
++  }
++  const link = findRuntimeLink(args.links, args.hauptSourceId, sourceId)
++  if (!link) return ''
++  // Schluesselpaare in {haupt,zusatz}-Form ausrichten (Link ist richtungsfrei).
++  const schluesselpaare = link.keys.map((k) =>
++    link.fromId === args.hauptSourceId
++      ? { haupt: k.from, zusatz: k.to }
++      : { haupt: k.to, zusatz: k.from },
++  )
++  const zusatz = findRuntimeDataSource(args.dataSources, sourceId)
++  if (!zusatz) return ''
++  const zeilen = rowsFor(args.seData, zusatz.name, zusatz.tableId)
++  const partner = verbinde(args.hauptzeile, zeilen, schluesselpaare)
++  return partner ? getField(partner, code) : ''
++}
