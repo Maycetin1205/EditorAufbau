@@ -18,8 +18,9 @@
 
 import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
-import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
+import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -46,7 +47,6 @@ export function catchColumnIndex(flags: readonly (string | null | undefined)[]):
 
 // ---------- Board-Verwaltung + Hydrierung ----------
 
-const boards = new Set<HTMLElement>()
 // Musterkarte je Board: VOR dem ersten Befüllen geklont, damit jede
 // Neu-Hydrierung (ReloadData) wieder von der gestalteten Karte ausgeht.
 // Quelle = die ERSTE Karte des Boards in Dokumentreihenfolge (P1.1,
@@ -238,30 +238,10 @@ function wireDrag(board: HTMLElement): void {
   })
 }
 
-function hydrateAll(): void {
-  if (!hasSeData()) return
-  boards.forEach(hydrate)
-}
+// Anmeldung/Abo/Bruecke: die geteilte Mechanik (shared/datenAnschluss).
+const anschluss = macheDatenAnschluss<HTMLElement>({ hydriere: hydrate, verdrahte: wireDrag })
 
-// Die Boards hören auf die Klingel der Brücke (Abo-Punkt) — einmal je
-// Maske angemeldet. Im Editor passiert das nie (connectBoard bricht ab).
-let subscribed = false
-
-// Vom KanbanBlock bei connectedCallback gerufen. Editor-Boards (BlockHost
-// setzt data-ff-editor VOR dem Einhängen) melden sich nie an — die gesamte
-// Daten-Mechanik existiert im Editor schlicht nicht.
-export function connectBoard(board: HTMLElement): void {
-  if (board.hasAttribute('data-ff-editor')) return
-  boards.add(board)
-  wireDrag(board)
-  if (!subscribed) {
-    subscribed = true
-    onSeDaten(hydrateAll)
-  }
-  bootSe()
-  if (hasSeData()) hydrate(board)
-}
-
-export function disconnectBoard(board: HTMLElement): void {
-  boards.delete(board)
-}
+// Vom KanbanBlock bei connectedCallback gerufen. Editor-Boards melden sich
+// nie an — das prueft der geteilte Anschluss.
+export const connectBoard = anschluss.connect
+export const disconnectBoard = anschluss.disconnect

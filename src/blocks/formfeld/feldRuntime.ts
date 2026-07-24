@@ -6,8 +6,9 @@
 // normales Web Component. Editor-Elemente melden sich nie an.
 
 import { bindingAttr } from '../../core/blocks/BlockDefinition'
-import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
+import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
+import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { runEvent } from '../shared/seAktionen'
 
 export interface RuntimeFieldElement extends HTMLElement {
@@ -20,7 +21,6 @@ interface FieldData {
   pindex: string
 }
 
-const fields = new Set<RuntimeFieldElement>()
 const fieldData = new WeakMap<RuntimeFieldElement, FieldData>()
 const wired = new WeakSet<RuntimeFieldElement>()
 
@@ -88,25 +88,11 @@ function wireField(field: RuntimeFieldElement): void {
   })
 }
 
-function hydrateAll(): void {
-  if (!hasSeData()) return
-  fields.forEach(hydrateField)
-}
+// Anmeldung/Abo/Bruecke: die geteilte Mechanik (shared/datenAnschluss).
+const anschluss = macheDatenAnschluss<RuntimeFieldElement>({
+  hydriere: hydrateField,
+  verdrahte: wireField,
+})
 
-let subscribed = false
-
-export function connectField(field: RuntimeFieldElement): void {
-  if (field.hasAttribute('data-ff-editor')) return
-  fields.add(field)
-  wireField(field)
-  if (!subscribed) {
-    subscribed = true
-    onSeDaten(hydrateAll)
-  }
-  bootSe()
-  if (hasSeData()) hydrateField(field)
-}
-
-export function disconnectField(field: RuntimeFieldElement): void {
-  fields.delete(field)
-}
+export const connectField = anschluss.connect
+export const disconnectField = anschluss.disconnect

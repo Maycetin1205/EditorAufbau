@@ -10,14 +10,13 @@
 // die SE-Schicht kennt NIE einen Baustein). Editor-Elemente tragen
 // data-ff-editor und melden sich hier nie an — der Editor zeigt Platzhalter.
 
-import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
+import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+import { macheDatenAnschluss } from '../shared/datenAnschluss'
 
 export interface RuntimeTableElement extends HTMLElement {
   datenzeilen: string[][]
 }
-
-const tables = new Set<RuntimeTableElement>()
 
 // Feldcodes der Spalten aus dem `spalten`-Attribut (JSON {titel,feld}[]) —
 // dieselbe Quelle wie der Baustein rendert (Attribut-Form der Spalten). Kaputtes
@@ -56,24 +55,8 @@ export function hydrateTable(el: RuntimeTableElement): void {
   el.datenzeilen = rows.map((row) => felder.map((code) => (code === '' ? '' : getField(row, code))))
 }
 
-function hydrateAll(): void {
-  if (!hasSeData()) return
-  tables.forEach(hydrateTable)
-}
+// Anmeldung/Abo/Bruecke: die geteilte Mechanik (shared/datenAnschluss).
+const anschluss = macheDatenAnschluss<RuntimeTableElement>({ hydriere: hydrateTable })
 
-let subscribed = false
-
-export function connectTable(el: RuntimeTableElement): void {
-  if (el.hasAttribute('data-ff-editor')) return // Editor: statisch, Platzhalter
-  tables.add(el)
-  if (!subscribed) {
-    subscribed = true
-    onSeDaten(hydrateAll)
-  }
-  bootSe()
-  if (hasSeData()) hydrateTable(el)
-}
-
-export function disconnectTable(el: RuntimeTableElement): void {
-  tables.delete(el)
-}
+export const connectTable = anschluss.connect
+export const disconnectTable = anschluss.disconnect
