@@ -35,9 +35,27 @@ export class TabelleBlock extends BasicBlock {
   // Raster-Startgröße (Erstwert — im Browser nachzukalibrieren).
   static readonly raster = { startW: 14, startH: 8, minW: 6, minH: 4 }
 
-  // Titel-Liste. attribute:false — reine DOM-Property (useLitElement setzt sie),
-  // nie als HTML-Attribut serialisiert.
-  @property({ attribute: false }) spalten: string[] = [...STANDARD_TITEL]
+  // Titel-Liste. Zwei Wege, EIN Wert: der Editor setzt die DOM-Property direkt
+  // (useLitElement), der Export schreibt die Liste als JSON ins Attribut
+  // (exportMask). Darum KEIN attribute:false mehr — sonst käme der Export-Wert
+  // in SoftEngine nie an (die Spalten fielen auf die Standardtitel zurück,
+  // WYSIWYG-Bruch, Regel 1). Der Wandler ist robust: leeres/kaputtes Attribut
+  // → Standardtitel; titelListe() fängt zusätzlich alte Stände (Spalten-ZAHL) ab.
+  @property({
+    converter: {
+      fromAttribute: (v: string | null): string[] => {
+        if (!v) return [...STANDARD_TITEL]
+        try {
+          const p: unknown = JSON.parse(v)
+          return Array.isArray(p) ? p.map((x) => String(x)) : [...STANDARD_TITEL]
+        } catch {
+          return [...STANDARD_TITEL]
+        }
+      },
+      toAttribute: (v: string[]): string => JSON.stringify(v),
+    },
+  })
+  spalten: string[] = [...STANDARD_TITEL]
 
   // Robust gegen alte Stände (Zahl) und kaputte Werte; immer 1..MAX Titel.
   private titelListe(): string[] {

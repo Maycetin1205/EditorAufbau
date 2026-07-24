@@ -152,7 +152,12 @@ function nodeToHtml(
     .filter((key) => !LAYOUT_ATTR_AUSNAHME.has(key))
     .map((key) => {
       const value = node.props[key] ?? def.defaultProps[key]
-      return ` ${key.toLowerCase()}="${escapeHtmlAttr(String(value ?? ''))}"`
+      // Listen reisen als JSON (komma- und umlautsicher) — String(array) joint
+      // mit Komma und ist nicht mehr eindeutig rueckgewinnbar; der Baustein
+      // liest das JSON ueber seinen Attribut-Wandler zurueck. Alles andere als
+      // Text wie bisher.
+      const roh = Array.isArray(value) ? JSON.stringify(value) : String(value ?? '')
+      return ` ${key.toLowerCase()}="${escapeHtmlAttr(roh)}"`
     })
     .join('')
 

@@ -12,6 +12,8 @@ import '../blocks/popup/PopupBlock'
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
+// Side-Effect-Import: registriert den Tabellen-Baustein (Fahrplan 4).
+import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -313,7 +315,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-text', 'ff-trenner', 'ff-zeile']) {
+    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,
@@ -378,5 +380,29 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     }
     const { html } = exportMask(tree)
     expect(html).toMatch(/<ff-trenner[^>]*><\/ff-trenner>/)
+  })
+})
+
+describe('Tabelle (Fahrplan 4)', () => {
+  it('Spaltentitel ueberleben den Export als JSON — Komma und Umlaut sind die Fallen', () => {
+    // Regel 1 (WYSIWYG): die im Editor vergebenen Spaltentitel muessen EXAKT so
+    // in der exportierten Maske ankommen. String(array) zerbraeche am Komma,
+    // roher Text am Umlaut — beide Fallen stecken bewusst in den Titeln.
+    const titel = ['Kunde', 'Betrag, netto', 'Größe']
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: { id: 'tab', type: 'tabelle', props: { width: 'fill', spalten: titel }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toContain('<ff-tabelle ')
+    // Attributwert ziehen, HTML-Entities zurueckwandeln, als JSON lesen — es
+    // muessen EXAKT die drei Titel herauskommen (so liest es auch Lit im Browser).
+    const attr = /<ff-tabelle[^>]*\sspalten="([^"]*)"/.exec(html)?.[1] ?? ''
+    const decode = (s: string): string =>
+      s.replace(/&#x([0-9A-Fa-f]+);|&quot;|&amp;/g, (m, h?: string) =>
+        h ? String.fromCodePoint(parseInt(h, 16)) : m === '&quot;' ? '"' : '&')
+    expect(JSON.parse(decode(attr))).toEqual(titel)
+    // Und der Export bleibt SE-konform (ASCII/LF/Marker/Interface/Runtime).
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })

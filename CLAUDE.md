@@ -89,6 +89,12 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    ein Paket den Export ABSICHTLICH, Referenz mit `npx vitest run -u`
    erneuern — der Datei-Diff macht die Maskenänderung im Commit sichtbar.
    Berührt ein Paket den Export → SE-Echttest durch den Nutzer.
+   **Neuer Baustein = Zeile im Export-Test** (Lehre aus dem Tabellen-Bug
+   2026-07-24): jeder neue Baustein bekommt mindestens EINEN Fall in
+   `export.test.ts` (Attribut-Round-Trip) UND steht in der Veralten-Positivliste
+   des Bündel-Sanity-Checks. Der Tabellen-Export war STILL kaputt (umbenannte
+   Spalten fielen im Export auf die Standardtitel zurück, WYSIWYG-Bruch), weil
+   kein Export-Test je „tabelle" berührte — deshalb schlug kein Wächter an.
 10. **Nichts auf Verdacht bauen** — Gemeinsames erst herausziehen bzw.
     Neues erst bauen, wenn ein echter zweiter Fall es erzwingt.
 
