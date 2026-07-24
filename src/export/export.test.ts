@@ -18,6 +18,7 @@ import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
+import { escapeHtmlText } from './serializer'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import {
   registerTestBlocks,
@@ -404,5 +405,18 @@ describe('Tabelle (Fahrplan 4)', () => {
     expect(JSON.parse(decode(attr))).toEqual(titel)
     // Und der Export bleibt SE-konform (ASCII/LF/Marker/Interface/Runtime).
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+})
+
+describe('serializer (ASCII-Regel)', () => {
+  it('escaped Umlaute wie bisher, aber Emoji als GANZEN Codepoint (kein Surrogat-Bruch)', () => {
+    // Umlaute: byte-identisch zur alten Fassung — Regressionsschutz, damit der
+    // Referenzabzug vom Emoji-Fix NICHT beruehrt wird.
+    expect(escapeHtmlText('Grüße')).toBe('Gr&#xFC;&#xDF;e')
+    // Emoji (U+1F600): frueher zwei ungueltige Surrogat-Haelften
+    // (&#xD83D;&#xDE00;), jetzt EIN gueltiger Codepoint.
+    expect(escapeHtmlText('Status 😀')).toBe('Status &#x1F600;')
+    // Keine isolierte Surrogat-Referenz (D800..DFFF) mehr im Ergebnis.
+    expect(escapeHtmlText('😀')).not.toMatch(/&#xD[89A-F][0-9A-F][0-9A-F];/i)
   })
 })

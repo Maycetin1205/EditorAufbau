@@ -13,7 +13,15 @@
 // Zeichen diese Helfer — nirgendwo sonst wird escaped.
 
 function escapeNonAsciiHtml(s: string): string {
-  return s.replace(/[^\n\t\x20-\x7E]/g, (c) => `&#x${c.codePointAt(0)!.toString(16).toUpperCase()};`)
+  // Array.from laeuft ueber CODEPOINTS — Surrogatpaare (Emoji) bleiben ganz.
+  // Das fruehere Regex ohne u-Flag zerlegte sie in Haelften und erzeugte
+  // ungueltige Referenzen (&#xD83D;&#xDE00; statt &#x1F600;), aus denen der
+  // Browser Ersatzzeichen macht. Fuer ASCII/Umlaute ist die Ausgabe
+  // byte-identisch zu vorher (je ein BMP-Zeichen pro Durchlauf) — der
+  // Referenzabzug bleibt gruen.
+  return Array.from(s)
+    .map((c) => (/^[\n\t\x20-\x7E]$/.test(c) ? c : `&#x${c.codePointAt(0)!.toString(16).toUpperCase()};`))
+    .join('')
 }
 
 export function escapeHtmlText(s: string): string {
