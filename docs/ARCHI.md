@@ -90,6 +90,7 @@ src/
 docs/               ARCHI.md (diese Datei), TRIP-Ordner (1-plans …), decisions/,
                     softengine-wiki/ (SE-Kontrakte)
 scripts/            check-runtime-bundle.mjs (Bündel-Wächter) + check-docs.mjs (Doku-Wächter)
+                    + check-regeln.mjs (Regel-Wächter: bewacht die Bauart)
 ```
 
 ## 4. Kern-Architekturprinzipien (Kurzfassung der 10 Regeln)
@@ -191,7 +192,7 @@ gebündelte Laufzeit] --> E
 **Prüfbündel — EINMAL gebündelt vor dem Commit, nie zwischendurch:**
 
 ```bash
-npx tsc -b && npx eslint src && npm run check:runtime && npm run check:docs && npm test
+npx tsc -b && npx eslint src && npm run check:regeln && npm run check:runtime && npm run check:docs && npm test
 ```
 
 - Fünf Wächter: export.test · seRuntime.test · persistence.test ·
@@ -209,6 +210,21 @@ npx tsc -b && npx eslint src && npm run check:runtime && npm run check:docs && n
   ARCHI.md die richtige Version nennt und jedes genannte `npm run …` wirklich
   existiert. Bewusst nur diese zwei Prüfungen (Regel 10). Fing bei Einführung
   die zwei bekannten Abweichungen (Version 0.1.0→0.1.1, `test:e2e`).
+- Regel-Wächter `check:regeln` (2026-07-24, Nutzer-Entscheidung):
+  `scripts/check-regeln.mjs` bewacht die BAUART gegen die Architektur-Regeln,
+  die vorher nur als Prosa in CLAUDE.md standen. Sechs Prüfungen:
+  (1) kein Bausteintyp-Vergleich in generischem Code · (2) jeder Baustein im
+  export.test UND in der Veralten-Positivliste · (3) Dateien ≤ 500 Zeilen
+  (StepForm.tsx/Editor.ts als Altlast eingefroren, dürfen nur schrumpfen) ·
+  (4) `any`/`ts-ignore` eingefroren · (5) keine Hex-Farben im Baustein-CSS ·
+  (6) kein Baustein-IMPORT in generischem Code. Ausnahmen stehen einzeln MIT
+  Begründung im Script (`migrations.ts` kennt alte Typnamen von Berufs wegen;
+  `PopupSeite.tsx` teilt `POPUP_RAND` mit dem Baustein). Die Bausteinliste
+  liest er aus dem Code, nie aus einer gepflegten Liste — er kann nicht
+  veralten. Anlass: Prosa-Regeln halten niemanden auf; der Tabellen-Bug
+  2026-07-24 (Spalten-Export still kaputt) entstand genau dort, wo die
+  Regel nur im Kopf existierte. Prüfung (6) kam noch am selben Tag dazu,
+  nachdem ein Tabellen-Import im generischen BlockHost durch (1) schlüpfte.
 - **Test-Bremse:** KEINE neuen Browser-/e2e-Tests (die Playwright-Suite ist
   2026-07-23 entfernt). Berührt ein Paket Export/Laufzeit, deckt ein schlanker
   vitest-Fall die Byte-/Kontrakt-Seite ab; die Bedienung prüft der bauende
@@ -256,6 +272,7 @@ bleibt bis zum nächsten Push liegen).
 | `npm test` | Vitest (Unit/Snapshot) |
 | `npm run check:runtime` | Bündel-Wächter (läuft VOR vitest) |
 | `npm run check:docs` | Doku-Wächter: ARCHI.md-Version + genannte Scripts gegen package.json |
+| `npm run check:regeln` | Regel-Wächter: Bauart gegen die Architektur-Regeln (s. Abschnitt 9) |
 
 ## 13. Bewusste Grenzen (Stand 2026-07-20)
 
