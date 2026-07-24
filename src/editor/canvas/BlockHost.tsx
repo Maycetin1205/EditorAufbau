@@ -19,11 +19,15 @@
 // (useBlockResize) und die React↔Lit-Übergabestelle (useLitElement)
 // wohnen in eigenen Hooks daneben.
 
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
+import {
+  bindingProp,
+  type BindableSpot,
+  type ListenBindung,
+} from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { rasterSpecOf } from '../../core/blocks/rasterLayout'
 import { useEditorInstance } from '../../state/EditorContext'
@@ -49,6 +53,29 @@ interface BlockHostProps {
 // läuft, nur weil `?? []` eine frische Referenz erzeugt hätte.
 const KEINE_SPOTS: readonly BindableSpot[] = []
 
+// --- Bindbare Listen, generisch (siehe ListenBindung) ---------------------
+// Der BlockHost darf KEINEN Baustein importieren (Regel 2). Deshalb liest er
+// die Liste hier ueber die im Registry-Eintrag genannten Schluessel statt
+// ueber die Typen der Tabelle.
+
+// Titel eines noch unbenannten Eintrags aus der Vorlage ('Spalte {n}').
+function standardTitel(b: ListenBindung, index: number): string {
+  return b.standardTitel.replace('{n}', String(index + 1))
+}
+
+// Die Listen-Prop defensiv als Eintragsliste lesen — alte Staende koennen
+// reine Strings enthalten (der Baustein selbst faengt das ebenfalls ab).
+function listeLesen(roh: unknown, b: ListenBindung): Record<string, unknown>[] {
+  if (!Array.isArray(roh)) return []
+  return roh.map((x, i) => {
+    if (x && typeof x === 'object') return { ...(x as Record<string, unknown>) }
+    return {
+      [b.titelKey]: typeof x === 'string' ? x : standardTitel(b, i),
+      [b.feldKey]: '',
+    }
+  })
+}
+
 export function BlockHost({ block, selected, onSelect, raster = false, children }: BlockHostProps) {
   // A2 (Aufräum.md): Instanz aus dem Versorger statt Weltvariable — bewusst
   // OHNE Abo (useEditorInstance): der Host rendert wie bisher über den
@@ -63,7 +90,9 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   // ist editierbar — die Klarnamen-Vorschau muss sofort nachziehen).
   useDataSources()
   const bindableSpots = def?.bindableSpots ?? KEINE_SPOTS
-  const dataSource = bindableSpots.length > 0 ? editor.dataSourceFor(block.id) : undefined
+  const dataSource = (bindableSpots.length > 0 || def?.acceptsDataSource)
+    ? editor.dataSourceFor(block.id)
+    : undefined
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte
   // Event-Listener immer mit dem aktuellen Stand laufen.
   const blockRef = useRef<BlockNode>(block)
@@ -91,6 +120,43 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
     dataSource,
     onSelect,
   })
+
+  // ---- Feld-Picker fuer bindbare LISTEN ----
+  // Ein Baustein mit `listenBindung` (Registry) meldet per Custom Event
+  // `ff-listen-bind`, dass der Bediener einen Listen-Eintrag an ein Feld
+  // binden will — die Tabelle tut das an ihren Spaltenkoepfen. Der BlockHost
+  // kennt WEDER die Tabelle NOCH „Spalten": er liest Prop-Name und Schluessel
+  // aus dem Registry-Eintrag (Regel 2 — Faehigkeiten sind Registry-Eintraege).
+  const listenBindung = def?.listenBindung
+  const [listenPicker, setListenPicker] = useState<{
+    index: number
+    top: number
+    left: number
+  } | null>(null)
+  const closeListenPicker = useCallback(() => setListenPicker(null), [])
+  if (!selected && listenPicker !== null) setListenPicker(null)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || !listenBindung) return
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as {
+        prop?: string
+        index?: number
+        top?: number
+        left?: number
+      }
+      // Nur die eigene Liste bedienen (ein Baustein koennte spaeter mehrere haben).
+      if (detail?.prop !== listenBindung.prop || typeof detail.index !== 'number') return
+      setListenPicker({
+        index: detail.index,
+        top: Math.max(8, detail.top ?? 0),
+        left: Math.max(8, Math.min(detail.left ?? 0, window.innerWidth - 248)),
+      })
+    }
+    el.addEventListener('ff-listen-bind', handler)
+    return () => el.removeEventListener('ff-listen-bind', handler)
+  }, [containerRef, listenBindung])
 
   // Breite/Höhe ziehen (Anfasser rechts bzw. unten) — useBlockResize.
   // startResize = Fluss (px, misst das Element); startRasterResize = Raster
@@ -190,6 +256,43 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
           onClose={closePicker}
         />
       )}
+      {selected && listenPicker && dataSource && listenBindung && (() => {
+        const liste = listeLesen(block.props[listenBindung.prop], listenBindung)
+        const eintrag = liste[listenPicker.index]
+        if (!eintrag) return null
+        const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
+        return (
+          <FieldPicker
+            spotLabel={titelJetzt}
+            sourceName={dataSource.name}
+            fields={dataSource.fields}
+            current={String(eintrag[listenBindung.feldKey] ?? '')}
+            top={listenPicker.top}
+            left={listenPicker.left}
+            onPick={(code) => {
+              const next = listeLesen(block.props[listenBindung.prop], listenBindung)
+              const ziel = next[listenPicker.index]
+              if (ziel) {
+                // Der Titel des Bedieners ist heilig: nur ein NIE angefasster
+                // Titel (exakt die Standard-Vorlage) darf zum Feld-Klarnamen
+                // werden. Wer „Kunde" getippt hat, behaelt „Kunde" — auch nach
+                // dem Binden. (Fehler der Erstfassung: sie ueberschrieb immer.)
+                const standard = standardTitel(listenBindung, listenPicker.index)
+                const unberuehrt = titelJetzt === '' || titelJetzt === standard
+                if (unberuehrt) {
+                  ziel[listenBindung.titelKey] = code === ''
+                    ? standard
+                    : dataSource.fields.find((f) => f.code === code)?.label ?? code
+                }
+                ziel[listenBindung.feldKey] = code
+                editor.updateProperty(block.id, listenBindung.prop, next)
+              }
+              closeListenPicker()
+            }}
+            onClose={closeListenPicker}
+          />
+        )
+      })()}
       {def?.addChildButton
         && editor.selectedId !== null
         && editor.isInSubtree(block.id, editor.selectedId) && (

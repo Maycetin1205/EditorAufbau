@@ -12,6 +12,7 @@ import type {
   BindingRoute,
   BlockEventSpec,
   DefaultChildSpec,
+  ListenBindung,
 } from './BlockDefinition'
 import type { FlowDirection, FlowWidth } from './flowLayout'
 import type { RasterSpec } from './rasterLayout'
@@ -58,6 +59,8 @@ export interface BlockComponentStatic {
   readonly bindableSpots?: readonly BindableSpot[]
   // Als Aktionsparameter auslesbare Stellen — Bedeutung siehe BlockDefinition.
   readonly actionValueSpots?: readonly ActionValueSpot[]
+  // Bindbare Liste (Tabellen-Spalten) — Bedeutung siehe BlockDefinition.
+  readonly listenBindung?: ListenBindung
   // Eigener Datenanschluss-Dialog — Bedeutung siehe BlockDefinition.
   readonly bindingRoute?: BindingRoute
   // Ereignisse des Blocks (Z1) — Bedeutung siehe BlockDefinition.

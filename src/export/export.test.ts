@@ -14,6 +14,14 @@ import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
 // Registriert den Tabellen-Baustein (Fahrplan 4) + liefert die Spalten-Coercion.
 import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
+
+// Spalten fuer die Tabellen-Faelle: Umlaut + Komma + gebundene/ungebundene
+// Spalte in einem — deckt Escaping UND Feldcodes ab.
+const standardTestSpalten = [
+  { titel: 'Kunde', feld: '2_8' },
+  { titel: 'Betrag, netto', feld: '10_12' },
+  { titel: 'Größe', feld: '' },
+]
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -316,7 +324,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
+    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,
@@ -390,11 +398,7 @@ describe('Tabelle (Fahrplan 4)', () => {
     // muessen EXAKT so in der exportierten Maske ankommen. String(array)
     // zerbraeche am Komma, roher Text am Umlaut — beide Fallen stecken bewusst
     // im Titel. Der Feldcode ist der Technikwert, den die Laufzeit ausliest.
-    const spalten = [
-      { titel: 'Kunde', feld: '2_8' },
-      { titel: 'Betrag, netto', feld: '10_12' },
-      { titel: 'Größe', feld: '' },
-    ]
+    const spalten = standardTestSpalten
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
       tab: { id: 'tab', type: 'tabelle', props: { width: 'fill', spalten }, parentId: 'root', childIds: [] },
@@ -409,6 +413,25 @@ describe('Tabelle (Fahrplan 4)', () => {
         h ? String.fromCodePoint(parseInt(h, 16)) : m === '&quot;' ? '"' : '&')
     expect(JSON.parse(decode(attr))).toEqual(spalten)
     // Und der Export bleibt SE-konform (ASCII/LF/Marker/Interface/Runtime).
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Tabelle: „Zeilen pro Seite" ueberlebt den Export', () => {
+    // Die Seitengroesse ist eine Maskeneinstellung (Registry-Eigenschaft) und
+    // muss als Attribut mitreisen — sonst blaettert SoftEngine anders als der
+    // Editor zeigt (WYSIWYG-Bruch, Regel 1).
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab',
+        type: 'tabelle',
+        props: { width: 'fill', spalten: standardTestSpalten, proSeite: '50' },
+        parentId: 'root',
+        childIds: [],
+      },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toMatch(/<ff-tabelle[^>]*\sproSeite="50"/i)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 

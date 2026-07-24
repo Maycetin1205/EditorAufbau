@@ -27,55 +27,30 @@ import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import type { ListenBindung } from '../../core/blocks/BlockDefinition'
+import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { connectTable, disconnectTable } from './seRuntime'
+import { sortiereZeilen } from './sortierung'
+import {
+  SPALTEN_MAX,
+  SPALTEN_MIN,
+  STANDARD_TITEL,
+  coerceSpalten,
+  standardSpalten,
+  tryCoerceSpalten,
+  type Spalte,
+} from './spalten'
 
-export interface Spalte {
-  titel: string
-  feld: string
-}
+// Das Spalten-Modell wohnt in ./spalten — hier nur die Darstellung.
+export { coerceSpalten, type Spalte } from './spalten'
 
-const SPALTEN_MIN = 1
-const SPALTEN_MAX = 8
 const PLATZHALTER_ZEILEN = 4
+const ZEILEN_PRO_SEITE = [10, 25, 50] as const
 
-function standardSpalten(): Spalte[] {
-  return [
-    { titel: 'Spalte 1', feld: '' },
-    { titel: 'Spalte 2', feld: '' },
-    { titel: 'Spalte 3', feld: '' },
-  ]
-}
-
-// Eine unbekannte Struktur defensiv auf eine Spalte abbilden (nie werfen).
-function alsSpalte(x: unknown, index: number): Spalte {
-  if (x && typeof x === 'object') {
-    const o = x as Record<string, unknown>
-    return {
-      titel: typeof o.titel === 'string' ? o.titel : `Spalte ${index + 1}`,
-      feld: typeof o.feld === 'string' ? o.feld : '',
-    }
-  }
-  // Alte Erstfassung: reine Titel-Strings.
-  if (typeof x === 'string') return { titel: x, feld: '' }
-  return { titel: `Spalte ${index + 1}`, feld: '' }
-}
-
-// Robust gegen alte Staende (Titel-Strings, Spalten-ZAHL) und kaputte Werte;
-// immer 1..MAX Spalten mit {titel,feld}.
-export function coerceSpalten(v: unknown): Spalte[] {
-  let arr: Spalte[]
-  if (Array.isArray(v)) {
-    arr = v.map((x, i) => alsSpalte(x, i))
-  } else if ((typeof v === 'number' && Number.isFinite(v)) || (typeof v === 'string' && /^\d+$/.test(v))) {
-    const n = Math.max(1, Math.floor(Number(v)))
-    arr = [...Array(n).keys()].map((i) => ({ titel: `Spalte ${i + 1}`, feld: '' }))
-  } else {
-    arr = standardSpalten()
-  }
-  if (arr.length > SPALTEN_MAX) arr = arr.slice(0, SPALTEN_MAX)
-  if (arr.length < SPALTEN_MIN) arr = [{ titel: 'Spalte 1', feld: '' }]
-  return arr
-}
+// Wartezeit, bis ein Einzelklick auf den Spaltenkopf als Einzelklick gilt.
+// Darunter waere ein Doppelklick (Umbenennen) nicht mehr sauber abzugrenzen,
+// darueber fuehlt sich der Feld-Picker traege an.
+const DOPPELKLICK_FENSTER = 220
 
 export class TabelleBlock extends BasicBlock {
   static readonly blockType = 'tabelle'
@@ -86,11 +61,33 @@ export class TabelleBlock extends BasicBlock {
   // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
   // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
   static readonly acceptsDataSource = true
+  // Jede SPALTE ist eine bindbare Stelle (Regel 2): der Editor oeffnet den
+  // Feld-Picker generisch ueber diesen Eintrag — er kennt die Tabelle nicht.
+  static readonly listenBindung: ListenBindung = {
+    prop: 'spalten',
+    titelKey: 'titel',
+    feldKey: 'feld',
+    standardTitel: STANDARD_TITEL,
+  }
   static readonly defaultProps = {
     width: 'fill',
     source: '',
     spalten: standardSpalten(),
+    proSeite: String(ZEILEN_PRO_SEITE[0]),
   }
+  // Wie viele Zeilen eine Seite zeigt — bisher fest im Code, jetzt je Maske
+  // einstellbar (Regel 2: Faehigkeiten sind Registry-Eintraege). Ohne
+  // Datenquelle sinnlos, deshalb requiresDataSource.
+  static readonly customProperties: PropertyDescription[] = [
+    {
+      attributeName: 'proSeite',
+      name: 'Zeilen pro Seite',
+      description: 'Wie viele Datensaetze eine Seite der Tabelle zeigt.',
+      kind: 'select',
+      options: ZEILEN_PRO_SEITE.map((n) => ({ value: String(n), label: String(n) })),
+      requiresDataSource: true,
+    },
+  ]
   // Raster-Startgröße (Erstwert — im Browser nachzukalibrieren).
   static readonly raster = { startW: 14, startH: 8, minW: 6, minH: 4 }
 
@@ -100,7 +97,7 @@ export class TabelleBlock extends BasicBlock {
   @property({
     converter: {
       fromAttribute: (v: string | null): Spalte[] =>
-        v ? tryCoerce(v) : standardSpalten(),
+        v ? tryCoerceSpalten(v) : standardSpalten(),
       toAttribute: (v: Spalte[]): string => JSON.stringify(v),
     },
   })
@@ -109,13 +106,58 @@ export class TabelleBlock extends BasicBlock {
   // Datenquelle (Technikwert, Vorlagen-id). Leer = statisch (Platzhalter).
   @property() source = ''
 
+  // Zeilen pro Seite, wie der Maskenbauer sie eingestellt hat (Text, weil
+  // Attribute Text sind). Der Bediener kann davon zur Laufzeit abweichen —
+  // s. _proSeiteWahl.
+  @property() proSeite = String(ZEILEN_PRO_SEITE[0])
+
   // Laufzeit-Zeilen (attribute:false): tabelle/seRuntime setzt sie im Export aus
   // den SoftEngine-Daten — je Datenzeile ein Wert-Array, an `spalten` ausgerichtet.
   // Im Editor bleibt es [] -> Platzhalter-Striche (Regel 7).
   @property({ attribute: false }) datenzeilen: string[][] = []
 
+  // Sortier-Zustand (nur Laufzeit/Export, nicht persistiert).
+  private _sortSpalte = -1
+  private _sortAuf = true
+
+  // Paginierung (nur Laufzeit, nicht persistiert).
+  private _seite = 0
+  // Abweichung des BEDIENERS von der eingestellten Seitengroesse (null = er
+  // hat nichts umgestellt, dann gilt die Maskeneinstellung `proSeite`).
+  // Getrennt gehalten, damit eine Aenderung im Editor sofort durchschlaegt
+  // und nicht von einer alten Laufzeit-Wahl ueberdeckt wird.
+  private _proSeiteWahl: number | null = null
+
+  private get proSeiteAktuell(): number {
+    if (this._proSeiteWahl !== null) return this._proSeiteWahl
+    const n = Number(this.proSeite)
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : ZEILEN_PRO_SEITE[0]
+  }
+
   private spaltenListe(): Spalte[] {
     return coerceSpalten(this.spalten)
+  }
+
+  // Sortieren nach Spaltenart (Zahl/Datum/Text) — s. ./sortierung.
+  private sortierteZeilen(): string[][] {
+    if (this._sortSpalte < 0) return this.datenzeilen.map((z) => [...z])
+    return sortiereZeilen(this.datenzeilen, this._sortSpalte, this._sortAuf)
+  }
+
+  // Klick auf den Spaltenkopf in der LAUFZEIT: erst absteigend?  Nein —
+  // erst aufsteigend, zweiter Klick dreht um (Explorer-Verhalten).
+  // Nach dem Sortieren immer zurueck auf Seite 1: sonst steht der Bediener
+  // auf Seite 7 einer Liste, die er gerade neu geordnet hat.
+  private klickSortiere(index: number): void {
+    if (this.editable) return
+    if (this._sortSpalte === index) {
+      this._sortAuf = !this._sortAuf
+    } else {
+      this._sortSpalte = index
+      this._sortAuf = true
+    }
+    this._seite = 0
+    this.requestUpdate()
   }
 
   // Eigene Prop ändern = 'ff-prop-change' an den BlockHost (Muster inlineEdit).
@@ -127,6 +169,46 @@ export class TabelleBlock extends BasicBlock {
         composed: true,
       }),
     )
+  }
+
+  // Editor-only: Klick auf einen Spaltenkopf fordert den BlockHost auf, den
+  // Feld-Picker fuer diesen Listen-Eintrag zu oeffnen. Das Event ist GENERISCH
+  // (`ff-listen-bind` + Prop-Name) — der BlockHost bedient damit jeden
+  // Baustein mit `listenBindung`, ohne die Tabelle zu kennen (Regel 2).
+  //
+  // Einzel- und Doppelklick liegen hier auf DEMSELBEN Element (Picker vs.
+  // Umbenennen). Ein Doppelklick loest immer auch zwei Einzelklicks aus —
+  // darum wartet der Picker kurz ab und wird vom dblclick abbestellt.
+  private _klickTimer: ReturnType<typeof setTimeout> | null = null
+
+  private klickSpaltenkopf(e: MouseEvent, index: number): void {
+    if (!this.editable) return
+    e.stopPropagation()
+    const el = e.currentTarget as HTMLElement
+    const rect = el.getBoundingClientRect()
+    this.klickTimerAus()
+    this._klickTimer = setTimeout(() => {
+      this._klickTimer = null
+      this.dispatchEvent(
+        new CustomEvent('ff-listen-bind', {
+          detail: {
+            prop: TabelleBlock.listenBindung.prop,
+            index,
+            top: rect.bottom + 4,
+            left: rect.left,
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      )
+    }, DOPPELKLICK_FENSTER)
+  }
+
+  private klickTimerAus(): void {
+    if (this._klickTimer !== null) {
+      clearTimeout(this._klickTimer)
+      this._klickTimer = null
+    }
   }
 
   // Inline-Umbenennen des TITELS einer Spalte am Kopf (Muster BasicBlock.inlineEdit,
@@ -185,6 +267,7 @@ export class TabelleBlock extends BasicBlock {
 
   disconnectedCallback(): void {
     super.disconnectedCallback()
+    this.klickTimerAus()
     disconnectTable(this)
   }
 
@@ -224,8 +307,43 @@ export class TabelleBlock extends BasicBlock {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        border-right: 1px solid var(--se-line-soft);
       }
+      .kopf > div:last-child,
+      .zeile > div:last-child { border-right: none; }
+      .kopf > div { cursor: pointer; user-select: none; }
+      .sort-pfeil { font-size: 9px; color: var(--se-muted); }
       .zeile > div { color: var(--se-muted); }
+      .fusszeile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 10px;
+        border-top: 1px solid var(--se-line);
+        font-size: var(--se-fs-sm);
+        color: var(--se-muted);
+        background: var(--se-panel-2);
+      }
+      .seiten-nav {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .seiten-nav select,
+      .seiten-nav button {
+        font-family: var(--se-font);
+        font-size: var(--se-fs-sm);
+        padding: 2px 6px;
+        border: 1px solid var(--se-line);
+        border-radius: var(--se-r-sm);
+        background: var(--se-panel);
+        color: var(--se-ink);
+        cursor: pointer;
+      }
+      .seiten-nav button:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
       /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im Export. */
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
@@ -259,9 +377,30 @@ export class TabelleBlock extends BasicBlock {
     const cols = { gridTemplateColumns: `repeat(${spalten.length}, minmax(0, 1fr))` }
     const stop = (e: Event): void => e.stopPropagation()
     // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle).
-    const daten = this.datenzeilen
-    const platzhalter = Array.from({ length: PLATZHALTER_ZEILEN }, () => null)
-    const zeilen: (readonly string[] | null)[] = daten.length > 0 ? daten : platzhalter
+    const alleDaten = this.sortierteZeilen()
+    const hatDaten = alleDaten.length > 0
+    // Paginierung (nur Laufzeit mit echten Daten).
+    const gesamt = alleDaten.length
+    const proSeite = this.proSeiteAktuell
+    const seiten = hatDaten ? Math.max(1, Math.ceil(gesamt / proSeite)) : 1
+    // Seite einklemmen: eine geschrumpfte Datenmenge (neuer SE-Push) darf den
+    // Bediener nicht auf einer Seite stehen lassen, die es nicht mehr gibt.
+    const seite = Math.min(Math.max(this._seite, 0), seiten - 1)
+    const seitenDaten = hatDaten
+      ? alleDaten.slice(seite * proSeite, (seite + 1) * proSeite)
+      : []
+    // Zeilen auffuellen: immer mindestens proSeite (Laufzeit) bzw.
+    // PLATZHALTER_ZEILEN (Editor) Zeilen mit Linien zeigen.
+    const sollZeilen = hatDaten ? proSeite : PLATZHALTER_ZEILEN
+    // Zwei verschiedene leere Zeilen, zwei verschiedene Bedeutungen:
+    //   ohne Daten (Editor): „—" = hier kommt spaeter ein Wert hin (Regel 7).
+    //   mit Daten (letzte Seite halb voll): LEER — es gibt schlicht nicht mehr.
+    // Ein „—" waere dort gelogen: es sieht aus wie ein fehlender Wert.
+    const fuellzeichen = hatDaten ? '' : '—'
+    const zeilen: (readonly string[] | null)[] = [
+      ...seitenDaten,
+      ...Array.from({ length: Math.max(0, sollZeilen - seitenDaten.length) }, () => null),
+    ]
     return html`<div class="tabelle">
       <div class="steuerung">
         <button
@@ -293,8 +432,20 @@ export class TabelleBlock extends BasicBlock {
         ${spalten.map(
           (s, i) => html`<div
             data-ff-editable
-            @dblclick=${(e: MouseEvent) => this.bearbeiteTitel(e, i)}
-          >${s.titel}</div>`,
+            @dblclick=${(e: MouseEvent) => {
+              // Umbenennen gewinnt: den wartenden Feld-Picker abbestellen.
+              this.klickTimerAus()
+              this.bearbeiteTitel(e, i)
+            }}
+            @click=${(e: MouseEvent) => {
+              // Editor: Feld-Picker (verzoegert, s. klickSpaltenkopf).
+              // Laufzeit: sortieren. Nie beides — editable trennt die Welten.
+              this.klickSpaltenkopf(e, i)
+              this.klickSortiere(i)
+            }}
+          >${s.titel}${!this.editable && this._sortSpalte === i
+            ? html`<span class="sort-pfeil">${this._sortAuf ? ' ▲' : ' ▼'}</span>`
+            : ''}</div>`,
         )}
       </div>
       <div class="koerper">
@@ -302,20 +453,28 @@ export class TabelleBlock extends BasicBlock {
           (row) => html`<div class="zeile" style=${styleMap(cols)}>
             ${row
               ? row.map((wert) => html`<div>${wert}</div>`)
-              : spalten.map(() => html`<div>—</div>`)}
+              : spalten.map(() => html`<div>${fuellzeichen}</div>`)}
           </div>`,
         )}
       </div>
+      ${hatDaten ? html`<div class="fusszeile">
+        <div class="seiten-info">${gesamt} Datensätze</div>
+        <div class="seiten-nav">
+          <select
+            @change=${(e: Event) => {
+              this._proSeiteWahl = Number((e.target as HTMLSelectElement).value)
+              this._seite = 0
+              this.requestUpdate()
+            }}
+          >${ZEILEN_PRO_SEITE.map(
+            (n) => html`<option value=${n} ?selected=${n === proSeite}>${n} pro Seite</option>`,
+          )}</select>
+          <button ?disabled=${seite <= 0} @click=${() => { this._seite = seite - 1; this.requestUpdate() }}>‹</button>
+          <span>${seite + 1} / ${seiten}</span>
+          <button ?disabled=${seite >= seiten - 1} @click=${() => { this._seite = seite + 1; this.requestUpdate() }}>›</button>
+        </div>
+      </div>` : ''}
     </div>`
-  }
-}
-
-// Nur fuer den Attribut-Wandler (haelt fromAttribute knapp + faengt JSON-Fehler).
-function tryCoerce(v: string): Spalte[] {
-  try {
-    return coerceSpalten(JSON.parse(v))
-  } catch {
-    return standardSpalten()
   }
 }
 

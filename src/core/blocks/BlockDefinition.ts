@@ -40,6 +40,30 @@ export interface ActionValueSpot {
   label: string
 }
 
+// Bindbare LISTE (Registry-Opt-in, Regel 2): eine Prop des Blocks haelt eine
+// Liste gleichartiger Eintraege, von denen JEDER an ein Feld der Datenquelle
+// gebunden wird — die Tabelle bindet so ihre Spalten. Ohne diesen Eintrag
+// muesste der generische BlockHost den Baustein persoenlich kennen (Import +
+// Sondercode) — genau das, was Regel 2 verbietet.
+//
+// Unterschied zu bindableSpots: dort sind es FESTE, im Voraus bekannte Stellen
+// (Titel, Untertitel …); hier ist die Anzahl erst zur Laufzeit bekannt, weil
+// der Bediener Eintraege hinzufuegt und entfernt.
+export interface ListenBindung {
+  // Prop mit der Liste (Tabelle: 'spalten').
+  prop: string
+  // Schluessel des Klarnamens IM Eintrag (Tabelle: 'titel').
+  titelKey: string
+  // Schluessel des Feldcodes IM Eintrag (Tabelle: 'feld') — Technikwert.
+  feldKey: string
+  // Vorlage des noch unbenannten Titels, `{n}` = 1-basierte Nummer
+  // (Tabelle: 'Spalte {n}'). Nur ein Titel, der EXAKT dieser Vorlage
+  // entspricht, gilt als „vom Bediener nicht angefasst" und darf beim Binden
+  // durch den Feld-Klarnamen ersetzt werden. Alles andere hat der Bediener
+  // selbst getippt und wird NIE ueberschrieben.
+  standardTitel: string
+}
+
 // Auslesbare Stellen liefern aktuelle Laufzeitwerte an Aktionsparameter.
 // Registry-Opt-in statt fest verdrahteter Bausteintypen im Schritt-Editor.
 export type ActionValueSpotsFor<Props> = ReadonlyArray<{
@@ -173,6 +197,8 @@ export interface BlockDefinition {
   bindableSpots?: readonly BindableSpot[]
   // Aktuelle Bausteinwerte, die als Parameterquelle angeboten werden.
   actionValueSpots?: readonly ActionValueSpot[]
+  // Bindbare Liste (Tabellen-Spalten) — siehe ListenBindung.
+  listenBindung?: ListenBindung
   // Eigener Datenanschluss-Dialog fuer source + Einsortieren-Feld.
   // Das dort gepflegte Feld-Control ist hiddenInInspector.
   bindingRoute?: BindingRoute
