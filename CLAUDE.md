@@ -70,15 +70,17 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    ansehen und zusammenführen, dann bauen/pushen. NIE force-pushen. Ein
    Branch, an dem der jeweils andere Agent laut Auftrag arbeitet, ist tabu.
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
-   `npx eslint src` + `npm run check:runtime` + `npm test`), nie
-   zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
+   `npx eslint src` + `npm run check:runtime` + `npm run check:docs` +
+   `npm test`), nie zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
    die langsamen Browser-Tests fraßen Tokens und Zeit; der Nutzer prüft die
    Bedienung selbst live, und der bauende Agent prüft VOR jedem „fertig"
    selbst im Browser-Preview (Port 5173) — nie mehr den Nutzer als einzigen
    Tester. Sicherheitsnetz = fünf Wächter (export / seRuntime / persistence /
    Export-Referenzabzug / Bündel-Wächter `check:runtime`): sie prüfen genau
    das, was im Browser NICHT sichtbar ist — Export-Bytes + SE-Anschluss.
-   Nutzer-Entscheidung, nicht ohne Absprache aufblähen. Der Bündel-Wächter
+   Dazu ein Doku-Wächter `check:docs` (2026-07-24): er bewacht die Doku selbst
+   (ARCHI.md-Version + genannte `npm run …`-Scripts gegen package.json),
+   keinen Code. Nutzer-Entscheidung, nicht ohne Absprache aufblähen. Der Bündel-Wächter
    (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
    CLI-Weg neu und vergleicht es mit dem eingecheckten `ff-runtime.js`; bewusst
    KEIN vitest-Test (In-Place-Bauen im vitest-Lauf würde die `?raw`-Leser

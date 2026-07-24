@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
-| Version | `package.json` (`0.1.0`) | SemVer |
+| Version | `package.json` (`0.1.1`) | SemVer |
 
 ## 3. Projektstruktur
 
@@ -89,7 +89,7 @@ src/
 ├── lib/ · test/    Helfer · Test-Aufbau
 docs/               ARCHI.md (diese Datei), TRIP-Ordner (1-plans …), decisions/,
                     softengine-wiki/ (SE-Kontrakte)
-scripts/            check-runtime-bundle.mjs (Bündel-Wächter)
+scripts/            check-runtime-bundle.mjs (Bündel-Wächter) + check-docs.mjs (Doku-Wächter)
 ```
 
 ## 4. Kern-Architekturprinzipien (Kurzfassung der 10 Regeln)
@@ -191,7 +191,7 @@ gebündelte Laufzeit] --> E
 **Prüfbündel — EINMAL gebündelt vor dem Commit, nie zwischendurch:**
 
 ```bash
-npx tsc -b && npx eslint src && npm run check:runtime && npm test
+npx tsc -b && npx eslint src && npm run check:runtime && npm run check:docs && npm test
 ```
 
 - Fünf Wächter: export.test · seRuntime.test · persistence.test ·
@@ -205,6 +205,10 @@ npx tsc -b && npx eslint src && npm run check:runtime && npm test
   Marker des Sanity-Checks in export.test.ts (der bleibt billig daneben).
   BEWUSST kein vitest-Test: In-Place-Bauen im vitest-Lauf würde die
   `?raw`-Leser (export.test.ts) flaky machen; darum eigener Schritt VOR vitest.
+- Doku-Wächter `check:docs` (2026-07-24): bewacht die Doku selbst — prüft, dass
+  ARCHI.md die richtige Version nennt und jedes genannte `npm run …` wirklich
+  existiert. Bewusst nur diese zwei Prüfungen (Regel 10). Fing bei Einführung
+  die zwei bekannten Abweichungen (Version 0.1.0→0.1.1, `test:e2e`).
 - **Test-Bremse:** KEINE neuen Browser-/e2e-Tests (die Playwright-Suite ist
   2026-07-23 entfernt). Berührt ein Paket Export/Laufzeit, deckt ein schlanker
   vitest-Fall die Byte-/Kontrakt-Seite ab; die Bedienung prüft der bauende
@@ -251,6 +255,7 @@ bleibt bis zum nächsten Push liegen).
 | `npm run build:runtime` | ff-runtime-Bündel erneuern (nach Laufzeit-Änderungen Pflicht) |
 | `npm test` | Vitest (Unit/Snapshot) |
 | `npm run check:runtime` | Bündel-Wächter (läuft VOR vitest) |
+| `npm run check:docs` | Doku-Wächter: ARCHI.md-Version + genannte Scripts gegen package.json |
 
 ## 13. Bewusste Grenzen (Stand 2026-07-20)
 

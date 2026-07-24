@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "build:runtime": "vite build --config vite.runtime.config.ts",
-    "check:runtime": "node scripts/check-runtime-bundle.mjs"
+    "check:runtime": "node scripts/check-runtime-bundle.mjs",
+    "check:docs": "node scripts/check-docs.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
