@@ -49,5 +49,23 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    /* Editor ~10% kleiner als Standard (Nutzer-Wunsch 2026-07-24): entspricht
+       dem manuellen Browser-Zoom auf 90% (Strg+Minus), den der Nutzer bisher
+       gesetzt hat. NUR die Editor-Welt (index.css) — der Export (SoftEngine)
+       laedt diese Datei nie und bleibt originalgross. Auf `body`, damit auch die
+       in den Body gehaengten Popover/Dropdowns (Radix-Portale) mitskalieren. */
+    zoom: 0.9;
   }
+}
+
+/* zoom:0.9 malt die App-Huelle (EditorShell = h-screen/w-screen = 100vh/100vw)
+   auf 90% -> unten/rechts blieben 10% Luecke. Gegenrechnung: die Huelle 1/0.9
+   gross machen, dann fuellt sie nach dem 0.9-Skalieren wieder EXAKT das Fenster
+   (calc(100vw/0.9) * 0.9 = 100vw). Ungelayerte Regel (nicht in @layer base),
+   damit sie die Tailwind-Utilities .h-screen/.w-screen aus @layer utilities
+   schlaegt; Struktur-Selektor auf die eine App-Huelle als direktes Kind von
+   #root. Muss mit dem zoom-Faktor oben zusammenpassen. */
+#root > div:first-child {
+  width: calc(100vw / 0.9);
+  height: calc(100vh / 0.9);
 }
