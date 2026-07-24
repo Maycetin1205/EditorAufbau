@@ -1,17 +1,24 @@
 // TabelleBlock
-// Test-/Erstfassung des Tabellen-Bausteins (Fahrplan-Punkt 4). EIN Baustein,
-// EIN Rahmen: die Spalten stecken INNEN (kein Kind-Baustein je Spalte). Die
-// Spalten sind jetzt ECHTE Spalten mit eigenem Titel:
+// Tabellen-Baustein (Fahrplan-Punkt 4). EIN Baustein, EIN Rahmen: die Spalten
+// stecken INNEN (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel
+// UND ein Feld:
 //   - Titel je Spalte per Doppelklick am Kopf umbenennen (Inline-Edit)
-//   - „+ Spalte" / „−" oben rechts am Baustein: hinzufügen / letzte entfernen
-// Beides nur im Editor sichtbar (data-ff-editor) — im Export nie (WYSIWYG).
-// KEIN Spaltenbreite-Ziehen (Nutzer-Entscheidung 2026-07-23: bewusst raus).
-// KEINE Inspector-Steuerung (Bedienung am Ding, Regel 7).
+//   - „+ Spalte" / „−" oben rechts: hinzufügen / letzte entfernen
+//   - feld = Feldcode der Datenquelle (Technikwert, unsichtbar) — welchen Wert
+//     die Spalte je Zeile zeigt. Das Setzen kommt in der naechsten Stufe
+//     (Feld am Spaltenkopf); bis dahin bleibt feld leer.
+// Alles Editor-Sichtbare (Steuerung/Inline-Edit) NUR im Editor (data-ff-editor),
+// im Export nie (WYSIWYG). KEIN Spaltenbreite-Ziehen (Nutzer 2026-07-23).
 //
-// Die Titel liegen als Liste (string[]) in der Prop `spalten`. Alte Stände mit
-// einer Spalten-ZAHL werden beim Lesen still auf „Spalte 1..N" abgebildet.
-// Zeilen sind Platzhalter mit Strichen „—" (keine erfundenen Daten, Regel 7);
-// echte Zeilen kommen erst mit der Datenanbindung (nächste Stufe).
+// Daten: an die Tabelle laesst sich eine Datenquelle haengen (acceptsDataSource,
+// `source`-Prop -> Inspector-Sektion „Daten", Export -> SEFILELOOP). Zur
+// Laufzeit fuellt tabelle/seRuntime die echten Zeilen (setzt `datenzeilen`); im
+// Editor bleibt es bei Platzhalter-Strichen „—" (Regel 7 — keine erfundenen Daten).
+//
+// `spalten` reist als JSON in Prop/Attribut: der Editor setzt die DOM-Property
+// (useLitElement), der Export schreibt JSON ins Attribut, der Wandler unten liest
+// es zurueck. Alte Staende (reine Titel-Strings aus der Erstfassung, oder eine
+// Spalten-ZAHL) werden defensiv auf {titel,feld} abgebildet — keine Migration noetig.
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*).
 
@@ -20,70 +27,110 @@ import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import { connectTable, disconnectTable } from './seRuntime'
+
+export interface Spalte {
+  titel: string
+  feld: string
+}
 
 const SPALTEN_MIN = 1
 const SPALTEN_MAX = 8
 const PLATZHALTER_ZEILEN = 4
-const STANDARD_TITEL = ['Spalte 1', 'Spalte 2', 'Spalte 3']
+
+function standardSpalten(): Spalte[] {
+  return [
+    { titel: 'Spalte 1', feld: '' },
+    { titel: 'Spalte 2', feld: '' },
+    { titel: 'Spalte 3', feld: '' },
+  ]
+}
+
+// Eine unbekannte Struktur defensiv auf eine Spalte abbilden (nie werfen).
+function alsSpalte(x: unknown, index: number): Spalte {
+  if (x && typeof x === 'object') {
+    const o = x as Record<string, unknown>
+    return {
+      titel: typeof o.titel === 'string' ? o.titel : `Spalte ${index + 1}`,
+      feld: typeof o.feld === 'string' ? o.feld : '',
+    }
+  }
+  // Alte Erstfassung: reine Titel-Strings.
+  if (typeof x === 'string') return { titel: x, feld: '' }
+  return { titel: `Spalte ${index + 1}`, feld: '' }
+}
+
+// Robust gegen alte Staende (Titel-Strings, Spalten-ZAHL) und kaputte Werte;
+// immer 1..MAX Spalten mit {titel,feld}.
+export function coerceSpalten(v: unknown): Spalte[] {
+  let arr: Spalte[]
+  if (Array.isArray(v)) {
+    arr = v.map((x, i) => alsSpalte(x, i))
+  } else if ((typeof v === 'number' && Number.isFinite(v)) || (typeof v === 'string' && /^\d+$/.test(v))) {
+    const n = Math.max(1, Math.floor(Number(v)))
+    arr = [...Array(n).keys()].map((i) => ({ titel: `Spalte ${i + 1}`, feld: '' }))
+  } else {
+    arr = standardSpalten()
+  }
+  if (arr.length > SPALTEN_MAX) arr = arr.slice(0, SPALTEN_MAX)
+  if (arr.length < SPALTEN_MIN) arr = [{ titel: 'Spalte 1', feld: '' }]
+  return arr
+}
 
 export class TabelleBlock extends BasicBlock {
   static readonly blockType = 'tabelle'
   static readonly tagName = 'ff-tabelle'
   static readonly displayName = 'Tabelle'
   static readonly category: BlockCategory = 'anzeige'
-  static readonly defaultProps = { width: 'fill', spalten: [...STANDARD_TITEL] }
+  // Kap. 5.1: Datenquelle anhaengbar (Inspector-Sektion „Daten"); der Export
+  // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
+  // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
+  static readonly acceptsDataSource = true
+  static readonly defaultProps = {
+    width: 'fill',
+    source: '',
+    spalten: standardSpalten(),
+  }
   // Raster-Startgröße (Erstwert — im Browser nachzukalibrieren).
   static readonly raster = { startW: 14, startH: 8, minW: 6, minH: 4 }
 
-  // Titel-Liste. Zwei Wege, EIN Wert: der Editor setzt die DOM-Property direkt
-  // (useLitElement), der Export schreibt die Liste als JSON ins Attribut
-  // (exportMask). Darum KEIN attribute:false mehr — sonst käme der Export-Wert
-  // in SoftEngine nie an (die Spalten fielen auf die Standardtitel zurück,
-  // WYSIWYG-Bruch, Regel 1). Der Wandler ist robust: leeres/kaputtes Attribut
-  // → Standardtitel; titelListe() fängt zusätzlich alte Stände (Spalten-ZAHL) ab.
+  // Spalten (Titel + Feld) als JSON in Prop/Attribut. Editor setzt die
+  // DOM-Property (useLitElement), Export schreibt JSON ins Attribut; der Wandler
+  // liest es zurueck (leer/kaputt -> Standard; coerceSpalten faengt alte Staende).
   @property({
     converter: {
-      fromAttribute: (v: string | null): string[] => {
-        if (!v) return [...STANDARD_TITEL]
-        try {
-          const p: unknown = JSON.parse(v)
-          return Array.isArray(p) ? p.map((x) => String(x)) : [...STANDARD_TITEL]
-        } catch {
-          return [...STANDARD_TITEL]
-        }
-      },
-      toAttribute: (v: string[]): string => JSON.stringify(v),
+      fromAttribute: (v: string | null): Spalte[] =>
+        v ? tryCoerce(v) : standardSpalten(),
+      toAttribute: (v: Spalte[]): string => JSON.stringify(v),
     },
   })
-  spalten: string[] = [...STANDARD_TITEL]
+  spalten: Spalte[] = standardSpalten()
 
-  // Robust gegen alte Stände (Zahl) und kaputte Werte; immer 1..MAX Titel.
-  private titelListe(): string[] {
-    const v = this.spalten as unknown
-    let arr: string[]
-    if (Array.isArray(v)) arr = v.map((x) => String(x))
-    else if ((typeof v === 'number' && Number.isFinite(v)) || (typeof v === 'string' && /^\d+$/.test(v))) {
-      const n = Math.max(1, Math.floor(Number(v)))
-      arr = [...Array(n).keys()].map((i) => `Spalte ${i + 1}`)
-    } else arr = [...STANDARD_TITEL]
-    if (arr.length > SPALTEN_MAX) arr = arr.slice(0, SPALTEN_MAX)
-    if (arr.length < SPALTEN_MIN) arr = ['Spalte 1']
-    return arr
+  // Datenquelle (Technikwert, Vorlagen-id). Leer = statisch (Platzhalter).
+  @property() source = ''
+
+  // Laufzeit-Zeilen (attribute:false): tabelle/seRuntime setzt sie im Export aus
+  // den SoftEngine-Daten — je Datenzeile ein Wert-Array, an `spalten` ausgerichtet.
+  // Im Editor bleibt es [] -> Platzhalter-Striche (Regel 7).
+  @property({ attribute: false }) datenzeilen: string[][] = []
+
+  private spaltenListe(): Spalte[] {
+    return coerceSpalten(this.spalten)
   }
 
   // Eigene Prop ändern = 'ff-prop-change' an den BlockHost (Muster inlineEdit).
-  private aendere(titel: string[]): void {
+  private aendere(spalten: Spalte[]): void {
     this.dispatchEvent(
       new CustomEvent('ff-prop-change', {
-        detail: { attr: 'spalten', value: titel },
+        detail: { attr: 'spalten', value: spalten },
         bubbles: true,
         composed: true,
       }),
     )
   }
 
-  // Inline-Umbenennen EINER Spalte am Kopf (Muster BasicBlock.inlineEdit,
-  // angepasst auf den Listen-Index).
+  // Inline-Umbenennen des TITELS einer Spalte am Kopf (Muster BasicBlock.inlineEdit,
+  // angepasst auf den Listen-Index). Das Feld der Spalte bleibt dabei erhalten.
   private bearbeiteTitel(e: MouseEvent, index: number): void {
     if (!this.editable) return
     const ziel = e.currentTarget as HTMLElement | null
@@ -108,9 +155,9 @@ export class TabelleBlock extends BasicBlock {
       ziel.removeEventListener('blur', onBlur)
       ziel.removeEventListener('keydown', onKey)
       const neu = (ziel.textContent ?? '').trim()
-      const liste = this.titelListe()
+      const liste = this.spaltenListe()
       if (commit && neu && neu !== original.trim() && index < liste.length) {
-        liste[index] = neu
+        liste[index] = { ...liste[index], titel: neu }
         this.aendere(liste)
       } else {
         // Verwerfen: Original-Knoten zurück (Lit-Marker bleiben heil).
@@ -129,6 +176,16 @@ export class TabelleBlock extends BasicBlock {
     }
     ziel.addEventListener('blur', onBlur)
     ziel.addEventListener('keydown', onKey)
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback()
+    connectTable(this)
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    disconnectTable(this)
   }
 
   static styles = [
@@ -198,10 +255,13 @@ export class TabelleBlock extends BasicBlock {
   ]
 
   render(): TemplateResult {
-    const titel = this.titelListe()
-    const cols = { gridTemplateColumns: `repeat(${titel.length}, minmax(0, 1fr))` }
-    const zeilen = [...Array(PLATZHALTER_ZEILEN)]
+    const spalten = this.spaltenListe()
+    const cols = { gridTemplateColumns: `repeat(${spalten.length}, minmax(0, 1fr))` }
     const stop = (e: Event): void => e.stopPropagation()
+    // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle).
+    const daten = this.datenzeilen
+    const platzhalter = Array.from({ length: PLATZHALTER_ZEILEN }, () => null)
+    const zeilen: (readonly string[] | null)[] = daten.length > 0 ? daten : platzhalter
     return html`<div class="tabelle">
       <div class="steuerung">
         <button
@@ -209,7 +269,7 @@ export class TabelleBlock extends BasicBlock {
           @pointerdown=${stop}
           @click=${(e: Event) => {
             stop(e)
-            const l = this.titelListe()
+            const l = this.spaltenListe()
             if (l.length > SPALTEN_MIN) {
               l.pop()
               this.aendere(l)
@@ -221,30 +281,41 @@ export class TabelleBlock extends BasicBlock {
           @pointerdown=${stop}
           @click=${(e: Event) => {
             stop(e)
-            const l = this.titelListe()
+            const l = this.spaltenListe()
             if (l.length < SPALTEN_MAX) {
-              l.push(`Spalte ${l.length + 1}`)
+              l.push({ titel: `Spalte ${l.length + 1}`, feld: '' })
               this.aendere(l)
             }
           }}
         >+ Spalte</button>
       </div>
       <div class="kopf" style=${styleMap(cols)}>
-        ${titel.map(
-          (t, i) => html`<div
+        ${spalten.map(
+          (s, i) => html`<div
             data-ff-editable
             @dblclick=${(e: MouseEvent) => this.bearbeiteTitel(e, i)}
-          >${t}</div>`,
+          >${s.titel}</div>`,
         )}
       </div>
       <div class="koerper">
         ${zeilen.map(
-          () => html`<div class="zeile" style=${styleMap(cols)}>
-            ${titel.map(() => html`<div>—</div>`)}
+          (row) => html`<div class="zeile" style=${styleMap(cols)}>
+            ${row
+              ? row.map((wert) => html`<div>${wert}</div>`)
+              : spalten.map(() => html`<div>—</div>`)}
           </div>`,
         )}
       </div>
     </div>`
+  }
+}
+
+// Nur fuer den Attribut-Wandler (haelt fromAttribute knapp + faengt JSON-Fehler).
+function tryCoerce(v: string): Spalte[] {
+  try {
+    return coerceSpalten(JSON.parse(v))
+  } catch {
+    return standardSpalten()
   }
 }
 

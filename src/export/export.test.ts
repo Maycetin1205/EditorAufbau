@@ -12,8 +12,8 @@ import '../blocks/popup/PopupBlock'
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
-// Side-Effect-Import: registriert den Tabellen-Baustein (Fahrplan 4).
-import '../blocks/tabelle/TabelleBlock'
+// Registriert den Tabellen-Baustein (Fahrplan 4) + liefert die Spalten-Coercion.
+import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -385,26 +385,51 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
 })
 
 describe('Tabelle (Fahrplan 4)', () => {
-  it('Spaltentitel ueberleben den Export als JSON — Komma und Umlaut sind die Fallen', () => {
-    // Regel 1 (WYSIWYG): die im Editor vergebenen Spaltentitel muessen EXAKT so
-    // in der exportierten Maske ankommen. String(array) zerbraeche am Komma,
-    // roher Text am Umlaut — beide Fallen stecken bewusst in den Titeln.
-    const titel = ['Kunde', 'Betrag, netto', 'Größe']
+  it('Spalten (Titel + Feld) ueberleben den Export als JSON — Komma und Umlaut sind die Fallen', () => {
+    // Regel 1 (WYSIWYG): die im Editor vergebenen Spalten (Titel UND Feldcode)
+    // muessen EXAKT so in der exportierten Maske ankommen. String(array)
+    // zerbraeche am Komma, roher Text am Umlaut — beide Fallen stecken bewusst
+    // im Titel. Der Feldcode ist der Technikwert, den die Laufzeit ausliest.
+    const spalten = [
+      { titel: 'Kunde', feld: '2_8' },
+      { titel: 'Betrag, netto', feld: '10_12' },
+      { titel: 'Größe', feld: '' },
+    ]
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
-      tab: { id: 'tab', type: 'tabelle', props: { width: 'fill', spalten: titel }, parentId: 'root', childIds: [] },
+      tab: { id: 'tab', type: 'tabelle', props: { width: 'fill', spalten }, parentId: 'root', childIds: [] },
     }
     const { html } = exportMask(tree)
     expect(html).toContain('<ff-tabelle ')
     // Attributwert ziehen, HTML-Entities zurueckwandeln, als JSON lesen — es
-    // muessen EXAKT die drei Titel herauskommen (so liest es auch Lit im Browser).
+    // muessen EXAKT die drei Spalten herauskommen (so liest es auch Lit im Browser).
     const attr = /<ff-tabelle[^>]*\sspalten="([^"]*)"/.exec(html)?.[1] ?? ''
     const decode = (s: string): string =>
       s.replace(/&#x([0-9A-Fa-f]+);|&quot;|&amp;/g, (m, h?: string) =>
         h ? String.fromCodePoint(parseInt(h, 16)) : m === '&quot;' ? '"' : '&')
-    expect(JSON.parse(decode(attr))).toEqual(titel)
+    expect(JSON.parse(decode(attr))).toEqual(spalten)
     // Und der Export bleibt SE-konform (ASCII/LF/Marker/Interface/Runtime).
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('coerceSpalten faengt alte Staende defensiv ab (Titel-Strings, Zahl, kaputt)', () => {
+    // Neues Modell {titel,feld} bleibt unveraendert.
+    expect(coerceSpalten([{ titel: 'A', feld: '2_8' }])).toEqual([{ titel: 'A', feld: '2_8' }])
+    // Erstfassung: reine Titel-Strings -> Feld leer.
+    expect(coerceSpalten(['A', 'B'])).toEqual([
+      { titel: 'A', feld: '' },
+      { titel: 'B', feld: '' },
+    ])
+    // Aeltester Stand: eine Spalten-ZAHL -> generierte Titel.
+    expect(coerceSpalten(2)).toEqual([
+      { titel: 'Spalte 1', feld: '' },
+      { titel: 'Spalte 2', feld: '' },
+    ])
+    // Kaputt/leer -> Standard (drei Spalten), nie ein Wurf.
+    expect(coerceSpalten(null)).toHaveLength(3)
+    expect(coerceSpalten('quatsch')).toHaveLength(3)
+    // Fehlende Felder in einem Objekt werden ergaenzt (nie undefined).
+    expect(coerceSpalten([{ titel: 'X' }])).toEqual([{ titel: 'X', feld: '' }])
   })
 })
 
