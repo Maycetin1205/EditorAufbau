@@ -1,48 +1,39 @@
-// Ein Schritt im bestehenden Ablauf: Baustein -> Ereignis -> Aktion.
-// START_TOOL und RELATION teilen nur die Huelle; ihre Felder bleiben durch
-// das typisierte Kernmodell strikt getrennt.
-// START_TOOL traegt nur die Nummer — KEINE Parameter im Formular
-// (Nutzer-Entscheidung 2026-07-15); toolParams bleibt im Modell fuer
-// Altbestaende und die Laufzeit, gespeichert wird leer.
+﻿// StepForm — ein Schritt im Ablauf: Baustein -> Ereignis -> Aktion.
 //
-// Wohnt seit dem R3-Feinschliff (2026-07-21) in der umgeblätterten
-// Inspector-Ansicht (kein Modal/Overlay mehr): Titel + Zurückblättern +
-// Escape stellt der Inspector über die SidePanel-Rückzeile, das Formular
-// liefert nur seinen Inhalt. Für die 340-px-Spalte stehen die
-// Parameterzeilen einzeilig (Name | Quelle | Wert, R3-Abschluss 2026-07-21)
-// — Felder und Verhalten unverändert, nur das Layout ist schmaler.
+// START_TOOL und RELATION teilen nur die Huelle; ihre Felder bleiben durch
+// das typisierte Kernmodell strikt getrennt. START_TOOL traegt nur die
+// Nummer — KEINE Parameter im Formular (Nutzer-Entscheidung 2026-07-15);
+// toolParams bleibt im Modell fuer Altbestaende und die Laufzeit,
+// gespeichert wird leer.
+//
+// Das Formular liefert nur seinen INHALT: Titel, Zurueckblaettern und
+// Escape stellt der Inspector ueber die SidePanel-Rueckzeile (kein Modal,
+// kein Overlay). Es rechnet mit einer schmalen Spalte (rund 340 px) —
+// deshalb stehen die Parameter einzeilig.
+//
+// Die Teile daneben, jeder mit einer Aufgabe (Aufteilung 2026-07-24, weil
+// diese Datei ueber den 500-Zeilen-Deckel gewachsen war):
+//   - ParameterZeile  eine Parameterzeile samt Wert-Steuerung
+//   - RelationAuswahl Vorlagen-Suche + -Liste mit Lesen/Schreiben-Tabs
+//   - SchrittSelect   das handgebaute Auswahlfeld dieser Bedienung
 
-import { useState, type SelectHTMLAttributes } from 'react'
-import { ChevronDown, Link2, Plus, Search, X } from 'lucide-react'
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
-import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
-import { cn } from '@/lib/utils'
 import {
-  ACTION_PARAM_SOURCES,
-  AKTIONS_PLATZHALTER,
   STEP_TYPES,
   defaultRelationParams,
   ergebnisSchritteVor,
   stepProblem,
   type ActionParamBinding,
-  type ActionParamSource,
   type ActionStep,
-  type ErgebnisSchritt,
   type StepTypeKey,
 } from '../../core/data/aktionen'
-import type { DataSource } from '../../core/data/dataSources'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { actionValueTargets } from '../../core/blocks/treeQuery'
-import {
-  formatRelationSyntax,
-  relationGroup,
-  relationMatchesSearch,
-  type RelationGroup,
-  type RelationTemplate,
-} from '../../core/data/relations'
-import { istUngetaufteVorlage, relationAnzeige } from './relationAnzeige'
+import { relationMatchesSearch } from '../../core/data/relations'
 import { FeldUebernahmePicker } from './FeldUebernahmePicker'
 import {
   feldUebernahmeArt,
@@ -51,11 +42,13 @@ import {
   uebernahmeIdbQuellen,
   uebernahmeQuellen,
 } from './feldUebernahme'
-import { eigenerText, RELATION_GRUPPEN } from './helfer'
+import { blockValueKey, eigenerText, type BlockValueOption } from './helfer'
+import { ParameterZeile } from './ParameterZeile'
+import { RelationAuswahl } from './RelationAuswahl'
+import { SchrittSelect } from './SchrittSelect'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
-import { SegmentControl } from '../inspector/controls/SegmentControl'
 import { SelectControl } from '../inspector/controls/SelectControl'
 
 interface StepFormProps {
@@ -67,346 +60,6 @@ interface StepFormProps {
   onClose: () => void
 }
 
-// Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
-// (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen).
-const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({ value, label: value }))
-
-// Klarnamen der Parameterquellen — Editor-Tabelle (Muster optionColors):
-// kurz genug für die schmale Quelle-Spalte (Nutzer-Go 2026-07-22), und die
-// Namen bleiben aus dem Runtime-Bündel heraus (dort zählen nur die Keys).
-const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
-  fixed: 'Fest',
-  context: 'Ereigniswert',
-  data_field: 'Datenfeld',
-  block_value: 'Baustein',
-  previous_result: 'Vorheriger Schritt',
-  step_result: 'Ergebnis von Schritt',
-  se_variable: 'SE VAR-Array',
-}
-
-interface BlockValueOption {
-  key: string
-  blockId: string
-  prop: string
-  label: string
-}
-
-function blockValueKey(blockId: string, prop: string): string {
-  return `${encodeURIComponent(blockId)}:${encodeURIComponent(prop)}`
-}
-
-// Das EINE handgebaute Auswahlfeld der Schritt-Bedienung: eigener Pfeil mit
-// reserviertem Platz rechts (pr-6), damit der gewählte Text NIE unter dem
-// Aufklapp-Pfeil verschwindet (Nutzer-Korrektur 2026-07-22 — der Browser-
-// Pfeil liegt sonst AUF dem Text). Layout-Klassen (Breite/Flex) gehören auf
-// die Hülle; das <select> füllt sie immer ganz.
-function SchrittSelect({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <div className={cn('relative', className)}>
-      <select
-        {...props}
-        className="h-7 w-full appearance-none rounded border border-input bg-background pl-2 pr-6 text-xs"
-      >
-        {children}
-      </select>
-      <ChevronDown
-        size={12}
-        className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-      />
-    </div>
-  )
-}
-
-function BindingValue({
-  binding,
-  dataSources,
-  blockValues,
-  schritte,
-  onChange,
-}: {
-  binding: ActionParamBinding
-  dataSources: readonly DataSource[]
-  blockValues: readonly BlockValueOption[]
-  schritte: readonly ErgebnisSchritt[]
-  onChange: (binding: ActionParamBinding) => void
-}) {
-  if (binding.source === 'previous_result') {
-    return (
-      <div className="flex h-7 items-center rounded border border-input bg-secondary/50 px-2 text-xs text-muted-foreground">
-        Ergebnis des vorherigen Schritts
-      </div>
-    )
-  }
-  if (binding.source === 'step_result') {
-    // Der Zwischenspeicher des Nutzers (2026-07-17): GET-Schritte davor,
-    // per Position angeboten — kein Namen-Vergeben, nur anklicken.
-    return (
-      <SchrittSelect
-        value={binding.value}
-        onChange={(e) => onChange({ ...binding, value: e.target.value })}
-      >
-        <option value="">
-          {schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
-        </option>
-        {schritte.map((s) => (
-          <option key={s.id} value={s.id}>{`Schritt ${s.nr} — ${s.name}`}</option>
-        ))}
-      </SchrittSelect>
-    )
-  }
-  if (binding.source === 'context') {
-    return (
-      <SchrittSelect
-        value={binding.value}
-        onChange={(e) => onChange({ ...binding, value: e.target.value })}
-      >
-        <option value="">— wählen —</option>
-        {CONTEXT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </SchrittSelect>
-    )
-  }
-  if (binding.source === 'data_field') {
-    const selectedSource = dataSources.find((source) => source.id === binding.dataSourceId)
-    return (
-      <div className="grid grid-cols-2 gap-1">
-        <SchrittSelect
-          className="min-w-0"
-          value={binding.dataSourceId ?? ''}
-          onChange={(e) => onChange({ ...binding, dataSourceId: e.target.value, value: '' })}
-        >
-          <option value="">— Quelle —</option>
-          {dataSources.map((source) => (
-            <option key={source.id} value={source.id}>{source.name}</option>
-          ))}
-        </SchrittSelect>
-        <SchrittSelect
-          className="min-w-0"
-          value={binding.value}
-          onChange={(e) => onChange({ ...binding, value: e.target.value })}
-        >
-          <option value="">— Feld —</option>
-          {selectedSource?.fields.map((field) => (
-            <option key={field.code} value={field.code}>{field.label}</option>
-          ))}
-        </SchrittSelect>
-      </div>
-    )
-  }
-  if (binding.source === 'block_value') {
-    const current = binding.blockId ? blockValueKey(binding.blockId, binding.value) : ''
-    return (
-      <SchrittSelect
-        value={current}
-        onChange={(e) => {
-          const selected = blockValues.find((option) => option.key === e.target.value)
-          onChange(selected
-            ? { source: 'block_value', blockId: selected.blockId, value: selected.prop }
-            : { source: 'block_value', blockId: '', value: '' })
-        }}
-      >
-        <option value="">— Baustein —</option>
-        {blockValues.map((option) => (
-          <option key={option.key} value={option.key}>{option.label}</option>
-        ))}
-      </SchrittSelect>
-    )
-  }
-  return (
-    <TextInput
-      value={binding.value}
-      placeholder={binding.source === 'se_variable' ? 'Variablenname' : 'Wert'}
-      onChange={(e) => onChange({ ...binding, value: e.target.value })}
-    />
-  )
-}
-
-function BindingRow({
-  label,
-  binding,
-  dataSources,
-  blockValues,
-  schritte,
-  removable = false,
-  ausloeser,
-  onChange,
-  onAusloeser,
-  onRemove,
-}: {
-  label: string
-  binding: ActionParamBinding
-  dataSources: readonly DataSource[]
-  blockValues: readonly BlockValueOption[]
-  schritte: readonly ErgebnisSchritt[]
-  removable?: boolean
-  ausloeser?: FeldUebernahmeZiel
-  onChange: (binding: ActionParamBinding) => void
-  onAusloeser?: (anchor: HTMLElement) => void
-  onRemove?: () => void
-}) {
-  const setSource = (source: ActionParamSource) => {
-    if (source === 'block_value' && blockValues.length === 1) {
-      const target = blockValues[0]
-      onChange({ source, blockId: target.blockId, value: target.prop })
-      return
-    }
-    const value = source === 'context'
-      ? 'VALUE'
-      // Genau EIN GET davor: direkt vorwählen — der häufigste Fall
-      // (GET Index holen → benutzen) kommt dann ohne zweiten Klick aus.
-      : source === 'step_result' && schritte.length === 1
-        ? schritte[0].id
-        : ''
-    onChange({ source, value })
-  }
-
-  // EINE Zeile je Parameter (R3-Abschluss 2026-07-21): Name | Quelle | Wert
-  // nebeneinander — halbiert die Höhe der Parameterliste in der schmalen
-  // Panel-Ansicht. Lange Technikwerte kürzen sich, der Tooltip zeigt sie
-  // ganz. Felder/Verhalten unverändert.
-  return (
-    <div className="flex items-center gap-1">
-      <span className="w-14 shrink-0 truncate font-mono text-[11px]" title={label}>{label}</span>
-      <SchrittSelect
-        className="w-24 shrink-0"
-        value={binding.source}
-        onChange={(e) => setSource(e.target.value as ActionParamSource)}
-      >
-        {ACTION_PARAM_SOURCES.map((source) => (
-          <option
-            key={source}
-            value={source}
-            disabled={(source === 'data_field' && dataSources.length === 0)
-              || (source === 'block_value' && blockValues.length === 0)
-              || (source === 'step_result' && schritte.length === 0)}
-          >
-            {QUELLEN_NAMEN[source]}
-          </option>
-        ))}
-      </SchrittSelect>
-      <div
-        className="min-w-0 flex-1"
-        onKeyDown={(e) => {
-          if (e.key !== 'Enter' || !ausloeser || !onAusloeser) return
-          e.preventDefault()
-          onAusloeser(e.currentTarget)
-        }}
-      >
-        <BindingValue
-          binding={binding}
-          dataSources={dataSources}
-          blockValues={blockValues}
-          schritte={schritte}
-          onChange={onChange}
-        />
-      </div>
-      {ausloeser && onAusloeser && (
-        <IconButton
-          aria-label={ausloeser === 'feld' ? 'Feld übernehmen' : 'Tabelle übernehmen'}
-          onClick={(e) => onAusloeser(e.currentTarget)}
-        >
-          <Link2 size={13} />
-        </IconButton>
-      )}
-      {removable && onRemove && (
-        <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
-      )}
-    </div>
-  )
-}
-
-// Vorlagen-Suche + -Liste für den Relation-Schritt.
-function RelationAuswahl({
-  label,
-  eintraege,
-  relationId,
-  suche,
-  onSuche,
-  onSelect,
-}: {
-  label: string
-  eintraege: readonly RelationTemplate[]
-  relationId: string
-  suche: string
-  onSuche: (value: string) => void
-  onSelect: (id: string) => void
-}) {
-  // Lesen (GET) und Schreiben (PUT/PUTADD) stehen NIE gemischt (Nutzer
-  // 2026-07-22): zwei Mini-Tabs statt gestapelter Abschnitte — derselbe
-  // Umschalter (SegmentControl) wie im Inspector und im Steuerungs-Filter.
-  // Startwert = Gruppe der gewählten Vorlage (beim Bearbeiten), sonst „Lesen".
-  const [tab, setTab] = useState<RelationGroup>(() => {
-    const gewaehlt = eintraege.find((entry) => entry.id === relationId)
-    return gewaehlt ? relationGroup(gewaehlt) : 'lesen'
-  })
-  // Die Suche findet in BEIDEN Gruppen (Nutzer 2026-07-22): eintraege ist
-  // schon suchgefiltert; wir zählen je Gruppe und springen zum Tab mit
-  // Treffern, wenn der aktive leer ist — Lesen/Schreiben bleiben getrennt.
-  const lesen = eintraege.filter((entry) => relationGroup(entry) === 'lesen')
-  const schreiben = eintraege.filter((entry) => relationGroup(entry) === 'schreiben')
-  const zaehler: Record<RelationGroup, number> = { lesen: lesen.length, schreiben: schreiben.length }
-  const anderer: RelationGroup = tab === 'lesen' ? 'schreiben' : 'lesen'
-  const aktiv: RelationGroup = zaehler[tab] === 0 && zaehler[anderer] > 0 ? anderer : tab
-  const sichtbar = aktiv === 'lesen' ? lesen : schreiben
-  // Trefferzahl nur bei aktiver Suche an die Tabs (sonst nur Lesen | Schreiben).
-  const sucht = suche.trim().length > 0
-  const tabOptionen = RELATION_GRUPPEN.map((gruppe) => ({
-    ...gruppe,
-    label: sucht ? `${gruppe.label} · ${zaehler[gruppe.value as RelationGroup]}` : gruppe.label,
-  }))
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[11px] font-medium">{label}</span>
-      <div className="relative">
-        <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <TextInput
-          aria-label={`${label} suchen`}
-          value={suche}
-          placeholder="Name, Nummer oder Syntax"
-          className="pl-7"
-          onChange={(e) => onSuche(e.target.value)}
-        />
-      </div>
-      <SegmentControl
-        name="Lesen oder Schreiben"
-        value={aktiv}
-        options={tabOptionen}
-        onChange={(value) => setTab(value as RelationGroup)}
-      />
-      {/* Je Zeile der Klarname (bzw. „VERB · Nr." bei ungetauften Vorlagen);
-          die volle Syntax ist NIE Anzeigetext — nur Hover-Tooltip + Suche
-          (R3-Abschluss 2026-07-21, Regel 3). Nur der aktive Tab; leere Gruppe
-          zeigt „Keine Treffer" (die Suche darüber bleibt aktiv). */}
-      <div className="max-h-36 divide-y divide-border overflow-y-auto border-y border-border">
-        {sichtbar.map((entry) => {
-          const ungetauft = istUngetaufteVorlage(entry)
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              title={formatRelationSyntax(entry)}
-              onClick={() => onSelect(entry.id)}
-              className={`w-full px-2 py-1.5 text-left text-xs ${
-                entry.id === relationId ? 'bg-secondary font-medium' : 'hover:bg-secondary/60'
-              }`}
-            >
-              <span className="block truncate">{relationAnzeige(entry)}</span>
-              {!ungetauft && (
-                <span className="block truncate text-[10px] text-muted-foreground">
-                  {entry.verb} · Nr. {entry.nr}
-                </span>
-              )}
-            </button>
-          )
-        })}
-        {sichtbar.length === 0 && (
-          <p className="px-2 py-1 text-xs text-muted-foreground">Keine Treffer.</p>
-        )}
-      </div>
-    </div>
-  )
-}
 
 export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const relations = useRelations()
@@ -640,7 +293,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                       ? 'feld'
                       : undefined
                   const row = (
-                    <BindingRow
+                    <ParameterZeile
                       label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
                       binding={bindingFor(index)}
                       dataSources={dataSources.list}
@@ -690,7 +343,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                 </Button>
               </div>
               {extraParams.map((binding, index) => (
-                <BindingRow
+                <ParameterZeile
                   key={index}
                   label={`${index + 1}.`}
                   binding={binding}

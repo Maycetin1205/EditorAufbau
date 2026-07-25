@@ -1,5 +1,5 @@
 // relationAnzeige — DIE eine Stelle für den Anzeigenamen einer
-// Relations-Vorlage in Listen und Schritt-Zeilen (R3-Abschluss 2026-07-21).
+// Relations-Vorlage in Listen und Schritt-Zeilen.
 // Ungetaufte Vorlagen (kein Name, oder der Name IST die Syntax — typisch
 // bei importierten Vorlagen) zeigen „<VERB> · Nr. <nr>" statt der
 // Syntax-Wurst: Die volle Syntax ist NIE Anzeigename (Regel 3) — sie

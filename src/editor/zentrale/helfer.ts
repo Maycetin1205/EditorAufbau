@@ -87,3 +87,19 @@ export function bausteinName(node: BlockNode): string {
   const text = eigenerText(node.props, def?.defaultProps)
   return text === '' ? basis : `${basis} — ${text}`
 }
+
+// Ein auslesbarer Bausteinwert als Auswahl-Eintrag (Registry: actionValueSpots).
+export interface BlockValueOption {
+  key: string
+  blockId: string
+  prop: string
+  label: string
+}
+
+// Stabiler Schlüssel für die Auswahl. Baustein-id und Prop können beliebige
+// Zeichen tragen, deshalb kodiert — sonst kollidiert ein Doppelpunkt im Wert
+// mit dem Trennzeichen. Wohnt hier statt bei der Parameterzeile, weil eine
+// Datei mit React-Komponenten nichts anderes exportieren soll (Fast Refresh).
+export function blockValueKey(blockId: string, prop: string): string {
+  return `${encodeURIComponent(blockId)}:${encodeURIComponent(prop)}`
+}

@@ -5,8 +5,7 @@
 // jetzt an genau einem Ort (löst die „Abschnitts-Überschriften-Orgie" auf).
 //
 // Label-Stufen der Editor-UI, bewusst getrennt und je an EINER Stelle
-// gepflegt (saubere Auflösung des R2-Hinweises „11-px-Labels wirken in der
-// Steuerung mit" — es gibt genau diese Stellen, nichts Ad-hoc daneben):
+// gepflegt — es gibt genau diese Stellen, nichts Ad-hoc daneben:
 //   · Eyebrow (hier):        10 px, versal — Gruppen einer Lese-Ansicht.
 //   · Feld-Label (Field):    11 px — beschriftet EIN Eingabe-Control, im
 //     Inspector UND in den Steuerungs-Formularen identisch.

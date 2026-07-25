@@ -124,8 +124,12 @@ for (const { tag, typ } of bausteine) {
 // 500 Zeilen ist die Grenze; die zwei Altlasten duerfen NICHT wachsen
 // (Schrumpfen ist jederzeit erlaubt -- dann Deckel hier nachziehen).
 const DECKEL = 500
+// StepForm.tsx stand hier bis 2026-07-24 mit 722 Zeilen — jetzt geteilt
+// (ParameterZeile / RelationAuswahl / SchrittSelect) und wieder unter dem
+// Deckel. Bleibt nur Editor.ts: der Zustandsspeicher, dessen Aufteilen
+// riskanter waere als die 60 Zeilen wert sind (Entscheidung 2026-07-24).
+// Darf ausschliesslich schrumpfen.
 const ALTLASTEN = {
-  'src/editor/zentrale/StepForm.tsx': 722,
   'src/state/Editor.ts': 560,
 }
 
