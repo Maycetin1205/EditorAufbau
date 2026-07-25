@@ -416,6 +416,25 @@ describe('Tabelle (Fahrplan 4)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
+  it('Tabelle: die Suchzeile-Einstellung ueberlebt den Export', () => {
+    // Die Suchzeile ist eine Maskeneinstellung (Registry-Eigenschaft). Faellt
+    // sie im Export weg, sucht der Bediener in SoftEngine eine Zeile, die der
+    // Editor ihm gezeigt hat — WYSIWYG-Bruch (Regel 1).
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab',
+        type: 'tabelle',
+        props: { width: 'fill', spalten: standardTestSpalten, suche: 'nein' },
+        parentId: 'root',
+        childIds: [],
+      },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toMatch(/<ff-tabelle[^>]*\ssuche="nein"/i)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
   it('Tabelle: „Zeilen pro Seite" ueberlebt den Export', () => {
     // Die Seitengroesse ist eine Maskeneinstellung (Registry-Eigenschaft) und
     // muss als Attribut mitreisen — sonst blaettert SoftEngine anders als der

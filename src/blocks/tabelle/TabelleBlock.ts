@@ -1,4 +1,4 @@
-// TabelleBlock
+﻿// TabelleBlock
 // Tabellen-Baustein (Fahrplan-Punkt 4). EIN Baustein, EIN Rahmen: die Spalten
 // stecken INNEN (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel
 // UND ein Feld:
@@ -22,7 +22,7 @@
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*).
 
-import { css, html, type TemplateResult } from 'lit'
+import { html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
@@ -31,6 +31,8 @@ import type { ListenBindung } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereZeilen } from './sortierung'
+import { filtereZeilen } from './suche'
+import { tabelleStil } from './tabelleStil'
 import {
   SPALTEN_MAX,
   SPALTEN_MIN,
@@ -74,11 +76,20 @@ export class TabelleBlock extends BasicBlock {
     source: '',
     spalten: standardSpalten(),
     proSeite: String(ZEILEN_PRO_SEITE[0]),
+    suche: 'ja',
   }
   // Wie viele Zeilen eine Seite zeigt — bisher fest im Code, jetzt je Maske
   // einstellbar (Regel 2: Faehigkeiten sind Registry-Eintraege). Ohne
   // Datenquelle sinnlos, deshalb requiresDataSource.
   static readonly customProperties: PropertyDescription[] = [
+    {
+      attributeName: 'suche',
+      name: 'Suchzeile',
+      description: 'Zeigt ueber der Tabelle ein Feld, mit dem der Bediener den Inhalt durchsucht.',
+      kind: 'segment',
+      options: [{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }],
+      requiresDataSource: true,
+    },
     {
       attributeName: 'proSeite',
       name: 'Zeilen pro Seite',
@@ -111,6 +122,12 @@ export class TabelleBlock extends BasicBlock {
   // s. _proSeiteWahl.
   @property() proSeite = String(ZEILEN_PRO_SEITE[0])
 
+  // Suchzeile ueber der Tabelle ein-/ausschaltbar ('ja' | 'nein').
+  @property() suche = 'ja'
+
+  // Was der Bediener zur Laufzeit in die Suchzeile getippt hat.
+  private _suchtext = ''
+
   // Laufzeit-Zeilen (attribute:false): tabelle/seRuntime setzt sie im Export aus
   // den SoftEngine-Daten — je Datenzeile ein Wert-Array, an `spalten` ausgerichtet.
   // Im Editor bleibt es [] -> Platzhalter-Striche (Regel 7).
@@ -138,10 +155,22 @@ export class TabelleBlock extends BasicBlock {
     return coerceSpalten(this.spalten)
   }
 
-  // Sortieren nach Spaltenart (Zahl/Datum/Text) — s. ./sortierung.
-  private sortierteZeilen(): string[][] {
-    if (this._sortSpalte < 0) return this.datenzeilen.map((z) => [...z])
-    return sortiereZeilen(this.datenzeilen, this._sortSpalte, this._sortAuf)
+  // Die Zeilen, die der Bediener gerade sehen soll: ERST suchen, DANN
+  // sortieren. Andersherum waere die Arbeit umsonst — sortiert wird nur,
+  // was uebrig bleibt. Beides sind eigene, getestete Stellen
+  // (./suche, ./sortierung).
+  private sichtbareZeilen(): string[][] {
+    const gefiltert = filtereZeilen(this.datenzeilen, this._suchtext)
+    if (this._sortSpalte < 0) return gefiltert
+    return sortiereZeilen(gefiltert, this._sortSpalte, this._sortAuf)
+  }
+
+  // Tippen in der Suchzeile: zurueck auf Seite 1 — sonst steht der Bediener
+  // auf Seite 5 einer Liste, die nach dem Filtern nur noch zwei Seiten hat.
+  private setzeSuchtext(text: string): void {
+    this._suchtext = text
+    this._seite = 0
+    this.requestUpdate()
   }
 
   // Klick auf den Spaltenkopf in der LAUFZEIT: erst absteigend?  Nein —
@@ -271,114 +300,20 @@ export class TabelleBlock extends BasicBlock {
     disconnectTable(this)
   }
 
-  static styles = [
-    BasicBlock.styles,
-    css`
-      :host { min-width: 0; height: 100%; }
-      .tabelle {
-        position: relative;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        background: var(--se-panel);
-        border: 1px solid var(--se-line);
-        border-radius: var(--se-r-lg);
-        overflow: hidden;
-        font-family: var(--se-font);
-        font-size: var(--se-fs);
-        color: var(--se-ink);
-      }
-      .kopf,
-      .zeile { display: grid; }
-      .kopf {
-        background: var(--se-panel-2);
-        border-bottom: 1px solid var(--se-line);
-        font-size: var(--se-fs-sm);
-        font-weight: 600;
-      }
-      .koerper { flex: 1 1 auto; overflow: auto; }
-      .zeile { border-bottom: 1px solid var(--se-line-soft); }
-      .zeile:last-child { border-bottom: none; }
-      .kopf > div,
-      .zeile > div {
-        padding: 6px 10px;
-        min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-right: 1px solid var(--se-line-soft);
-      }
-      .kopf > div:last-child,
-      .zeile > div:last-child { border-right: none; }
-      .kopf > div { cursor: pointer; user-select: none; }
-      .sort-pfeil { font-size: 9px; color: var(--se-muted); }
-      .zeile > div { color: var(--se-muted); }
-      .fusszeile {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 4px 10px;
-        border-top: 1px solid var(--se-line);
-        font-size: var(--se-fs-sm);
-        color: var(--se-muted);
-        background: var(--se-panel-2);
-      }
-      .seiten-nav {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .seiten-nav select,
-      .seiten-nav button {
-        font-family: var(--se-font);
-        font-size: var(--se-fs-sm);
-        padding: 2px 6px;
-        border: 1px solid var(--se-line);
-        border-radius: var(--se-r-sm);
-        background: var(--se-panel);
-        color: var(--se-ink);
-        cursor: pointer;
-      }
-      .seiten-nav button:disabled {
-        opacity: 0.3;
-        cursor: default;
-      }
-      /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im Export. */
-      .steuerung { display: none; }
-      :host([data-ff-editor]) .steuerung {
-        position: absolute;
-        top: 3px;
-        right: 3px;
-        z-index: 2;
-        display: inline-flex;
-        gap: 4px;
-      }
-      .steuerung button {
-        font-family: var(--se-font);
-        font-size: var(--se-fs-sm);
-        line-height: 1;
-        padding: 3px 7px;
-        border: 1px solid var(--se-line);
-        border-radius: var(--se-r-sm);
-        background: var(--se-panel);
-        color: var(--se-muted);
-        cursor: pointer;
-      }
-      .steuerung button:hover {
-        border-color: var(--se-accent);
-        color: var(--se-accent);
-      }
-    `,
-  ]
+  static styles = [BasicBlock.styles, tabelleStil]
 
   render(): TemplateResult {
     const spalten = this.spaltenListe()
     const cols = { gridTemplateColumns: `repeat(${spalten.length}, minmax(0, 1fr))` }
     const stop = (e: Event): void => e.stopPropagation()
     // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle).
-    const alleDaten = this.sortierteZeilen()
-    const hatDaten = alleDaten.length > 0
+    const alleDaten = this.sichtbareZeilen()
+    // „Hat Daten" heisst: es KOMMEN Daten (Quelle haengt dran) — nicht, dass
+    // die Suche gerade etwas uebrig laesst. Sonst faellt die Tabelle bei
+    // einer Suche ohne Treffer auf die Editor-Platzhalter zurueck und
+    // behauptet Werte, die es nicht gibt (Regel 7).
+    const hatQuelle = this.datenzeilen.length > 0
+    const hatDaten = hatQuelle
     // Paginierung (nur Laufzeit mit echten Daten).
     const gesamt = alleDaten.length
     const proSeite = this.proSeiteAktuell
@@ -428,6 +363,16 @@ export class TabelleBlock extends BasicBlock {
           }}
         >+ Spalte</button>
       </div>
+      ${this.suche === 'ja' ? html`<div class="suchzeile">
+        <input
+          type="search"
+          placeholder="Tabelle durchsuchen…"
+          aria-label="Tabelle durchsuchen"
+          .value=${this._suchtext}
+          @pointerdown=${stop}
+          @input=${(e: Event) => this.setzeSuchtext((e.target as HTMLInputElement).value)}
+        />
+      </div>` : ''}
       <div class="kopf" style=${styleMap(cols)}>
         ${spalten.map(
           (s, i) => html`<div
@@ -457,10 +402,18 @@ export class TabelleBlock extends BasicBlock {
           </div>`,
         )}
       </div>
-      ${hatDaten ? html`<div class="fusszeile">
-        <div class="seiten-info">${gesamt} Datensätze</div>
+      <!-- Fusszeile IMMER: sie gehoert zum Aufbau der Tabelle, also muss der
+           Editor sie zeigen (Regel 1 — was zu sehen ist, IST der Export).
+           Vorher erschien sie nur mit Daten; im Editor fehlte sie damit
+           komplett, und der Bediener suchte vergeblich nach der
+           Seiteneinstellung. Ohne Daten steht statt einer erfundenen Zahl
+           ein Strich (Regel 7). -->
+      <div class="fusszeile">
+        <div class="seiten-info">${hatDaten ? `${gesamt} Datensätze` : '— Datensätze'}</div>
         <div class="seiten-nav">
           <select
+            aria-label="Zeilen pro Seite"
+            @pointerdown=${stop}
             @change=${(e: Event) => {
               this._proSeiteWahl = Number((e.target as HTMLSelectElement).value)
               this._seite = 0
@@ -469,11 +422,11 @@ export class TabelleBlock extends BasicBlock {
           >${ZEILEN_PRO_SEITE.map(
             (n) => html`<option value=${n} ?selected=${n === proSeite}>${n} pro Seite</option>`,
           )}</select>
-          <button ?disabled=${seite <= 0} @click=${() => { this._seite = seite - 1; this.requestUpdate() }}>‹</button>
+          <button aria-label="Seite zurück" ?disabled=${seite <= 0} @click=${() => { this._seite = seite - 1; this.requestUpdate() }}>‹</button>
           <span>${seite + 1} / ${seiten}</span>
-          <button ?disabled=${seite >= seiten - 1} @click=${() => { this._seite = seite + 1; this.requestUpdate() }}>›</button>
+          <button aria-label="Seite vor" ?disabled=${seite >= seiten - 1} @click=${() => { this._seite = seite + 1; this.requestUpdate() }}>›</button>
         </div>
-      </div>` : ''}
+      </div>
     </div>`
   }
 }
