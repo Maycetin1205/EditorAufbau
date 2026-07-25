@@ -3,7 +3,7 @@
 // mehrere Woerter sind ein UND, leere Eingabe blendet nie etwas aus.
 
 import { describe, expect, it } from 'vitest'
-import { filtereZeilen, zeilePasst } from './suche'
+import { datensatzText, filtereZeilen, zeilePasst } from './suche'
 
 const zeilen = [
   ['Meier', 'Hund', '24.07.2026'],
@@ -65,5 +65,33 @@ describe('filtereZeilen', () => {
     const eingabe = [['a'], ['b']]
     filtereZeilen(eingabe, 'a')
     expect(eingabe).toHaveLength(2)
+  })
+})
+
+describe('datensatzText (Fusszeile)', () => {
+  const t = (o: Partial<Parameters<typeof datensatzText>[0]>): string =>
+    datensatzText({ hatQuelle: true, sichtbar: 0, gesamt: 0, suchtAktiv: false, ...o })
+
+  it('zeigt ohne Quelle einen Strich statt einer erfundenen Zahl', () => {
+    expect(t({ hatQuelle: false })).toBe('— Datensätze')
+  })
+
+  it('schreibt die Einzahl richtig', () => {
+    expect(t({ gesamt: 1, sichtbar: 1 })).toBe('1 Datensatz')
+    expect(t({ gesamt: 2, sichtbar: 2 })).toBe('2 Datensätze')
+  })
+
+  it('zeigt ohne Suche die schlichte Anzahl', () => {
+    expect(t({ gesamt: 250, sichtbar: 10 })).toBe('250 Datensätze')
+    expect(t({ gesamt: 0, sichtbar: 0 })).toBe('Keine Datensätze')
+  })
+
+  it('zeigt MIT Suche „X von Y" — sonst verschweigt die Zahl den Bestand', () => {
+    expect(t({ gesamt: 250, sichtbar: 1, suchtAktiv: true })).toBe('1 von 250 Datensätzen')
+    expect(t({ gesamt: 250, sichtbar: 12, suchtAktiv: true })).toBe('12 von 250 Datensätzen')
+  })
+
+  it('sagt bei einer Suche ohne Treffer, wovon nichts uebrig blieb', () => {
+    expect(t({ gesamt: 250, sichtbar: 0, suchtAktiv: true })).toBe('Kein Treffer von 250 Datensätzen')
   })
 })

@@ -31,7 +31,7 @@ import type { ListenBindung } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereZeilen } from './sortierung'
-import { filtereZeilen } from './suche'
+import { datensatzText, filtereZeilen } from './suche'
 import { tabelleStil } from './tabelleStil'
 import {
   SPALTEN_MAX,
@@ -409,7 +409,12 @@ export class TabelleBlock extends BasicBlock {
            Seiteneinstellung. Ohne Daten steht statt einer erfundenen Zahl
            ein Strich (Regel 7). -->
       <div class="fusszeile">
-        <div class="seiten-info">${hatDaten ? `${gesamt} Datensätze` : '— Datensätze'}</div>
+        <div class="seiten-info">${datensatzText({
+          hatQuelle,
+          sichtbar: gesamt,
+          gesamt: this.datenzeilen.length,
+          suchtAktiv: this._suchtext.trim() !== '',
+        })}</div>
         <div class="seiten-nav">
           <select
             aria-label="Zeilen pro Seite"
@@ -423,7 +428,7 @@ export class TabelleBlock extends BasicBlock {
             (n) => html`<option value=${n} ?selected=${n === proSeite}>${n} pro Seite</option>`,
           )}</select>
           <button aria-label="Seite zurück" ?disabled=${seite <= 0} @click=${() => { this._seite = seite - 1; this.requestUpdate() }}>‹</button>
-          <span>${seite + 1} / ${seiten}</span>
+          <span>Seite ${seite + 1} von ${seiten}</span>
           <button aria-label="Seite vor" ?disabled=${seite >= seiten - 1} @click=${() => { this._seite = seite + 1; this.requestUpdate() }}>›</button>
         </div>
       </div>

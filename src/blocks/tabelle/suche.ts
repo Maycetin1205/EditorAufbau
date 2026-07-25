@@ -40,3 +40,30 @@ export function filtereZeilen(
   if (woerterVon(suchtext).length === 0) return zeilen.map((z) => [...z])
   return zeilen.filter((z) => zeilePasst(z, suchtext)).map((z) => [...z])
 }
+
+// Beschriftung der Fusszeile: wie viele Datensaetze sieht der Bediener?
+//
+// Drei Faelle, drei Saetze — der haeufigste Fehler waere, sie zu einem zu
+// verschmelzen:
+//   - Ohne Quelle (Editor): ein Strich. Nie eine erfundene Zahl (Regel 7).
+//   - Ohne Suche: die schlichte Anzahl.
+//   - MIT Suche: „X von Y" — sonst verschweigt die Zahl, dass 250 Saetze
+//     da sind und die Suche nur einen uebrig laesst. Genau das hat der
+//     Nutzer am 2026-07-25 bemaengelt.
+// Und richtige Einzahl: „1 Datensatz", nicht „1 Datensätze".
+export function datensatzText(args: {
+  hatQuelle: boolean
+  sichtbar: number
+  gesamt: number
+  suchtAktiv: boolean
+}): string {
+  if (!args.hatQuelle) return '— Datensätze'
+  // Nach „von" steht der Dativ: „von 250 DatensätzEN".
+  const wort = (n: number): string => (n === 1 ? 'Datensatz' : 'Datensätze')
+  const wortDativ = (n: number): string => (n === 1 ? 'Datensatz' : 'Datensätzen')
+  if (!args.suchtAktiv) {
+    return args.gesamt === 0 ? 'Keine Datensätze' : `${args.gesamt} ${wort(args.gesamt)}`
+  }
+  if (args.sichtbar === 0) return `Kein Treffer von ${args.gesamt} ${wortDativ(args.gesamt)}`
+  return `${args.sichtbar} von ${args.gesamt} ${wortDativ(args.gesamt)}`
+}
