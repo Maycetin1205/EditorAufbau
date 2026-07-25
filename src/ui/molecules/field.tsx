@@ -39,7 +39,7 @@ export function Field({ label, description, error, className, children }: FieldP
           htmlFor={id}
           title={beschreibungAlsHinweis && !error ? (description as string) : undefined}
           className={cn(
-            'text-[11px] leading-4 font-medium text-foreground',
+            'text-[0.6875rem] leading-4 font-medium text-foreground',
             beschreibungAlsHinweis && !error && 'cursor-help',
           )}
         >

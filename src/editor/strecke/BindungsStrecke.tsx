@@ -56,8 +56,8 @@ function Schritt({
           aria-hidden="true"
           className={
             fertig
-              ? 'flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] text-primary-foreground'
-              : 'flex h-5 w-5 items-center justify-center rounded-full border border-border text-[11px] text-muted-foreground'
+              ? 'flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[0.6875rem] text-primary-foreground'
+              : 'flex h-5 w-5 items-center justify-center rounded-full border border-border text-[0.6875rem] text-muted-foreground'
           }
         >
           {fertig ? '\u2713' : nr}
@@ -122,7 +122,7 @@ export function BindungsStrecke({ blockId, onClose }: BindungsStreckeProps) {
             Die gew&auml;hlte Datenquelle fehlt in der Bibliothek.
           </p>
         )}
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-[0.6875rem] text-muted-foreground">
           Vorlagen anlegen und bearbeiten: Steuerung &rarr; Datenquellen.
         </p>
       </Schritt>
@@ -138,7 +138,7 @@ export function BindungsStrecke({ blockId, onClose }: BindungsStreckeProps) {
           </p>
         ) : (
           <>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[0.6875rem] text-muted-foreground">
               {feldProp?.description ?? ''}
             </p>
             <div className="flex flex-wrap gap-1.5">

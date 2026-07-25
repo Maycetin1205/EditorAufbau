@@ -333,7 +333,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
           {relation?.allowExtraParams && (
             <div className="flex flex-col gap-2 border-t border-border pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium">Zusatzparameter</span>
+                <span className="text-[0.6875rem] font-medium">Zusatzparameter</span>
                 <Button
                   variant="outline"
                   size="sm"

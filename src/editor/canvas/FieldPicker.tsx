@@ -99,7 +99,7 @@ export function FieldPicker({
       style={{ position: 'fixed', top, left, zIndex: 50 }}
       className="max-h-64 w-60 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
     >
-      <p className="px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
         {spotLabel} · Feld aus {sourceName}
       </p>
       {eintrag('', '— nicht gebunden —')}

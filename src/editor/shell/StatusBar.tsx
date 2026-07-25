@@ -13,7 +13,7 @@ export function StatusBar() {
   const page = ed.pages.find((p) => p.id === ed.activePageId)
 
   return (
-    <footer className="flex h-6 shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-3 text-[11px] text-muted-foreground">
+    <footer className="flex h-6 shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-3 text-[0.6875rem] text-muted-foreground">
       <div className="flex items-center gap-3">
         <span>
           Blöcke <strong className="font-semibold text-foreground">{ed.blockCount}</strong>

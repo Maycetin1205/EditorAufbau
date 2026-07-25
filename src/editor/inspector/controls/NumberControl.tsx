@@ -74,7 +74,7 @@ function Zahlenfeld({ property, value, onChange, id }: NumberControlProps & { id
         )}
       />
       {property.unit && (
-        <span className="pointer-events-none absolute right-1.5 text-[10px] text-muted-foreground">
+        <span className="pointer-events-none absolute right-1.5 text-[0.625rem] text-muted-foreground">
           {property.unit}
         </span>
       )}

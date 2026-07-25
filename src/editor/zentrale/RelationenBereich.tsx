@@ -117,7 +117,7 @@ export function RelationenBereich() {
                 <div className="flex items-center gap-1.5">
                   <Share2 size={12} className="shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
-                  <span className="shrink-0 rounded-full bg-secondary px-1.5 font-mono text-[10px] text-muted-foreground">
+                  <span className="shrink-0 rounded-full bg-secondary px-1.5 font-mono text-[0.625rem] text-muted-foreground">
                     {VERB_KURZ[r.verb]} {r.nr}
                   </span>
                 </div>
@@ -158,10 +158,10 @@ export function RelationenBereich() {
                   <tbody>
                     {auswahl.params.map((p, i) => (
                       <tr key={i} className="border-b border-border last:border-b-0">
-                        <td className="w-6 px-2 py-1 text-right font-mono text-[11px] text-muted-foreground">
+                        <td className="w-6 px-2 py-1 text-right font-mono text-[0.6875rem] text-muted-foreground">
                           {i + 1}
                         </td>
-                        <td className="px-2 py-1 font-mono text-[11px]">
+                        <td className="px-2 py-1 font-mono text-[0.6875rem]">
                           {p === '' ? <span className="text-muted-foreground">(leer)</span> : p}
                         </td>
                         <td className="px-2 py-1 text-muted-foreground">{parameterBedeutung(p)}</td>
@@ -176,7 +176,7 @@ export function RelationenBereich() {
             </Gruppe>
 
             <Gruppe titel="Gespeicherte SoftEngine-Syntax">
-              <code className="block overflow-x-auto rounded-md bg-secondary px-2.5 py-1.5 font-mono text-[11px]">
+              <code className="block overflow-x-auto rounded-md bg-secondary px-2.5 py-1.5 font-mono text-[0.6875rem]">
                 {formatRelationSyntax(auswahl)}
               </code>
             </Gruppe>

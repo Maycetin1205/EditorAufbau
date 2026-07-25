@@ -109,7 +109,7 @@ export function Inspector() {
             Sprache spricht (R2 2026-07-21). */}
         <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-6 py-6 text-center">
           <MousePointer2 size={18} className="text-muted-foreground/60" />
-          <p className="text-[13px] font-medium text-foreground/80">Kein Block ausgewählt.</p>
+          <p className="text-[0.8125rem] font-medium text-foreground/80">Kein Block ausgewählt.</p>
           <p className="text-xs text-muted-foreground">
             Wähle einen Baustein auf der Fläche.
           </p>

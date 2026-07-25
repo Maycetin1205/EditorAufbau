@@ -165,7 +165,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium">Felder</span>
+            <span className="text-[0.6875rem] font-medium">Felder</span>
             <Button
               variant="outline"
               size="sm"
@@ -174,7 +174,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
               <Plus size={14} /> Feld
             </Button>
           </div>
-          <div className="grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2 text-[11px] text-muted-foreground">
+          <div className="grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2 text-[0.6875rem] text-muted-foreground">
             <span>Klarname</span>
             <span>Position</span>
             <span>Länge</span>

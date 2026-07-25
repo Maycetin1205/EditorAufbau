@@ -21,7 +21,7 @@ interface GruppeProps {
 export function Gruppe({ titel, children }: GruppeProps) {
   return (
     <div>
-      <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <h4 className="mb-1 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
         {titel}
       </h4>
       {children}

@@ -166,7 +166,7 @@ function MoreMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[190px] rounded-md border border-border bg-popover p-1 shadow-md"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[11.875rem] rounded-md border border-border bg-popover p-1 shadow-md"
         >
           <button
             role="menuitem"

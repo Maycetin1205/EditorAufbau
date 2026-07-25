@@ -72,7 +72,7 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Steuerung"
-        className="flex h-full max-h-[760px] w-full max-w-5xl flex-col rounded-lg border border-border bg-background shadow-lg"
+        className="flex h-full max-h-[47.5rem] w-full max-w-5xl flex-col rounded-lg border border-border bg-background shadow-lg"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
           <h2 className="text-sm font-semibold">Steuerung</h2>
@@ -97,7 +97,7 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
                 <span className="min-w-0 flex-1">{name}</span>
                 {warnt[key] && <span className="size-2 shrink-0 rounded-full bg-amber-500" />}
                 {navZahl[key] !== '' && (
-                  <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                  <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground">
                     {navZahl[key]}
                   </span>
                 )}

@@ -133,7 +133,7 @@ export function FeldUebernahmePicker({
           >
             ← Quellen
           </button>
-          <p className="px-2 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="px-2 pb-0.5 pt-1 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
             {quelle.sourceName}
           </p>
           {sichtbareFelder.map((field) => (
@@ -156,7 +156,7 @@ export function FeldUebernahmePicker({
         </>
       ) : (
         <>
-          <p className="px-2 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="px-2 pb-0.5 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
             Datenquelle wählen
           </p>
           {sichtbareQuellen.map((source) => (

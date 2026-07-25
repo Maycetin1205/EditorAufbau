@@ -87,26 +87,40 @@
     border-color: hsl(var(--border));
   }
 
+  /* ============================================================
+     Editor 10 % kompakter — als GROESSE, nicht als Stauchung
+     ============================================================
+     Der Nutzer will den Editor rund 10 % kleiner (Wunsch 2026-07-24,
+     bestaetigt 2026-07-25: „90 % war gut"). Bis dahin stand hier
+     `zoom: 0.9` auf dem body — die fertig gezeichnete Oberflaeche
+     wurde nachtraeglich zusammengestaucht. Das hat drei Nachteile,
+     die der Nutzer als „zu gross / unsauber umgesetzt" gemerkt hat:
+
+       1. Gestauchte Kanten und Schrift landen auf halben Pixeln und
+          werden unscharf. Echte 90-%-Groessen rasten sauber ein.
+       2. `zoom` verschiebt die Rechnung von Mauskoordinaten. Der
+          Editor hat neun Dateien mit Pixel-Mathematik (Raster ziehen,
+          Groesse ziehen, Feld-Picker platzieren) — jede davon musste
+          mit dem Faktor leben.
+       3. Es brauchte einen zweiten Hack, um sich selbst zu heilen:
+          die App-Huelle wurde auf 1/0.9 aufgeblasen, damit nach dem
+          Stauchen wieder exakt das Fenster gefuellt war.
+
+     Richtig ist, die MASSEINHEIT zu verkleinern: 90 % Grundschrift.
+     Tailwind rechnet Abstaende, Hoehen und Schriftgroessen in rem —
+     alles wird damit echt 10 % kleiner und bei 100 % Browser-Zoom
+     gestochen gezeichnet. Beide Hacks fallen ersatzlos weg.
+
+     Damit nichts halb mitschrumpft, wurden die 38 fest eingebauten
+     Pixel-Groessen des Editor-UI auf rem umgerechnet (2026-07-25).
+     Die Masken-Welt (src/blocks, src/design) blieb unangetastet —
+     sie MUSS im Export originalgross bleiben (WYSIWYG). */
+  html {
+    font-size: 90%;
+  }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    /* Editor ~10% kleiner als Standard (Nutzer-Wunsch 2026-07-24): entspricht
-       dem manuellen Browser-Zoom auf 90% (Strg+Minus), den der Nutzer bisher
-       gesetzt hat. NUR die Editor-Welt (index.css) — der Export (SoftEngine)
-       laedt diese Datei nie und bleibt originalgross. Auf `body`, damit auch die
-       in den Body gehaengten Popover/Dropdowns (Radix-Portale) mitskalieren. */
-    zoom: 0.9;
   }
-}
-
-/* zoom:0.9 malt die App-Huelle (EditorShell = h-screen/w-screen = 100vh/100vw)
-   auf 90% -> unten/rechts blieben 10% Luecke. Gegenrechnung: die Huelle 1/0.9
-   gross machen, dann fuellt sie nach dem 0.9-Skalieren wieder EXAKT das Fenster
-   (calc(100vw/0.9) * 0.9 = 100vw). Ungelayerte Regel (nicht in @layer base),
-   damit sie die Tailwind-Utilities .h-screen/.w-screen aus @layer utilities
-   schlaegt; Struktur-Selektor auf die eine App-Huelle als direktes Kind von
-   #root. Muss mit dem zoom-Faktor oben zusammenpassen. */
-#root > div:first-child {
-  width: calc(100vw / 0.9);
-  height: calc(100vh / 0.9);
 }

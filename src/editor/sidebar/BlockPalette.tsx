@@ -92,7 +92,7 @@ export function BlockPalette() {
               i > 0 && 'mt-4 border-t border-border pt-4',
             )}
           >
-            <h3 className="px-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 className="px-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
               {CATEGORY_LABEL[cat]}
             </h3>
             <div className="flex flex-col gap-1">

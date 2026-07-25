@@ -46,7 +46,7 @@ function Segmente({ name, description, value, options, onChange, id }: SegmentCo
             title={o.label}
             onClick={() => onChange(o.value)}
             className={cn(
-              'flex h-6 shrink-0 items-center justify-center whitespace-nowrap rounded-md text-[11px] transition-colors',
+              'flex h-6 shrink-0 items-center justify-center whitespace-nowrap rounded-md text-[0.6875rem] transition-colors',
               icon ? 'px-1.5' : 'px-2',
               gewaehlt
                 ? 'bg-card font-semibold text-foreground shadow-sm'

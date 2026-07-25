@@ -131,7 +131,7 @@ export function Canvas() {
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
               <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-8 py-6 text-center font-sans">
                 <MousePointerClick size={18} className="text-muted-foreground/60" />
-                <p className="text-[13px] font-medium text-foreground/80">Leere Maske</p>
+                <p className="text-[0.8125rem] font-medium text-foreground/80">Leere Maske</p>
                 <p className="text-xs text-muted-foreground">
                   Zieh einen Baustein aus der Bibliothek links hierher.
                 </p>

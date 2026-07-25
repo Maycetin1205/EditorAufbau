@@ -188,7 +188,7 @@ export function ParameterZeile({
 
   return (
     <div className="flex items-center gap-1">
-      <span className="w-14 shrink-0 truncate font-mono text-[11px]" title={label}>{label}</span>
+      <span className="w-14 shrink-0 truncate font-mono text-[0.6875rem]" title={label}>{label}</span>
       <SchrittSelect
         className="w-24 shrink-0"
         value={binding.source}

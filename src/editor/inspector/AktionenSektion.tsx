@@ -94,7 +94,7 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                 Ereignis ohne Schritte kostet null zusätzliche Höhe (Punkt 10,
                 Nutzer 2026-07-21). Schritte hängen als dichte Zeilen darunter. */}
             <div className="flex min-h-7 items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold text-foreground">{ev.name}</span>
+              <span className="text-[0.6875rem] font-semibold text-foreground">{ev.name}</span>
               <IconButton
                 aria-label="Schritt hinzufügen"
                 title="Schritt hinzufügen"

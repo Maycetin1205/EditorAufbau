@@ -71,11 +71,11 @@ export function DatenquellenBereich() {
                 <div className="flex items-center gap-1.5">
                   <Database size={12} className="shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate font-medium">{s.name}</span>
-                  <span className="shrink-0 rounded-full bg-secondary px-1.5 text-[10px] text-muted-foreground">
+                  <span className="shrink-0 rounded-full bg-secondary px-1.5 text-[0.625rem] text-muted-foreground">
                     {KIND_LABELS[s.kind]}
                   </span>
                 </div>
-                <div className="mt-0.5 pl-[18px] text-[10px] text-muted-foreground">
+                <div className="mt-0.5 pl-[1.125rem] text-[0.625rem] text-muted-foreground">
                   {s.fields.length} Felder · {verwendet > 0 ? `verwendet von ${verwendet}` : 'nicht verwendet'}
                 </div>
               </button>
@@ -119,7 +119,7 @@ export function DatenquellenBereich() {
                     {auswahl.fields.map((f) => (
                       <tr key={f.code} className="border-b border-border last:border-b-0">
                         <td className="px-2.5 py-1">{f.label}</td>
-                        <td className="px-2.5 py-1 text-right font-mono text-[11px] text-muted-foreground">
+                        <td className="px-2.5 py-1 text-right font-mono text-[0.6875rem] text-muted-foreground">
                           {f.code}
                         </td>
                       </tr>

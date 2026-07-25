@@ -76,14 +76,14 @@ export function RelationForm({ relation, onClose }: RelationFormProps) {
               {...f}
               value={syntaxInput}
               placeholder="z. B. GET_RELATION[640!{IDBID}!{DATUM}]"
-              className="font-mono text-[11px]"
+              className="font-mono text-[0.6875rem]"
               onChange={(e) => setSyntaxInput(e.target.value)}
             />
           )}
         </Field>
 
         {syntax && (
-          <div className="rounded-md border border-border bg-background p-2 text-[11px]">
+          <div className="rounded-md border border-border bg-background p-2 text-[0.6875rem]">
             <div className="font-medium">
               {syntax.verb.replace('_RELATION', '')} {syntax.nr} · {syntax.params.length} Parameter
               {syntax.allowExtraParams ? ' · weitere erlaubt' : ''}

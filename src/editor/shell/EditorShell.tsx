@@ -50,7 +50,7 @@ export function EditorShell() {
           <Canvas />
         </main>
 
-        <aside className="w-[340px] shrink-0 overflow-hidden border-l border-border bg-card">
+        <aside className="w-[21.25rem] shrink-0 overflow-hidden border-l border-border bg-card">
           <Inspector />
         </aside>
       </div>
