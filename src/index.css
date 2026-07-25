@@ -3,13 +3,40 @@
    selbst fest (--se-font), zusätzlich pinnt Canvas.tsx das Blatt. */
 @import '@fontsource-variable/inter';
 
-/* Tailwind-Basis + shadcn-CSS-Variablen.
-   Wird in main.tsx importiert.
+/* Tailwind-Basis + shadcn-CSS-Variablen. Wird in main.tsx importiert.
 
-   Design-Richtung (Kap. 1): kein "Weiss-Matsch".
-   - --background = abgesetztes Hellgrau  -> Canvas als zurueckgesetzte Flaeche
-   - --card       = weiss                 -> Panels sitzen sichtbar "ueber" dem Canvas
-   - --border     = klar sichtbar         -> echte Trennlinien, keine 2%-Andeutung */
+   ============================================================
+   Farbrichtung „warmes Papier" (Nutzer-Entscheidungen 2026-07-25)
+   ============================================================
+   Drei Vorgaben des Nutzers, in dieser Reihenfolge entstanden:
+     1. die shadcn-Werkseinstellung „wirkt generisch"
+     2. es „sieht leblos und tot aus" — es muss WOW sein, wenn ein
+        Kunde die fertigen Masken sieht
+     3. „nicht zu dunkel, typisch KI, das waere Muell" — also
+        ausdruecklich KEIN dunkles Chrome
+
+   Warum es vorher leblos wirkte: reine KALTE Graustufen (Blau-Grau,
+   Farbton 214-220). Kaltes Grau liest sich als Wartezimmer, egal
+   wie sauber die Abstufungen sind. Der Ausweg ohne dunkles Chrome
+   ist Waerme: dieselbe Helligkeit, aber Neutraltoene mit einem
+   Stich ins Papierfarbene (Farbton ~38). Das wirkt gefertigt statt
+   steril — und bleibt hell.
+
+   Die drei Hebel fuer „wow" bei einer HELLEN Oberflaeche:
+   - WAERME statt Kaelte in allen Neutraltoenen (Farbton 30-40,
+     wenig Saettigung). Papier, nicht Beton.
+   - TIEFE: --canvas-bg ist deutlich dunkler und waermer als das
+     Chrome, damit die weisse Maske als Blatt darauf liegt. Der
+     Blattschatten (Canvas.tsx) traegt das sichtbar.
+   - EIN Akzent mit Charakter: tiefes Indigo. Bewusst nicht das
+     shadcn-Blau (zu bekannt), bewusst nicht Gruen (Gruen gehoert
+     der Maskenwelt — die zwei Welten duerfen nie verschwimmen),
+     bewusst gesaettigt statt gedeckt: Indigo auf warmem Papier ist
+     die Kombination von Tinte auf Buetten, sie wirkt wertig ohne
+     zu schreien.
+
+   Die Masken-Tokens in design/masken-tokens.css sind davon NICHT
+   beruehrt. Der Export laedt diese Datei nie. */
 
 @tailwind base;
 @tailwind components;
@@ -17,29 +44,43 @@
 
 @layer base {
   :root {
-    --background: 220 16% 96%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 14% 93%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 93%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 93%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 13% 85%;
-    --input: 220 13% 85%;
-    --ring: 221 83% 53%;
-    /* R1 (2026-07-21): EIN kleiner Radius (4px, fast kantig) statt Bubbles;
-       --canvas-bg = dunklerer Grund, auf dem die Maske als Blatt liegt. */
+    /* Flaechen — warme Neutraltoene (Farbton 38 = Papier, nicht Beton) */
+    --background: 40 20% 95%;
+    --card: 40 40% 99%;
+    --popover: 40 40% 99%;
+    --secondary: 40 16% 90%;
+    --muted: 40 15% 91%;
+
+    /* Text — warmes Fast-Schwarz statt Blau-Schwarz */
+    --foreground: 30 14% 13%;
+    --card-foreground: 30 14% 13%;
+    --popover-foreground: 30 14% 13%;
+    --secondary-foreground: 30 14% 13%;
+    /* 36 % statt 40 %: bei 40 % lag der Nebentext bei Kontrast 4,59 —
+       knapp ueber der Lesbarkeitsgrenze 4,5. Knapp ist kein Ergebnis. */
+    --muted-foreground: 32 10% 36%;
+
+    /* Akzent — die EINE Hausfarbe des Editors: Indigo (Tinte auf Buetten) */
+    --primary: 246 52% 44%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 246 45% 93%;
+    --accent-foreground: 246 55% 34%;
+    --ring: 246 60% 56%;
+
+    /* Gefahr (Loeschen) — warmes Rot, klar von Indigo unterscheidbar */
+    --destructive: 4 66% 47%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Linien — sichtbar, warm getoent */
+    --border: 38 14% 82%;
+    --input: 38 14% 79%;
+
+    /* EIN kleiner Radius (4px, fast kantig) statt Bubbles. */
     --radius: 0.25rem;
-    --canvas-bg: 220 14% 90%;
+    /* Der „Tisch", auf dem die Maske als Blatt liegt: deutlich dunkler
+       UND waermer als das Chrome. Ohne diesen Abstand traegt der
+       Blattschatten nicht, und alles verschwimmt zu einer Flaeche. */
+    --canvas-bg: 36 20% 82%;
   }
 
   * {

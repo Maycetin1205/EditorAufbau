@@ -59,10 +59,16 @@ export function Canvas() {
       <div className="flex h-full w-full flex-col">
         <div
           onClick={() => ed.selectBlock(null)}
-          // Das „Blatt" (R1): die Maske liegt sichtbar AUF dem Grund —
-          // Kante + zweistufiger Schatten geben die Tiefe, der Inhalt
-          // selbst bleibt unverändert Masken-Welt (--se-bg).
-          className="relative min-h-0 w-full flex-1 overflow-hidden rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.07),0_12px_28px_-14px_rgba(16,24,40,0.25)]"
+          // Das „Blatt": die Maske liegt sichtbar AUF dem Grund — Kante +
+          // dreistufiger Schatten geben die Tiefe, der Inhalt selbst bleibt
+          // unverändert Masken-Welt (--se-bg).
+          //
+          // Der Schatten ist bewusst kräftig (Nutzer 2026-07-25: „muss wow
+          // sein, wenn ein Kunde die Masken sieht"): eine harte Nahkante,
+          // ein mittlerer Absatz und ein weiter, warmer Wurf. Warm getönt
+          // (nicht neutralschwarz), sonst wirkt er schmutzig auf dem
+          // papierfarbenen Tisch.
+          className="relative min-h-0 w-full flex-1 overflow-hidden rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(40,30,20,0.10),0_6px_14px_-6px_rgba(40,30,20,0.16),0_26px_50px_-24px_rgba(40,30,20,0.38)]"
           // Blatt = Masken-Welt: Schrift/Größe/Farbe wie der Export-body
           // (WYSIWYG) — die Editor-Schrift (Inter) bleibt draußen.
           style={{
