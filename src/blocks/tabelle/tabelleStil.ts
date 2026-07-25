@@ -12,10 +12,15 @@ import { css } from 'lit'
 
 export const tabelleStil = css`
       :host { min-width: 0; height: 100%; }
-      /* Der Takt der Tabelle: Zeilenhoehe = Schrift + Innenabstand + Linie.
-         EINE Stelle, weil drei Dinge sie brauchen — die echten Zeilen, die
-         weitergezeichneten Linien im leeren Rest und der Kopf. */
-      .tabelle { --zeilen-hoehe: 29px; }
+      /* Der Takt der Tabelle. WICHTIG: dieser Wert wird VORGEGEBEN, nicht
+         geschaetzt — Kopf und Zeilen bekommen ihn als feste Hoehe, der
+         Text wird ueber line-height darin zentriert. Vorher stand hier ein
+         geschaetzter Wert (29px), waehrend die Zeilen sich aus Schrift +
+         Innenabstand auf 33,25px ergaben. Die weitergezeichneten Linien
+         liefen dadurch 4,25px je Zeile aus dem Takt — nach vier Zeilen
+         17px Versatz, und genau das sah krumm aus (Nutzer 2026-07-25).
+         Vorgeben statt schaetzen: jetzt koennen sie nicht mehr abweichen. */
+      .tabelle { --zeilen-hoehe: 32px; }
       .tabelle {
         position: relative;
         box-sizing: border-box;
@@ -39,7 +44,14 @@ export const tabelleStil = css`
       }
       .suchzeile input {
         box-sizing: border-box;
+        /* NICHT ueber die ganze Breite (Nutzer 2026-07-25): ein Suchfeld,
+           das die volle Tabellenbreite einnimmt, sieht aus wie ein
+           Eingabefeld der Maske statt wie eine Suche. Ausserdem braucht die
+           Editor-Steuerung (+/−) rechts daneben Platz, sonst liegt sie auf
+           dem Feld. Schmal genug, um als Suche gelesen zu werden, breit
+           genug fuer einen Suchbegriff. */
         width: 100%;
+        max-width: 15rem;
         height: 24px;
         padding: 0 8px;
         font-family: var(--se-font);
@@ -53,8 +65,14 @@ export const tabelleStil = css`
         outline: none;
         border-color: var(--se-accent);
       }
+      /* Kopf und Zeilen tragen DIESELBE feste Hoehe — daraus entsteht der
+         gleichmaessige Takt, den man als sauberes Lineal wahrnimmt. */
       .kopf,
-      .zeile { display: grid; }
+      .zeile {
+        display: grid;
+        height: var(--zeilen-hoehe);
+        box-sizing: border-box;
+      }
       .kopf {
         background: var(--se-panel-2);
         border-bottom: 1px solid var(--se-line);
@@ -70,28 +88,41 @@ export const tabelleStil = css`
       .koerper {
         flex: 1 1 auto;
         overflow: auto;
-        background-image: repeating-linear-gradient(
-          to bottom,
-          transparent 0,
-          transparent calc(var(--zeilen-hoehe) - 1px),
-          var(--se-line-soft) calc(var(--zeilen-hoehe) - 1px),
-          var(--se-line-soft) var(--zeilen-hoehe)
-        );
+        /* ZWEI Lagen, sonst sieht der leere Rest kaputt aus: nur Querstriche
+           ohne Spaltentrenner wirkt wie eine abgebrochene Tabelle.
+           1. waagerecht im Zeilentakt, 2. senkrecht im Spaltentakt
+           (--spalten-zahl setzt der Baustein beim Zeichnen). */
+        background-image:
+          repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent calc(var(--zeilen-hoehe) - 1px),
+            var(--se-line-soft) calc(var(--zeilen-hoehe) - 1px),
+            var(--se-line-soft) var(--zeilen-hoehe)
+          ),
+          repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(100% / var(--spalten-zahl) - 1px),
+            var(--se-line-soft) calc(100% / var(--spalten-zahl) - 1px),
+            var(--se-line-soft) calc(100% / var(--spalten-zahl))
+          );
         background-position: 0 0;
       }
+      /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
-        /* Muss zum Takt des Verlaufs oben passen, sonst versetzen sich
-           echte Zeilen und weitergezeichnete Linien. */
-        min-height: var(--zeilen-hoehe);
-        box-sizing: border-box;
-        align-items: center;
+        background: var(--se-panel);
       }
-      /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
-      .zeile { background: var(--se-panel); }
       .kopf > div,
       .zeile > div {
-        padding: 6px 10px;
+        /* KEIN senkrechter Innenabstand: die Zeilenhoehe steht fest, der
+           Text wird ueber line-height darin zentriert. So bleibt die Hoehe
+           unabhaengig von der Schriftgroesse exakt im Takt — und die
+           Textkuerzung mit „…" funktioniert weiter (das braucht einen
+           Block, kein Flex). */
+        padding: 0 10px;
+        line-height: calc(var(--zeilen-hoehe) - 1px);
         min-width: 0;
         white-space: nowrap;
         overflow: hidden;

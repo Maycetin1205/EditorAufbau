@@ -595,10 +595,15 @@
       .board slot { display: contents; }
     `]}render(){return x`<div class="board"><slot></slot></div>`}connectedCallback(){super.connectedCallback(),Hn(this)}disconnectedCallback(){super.disconnectedCallback(),Un(this)}};j.defineAndRegister(Wn);var Gn={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6},Kn=e=>(...t)=>({_$litDirective$:e,values:t}),qn=class{constructor(e){}get _$AU(){return this._$AM._$AU}_$AT(e,t,n){this._$Ct=e,this._$AM=t,this._$Ci=n}_$AS(e,t){return this.update(e,t)}update(e,t){return this.render(...t)}},Jn=`important`,Yn=` !`+Jn,Xn=Kn(class extends qn{constructor(e){if(super(e),e.type!==Gn.ATTRIBUTE||e.name!==`style`||e.strings?.length>2)throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.")}render(e){return Object.keys(e).reduce((t,n)=>{let r=e[n];return r==null?t:t+`${n=n.includes(`-`)?n:n.replace(/(?:^(webkit|moz|ms|o)|)(?=[A-Z])/g,`-$&`).toLowerCase()}:${r};`},``)}update(e,[t]){let{style:n}=e.element;if(this.ft===void 0)return this.ft=new Set(Object.keys(t)),this.render(t);for(let e of this.ft)t[e]??(this.ft.delete(e),e.includes(`-`)?n.removeProperty(e):n[e]=null);for(let e in t){let r=t[e];if(r!=null){this.ft.add(e);let t=typeof r==`string`&&r.endsWith(Yn);e.includes(`-`)||t?n.setProperty(e,t?r.slice(0,-11):r,t?Jn:``):n[e]=r}}return C}});function Zn(e){let t=e.getAttribute(`spalten`)??``;if(t===``)return[];try{let e=JSON.parse(t);return Array.isArray(e)?e.map(e=>e&&typeof e==`object`&&typeof e.feld==`string`?e.feld:``):[]}catch{return[]}}function Qn(e){let t=e.getAttribute(`source`)??``;if(t===``){e.datenzeilen=[];return}let n=it(L().FF_DATA_SOURCES,t);if(!n){e.datenzeilen=[];return}let r=Zn(e);e.datenzeilen=st(L().SEDATA,n.name,n.tableId).map(e=>r.map(t=>t===``?``:P(e,t)))}var $n=cn({hydriere:Qn}),er=$n.connect,tr=$n.disconnect,nr=1,rr=/^-?\d{1,3}(\.\d{3})*(,\d+)?$|^-?\d+(,\d+)?$|^-?\d+(\.\d+)?$/,ir=/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/,ar=/^(\d{4})-(\d{2})-(\d{2})$/;function or(e){let t=e.trim();if(t===``||!rr.test(t))return null;let n=t.includes(`,`)?t.replace(/\./g,``).replace(`,`,`.`):/^-?\d{1,3}(\.\d{3})+$/.test(t)?t.replace(/\./g,``):t,r=Number(n);return Number.isFinite(r)?r:null}function sr(e){let t=e.trim();if(t===``)return null;let n=ar.exec(t);if(n){let[,e,t,r]=n;return cr(Number(e),Number(t),Number(r))}let r=ir.exec(t);if(r){let[,e,t,n]=r,i=Number(n);return cr(n.length===2?i<=69?2e3+i:1900+i:i,Number(t),Number(e))}return null}function cr(e,t,n){if(t<1||t>12||n<1||n>31)return null;let r=new Date(e,t-1,n);return r.getFullYear()!==e||r.getMonth()!==t-1||r.getDate()!==n?null:r.getTime()}function lr(e){let t=0,n=0,r=0;for(let i of e)i.trim()!==``&&(t++,or(i)!==null&&n++,sr(i)!==null&&r++);return t===0?`text`:r===t?`datum`:n===t?`zahl`:`text`}var ur=new Intl.Collator(`de`,{numeric:!0,sensitivity:`base`});function dr(e,t,n){if(t<0||e.length===0)return e.map(e=>[...e]);let r=e=>e[t]??``,i=lr(e.map(r)),a=n?1:-1;return e.map((e,t)=>({zeile:e,i:t})).sort((e,t)=>{let n=r(e.zeile).trim(),o=r(t.zeile).trim();if(n===``&&o===``)return e.i-t.i;if(n===``)return nr;if(o===``)return-nr;let s=i===`zahl`?(or(n)??0)-(or(o)??0):i===`datum`?(sr(n)??0)-(sr(o)??0):ur.compare(n,o);return s===0?e.i-t.i:s*a}).map(e=>[...e.zeile])}function fr(e){return e.trim().toLowerCase().split(/\s+/).filter(e=>e!==``)}function pr(e,t){let n=fr(t);if(n.length===0)return!0;let r=e.join(` `).toLowerCase();return n.every(e=>r.includes(e))}function mr(e,t){return fr(t).length===0?e.map(e=>[...e]):e.filter(e=>pr(e,t)).map(e=>[...e])}function hr(e){if(!e.hatQuelle)return`— Datensätze`;let t=e=>e===1?`Datensatz`:`Datensätze`,n=e=>e===1?`Datensatz`:`Datensätzen`;return e.suchtAktiv?e.sichtbar===0?`Kein Treffer von ${e.gesamt} ${n(e.gesamt)}`:`${e.sichtbar} von ${e.gesamt} ${n(e.gesamt)}`:e.gesamt===0?`Keine Datensätze`:`${e.gesamt} ${t(e.gesamt)}`}var gr=o`
       :host { min-width: 0; height: 100%; }
-      /* Der Takt der Tabelle: Zeilenhoehe = Schrift + Innenabstand + Linie.
-         EINE Stelle, weil drei Dinge sie brauchen — die echten Zeilen, die
-         weitergezeichneten Linien im leeren Rest und der Kopf. */
-      .tabelle { --zeilen-hoehe: 29px; }
+      /* Der Takt der Tabelle. WICHTIG: dieser Wert wird VORGEGEBEN, nicht
+         geschaetzt — Kopf und Zeilen bekommen ihn als feste Hoehe, der
+         Text wird ueber line-height darin zentriert. Vorher stand hier ein
+         geschaetzter Wert (29px), waehrend die Zeilen sich aus Schrift +
+         Innenabstand auf 33,25px ergaben. Die weitergezeichneten Linien
+         liefen dadurch 4,25px je Zeile aus dem Takt — nach vier Zeilen
+         17px Versatz, und genau das sah krumm aus (Nutzer 2026-07-25).
+         Vorgeben statt schaetzen: jetzt koennen sie nicht mehr abweichen. */
+      .tabelle { --zeilen-hoehe: 32px; }
       .tabelle {
         position: relative;
         box-sizing: border-box;
@@ -622,7 +627,14 @@
       }
       .suchzeile input {
         box-sizing: border-box;
+        /* NICHT ueber die ganze Breite (Nutzer 2026-07-25): ein Suchfeld,
+           das die volle Tabellenbreite einnimmt, sieht aus wie ein
+           Eingabefeld der Maske statt wie eine Suche. Ausserdem braucht die
+           Editor-Steuerung (+/−) rechts daneben Platz, sonst liegt sie auf
+           dem Feld. Schmal genug, um als Suche gelesen zu werden, breit
+           genug fuer einen Suchbegriff. */
         width: 100%;
+        max-width: 15rem;
         height: 24px;
         padding: 0 8px;
         font-family: var(--se-font);
@@ -636,8 +648,14 @@
         outline: none;
         border-color: var(--se-accent);
       }
+      /* Kopf und Zeilen tragen DIESELBE feste Hoehe — daraus entsteht der
+         gleichmaessige Takt, den man als sauberes Lineal wahrnimmt. */
       .kopf,
-      .zeile { display: grid; }
+      .zeile {
+        display: grid;
+        height: var(--zeilen-hoehe);
+        box-sizing: border-box;
+      }
       .kopf {
         background: var(--se-panel-2);
         border-bottom: 1px solid var(--se-line);
@@ -653,28 +671,41 @@
       .koerper {
         flex: 1 1 auto;
         overflow: auto;
-        background-image: repeating-linear-gradient(
-          to bottom,
-          transparent 0,
-          transparent calc(var(--zeilen-hoehe) - 1px),
-          var(--se-line-soft) calc(var(--zeilen-hoehe) - 1px),
-          var(--se-line-soft) var(--zeilen-hoehe)
-        );
+        /* ZWEI Lagen, sonst sieht der leere Rest kaputt aus: nur Querstriche
+           ohne Spaltentrenner wirkt wie eine abgebrochene Tabelle.
+           1. waagerecht im Zeilentakt, 2. senkrecht im Spaltentakt
+           (--spalten-zahl setzt der Baustein beim Zeichnen). */
+        background-image:
+          repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent calc(var(--zeilen-hoehe) - 1px),
+            var(--se-line-soft) calc(var(--zeilen-hoehe) - 1px),
+            var(--se-line-soft) var(--zeilen-hoehe)
+          ),
+          repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(100% / var(--spalten-zahl) - 1px),
+            var(--se-line-soft) calc(100% / var(--spalten-zahl) - 1px),
+            var(--se-line-soft) calc(100% / var(--spalten-zahl))
+          );
         background-position: 0 0;
       }
+      /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
-        /* Muss zum Takt des Verlaufs oben passen, sonst versetzen sich
-           echte Zeilen und weitergezeichnete Linien. */
-        min-height: var(--zeilen-hoehe);
-        box-sizing: border-box;
-        align-items: center;
+        background: var(--se-panel);
       }
-      /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
-      .zeile { background: var(--se-panel); }
       .kopf > div,
       .zeile > div {
-        padding: 6px 10px;
+        /* KEIN senkrechter Innenabstand: die Zeilenhoehe steht fest, der
+           Text wird ueber line-height darin zentriert. So bleibt die Hoehe
+           unabhaengig von der Schriftgroesse exakt im Takt — und die
+           Textkuerzung mit „…" funktioniert weiter (das braucht einen
+           Block, kein Flex). */
+        padding: 0 10px;
+        line-height: calc(var(--zeilen-hoehe) - 1px);
         min-width: 0;
         white-space: nowrap;
         overflow: hidden;
@@ -741,7 +772,7 @@
         border-color: var(--se-accent);
         color: var(--se-accent);
       }
-`,_r=`Spalte {n}`;function Y(e){return _r.replace(`{n}`,String(e+1))}function X(){return[0,1,2].map(e=>({titel:Y(e),feld:``}))}function vr(e,t){if(e&&typeof e==`object`){let n=e;return{titel:typeof n.titel==`string`?n.titel:Y(t),feld:typeof n.feld==`string`?n.feld:``}}return typeof e==`string`?{titel:e,feld:``}:{titel:Y(t),feld:``}}function yr(e){let t;if(Array.isArray(e))t=e.map((e,t)=>vr(e,t));else if(typeof e==`number`&&Number.isFinite(e)||typeof e==`string`&&/^\d+$/.test(e)){let n=Math.max(1,Math.floor(Number(e)));t=[...Array(n).keys()].map(e=>({titel:Y(e),feld:``}))}else t=X();return t.length>8&&(t=t.slice(0,8)),t.length<1&&(t=[{titel:Y(0),feld:``}]),t}function br(e){try{return yr(JSON.parse(e))}catch{return X()}}var xr=4,Z=[10,25,50],Sr=220,Q=class e extends j{constructor(...e){super(...e),this.spalten=X(),this.source=``,this.proSeite=String(Z[0]),this.suche=`ja`,this._suchtext=``,this.datenzeilen=[],this._sortSpalte=-1,this._sortAuf=!0,this._seite=0,this._proSeiteWahl=null,this._klickTimer=null}static{this.blockType=`tabelle`}static{this.tagName=`ff-tabelle`}static{this.displayName=`Tabelle`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.listenBindung={prop:`spalten`,titelKey:`titel`,feldKey:`feld`,standardTitel:_r}}static{this.defaultProps={width:`fill`,source:``,spalten:X(),proSeite:String(Z[0]),suche:`ja`}}static{this.customProperties=[{attributeName:`suche`,name:`Suchzeile`,description:`Zeigt ueber der Tabelle ein Feld, mit dem der Bediener den Inhalt durchsucht.`,kind:`segment`,options:[{value:`ja`,label:`Ja`},{value:`nein`,label:`Nein`}],requiresDataSource:!0},{attributeName:`proSeite`,name:`Zeilen pro Seite`,description:`Wie viele Datensaetze eine Seite der Tabelle zeigt.`,kind:`select`,options:Z.map(e=>({value:String(e),label:String(e)})),requiresDataSource:!0}]}static{this.raster={startW:14,startH:8,minW:6,minH:4}}get proSeiteAktuell(){if(this._proSeiteWahl!==null)return this._proSeiteWahl;let e=Number(this.proSeite);return Number.isFinite(e)&&e>0?Math.floor(e):Z[0]}spaltenListe(){return yr(this.spalten)}sichtbareZeilen(){let e=mr(this.datenzeilen,this._suchtext);return this._sortSpalte<0?e:dr(e,this._sortSpalte,this._sortAuf)}setzeSuchtext(e){this._suchtext=e,this._seite=0,this.requestUpdate()}klickSortiere(e){this.editable||(this._sortSpalte===e?this._sortAuf=!this._sortAuf:(this._sortSpalte=e,this._sortAuf=!0),this._seite=0,this.requestUpdate())}aendere(e){this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:`spalten`,value:e},bubbles:!0,composed:!0}))}klickSpaltenkopf(t,n){if(!this.editable)return;t.stopPropagation();let r=t.currentTarget.getBoundingClientRect();this.klickTimerAus(),this._klickTimer=setTimeout(()=>{this._klickTimer=null,this.dispatchEvent(new CustomEvent(`ff-listen-bind`,{detail:{prop:e.listenBindung.prop,index:n,top:r.bottom+4,left:r.left},bubbles:!0,composed:!0}))},Sr)}klickTimerAus(){this._klickTimer!==null&&(clearTimeout(this._klickTimer),this._klickTimer=null)}bearbeiteTitel(e,t){if(!this.editable)return;let n=e.currentTarget;if(!n)return;e.stopPropagation(),e.preventDefault();let r=Array.from(n.childNodes),i=n.textContent??``;n.setAttribute(`contenteditable`,`plaintext-only`),n.focus();let a=window.getSelection(),o=document.createRange();o.selectNodeContents(n),a?.removeAllRanges(),a?.addRange(o);let s=!1,c=e=>{if(s)return;s=!0,n.removeAttribute(`contenteditable`),n.removeEventListener(`blur`,l),n.removeEventListener(`keydown`,u);let a=(n.textContent??``).trim(),o=this.spaltenListe();e&&a&&a!==i.trim()&&t<o.length?(o[t]={...o[t],titel:a},this.aendere(o)):n.replaceChildren(...r)},l=()=>c(!0),u=e=>{e.key===`Enter`?(e.preventDefault(),n.blur()):e.key===`Escape`&&(e.preventDefault(),c(!1))};n.addEventListener(`blur`,l),n.addEventListener(`keydown`,u)}connectedCallback(){super.connectedCallback(),er(this)}disconnectedCallback(){super.disconnectedCallback(),this.klickTimerAus(),tr(this)}static{this.styles=[j.styles,gr]}render(){let e=this.spaltenListe(),t={gridTemplateColumns:`repeat(${e.length}, minmax(0, 1fr))`},n=e=>e.stopPropagation(),r=this.sichtbareZeilen(),i=this.datenzeilen.length>0,a=i,o=r.length,s=this.proSeiteAktuell,c=a?Math.max(1,Math.ceil(o/s)):1,l=Math.min(Math.max(this._seite,0),c-1),u=a?r.slice(l*s,(l+1)*s):[],d=a?s:xr,ee=a?``:`—`,te=[...u,...Array.from({length:Math.max(0,d-u.length)},()=>null)];return x`<div class="tabelle">
+`,_r=`Spalte {n}`;function Y(e){return _r.replace(`{n}`,String(e+1))}function X(){return[0,1,2].map(e=>({titel:Y(e),feld:``}))}function vr(e,t){if(e&&typeof e==`object`){let n=e;return{titel:typeof n.titel==`string`?n.titel:Y(t),feld:typeof n.feld==`string`?n.feld:``}}return typeof e==`string`?{titel:e,feld:``}:{titel:Y(t),feld:``}}function yr(e){let t;if(Array.isArray(e))t=e.map((e,t)=>vr(e,t));else if(typeof e==`number`&&Number.isFinite(e)||typeof e==`string`&&/^\d+$/.test(e)){let n=Math.max(1,Math.floor(Number(e)));t=[...Array(n).keys()].map(e=>({titel:Y(e),feld:``}))}else t=X();return t.length>8&&(t=t.slice(0,8)),t.length<1&&(t=[{titel:Y(0),feld:``}]),t}function br(e){try{return yr(JSON.parse(e))}catch{return X()}}var xr=4,Z=[10,25,50],Sr=220,Q=class e extends j{constructor(...e){super(...e),this.spalten=X(),this.source=``,this.proSeite=String(Z[0]),this.suche=`ja`,this._suchtext=``,this.datenzeilen=[],this._sortSpalte=-1,this._sortAuf=!0,this._seite=0,this._proSeiteWahl=null,this._klickTimer=null}static{this.blockType=`tabelle`}static{this.tagName=`ff-tabelle`}static{this.displayName=`Tabelle`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.listenBindung={prop:`spalten`,titelKey:`titel`,feldKey:`feld`,standardTitel:_r}}static{this.defaultProps={width:`fill`,source:``,spalten:X(),proSeite:String(Z[0]),suche:`ja`}}static{this.customProperties=[{attributeName:`suche`,name:`Suchzeile`,description:`Zeigt ueber der Tabelle ein Feld, mit dem der Bediener den Inhalt durchsucht.`,kind:`segment`,options:[{value:`ja`,label:`Ja`},{value:`nein`,label:`Nein`}],requiresDataSource:!0},{attributeName:`proSeite`,name:`Zeilen pro Seite`,description:`Wie viele Datensaetze eine Seite der Tabelle zeigt.`,kind:`select`,options:Z.map(e=>({value:String(e),label:String(e)})),requiresDataSource:!0}]}static{this.raster={startW:14,startH:8,minW:6,minH:4}}get proSeiteAktuell(){if(this._proSeiteWahl!==null)return this._proSeiteWahl;let e=Number(this.proSeite);return Number.isFinite(e)&&e>0?Math.floor(e):Z[0]}spaltenListe(){return yr(this.spalten)}sichtbareZeilen(){let e=mr(this.datenzeilen,this._suchtext);return this._sortSpalte<0?e:dr(e,this._sortSpalte,this._sortAuf)}setzeSuchtext(e){this._suchtext=e,this._seite=0,this.requestUpdate()}klickSortiere(e){this.editable||(this._sortSpalte===e?this._sortAuf=!this._sortAuf:(this._sortSpalte=e,this._sortAuf=!0),this._seite=0,this.requestUpdate())}aendere(e){this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:`spalten`,value:e},bubbles:!0,composed:!0}))}klickSpaltenkopf(t,n){if(!this.editable)return;t.stopPropagation();let r=t.currentTarget.getBoundingClientRect();this.klickTimerAus(),this._klickTimer=setTimeout(()=>{this._klickTimer=null,this.dispatchEvent(new CustomEvent(`ff-listen-bind`,{detail:{prop:e.listenBindung.prop,index:n,top:r.bottom+4,left:r.left},bubbles:!0,composed:!0}))},Sr)}klickTimerAus(){this._klickTimer!==null&&(clearTimeout(this._klickTimer),this._klickTimer=null)}bearbeiteTitel(e,t){if(!this.editable)return;let n=e.currentTarget;if(!n)return;e.stopPropagation(),e.preventDefault();let r=Array.from(n.childNodes),i=n.textContent??``;n.setAttribute(`contenteditable`,`plaintext-only`),n.focus();let a=window.getSelection(),o=document.createRange();o.selectNodeContents(n),a?.removeAllRanges(),a?.addRange(o);let s=!1,c=e=>{if(s)return;s=!0,n.removeAttribute(`contenteditable`),n.removeEventListener(`blur`,l),n.removeEventListener(`keydown`,u);let a=(n.textContent??``).trim(),o=this.spaltenListe();e&&a&&a!==i.trim()&&t<o.length?(o[t]={...o[t],titel:a},this.aendere(o)):n.replaceChildren(...r)},l=()=>c(!0),u=e=>{e.key===`Enter`?(e.preventDefault(),n.blur()):e.key===`Escape`&&(e.preventDefault(),c(!1))};n.addEventListener(`blur`,l),n.addEventListener(`keydown`,u)}connectedCallback(){super.connectedCallback(),er(this)}disconnectedCallback(){super.disconnectedCallback(),this.klickTimerAus(),tr(this)}static{this.styles=[j.styles,gr]}render(){let e=this.spaltenListe(),t={gridTemplateColumns:`repeat(${e.length}, minmax(0, 1fr))`},n=e=>e.stopPropagation(),r=this.sichtbareZeilen(),i=this.datenzeilen.length>0,a=i,o=r.length,s=this.proSeiteAktuell,c=a?Math.max(1,Math.ceil(o/s)):1,l=Math.min(Math.max(this._seite,0),c-1),u=a?r.slice(l*s,(l+1)*s):[],d=a?s:xr,ee=a?``:`—`,te=[...u,...Array.from({length:Math.max(0,d-u.length)},()=>null)];return x`<div class="tabelle" style=${Xn({"--spalten-zahl":String(e.length)})}>
       <div class="steuerung">
         <button
           title="Letzte Spalte entfernen"
@@ -752,7 +783,7 @@
           title="Spalte hinzufügen"
           @pointerdown=${n}
           @click=${e=>{n(e);let t=this.spaltenListe();t.length<8&&(t.push({titel:`Spalte ${t.length+1}`,feld:``}),this.aendere(t))}}
-        >+ Spalte</button>
+        >+</button>
       </div>
       ${this.suche===`ja`?x`<div class="suchzeile">
         <input

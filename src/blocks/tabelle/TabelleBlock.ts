@@ -336,7 +336,7 @@ export class TabelleBlock extends BasicBlock {
       ...seitenDaten,
       ...Array.from({ length: Math.max(0, sollZeilen - seitenDaten.length) }, () => null),
     ]
-    return html`<div class="tabelle">
+    return html`<div class="tabelle" style=${styleMap({ '--spalten-zahl': String(spalten.length) })}>
       <div class="steuerung">
         <button
           title="Letzte Spalte entfernen"
@@ -361,7 +361,7 @@ export class TabelleBlock extends BasicBlock {
               this.aendere(l)
             }
           }}
-        >+ Spalte</button>
+        >+</button>
       </div>
       ${this.suche === 'ja' ? html`<div class="suchzeile">
         <input
