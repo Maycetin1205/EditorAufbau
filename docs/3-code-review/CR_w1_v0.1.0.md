@@ -14,7 +14,8 @@
 - `src/blocks/kanban/seRuntime.test.ts` — Testname; `src/ui/molecules/panel.tsx` (gelöscht)
 - `docs/logo-rohsatz.png`, `docs/avatare-rohsatz.png` (per `git rm` entfernt)
 
-**Plan**: `docs/1-plans/feld-uebernehmen.plan.md`
+**Plan**: `docs/1-plans/feld-uebernehmen.plan.md` (bei der Doku-Diaet 2026-07-27
+geloescht — bei Bedarf aus der git-Historie holen)
 
 ---
 

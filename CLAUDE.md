@@ -163,21 +163,16 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
 
 ## Stand & Fahrplan
 
-**Ausgelagert: [`docs/FAHRPLAN.md`](docs/FAHRPLAN.md)** — Chronik der
-abgenommenen Pakete, offene Reihenfolge, Merkliste. Wortgleich verschoben am
-2026-07-24 (Nutzer-Entscheidung): CLAUDE.md war 487 Zeilen, davon 312 nur
-Planung. Regeln und Tagesordnung getrennt halten — sonst ertrinken die Regeln
-in Prosa und werden ueberlesen. Bei Widerspruch gewinnt CLAUDE.md.
+**Ausgelagert: [`docs/FAHRPLAN.md`](docs/FAHRPLAN.md)** — Tagesordnung, feste
+Zusagen, Merkliste. Regeln und Tagesordnung bleiben getrennt: sonst ertrinken
+die Regeln in Prosa und werden ueberlesen. Bei Widerspruch gewinnt CLAUDE.md.
+Die Chronik „was wann gebaut wurde" steht NICHT dort, sondern in der
+git-Historie und in `docs/2-changelog/` (Doku-Diaet 2026-07-27).
 
 ### Woran gerade gearbeitet wird
 
-**Tabelle stabil machen** (Fahrplan-Punkt 4). Der Rest der Reihenfolge steht
-in FAHRPLAN.md.
-
-Danach in dieser Reihenfolge, jeweils mit „go" des Nutzers:
-Farben/Optik des Editors (shadcn-Werkseinstellung wirkt generisch) ·
-`zoom: 0.9` in `index.css` durch eine Schriftgroessen-Basis ersetzen ·
-Kommentar-Diaet (rund 900 Zeilen tote Kapitel-/Paket-Verweise).
+**Tabelle stabil machen**, daneben **Verknuepfte Quellen** (Paket 3 von 4).
+Die vollstaendige Reihenfolge steht in FAHRPLAN.md.
 
 ## Wichtige Stellen
 

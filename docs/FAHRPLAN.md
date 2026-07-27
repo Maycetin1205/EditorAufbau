@@ -1,364 +1,110 @@
-﻿# Fahrplan & Stand
+# Fahrplan & Stand
 
-> Ausgelagert aus CLAUDE.md am 2026-07-24 (Nutzer-Entscheidung): CLAUDE.md
-> war 487 Zeilen, davon 312 dieser Abschnitt. Regeln (aendern sich fast nie)
-> und Tagesordnung (aendert sich staendig) gehoeren getrennt — sonst ertrinken
-> die Regeln in Planung und werden ueberlesen.
+> Tagesordnung, kein Gesetz — **bei Widerspruch gewinnt CLAUDE.md.**
 >
-> **Bei Widerspruch gewinnt CLAUDE.md.** Diese Datei ist Chronik und Planung,
-> kein Gesetz.
+> Eingedampft am 2026-07-27 (Nutzer-Entscheidung): 342 → gut 100 Zeilen. Die
+> Chronik „was wann gebaut wurde" ist ersatzlos gestrichen, ebenso die
+> Planungsdateien in `docs/1-plans/` und das Neuschnitt-Archiv. Das stand
+> dreifach da — git-Historie und `docs/2-changelog/` erzaehlen dasselbe, und
+> keine der drei Fassungen hat je jemand gelesen.
 
-## Stand 2026-07-20 + Fahrplan
+## Jetzt
 
-Historie der erledigten Pakete und alten Fahrpläne — wortgleich
-ausgelagert: `docs/decisions/2026-07-20-claude-md-neuschnitt-archiv.md`.
+**Tabelle stabil machen.** Der Baustein steht und wurde aus dem Live-Test
+nachgebessert (Inhaltssuche, Fusszeile auch im Editor, Tagesfilter, richtige
+Datensatz-Anzeige, fluchtende Spaltentrenner). Offen: die volle Bedien-Abnahme
+durch den Nutzer und der grosse SE-Echttest.
 
-### Was steht (vom Nutzer abgenommen, Kern-Wege SE-getestet)
+Daneben laufend: **Verknuepfte Quellen**, Paket 3 von 4.
 
-- **Bausteine:** Kanban (+ Spalte/Karte — Karten-Anatomie, LEER-Regel und
-  Avatar-Regeln: `docs/decisions/2026-07-16-karte-empfang-anatomie.md`),
-  Schaltfläche, Formularfeld (Text + Auswahl; Ankreuzfeld bewusst
-  unbindbar, bis der SE-Wert-Kontrakt belegt ist; gebundene Felder zeigen
-  den Klarnamen im Editor in PLATZHALTER-Optik — grau, Feld wirkt leer,
-  Nutzer-Go 2026-07-22 — nie wie ein Wert), Datumsanzeige
-  (ungebunden echte Uhr, gebunden Feldwert), Zeile, Popup-Seiten
-  (Seiten-Reiter am Canvas; X + Abdunklung gehören zum Baustein;
-  Popup-Klarnamen müssen je Maske EINDEUTIG sein — Laufzeit-Identität,
-  Preflight blockt). Export = Vollbild.
-- **Kanban-Regeln:** „Einsortieren nach" ist OPTIONAL (ohne Feld → alle
-  Zeilen in die Auffang-Spalte); KEIN eingebauter Schreibweg beim Ziehen —
-  ein Drop führt nur die sichtbare Kette „Karte verschoben" aus, der
-  nächste Daten-Push entscheidet. IDB-ID sichtbar als `ID0004`
-  (Technikwert `IDBID0004` unsichtbar); Felder pflegt allein „+ Feld",
-  `indexField` läuft unsichtbar.
-- **Aktionsketten:** Baustein → Ereignis → Schritte. Arten: START_TOOL ·
-  RELATION (GET/PUT/PUTADD über Vorlagen = Daten) · POPUP_OPEN/POPUP_CLOSE
-  (Anzeige in Klarnamen). Parameterquellen: Fest / Ereigniswert
-  ({VALUE}/{PINDEX}) / Datenfeld / Vorheriger Schritt / „Ergebnis von
-  Schritt N" / SE-VAR-Array — Kurz-Klarnamen seit 2026-07-22 exakt so im
-  Formular; die Namen leben NUR im Editor (Tabelle im StepForm), nicht im
-  Runtime-Bündel. Das freie Feld „Ergebnisname" ist ENTFERNT (Nutzer
-  2026-07-22): „Ergebnis von Schritt N" ersetzt es; Alt-Namen bleiben beim
-  Bearbeiten erhalten, die Laufzeit liest sie unverändert.
-  Schreiben läuft NUR über sichtbare Ketten (kein Auto-PUT); Lesen
-  hydriert automatisch aus der ERSTEN Zeile der Quelle. Multi-Datenquelle
-  belegt: jedes Feld wählt seine Quelle, der Export sammelt alle.
-- **SE-Echttests bestanden:** Formularfeld-Kette schreibt echt (PUT,
-  2026-07-16) · Popup-Kreislauf (2026-07-17) · Kanban-Datenpfad +
-  Aktionsketten Z2/START_TOOL · GET-Weg + „Ergebnis von Schritt N" samt
-  Wert-Zufluss und Anlegen über ZWEI Quellen/Indizes gleichzeitig
-  (2026-07-22). **Kein offener SE-Kontrakt mehr.**
-- **Steuerung (Zentrale):** Master-Detail mit Bereichen Datenquellen |
-  Relationen | Aktionen; Bearbeiten inline (FormularKarte),
-  Escape-Schichtung erhalten.
-- **Relation-Auswahl vereinheitlicht (Nutzer 2026-07-22):** Der Vorlagen-
-  Filter im Schritt-Formular UND in der Steuerung läuft über EINEN Umschalter
-  (`SegmentControl`, Optionen `RELATION_GRUPPEN` in `zentrale/helfer.ts` =
-  die eine Ablage): Mini-Tabs **Lesen | Schreiben**, „Alle" gestrichen
-  („ist dumm"). Die Suche findet in BEIDEN Gruppen — bei aktiver Suche steht
-  die Trefferzahl je Tab (`Lesen · 0` / `Schreiben · 2`) und die Ansicht
-  springt zum Tab mit Treffern, wenn der aktive leer ist; Lesen/Schreiben
-  bleiben getrennt (nie gemischt). Reine Editor-UI, Export unberührt
-  (Bündel-Wächter „identisch", Referenzabzug byte-gleich, keine neuen Tests).
-- **Entfernt (Nutzer 2026-07-20, restlos):** „Quelle speichern" samt
-  Änderungs-Spur/Schreib-Helfern (`f9a5af9`) · „Neuen Satz
-  anlegen"/CREATE_RECORD (`24fbe54`) · Projektkarte/project-map
-  (`fc5d786`) · dashboard/-Klickmodelle (`2c2d944`). Nichts davon ohne
-  neue Nutzer-Entscheidung wieder einbauen.
+## Als Naechstes (Reihenfolge = Nutzer-Entscheidung)
 
-### SE-Echttest 2026-07-22: BESTANDEN — Warteschlange leer
+1. **Verknuepfte Quellen** Paket 3 + 4 — ab Paket 3 ist ein SE-Echttest faellig.
+2. **Zeilen-Auswahl / Nachschlagen** — die markierte Zeile als Parameterquelle,
+   dazu der vom Nutzer benannte Lookup-Fall („ganz wichtig"): Formularfeld
+   anklicken → Enter → Popup mit Tabelle oeffnet sich → Bediener waehlt eine
+   Zeile → der gewollte Wert landet im Feld. Setzt die fertige Tabelle voraus.
+3. **Optik-Feinschliff des Editors** — die Farbrichtung ist neu gesetzt
+   (warmes Papier statt kaltem Grau, 2026-07-27); der Rest ist offen.
+4. **Wizard** — mehrstufige Maske. Zuschnitt offen, braucht einen eigenen Plan;
+   Fragen erst, wenn er dran ist.
+5. **Kommentar-Diaet** — rund 900 Zeilen tote Kapitel-/Paket-Verweise im Code.
+6. README · CI · Fehlerbild.
+7. Meilenstein: **Demo beim Chef** mit einer echten Maske.
 
-In EINEM Lauf bestätigt (echte SE-Logs des Nutzers): GET-Weg liefert
-(640 → neuer Satz-Index) · „Ergebnis von Schritt N" trägt die Stelle
-korrekt in die PUTs — auch mit ZWEI Quellen/Indizes GLEICHZEITIG
-(Anlegen-Muster live: GET ID0001→277 + GET ID0004→230, jeder PUT trifft
-die richtige Tabelle) · getippte Werte fließen über das gebundene Feld in
-den PUT · Sichtprüfung Text/Trennlinie/Datum-Optik: sieht in SoftEngine
-aus wie im Editor (Nutzer-Abnahme 2026-07-22).
-Lehre aus dem ersten Fehlversuch (dokumentiert, damit sie nie wieder Zeit
-kostet): Formularfeld war ungebunden und der Wert-Parameter las ein
-anderes Feld, als Position/Länge beschrieben — Masken-Konfiguration, kein
-Code-Fehler. Merksatz **„Dreier-Regel": Wert, Position, Länge = dreimal
-dasselbe Feld;** nur die Stelle kommt aus Schritt 1.
-**Damit fällig: dieses Gleis → main mergen, Nebengleis löschen, ab dann
-wieder EIN Gleis** (Merge macht die lokale Sitzung auf Nutzer-Auftrag,
-2026-07-22).
+**Geparkt** (nicht ohne neue Entscheidung anfassen): Relations-Vertiefung ·
+Mehr-Quellen-Ausbau · Feld-Extras (Pflichtfeld/Pruefung/Standardwert/Hilfetext,
+zurueckgestuft 2026-07-23) · Schritt-Arten-Registry (nur mit eigenem Plan +
+Doppel-Review) · App-Ausbau: mehrere Masken, Server-Speicherung, Login, Rechte,
+Ein-Bearbeiter-Sperre, Versionsstaende.
 
-### Fahrplan (Nutzer-Entscheidungen 2026-07-20)
+## Verknuepfte Quellen — die vier Pakete
 
-Leitlinie: erst das Grundgerüst „fertig anfühlen" — Relations-Vertiefung
-und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
+Zwei Festlegungen des Nutzers (2026-07-25), **nicht ohne Rueckfrage aendern**:
 
-1. ✅ **Doku-Neuschnitt** (dieses Paket): CLAUDE.md halbiert, Historie
-   wortgleich nach `docs/decisions/`, tote Verweise restlos nachgezogen,
-   Erledigtes gelöscht, Skills vollständig behalten.
-2. **Editor-Redesign R1–R3** — Bedienung + Optik, NUR Editor-UI, Export
-   unberührt (beweisbar über den Referenzabzug; Test-Bremse: keine neuen
-   e2e). Blaupause = Internal-Tool-Builder (Retool & Co.), Nutzer-Wahl
-   2026-07-20: hell + Blau, dicht, EIN kleiner Radius (keine Bubbles),
-   keine verschwendete Fläche. R1 ✅ gebaut 2026-07-21 (Skala 4px-Radius/
-   28px-Dichte · Top-Bar 40px: Maskenname statt „MVP Editor", Seiten-
-   Reiter als Segmente in der Leiste, Export = blauer Primärknopf, „Alle
-   Blöcke löschen" ins „…"-Menü mit Bestätigung · Canvas als Blatt mit
-   Schatten + Leerzustand-Hinweis · StatusBar mit Seiten-Anzeige) —
-   vom Nutzer LIVE abgenommen (2026-07-21) ·
-   R2 ✅ gebaut 2026-07-21 (Bibliothek oben Hauptdarsteller: kompakte
-   Icon-Karten je Kategorie, Klick/Drag unverändert · Baustein-Baum „Aufbau"
-   war zwischenzeitlich gebaut, auf Nutzer-Entscheidung 2026-07-21 aber
-   RESTLOS wieder entfernt [BausteinBaum.tsx + blockLabels.ts gelöscht,
-   Sidebar-Einbindung raus; blockIcons.ts BLEIBT — die Bibliothek nutzt die
-   Icons weiter] ·
-   Inspector: feste Reihenfolge Inhalt→Daten mit feiner Trennlinie statt
-   Abschnitts-Überschriften, gestrichelte Leer-Karte im Canvas-Stil, Labels
-   11 px, Kopf OHNE Technik-Unterzeile [Regel 3], Beschreibungen als
-   Label-Tooltip statt angeklebtem ⓘ, Farb-Eigenschaft als dezente Kacheln
-   [echte --se-Farben, gewählte mit Ring, Tooltip = Klarname] statt Dropdown
-   über Editor-Tabelle `src/editor/inspector/optionColors.ts` [rein
-   Editor-seitig, Baustein-„select" unverändert] · Icons als Editor-Tabelle
-   `blockIcons.ts`, Lucide bleibt aus dem Runtime-Bündel — Bündel-Wächter
-   „identisch". Genehmigte e2e-Ausnahme: drei Kopf-Assertions [formfeld/
-   kanban/zwischenspeicher] von der Technik-Zeile auf die Kopf-Überschrift
-   umgestellt, Wächter-Zweck bleibt) — vom Nutzer LIVE begleitet und
-   abgenommen (2026-07-21, inkl. aller 9 Korrekturpunkte + Baum-Aus) ·
-   R3 Steuerung/Formulare — KORRIGIERTER ZUSCHNITT (Nutzer 2026-07-21):
-   NUR die Ereignis-Ketten wandern an den Baustein (Inspector-Abschnitt
-   „Aktionen"); die Steuerung STIRBT NICHT, sie bleibt als schlankes
-   Verwaltungsfenster für Datenquellen + Relationen (maskenweite, selten
-   angefasste Pflege) und bekommt nur die neue Optik.
-   Detailplan je Paket, „go" je Paket. **Abnahme: der Nutzer prüft LIVE
-   im Browser — KEINE Screenshot-/Galerie-Erzeugung mehr (Nutzer-
-   Entscheidung 2026-07-21, „frisst unnötig Tokens"); Beweis = Prüfbündel-
-   Ergebnis in Textform.**
-   R3 ✅ gebaut 2026-07-21: Inspector-Abschnitt „Aktionen"
-   (`src/editor/inspector/AktionenSektion.tsx`), registry-getrieben über
-   `blockEvents` (kein Typ-Check), erscheint nach Inhalt/Daten mit feiner
-   Trennlinie · je Ereignis EINE kompakte Kopfzeile (Name links, kleiner
-   „+"-Icon „Schritt hinzufügen" rechts), Schritte als dichte Zeilen direkt
-   darunter, KEIN Leerzustand-Text/keine eigene Knopf-Zeile (Punkt 10, Nutzer
-   2026-07-21: Leerzustände kosten null zusätzliche Höhe) ·
-   Sortieren/Bearbeiten/Duplizieren/Löschen + Undo (updateBlockEvents) exakt
-   wie zuvor im Bereich · StepForm im VERHALTEN unverändert wiederverwendet
-   (bleibt in `zentrale/`); die Schritt-Bearbeitung öffnete zunächst als Karte
-   AM PANEL (Portal), seit dem R3-Feinschliff blättert stattdessen das
-   Inspector-Panel um (s. unten), Escape-Schichtung erhalten ·
-   Steuerung: Bereich „Aktionen" restlos raus (`AktionenBereich.tsx`
-   gelöscht, Kommandozentrale auf zwei Bereiche Datenquellen|Relationen,
-   Toolbar-Tooltip nachgezogen) · die Lese-Ansichten beider Bereiche teilen
-   jetzt EINE Label-Stelle (`src/editor/zentrale/Gruppe.tsx`) — löst die
-   kopierten Eyebrow-Überschriften + den R2-Hinweis „11-px-Labels" auf
-   (Stufen: 10 px Eyebrow / 11 px Field / 14 px Detail-Titel) · Formular-
-   Labels auf EINE Größe 11 px gezogen (Nutzer-Go 2026-07-21, „ruhiges
-   Bild": StepForm-Gruppenlabels + Parameter-Spaltenköpfe und DataSourceForm
-   „Felder" von 12/10 px → 11 px; Felder/Reihenfolge/Verhalten unberührt,
-   RelationForm lief schon über Field). Prüfbündel grün (tsc · eslint ·
-   check:runtime „identisch" · 103 vitest · 11 e2e), Export beweisbar
-   unberührt, keine Testdatei/keine neuen e2e — LIVE-Abnahme durch den
-   Nutzer steht aus.
-   R3-Feinschliff ✅ gebaut 2026-07-21 (Plan von Fable, „Panel blättert um"):
-   „Daten anschließen" UND das Schritt-Formular überlagern den Inspector nicht
-   mehr (kein Modal/kein 460-px-Portal) — der Inspector hält EINEN Zustand
-   `unteraufgabe` und wechselt seinen Inhalt komplett zur Aufgabe: SidePanel im
-   Rückzeilen-Modus („← <Baustein>" + Aufgaben-Titel), 340 px EXAKT, Controls
-   gestapelt (StepForm-Parameterzeilen: Name+Quelle in einer Zeile, Wert in
-   voller Breite darunter — geprüft mit dem 6-Parameter-PUT: kein Querlauf).
-   Escape/„Fertig"/„←" blättern zurück (capture+stopPropagation wie zuvor bei
-   FormularKarte/Modal); Baustein-Wechsel schließt die Unteraufgabe (Render-
-   Muster „State beim Auswahl-Wechsel anpassen", KEIN setState-im-Effekt).
-   BindungsStrecke/StepForm liefern nur noch ihren Inhalt (kein Modal/keine
-   FormularKarte-Hülle); die Schritt-Abschnitte bleiben role="group" — die e2e
-   (formfeld-/kanban-/zwischenspeicher-data) zielen auf die Panel-Ansicht statt
-   den Dialog (genehmigte Ausnahme, Flüsse + Assertions identisch). Beifang
-   (Nutzer-Brille): die handgebauten Schritt-Selects auf EINE Größe (12 px wie
-   die übrigen Controls; Labels bleiben 11 px), Popup-Select h-8→h-7, toter
-   Parameter-Spaltenkopf raus. `ui/molecules/modal.tsx` ist damit ungenutzt
-   (nur noch FieldPicker trägt sein eigenes role=dialog) — bewusst NICHT gelöscht
-   (nicht selbst angelegt; s. Aufgefallen). Prüfbündel grün (tsc · eslint ·
-   check:runtime „Bündel identisch" · 103 vitest · 11 e2e), Export beweisbar
-   unberührt, keine neuen Tests.
-   R3-Abschluss ✅ (Fable, 2026-07-21): Vorlagen-Anzeige entschärft — die
-   volle Relations-Syntax ist NIE mehr Anzeigetext (Regel 3): Vorlagen-Liste
-   und Schritt-Zeilen zeigen den Klarnamen bzw. bei ungetauften Vorlagen
-   „<VERB> · Nr. <nr>" (`src/editor/zentrale/relationAnzeige.ts` = DIE eine
-   Stelle dafür), die Syntax lebt nur noch als Hover-Tooltip + Suchtreffer ·
-   Parameterzeilen EINZEILIG (Name | Quelle | Wert — halbe Höhe beim
-   6-Parameter-PUT) · totes `ui/molecules/modal.tsx` gelöscht ·
-   Referenzmasken eingecheckt: `docs/chef-maske/` (empfang + behandlung).
-   R3 gesamt vom Nutzer LIVE abgenommen (2026-07-21) — das
-   Editor-Redesign R1–R3 ist damit KOMPLETT abgeschlossen.
-3. ✅ **Billig-Atome** gebaut 2026-07-21 (Plan `docs/1-plans/atome.plan.md`,
-   UMGEPLANT: EIN Text-Baustein statt zwei, Gruppe gestrichen). Zwei statische
-   Bausteine, registry-getrieben (Regel 2, kein `if typ`).
-   **Text** (`ff-text`, Anzeige): EIN Bibliothekseintrag; die Optik bestimmen
-   DREI freie Stil-Eigenschaften in EINER kompakten Inspector-Zeile
-   „Text-Stil" (2. Umplanung, Nutzer 2026-07-21: „nicht per Auswahl — ich
-   will entscheiden, wo es liegt, wie viele Pixel groß, dünn, dick"):
-   `groesse` = freie Pixelzahl (6–96, Standard 14; Stufen-Werte der ersten
-   Fassung werden still auf Pixel abgebildet) · `gewicht` = Dünn/Normal/Fett ·
-   `ausrichtung` = Links/Mitte/Rechts (Icons). Inhalt per
-   Doppelklick am Ding, Default-Text = überschreibbarer Platzhalter (Regel 7).
-   KEINE Art-Umschaltung / kein zweiter Eintrag (Nutzer 2026-07-21: „ich nehm
-   Text auch als Überschrift, wenn die Größe einstellbar ist") · **Trennlinie**
-   (`ff-trenner`, Layout): 1px-Linie in --se-line, volle Breite (kein Anfasser),
-   fester dezenter Abstand, KEINE Eigenschaften (Regel 10). Icons in
-   `blockIcons.ts` (Lucide bleibt aus dem Bündel). **Gruppe GESTRICHEN** (Nutzer
-   versteht ihren Nutzen nicht → Regel 10; kommt erst wieder, wenn sie beim
-   Popup-Bauen real vermisst wird). **Export berührt (absichtlich):**
-   `ff-runtime.js` neu gebaut (wächst um ff-text/ff-trenner), Referenzabzug
-   erneuert (nur das eingebettete Bündel ändert sich, Masken-HTML byte-gleich),
-   Veralten-Wächter-Positivliste um ff-text/ff-trenner ergänzt (der im Kahlschlag
-   2026-07-14 entfernte ff-text ist als statisches Atom NEU). export.test:
-   ein Fall je Baustein (Text-Stil-Attribute + Escaping, Trennlinie),
-   KEINE neuen e2e (Test-Bremse). **Beifang Bibliothek:** Kategorien durch feine
-   Trennlinie getrennt (Muster Inspector).
-   **Feinschliff-Pass (Fable, 2026-07-21, nach Opus' Atome-Commit):**
-   Inspector-Zeilen-Mechanik generisch (`inspectorRow` + kinds
-   number/segment in PropertyDescription; NumberControl/SegmentControl,
-   Icon-Tabelle `segmentIcons.ts` — Registry-Daten, kein Sondercode) ·
-   **Datum-Optik nach Chef-Vorbild** `.vuhr` (Empfang): Zeit 17px/600/mono,
-   Datum 11.5px gedämpft darunter, KEIN Kasten — löst den „Windows 98"-Look
-   ab (Nutzer 2026-07-21); gebunden zeigt die Hauptzeile den Feldwert,
-   Spot-Markierung unverändert · **Farb-Kacheln repariert**: Haken IN der
-   Kachel statt Außen-Ring (der wurde am Panel-Rand abgeschnitten =
-   „passt nicht rein") · **Hinweiszeilen** für sonst leer wirkende
-   Inspector-Panels (Karte/Trennlinie/Zeile) über Editor-Tabelle
-   `blockHinweise.ts` — ein Satz, wo die Bedienung am Ding stattfindet.
-   Prüfbündel grün (tsc · eslint · check:runtime „identisch" · 105 vitest ·
-   11 e2e), Masken-Markup im Referenzabzug byte-gleich (nur Bündel).
-   LIVE-Abnahme + SE-Sichtprüfung BESTANDEN (2026-07-22).
-3b. **„Feld übernehmen" + sprechende Namen ✅ gebaut 2026-07-22** (v0.1.0,
-   Plan `docs/1-plans/feld-uebernehmen.plan.md`; Codex-Implementierung +
-   Claude-Gegencheck, editor-only, Prüfbündel grün, kein SE-Echttest).
-   „Feld übernehmen" am Schreib-Schritt: der Auslöser sitzt AN der
-   Parameter-Zeile (Symbol + Enter im Wert-Feld) und erkennt POS/LEN/IDBID
-   als Ganz-String MIT und OHNE `{}` — behebt, dass er bei der echten
-   Nutzer-Vorlage mit nackten Wörtern nie erschien. POS füllt
-   Position+Länge, IDBID die Tabelle; **der WERT füllt sich NICHT
-   automatisch** und die Satz-Nummer bleibt beim Bediener
-   (Nutzer-Entscheidung 2026-07-22). Zweistufiger Picker (Quelle → Feld)
-   mit Viewport-Einklemmung (Nutzer-Fund) + Escape-Schichtung.
-   Sprechende Namen: `eigenerText` (zentrale/helfer.ts) liest zusätzlich
-   `placeholder`, default-bewusst (frisches Formularfeld bleibt
-   „Formularfeld", stabile IDs unverändert, Regel 3).
-   **QUELLDATEN-Wertquelle ✅ gebaut 2026-07-22, SE-Echttest BESTANDEN
-   (Nutzer 2026-07-23):** neue Parameterquelle „Baustein"; wählbar sind
-   vorerst Formularfelder mit ihrem Inline-Namen. Geschrieben wird ihr
-   aktueller Wert, ausdrücklich OHNE Datenquellen-Bindung; gespeichert wird
-   die stabile Baustein-ID. Registry-Opt-in (`actionValueSpots`) hält
-   weitere Bausteine später erweiterbar. Laufzeit/Export + Lösch-Preflight
-   sind gebaut. Beim ersten Nutzerexport fehlte wegen Runtime-Build/HMR-Race
-   das ganze Bundle (HTML unsichtbar): Runtime-Build leert den Zielordner
-   nicht mehr, Validator blockt leere Runtime jetzt ausdrücklich.
-   **Aktuelle Reihenfolge:** Raster-Canvas/Größen-Paket (jetzt) → Tabelle.
-   **Größen-Paket → GEHT IM RASTER-PAKET AUF** (Nutzer-Entscheidung
-   2026-07-23): „Höhe/Breite an jedem Baustein ziehbar + Startgrößen" ist
-   Teil des Raster-Canvas (Plan `docs/1-plans/raster-canvas.plan.md`), kein
-   eigenes Paket mehr. **Grundsatz-Entscheidung 2026-07-23 ERSETZT die vom
-   2026-07-22:** die Maskenfläche wird ein Raster mit Einrasten (Retool-
-   „Lego"), NICHT mehr reiner Fluss — der echte Fall (Regel 10) ist da, vom
-   Nutzer wörtlich benannt (frei bewegen, Größe ändern, nebeneinander
-   packen, platzieren wie ich will). Spalten wachsen mit dem SE-Fenster
-   (1fr, responsiv — SE zeigt die Maske in einem mitwachsenden Rahmen),
-   Zeilenhöhe fest. Stand: gebaut, SE-Sichtprüfung Layout bestanden
-   2026-07-23; volle Bedien-Abnahme + großer SE-Echttest (E4) stehen aus.
-4. **Tabelle** (der große fehlende Baustein). Die Grundsatzfrage freies
-   Raster vs. Fluss ist ENTSCHIEDEN (Raster, 2026-07-23) — die Tabelle
-   kommt als Raster-Block. Das **Chef-Modell** (Notiz-Fotos lokal beim
-   Nutzer, `docs/Test-note*`, bewusst NICHT eingecheckt, s. .gitignore)
-   bleibt die Vorlage: `GridComponent` mit fester Breite×Höhe;
-   `PropertyDescription`-Eigenschafts-Registry (deckungsgleich mit
-   Regel 2); Beispiel `KanbanBoard` 500×200 mit Swimlane-Status
-   „Offen/Bearbeitet/Geschlossen".
-5. Danach (Reihenfolge = Nutzer-Entscheidung 2026-07-23):
-   **Zeilen-Auswahl/Nachschlagen** — markierte Zeile als Parameterquelle
-   UND der vom Nutzer benannte Lookup-Fall („ganz wichtig"): Formularfeld
-   anklicken → Enter → Popup mit z. B. Tabelle öffnet sich → Bediener
-   wählt eine Zeile → der gewollte Wert wird ins Feld übernommen.
-   Baut auf Tabelle + Popups + Ketten auf — Tabelle MUSS davor fertig
-   sein · **Wizard** (Nutzer 2026-07-23 angemeldet, Zuschnitt offen —
-   mehrstufige Maske; braucht eigenen Fable-Plan, Fragen erst wenn dran) ·
-   README/CI/Fehlerbild · Meilenstein: **Demo beim Chef** mit einer
-   echten Maske. **Feld-Extras (Pflichtfeld/Prüfung/Standardwert/
-   Hilfetext): zurückgestuft auf „irgendwann vielleicht"**
-   (Nutzer 2026-07-23), nicht mehr Teil der nahen Reihenfolge.
-- Später, NUR mit Fable-Plan + Doppel-Review: Schritt-Arten-Registry
-  (Ketten-Schritte steckbar wie Bausteine, Unbekanntes scheitert LAUT;
-  huckepack Origin-Prüfung message-Fallback + Enum-Fixes Referenzmaske →
-  ein SE-Echttest).
-- Später (App-Ausbau, blockiert nichts): mehrere Masken verwalten ·
-  Server-Speicherung · Login · Rechte · Ein-Bearbeiter-Sperre ·
-  Versionsstände.
-
-### In Arbeit: Verknüpfte Quellen (Nutzer 2026-07-24)
-
-**Zwei Festlegungen des Nutzers (2026-07-25) — nicht ohne Rückfrage ändern:**
-
-1. **Höchstens 3 Schlüsselfelder** je Verknüpfung, UND-verknüpft
-   („Kunde *und* Jahr"). Mehr wäre Theorie ohne echten Fall (Regel 10).
+1. **Hoechstens 3 Schluesselfelder** je Verknuepfung, UND-verknuepft
+   („Kunde *und* Jahr"). Mehr waere Theorie ohne echten Fall (Regel 10).
 2. **Kein Partner gefunden → kein Wert.** Das Feld bleibt leer, die Zeile
-   bleibt stehen. Sie verschwindet NICHT. Grund: verschwundene Zeilen
-   wären unsichtbarer Datenverlust — der Bediener sähe 240 statt 250
-   Sätze und merkte nie, dass zehn fehlen. Ein leeres Feld sieht er.
+   bleibt stehen. Sie verschwindet NICHT: verschwundene Zeilen waeren
+   unsichtbarer Datenverlust — der Bediener saehe 240 statt 250 Saetze und
+   merkte nie, dass zehn fehlen. Ein leeres Feld sieht er.
 
-**Die vier Pakete** (Stationen wie bei Datenquellen und Relationen, das
-Muster gibt es zweimal — dies ist der dritte Fall):
-
-| | Was | Export berührt? | Stand |
+| | Was | Export beruehrt? | Stand |
 |---|---|---|---|
-| 1 | Modell + Bestand (`core/data/sourceLinks`, `state/SourceLinkStore`) | nein | **fertig 2026-07-25** |
-| 2 | Bereich in der Steuerung: anlegen und pflegen | nein | offen |
+| 1 | Modell + Bestand (`core/data/sourceLinks`, `state/SourceLinkStore`) | nein | fertig 2026-07-25 |
+| 2 | Bereich in der Steuerung: anlegen und pflegen | nein | fertig 2026-07-27 |
 | 3 | Bindung mit Quellenangabe (`quelleId::feldcode`), an EINER Stelle | ja | offen |
-| 4 | Laufzeit-Auflöser + Export (`FF_SOURCE_LINKS`) + Preflight | ja | offen |
+| 4 | Laufzeit-Aufloeser + Export (`FF_SOURCE_LINKS`) + Preflight | ja | offen |
 
-Ab Paket 3 ist ein SE-Echttest fällig.
+Als Ideengeber fuer Paket 3 + 4 liegt ein verworfener Torso bereit:
+`docs/decisions/2026-07-24-verknuepfte-quellen-torso.patch` (440 Zeilen; enthaelt
+qualifizierte Bindung, Wert-Aufloeser, Zusammenfuehren ueber 1–3 Schluesselpaare,
+`window.FF_SOURCE_LINKS`, Preflight-Sperre). **Nicht ungeprueft uebernehmen** —
+lesen, dann mit eigenem Plan neu bauen.
 
-### Ursprüngliche Anmeldung
+## Feste Zusagen (gelten weiter, stehen nur hier)
 
-**Mehrere Datenquellen gleichzeitig anzeigen und über gleiche Felder
-verbinden** — ein Baustein zeigt einen Wert aus einer ZWEITEN Quelle,
-zusammengeführt über Schlüsselfelder (wie „Kunde zu Auftrag"). Der Nutzer
-hat das ausdrücklich auf die Liste gesetzt, Zuschnitt noch offen.
+- **Kein offener SE-Kontrakt.** Alle Kern-Wege sind am echten System belegt
+  (zuletzt 2026-07-22: GET-Weg, „Ergebnis von Schritt N", Anlegen ueber zwei
+  Quellen gleichzeitig). Merksatz aus dem Fehlversuch — **„Dreier-Regel":
+  Wert, Position und Laenge sind dreimal dasselbe Feld;** nur die Satz-Stelle
+  kommt aus Schritt 1.
+- **Geschrieben wird nur ueber sichtbare Ketten** — kein Auto-PUT. Gelesen
+  wird automatisch aus der ERSTEN Zeile der Quelle.
+- **Kanban:** „Einsortieren nach" ist optional (ohne Feld landen alle Zeilen in
+  der Auffang-Spalte); ein Drop fuehrt NUR die sichtbare Kette
+  „Karte verschoben" aus, einen eingebauten Schreibweg gibt es nicht.
+- **Ankreuzfeld bleibt unbindbar**, bis der SE-Wert-Kontrakt (J/N? 1/0?) an
+  einer echten Maske belegt ist.
+- **Restlos entfernt — nicht ohne neue Entscheidung wieder einbauen:**
+  „Quelle speichern" samt Aenderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD ·
+  Projektkarte/project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) ·
+  der Baustein-Baum (Nutzer 2026-07-21).
+- **Abnahme laeuft live:** der Nutzer prueft im Browser, der bauende Agent
+  prueft VOR jedem „fertig" selbst im Preview. Keine Screenshot-Galerien.
+- **Codex ist wieder verfuegbar** (2026-07-27) — die TRIP-/codex-Skills in
+  `.claude/skills/` werden im naechsten Paket real eingesetzt statt weiter
+  ungenutzt zu liegen.
 
-Es gab dazu einen halbfertigen Bau (Zweigname `feat/verknuepfte-quellen`),
-der in einer git-Schublade lag und am 2026-07-24 verworfen wurde: er war
-NICHT anwendbar, weil zwei Dateien fehlten, die er importiert
-(`state/SourceLinkStore.ts`, `core/data/sourceLinks.ts`). Der Torso ist
-als Vorlage gesichert: `docs/decisions/2026-07-24-verknuepfte-quellen-torso.patch`
-(440 Zeilen). Darin steckt bereits durchdacht: qualifizierte Bindung
-`"quelleId::feldcode"`, ein geteilter Wert-Auflöser (`aufloeseWert`), das
-Zusammenführen über 1–3 Schlüsselpaare (`verbinde`), Export der benutzten
-Verknüpfungen als `window.FF_SOURCE_LINKS`, und eine Preflight-Sperre,
-wenn eine Verknüpfung fehlt. **Nicht ungeprüft übernehmen** — als
-Ideengeber lesen, dann mit eigenem Plan neu bauen.
+## Merkliste
 
-### Merkliste
-
-Tabellen-Spalten aus verschiedenen Quellen · bausteinübergreifende
-Selektion · pflegbare Wert→Bild-Zuordnung für den Karten-Avatar
-(installations-individuell; bis dahin gilt die eingebaute Empfang-Liste
-in `src/blocks/card/tierIcon.ts`) · Spaltenbreiten der Tabelle in der
-Maske dauerhaft merken · Sortierung wie Windows (Zahl/Datum/ABC) ·
-Ankreuzfeld bindbar machen, sobald der SE-Wert-Kontrakt (J/N? 1/0?) an
-einer echten Maske belegt ist · Seiten-Leiste als kompakte Aufklappliste,
-falls viele Popups je Maske real werden · Vorlagen-Ablage: gespeicherte
-Popups/Baustein-Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, Ort
-offen) · „Maske als Datei
-speichern/laden" für Sicherung/zweiten Arbeitsplatz (heute nur
-Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus
-exportMask erst MIT dem Tabellen-Baustein herausziehen · Export wirft
-unbekannte Props still weg (Preflight-Meldung fehlt) · Maske meldet
-Schreib-/Lesefehler dem Bediener nicht · Masken-Titel fest „Maske" ·
-Editor-UI-Testabdeckung dünn — laut Architektur-Review 2026-07-21 tiefer
-als notiert: auch Migrationen/Baum/Undo/SE-Datenschicht ohne eigene Tests,
-und `relations.test.ts` testet nur das Modell, nicht die gleichnamige
-Laufzeit-Datei (Nachzieh-Paket ~½ Tag, kein Export) · TRIP-Skills
-(~4.000 Zeilen in `.claude/`): testen, sobald Codex-Kontingent frei,
-sonst abspecken — Entscheidung offen · doppelter Schlüssel-Scan in
-`softengine/data.ts` (getField/setField) noch offen (war NICHT Teil des
-Kleinputz-Pakets v0.1.0) · Feld-übernehmen für Stammtabellen (ADR/ART/BEL)
-wartet auf belegten Stamm-PUT-Kontrakt · Formularfeld-Option „startet leer" für
-Anlege-Masken (gebunden fürs Schreiben, zeigt keinen Bestandswert;
-Kontrakt seit 2026-07-22 belegt, Nutzer-Bedenken notiert) ·
-Steuerung zeigt Vorlagen-Parameter nur als „Fester Wert" ohne den Wert
-selbst (besser: „Fester Wert: ‚X'") · Preflight warnt nicht, wenn eine
-Kette ein Datenfeld liest, das kein Baustein der Maske pflegt.
-
+Tabellen-Spalten aus verschiedenen Quellen · bausteinuebergreifende Selektion ·
+pflegbare Wert→Bild-Zuordnung fuer den Karten-Avatar (installations-individuell;
+bis dahin gilt die eingebaute Empfang-Liste in `src/blocks/card/tierIcon.ts`) ·
+Spaltenbreiten der Tabelle in der Maske dauerhaft merken · Sortierung wie
+Windows (Zahl/Datum/ABC) · Seiten-Leiste als kompakte Aufklappliste, falls viele
+Popups je Maske real werden · Vorlagen-Ablage: gespeicherte Popups/Baustein-
+Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, Ort offen) · „Maske als Datei
+speichern/laden" fuer Sicherung und zweiten Arbeitsplatz (heute nur
+Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus exportMask
+herausziehen · Export wirft unbekannte Props still weg (Preflight-Meldung fehlt) ·
+Maske meldet Schreib-/Lesefehler dem Bediener nicht · Masken-Titel fest „Maske" ·
+Editor-UI-Testabdeckung duenn — auch Migrationen/Undo/SE-Datenschicht ohne eigene
+Tests, und `relations.test.ts` testet nur das Modell, nicht die gleichnamige
+Laufzeit-Datei (Nachzieh-Paket ~½ Tag, kein Export) · doppelter Schluessel-Scan
+in `softengine/data.ts` (getField/setField) · Feld-uebernehmen fuer Stammtabellen
+(ADR/ART/BEL) wartet auf belegten Stamm-PUT-Kontrakt · Formularfeld-Option
+„startet leer" fuer Anlege-Masken (Kontrakt seit 2026-07-22 belegt,
+Nutzer-Bedenken notiert) · Steuerung zeigt Vorlagen-Parameter nur als „Fester
+Wert" ohne den Wert selbst · Preflight warnt nicht, wenn eine Kette ein Datenfeld
+liest, das kein Baustein der Maske pflegt.
