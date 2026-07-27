@@ -14,7 +14,7 @@
 import { css, html, type TemplateResult } from 'lit'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { BindingRouteFor, DefaultChildSpec } from '../../core/blocks/BlockDefinition'
+import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
@@ -70,16 +70,11 @@ export class KanbanBlock extends BasicBlock {
   // Raster-Startgröße auf der Maskenfläche (kalibrierbar): das Board ist die
   // grosse Hauptfläche seiner Maske (breit + hoch).
   static readonly raster = { startW: 24, startH: 20, minW: 6, minH: 8 }
-  // Typgeprüft gegen die eigenen defaultProps (Bindungs-Konvention, A5).
-  static readonly bindingRoute: BindingRouteFor<typeof KanbanBlock.defaultProps> = {
-    fieldProp: 'statusField',
-  }
   static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'statusField',
       name: 'Einsortieren nach',
       description: 'Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt. Leer = alle Einträge in der Auffang-Spalte.',      kind: 'field',
-      hiddenInInspector: true,
     },
   ]
 

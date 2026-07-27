@@ -38,7 +38,6 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
   ActionValueSpotsFor,
   BindableSpotsFor,
-  BindingRouteFor,
 } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import {
@@ -67,8 +66,6 @@ export class FormFeldBlock extends BasicBlock {
   static readonly displayName = 'Formularfeld'
   static readonly category: BlockCategory = 'eingabe'
   static readonly acceptsDataSource = true
-  // Typgeprüft gegen die eigenen defaultProps (Bindungs-Konvention, A5).
-  static readonly bindingRoute: BindingRouteFor<typeof FormFeldBlock.defaultProps> = { fieldProp: 'valueField' }
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [{ prop: 'value', label: 'Wert' }]
   // Aktueller Eingabewert - ausdruecklich auch ohne Datenquellen-Bindung.
   static readonly actionValueSpots: ActionValueSpotsFor<typeof FormFeldBlock.defaultProps> = [
@@ -115,7 +112,6 @@ export class FormFeldBlock extends BasicBlock {
       attributeName: 'valueField',
       name: 'Feld',
       description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',      kind: 'field',
-      hiddenInInspector: true,
     },
   ]
 

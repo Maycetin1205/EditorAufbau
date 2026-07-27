@@ -343,8 +343,10 @@ describe('Runtime-Bündel', () => {
     // wieder die abgeschaffte stille "erste Spalte"-Regel.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — Auffang-Kennzeichen (B2) fehlt').toContain('auffang')
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" (B2) fehlt').toContain('data-ff-nicht-zugeordnet')
-    // Der eigene Datenanschluss bleibt Registry-getrieben.
-    expect(runtimeJsRaw, 'npm run build:runtime ausführen — bindingRoute fehlt').toContain('bindingRoute')
+    // Der eigene Datenanschluss-Dialog ist abgeschafft (2026-07-27): alle
+    // Bausteine waehlen ihre Quelle im Inspector. Ein Buendel, das die
+    // Wegbeschreibung noch traegt, ist veraltet.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — bindingRoute ist abgeschafft').not.toContain('bindingRoute')
     // Karten bleiben auch mit leeren Bindungen gleich hoch; die Diagnose
     // muss schon ohne empfangenes Datenpaket im Export vorhanden sein.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — feste Kartenhöhe fehlt')

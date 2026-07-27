@@ -5,8 +5,6 @@
 // Control ohne Quelle aus. visibleWhen beschreibt registry-getrieben, wann
 // ein Control zum aktuellen Blockzustand passt. exclusiveAmongSiblings
 // erzwingt hoechstens ein Ja-Kennzeichen unter gleichartigen Geschwistern.
-// hiddenInInspector ist nur fuer Properties erlaubt, die in einem eigenen
-// Dialog gepflegt werden.
 // number ist eine kompakte Zahl (unit/min/max), segment eine Options-Liste
 // als Segmentgruppe statt Dropdown. inspectorRow packt benachbarte
 // Properties mit gleichem Zeilen-Titel in EINE Inspector-Zeile (ein Label,
@@ -46,5 +44,4 @@ export interface PropertyDescription {
   visibleWhen?: PropertyVisibilityCondition
   requiresDataSource?: boolean
   exclusiveAmongSiblings?: boolean
-  hiddenInInspector?: boolean
 }

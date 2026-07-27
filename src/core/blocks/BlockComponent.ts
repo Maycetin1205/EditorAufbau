@@ -9,7 +9,6 @@
 import type {
   ActionValueSpot,
   BindableSpot,
-  BindingRoute,
   BlockEventSpec,
   DefaultChildSpec,
   ListenBindung,
@@ -61,8 +60,6 @@ export interface BlockComponentStatic {
   readonly actionValueSpots?: readonly ActionValueSpot[]
   // Bindbare Liste (Tabellen-Spalten) — Bedeutung siehe BlockDefinition.
   readonly listenBindung?: ListenBindung
-  // Eigener Datenanschluss-Dialog — Bedeutung siehe BlockDefinition.
-  readonly bindingRoute?: BindingRoute
   // Ereignisse des Blocks — Bedeutung siehe BlockDefinition.
   readonly blockEvents?: readonly BlockEventSpec[]
   // Seiten-Baustein (Popup, P-A) — Bedeutung siehe BlockDefinition.

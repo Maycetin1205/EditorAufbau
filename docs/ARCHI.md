@@ -69,14 +69,14 @@ src/
 │   │               (SeitenLeiste/PopupSeite), Anfasser (zieheGroesse = DIE
 │   │               eine Zieh-Mechanik), useBindingPicker/useBlockResize
 │   ├── inspector/  Eigenschaften-Panel (nur für Unzeigbares)
-│   ├── zentrale/   Steuerung: Datenquellen | Relationen (Master-Detail);
+│   ├── zentrale/   Steuerung: Datenquellen | Verknüpfungen | Relationen
+│   │               (Master-Detail);
 │   │               StepForm (Schritt-Formular) blättert im Inspector auf;
 │   │               feldUebernahme.ts + FeldUebernahmePicker.tsx = „Feld
 │   │               übernehmen" (Pos/Länge/Tabelle aus gewähltem Feld,
 │   │               Auslöser an der Parameter-Zeile, editor-only)
 │   ├── sidebar/    Bausteine-Bibliothek
-│   ├── shell/      Rahmen, Kopfleiste
-│   └── strecke/    Führungslinien/Vermessung beim Ziehen
+│   └── shell/      Rahmen, Kopfleiste
 ├── export/         Export-Pipeline:
 │   ├── exportMask.ts  Baum → HTML + SEvariablen (deterministisch)
 │   ├── validator.ts   + preflight.ts — blocken mit Klartext, nichts scheitert still

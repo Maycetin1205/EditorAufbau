@@ -2,9 +2,11 @@
 // Property-Editor des selektierten Blocks. Liest die PropertyDescription des
 // Blocks und baut daraus einfache Controls. Nutzt die gemeinsame SidePanel-Hülle.
 //
-// Unteraufgaben (R3-Feinschliff 2026-07-21): „Daten anschließen" UND das
-// Schritt-Formular blättern das Panel um, statt es als Modal/Overlay zu
-// überlagern. Der Inspector hält dafür genau EINEN Zustand `unteraufgabe`;
+// Unteraufgabe (R3-Feinschliff 2026-07-21): das Schritt-Formular blättert das
+// Panel um, statt es als Modal/Overlay zu überlagern. („Daten anschließen"
+// tat das bis 2026-07-27 auch — die Ansicht ist ersatzlos entfallen, die
+// Datenquelle wird jetzt direkt hier im Panel gewählt, wie bei der Tabelle.)
+// Der Inspector hält dafür genau EINEN Zustand `unteraufgabe`;
 // ist er gesetzt, wechselt der Panel-Inhalt komplett zur Aufgabe (SidePanel
 // im Rückzeilen-Modus, 340 px unverändert). Escape blättert zurück — capture
 // + stopPropagation, exakt die Schichtung, die vorher FormularKarte/Modal
@@ -22,8 +24,6 @@ import { IconButton } from '@/ui/atoms/icon-button'
 import { Field } from '@/ui/molecules/field'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { cn } from '@/lib/utils'
-import { BindungsStrecke } from '../strecke/BindungsStrecke'
-import { BindungsAnschluss } from '../strecke/BindungsAnschluss'
 import { StepForm } from '../zentrale/StepForm'
 import { eigenerText } from '../zentrale/helfer'
 import { AktionenSektion } from './AktionenSektion'
@@ -38,9 +38,12 @@ import { blockHinweis } from './blockHinweise'
 import { allOptionsHaveColor } from './optionColors'
 
 // Offene Unteraufgabe des Inspector-Panels (null = normale Property-Ansicht).
-type Unteraufgabe =
-  | { art: 'binding' }
-  | { art: 'schritt'; eventKey: string; step?: ActionStep }
+// Seit dem Wegfall der Datenanschluss-Ansicht (2026-07-27) gibt es nur noch
+// EINE Unteraufgabe — das Schritt-Formular; deshalb kein Unterscheider mehr.
+interface Unteraufgabe {
+  eventKey: string
+  step?: ActionStep
+}
 
 // Radix-Select verbietet '' als Option-Wert — interner Platzhalter für
 // "kein Feld gewählt" (die Prop bleibt dabei der Leer-String).
@@ -152,21 +155,15 @@ export function Inspector() {
   // Abdunklung). Rückzeile „← <Baustein>" + Titel der Aufgabe, Formular
   // unverändert darunter. Escape/„Fertig"/„←" blättern zurück.
   if (unteraufgabe) {
-    const titel = unteraufgabe.art === 'binding'
-      ? 'Daten anschließen'
-      : unteraufgabe.step ? 'Schritt bearbeiten' : 'Neuer Schritt'
+    const titel = unteraufgabe.step ? 'Schritt bearbeiten' : 'Neuer Schritt'
     return (
       <SidePanel title={titel} backLabel={blockName} onBack={() => setUnteraufgabe(null)}>
-        {unteraufgabe.art === 'binding' ? (
-          <BindungsStrecke blockId={block.id} onClose={() => setUnteraufgabe(null)} />
-        ) : (
-          <StepForm
-            step={unteraufgabe.step}
-            kette={ed.tree[block.id]?.events?.[unteraufgabe.eventKey] ?? []}
-            onClose={() => setUnteraufgabe(null)}
-            onSave={(step) => speichereSchritt(unteraufgabe.eventKey, unteraufgabe.step, step)}
-          />
-        )}
+        <StepForm
+          step={unteraufgabe.step}
+          kette={ed.tree[block.id]?.events?.[unteraufgabe.eventKey] ?? []}
+          onClose={() => setUnteraufgabe(null)}
+          onSave={(step) => speichereSchritt(unteraufgabe.eventKey, unteraufgabe.step, step)}
+        />
       </SidePanel>
     )
   }
@@ -284,10 +281,7 @@ export function Inspector() {
     return renderPropControl(property)
   }
 
-  // Im eigenen Datenanschluss-Dialog gepflegte Props bekommen kein
-  // zweites Inspector-Control.
   const visibleProps = def.customProperties.filter((p) => {
-    if (p.hiddenInInspector) return false
     if (!p.visibleWhen) return true
     return Object.is(block.props[p.visibleWhen.attributeName], p.visibleWhen.equals)
   })
@@ -363,11 +357,7 @@ export function Inspector() {
               generalProps.length > 0 && 'mt-4 border-t border-border pt-4',
             )}
           >
-            {/* Board-Datenanschluss: Quelle + Einsortieren-Feld — öffnet die
-                umgeblätterte Panel-Ansicht (kein Modal mehr). */}
-            {def.bindingRoute
-              ? <BindungsAnschluss block={block} onOpen={() => setUnteraufgabe({ art: 'binding' })} />
-              : def.acceptsDataSource && <DataSection block={block} />}
+            {def.acceptsDataSource && <DataSection block={block} />}
             {dataProps.map(renderPropControl)}
           </div>
         )}
@@ -385,7 +375,7 @@ export function Inspector() {
             <AktionenSektion
               block={block}
               events={def.blockEvents}
-              onEditStep={(eventKey, step) => setUnteraufgabe({ art: 'schritt', eventKey, step })}
+              onEditStep={(eventKey, step) => setUnteraufgabe({ eventKey, step })}
             />
           </div>
         )}

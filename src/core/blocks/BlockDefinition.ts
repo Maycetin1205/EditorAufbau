@@ -81,8 +81,8 @@ export type ActionValueSpotsFor<Props> = ReadonlyArray<{
 //   - Laufzeit: seRuntime/feldRuntime bauen ihre Attributnamen über
 //     bindingAttr() (P-C 2026-07-17 — vorher nur Typ-Anker per satisfies;
 //     seither reist diese Funktion im Runtime-Bündel mit).
-//   - Bausteine: bindableSpots/bindingRoute sind über BindableSpotsFor/
-//     BindingRouteFor gegen die eigenen defaultProps geprüft.
+//   - Bausteine: bindableSpots ist über BindableSpotsFor gegen die eigenen
+//     defaultProps geprüft.
 
 // Prop-Form der Bindung (`heading` → `headingField`).
 export type BindingProp<P extends string = string> = `${P}Field`
@@ -113,19 +113,6 @@ export type BindableSpotsFor<Props> = ReadonlyArray<{
   prop: BindableSpotProp<Props>
   label: string
 }>
-
-// Typgeprüfte bindingRoute: das Einsortieren-/Wert-Feld muss eine
-// existierende Bindungs-Prop des Blocks sein.
-export type BindingRouteFor<Props> = {
-  fieldProp: keyof Props & BindingProp
-}
-
-// Datenanschluss am Board: der Block deklariert das Einsortieren-Feld,
-// das gemeinsam mit der source-Prop im eigenen Anschluss-Dialog gepflegt wird.
-// Struktur und sichtbare Feldbindungen bleiben am echten Baustein im Canvas.
-export interface BindingRoute {
-  fieldProp: string
-}
 
 // Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff): was bei
 // diesem Baustein passieren kann. `name` = Klarname für den Bediener
@@ -199,9 +186,6 @@ export interface BlockDefinition {
   actionValueSpots?: readonly ActionValueSpot[]
   // Bindbare Liste (Tabellen-Spalten) — siehe ListenBindung.
   listenBindung?: ListenBindung
-  // Eigener Datenanschluss-Dialog fuer source + Einsortieren-Feld.
-  // Das dort gepflegte Feld-Control ist hiddenInInspector.
-  bindingRoute?: BindingRoute
   // Ereignisse des Blocks — siehe BlockEventSpec. undefined = der
   // Baustein löst keine Ereignisse aus (erscheint nicht in der Zentrale).
   blockEvents?: readonly BlockEventSpec[]
