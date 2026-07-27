@@ -1,11 +1,13 @@
 // Kommandozentrale (Z1; Gerüst-Neuschnitt 2026-07-15 nach der abgenommenen
 // Demo-Vorlage): das schlanke Verwaltungsfenster für die maskenweite,
-// selten angefasste Pflege. Zwei Bereiche — Datenquellen | Relationen —
+// selten angefasste Pflege. Drei Bereiche — Datenquellen | Verknüpfungen |
+// Relationen —
 // als Master-Detail, Bearbeiten inline im Detail (kein Modal im Modal).
 // Die Ereignis-Ketten sind seit R3 (2026-07-21) an den Baustein umgezogen
 // (Inspector-Abschnitt „Aktionen"); der frühere Bereich „Aktionen" entfiel
-// dabei restlos. Der Bereich „Verknüpfungen/Auswahl-Filter" kommt erst MIT
-// der Selektions-Funktion (kein leerer Platzhalter-Bereich).
+// dabei restlos. Der Bereich „Verknüpfungen" stand hier lange als Vorhaben
+// mit dem Zusatz „kommt erst MIT der Selektions-Funktion, kein leerer
+// Platzhalter-Bereich" — seit 2026-07-25 ist er da und hat Inhalt.
 //
 // Öffnet über den Toolbar-Knopf „Steuerung". Optik: Editor-UI
 // (shadcn-Tokens) — bewusst KEINE Übernahme des alten Editors.
@@ -16,19 +18,23 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Database, Link2, X } from 'lucide-react'
+import { Database, Link2, Workflow, X } from 'lucide-react'
+import { istBrauchbar } from '../../core/data/sourceLinks'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { preflightMask } from '../../export/preflight'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
+import { useSourceLinks } from '../../state/useSourceLinks'
 import { DatenquellenBereich } from './DatenquellenBereich'
 import { RelationenBereich } from './RelationenBereich'
+import { VerknuepfungBereich } from './VerknuepfungBereich'
 
-type Bereich = 'datenquellen' | 'relationen'
+type Bereich = 'datenquellen' | 'relationen' | 'verknuepfungen'
 
 const BEREICHE: ReadonlyArray<{ key: Bereich; name: string; icon: typeof Database }> = [
   { key: 'datenquellen', name: 'Datenquellen', icon: Database },
+  { key: 'verknuepfungen', name: 'Verknüpfungen', icon: Workflow },
   { key: 'relationen', name: 'Relationen', icon: Link2 },
 ]
 
@@ -37,6 +43,7 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
   const ed = useEditor()
   const sources = useDataSources()
   const relations = useRelations()
+  const links = useSourceLinks()
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -54,11 +61,16 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
   const warnt: Record<Bereich, boolean> = {
     datenquellen: probleme.some((p) => p.name === 'Datenquelle fehlt'),
     relationen: false,
+    // Eine halbfertige Verknuepfung verbindet nichts. Das faellt sonst erst
+    // in SoftEngine auf (leeres Feld ohne Erklaerung) — hier ist es sichtbar,
+    // solange es noch billig zu beheben ist.
+    verknuepfungen: links.list.some((l) => !istBrauchbar(l)),
   }
 
   const navZahl: Record<Bereich, string> = {
     datenquellen: String(sources.list.length),
     relationen: String(relations.list.length),
+    verknuepfungen: String(links.list.length),
   }
 
   return createPortal(
@@ -105,6 +117,7 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
             ))}
           </nav>
           {bereich === 'datenquellen' && <DatenquellenBereich />}
+          {bereich === 'verknuepfungen' && <VerknuepfungBereich />}
           {bereich === 'relationen' && <RelationenBereich />}
         </div>
       </div>
