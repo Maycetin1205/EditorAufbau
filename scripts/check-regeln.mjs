@@ -121,17 +121,16 @@ for (const { tag, typ } of bausteine) {
 
 // --- 3. Dateigroessen-Deckel ------------------------------------------
 // Grosse Dateien sind der Weg zurueck ins unwartbare Vorgaenger-Repo.
-// 500 Zeilen ist die Grenze; die zwei Altlasten duerfen NICHT wachsen
-// (Schrumpfen ist jederzeit erlaubt -- dann Deckel hier nachziehen).
+// 500 Zeilen ist die Grenze. Altlasten (hoehere Einzel-Deckel) gibt es
+// KEINE mehr -- jede Quelldatei faellt unter denselben Deckel.
+// StepForm.tsx stand hier bis 2026-07-24 mit 722 Zeilen (geteilt in
+// ParameterZeile / RelationAuswahl / SchrittSelect); Editor.ts bis
+// 2026-07-27 mit 559 -- jetzt 422, weil Seiten, Raster und Auswahl in
+// eigene Faecher gezogen wurden (pageOps / rasterOps / selectionOps).
+// Damit ist die Ausnahme ersatzlos entfallen: der Zustandsspeicher kann
+// nicht mehr unbemerkt zum Monolithen wachsen.
 const DECKEL = 500
-// StepForm.tsx stand hier bis 2026-07-24 mit 722 Zeilen — jetzt geteilt
-// (ParameterZeile / RelationAuswahl / SchrittSelect) und wieder unter dem
-// Deckel. Bleibt nur Editor.ts: der Zustandsspeicher, dessen Aufteilen
-// riskanter waere als die 60 Zeilen wert sind (Entscheidung 2026-07-24).
-// Darf ausschliesslich schrumpfen.
-const ALTLASTEN = {
-  'src/state/Editor.ts': 560,
-}
+const ALTLASTEN = {}
 
 for (const pfad of quellen) {
   const zeilen = zeilenVon(lies(pfad))

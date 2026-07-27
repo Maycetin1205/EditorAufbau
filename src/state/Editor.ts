@@ -6,7 +6,15 @@
 //   persistence   — Laden, Verteidigen (sanitize), Notfallkopie, Speichern
 //   migrations    — Übernahme alter Speicherstände
 //   templateRules — Musterkarten-Markierung + Löschschutz
+//   pageOps       — Seiten der Maske (Hauptseite + Popups), Fluss-Kinder
+//   rasterOps     — Rasterfläche: Bewegen, Größe, Einfügen an der Zelle
+//   selectionOps  — Aufklapp-Auswahl (Board → Spalte → Karte)
 // Außenverhalten und öffentliche Schnittstelle sind UNVERÄNDERT.
+//
+// Die Fächer rechnen NUR — sie halten keinen Zustand, hören auf niemanden und
+// melden nichts. Sie bekommen den Baum herein und geben den neuen zurück
+// (null = nichts zu tun). Den Baum übernehmen, die Historie schreiben und
+// EINMAL melden: allein hier. Ein Horchposten, eine Meldestelle.
 //
 // Speichert nur einen serialisierbaren BlockNode-Baum (flache Map + Wurzel) und
 // benachrichtigt React per Subject. Position = Verschachtelung + Reihenfolge
@@ -19,12 +27,7 @@ import {
 } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
-import {
-  naechsteFreieZeile,
-  parseRasterPos,
-  RASTER,
-  rasterSpecOf,
-} from '../core/blocks/rasterLayout'
+import { parseRasterPos, rasterSpecOf } from '../core/blocks/rasterLayout'
 import { type BlockEventsMap } from '../core/data/aktionen'
 import { type DataSource } from '../core/data/dataSources'
 import { dataSourceStore } from './DataSourceStore'
@@ -40,6 +43,20 @@ import {
   isRemoveProtected as istMusterGeschuetzt,
   templateMarkFor as templateMarkInTree,
 } from './templateRules'
+import {
+  aktiveSeitenWurzel,
+  kinderImFluss,
+  seitenDerMaske,
+  type SeitenEintrag,
+} from './pageOps'
+import {
+  freieZeileAuf,
+  istRasterFlaeche,
+  neuerBlockAnZelle,
+  zelleneinzug,
+  zellenGroesse,
+} from './rasterOps'
+import { drillDownZiel } from './selectionOps'
 import { deepClone } from '../lib/deepClone'
 
 // Der persistence-Wächter (und Rettungs-Anleitungen) importieren den
@@ -71,25 +88,14 @@ export class Editor extends Subject<Editor> {
 
   // Wurzel der AKTIVEN Seite: Canvas, Bibliothek und Drag-Ziele
   // arbeiten dadurch automatisch auf der Seite, die gerade offen ist.
-  // Verschwindet die Seite (Undo, Löschen), fällt alles auf die Hauptseite.
   get rootId(): string {
-    return this._tree[this._activePageId] ? this._activePageId : ROOT_ID
+    return aktiveSeitenWurzel(this._tree, this._activePageId)
   }
 
   get activePageId(): string { return this.rootId }
 
-  // Seiten der Maske: Hauptseite + alle Seiten-Bausteine (pageBlock) unter
-  // der Wurzel, in Baum-Reihenfolge. Registry-getrieben, kein `if type===`.
-  get pages(): { id: string; name: string; istHauptseite: boolean }[] {
-    const popups = (this._tree[ROOT_ID]?.childIds ?? [])
-      .map((id) => this._tree[id])
-      .filter((n): n is BlockNode => Boolean(n) && getBlockDefinition(n!.type)?.pageBlock === true)
-      .map((n) => ({
-        id: n.id,
-        name: typeof n.props.name === 'string' && n.props.name !== '' ? n.props.name : 'Popup',
-        istHauptseite: false,
-      }))
-    return [{ id: ROOT_ID, name: 'Hauptseite', istHauptseite: true }, ...popups]
+  get pages(): SeitenEintrag[] {
+    return seitenDerMaske(this._tree)
   }
 
   // Seite wechseln: reiner Arbeitszustand (kein History-Schritt); die
@@ -123,13 +129,7 @@ export class Editor extends Subject<Editor> {
   getNode(id: string): BlockNode | undefined { return this._tree[id] }
 
   childNodesOf(parentId: string): BlockNode[] {
-    const parent = this._tree[parentId]
-    if (!parent) return []
-    return parent.childIds
-      .map((id) => this._tree[id])
-      // Seiten-Bausteine (Popups) erscheinen NIE im Fluss ihres Elternteils —
-      // sie sind eigene Seiten (Reiter), keine Inhalte der Hauptseite.
-      .filter((n): n is BlockNode => Boolean(n) && getBlockDefinition(n!.type)?.pageBlock !== true)
+    return kinderImFluss(this._tree, parentId)
   }
 
   // Anzahl echter Blöcke (ohne die Wurzel).
@@ -193,13 +193,6 @@ export class Editor extends Subject<Editor> {
   // nicht aufnimmt (allowedChildTypes) — dann kein History-Eintrag, null.
   // Ohne parentId landet der Block auf der AKTIVEN Seite — die
   // Bibliothek bestückt damit automatisch die Seite, die gerade offen ist.
-  // Rasterfläche = die oberste Ebene (Wurzel) oder ein Popup-Rumpf
-  // (pageBlock): dort liegen die Blöcke im Raster, nicht im Fluss. Registry-
-  // getrieben über das pageBlock-Kennzeichen, kein `if type===`.
-  private istRasterFlaeche(node: BlockNode): boolean {
-    return node.id === ROOT_ID || getBlockDefinition(node.type)?.pageBlock === true
-  }
-
   addBlock(type: string, parentId?: string, index?: number): BlockNode | null {
     const parent = this._tree[parentId ?? this.rootId] ?? this._tree[ROOT_ID]
     if (!canContain(parent.type, type)) return null
@@ -211,11 +204,9 @@ export class Editor extends Subject<Editor> {
     // Registry und rückt in die freie Zeile ganz unten (Einfügen „ans Ende") —
     // sonst lägen alle neuen Blöcke aufeinander in Zeile 0. INNERHALB von
     // Containern (Spalte/Zeile/Karte) bleibt die Fluss-Reihenfolge.
-    if (this.istRasterFlaeche(parent)) {
+    if (istRasterFlaeche(parent)) {
       const spec = rasterSpecOf(getBlockDefinition(type))
-      const y = naechsteFreieZeile(
-        this.childNodesOf(parent.id).map((n) => parseRasterPos(n.props)),
-      )
+      const y = freieZeileAuf(this._tree, parent.id)
       node.props = { ...node.props, rasterX: 0, rasterY: y, rasterW: spec.startW, rasterH: spec.startH }
     }
     const childIds = [...parent.childIds]
@@ -273,30 +264,10 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Auswahl auf der Rasterfläche = Aufklapp-Auswahl (Nutzer-Regel 2026-07-23,
-  // „Kanban-Problem"): ein Klick wählt IMMER zuerst den obersten Baustein unter
-  // dem Zeiger (das Board — egal, wo hineingeklickt wurde); ein weiterer Klick
-  // in den bereits gewählten steigt EINE Ebene tiefer (Board → Spalte → Karte).
-  // Registry-frei: die Kette entsteht aus dem Baum bis zur nächsten Rasterfläche
-  // (Wurzel/Popup-Rumpf). `clickedId` ist der TIEFSTE Baustein unter dem Zeiger
-  // (der innerste BlockHost fängt den Klick zuerst ab).
+  // Aufklapp-Auswahl (Board → Spalte → Karte) — Regel siehe selectionOps.
   selectDrillDown(clickedId: string): void {
-    const node = this._tree[clickedId]
-    if (!node || clickedId === ROOT_ID) return
-    const kette: string[] = []
-    let cur: BlockNode | undefined = node
-    while (cur && cur.id !== ROOT_ID) {
-      kette.unshift(cur.id)
-      const parent: BlockNode | undefined = cur.parentId ? this._tree[cur.parentId] : undefined
-      // Oberste Ebene erreicht, sobald das Elternteil eine Rasterfläche ist.
-      if (!parent || parent.id === ROOT_ID || getBlockDefinition(parent.type)?.pageBlock) break
-      cur = parent
-    }
-    if (kette.length === 0) return
-    const i = this._selectedId ? kette.indexOf(this._selectedId) : -1
-    // In der Kette → eine Ebene tiefer (am Grund bleiben); sonst → oberste Ebene.
-    const ziel = i >= 0 ? kette[Math.min(i + 1, kette.length - 1)] : kette[0]
-    this.selectBlock(ziel)
+    const ziel = drillDownZiel(this._tree, clickedId, this._selectedId)
+    if (ziel !== null) this.selectBlock(ziel)
   }
 
   // Datenquelle in Reichweite eines Blocks:
@@ -429,11 +400,9 @@ export class Editor extends Subject<Editor> {
       // Zeile ganz unten (keine Überlappung mit den vorhandenen Blöcken); seine
       // Breite/Höhe behält er. Freies Verschieben auf der Fläche selbst ist
       // Sache der Bewegen-Etappe (E2) — hier nur der Überlappungs-Schutz.
-      if (this.istRasterFlaeche(newParent)) {
+      if (istRasterFlaeche(newParent)) {
         const pos = parseRasterPos(node.props)
-        const y = naechsteFreieZeile(
-          this.childNodesOf(newParentId).map((n) => parseRasterPos(n.props)),
-        )
+        const y = freieZeileAuf(this._tree, newParentId)
         next[id] = { ...next[id], props: { ...node.props, rasterX: 0, rasterY: y, rasterW: pos.w, rasterH: pos.h } }
       }
     }
@@ -441,101 +410,37 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Verschiebt einen Block auf eine feste Zelle einer Rasterfläche (E2
-  // „Bewegen", Nutzer-Entscheidung B 2026-07-23 „Bausteine bleiben stehen"):
-  // NUR der gezogene Block wandert an die Zielzelle — KEIN Ausweichen, die
-  // Nachbarn bleiben EXAKT stehen (nichts bewegt sich von selbst). Legt man zwei
-  // übereinander, überlappen sie bewusst; auseinandergeschoben wird von Hand am
-  // Raster. Ein pushHistory + ein notify = EIN Undo-Schritt. Kommt der Block von
-  // einer ANDEREN Fläche / aus einem Container, bekommt er die Registry-
-  // Startgröße (nie Vollbreite); auf DERSELBEN Fläche behält er seine Größe.
+  // Block auf eine feste Zelle verschieben — Regeln siehe rasterOps.
+  // Ein pushHistory + ein notify = EIN Undo-Schritt.
   moveNodeToCell(id: string, parentId: string, x: number, y: number): void {
-    const node = this._tree[id]
-    const parent = this._tree[parentId]
-    if (!node || !parent || id === ROOT_ID) return
-    if (!this.istRasterFlaeche(parent)) return
-    if (!canContain(parent.type, node.type)) return
-    // Niemals in den eigenen Teilbaum einhängen (Zyklus).
-    if (collectSubtree(this._tree, id).includes(parentId)) return
-    const gleicheFlaeche = node.parentId === parentId
-    const cur = parseRasterPos(node.props)
-    const spec = rasterSpecOf(getBlockDefinition(node.type))
-    const w = gleicheFlaeche ? cur.w : spec.startW
-    const h = gleicheFlaeche ? cur.h : spec.startH
-    const nx = Math.max(0, Math.min(x, RASTER.spalten - w))
-    const ny = Math.max(0, y)
-    // Nichts zu tun: gleiche Fläche, gleiche Zelle, gleiche Größe (reiner Klick).
-    if (gleicheFlaeche && nx === cur.x && ny === cur.y && w === cur.w && h === cur.h) return
+    const next = zelleneinzug(this._tree, id, parentId, x, y)
+    if (!next) return
     this.pushHistory()
-    const next: BlockTree = { ...this._tree }
-    if (!gleicheFlaeche && node.parentId && next[node.parentId]) {
-      next[node.parentId] = {
-        ...next[node.parentId],
-        childIds: next[node.parentId].childIds.filter((c) => c !== id),
-      }
-      next[parentId] = { ...next[parentId], childIds: [...next[parentId].childIds, id] }
-    }
-    next[id] = {
-      ...node,
-      parentId,
-      props: { ...node.props, rasterX: nx, rasterY: ny, rasterW: w, rasterH: h },
-    }
     this._tree = next
     this._selectedId = id
     this.notify(this)
   }
 
-  // Größe eines Blocks auf einer Rasterfläche ändern (Anfasser rechts/unten) —
-  // setzt rasterW/rasterH; die NACHBARN bleiben stehen (Nutzer-Entscheidung B:
-  // nichts weicht aus, ein wachsender Block überlappt bewusst, statt andere
-  // wegzudrücken). Läuft LIVE im Zieh-Zug, der die Undo-Transaktion klammert
-  // (zieheGroesse begin/endTransaction) — deshalb nur pushHistory (im
-  // Transaktions-Fenster absorbiert) + notify, kein eigener begin/end.
-  // `achse` 'x' = Breite (rasterW), 'y' = Höhe (rasterH).
+  // Größe auf der Rasterfläche ändern — Regeln siehe rasterOps. Läuft LIVE im
+  // Zieh-Zug, der die Undo-Transaktion klammert (zieheGroesse begin/end) —
+  // deshalb nur pushHistory (im Transaktions-Fenster absorbiert) + notify.
   resizeNodeToCells(id: string, achse: 'x' | 'y', value: number): void {
-    const node = this._tree[id]
-    if (!node || !node.parentId) return
-    const parent = this._tree[node.parentId]
-    if (!parent || !this.istRasterFlaeche(parent)) return
-    const cur = parseRasterPos(node.props)
-    // Breite nie über den rechten Rand hinaus; Höhe darf beliebig wachsen
-    // (Nachbarn bleiben stehen, der Block überlappt bewusst nach unten). Mindestens EINE Zelle.
-    const w = achse === 'x' ? Math.max(1, Math.min(value, RASTER.spalten - cur.x)) : cur.w
-    const h = achse === 'y' ? Math.max(1, value) : cur.h
-    if (w === cur.w && h === cur.h) return
+    const next = zellenGroesse(this._tree, id, achse, value)
+    if (!next) return
     this.pushHistory()
-    const next: BlockTree = {
-      ...this._tree,
-      [id]: { ...node, props: { ...node.props, rasterW: w, rasterH: h } },
-    }
     this._tree = next
     this.notify(this)
   }
 
-  // Fügt einen neuen Block aus der Bibliothek an eine feste Zelle ein (E3
-  // „Einfügen an der Zelle"): Startgröße aus der Registry an der Drop-Zelle —
-  // EIN Undo-Schritt, vorhandene Bausteine bleiben stehen (Nutzer-Entscheidung
-  // B). Verweigert Typen, die die Fläche nicht aufnimmt.
+  // Neuen Block an eine feste Zelle einfügen — Regeln siehe rasterOps.
   addBlockAtCell(type: string, parentId: string, x: number, y: number): BlockNode | null {
-    const parent = this._tree[parentId]
-    if (!parent || !this.istRasterFlaeche(parent) || !canContain(parent.type, type)) return null
+    const res = neuerBlockAnZelle(this._tree, type, parentId, x, y)
+    if (!res) return null
     this.pushHistory()
-    const { nodes, rootId } = createBlockSubtree(type)
-    const node = nodes[rootId]
-    node.parentId = parent.id
-    const spec = rasterSpecOf(getBlockDefinition(type))
-    const nx = Math.max(0, Math.min(x, RASTER.spalten - spec.startW))
-    const ny = Math.max(0, y)
-    node.props = { ...node.props, rasterX: nx, rasterY: ny, rasterW: spec.startW, rasterH: spec.startH }
-    const next: BlockTree = {
-      ...this._tree,
-      ...nodes,
-      [parent.id]: { ...parent, childIds: [...parent.childIds, node.id] },
-    }
-    this._tree = next
-    this._selectedId = node.id
+    this._tree = res.tree
+    this._selectedId = res.node.id
     this.notify(this)
-    return node
+    return res.node
   }
 
   clear(): void {

@@ -42,7 +42,13 @@ src/
 │                   (EditorProvider/EditorContext — keine Weltvariable)
 ├── state/          Editor.ts = Zustand + öffentliche Methoden; Fächer daneben:
 │                   treeOps (Baum), history (Undo), persistence (Browser-
-│                   Speicher + Notfallkopie BACKUP_KEY), migrations, templateRules
+│                   Speicher + Notfallkopie BACKUP_KEY), migrations, templateRules,
+│                   pageOps (Seiten + Fluss-Kinder), rasterOps (Zelle/Größe/
+│                   Einfügen), selectionOps (Aufklapp-Auswahl).
+│                   Die Fächer RECHNEN nur: Baum rein, neuer Baum raus
+│                   (null = nichts zu tun). Zustand halten, Historie schreiben
+│                   und melden macht allein Editor.ts — ein Horchposten,
+│                   eine Meldestelle.
 ├── core/
 │   ├── blocks/     Registry-KONZEPTE: BlockDefinition (Fähigkeiten wie
 │   │               allowedChildTypes, bindableSpots, blockEvents, bindingProp,
