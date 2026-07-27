@@ -745,7 +745,20 @@
         height: var(--zeilen-hoehe);
         box-sizing: border-box;
       }
+      /* Die Kopfzeile sitzt IM scrollenden Rumpf und klebt dort oben fest.
+         Grund (Nutzer-Meldung 2026-07-27, zweiter Anlauf): stand sie
+         ausserhalb, war sie um die Scrollleiste BREITER als die Zeilen
+         darunter — ihre Spaltentrenner liefen um 3,75px, 7,5px, 11,25px
+         aus der Flucht, wachsend nach rechts. Im selben Kasten koennen
+         Kopf, Zeilen und Lineal gar nicht mehr verschieden breit sein.
+         Der sichtbare Nebeneffekt ist erwuenscht: die Ueberschriften
+         bleiben beim Scrollen stehen.
+         Die Flaeche MUSS deckend sein, sonst scheinen Zeilen durch. */
       .kopf {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        flex: none;
         background: var(--se-panel-2);
         border-bottom: 1px solid var(--se-line);
         font-size: var(--se-fs-sm);
@@ -905,6 +918,7 @@
           @input=${e=>this.setzeSuchtext(e.target.value)}
         />
       </div>`:``}
+      <div class="koerper">
       <div class="kopf" style=${Qn(t)}>
         ${e.map((e,t)=>b`<div
             data-ff-editable
@@ -912,7 +926,6 @@
             @click=${e=>{this.klickSpaltenkopf(e,t),this.klickSortiere(t)}}
           >${e.titel}${!this.editable&&this._sortSpalte===t?b`<span class="sort-pfeil">${this._sortAuf?` ▲`:` ▼`}</span>`:``}</div>`)}
       </div>
-      <div class="koerper">
         ${te.map(n=>b`<div class="zeile" style=${Qn(t)}>
             ${n?n.map(e=>b`<div>${e}</div>`):e.map(()=>b`<div>${ee}</div>`)}
           </div>`)}

@@ -368,6 +368,7 @@ export class TabelleBlock extends BasicBlock {
           @input=${(e: Event) => this.setzeSuchtext((e.target as HTMLInputElement).value)}
         />
       </div>` : ''}
+      <div class="koerper">
       <div class="kopf" style=${styleMap(cols)}>
         ${spalten.map(
           (s, i) => html`<div
@@ -388,7 +389,6 @@ export class TabelleBlock extends BasicBlock {
             : ''}</div>`,
         )}
       </div>
-      <div class="koerper">
         ${zeilen.map(
           (row) => html`<div class="zeile" style=${styleMap(cols)}>
             ${row
