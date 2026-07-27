@@ -60,11 +60,18 @@ src/
 │   ├── kanban/     Kanban + Spalte + Karte; seRuntime.ts = Kanban-Hydrierung
 │   ├── card/       Karte (acht bindbare Stellen, LEER-Regel, tierIcon.ts)
 │   ├── formfeld/   Formularfeld (bindbar, feldRuntime = Feld-Hydrierung)
-│   ├── datum/      Datumsanzeige (ungebunden Uhr, gebunden Feldwert)
+│   ├── datum/      TAGESWÄHLER der Maske (‹ Datum › + Heute). Ohne eigene
+│   │               Eigenschaften: keine Quelle, keine Bindung. Er setzt den
+│   │               Tag, nach dem Kanban/Tabelle filtern ("Tag filtern nach")
 │   ├── button/     Schaltfläche (trägt Aktionsketten)
 │   ├── popup/      Popup-Seite (pageBlock: zentriertes Fenster, X, Abdunklung)
 │   ├── zeile/      Zeilen-Layout
-│   └── shared/     seAktionen.ts = Ketten-LAUFZEIT (Schritte ausführen)
+│   └── shared/     seAktionen.ts = Ketten-LAUFZEIT (Schritte ausführen);
+│                   datenAnschluss.ts = DIE Anmelde-/Neuzeichnen-Mechanik;
+│                   gewaehlterTag.ts = DER Tag der Maske (Tageswähler setzt,
+│                   datengetriebene Bausteine horchen — keiner kennt den
+│                   anderen); tagFilter.ts = DIE Regel "nur Sätze dieses
+│                   Tages"; datumSchluessel.ts = DIE Übersetzung deutsch ↔ ISO
 ├── softengine/     Die SoftEngine-SCHICHT (kennt NIE einen Baustein):
 │   ├── bridge.ts   Anmeldung basisHTML_REGISTER, Daten-Push, Abo-Punkt
 │   │               onSeDaten, Diagnose-Overlay (Strg+Alt+D)

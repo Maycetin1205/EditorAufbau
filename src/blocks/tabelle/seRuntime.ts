@@ -13,6 +13,8 @@
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
+import { gewaehlterTag } from '../shared/gewaehlterTag'
+import { zeilenAmTag } from '../shared/tagFilter'
 
 export interface RuntimeTableElement extends HTMLElement {
   datenzeilen: string[][]
@@ -51,7 +53,14 @@ export function hydrateTable(el: RuntimeTableElement): void {
     return
   }
   const felder = spaltenFelder(el)
-  const rows = rowsFor(seGlobal().SEDATA, source.name, source.tableId)
+  // Tagesfilter (shared/tagFilter): ohne eingestelltes Datumsfeld bzw. ohne
+  // gewaehlten Tag bleibt die Liste unveraendert — Tabellen ohne
+  // Tageswaehler verhalten sich exakt wie vorher.
+  const rows = zeilenAmTag(
+    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
+    el.getAttribute('tagfield') ?? '',
+    gewaehlterTag(),
+  )
   el.datenzeilen = rows.map((row) => felder.map((code) => (code === '' ? '' : getField(row, code))))
 }
 

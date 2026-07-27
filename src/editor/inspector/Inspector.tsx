@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from 'react'
 import { Copy, MousePointer2, Trash } from 'lucide-react'
+import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import type { ActionStep } from '../../core/data/aktionen'
@@ -281,7 +282,20 @@ export function Inspector() {
     return renderPropControl(property)
   }
 
+  // Ein Wert, EIN Schalter (2026-07-27, Nutzer-Entscheidung): Stellen, die am
+  // Baustein selbst anklickbar sind (bindableSpots), tragen ihre Bindung in der
+  // Prop `<Stelle>Field`. Dafür gehört KEIN zweites Bedienelement in den
+  // Inspector — sonst setzen zwei Schalter denselben Wert und niemand weiß,
+  // welcher gilt (Regel 7: Bedienung am Ding, Inspector nur für Unzeigbares).
+  // Registry-getrieben über bindingProp = die EINE Namensstelle: greift
+  // automatisch für jeden künftigen Baustein, niemand muss daran denken.
+  // Bausteine ohne anklickbare Stelle (Kanban „Einsortieren nach") behalten
+  // ihr Control — dort gibt es nichts zum Anklicken.
+  const amBausteinGebunden = new Set<string>(
+    (def.bindableSpots ?? []).map((spot) => bindingProp(spot.prop)),
+  )
   const visibleProps = def.customProperties.filter((p) => {
+    if (amBausteinGebunden.has(p.attributeName)) return false
     if (!p.visibleWhen) return true
     return Object.is(block.props[p.visibleWhen.attributeName], p.visibleWhen.equals)
   })

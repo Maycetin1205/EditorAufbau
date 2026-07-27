@@ -37,6 +37,12 @@ const STAMM_TABLE_IDS: Record<Exclude<DataSourceKind, 'idb'>, string> = {
   beleg: 'BEL',
 }
 
+// Eine FELD-ART (Text/Zahl/Datum/Uhrzeit) gab es hier am 2026-07-27 einen
+// halben Tag lang: sie sollte „Tag filtern nach" auf Datumsfelder verengen.
+// Wieder entfernt am selben Tag (Nutzer-Entscheidung) — der Bediener kennt
+// seine Felder und waehlt selbst; die Art zwang ihn nur, jedes Bestandsfeld
+// nachzupflegen, bevor die Auswahl ueberhaupt etwas anbot. Bindbare Stellen
+// zeigen darum ausnahmslos ALLE Felder der Quelle.
 export interface DataSourceField {
   // Technikwert: direkter Property-Name im Datensatz ODER 'pos_len'
   // (Position_Länge im SATZ, z. B. '193_30').
@@ -171,7 +177,8 @@ export function sanitizeDataSources(raw: unknown): DataSource[] {
       if (typeof ff.code !== 'string' || ff.code === '') continue
       if (typeof ff.label !== 'string' || ff.label === '') continue
       // Nur code + label — ein `sample` aus Altbeständen (bis 2026-07-10)
-      // wird bewusst verworfen: Beispielwerte gibt es nicht mehr.
+      // oder ein `art` aus dem halben Tag Feld-Art (2026-07-27) wird
+      // bewusst verworfen: beides gibt es nicht mehr.
       fields.push({ code: ff.code, label: ff.label })
     }
     seen.add(e.id)

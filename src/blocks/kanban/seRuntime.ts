@@ -21,6 +21,8 @@ import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
+import { gewaehlterTag } from '../shared/gewaehlterTag'
+import { zeilenAmTag } from '../shared/tagFilter'
 import { runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -28,8 +30,8 @@ import { KanbanSpalteBlock } from './KanbanSpalteBlock'
 // ---------- Pure Helfer (Node-testbar, kein DOM) ----------
 
 // Ziel-Spalte einer Zeile: erster exakter Treffer gegen die Spaltentitel.
-// Leere Titel und unbekannte Werte liefern -1; hydrate entscheidet danach
-// zwischen gewählter Auffangspalte und Nicht zugeordnet.
+// Leere Titel und unbekannte Werte liefern -1; hydrate nimmt dann die
+// gewählte Auffangspalte, sonst die erste Spalte.
 export function columnIndexFor(value: string, columnValues: readonly string[]): number {
   const v = value.trim().toLowerCase()
   if (v !== '') {
@@ -58,13 +60,15 @@ const templates = new WeakMap<HTMLElement, HTMLElement>()
 // keine duplizierten String-Literale).
 const SPALTE_TAG = KanbanSpalteBlock.tagName
 const CARD_TAG = CardBlock.tagName
-const AUTO_COLUMN_ATTR = 'data-ff-nicht-zugeordnet'
-const AUTO_COLUMN_TITLE = 'Nicht zugeordnet'
+// Bis 2026-07-27 baute die Laufzeit hier eine eigene Spalte „Nicht
+// zugeordnet", wenn eine Zeile in keine Spalte passte und keine
+// Auffangspalte gewählt war. Ersatzlos gestrichen (Nutzer-Entscheidung):
+// der Baukasten erfindet keine Spalte, die der Bediener nie hingestellt
+// hat — solche Zeilen landen jetzt in der ERSTEN Spalte.
 
 function columnsOf(board: HTMLElement): HTMLElement[] {
   return Array.from(board.children).filter(
-    (el): el is HTMLElement =>
-      el.tagName.toLowerCase() === SPALTE_TAG && !el.hasAttribute(AUTO_COLUMN_ATTR),
+    (el): el is HTMLElement => el.tagName.toLowerCase() === SPALTE_TAG,
   )
 }
 
@@ -109,38 +113,30 @@ function hydrate(board: HTMLElement): void {
   }
   if (!template) return // keine Musterkarte, nirgends: nichts tun
 
-  const rows = rowsFor(seGlobal().SEDATA, source.name, source.tableId)
+  // Tagesfilter (shared/tagFilter): ohne eingestelltes Datumsfeld bzw. ohne
+  // gewaehlten Tag bleibt die Liste unveraendert — Boards ohne Tageswaehler
+  // verhalten sich exakt wie vorher.
+  const rows = zeilenAmTag(
+    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
+    board.getAttribute('tagfield') ?? '',
+    gewaehlterTag(),
+  )
   // Titel = Datenwert (2026-07-14): heading reist als Export-Attribut mit.
   const columnValues = columns.map((c) => c.getAttribute('heading') ?? '')
   const spots = spotsForTag(template.tagName)
   const catchIdx = catchColumnIndex(columns.map((c) => c.getAttribute('auffang')))
 
   // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
-  board.querySelectorAll('[' + AUTO_COLUMN_ATTR + ']').forEach((el) => el.remove())
-  let autoColumn: HTMLElement | null = null
-  const ensureAutoColumn = (): HTMLElement => {
-    if (!autoColumn) {
-      autoColumn = document.createElement(SPALTE_TAG)
-      autoColumn.setAttribute('heading', AUTO_COLUMN_TITLE)
-      autoColumn.setAttribute(AUTO_COLUMN_ATTR, '')
-      autoColumn.setAttribute(
-        'style',
-        columns[0].getAttribute('style') ?? 'flex-grow:1;flex-basis:0;min-width:0',
-      )
-      board.appendChild(autoColumn)
-    }
-    return autoColumn
-  }
-
   for (const col of columns) cardsOf(col).forEach((card) => card.remove())
   for (const row of rows) {
     const card = template.cloneNode(true) as HTMLElement
     const idx = statusField === ''
       ? -1
       : columnIndexFor(getField(row, statusField), columnValues)
+    // Kein Treffer: gewählte Auffangspalte, sonst die erste Spalte.
     const target = idx >= 0
       ? columns[idx]
-      : catchIdx >= 0 ? columns[catchIdx] : ensureAutoColumn()
+      : catchIdx >= 0 ? columns[catchIdx] : columns[0]
     target.appendChild(card)
     // Gebundene Stellen mit den Zeilenwerten füllen — ungebundene behalten
     // den statischen Text der Vorlage. Property-Zuweisung NACH dem Einhängen
@@ -224,14 +220,14 @@ function wireDrag(board: HTMLElement): void {
   board.addEventListener('dragend', () => { dragged = null })
   board.addEventListener('dragover', (e) => {
     const column = columnOfEvent(board, e)
-    if (dragged?.board === board && column && !column.hasAttribute(AUTO_COLUMN_ATTR)) {
+    if (dragged?.board === board && column) {
       e.preventDefault()
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
     }
   })
   board.addEventListener('drop', (e) => {
     const column = columnOfEvent(board, e)
-    if (!column || column.hasAttribute(AUTO_COLUMN_ATTR)) return
+    if (!column) return
     e.preventDefault()
     handleDrop(board, column)
     dragged = null

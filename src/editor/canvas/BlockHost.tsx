@@ -273,17 +273,17 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
               const next = listeLesen(block.props[listenBindung.prop], listenBindung)
               const ziel = next[listenPicker.index]
               if (ziel) {
-                // Der Titel des Bedieners ist heilig: nur ein NIE angefasster
-                // Titel (exakt die Standard-Vorlage) darf zum Feld-Klarnamen
-                // werden. Wer „Kunde" getippt hat, behaelt „Kunde" — auch nach
-                // dem Binden. (Fehler der Erstfassung: sie ueberschrieb immer.)
-                const standard = standardTitel(listenBindung, listenPicker.index)
-                const unberuehrt = titelJetzt === '' || titelJetzt === standard
-                if (unberuehrt) {
-                  ziel[listenBindung.titelKey] = code === ''
-                    ? standard
-                    : dataSource.fields.find((f) => f.code === code)?.label ?? code
-                }
+                // Feld gewaehlt = Klarname in den Titel, IMMER (Nutzer-
+                // Entscheidung 2026-07-27). Die Vorfassung schuetzte selbst
+                // getippte Titel — nach dem ersten Binden galt aber der
+                // eingesetzte Klarname selbst als getippt, und ein Umstellen
+                // auf ein anderes Feld liess den alten Titel stehen: die
+                // Spalte hiess „Tiername" und zeigte Zimmer. Lieber einmal
+                // zu viel umbenennen als eine Spalte, die luegt; wer einen
+                // eigenen Titel will, tippt ihn nach dem Binden.
+                ziel[listenBindung.titelKey] = code === ''
+                  ? standardTitel(listenBindung, listenPicker.index)
+                  : dataSource.fields.find((f) => f.code === code)?.label ?? code
                 ziel[listenBindung.feldKey] = code
                 editor.updateProperty(block.id, listenBindung.prop, next)
               }

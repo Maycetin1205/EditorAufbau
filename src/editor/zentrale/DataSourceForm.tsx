@@ -58,6 +58,9 @@ function zeileFromField(f: DataSourceField): FeldZeile {
 
 const LEERE_ZEILE: FeldZeile = { label: '', pos: '', len: '', rawCode: '' }
 
+// Spaltenraster der Feld-Liste: Klarname | Position | Länge | Entfernen.
+const FELD_SPALTEN = 'grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2'
+
 // Feldcode einer Zeile ('' = ungültig): Eingaben gewinnen, sonst rawCode.
 function zeilenCode(z: FeldZeile): string {
   if (z.pos.trim() === '' && z.len.trim() === '' && z.rawCode !== '') return z.rawCode
@@ -174,7 +177,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
               <Plus size={14} /> Feld
             </Button>
           </div>
-          <div className="grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2 text-[0.6875rem] text-muted-foreground">
+          <div className={`${FELD_SPALTEN} text-[0.6875rem] text-muted-foreground`}>
             <span>Klarname</span>
             <span>Position</span>
             <span>Länge</span>
@@ -182,7 +185,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </div>
           {zeilen.map((z, i) => (
             <div key={i} className="flex flex-col gap-1">
-              <div className="grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2">
+              <div className={FELD_SPALTEN}>
                 <TextInput
                   aria-label={`Feld ${i + 1}: Klarname`}
                   value={z.label}

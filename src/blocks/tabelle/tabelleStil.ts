@@ -88,6 +88,27 @@ export const tabelleStil = css`
       .koerper {
         flex: 1 1 auto;
         overflow: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Zeilen behalten ihre feste Hoehe, auch als Flex-Kinder: ohne
+         flex:none wuerden sie zusammengedrueckt, sobald der Rumpf zu klein
+         wird — der Zeilentakt waere dahin. */
+      .koerper > .zeile { flex: none; }
+      /* Das LINEAL im Leerraum unter der letzten Zeile: ein eigenes Element
+         statt eines Hintergrunds auf dem Rumpf.
+         Grund (Nutzer-Meldung 2026-07-27, senkrechte Linien versetzt): der
+         Rumpf scrollt. Sobald Datensaetze drin sind, erscheint die
+         Scrollleiste und die Zeilen werden in der SCHMALEREN Restbreite
+         gezeichnet — ein Hintergrund auf dem Rumpf rechnet seine
+         Spaltenbreite aber weiter aus der vollen Breite samt
+         Scrollleisten-Streifen. Der Versatz wuchs nach rechts (bei 15px
+         Leiste und drei Spalten: 5px, 10px).
+         Als eigenes Kind hat das Lineal EXAKT die Breite der Zeilen — mit
+         und ohne Scrollleiste. Es kann sich gar nicht mehr verrechnen. */
+      .lineal {
+        flex: 1 1 auto;
+        min-height: 0;
         /* ZWEI Lagen, sonst sieht der leere Rest kaputt aus: nur Querstriche
            ohne Spaltentrenner wirkt wie eine abgebrochene Tabelle.
            1. waagerecht im Zeilentakt, 2. senkrecht im Spaltentakt

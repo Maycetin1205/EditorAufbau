@@ -30,6 +30,9 @@ export interface DefaultChildSpec {
 // Der Block markiert das Stellen-Element im Template mit
 // data-ff-spot="<prop>" (Klick-Ziel) und data-ff-bound (Daten-Markierung,
 // sichtbar nur im Editor — gated über data-ff-editor am Host).
+// Eine Stelle zeigt IMMER alle Felder ihrer Quelle: welches Feld passt,
+// entscheidet der Bediener (Nutzer-Entscheidung 2026-07-27, nachdem eine
+// Einschraenkung auf Feld-Arten nur Pflegearbeit erzeugte).
 export interface BindableSpot {
   prop: string
   label: string

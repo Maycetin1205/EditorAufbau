@@ -338,11 +338,14 @@ describe('Runtime-Bündel', () => {
     // P1.1: der Vorlagen-Kasten ist abgeschafft — ein Bündel, das ihn noch
     // trägt, ist veraltet.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — ff-kanban-vorlage ist abgeschafft').not.toContain('ff-kanban-vorlage')
-    // B2 (V2/K6): Zeilen ohne Treffer verschwinden NIE still — ein Bündel
-    // ohne Auffang-Kennzeichen + "Nicht zugeordnet"-Laufzeitspalte hätte
-    // wieder die abgeschaffte stille "erste Spalte"-Regel.
-    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Auffang-Kennzeichen (B2) fehlt').toContain('auffang')
-    expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" (B2) fehlt').toContain('data-ff-nicht-zugeordnet')
+    // Die Auffangspalte bleibt waehlbar — sie ist der EINE Weg, Zeilen ohne
+    // Treffer bewusst zu lenken.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Auffang-Kennzeichen fehlt').toContain('auffang')
+    // Umgekehrt zur Vorfassung (Nutzer-Entscheidung 2026-07-27): die
+    // Laufzeit erfindet KEINE Spalte "Nicht zugeordnet" mehr. Ohne
+    // Auffangspalte landen Zeilen ohne Treffer in der ERSTEN Spalte. Ein
+    // Bündel, das das Kennzeichen noch trägt, ist veraltet.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" ist abgeschafft').not.toContain('data-ff-nicht-zugeordnet')
     // Der eigene Datenanschluss-Dialog ist abgeschafft (2026-07-27): alle
     // Bausteine waehlen ihre Quelle im Inspector. Ein Buendel, das die
     // Wegbeschreibung noch traegt, ist veraltet.
@@ -437,22 +440,27 @@ describe('Tabelle (Fahrplan 4)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Tabelle: „Zeilen pro Seite" ueberlebt den Export', () => {
-    // Die Seitengroesse ist eine Maskeneinstellung (Registry-Eigenschaft) und
-    // muss als Attribut mitreisen — sonst blaettert SoftEngine anders als der
-    // Editor zeigt (WYSIWYG-Bruch, Regel 1).
+  it('Tabelle: „Tag filtern nach" ueberlebt den Export', () => {
+    // Die Tabelle braucht mindestens EINEN Attribut-Round-Trip (Regel 9,
+    // Lehre aus dem stillen Tabellen-Bug 2026-07-24). Bis 2026-07-27 stand
+    // hier „Zeilen pro Seite"; die Einstellung ist abgeschafft (nur noch in
+    // der Fusszeile zur Laufzeit), also uebernimmt das Datumsfeld des
+    // Tagesfilters — ohne Attribut filtert die exportierte Maske nicht und
+    // zeigt andere Zeilen als der Editor (WYSIWYG-Bruch, Regel 1).
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
       tab: {
         id: 'tab',
         type: 'tabelle',
-        props: { width: 'fill', spalten: standardTestSpalten, proSeite: '50' },
+        props: { width: 'fill', spalten: standardTestSpalten, tagField: '118_10' },
         parentId: 'root',
         childIds: [],
       },
     }
     const { html } = exportMask(tree)
-    expect(html).toMatch(/<ff-tabelle[^>]*\sproSeite="50"/i)
+    expect(html).toMatch(/<ff-tabelle[^>]*\stagField="118_10"/i)
+    // Die abgeschaffte Einstellung darf NICHT wieder auftauchen.
+    expect(html).not.toMatch(/proSeite=/i)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 

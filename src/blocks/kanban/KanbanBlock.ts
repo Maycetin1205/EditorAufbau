@@ -63,9 +63,11 @@ export class KanbanBlock extends BasicBlock {
   // ohne Feld landen alle Zeilen in der Auffang- bzw. einer Auto-Spalte.
   // Was ein Drop tut, bestimmt allein die Aktionskette „Karte verschoben"
   // (docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md).
+  // tagField: Feldcode des Datumsfelds, nach dem der Tageswaehler filtert
+  // (Technikwert, unsichtbar). Leer = kein Tagesfilter, alle Saetze.
   static readonly defaultProps = {
     width: 'fill', height: 'fill' as const,
-    source: '', statusField: '',
+    source: '', statusField: '', tagField: '',
   }
   // Raster-Startgröße auf der Maskenfläche (kalibrierbar): das Board ist die
   // grosse Hauptfläche seiner Maske (breit + hoch).
@@ -75,6 +77,12 @@ export class KanbanBlock extends BasicBlock {
       attributeName: 'statusField',
       name: 'Einsortieren nach',
       description: 'Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt. Leer = alle Einträge in der Auffang-Spalte.',      kind: 'field',
+    },
+    {
+      attributeName: 'tagField',
+      name: 'Tag filtern nach',
+      description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt das Board nur Einträge des Tages, den der Tageswähler zeigt. Leer = alle Einträge.',
+      kind: 'field',
     },
   ]
 

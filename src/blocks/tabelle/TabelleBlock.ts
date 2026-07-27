@@ -75,12 +75,11 @@ export class TabelleBlock extends BasicBlock {
     width: 'fill',
     source: '',
     spalten: standardSpalten(),
-    proSeite: String(ZEILEN_PRO_SEITE[0]),
     suche: 'ja',
+    // Feldcode des Datumsfelds fuer den Tageswaehler (Technikwert,
+    // unsichtbar). Leer = kein Tagesfilter, alle Saetze.
+    tagField: '',
   }
-  // Wie viele Zeilen eine Seite zeigt — bisher fest im Code, jetzt je Maske
-  // einstellbar (Regel 2: Faehigkeiten sind Registry-Eintraege). Ohne
-  // Datenquelle sinnlos, deshalb requiresDataSource.
   static readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'suche',
@@ -90,13 +89,17 @@ export class TabelleBlock extends BasicBlock {
       options: [{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }],
       requiresDataSource: true,
     },
+    // „Zeilen pro Seite" war bis 2026-07-27 zweimal da: hier im Inspector
+    // UND unten in der Fusszeile der Tabelle. Beides ersatzlos auf EINEN
+    // Ort zusammengezogen (Nutzer-Entscheidung) — die Fusszeile, wo der
+    // Bediener es in der laufenden Maske umstellt. Die Maske startet immer
+    // mit ZEILEN_PRO_SEITE[0]; es gibt keinen einstellbaren Startwert mehr
+    // und darum auch kein Attribut im Export.
     {
-      attributeName: 'proSeite',
-      name: 'Zeilen pro Seite',
-      description: 'Wie viele Datensaetze eine Seite der Tabelle zeigt.',
-      kind: 'select',
-      options: ZEILEN_PRO_SEITE.map((n) => ({ value: String(n), label: String(n) })),
-      requiresDataSource: true,
+      attributeName: 'tagField',
+      name: 'Tag filtern nach',
+      description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt die Tabelle nur Saetze des Tages, den der Tageswaehler zeigt. Leer = alle Saetze.',
+      kind: 'field',
     },
   ]
   // Raster-Startgröße (Erstwert — im Browser nachzukalibrieren).
@@ -117,11 +120,6 @@ export class TabelleBlock extends BasicBlock {
   // Datenquelle (Technikwert, Vorlagen-id). Leer = statisch (Platzhalter).
   @property() source = ''
 
-  // Zeilen pro Seite, wie der Maskenbauer sie eingestellt hat (Text, weil
-  // Attribute Text sind). Der Bediener kann davon zur Laufzeit abweichen —
-  // s. _proSeiteWahl.
-  @property() proSeite = String(ZEILEN_PRO_SEITE[0])
-
   // Suchzeile ueber der Tabelle ein-/ausschaltbar ('ja' | 'nein').
   @property() suche = 'ja'
 
@@ -139,16 +137,13 @@ export class TabelleBlock extends BasicBlock {
 
   // Paginierung (nur Laufzeit, nicht persistiert).
   private _seite = 0
-  // Abweichung des BEDIENERS von der eingestellten Seitengroesse (null = er
-  // hat nichts umgestellt, dann gilt die Maskeneinstellung `proSeite`).
-  // Getrennt gehalten, damit eine Aenderung im Editor sofort durchschlaegt
-  // und nicht von einer alten Laufzeit-Wahl ueberdeckt wird.
+  // Was der BEDIENER unten in der Fusszeile gewaehlt hat (null = nichts
+  // umgestellt, dann gilt die Startgroesse). Es gibt keine Maskeneinstellung
+  // mehr — die Seitengroesse ist reine Laufzeit-Sache des Bedieners.
   private _proSeiteWahl: number | null = null
 
   private get proSeiteAktuell(): number {
-    if (this._proSeiteWahl !== null) return this._proSeiteWahl
-    const n = Number(this.proSeite)
-    return Number.isFinite(n) && n > 0 ? Math.floor(n) : ZEILEN_PRO_SEITE[0]
+    return this._proSeiteWahl ?? ZEILEN_PRO_SEITE[0]
   }
 
   private spaltenListe(): Spalte[] {
@@ -401,6 +396,7 @@ export class TabelleBlock extends BasicBlock {
               : spalten.map(() => html`<div>${fuellzeichen}</div>`)}
           </div>`,
         )}
+        <div class="lineal"></div>
       </div>
       <!-- Fusszeile IMMER: sie gehoert zum Aufbau der Tabelle, also muss der
            Editor sie zeigen (Regel 1 — was zu sehen ist, IST der Export).

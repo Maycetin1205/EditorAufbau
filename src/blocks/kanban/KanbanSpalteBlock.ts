@@ -79,7 +79,7 @@ export class KanbanSpalteBlock extends BasicBlock {
     jaNeinProperty(
       'auffang',
       'Auffangspalte',
-      'Eintr\u00E4ge ohne passenden Spaltentitel landen hier. Ohne Auffangspalte zeigt die Maske sie sichtbar in \u201ENicht zugeordnet\u201C.',
+      'Eintr\u00E4ge ohne passenden Spaltentitel landen hier. Ohne Auffangspalte landen sie in der ersten Spalte.',
       { requiresDataSource: true, exclusiveAmongSiblings: true },
     ),
   ]
@@ -121,13 +121,6 @@ export class KanbanSpalteBlock extends BasicBlock {
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
       .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-shell: var(--se-amber-shell); --col-line: var(--se-amber-line); }
       .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-shell: var(--se-red-shell); --col-line: var(--se-red-line); }
-      /* Neutrale Laufzeitspalte. */
-      :host([data-ff-nicht-zugeordnet]) .col {
-        --col-strong: var(--se-muted);
-        --col-soft: var(--se-bg);
-        --col-shell: var(--se-panel);
-        --col-line: var(--se-line);
-      }
       .head {
         flex: none;
         display: flex;
