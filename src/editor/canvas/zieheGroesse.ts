@@ -60,11 +60,26 @@ export function zieheGroesse(
     if (auftrag.anwenden) auftrag.anwenden(auftrag.getId(), next)
     else editor.updateProperty(auftrag.getId(), auftrag.prop, next)
   }
-  const onUp = () => {
+  // Die Geste MUSS in jedem Fall abschliessen. Bleibt endTransaction aus,
+  // steht der History-Zaehler dauerhaft > 0 — und history.record() schweigt
+  // dann fuer den REST der Sitzung: ab da wird nichts mehr fuer Undo
+  // aufgezeichnet, ohne dass der Bediener etwas merkt. Darum ausser
+  // pointerup auch pointercancel (Zeiger vom Browser/System entzogen, z. B.
+  // Touch-Geste) und blur (Fenster verlassen, waehrend die Taste haelt —
+  // das pointerup kommt dann nie bei uns an). Beenden ist EINMALIG:
+  // `beendet` schuetzt davor, dass zwei Wege endTransaction doppelt rufen.
+  let beendet = false
+  const beende = () => {
+    if (beendet) return
+    beendet = true
     editor.endTransaction()
     window.removeEventListener('pointermove', onMove)
-    window.removeEventListener('pointerup', onUp)
+    window.removeEventListener('pointerup', beende)
+    window.removeEventListener('pointercancel', beende)
+    window.removeEventListener('blur', beende)
   }
   window.addEventListener('pointermove', onMove)
-  window.addEventListener('pointerup', onUp)
+  window.addEventListener('pointerup', beende)
+  window.addEventListener('pointercancel', beende)
+  window.addEventListener('blur', beende)
 }

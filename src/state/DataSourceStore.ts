@@ -17,6 +17,7 @@ import {
   type DataSource,
 } from '../core/data/dataSources'
 import { deepClone } from '../lib/deepClone'
+import { sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
 
 const STORAGE_KEY = 'aufbau_editor_datenquellen_v1'
@@ -24,13 +25,25 @@ const SAVE_DEBOUNCE_MS = 500
 
 // null = noch nie gespeichert (→ Seed); sonst die sanitierte Liste
 // (auch wenn leer — der Bediener hat dann alles gelöscht).
+//
+// Ein BESCHÄDIGTER Stand ist etwas anderes als „noch nie gespeichert": bis
+// 2026-07-27 fielen beide still auf die mitgelieferten Vorlagen zurück, die
+// echten Datenquellen des Bedieners waren damit wortlos weg. Jetzt wird
+// gesichert und gemeldet (Regel „nichts scheitert still").
 function loadFromStorage(): DataSource[] | null {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
     const parsed = JSON.parse(raw) as { sources?: unknown }
+    // Gültiges JSON, aber keine Liste, wo eine stehen muss: fremder oder
+    // halb-kaputter Inhalt — wie einen Lesefehler behandeln.
+    if (!Array.isArray(parsed?.sources)) {
+      sichereUnlesbaren(STORAGE_KEY, raw, 'Datenquellen')
+      return null
+    }
     return sanitizeDataSources(parsed.sources)
   } catch {
+    sichereUnlesbaren(STORAGE_KEY, raw, 'Datenquellen')
     return null
   }
 }

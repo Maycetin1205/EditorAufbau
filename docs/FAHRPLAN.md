@@ -98,7 +98,7 @@ Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, Ort offen) · „Maske als Date
 speichern/laden" fuer Sicherung und zweiten Arbeitsplatz (heute nur
 Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus exportMask
 herausziehen · Export wirft unbekannte Props still weg (Preflight-Meldung fehlt) ·
-Maske meldet Schreib-/Lesefehler dem Bediener nicht · Masken-Titel fest „Maske" ·
+Masken-Titel fest „Maske" ·
 Editor-UI-Testabdeckung duenn — auch Migrationen/Undo/SE-Datenschicht ohne eigene
 Tests, und `relations.test.ts` testet nur das Modell, nicht die gleichnamige
 Laufzeit-Datei (Nachzieh-Paket ~½ Tag, kein Export) · doppelter Schluessel-Scan

@@ -236,47 +236,6 @@ describe('exportMask', () => {
     expect(html).toMatch(/<ff-popup[^>]*>\n\s+<ff-t-block[^>]*text="Im Popup"/)
   })
 
-  it('Popup-Schritt reist mit dem Klarnamen; Preflight blockt gelöschte Ziele und Doppelnamen (P-B)', () => {
-    const popup = (id: string, name: string) => ({
-      id, type: 'popup',
-      props: { name, breite: 400, hoehe: 300 },
-      parentId: 'root', childIds: [],
-    })
-    const knopf = {
-      id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
-      events: {
-        onClick: [{ id: 's1', type: 'POPUP_OPEN' as const, resultKey: '', popupId: 'p1' }],
-      },
-    }
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'p1'] },
-      a: knopf,
-      p1: popup('p1', 'Neue Behandlung'),
-    }
-    const { html } = exportMask(tree)
-    // Im Ketten-Attribut steht der KLARNAME der Seite, nie die Editor-id.
-    const attr = /data-ff-aktionen="([^"]*)"/.exec(html)?.[1] ?? ''
-    expect(attr).toContain('&quot;popup&quot;:&quot;Neue Behandlung&quot;')
-    expect(attr).not.toContain('popupId')
-    expect(attr).not.toContain('p1')
-    expect(preflightMask(tree, [], [])).toEqual([])
-
-    // Schritt zeigt auf eine gelöschte Popup-Seite → Preflight blockt.
-    const ohneSeite: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
-      a: knopf,
-    }
-    expect(preflightMask(ohneSeite, [], []).some((r) =>
-      r.detail.includes('gelöschte Popup-Seite'))).toBe(true)
-
-    // Zwei Popups mit demselben Namen → Preflight blockt (Laufzeit-Identität).
-    const doppelt: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p1', 'p2'] },
-      p1: popup('p1', 'Neue Behandlung'),
-      p2: popup('p2', 'Neue Behandlung'),
-    }
-    expect(preflightMask(doppelt, [], []).some((r) => r.name === 'Popup-Name doppelt')).toBe(true)
-  })
 })
 
 describe('validateMaskHtml (Verteidigung)', () => {

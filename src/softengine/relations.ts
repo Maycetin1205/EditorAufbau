@@ -21,6 +21,12 @@ import {
   isRecord,
   rowsFor,
 } from './data'
+import { meldeFehler } from './meldung'
+
+// Fehlergrund als lesbarer Satzteil — der Bediener sieht ihn im Balken.
+function fehlertext(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
 
 // Relation-Vorlage in der EXPORTIERTEN Maske: die Vorlagen sind
 // benutzerdefiniert und leben im Editor-localStorage — exportMask bettet die
@@ -170,9 +176,18 @@ function runNextGet(): void {
     const result = newSeMessageResult(seGlobal().SEDATA, before)
     if (result !== undefined) finish(result)
   }, GET_POLL_MS)
-  const timeout = setTimeout(() => { finish('') }, GET_TIMEOUT_MS)
+  // Die drei Fehlerwege eines GET lieferten bis 2026-07-27 still einen
+  // leeren String: die Kette lief mit einem Nichts weiter, der Bediener sah
+  // ein leeres Feld und hielt es fuer „keine Daten vorhanden". Jetzt sagt
+  // die Maske, was los ist — der Rueckgabewert bleibt '', damit die Kette
+  // sich unveraendert verhaelt (kein neuer Abbruch-Weg, kein SE-Kontrakt).
+  const timeout = setTimeout(() => {
+    meldeFehler(`Daten laden: SoftEngine hat nicht geantwortet (Relation Nr. ${job.template.nr}).`)
+    finish('')
+  }, GET_TIMEOUT_MS)
 
   if (typeof g.basisHTML_SND_MSG !== 'function') {
+    meldeFehler('Daten laden nicht moeglich: keine Verbindung zu SoftEngine.')
     finish('')
     return
   }
@@ -181,7 +196,8 @@ function runNextGet(): void {
       NR: job.template.nr,
       PARAMS: job.params,
     })
-  } catch {
+  } catch (error) {
+    meldeFehler(`Daten laden fehlgeschlagen (Relation Nr. ${job.template.nr}): ${fehlertext(error)}`)
     finish('')
   }
 }
@@ -195,10 +211,19 @@ export function executeRelation(
   bootSe()
   const g = seGlobal()
   if (template.verb !== 'GET_RELATION') {
-    if (typeof g.basisHTML_SND_MSG === 'function') {
-      try {
-        g.basisHTML_SND_MSG(template.verb, { NR: template.nr, PARAMS: [...params] })
-      } catch { /* nicht in SE */ }
+    // SCHREIBEN. Bis 2026-07-27 war ein verlorener PUT von einem gelungenen
+    // nicht zu unterscheiden: fehlte die SoftEngine-Funktion, wurde gar nichts
+    // gesendet — und die Kette lief weiter, als waere gespeichert worden.
+    // SoftEngine bestaetigt einen PUT nicht (kein Kontrakt dafuer belegt),
+    // also koennen wir nur den ABSENDEWEG pruefen; genau das tun wir hier.
+    if (typeof g.basisHTML_SND_MSG !== 'function') {
+      meldeFehler('Speichern nicht moeglich: keine Verbindung zu SoftEngine. Die Eingabe wurde NICHT uebernommen.')
+      return Promise.resolve('')
+    }
+    try {
+      g.basisHTML_SND_MSG(template.verb, { NR: template.nr, PARAMS: [...params] })
+    } catch (error) {
+      meldeFehler(`Speichern fehlgeschlagen (Relation Nr. ${template.nr}): ${fehlertext(error)}`)
     }
     return Promise.resolve('')
   }

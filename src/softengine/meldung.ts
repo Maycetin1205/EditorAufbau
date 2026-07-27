@@ -1,0 +1,59 @@
+// meldung — der schmale Fehlerbalken der MASKE.
+//
+// Nutzer-Entscheidung 2026-07-27 (Architektur-Review): ein Lese- oder
+// Schreibversuch, der SoftEngine nie erreicht, darf nicht mehr wie ein
+// gelungener aussehen. Bis dahin lieferten alle Fehlerwege still einen
+// leeren String zurueck — ein verlorener PUT war von einem erfolgreichen
+// nicht zu unterscheiden, und der Bediener arbeitete ahnungslos weiter.
+//
+// Bewusst KEIN alert(): das blockiert die Arbeit und waere bei einer
+// wackeligen Verbindung unertraeglich. Stattdessen eine schmale Leiste am
+// oberen Rand — nicht zu uebersehen, aber im Weg steht sie nicht. Klick
+// schliesst sie, sonst geht sie von selbst.
+//
+// Laeuft NUR in der Maske: die Aktionsketten steigen im Editor schon vorher
+// aus (runEvent prueft data-ff-editor), darum kann der Balken beim Bauen
+// nicht aufpoppen. Ausserhalb eines Browsers (Node-Tests) passiert nichts.
+
+const ANZEIGE_MS = 8000
+
+let balken: HTMLElement | null = null
+let ausblenden: ReturnType<typeof setTimeout> | null = null
+
+function baueBalken(): HTMLElement {
+  const el = document.createElement('div')
+  el.setAttribute('data-ff-meldung', '')
+  el.setAttribute('role', 'alert')
+  el.style.cssText = [
+    'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:2147483647',
+    'padding:7px 12px',
+    'background:var(--se-red-soft,#fbe7e6)',
+    'color:var(--se-red,#c0201a)',
+    'border-bottom:1px solid var(--se-red,#c0201a)',
+    'font:500 12px/1.4 system-ui,sans-serif',
+    'cursor:pointer',
+  ].join(';')
+  el.title = 'Klicken zum Schliessen'
+  el.addEventListener('click', schliesse)
+  return el
+}
+
+function schliesse(): void {
+  if (ausblenden) { clearTimeout(ausblenden); ausblenden = null }
+  balken?.remove()
+  balken = null
+}
+
+// Eine Zeile Klartext an den Bediener. Mehrere Fehler kurz nacheinander
+// teilen sich EINEN Balken (der neueste Text gewinnt) — sonst waechst bei
+// einer abgerissenen Verbindung eine Mauer aus Leisten.
+export function meldeFehler(text: string): void {
+  if (typeof document === 'undefined' || !document.body) return
+  if (!balken) {
+    balken = baueBalken()
+    document.body.appendChild(balken)
+  }
+  balken.textContent = text
+  if (ausblenden) clearTimeout(ausblenden)
+  ausblenden = setTimeout(schliesse, ANZEIGE_MS)
+}

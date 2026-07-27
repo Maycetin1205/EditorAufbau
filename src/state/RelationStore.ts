@@ -17,6 +17,7 @@ import {
   type RelationTemplate,
 } from '../core/data/relations'
 import { deepClone } from '../lib/deepClone'
+import { sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
 
 const STORAGE_KEY = 'aufbau_editor_relationen_v1'
@@ -24,13 +25,22 @@ const SAVE_DEBOUNCE_MS = 500
 
 // null = noch nie gespeichert (→ Seed); sonst die sanitierte Liste
 // (auch wenn leer — der Bediener hat dann alles gelöscht).
+//
+// Beschädigt ≠ nie gespeichert: bis 2026-07-27 wurden die echten Vorlagen
+// bei kaputtem JSON still durch die mitgelieferten ersetzt. Siehe
+// `notfallkopie.ts` (dieselbe Behandlung wie beim Block-Baum).
 function loadFromStorage(): RelationTemplate[] | null {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
     const parsed = JSON.parse(raw) as { relations?: unknown }
+    if (!Array.isArray(parsed?.relations)) {
+      sichereUnlesbaren(STORAGE_KEY, raw, 'Relations-Vorlagen')
+      return null
+    }
     return sanitizeRelationTemplates(parsed.relations)
   } catch {
+    sichereUnlesbaren(STORAGE_KEY, raw, 'Relations-Vorlagen')
     return null
   }
 }

@@ -32,7 +32,7 @@
 // Literale wie bei Karte/Spalte.
 
 import { css, html, nothing, type TemplateResult } from 'lit'
-import { property } from 'lit/decorators.js'
+import { property, state } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
@@ -228,6 +228,16 @@ export class FormFeldBlock extends BasicBlock {
   @property() value = ''
   @property() valueField = ''
 
+  // Der Haken des Ankreuzfelds. Bewusst @state und NICHT @property: er ist
+  // kein Bauplan-Wert und reist nicht in den Export — er entsteht erst, wenn
+  // der Bediener in der fertigen Maske klickt. Bis 2026-07-27 hing er allein
+  // im DOM (`box.checked` direkt gesetzt); jedes Neuzeichnen loeschte ihn,
+  // und der SoftEngine-Daten-Push zeichnet neu — der Bediener hakte an, SE
+  // schob Daten, der Haken war weg. Gefunden im Architektur-Review 2026-07-27.
+  // Die BINDUNG bleibt weiterhin aus: der SE-Wert-Kontrakt (J/N? 1/0?) ist
+  // an keiner echten Maske belegt, und geraten wird nicht (Regel 5).
+  @state() private angehakt = false
+
   private onInput(e: Event): void {
     const t = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     this.value = coerceFeldTyp(this.fieldType) === 'date'
@@ -264,8 +274,17 @@ export class FormFeldBlock extends BasicBlock {
   // klick-durchlässig (pointer-events) und erreicht diesen Handler nie.
   private onTextClick(): void {
     if (this.hasAttribute('data-ff-editor')) return
-    const box = this.renderRoot.querySelector<HTMLInputElement>('input[type="checkbox"]')
-    if (box) box.checked = !box.checked
+    this.setzeHaken(!this.angehakt)
+  }
+
+  // EIN Weg zum Haken — ob ueber das Kaestchen oder ueber die Beschriftung.
+  // Der Zustand liegt im Baustein (ueberlebt das Neuzeichnen), das Kaestchen
+  // zeigt ihn nur an. `change` feuert wie bei jedem anderen Feldtyp, damit
+  // eine daran gehaengte Aktionskette ausloest.
+  private setzeHaken(an: boolean): void {
+    if (this.angehakt === an) return
+    this.angehakt = an
+    this.dispatchEvent(new Event('change'))
   }
 
   private controlTpl(typ: FeldTyp): TemplateResult {
@@ -300,7 +319,12 @@ export class FormFeldBlock extends BasicBlock {
     if (typ === 'checkbox') {
       return html`<div class="feld">
         <div class="zeile">
-          <input class="ctrl" type="checkbox" />
+          <input
+            class="ctrl"
+            type="checkbox"
+            .checked=${this.angehakt}
+            @change=${(e: Event) => this.setzeHaken((e.target as HTMLInputElement).checked)}
+          />
           ${this.textTpl('text')}
         </div>
       </div>`

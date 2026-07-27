@@ -16,6 +16,7 @@ import {
   migrateRootKanbanToViewportFill,
   putzeAlteKartenDemos,
 } from './migrations'
+import { backupKeyFor, sichereUnlesbaren } from './notfallkopie'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
 export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
@@ -23,7 +24,7 @@ export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
 // den der Autosave (STORAGE_KEY) nie anfasst — die beschädigten Rohdaten
 // bleiben damit erhalten, auch nachdem der Editor leer weiterläuft und beim
 // ersten Speichern den kaputten STORAGE_KEY überschreibt.
-export const BACKUP_KEY = 'aufbau_editor_mvp_v1__notfallkopie'
+export const BACKUP_KEY = backupKeyFor(STORAGE_KEY)
 export const SAVE_DEBOUNCE_MS = 500
 
 interface PersistedState {
@@ -92,25 +93,10 @@ export function sanitizeTree(
 }
 
 // Einen UNLESBAREN Speicherstand behandeln (U1, Nutzer-Regel „Verluste
-// passieren nie still"): die Rohdaten ZUERST als Notfallkopie sichern (nur
-// falls dort noch keine liegt — die früheste, wertvollste Kopie bleibt), dann
-// Klartext melden. Der Editor startet danach leer weiter; die Kopie überlebt,
-// weil sie unter einem eigenen Schlüssel liegt (Autosave rührt sie nie an).
+// passieren nie still"). Die Mechanik selbst wohnt seit 2026-07-27 in
+// `notfallkopie.ts` — dieselbe Stelle bedient auch die drei Bibliotheken.
 function backupUnreadableState(raw: string): void {
-  try {
-    if (localStorage.getItem(BACKUP_KEY) === null) {
-      localStorage.setItem(BACKUP_KEY, raw)
-    }
-  } catch { /* Das Sichern selbst darf nie zusätzlich Schaden anrichten. */ }
-  if (typeof alert === 'function') {
-    alert(
-      'Der gespeicherte Editor-Stand war beschädigt und konnte nicht gelesen '
-      + 'werden.\nEr wurde NICHT gelöscht, sondern als Notfallkopie gesichert '
-      + `(Schlüssel „${BACKUP_KEY}" im Browser-Speicher).\n`
-      + 'Der Editor startet vorerst leer; die Kopie bleibt erhalten, bis sie '
-      + 'gerettet oder bewusst entfernt wird.',
-    )
-  }
+  sichereUnlesbaren(STORAGE_KEY, raw, 'Editor-Stand')
 }
 
 export function loadFromStorage(): LoadedState | null {

@@ -51,6 +51,9 @@ src/
 │                   eine Meldestelle. Daneben die Ablagen der maskenweiten
 │                   Daten: DataSourceStore, RelationStore, SourceLinkStore
 │                   (je mit use*-Haken), Subject = der kleine Melder.
+│                   notfallkopie = DIE eine Stelle „unlesbarer Stand":
+│                   erst Rohdaten sichern (BACKUP_KEY), dann Klartext —
+│                   genutzt von persistence UND den drei Ablagen.
 ├── core/
 │   ├── blocks/     Registry-KONZEPTE: BlockDefinition (Fähigkeiten wie
 │   │               allowedChildTypes, bindableSpots, actionValueSpots,
@@ -87,7 +90,9 @@ src/
 │   ├── bridge.ts   Anmeldung basisHTML_REGISTER, Daten-Push, Abo-Punkt
 │   │               onSeDaten, Diagnose-Overlay (Strg+Alt+D)
 │   ├── data.ts     getField/setField (Präfix-Scan), rowsFor, Quellen
-│   └── relations.ts Vorlagen (GET/PUT/PUTADD), serielle GET-Warteschlange
+│   ├── relations.ts Vorlagen (GET/PUT/PUTADD), serielle GET-Warteschlange
+│   └── meldung.ts  Fehlerbalken der MASKE: gescheiterte Lese-/Schreibwege
+│                   melden Klartext statt still '' zu liefern
 ├── editor/         Editor-Oberfläche (NICHT im Export):
 │   ├── canvas/     Fläche, CanvasNode, Drag&Drop (dndState), Seiten-Reiter
 │   │               (SeitenLeiste/PopupSeite), Anfasser (zieheGroesse = DIE
@@ -166,6 +171,11 @@ NIE einen Baustein.**
   über den REGISTER-Callback. PUT: `basisHTML_SND_MSG('PUT_RELATION',
   {NR, PARAMS})`, PARAMS = sechs Strings `[pos, len, 'L', pindex, relId, wert]`,
   relId OHNE `IDB`-Präfix. START_TOOL: `sendBWLinkIntern('0,START_TOOL,<nr>…')`.
+- **meldung.ts:** der schmale Fehlerbalken der Maske (seit 2026-07-27). Ein
+  Lese- oder Schreibweg, der SoftEngine nie erreicht (keine Verbindung,
+  Timeout, Wurf), meldet dem Bediener Klartext, statt still einen leeren
+  String zu liefern — der Rückgabeweg der Ketten bleibt unverändert, es
+  entsteht kein neuer SE-Kontrakt.
 - **Export-Anschluss:** jede Maske lädt
   `<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js` — ohne ihn
   keine SEFILELOOP-Daten und keine Relationen.

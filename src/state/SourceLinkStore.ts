@@ -15,21 +15,31 @@
 
 import { sanitizeSourceLinks, type SourceLink } from '../core/data/sourceLinks'
 import { deepClone } from '../lib/deepClone'
+import { sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
 
 const STORAGE_KEY = 'aufbau_editor_verknuepfungen_v1'
 const SAVE_DEBOUNCE_MS = 500
 
-// Leere Liste, wenn nichts (oder Kaputtes) gespeichert ist — anders als bei
-// den Relationen gibt es hier keinen Startbestand, also auch keinen
-// Unterschied zwischen „noch nie gespeichert" und „alles geloescht".
+// Leere Liste, wenn nichts gespeichert ist — anders als bei den Relationen
+// gibt es hier keinen Startbestand, also auch keinen Unterschied zwischen
+// „noch nie gespeichert" und „alles geloescht".
+//
+// KAPUTTES ist etwas anderes: bis 2026-07-27 verschwanden beschaedigte
+// Verknuepfungen wortlos (leere Liste). Jetzt sichern + melden, siehe
+// `notfallkopie.ts`.
 function loadFromStorage(): SourceLink[] {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (!raw) return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
     const parsed = JSON.parse(raw) as { links?: unknown }
+    if (!Array.isArray(parsed?.links)) {
+      sichereUnlesbaren(STORAGE_KEY, raw, 'Verknuepfungen')
+      return []
+    }
     return sanitizeSourceLinks(parsed.links)
   } catch {
+    sichereUnlesbaren(STORAGE_KEY, raw, 'Verknuepfungen')
     return []
   }
 }
