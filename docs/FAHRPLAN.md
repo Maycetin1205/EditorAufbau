@@ -288,7 +288,30 @@ und Mehr-Quellen-Ausbau sind ausdrücklich GEPARKT.
   Server-Speicherung · Login · Rechte · Ein-Bearbeiter-Sperre ·
   Versionsstände.
 
-### Angemeldet: Verknüpfte Quellen (Nutzer 2026-07-24)
+### In Arbeit: Verknüpfte Quellen (Nutzer 2026-07-24)
+
+**Zwei Festlegungen des Nutzers (2026-07-25) — nicht ohne Rückfrage ändern:**
+
+1. **Höchstens 3 Schlüsselfelder** je Verknüpfung, UND-verknüpft
+   („Kunde *und* Jahr"). Mehr wäre Theorie ohne echten Fall (Regel 10).
+2. **Kein Partner gefunden → kein Wert.** Das Feld bleibt leer, die Zeile
+   bleibt stehen. Sie verschwindet NICHT. Grund: verschwundene Zeilen
+   wären unsichtbarer Datenverlust — der Bediener sähe 240 statt 250
+   Sätze und merkte nie, dass zehn fehlen. Ein leeres Feld sieht er.
+
+**Die vier Pakete** (Stationen wie bei Datenquellen und Relationen, das
+Muster gibt es zweimal — dies ist der dritte Fall):
+
+| | Was | Export berührt? | Stand |
+|---|---|---|---|
+| 1 | Modell + Bestand (`core/data/sourceLinks`, `state/SourceLinkStore`) | nein | **fertig 2026-07-25** |
+| 2 | Bereich in der Steuerung: anlegen und pflegen | nein | offen |
+| 3 | Bindung mit Quellenangabe (`quelleId::feldcode`), an EINER Stelle | ja | offen |
+| 4 | Laufzeit-Auflöser + Export (`FF_SOURCE_LINKS`) + Preflight | ja | offen |
+
+Ab Paket 3 ist ein SE-Echttest fällig.
+
+### Ursprüngliche Anmeldung
 
 **Mehrere Datenquellen gleichzeitig anzeigen und über gleiche Felder
 verbinden** — ein Baustein zeigt einen Wert aus einer ZWEITEN Quelle,
