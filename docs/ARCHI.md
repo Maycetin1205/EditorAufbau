@@ -48,23 +48,34 @@ src/
 │                   Die Fächer RECHNEN nur: Baum rein, neuer Baum raus
 │                   (null = nichts zu tun). Zustand halten, Historie schreiben
 │                   und melden macht allein Editor.ts — ein Horchposten,
-│                   eine Meldestelle.
+│                   eine Meldestelle. Daneben die Ablagen der maskenweiten
+│                   Daten: DataSourceStore, RelationStore, SourceLinkStore
+│                   (je mit use*-Haken), Subject = der kleine Melder.
 ├── core/
 │   ├── blocks/     Registry-KONZEPTE: BlockDefinition (Fähigkeiten wie
-│   │               allowedChildTypes, bindableSpots, blockEvents, bindingProp,
-│   │               acceptsDataSource, resizableHeight …)
+│   │               allowedChildTypes, bindableSpots, actionValueSpots,
+│   │               blockEvents, acceptsDataSource, resizableWidth/Height,
+│   │               listenBindung, raster …); bindingProp/bindingAttr = das
+│   │               Helferpaar für die EINE Bindungs-Attribut-Form
 │   └── data/       Aktionsketten-MODELL (Ereignis → Schritte, echte Union der
-│                   Schritt-Arten) + Datenquellen-Modell
+│                   Schritt-Arten) + Datenquellen-Modell (dataSources) +
+│                   Verknüpfungs-Modell (sourceLinks: 1–3 Schlüsselpaare,
+│                   UND-verknüpft; kein Partner → kein Wert)
 ├── blocks/         Die Bausteine, je Ordner: Definition + Web Component
 │   ├── base/       Gemeinsames (BlockHost-Anbindung)
 │   ├── kanban/     Kanban + Spalte + Karte; seRuntime.ts = Kanban-Hydrierung
 │   ├── card/       Karte (acht bindbare Stellen, LEER-Regel, tierIcon.ts)
 │   ├── formfeld/   Formularfeld (bindbar, feldRuntime = Feld-Hydrierung)
+│   ├── tabelle/    Tabelle (datengetrieben): spalten.ts = Spalten-Modell,
+│   │               sortierung.ts, suche.ts = Inhaltssuche, tabelleStil.ts,
+│   │               seRuntime.ts = Tabellen-Hydrierung
 │   ├── datum/      TAGESWÄHLER der Maske (‹ Datum › + Heute). Ohne eigene
 │   │               Eigenschaften: keine Quelle, keine Bindung. Er setzt den
 │   │               Tag, nach dem Kanban/Tabelle filtern ("Tag filtern nach")
 │   ├── button/     Schaltfläche (trägt Aktionsketten)
 │   ├── popup/      Popup-Seite (pageBlock: zentriertes Fenster, X, Abdunklung)
+│   ├── text/       statisches Atom ff-text (Größe/Gewicht/Ausrichtung frei)
+│   ├── trenner/    statisches Atom ff-trenner (1px-Linie, keine Eigenschaften)
 │   ├── zeile/      Zeilen-Layout
 │   └── shared/     seAktionen.ts = Ketten-LAUFZEIT (Schritte ausführen);
 │                   datenAnschluss.ts = DIE Anmelde-/Neuzeichnen-Mechanik;
@@ -100,15 +111,20 @@ src/
 ├── design/         masken-tokens.css (--se-*) — Masken-Welt
 ├── ui/             Editor-Kleinteile (atoms/molecules, shadcn-Stil)
 ├── lib/ · test/    Helfer · Test-Aufbau
-docs/               ARCHI.md (diese Datei), TRIP-Ordner (1-plans …), decisions/,
-                    softengine-wiki/ (SE-Kontrakte)
+docs/               ARCHI.md (diese Datei) · FAHRPLAN.md (Tagesordnung) ·
+                    softengine-wiki/ (SE-Kontrakte) · chef-maske/ (echte
+                    Referenzmasken) · decisions/ · TRIP-Ordner 2-changelog/,
+                    3-code-review/, 4-unit-tests/, 6-memo/ (1-plans/ legt
+                    TRIP-1-plan bei Bedarf neu an)
 scripts/            check-runtime-bundle.mjs (Bündel-Wächter) + check-docs.mjs (Doku-Wächter)
                     + check-regeln.mjs (Regel-Wächter: bewacht die Bauart)
 ```
 
 ## 4. Kern-Architekturprinzipien (Kurzfassung der 10 Regeln)
 
-Verbindlicher Wortlaut in `CLAUDE.md`. Für die tägliche Arbeit:
+Verbindlicher Wortlaut in `CLAUDE.md`. Für die tägliche Arbeit (die Nummern
+sind die der zehn Regeln; 6 „alter Editor = nur Funktionsliste" und 8 „ein
+Arbeitsbaum = ein Agent" regeln die Zusammenarbeit, nicht die Bauart):
 
 1. **WYSIWYG beweisbar** — eine Render-Quelle; Editor-Hilfen im BlockHost, nie im Baustein.
 2. **Fähigkeiten = Registry-Einträge** — nirgends `if typ === 'kanban'`.
@@ -165,8 +181,11 @@ Schritte. Schritt-Arten (echte Union, Anzeige in Klammern):
 | `RELATION` | GET_RELATION / PUT_RELATION / PUTADD_RELATION | Vorlagen-ID + positionsgetreue Parameter-Zuordnung |
 | `POPUP_OPEN` / `POPUP_CLOSE` | Popup öffnen/schließen | stabile Seiten-id, Export übersetzt in Klarnamen |
 
-Parameterquellen: Fest / Ereignis ({VALUE}, {PINDEX}) / Datenfeld / vorheriges
-Ergebnis / SE-VAR-Array. Benannte GET-Ergebnisse bleiben in der Kette verfügbar.
+Parameterquellen — die echte Union `ACTION_PARAM_SOURCES` (sieben, Technikwert
+→ Anzeige): `fixed` Fest · `context` Ereignis ({VALUE}, {PINDEX}) · `data_field`
+Datenfeld · `block_value` Baustein (aktueller Wert eines Formularfelds, OHNE
+Bindung) · `previous_result` Vorheriger Schritt · `step_result` Ergebnis von
+Schritt N · `se_variable` SE-VAR-Array.
 Laufzeit: `src/blocks/shared/seAktionen.ts`. Verwendete Vorlagen reisen als
 `FF_RELATIONS`, Schritt-Quellen als `FF_DATA_SOURCES` in die Maske.
 
@@ -287,9 +306,11 @@ bleibt bis zum nächsten Push liegen).
 | `npm run check:docs` | Doku-Wächter: ARCHI.md-Version + genannte Scripts gegen package.json |
 | `npm run check:regeln` | Regel-Wächter: Bauart gegen die Architektur-Regeln (s. Abschnitt 9) |
 
-## 13. Bewusste Grenzen (Stand 2026-07-20)
+## 13. Bewusste Grenzen (Stand 2026-07-27)
 
 - Die Feld-Hydrierung arbeitet mit der **ersten Zeile** der Quelle.
 - Ankreuzfeld unbindbar, MEMTAB/ERPAPICALL ungebaut — SE-Kontrakt unbelegt.
 - Werkzeug-Nummern/Relations-NRs sind installations-individuell = Vorlagen-Daten.
-- Vollständige Merkliste: `CLAUDE.md`.
+- Verknüpfte Quellen: Modell + Steuerung stehen (Paket 1+2), die qualifizierte
+  Bindung und der Laufzeit-Auflöser (`FF_SOURCE_LINKS`) fehlen noch (Paket 3+4).
+- Vollständige Merkliste: `docs/FAHRPLAN.md`.
