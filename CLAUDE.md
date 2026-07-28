@@ -66,10 +66,13 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    (`basis.html.interface.js:89/:161`), kein 404. `basisHTML_REGISTER` und
    `basisHTML_SND_MSG` vorhanden, ein Daten-Push angenommen. ABER: dieser
    Lauf war **WinUI/BüroWARE** (`__WEBWARE__: "0"`, `__WINUI_MAJORVERSION__:
-   "7"`) — genau die Plattform, für die der Anschluss ohnehin als optional
-   galt. Die eigentliche Frage („braucht WEBWARE ihn?") ist damit weiterhin
-   OFFEN. Der Tag bleibt drin (defensiver Kompatibilitäts-Anschluss), gilt
-   aber NICHT als belegter Kontrakt, bis derselbe Test in WEBWARE lief.
+   "7"`). Der Nutzer bestätigt im selben Gespräch mündlich, dass die Maske
+   AUCH in WebUI/WEBWARE läuft (kein Protokoll dazu, nur seine Aussage).
+   Praktischer Stand damit: **der Anschluss funktioniert auf beiden
+   Plattformen, er ist kein Risiko.** Unbeantwortet bleibt allein, ob er
+   NÖTIG ist — das entschiede nur ein Lauf OHNE den Tag, und der lohnt erst,
+   wenn jemand ihn entfernen will. Bis dahin: Tag bleibt drin, wird aber
+   nicht als belegter SE-Kontrakt zitiert.
    Nebenbeobachtung aus demselben Protokoll: `CONECT` wird ZWEIMAL gesendet
    (Empfang trotzdem nur 1 Paket) — ungeklärt, ob Interface-Eigenlogik oder
    doppelte Anmeldung.
