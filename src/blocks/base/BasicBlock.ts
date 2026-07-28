@@ -26,6 +26,7 @@ import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { registerBlockType } from '../../core/blocks/blockRegistry'
 import { FLOW_DEFAULTS } from '../../core/blocks/flowLayout'
 import { RASTER_DEFAULTS } from '../../core/blocks/rasterLayout'
+import { QUELLEN_DEFAULTS } from '../../core/data/sourceLinks'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
   // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
@@ -150,7 +151,18 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       // Universelle Flow-Props (width) UND Raster-Props (rasterX/Y/W/H) liegen
       // unter den Block-Defaults, damit Persistenz sie kennt; Block-eigene
       // Defaults gewinnen.
-      defaultProps: { ...FLOW_DEFAULTS, ...RASTER_DEFAULTS, ...BlockClass.defaultProps },
+      // Dazu (2026-07-28) die Liste WEITERER Datenquellen — aber nur fuer
+      // Bausteine, die ueberhaupt eine Datenquelle tragen. Generisch hier
+      // statt in jedem Baustein: ein neuer Baustein mit acceptsDataSource
+      // bekommt die Faehigkeit geschenkt und kann sie nicht vergessen
+      // (Regel 2). Leere Liste = kein Export-Attribut (exportMask), darum
+      // aendert das an bestehenden Masken kein einziges Byte.
+      defaultProps: {
+        ...FLOW_DEFAULTS,
+        ...RASTER_DEFAULTS,
+        ...(BlockClass.acceptsDataSource ? QUELLEN_DEFAULTS : null),
+        ...BlockClass.defaultProps,
+      },
       customProperties: BlockClass.customProperties,
       acceptsChildren: BlockClass.acceptsChildren ?? false,
       resizableWidth: BlockClass.resizableWidth ?? true,

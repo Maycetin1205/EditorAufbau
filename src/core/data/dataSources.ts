@@ -24,6 +24,9 @@
 // pos_len-Liste. Beleg: behandlung-umbau empfang/index.basis.SEvariablen.json
 // ({ ID: 'ADR', FELDER: '2_8,…' } / { ID: 'BEL', FELDER: '1_1,…' } /
 // { ID: 'IDBID0001', FELDER: '*' }; ART analog in behandlung/).
+
+import { QUELLEN_TRENNER } from '../blocks/BlockDefinition'
+
 export type DataSourceKind = 'idb' | 'adressstamm' | 'artikelstamm' | 'beleg'
 
 export const DATA_SOURCE_KINDS: readonly DataSourceKind[] = [
@@ -168,6 +171,13 @@ export function sanitizeDataSources(raw: unknown): DataSource[] {
     if (!entry || typeof entry !== 'object') continue
     const e = entry as Record<string, unknown>
     if (typeof e.id !== 'string' || e.id === '' || seen.has(e.id)) continue
+    // Der Trenner der qualifizierten Bindung (QUELLEN_TRENNER, s.
+    // BlockDefinition) darf in einer Quellen-id nicht vorkommen — sonst waere
+    // 'a::b::128_350' mehrdeutig. Beim Anlegen kann das nicht passieren
+    // (crypto.randomUUID), wohl aber in einer von Hand bearbeiteten Datei.
+    // Eindeutigkeit wird hier an der Quelle garantiert, statt beim Lesen
+    // erraten zu werden.
+    if (e.id.includes(QUELLEN_TRENNER)) continue
     if (typeof e.name !== 'string' || e.name.trim() === '') continue
     if (typeof e.kind !== 'string' || !DATA_SOURCE_KINDS.includes(e.kind as DataSourceKind)) continue
     const fields: DataSourceField[] = []
@@ -175,6 +185,11 @@ export function sanitizeDataSources(raw: unknown): DataSource[] {
       if (!f || typeof f !== 'object') continue
       const ff = f as Record<string, unknown>
       if (typeof ff.code !== 'string' || ff.code === '') continue
+      // Gleicher Grund wie bei der id: ein Feldcode mit Trenner machte die
+      // qualifizierte Bindung mehrdeutig, und sie faellt dann still auf
+      // „nicht gebunden" zurueck. Echte SE-Feldcodes ('193_30') koennen ihn
+      // nicht enthalten.
+      if (ff.code.includes(QUELLEN_TRENNER)) continue
       if (typeof ff.label !== 'string' || ff.label === '') continue
       // Nur code + label — ein `sample` aus Altbeständen (bis 2026-07-10)
       // oder ein `art` aus dem halben Tag Feld-Art (2026-07-27) wird

@@ -11,6 +11,7 @@
 
 import { describe, expect, it } from 'vitest'
 import '../blocks/card/CardBlock'
+import '../blocks/tabelle/TabelleBlock'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 import { Editor } from './Editor'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
@@ -49,6 +50,29 @@ describe('packeMaske / packeMaskeAus (Hin und zurueck)', () => {
     expect(e.inhalt.datenquellen[0].fields).toHaveLength(2)
     expect(e.inhalt.relationen.map((r) => r.nr)).toEqual(['0174'])
     expect(e.inhalt.verknuepfungen[0].keyPairs).toHaveLength(1)
+  })
+
+  it('ein Baustein mit MEHREREN Datenquellen ueberlebt Speichern und Laden', () => {
+    // Der Fall des Nutzers (2026-07-28): Tabelle auf dem Terminplaner, eine
+    // Spalte holt die Notiz aus Kundenhaustieren. Beides steckt in den
+    // Block-Props — geht die Verbindung oder die qualifizierte Bindung beim
+    // Hin und Zurueck verloren, ist die gesicherte Maske stumm kaputt.
+    const inhalt = beispiel()
+    inhalt.tree.a = {
+      id: 'a', type: 'tabelle', parentId: 'root', childIds: [],
+      props: {
+        source: 'q1',
+        weitereQuellen: [{ quelleId: 'q2', keyPairs: [{ fromField: '10_8', toField: '10_8' }] }],
+        spalten: [{ titel: 'Notiz', feld: 'q2::128_350' }],
+        tagField: '', suche: 'nein',
+      },
+    }
+    const e = packeMaskeAus(packeMaske(inhalt))
+    expect(e.ok).toBe(true)
+    if (!e.ok) return
+    expect(e.inhalt.tree.a?.props.weitereQuellen)
+      .toEqual([{ quelleId: 'q2', keyPairs: [{ fromField: '10_8', toField: '10_8' }] }])
+    expect(e.inhalt.tree.a?.props.spalten).toEqual([{ titel: 'Notiz', feld: 'q2::128_350' }])
   })
 
   it('zweimal packen ohne Aenderung ergibt denselben Text (vergleichbare Sicherungen)', () => {

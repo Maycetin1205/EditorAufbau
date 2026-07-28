@@ -21,6 +21,7 @@ import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
+import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
 import { zeilenAmTag } from '../shared/tagFilter'
 import { runEvent } from '../shared/seAktionen'
@@ -125,6 +126,10 @@ function hydrate(board: HTMLElement): void {
   const columnValues = columns.map((c) => c.getAttribute('heading') ?? '')
   const spots = spotsForTag(template.tagName)
   const catchIdx = catchColumnIndex(columns.map((c) => c.getAttribute('auffang')))
+  // Weitere Quellen haengen am BOARD (es traegt die Datenquelle), nicht an
+  // der Karte — der Leser wird deshalb einmal je Board gebaut und von allen
+  // Karten benutzt.
+  const lies = macheFeldLeser(board)
 
   // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
   for (const col of columns) cardsOf(col).forEach((card) => card.remove())
@@ -143,9 +148,9 @@ function hydrate(board: HTMLElement): void {
     // (Element ist dann sicher upgegradet, Lit übernimmt das Rendern).
     for (const spot of spots) {
       // Attribut-Form der Bindungs-Konvention (bindingAttr = die eine Stelle).
-      const code = card.getAttribute(bindingAttr(spot.prop)) ?? ''
-      if (code !== '') {
-        (card as unknown as Record<string, unknown>)[spot.prop] = getField(row, code)
+      const wert = card.getAttribute(bindingAttr(spot.prop)) ?? ''
+      if (wert !== '') {
+        (card as unknown as Record<string, unknown>)[spot.prop] = lies(row, wert)
       }
     }
     // Jede Daten-Karte ist ziehbar. Der Drop ist nur ein Auslöser für die

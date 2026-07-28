@@ -30,7 +30,9 @@ import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { parseRasterPos, rasterSpecOf } from '../core/blocks/rasterLayout'
 import { type BlockEventsMap } from '../core/data/aktionen'
 import { type DataSource } from '../core/data/dataSources'
+import { type QuelleInReichweite } from '../core/data/sourceLinks'
 import { dataSourceStore } from './DataSourceStore'
+import { ersteQuelleInReichweite, quellenInReichweite } from './quellenOps'
 import { Historie, type EditorSnapshot } from './history'
 import { loadFromStorage, persistState, SAVE_DEBOUNCE_MS } from './persistence'
 import { Subject } from './Subject'
@@ -270,22 +272,18 @@ export class Editor extends Subject<Editor> {
     if (ziel !== null) this.selectBlock(ziel)
   }
 
-  // Datenquelle in Reichweite eines Blocks:
-  // der NÄCHSTE Vorfahr (inkl. des Blocks selbst) mit acceptsDataSource
-  // bestimmt die Quelle — die Karte bekommt ihre Felder von IHREM Kanban.
-  // Trägt er keine (auflösbare) Quelle, gibt es keine Felder; weiter oben
-  // wird nicht gesucht. Registry-getrieben, kein `if type===`.
+  // Erste Datenquelle in Reichweite (sie liefert die ZEILEN) — Baumsuche und
+  // Vererbungsregel wohnen in quellenOps, damit Editor und Preflight dieselbe
+  // benutzen statt zweier Abschriften.
   dataSourceFor(id: string): DataSource | undefined {
-    let cur: BlockNode | undefined = this._tree[id]
-    while (cur) {
-      if (getBlockDefinition(cur.type)?.acceptsDataSource) {
-        return typeof cur.props.source === 'string'
-          ? dataSourceStore.get(cur.props.source)
-          : undefined
-      }
-      cur = cur.parentId ? this._tree[cur.parentId] : undefined
-    }
-    return undefined
+    return ersteQuelleInReichweite(this._tree, id, dataSourceStore.list)
+  }
+
+  // ALLE Quellen in Reichweite: die erste plus die weiteren, die am selben
+  // Träger hängen. Genau dieselbe Vererbung — hängt der Bediener eine zweite
+  // Quelle an den Kanban, können alle Karten darin ihre Felder wählen.
+  quellenFor(id: string): QuelleInReichweite[] {
+    return quellenInReichweite(this._tree, id, dataSourceStore.list)
   }
 
   // Musterkarten-Markierung + Löschschutz: dieselben Regeln wie Export und

@@ -10,12 +10,13 @@
 // damit die Toolbar beide Pruefungen identisch behandelt (failedChecks + alert).
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
-import { bindingProp } from '../core/blocks/BlockDefinition'
+import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { actionValueTargets } from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor, stepProblem } from '../core/data/aktionen'
 import type { DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
+import { quellenInReichweite, quellenTraeger } from '../state/quellenOps'
 import type { CheckResult } from './validator'
 
 // S1a: Ein Block mit acceptsDataSource, dessen source-Prop auf eine nicht (mehr)
@@ -23,27 +24,13 @@ import type { CheckResult } from './validator'
 // meldet die Preflight als Fehler. Leerer String = bewusst keine Quelle (ok).
 // Gibt nur die GEFUNDENEN Probleme zurueck (je ein CheckResult, ok:false);
 // ein sauberer Baum liefert eine leere Liste.
-// Quelle in Reichweite eines Blocks — DIESELBE Regel wie Editor.dataSourceFor:
-// der NAECHSTE Vorfahr (inkl. des Blocks selbst) mit acceptsDataSource
-// bestimmt sie; weiter oben wird nicht gesucht. Hier ohne Store gebaut, damit
-// die Preflight rein und in Node testbar bleibt.
-// `gesetzt` unterscheidet „gar keine Quelle gewaehlt" von „Quelle gewaehlt,
-// aber nicht auffindbar" — den zweiten Fall meldet bereits S1a.
-function quelleInReichweite(
-  tree: BlockTree,
-  id: string,
-  sources: readonly DataSource[],
-): { gesetzt: boolean; quelle: DataSource | undefined } {
-  let cur: BlockNode | undefined = tree[id]
-  while (cur) {
-    if (getBlockDefinition(cur.type)?.acceptsDataSource) {
-      const sid = typeof cur.props.source === 'string' ? cur.props.source : ''
-      return { gesetzt: sid !== '', quelle: sources.find((s) => s.id === sid) }
-    }
-    cur = cur.parentId ? tree[cur.parentId] : undefined
-  }
-  return { gesetzt: false, quelle: undefined }
-}
+//
+// Welche Quellen ein Baustein erreicht, beantwortet quellenOps — DIESELBE
+// Funktion, die auch der Editor benutzt. Bis 2026-07-28 stand die Baumsuche
+// hier als Abschrift mit dem Kommentar „DIESELBE Regel wie
+// Editor.dataSourceFor“: eine Doppelung mit Ankuendigung. Meldete der
+// Preflight etwas anderes, als der Editor anbietet, waere das schlimmer als
+// keine Meldung.
 
 export function preflightMask(
   tree: BlockTree,
@@ -68,35 +55,78 @@ export function preflightMask(
         })
       }
     }
-    // S1b: Eine GEBUNDENE Stelle zeigt auf einen Feldcode, den ihre Quelle
-    // nicht (mehr) kennt — z. B. weil das Feld in der Steuerung geloescht
-    // oder umbenannt wurde. Bis 2026-07-27 fiel das nirgends auf: die Maske
-    // exportierte sauber, lud in SoftEngine sauber und blieb an dieser Stelle
-    // einfach leer. Genau die Art stillen Scheiterns, die Regel 4 verbietet.
-    // Auch der Editor kann fuer einen unbekannten Code keinen Klarnamen mehr
-    // zeigen — das WYSIWYG-Versprechen ist also schon vor dem Export gebrochen,
-    // darum blocken statt warnen (fuer IDB- wie Stamm-Quellen gleich).
-    for (const spot of def?.bindableSpots ?? []) {
-      const code = node.props[bindingProp(spot.prop)]
-      if (typeof code !== 'string' || code === '') continue
-      const { gesetzt, quelle } = quelleInReichweite(tree, node.id, sources)
-      if (!gesetzt) {
+    // S1b: Eine GEBUNDENE Stelle zeigt auf ein Feld, das es an der genannten
+    // Stelle nicht (mehr) gibt. Bis 2026-07-27 fiel das nirgends auf: die
+    // Maske exportierte sauber, lud in SoftEngine sauber und blieb an dieser
+    // Stelle einfach leer. Genau die Art stillen Scheiterns, die Regel 4
+    // verbietet. Auch der Editor kann fuer einen unbekannten Code keinen
+    // Klarnamen mehr zeigen — das WYSIWYG-Versprechen ist also schon vor dem
+    // Export gebrochen, darum blocken statt warnen.
+    //
+    // Geprueft werden BEIDE Bindungsarten: feste Stellen (bindableSpots) und
+    // Listen-Eintraege (listenBindung, z. B. Tabellenspalten). Die Listen
+    // fehlten hier bis 2026-07-28 — ausgerechnet der Fall des Nutzers (eine
+    // Spalte aus einer weiteren Quelle) waere damit ungeprueft geblieben.
+    const pruefeBindung = (wert: unknown, stelle: string): void => {
+      if (typeof wert !== 'string' || wert === '') return
+      const bausteinName = def?.displayName ?? node.type
+      const erreichbar = quellenInReichweite(tree, node.id, sources)
+      // Wichtig: gefragt ist die Quelle des TRAEGERS, nicht die des Bausteins
+      // selbst. Eine Karte im Kanban hat gar keine source-Prop — laese man
+      // hier ihre eigene, meldete der Preflight bei einem Kanban mit
+      // geloeschter Quelle zusaetzlich „Bindung ohne Datenquelle" fuer jede
+      // Karte darin, obwohl die Ursache eine einzige ist (S1a meldet sie).
+      if (erreichbar.length === 0) {
+        // Gar keine Quelle in Reichweite — ausser die gewaehlte ist bloss
+        // unauffindbar, das meldet S1a schon (nicht doppelt melden).
+        const traeger = quellenTraeger(tree, node.id)
+        if (typeof traeger?.props.source === 'string' && traeger.props.source !== '') return
         results.push({
           name: 'Bindung ohne Datenquelle',
           ok: false,
-          detail: `Baustein "${def?.displayName ?? node.type}", Stelle "${spot.label}" ist an ein Feld gebunden, aber weder der Baustein noch ein Baustein darueber hat eine Datenquelle gewaehlt — die Stelle bliebe in der Maske leer.`,
+          detail: `Baustein "${bausteinName}", Stelle "${stelle}" ist an ein Feld gebunden, aber weder der Baustein noch ein Baustein darueber hat eine Datenquelle gewaehlt — die Stelle bliebe in der Maske leer.`,
         })
-        continue
+        return
       }
-      // Quelle gewaehlt, aber unauffindbar: meldet S1a schon (nicht doppelt).
-      if (!quelle) continue
-      if (!quelle.fields.some((f) => f.code === code)) {
+      const { quelleId, code } = zerlegeBindung(wert)
+      const ziel = quelleId === ''
+        ? erreichbar[0]
+        : erreichbar.find((q) => q.source.id === quelleId)
+      if (!ziel) {
+        // Die genannte Quelle ist von hier aus nicht zu haben. Zwei sehr
+        // verschiedene Ursachen, darum zwei Meldungen — „unbekannt" heilt man
+        // in der Steuerung, „nicht verbunden" am Baustein.
+        const inBibliothek = sources.find((s) => s.id === quelleId)
+        results.push(inBibliothek
+          ? {
+              name: 'Verbindung fehlt',
+              ok: false,
+              detail: `Baustein "${bausteinName}", Stelle "${stelle}" holt ihren Wert aus "${inBibliothek.name}" — diese Datenquelle haengt aber nicht (mehr) vollstaendig an dem Baustein. Unter Daten die Datenquelle wieder hinzufuegen und die Felder angeben, an denen die zusammengehoerige Zeile erkannt wird.`,
+            }
+          : {
+              name: 'Datenquelle unbekannt',
+              ok: false,
+              detail: `Baustein "${bausteinName}", Stelle "${stelle}" holt ihren Wert aus einer geloeschten oder unbekannten Datenquelle — die Stelle bliebe in der Maske leer.`,
+            })
+        return
+      }
+      if (!ziel.source.fields.some((f) => f.code === code)) {
         results.push({
           name: 'Gebundenes Feld fehlt',
           ok: false,
-          detail: `Baustein "${def?.displayName ?? node.type}", Stelle "${spot.label}": das gebundene Feld gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — die Stelle bliebe in der Maske leer. Feld neu waehlen oder das Feld in der Datenquelle wieder anlegen. (Feldcode ${code})`,
+          detail: `Baustein "${bausteinName}", Stelle "${stelle}": das gebundene Feld gibt es in der Datenquelle "${ziel.source.name}" nicht (mehr) — die Stelle bliebe in der Maske leer. Feld neu waehlen oder das Feld in der Datenquelle wieder anlegen. (Feldcode ${code})`,
         })
       }
+    }
+    for (const spot of def?.bindableSpots ?? []) {
+      pruefeBindung(node.props[bindingProp(spot.prop)], spot.label)
+    }
+    if (def?.listenBindung) {
+      const b = def.listenBindung
+      listeLesen(node.props[b.prop], b).forEach((eintrag, i) => {
+        const titel = String(eintrag[b.titelKey] ?? '') || `Nr. ${i + 1}`
+        pruefeBindung(eintrag[b.feldKey], titel)
+      })
     }
     // B2: exklusive Geschwister-Kennzeichen (exclusiveAmongSiblings in der
     // PropertyDescription, z. B. die Auffangspalte). Der Store verhindert

@@ -5,10 +5,11 @@
 // Zeilen kommen aus der SoftEngine-Schicht; der konkrete Baustein bleibt ein
 // normales Web Component. Editor-Elemente melden sich nie an.
 
-import { bindingAttr } from '../../core/blocks/BlockDefinition'
+import { bindingAttr, zerlegeBindung } from '../../core/blocks/BlockDefinition'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
+import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { runEvent } from '../shared/seAktionen'
 
 export interface RuntimeFieldElement extends HTMLElement {
@@ -20,6 +21,15 @@ interface FieldData {
   code: string
   pindex: string
 }
+
+// Ein Feld, das seinen Wert aus einer WEITEREN Quelle holt, wird NICHT
+// zurueckgeschrieben. Der Schreibweg adressiert den Satz ueber die
+// Datensatz-Nummer der ERSTEN Quelle (PINDEX) — mit dem Feldcode der zweiten
+// waere das die richtige Nummer in der falschen Tabelle, also ein Schreiber
+// auf einen fremden Satz. Erst wenn der Schreibweg fuer die Partnerzeile an
+// einer echten Maske belegt ist, darf das aufgehen (Regel 5/10). Bis dahin
+// zeigt so ein Feld den Wert nur an — sichtbar leer bleibt nichts, und still
+// falsch geschrieben wird auch nichts (Regel 4).
 
 const fieldData = new WeakMap<RuntimeFieldElement, FieldData>()
 const wired = new WeakSet<RuntimeFieldElement>()
@@ -65,8 +75,14 @@ export function hydrateField(field: RuntimeFieldElement): void {
   }
 
   const pindex = source.indexField === '' ? '' : getField(row, source.indexField)
-  fieldData.set(field, { row, code, pindex })
-  field.value = getField(row, code)
+  const { quelleId, code: reinerCode } = zerlegeBindung(code)
+  // Nur eine Bindung an die ERSTE Quelle bekommt einen Schreib-Eintrag.
+  if (quelleId === '') fieldData.set(field, { row, code: reinerCode, pindex })
+  else fieldData.delete(field)
+  // Der Fremd-Leser baut einen Zeilen-Index ueber die weitere Quelle. Fuer
+  // eine Bindung an die erste Quelle waere das reine Arbeit ohne Ertrag —
+  // ein Formular mit zehn Feldern indizierte die Fremdtabelle sonst zehnmal.
+  field.value = quelleId === '' ? getField(row, reinerCode) : macheFeldLeser(field)(row, code)
 }
 
 function writeLocal(field: RuntimeFieldElement): FieldData | undefined {

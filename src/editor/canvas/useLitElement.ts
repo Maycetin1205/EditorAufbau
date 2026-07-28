@@ -11,10 +11,23 @@
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
+import {
+  bindingProp,
+  zerlegeBindung,
+  type BindableSpot,
+} from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import type { DataSource } from '../../core/data/dataSources'
+import type { QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
+
+// Markierung eines Felds, das NICHT aus der ersten Quelle kommt. Bewusst nur
+// ein Zeichen und NICHT der ausgeschriebene Quellenname: „Notiz
+// (Kundenhaustiere)" waere im Editor deutlich breiter als der spaetere echte
+// Wert — die Karte saehe hier anders aus als in SoftEngine, und „was du
+// siehst, IST der Export" ist der Nordstern. Welche Quelle es ist, zeigt der
+// Picker beim Klick. EINE Konstante, damit sich die Markierung in einem Zug
+// aendern laesst, falls sie zu unauffaellig ist.
+const FREMD_ZEICHEN = ' ↗'
 
 interface PropChangeDetail {
   attr: string
@@ -40,7 +53,8 @@ interface LitElementArgs {
   block: BlockNode
   selected: boolean | undefined
   bindableSpots: readonly BindableSpot[]
-  dataSource: DataSource | undefined
+  // Alle Quellen in Reichweite, erste zuerst (Editor.quellenFor).
+  quellen: readonly QuelleInReichweite[]
   // true = der Block sitzt auf einer Rasterflaeche (oberste Ebene / Popup-
   // Rumpf): das Element bekommt das Attribut 'fuellt', damit sein Baustein-CSS
   // die Zelle fuellt (DIESELBE Marke setzt der Export am Wurzel-Kind, WYSIWYG).
@@ -53,7 +67,7 @@ export function useLitElement({
   block,
   selected,
   bindableSpots,
-  dataSource,
+  quellen,
   raster,
 }: LitElementArgs) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -118,12 +132,20 @@ export function useLitElement({
     // statischen Text ohne Markierung; die Bindung selbst bleibt gespeichert
     // und lebt wieder auf, sobald die Quelle zurückkommt.
     for (const spot of bindableSpots) {
-      const code = block.props[bindingProp(spot.prop)]
-      if (typeof code !== 'string' || code === '') continue
-      const field = dataSource?.fields.find((f) => f.code === code)
+      const wert = block.props[bindingProp(spot.prop)]
+      if (typeof wert !== 'string' || wert === '') continue
+      // Gegen die GENANNTE Quelle aufloesen, nicht gegen die erste: im
+      // Bestand des Nutzers gibt es denselben Feldcode in zwei Quellen mit
+      // verschiedener Bedeutung — die erste zu nehmen zeigte den falschen
+      // Klarnamen (Regel 7: der Editor raet nie).
+      const { quelleId, code } = zerlegeBindung(wert)
+      const quelle = quelleId === ''
+        ? quellen[0]?.source
+        : quellen.find((q) => q.source.id === quelleId)?.source
+      const field = quelle?.fields.find((f) => f.code === code)
       if (field) {
         const ziel = VORSCHAU_ALS_PLATZHALTER[`${block.type}.${spot.prop}`] ?? spot.prop
-        elAny[ziel] = field.label
+        elAny[ziel] = field.label + (quelleId === '' ? '' : FREMD_ZEICHEN)
       } else {
         elAny[bindingProp(spot.prop)] = ''
       }
@@ -133,7 +155,7 @@ export function useLitElement({
     // (:host([fuellt]) — der sichtbare Inhalt fuellt die Zelle). In Containern
     // (raster=false) bleibt es aus, der Baustein behaelt seine Naturgroesse.
     el.toggleAttribute('fuellt', !!raster)
-  }, [element, block.type, block.props, selected, bindableSpots, dataSource, raster])
+  }, [element, block.type, block.props, selected, bindableSpots, quellen, raster])
 
   return { containerRef, elementRef, element }
 }

@@ -17,7 +17,7 @@
 // Nutzer-Entscheidung als Anlass. Nichts auf Verdacht (Regel 10).
 
 import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, posix } from 'node:path'
 
 const fehler = []
 const hinweise = []
@@ -273,7 +273,17 @@ for (const pfad of quellen) {
 
   lies(pfad).split('\n').forEach((zeile, i) => {
     const treffer = /from '([^']*\/blocks\/[^']+)'/.exec(zeile)
-    if (!treffer || treffer[1].includes('core/blocks/')) return
+    if (!treffer) return
+    // Relative Angabe gegen das Verzeichnis der importierenden Datei
+    // aufloesen. Bis 2026-07-28 wurde nur der TEXT geprueft ("enthaelt
+    // 'core/blocks/'?") -- damit galt `../blocks/BlockDefinition` aus
+    // src/core/data/ als Baustein-Import, obwohl es die Registry ist. Ein
+    // Waechter, der bei sauberem Code Alarm schlaegt, erzieht dazu, ihn zu
+    // umgehen; also die Frage richtig stellen statt eine Ausnahme eintragen.
+    const ziel = treffer[1].startsWith('.')
+      ? posix.normalize(posix.join(posix.dirname(pfad), treffer[1]))
+      : treffer[1]
+    if (ziel.includes('core/blocks/')) return
     fehler.push(
       `Baustein-Import in generischem Code (Regel 2): ${pfad}:${i + 1}\n` +
       `      -> ${treffer[1]}\n` +

@@ -24,6 +24,7 @@ import { firstDescendantOfType } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
+import { quelleBrauchbar, WEITERE_QUELLEN_PROP, weitereQuellenAus } from '../core/data/sourceLinks'
 import { dataSourceStore } from '../state/DataSourceStore'
 import { relationStore } from '../state/RelationStore'
 import {
@@ -161,6 +162,14 @@ function nodeToHtml(
     .filter((key) => !LAYOUT_ATTR_AUSNAHME.has(key))
     .map((key) => {
       const value = node.props[key] ?? def.defaultProps[key]
+      // LEERE Liste reist gar nicht mit. Ein `weiterequellen="[]"` haenge sonst
+      // an JEDEM Baustein mit Datenquelle in JEDER Maske und sagte nichts —
+      // die Laufzeit-Leser behandeln fehlendes und leeres Attribut ohnehin
+      // gleich (getAttribute(...) ?? '' -> leere Liste). Nebenwirkung, die
+      // hier beabsichtigt ist: bestehende Masken exportieren dadurch weiter
+      // Byte fuer Byte identisch, obwohl alle Bausteine die neue Prop tragen
+      // (Beweis: der Referenzabzug bleibt ohne Erneuerung gruen).
+      if (Array.isArray(value) && value.length === 0) return ''
       // Listen reisen als JSON (komma- und umlautsicher) — String(array) joint
       // mit Komma und ist nicht mehr eindeutig rueckgewinnbar; der Baustein
       // liest das JSON ueber seinen Attribut-Wandler zurueck. Alles andere als
@@ -229,6 +238,14 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
     if (!node) return
     if (getBlockDefinition(node.type)?.acceptsDataSource) {
       add(node.props.source)
+      // Auch die WEITEREN Quellen des Bausteins (2026-07-28). Ohne sie stünde
+      // die zweite Tabelle in KEINER SEFILELOOP — SoftEngine schickte ihre
+      // Daten nie, die Laufzeit fände keine Partnerzeile, und die Stelle
+      // bliebe in der fertigen Maske still leer. Reihenfolge: erst die erste
+      // Quelle des Bausteins, dann seine weiteren (deterministisch).
+      for (const q of weitereQuellenAus(node.props[WEITERE_QUELLEN_PROP])) {
+        if (quelleBrauchbar(q)) add(q.quelleId)
+      }
     }
     node.childIds.forEach((id) => visit(tree[id]))
   }

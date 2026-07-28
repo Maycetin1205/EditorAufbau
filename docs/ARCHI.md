@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
-| Version | `package.json` (`0.2.0`) | SemVer |
+| Version | `package.json` (`0.3.0`) | SemVer |
 
 ## 3. Projektstruktur
 
@@ -44,7 +44,9 @@ src/
 │                   treeOps (Baum), history (Undo), persistence (Browser-
 │                   Speicher + Notfallkopie BACKUP_KEY), migrations, templateRules,
 │                   pageOps (Seiten + Fluss-Kinder), rasterOps (Zelle/Größe/
-│                   Einfügen), selectionOps (Aufklapp-Auswahl).
+│                   Einfügen), selectionOps (Aufklapp-Auswahl),
+│                   quellenOps (welche Datenquellen sind an dieser Stelle des
+│                   Baums zu haben — DIESELBE Antwort für Editor UND Preflight).
 │                   Die Fächer RECHNEN nur: Baum rein, neuer Baum raus
 │                   (null = nichts zu tun). Zustand halten, Historie schreiben
 │                   und melden macht allein Editor.ts — ein Horchposten,
@@ -104,8 +106,14 @@ src/
 ├── editor/         Editor-Oberfläche (NICHT im Export):
 │   ├── canvas/     Fläche, CanvasNode, Drag&Drop (dndState), Seiten-Reiter
 │   │               (SeitenLeiste/PopupSeite), Anfasser (zieheGroesse = DIE
-│   │               eine Zieh-Mechanik), useBindingPicker/useBlockResize
-│   ├── inspector/  Eigenschaften-Panel (nur für Unzeigbares)
+│   │               eine Zieh-Mechanik), useBlockResize;
+│   │               FeldBindung = DIE eine Stelle „Stelle anklicken → Feld
+│   │               wählen" (beide Picker-Fälle: feste Stellen UND
+│   │               Listen-Einträge wie Tabellenspalten), FieldPicker zeigt
+│   │               je Datenquelle des Bausteins eine Gruppe
+│   ├── inspector/  Eigenschaften-Panel (nur für Unzeigbares);
+│   │               QuellenListe = die Datenquellen EINES Bausteins
+│   │               („+ Datenquelle", ab Eintrag 2 mit Schlüsselregel)
 │   ├── zentrale/   Steuerung: Datenquellen | Verknüpfungen | Relationen
 │   │               (Master-Detail);
 │   │               StepForm (Schritt-Formular) blättert im Inspector auf;
@@ -317,6 +325,25 @@ Merksatz: **Lesen hydriert automatisch, Schreiben läuft NUR über sichtbare
 Ketten** (kein Auto-PUT; ein Kanban-Drop führt nur die Kette aus, die Karte
 bleibt bis zum nächsten Push liegen).
 
+**Mehrere Datenquellen je Baustein** (2026-07-28). Ein Baustein trägt eine
+LISTE von Quellen: Eintrag 1 (`source`) liefert die Zeilen, Eintrag 2..n
+(`weitereQuellen`) hängen mit einer Schlüsselregel daran („Adressnummer ist
+gleich Adressnummer"). Gepflegt wird sie am Baustein im Inspector — nicht in
+einer Bibliothek nebenan (Nutzer-Entscheidung: „allgemeine Verknüpfung ergibt
+keinen Sinn", Regel 7).
+
+Eine Bindung sagt dann, aus WELCHER Quelle ihr Feld kommt:
+`kundenhaustiere::128_350`; ohne Vorsilbe gilt weiter Eintrag 1. Bauen und
+Zerlegen dieser Form ist EINE Stelle (`bindungMitQuelle`/`zerlegeBindung` in
+`core/blocks/BlockDefinition.ts`) — niemand sucht selbst nach `::`.
+
+Zur Laufzeit holt `blocks/shared/fremdeQuellen.ts` die Partnerzeile: einmal je
+Hydrierung wird die weitere Quelle nach ihrem Schlüssel indiziert, danach
+kostet jede Zelle einen Zugriff. **Kein Partner → leerer Wert, die Zeile
+bleibt stehen** (Nutzer-Festlegung 2026-07-25: verschwundene Zeilen wären
+unsichtbarer Datenverlust). Der Export nimmt die weiteren Quellen in die
+SEFILELOOP auf — sonst schickte SoftEngine ihre Daten nie.
+
 ## 12. Build & Befehle
 
 | Befehl | Zweck |
@@ -329,11 +356,23 @@ bleibt bis zum nächsten Push liegen).
 | `npm run check:docs` | Doku-Wächter: ARCHI.md-Version + genannte Scripts gegen package.json |
 | `npm run check:regeln` | Regel-Wächter: Bauart gegen die Architektur-Regeln (s. Abschnitt 9) |
 
-## 13. Bewusste Grenzen (Stand 2026-07-27)
+## 13. Bewusste Grenzen (Stand 2026-07-28)
 
 - Die Feld-Hydrierung arbeitet mit der **ersten Zeile** der Quelle.
 - Ankreuzfeld unbindbar, MEMTAB/ERPAPICALL ungebaut — SE-Kontrakt unbelegt.
 - Werkzeug-Nummern/Relations-NRs sind installations-individuell = Vorlagen-Daten.
-- Verknüpfte Quellen: Modell + Steuerung stehen (Paket 1+2), die qualifizierte
-  Bindung und der Laufzeit-Auflöser (`FF_SOURCE_LINKS`) fehlen noch (Paket 3+4).
+- **Mehrere Datenquellen je Baustein: gebaut** (2026-07-28) — Liste im
+  Inspector, Gruppen im Feld-Picker, Partnerzeile zur Laufzeit, beide Quellen
+  in der SEFILELOOP. Grenzen davon: **nur EINE Stufe** (Eintrag 3 verbindet
+  zur ersten Quelle, nie zu Eintrag 2), **kein Schreibweg** in eine weitere
+  Quelle (ein Formularfeld mit Fremdbindung zeigt nur an — PINDEX gehört der
+  ersten Quelle), und **kein Gruppieren/Filtern** nach einem Fremdfeld
+  („Einsortieren nach", „Tag filtern nach" bleiben bei der eigenen Quelle).
+- Die ältere Bibliotheks-Variante der Verknüpfung (`SourceLink`,
+  `VerknuepfungBereich` in der Kommandozentrale) ist vom Nutzer verworfen und
+  an KEINEN Produktivcode angeschlossen — sie wird in einem eigenen Schritt
+  entfernt (`docs/FAHRPLAN.md`).
+- Baustein ↔ Baustein („Zeile anklicken, anderer Baustein reagiert") gibt es
+  nur als EINE fest verdrahtete Leitung: der Tageswähler
+  (`blocks/shared/gewaehlterTag.ts`). Der allgemeine Fall ist Schritt 2.
 - Vollständige Merkliste: `docs/FAHRPLAN.md`.

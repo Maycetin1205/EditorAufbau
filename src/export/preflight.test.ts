@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 // Side-Effect-Imports: registrieren die echten Bausteine der Faelle.
 import '../blocks/popup/PopupBlock'
 import '../blocks/formfeld/FormFeldBlock'
+import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -90,5 +91,87 @@ describe('preflightMask', () => {
       p2: popup('p2', 'Neue Behandlung'),
     }
     expect(preflightMask(doppelt, [], []).some((r) => r.name === 'Popup-Name doppelt')).toBe(true)
+  })
+
+  // --- Bindungen an eine WEITERE Datenquelle (2026-07-28) -----------------
+  //
+  // Ab jetzt kann eine Stelle sagen, aus welcher Quelle ihr Feld kommt. Drei
+  // neue Arten, wie das schiefgehen kann — alle drei blieben in SoftEngine
+  // still leer, also blockt der Export mit Klartext (Regel 4).
+  //
+  // Geprueft wird an einer TABELLENSPALTE. Das ist Absicht: Listen-Bindungen
+  // wurden bis heute gar nicht geprueft — ausgerechnet der Fall des Nutzers
+  // waere ungeprueft geblieben.
+  it('prueft Tabellenspalten und die Angabe der Quelle', () => {
+    const tabelle = (spalten: { titel: string; feld: string }[], weitereQuellen: unknown[] = []): BlockTree => ({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
+        props: {
+          source: 'termine', weitereQuellen, spalten,
+          tagField: '', suche: 'nein',
+        },
+      },
+    })
+    const verbindung = [{ quelleId: 'tiere', keyPairs: [{ fromField: '10_8', toField: '10_8' }] }]
+    const sources = [
+      {
+        id: 'termine', name: 'Terminplaner', kind: 'idb' as const, idbId: 'IDBID0001',
+        indexField: '0_10', fields: [{ code: '10_8', label: 'Adressnummer' }, { code: '78_30', label: 'Tiername' }],
+      },
+      {
+        id: 'tiere', name: 'Kundenhaustiere', kind: 'idb' as const, idbId: 'IDBID0004',
+        fields: [{ code: '10_8', label: 'Adressnummer' }, { code: '128_350', label: 'Notiz' }],
+      },
+    ]
+    const namen = (t: BlockTree) => preflightMask(t, sources, []).map((r) => r.name)
+
+    // Sauber: eigene Spalte + Fremdspalte mit vollstaendiger Verbindung.
+    expect(namen(tabelle(
+      [{ titel: 'Tiername', feld: '78_30' }, { titel: 'Notiz', feld: 'tiere::128_350' }],
+      verbindung,
+    ))).toEqual([])
+
+    // Spalte der EIGENEN Quelle mit unbekanntem Feldcode — bis 2026-07-28
+    // fiel das durch, weil Listen gar nicht geprueft wurden.
+    expect(namen(tabelle([{ titel: 'Weg', feld: '99_9' }])))
+      .toContain('Gebundenes Feld fehlt')
+
+    // Fremdspalte, aber die Verbindung fehlt am Baustein: die Laufzeit faende
+    // die Partnerzeile nicht.
+    expect(namen(tabelle([{ titel: 'Notiz', feld: 'tiere::128_350' }])))
+      .toContain('Verbindung fehlt')
+
+    // Halbfertige Verbindung zaehlt wie keine.
+    expect(namen(tabelle(
+      [{ titel: 'Notiz', feld: 'tiere::128_350' }],
+      [{ quelleId: 'tiere', keyPairs: [{ fromField: '10_8', toField: '' }] }],
+    ))).toContain('Verbindung fehlt')
+
+    // Genannte Quelle gibt es gar nicht (mehr) — andere Ursache, andere Meldung.
+    expect(namen(tabelle([{ titel: 'X', feld: 'gibtsnicht::1_2' }])))
+      .toContain('Datenquelle unbekannt')
+
+    // Verbindung steht, aber das Feld gibt es in der Fremdquelle nicht.
+    expect(namen(tabelle([{ titel: 'X', feld: 'tiere::99_9' }], verbindung)))
+      .toContain('Gebundenes Feld fehlt')
+  })
+
+  it('meldet eine geloeschte Quelle EINMAL, nicht zusaetzlich je gebundener Stelle', () => {
+    // Die Karte im Kanban hat keine eigene source-Prop — sie erbt die des
+    // Boards. Ist dessen Quelle geloescht, ist die Ursache EINE; „Bindung
+    // ohne Datenquelle" waere hier eine falsche Faehrte.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
+        props: {
+          source: 'weg', weitereQuellen: [], spalten: [{ titel: 'Tiername', feld: '78_30' }],
+          tagField: '', suche: 'nein',
+        },
+      },
+    }
+    const namen = preflightMask(tree, [], []).map((r) => r.name)
+    expect(namen).toEqual(['Datenquelle fehlt'])
   })
 })

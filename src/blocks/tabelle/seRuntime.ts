@@ -11,8 +11,9 @@
 // data-ff-editor und melden sich hier nie an — der Editor zeigt Platzhalter.
 
 import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+import { findRuntimeDataSource, rowsFor } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
+import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
 import { zeilenAmTag } from '../shared/tagFilter'
 
@@ -61,7 +62,12 @@ export function hydrateTable(el: RuntimeTableElement): void {
     el.getAttribute('tagfield') ?? '',
     gewaehlterTag(),
   )
-  el.datenzeilen = rows.map((row) => felder.map((code) => (code === '' ? '' : getField(row, code))))
+  // Werte holen ueber den gemeinsamen Feld-Leser: er kennt die weiteren
+  // Quellen des Bausteins und loest eine Spalte, die auf eine davon zeigt,
+  // ueber die Partnerzeile auf (shared/fremdeQuellen). Fuer Spalten der
+  // ersten Quelle ist er schlicht getField.
+  const lies = macheFeldLeser(el)
+  el.datenzeilen = rows.map((row) => felder.map((wert) => (wert === '' ? '' : lies(row, wert))))
 }
 
 // Anmeldung/Abo/Bruecke: die geteilte Mechanik (shared/datenAnschluss).

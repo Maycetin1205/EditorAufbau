@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, RefObject } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { bindingProp, type BindableSpot } from '../../core/blocks/BlockDefinition'
-import type { DataSource } from '../../core/data/dataSources'
 import type { Editor } from '../../state/Editor'
 
 // Gebundener Feldcode einer Stelle ('' = ungebunden) — Bindung liegt in der
@@ -24,7 +23,10 @@ interface BindingPickerArgs {
   blockRef: RefObject<BlockNode>
   selected: boolean | undefined
   bindableSpots: readonly BindableSpot[]
-  dataSource: DataSource | undefined
+  // Hat der Baustein überhaupt eine Quelle in Reichweite? Vorher stand hier
+  // die Quelle selbst, benutzt wurde aber nur ihr Vorhandensein — seit ein
+  // Baustein mehrere tragen kann, wäre „die eine Quelle" schlicht falsch.
+  hatQuelle: boolean
   onSelect?: () => void
 }
 
@@ -33,7 +35,7 @@ export function useBindingPicker({
   blockRef,
   selected,
   bindableSpots,
-  dataSource,
+  hatQuelle,
   onSelect,
 }: BindingPickerArgs) {
   const [picker, setPicker] = useState<{ spot: BindableSpot; top: number; left: number } | null>(null)
@@ -84,7 +86,7 @@ export function useBindingPicker({
     clearPickerTimer()
     // Erst selektieren, dann binden: der Picker öffnet nur am Block, der
     // beim Klick schon selektiert war — und nur mit Quelle in Reichweite.
-    if (!selected || !dataSource) return
+    if (!selected || !hatQuelle) return
     if (e.detail > 1) return // Teil eines Doppelklicks — der entscheidet.
     const hit = spotAt(e)
     if (!hit) return
@@ -110,7 +112,7 @@ export function useBindingPicker({
   // Edit lässt das Event durch (BasicBlock) — stattdessen sofort den Picker.
   function onDoubleClick(e: ReactMouseEvent<HTMLDivElement>) {
     clearPickerTimer()
-    if (!selected || !dataSource) return
+    if (!selected || !hatQuelle) return
     const hit = spotAt(e)
     if (!hit || bindingCode(blockRef.current.props, hit.spot) === '') return
     e.stopPropagation()

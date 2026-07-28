@@ -67,6 +67,27 @@ export interface ListenBindung {
   standardTitel: string
 }
 
+// Titel eines noch unbenannten Listen-Eintrags aus der Vorlage ('Spalte {n}').
+export function listenStandardTitel(b: ListenBindung, index: number): string {
+  return b.standardTitel.replace('{n}', String(index + 1))
+}
+
+// Die Listen-Prop defensiv als Eintragsliste lesen — alte Staende koennen
+// reine Strings enthalten (der Baustein selbst faengt das ebenfalls ab).
+// Steht hier bei der ListenBindung, damit Editor UND Preflight dieselbe
+// Lesart benutzen: liest der eine anders als der andere, meldet der Preflight
+// eine Spalte in Ordnung, die der Editor gar nicht so sieht.
+export function listeLesen(roh: unknown, b: ListenBindung): Record<string, unknown>[] {
+  if (!Array.isArray(roh)) return []
+  return roh.map((x, i) => {
+    if (x && typeof x === 'object') return { ...(x as Record<string, unknown>) }
+    return {
+      [b.titelKey]: typeof x === 'string' ? x : listenStandardTitel(b, i),
+      [b.feldKey]: '',
+    }
+  })
+}
+
 // Auslesbare Stellen liefern aktuelle Laufzeitwerte an Aktionsparameter.
 // Registry-Opt-in statt fest verdrahteter Bausteintypen im Schritt-Editor.
 export type ActionValueSpotsFor<Props> = ReadonlyArray<{
@@ -103,6 +124,66 @@ export function bindingProp<P extends string>(prop: P): BindingProp<P> {
 // Attribute, nicht Props — HTML normalisiert `valueField` zu `valuefield`).
 export function bindingAttr(prop: string): BindingAttr {
   return `${prop.toLowerCase()}field`
+}
+
+// ---------------------------------------------------------------------------
+// Qualifizierte Bindung: aus WELCHER Quelle kommt das Feld? (2026-07-28)
+//
+// Ein Baustein kann mehrere Datenquellen tragen (Nutzer-Fall: eine Karte zeigt
+// den Termin aus dem Terminplaner UND Rasse/Notiz aus Kundenhaustieren). Ein
+// Feldcode allein ist dann nicht mehr eindeutig: im Bestand des Nutzers heisst
+// „Tiername" im Terminplaner 78_30 und in Kundenhaustieren 18_30 — ohne
+// Quellenangabe waere jede Bindung an die zweite Quelle geraten (Regel 7).
+//
+// Darum eine VORSILBE im gespeicherten Wert:
+//   '128_350'                   -> Feld der ERSTEN Quelle (unveraendert)
+//   'kundenhaustiere::128_350'  -> Feld einer weiteren Quelle des Bausteins
+//
+// Warum eine Vorsilbe im String und keine zweite Prop: der Feldcode wohnt an
+// zwei voellig verschiedenen Orten — als Prop `<prop>Field` (feste Stellen)
+// und als Schluessel IM Listen-Eintrag (`spalten[i].feld`, Anzahl erst zur
+// Laufzeit bekannt). Beide halten einen einfachen String, also reist eine
+// Vorsilbe durch beide. Eine Parallel-Prop haette bei der Liste gar keinen Ort
+// (Regel 10: kein Umbau, wo eine Konvention genuegt).
+//
+// Abwaertskompatibel per Konstruktion: kein Trenner = erste Quelle. Alte
+// Speicherstaende, alte Masken und der Referenzabzug bleiben unberuehrt, es
+// gibt KEINE Schema-Migration.
+
+// Trennzeichen zwischen Quellen-id und Feldcode. Quellen-ids duerfen es nicht
+// enthalten — dafuer sorgt sanitizeDataSources (dort, nicht hier beim Lesen:
+// Eindeutigkeit wird an der Quelle garantiert, nie im Nachhinein erraten).
+export const QUELLEN_TRENNER = '::'
+
+// Zerlegtes Bindungsziel. `quelleId: ''` heisst „erste Quelle des Bausteins".
+export interface FeldZiel {
+  quelleId: string
+  code: string
+}
+
+// Die EINE Stelle, die einen qualifizierten Bindungswert BAUT.
+// Leere Quellen-id -> nackter Feldcode. Die erste Quelle wird NIE qualifiziert:
+// sonst gaebe es zwei Schreibweisen fuer dasselbe Ziel, und der Export waere
+// nicht mehr deterministisch (Regel 4).
+export function bindungMitQuelle(quelleId: string, code: string): string {
+  if (quelleId === '' || code === '') return code
+  return `${quelleId}${QUELLEN_TRENNER}${code}`
+}
+
+// Die EINE Stelle, die einen gespeicherten Bindungswert ZERLEGT.
+//
+// Defensiv wie die sanitize*-Funktionen: wirft nie. Alles Mehrdeutige —
+// mehrfacher Trenner, fuehrender/abschliessender Trenner, leere Haelfte — gilt
+// als NICHT qualifiziert und kommt als nackter Code zurueck. Der laeuft dann
+// ins Leere (Feld nicht gefunden -> Stelle bleibt leer) und der Preflight sagt
+// es im Klartext. Ein handgepfuschter Speicherstand darf den Editor nicht
+// anhalten.
+export function zerlegeBindung(wert: string): FeldZiel {
+  const teile = wert.split(QUELLEN_TRENNER)
+  if (teile.length !== 2) return { quelleId: '', code: wert }
+  const [quelleId, code] = teile
+  if (quelleId === '' || code === '') return { quelleId: '', code: wert }
+  return { quelleId, code }
 }
 
 // Typgeprüfte bindableSpots: eine Stelle ist nur deklarierbar, wenn ihre

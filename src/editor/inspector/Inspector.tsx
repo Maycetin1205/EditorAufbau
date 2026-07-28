@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils'
 import { StepForm } from '../zentrale/StepForm'
 import { eigenerText } from '../zentrale/helfer'
 import { AktionenSektion } from './AktionenSektion'
-import { DataSection } from './DataSection'
+import { QuellenListe } from './QuellenListe'
 import { ColorTileControl } from './controls/ColorTileControl'
 import { NumberControl } from './controls/NumberControl'
 import { SegmentControl } from './controls/SegmentControl'
@@ -371,7 +371,7 @@ export function Inspector() {
               generalProps.length > 0 && 'mt-4 border-t border-border pt-4',
             )}
           >
-            {def.acceptsDataSource && <DataSection block={block} />}
+            {def.acceptsDataSource && <QuellenListe block={block} />}
             {dataProps.map(renderPropControl)}
           </div>
         )}
