@@ -6,8 +6,8 @@
 // Ersatz: index.basis.source.html + SEvariablen sind das Ergebnis fuer
 // SoftEngine, eine Einbahnstrasse, aus der nie wieder ein Bauplan wird.
 //
-// Diese Datei ist der Bauplan: Baum + die drei Bibliotheken. Der Editor kann
-// sie schreiben und wieder einlesen.
+// Diese Datei ist der Bauplan: Baum + die zwei Bibliotheken (Datenquellen,
+// Relationen). Der Editor kann sie schreiben und wieder einlesen.
 //
 // GRUNDSATZ „ein Pruef-Eingang, zwei Quellen": der Baum laeuft hier durch
 // DIESELBE Lade-Kette wie der Browser-Speicher (persistence.baumAusRohdaten)
@@ -16,15 +16,14 @@
 //
 // GRUNDSATZ „alles oder nichts": geprueft wird die GANZE Datei, bevor der
 // Aufrufer irgendetwas ersetzt. Eine ungueltige Datei aendert am offenen
-// Stand nichts. (Was NICHT zugesagt werden kann: dass die vier
-// Speicherwege — Maske + drei Bibliotheken — gemeinsam auf die Platte
+// Stand nichts. (Was NICHT zugesagt werden kann: dass die drei
+// Speicherwege — Maske + zwei Bibliotheken — gemeinsam auf die Platte
 // kommen. Sie schreiben seit jeher einzeln; ein Journal waere ein eigener
 // Umbau ohne Anlass, Regel 10.)
 
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
 import { sanitizeRelationTemplates, type RelationTemplate } from '../core/data/relations'
-import { sanitizeSourceLinks, type SourceLink } from '../core/data/sourceLinks'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 import { baumAusRohdaten } from './persistence'
 
@@ -35,13 +34,18 @@ export const MASKEN_DATEI_ART = 'aufbau-editor-maske'
 
 // Format-Version der DATEI (nicht des Baums — der hat schemaVersion).
 // Erlaubt spaetere Aenderungen am Rahmen, ohne zu raten.
-export const MASKEN_DATEI_VERSION = 1
+//
+// Version 2 (2026-07-28): der Abschnitt „verknuepfungen" entfaellt — die
+// Bibliotheks-Verknuepfung ist entfernt, die Schluesselregel haengt am
+// Baustein (`weitereQuellen` in den Block-Props, reist im Baum mit).
+// Version-1-Dateien laden weiter; ihr verknuepfungen-Abschnitt wird beim
+// Lesen angenommen und bewusst verworfen (s. auspacken).
+export const MASKEN_DATEI_VERSION = 2
 
 export interface MaskenInhalt {
   tree: BlockTree
   datenquellen: DataSource[]
   relationen: RelationTemplate[]
-  verknuepfungen: SourceLink[]
 }
 
 // Ergebnis des Auspackens: entweder heil ODER ein Klartext-Grund.
@@ -64,7 +68,6 @@ export function packeMaske(inhalt: MaskenInhalt): string {
       tree: inhalt.tree,
       datenquellen: inhalt.datenquellen,
       relationen: inhalt.relationen,
-      verknuepfungen: inhalt.verknuepfungen,
     },
     null,
     2,
@@ -327,8 +330,14 @@ function auspacken(text: string): AuspackErgebnis {
   if (!quellen.ok) return { ok: false, grund: quellen.grund }
   const relationen = bibliothekPruefen(o.relationen, sanitizeRelationTemplates, 'Relationen')
   if (!relationen.ok) return { ok: false, grund: relationen.grund }
-  const links = bibliothekPruefen(o.verknuepfungen, sanitizeSourceLinks, 'Verknüpfungen')
-  if (!links.ok) return { ok: false, grund: links.grund }
+
+  // Ein „verknuepfungen"-Abschnitt (Dateiversion 1) wird AUSDRUECKLICH
+  // angenommen und verworfen — ohne Verlust-Kontrolle, anders als die zwei
+  // Bibliotheken oben. Die Bibliotheks-Verknuepfung ist am 2026-07-28
+  // entfernt (die Schluesselregel haengt am Baustein, `weitereQuellen`),
+  // und der Abschnitt hat nie etwas bewirkt: kein Produktivcode hat ihn je
+  // gelesen. Es geht also nichts verloren, was je gewirkt hat — eine
+  // Version-1-Datei laedt vollstaendig, nur dieser tote Abschnitt faellt weg.
 
   return {
     ok: true,
@@ -336,7 +345,6 @@ function auspacken(text: string): AuspackErgebnis {
       tree: baum.tree,
       datenquellen: quellen.liste,
       relationen: relationen.liste,
-      verknuepfungen: links.liste,
     },
     // Der Aufrufer zeigt das ERST, wenn wirklich geladen wurde.
     verworfen: baum.verworfen,

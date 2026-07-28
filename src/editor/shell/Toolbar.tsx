@@ -22,7 +22,6 @@ import { dataSourceStore } from '../../state/DataSourceStore'
 import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
 import { meldeVerworfeneTypen } from '../../state/persistence'
 import { relationStore } from '../../state/RelationStore'
-import { sourceLinkStore } from '../../state/SourceLinkStore'
 import { useEditor } from '../../state/useEditor'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -84,7 +83,6 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
       tree: ed.tree,
       datenquellen: [...dataSourceStore.list],
       relationen: [...relationStore.list],
-      verknuepfungen: [...sourceLinkStore.list],
     })
     const heute = new Date().toISOString().slice(0, 10)
     downloadFile(`aufbau-maske-${heute}.json`, text, 'application/json')
@@ -119,7 +117,6 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
 
     dataSourceStore.ersetzeAlle(ergebnis.inhalt.datenquellen)
     relationStore.ersetzeAlle(ergebnis.inhalt.relationen)
-    sourceLinkStore.ersetzeAlle(ergebnis.inhalt.verknuepfungen)
     ed.ersetzeMaske(ergebnis.inhalt.tree)
     meldeVerworfeneTypen(ergebnis.verworfen)
   }

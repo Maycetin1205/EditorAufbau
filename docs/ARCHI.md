@@ -51,10 +51,10 @@ src/
 │                   (null = nichts zu tun). Zustand halten, Historie schreiben
 │                   und melden macht allein Editor.ts — ein Horchposten,
 │                   eine Meldestelle. Daneben die Ablagen der maskenweiten
-│                   Daten: DataSourceStore, RelationStore, SourceLinkStore
+│                   Daten: DataSourceStore, RelationStore
 │                   (je mit use*-Haken), Subject = der kleine Melder.
 │                   maskenDatei = DIE eine Stelle für das Dateiformat
-│                   („Maske speichern/laden": Baum + die drei Bibliotheken;
+│                   („Maske speichern/laden": Baum + die zwei Bibliotheken;
 │                   nutzt DIESELBE Lade-Kette wie der Browser-Speicher,
 │                   `persistence.baumAusRohdaten` — ein Prüf-Eingang, zwei
 │                   Quellen). Laden ersetzt alles und LEERT die Historie.
@@ -62,7 +62,7 @@ src/
 │                   Richtungen: LESEN kaputt → erst Rohdaten sichern
 │                   (BACKUP_KEY), dann Klartext; SCHREIBEN kaputt → Klartext
 │                   EINMAL je Störungsphase, Merker je Speicherschlüssel, nach
-│                   Erfolg zurückgesetzt. Genutzt von persistence UND den drei
+│                   Erfolg zurückgesetzt. Genutzt von persistence UND den zwei
 │                   Ablagen (Schreib-Hälfte seit 2026-07-28, Befund B3).
 ├── core/
 │   ├── blocks/     Registry-KONZEPTE: BlockDefinition (Fähigkeiten wie
@@ -72,8 +72,8 @@ src/
 │   │               Helferpaar für die EINE Bindungs-Attribut-Form
 │   └── data/       Aktionsketten-MODELL (Ereignis → Schritte, echte Union der
 │                   Schritt-Arten) + Datenquellen-Modell (dataSources) +
-│                   Verknüpfungs-Modell (sourceLinks: 1–3 Schlüsselpaare,
-│                   UND-verknüpft; kein Partner → kein Wert)
+│                   Schlüsselregel/weitere Quellen am Baustein (sourceLinks:
+│                   1–3 Schlüsselpaare, UND-verknüpft; kein Partner → kein Wert)
 ├── blocks/         Die Bausteine, je Ordner: Definition + Web Component
 │   ├── base/       Gemeinsames (BlockHost-Anbindung)
 │   ├── kanban/     Kanban + Spalte + Karte; seRuntime.ts = Kanban-Hydrierung
@@ -114,8 +114,7 @@ src/
 │   ├── inspector/  Eigenschaften-Panel (nur für Unzeigbares);
 │   │               QuellenListe = die Datenquellen EINES Bausteins
 │   │               („+ Datenquelle", ab Eintrag 2 mit Schlüsselregel)
-│   ├── zentrale/   Steuerung: Datenquellen | Verknüpfungen | Relationen
-│   │               (Master-Detail);
+│   ├── zentrale/   Steuerung: Datenquellen | Relationen (Master-Detail);
 │   │               StepForm (Schritt-Formular) blättert im Inspector auf;
 │   │               feldUebernahme.ts + FeldUebernahmePicker.tsx = „Feld
 │   │               übernehmen" (Pos/Länge/Tabelle aus gewähltem Feld,
@@ -369,9 +368,10 @@ SEFILELOOP auf — sonst schickte SoftEngine ihre Daten nie.
   ersten Quelle), und **kein Gruppieren/Filtern** nach einem Fremdfeld
   („Einsortieren nach", „Tag filtern nach" bleiben bei der eigenen Quelle).
 - Die ältere Bibliotheks-Variante der Verknüpfung (`SourceLink`,
-  `VerknuepfungBereich` in der Kommandozentrale) ist vom Nutzer verworfen und
-  an KEINEN Produktivcode angeschlossen — sie wird in einem eigenen Schritt
-  entfernt (`docs/FAHRPLAN.md`).
+  `VerknuepfungBereich` in der Kommandozentrale) ist am 2026-07-28 restlos
+  entfernt (Maskendatei-Version 1 → 2; ein alter `verknuepfungen`-Abschnitt
+  wird beim Laden angenommen und verworfen). Die Schlüsselregel lebt am
+  Baustein (`weitereQuellen`).
 - Baustein ↔ Baustein („Zeile anklicken, anderer Baustein reagiert") gibt es
   nur als EINE fest verdrahtete Leitung: der Tageswähler
   (`blocks/shared/gewaehlterTag.ts`). Der allgemeine Fall ist Schritt 2.

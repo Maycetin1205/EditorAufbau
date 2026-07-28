@@ -89,13 +89,13 @@ Produktivcode ruft `findLink` je auf, es wird also nichts Laufendes eingerissen.
 Das Datenmodell (`SchluesselPaar`, 3 Paare, UND-verknuepft) bleibt und wandert
 in die Baustein-Eigenschaften.
 
-**Stand 2026-07-28:** die neue Haelfte steht (v0.3.0). Der alte Bereich in der
-Kommandozentrale steht auf Nutzer-Ansage („darum kuemmern wir uns nachher")
-NOCH da — unbenutzt wie zuvor. Zu entfernen sind dann `VerknuepfungBereich`,
-`SourceLinkStore`/`useSourceLinks`, `SourceLink`+`findLink`+`paareAusSicht` in
-`core/data/sourceLinks.ts` und der `verknuepfungen`-Abschnitt der Maskendatei
-(Dateiversion!). `SchluesselPaar` + `vollstaendigePaare` BLEIBEN — sie tragen
-die neue Haelfte.
+**Stand 2026-07-28: Abriss ERLEDIGT** (noch am selben Tag, nach v0.3.0).
+Entfernt sind `VerknuepfungBereich`, `SourceLinkStore`/`useSourceLinks` und
+`SourceLink`+`findLink`+`paareAusSicht` in `core/data/sourceLinks.ts`. Die
+Maskendatei schreibt keinen `verknuepfungen`-Abschnitt mehr (Dateiversion
+1 → 2); eine Version-1-Datei laedt weiter, ihr Abschnitt wird angenommen und
+bewusst verworfen (er hat nie gewirkt). `SchluesselPaar` +
+`vollstaendigePaare` tragen die neue Haelfte.
 
 Zwei Festlegungen des Nutzers (2026-07-25) gelten weiter, **nicht ohne
 Rueckfrage aendern**:
@@ -135,7 +135,9 @@ lesen, dann mit eigenem Plan neu bauen.
 - **Restlos entfernt — nicht ohne neue Entscheidung wieder einbauen:**
   „Quelle speichern" samt Aenderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD ·
   Projektkarte/project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) ·
-  der Baustein-Baum (Nutzer 2026-07-21).
+  der Baustein-Baum (Nutzer 2026-07-21) · die Verknuepfungs-Bibliothek der
+  Kommandozentrale (`VerknuepfungBereich`/`SourceLinkStore`; Nutzer
+  2026-07-28 — die Schluesselregel lebt am Baustein, `weitereQuellen`).
 - **Abnahme laeuft live — und zwar durch den Nutzer** (Ansage 2026-07-28):
   Browser-Bedienpruefung UND SE-Echttest macht er selbst. Der bauende Agent
   startet keinen Dev-Server und klickt nicht im Preview; er liefert das

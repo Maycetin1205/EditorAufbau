@@ -34,14 +34,11 @@ function beispiel(): MaskenInhalt {
     relationen: [
       { id: 'r1', name: 'Schreiben', verb: 'PUT_RELATION', nr: '0174', params: ['{PINDEX}', '', '{VALUE}'] },
     ],
-    verknuepfungen: [
-      { id: 'v1', fromSourceId: 'q1', toSourceId: 'q1', keyPairs: [{ fromField: '10_8', toField: '10_8' }] },
-    ],
   }
 }
 
 describe('packeMaske / packeMaskeAus (Hin und zurueck)', () => {
-  it('Packen -> Auspacken ergibt denselben Baum und dieselben drei Bibliotheken', () => {
+  it('Packen -> Auspacken ergibt denselben Baum und dieselben zwei Bibliotheken', () => {
     const e = packeMaskeAus(packeMaske(beispiel()))
     expect(e.ok).toBe(true)
     if (!e.ok) return
@@ -49,7 +46,6 @@ describe('packeMaske / packeMaskeAus (Hin und zurueck)', () => {
     expect(e.inhalt.datenquellen.map((q) => q.id)).toEqual(['q1'])
     expect(e.inhalt.datenquellen[0].fields).toHaveLength(2)
     expect(e.inhalt.relationen.map((r) => r.nr)).toEqual(['0174'])
-    expect(e.inhalt.verknuepfungen[0].keyPairs).toHaveLength(1)
   })
 
   it('ein Baustein mit MEHREREN Datenquellen ueberlebt Speichern und Laden', () => {
@@ -133,6 +129,38 @@ describe('packeMaskeAus lehnt Dateien aus der ZUKUNFT ab', () => {
   })
 })
 
+describe('Dateiversion 1 laedt weiterhin (Bestandsdateien auf der Platte)', () => {
+  // Version-1-Dateien tragen den Abschnitt „verknuepfungen" der am
+  // 2026-07-28 entfernten Bibliotheks-Verknuepfung. Er wird angenommen und
+  // bewusst verworfen — er hat nie etwas bewirkt, kein Produktivcode hat
+  // ihn je gelesen. Ginge das kaputt, lehnte der Editor Dateien ab, die er
+  // frueher selbst geschrieben hat.
+  it('eine Version-1-Datei MIT verknuepfungen-Abschnitt laedt sauber', () => {
+    const roh = JSON.parse(packeMaske(beispiel())) as Record<string, unknown>
+    roh.dateiVersion = 1
+    roh.verknuepfungen = [
+      { id: 'v1', fromSourceId: 'q1', toSourceId: 'q2', keyPairs: [{ fromField: '10_8', toField: '10_8' }] },
+    ]
+    const e = packeMaskeAus(JSON.stringify(roh))
+    expect(e.ok).toBe(true)
+    if (!e.ok) return
+    // Baum und beide Bibliotheken kommen vollstaendig an — nur der tote
+    // Abschnitt faellt weg.
+    expect(e.inhalt.tree.a?.props.text).toBe('Hallo Ümlaut')
+    expect(e.inhalt.datenquellen.map((q) => q.id)).toEqual(['q1'])
+    expect(e.inhalt.relationen.map((r) => r.id)).toEqual(['r1'])
+  })
+
+  it('auch ein KAPUTTER verknuepfungen-Abschnitt haelt eine Version-1-Datei nicht auf', () => {
+    // Der Abschnitt wird nicht mehr geprueft — auch Muell darin ist egal,
+    // denn nichts davon wird uebernommen.
+    const roh = JSON.parse(packeMaske(beispiel())) as Record<string, unknown>
+    roh.dateiVersion = 1
+    roh.verknuepfungen = 'kaputt'
+    expect(packeMaskeAus(JSON.stringify(roh)).ok).toBe(true)
+  })
+})
+
 describe('packeMaskeAus verliert nichts still (Zaehlprobe)', () => {
   it('eine kaputte Datenquelle unter mehreren -> Datei wird ABGELEHNT', () => {
     const inhalt = beispiel()
@@ -152,15 +180,6 @@ describe('packeMaskeAus verliert nichts still (Zaehlprobe)', () => {
     const e = packeMaskeAus(JSON.stringify(roh))
     expect(e.ok).toBe(false)
     if (!e.ok) expect(e.grund).toContain('Datenquellen')
-  })
-
-  it('eine Verknuepfung mit einem kaputten SCHLUESSELPAAR -> abgelehnt', () => {
-    const roh = JSON.parse(packeMaske(beispiel())) as Record<string, unknown>
-    const links = roh.verknuepfungen as { keyPairs: unknown[] }[]
-    links[0].keyPairs.push({ fromField: 5 })
-    const e = packeMaskeAus(JSON.stringify(roh))
-    expect(e.ok).toBe(false)
-    if (!e.ok) expect(e.grund).toContain('Verknüpfungen')
   })
 
   it('eine heile Datei laeuft durch, ohne dass die Zaehlprobe anschlaegt', () => {
@@ -358,7 +377,7 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
         root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
         k: { id: 'k', type: 'card', props: { chipText: 'Heute', heading: 'Rückruf' }, parentId: 'root', childIds: [] },
       },
-      datenquellen: [], relationen: [], verknuepfungen: [],
+      datenquellen: [], relationen: [],
     }
     const e = packeMaskeAus(packeMaske(inhalt))
     expect(e.ok).toBe(true)
