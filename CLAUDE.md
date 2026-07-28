@@ -96,6 +96,14 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    `npx eslint src` + `npm run check:regeln` + `npm run check:runtime` +
    `npm run check:docs` + `npm test`), nie zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
    die langsamen Browser-Tests fraßen Tokens und Zeit.
+   **HARTE TEST-SPERRE (Nutzer-Ansage 2026-07-28, sehr deutlich):** KEINE
+   neuen Testarten, keine neue Testumgebung, keine Anzeige-/Komponenten-/
+   DOM-Tests — auch nicht vorschlagen. Zwei Gründe, beide vom Nutzer: sie
+   fressen Tokens, UND sie machen Agenten fahrlässig, weil die sich auf
+   grüne Ampeln verlassen statt selbst zu denken. Der Tabellen-Befund B1
+   belegt genau das: ein GRÜNER Test deckte einen Zweig ab, den das Produkt
+   nie erreichte. Bestehende Tests bleiben und dürfen bei echten Änderungen
+   mitwachsen; neue Test-GATTUNGEN sind tabu.
    **Wer was testet (Nutzer-Ansage 2026-07-28, „softengine und browser test
    MACHE ICH"):** Die Bedienprüfung im Browser UND der SE-Echttest liegen
    ALLEIN beim Nutzer. Der bauende Agent startet keinen Dev-Server, klickt
