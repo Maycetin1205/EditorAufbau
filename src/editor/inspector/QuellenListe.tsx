@@ -20,6 +20,7 @@
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
+import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import {
   MAX_SCHLUESSELPAARE,
@@ -31,30 +32,22 @@ import {
 } from '../../core/data/sourceLinks'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
+import { SelectControl } from './controls/SelectControl'
 
-// Schlichtes Auswahlfeld. Bewusst NICHT das Radix-SelectControl der
-// Nachbarfelder: hier stehen bis zu drei Auswahlen in EINER Zeile
-// nebeneinander („Feld ist gleich Feld"), und das Field-Molekuel bringt
-// Label + Beschreibung mit, die in einer Zeile nur Platz fressen.
-function Auswahl({
-  wert, onWert, titel, children,
-}: {
-  wert: string
-  onWert: (v: string) => void
-  titel: string
-  children: React.ReactNode
-}) {
-  return (
-    <select
-      aria-label={titel}
-      value={wert}
-      onChange={(e) => onWert(e.target.value)}
-      className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-xs"
-    >
-      {children}
-    </select>
-  )
-}
+// Zwei Auswahl-Bauteile, je nach Platz (Angleichung 2026-07-28 — vorher ein
+// selbstgebautes nacktes <select>, das anders aussah als die
+// Eigenschaftsfelder darueber im selben Panel):
+//   - Quellen-Auswahl je Eintrag (EIN beschriftetes Feld pro Zeile) →
+//     dasselbe Radix-SelectControl wie die Nachbarfelder.
+//   - Schluesselregel-Zeilen („Feld = Feld", drei Dinge nebeneinander) →
+//     SchrittSelect: kompakt, ohne das Label/Beschreibungs-Gepaeck des
+//     Field-Molekuels, mit eigenem Aufklapp-Pfeil (der Browser-Pfeil laege
+//     sonst auf dem Text, Nutzer-Korrektur 2026-07-22).
+//
+// Radix-Select verbietet '' als Option-Wert — interner Platzhalter fuer
+// „keine Quelle" (die Prop bleibt dabei der Leer-String; dasselbe Muster
+// wie in der frueheren DataSection).
+const KEINE = '__keine__'
 
 interface QuellenListeProps {
   block: BlockNode
@@ -97,13 +90,16 @@ export function QuellenListe({ block }: QuellenListeProps) {
   }
 
   const quellenAuswahl = (wert: string, titel: string, onWert: (v: string) => void) => (
-    <Auswahl wert={wert} onWert={onWert} titel={titel}>
-      <option value="">— keine —</option>
-      {optionen(wert).map((s) => (
-        <option key={s.id} value={s.id}>{s.name}</option>
-      ))}
-      {fehlt(wert) && <option value={wert}>(gelöschte Quelle)</option>}
-    </Auswahl>
+    <SelectControl
+      label={titel}
+      value={wert === '' ? KEINE : wert}
+      options={[
+        { value: KEINE, label: '— keine —' },
+        ...optionen(wert).map((s) => ({ value: s.id, label: s.name })),
+        ...(fehlt(wert) ? [{ value: wert, label: '(gelöschte Quelle)' }] : []),
+      ]}
+      onChange={(v) => onWert(v === KEINE ? '' : v)}
+    />
   )
 
   return (
@@ -113,10 +109,7 @@ export function QuellenListe({ block }: QuellenListeProps) {
       </span>
 
       {/* Eintrag 1 — liefert die Zeilen. */}
-      <div className="flex items-center gap-2">
-        <span className="w-4 shrink-0 text-xs text-muted-foreground">1</span>
-        {quellenAuswahl(erste, 'Erste Datenquelle', (v) => ed.updateProperty(block.id, 'source', v))}
-      </div>
+      {quellenAuswahl(erste, 'Datenquelle 1', (v) => ed.updateProperty(block.id, 'source', v))}
       {fehlt(erste) && (
         <p className="text-xs text-destructive">
           Die gewählte Datenquelle fehlt in der Bibliothek. Neu wählen — oder
@@ -127,9 +120,10 @@ export function QuellenListe({ block }: QuellenListeProps) {
       {/* Eintrag 2..n — je mit ihrer Schluesselregel zu Eintrag 1. */}
       {weitere.map((q, i) => (
         <div key={i} className="flex flex-col gap-1.5 rounded-md border border-border p-2">
-          <div className="flex items-center gap-2">
-            <span className="w-4 shrink-0 text-xs text-muted-foreground">{i + 2}</span>
-            {quellenAuswahl(q.quelleId, `Datenquelle ${i + 2}`, (v) => aendere(i, { quelleId: v }))}
+          <div className="flex items-end gap-2">
+            <div className="min-w-0 flex-1">
+              {quellenAuswahl(q.quelleId, `Datenquelle ${i + 2}`, (v) => aendere(i, { quelleId: v }))}
+            </div>
             <IconButton
               aria-label={`Datenquelle ${i + 2} entfernen`}
               onClick={() => setzeWeitere(weitere.filter((_, at) => at !== i))}
@@ -142,27 +136,29 @@ export function QuellenListe({ block }: QuellenListeProps) {
           </span>
           {q.keyPairs.map((paar, at) => (
             <div key={at} className="flex items-center gap-1.5">
-              <Auswahl
-                wert={paar.fromField}
-                titel={`Feld ${at + 1} der ersten Datenquelle`}
-                onWert={(v) => setzePaar(i, at, { fromField: v })}
+              <SchrittSelect
+                className="min-w-0 flex-1"
+                aria-label={`Feld ${at + 1} der ersten Datenquelle`}
+                value={paar.fromField}
+                onChange={(e) => setzePaar(i, at, { fromField: e.target.value })}
               >
                 <option value="">— Feld —</option>
                 {felderVon(erste).map((f) => (
                   <option key={f.code} value={f.code}>{f.label}</option>
                 ))}
-              </Auswahl>
+              </SchrittSelect>
               <span className="shrink-0 text-xs text-muted-foreground">=</span>
-              <Auswahl
-                wert={paar.toField}
-                titel={`Feld ${at + 1} der Datenquelle ${i + 2}`}
-                onWert={(v) => setzePaar(i, at, { toField: v })}
+              <SchrittSelect
+                className="min-w-0 flex-1"
+                aria-label={`Feld ${at + 1} der Datenquelle ${i + 2}`}
+                value={paar.toField}
+                onChange={(e) => setzePaar(i, at, { toField: e.target.value })}
               >
                 <option value="">— Feld —</option>
                 {felderVon(q.quelleId).map((f) => (
                   <option key={f.code} value={f.code}>{f.label}</option>
                 ))}
-              </Auswahl>
+              </SchrittSelect>
               {q.keyPairs.length > 1 && (
                 <IconButton
                   aria-label={`Zeile ${at + 1} entfernen`}

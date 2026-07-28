@@ -1,4 +1,6 @@
-// SchrittSelect — das EINE handgebaute Auswahlfeld der Schritt-Bedienung.
+// SchrittSelect — DAS handgebaute kompakte Auswahlfeld fuer dichte Zeilen,
+// in denen mehrere Auswahlen nebeneinander stehen und das Field-Molekuel
+// (Label + Beschreibung) nur Platz fraesse.
 //
 // Eigener Pfeil mit reserviertem Platz rechts (pr-6), damit der gewaehlte
 // Text NIE unter dem Aufklapp-Pfeil verschwindet (Nutzer-Korrektur
@@ -6,6 +8,10 @@
 //
 // Layout-Klassen (Breite/Flex) gehoeren auf die Huelle; das <select> fuellt
 // sie immer ganz.
+//
+// Wohnt seit 2026-07-28 in ui/atoms: mit den Schluesselregel-Zeilen der
+// QuellenListe (Inspector) gab es den zweiten echten Benutzer ausserhalb
+// der Steuerung — erst der zweite Fall erzwingt das Teilen (Regel 10).
 
 import type { SelectHTMLAttributes } from 'react'
 import { ChevronDown } from 'lucide-react'

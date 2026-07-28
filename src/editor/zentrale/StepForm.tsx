@@ -15,7 +15,8 @@
 // diese Datei ueber den 500-Zeilen-Deckel gewachsen war):
 //   - ParameterZeile  eine Parameterzeile samt Wert-Steuerung
 //   - RelationAuswahl Vorlagen-Suche + -Liste mit Lesen/Schreiben-Tabs
-//   - SchrittSelect   das handgebaute Auswahlfeld dieser Bedienung
+//   - SchrittSelect   das kompakte Auswahlfeld (seit 2026-07-28 in
+//                     ui/atoms — die QuellenListe ist der zweite Benutzer)
 
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
@@ -45,7 +46,7 @@ import {
 import { blockValueKey, eigenerText, type BlockValueOption } from './helfer'
 import { ParameterZeile } from './ParameterZeile'
 import { RelationAuswahl } from './RelationAuswahl'
-import { SchrittSelect } from './SchrittSelect'
+import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'

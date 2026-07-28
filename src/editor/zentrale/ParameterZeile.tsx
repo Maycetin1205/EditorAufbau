@@ -22,7 +22,7 @@ import {
 import type { DataSource } from '../../core/data/dataSources'
 import type { FeldUebernahmeZiel } from './feldUebernahme'
 import { blockValueKey, type BlockValueOption } from './helfer'
-import { SchrittSelect } from './SchrittSelect'
+import { SchrittSelect } from '@/ui/atoms/schritt-select'
 
 // Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
 // (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen).
