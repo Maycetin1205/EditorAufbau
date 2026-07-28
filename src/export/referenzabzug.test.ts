@@ -12,14 +12,37 @@
 //     Referenz zeigt die Export-Änderung sichtbar im Commit, und es gilt
 //     Regel 9: Export berührt → SE-Echttest durch den Nutzer.
 // LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
+//
+// Der Abzug hält Markup + Datenzeilen (window.FF_DATA_SOURCES/FF_RELATIONS)
+// fest — OHNE das Runtime-Bündel (entrauscht 2026-07-28). Das Minifikat
+// stand hier mit rund 1000 von 1104 Zeilen und überdeckte jeden Diff: ob
+// sich die MASKE geändert hatte, war im Commit nicht mehr zu sehen. Das
+// Bündel hat eigene Wächter — check:runtime baut es über den echten CLI-Weg
+// neu und vergleicht Byte für Byte, export.test.ts prüft das eingebettete
+// Skript nach dem ASCII-Escaping auf gültiges JavaScript. Hier stünde es
+// nur ein zweites Mal.
 
 import { describe, expect, it } from 'vitest'
 // Side-Effect-Import: registriert ALLE echten Bausteine.
 import '../blocks/register'
 import { referenzMaske } from '../test/referenzMaske'
 import { exportMask } from './exportMask'
+import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import { preflightMask } from './preflight'
+import { escapeNonAsciiJs, guardScriptContent } from './serializer'
 import { failedChecks, validateMaskHtml } from './validator'
+
+// Das Runtime-Bündel aus dem Export-HTML herausschneiden. Der Schnitt ist
+// EXAKT, keine Heuristik: entfernt wird genau der String, den exportMask
+// einbettet — dieselbe Quelle (?raw), dieselben zwei Escape-Schritte. Steht
+// er nicht GENAU EINMAL im HTML, schlägt der Test laut fehl: dann hat sich
+// die Einbettung geändert, und dieser Schnitt muss mitziehen.
+function ohneBuendel(html: string): string {
+  const eingebettet = guardScriptContent(escapeNonAsciiJs(runtimeJsRaw.trim()))
+  const teile = html.split(eingebettet)
+  expect(teile, 'Runtime-Bündel nicht exakt EINMAL im Export gefunden — Einbettung geändert? Dann ohneBuendel() anpassen.').toHaveLength(2)
+  return teile.join('/* Runtime-Buendel herausgeschnitten - bewacht von check:runtime + export.test.ts */')
+}
 
 describe('Export-Referenzabzug (Byte-Wächter)', () => {
   it('Referenzmaske besteht Preflight + Validator', () => {
@@ -34,7 +57,7 @@ describe('Export-Referenzabzug (Byte-Wächter)', () => {
     const { html, sevariablen } = exportMask(tree, titel, sources, relations)
     // .snap-Endung: die Referenz ist ein per toMatchFileSnapshot gefuehrter
     // Abzug, keine Quelldatei.
-    await expect(html).toMatchFileSnapshot('./referenz/maske.html.snap')
+    await expect(ohneBuendel(html)).toMatchFileSnapshot('./referenz/maske.html.snap')
     await expect(sevariablen).toMatchFileSnapshot('./referenz/maske.sevariablen.json.snap')
   })
 })
