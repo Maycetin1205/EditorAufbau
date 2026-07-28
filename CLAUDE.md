@@ -60,11 +60,19 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Echttests (SEFILELOOP-Empfang, START_TOOL) bestanden VOR Einführung des
    Tags. Der Tag kam in `2364726` — zusammen mit dem `var`→`window.FF_*`-Fix,
    also ohne sauberen A/B-Beleg. Die zitierte Originalquelle
-   (JWHtmlStart.html / Monaco) liegt nicht in diesem Repo. Bis zu einem
-   kontrollierten WEBWARE-Test bleibt der Tag drin (defensiver
-   Kompatibilitäts-Anschluss), aber er gilt NICHT als belegter Kontrakt —
-   und „harmlos" ist er auch nicht bewiesen (404, Startverzögerung oder
-   Doppelanmeldung sind nicht ausgeschlossen).
+   (JWHtmlStart.html / Monaco) liegt nicht in diesem Repo.
+   **Neu belegt im Echttest 2026-07-28 (Nutzer-Protokoll):** die Datei
+   EXISTIERT und arbeitet — sie führt selbst `DATA SEND`/`DATA RECV` aus
+   (`basis.html.interface.js:89/:161`), kein 404. `basisHTML_REGISTER` und
+   `basisHTML_SND_MSG` vorhanden, ein Daten-Push angenommen. ABER: dieser
+   Lauf war **WinUI/BüroWARE** (`__WEBWARE__: "0"`, `__WINUI_MAJORVERSION__:
+   "7"`) — genau die Plattform, für die der Anschluss ohnehin als optional
+   galt. Die eigentliche Frage („braucht WEBWARE ihn?") ist damit weiterhin
+   OFFEN. Der Tag bleibt drin (defensiver Kompatibilitäts-Anschluss), gilt
+   aber NICHT als belegter Kontrakt, bis derselbe Test in WEBWARE lief.
+   Nebenbeobachtung aus demselben Protokoll: `CONECT` wird ZWEIMAL gesendet
+   (Empfang trotzdem nur 1 Paket) — ungeklärt, ob Interface-Eigenlogik oder
+   doppelte Anmeldung.
 6. **Alter Editor = nur Funktionsliste.**
 7. **Bedienung am Ding:** Anfasser, Doppelklick, Klick auf die Stelle;
    Inspector nur für Unzeigbares; der Editor **erfindet nie Daten**
