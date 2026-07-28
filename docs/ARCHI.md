@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
-| Version | `package.json` (`0.3.0`) | SemVer |
+| Version | `package.json` (`0.3.1`) | SemVer |
 
 ## 3. Projektstruktur
 
