@@ -17,7 +17,7 @@ import {
   type RelationTemplate,
 } from '../core/data/relations'
 import { deepClone } from '../lib/deepClone'
-import { sichereUnlesbaren } from './notfallkopie'
+import { meldeSpeicherPanne, merkeSpeicherErfolg, sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
 
 const STORAGE_KEY = 'aufbau_editor_relationen_v1'
@@ -102,8 +102,9 @@ export class RelationStore extends Subject<RelationStore> {
     this._saveTimer = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ relations: this._relations }))
+        merkeSpeicherErfolg(STORAGE_KEY)
       } catch (err) {
-        console.warn('RelationStore: localStorage-Speichern fehlgeschlagen', err)
+        meldeSpeicherPanne(STORAGE_KEY, 'Relationen', err)
       }
     }, SAVE_DEBOUNCE_MS)
   }

@@ -3,7 +3,7 @@
 // mehrere Woerter sind ein UND, leere Eingabe blendet nie etwas aus.
 
 import { describe, expect, it } from 'vitest'
-import { datensatzText, filtereZeilen, zeilePasst } from './suche'
+import { datensatzText, filtereZeilen, zeigtEchteDaten, zeilePasst } from './suche'
 
 const zeilen = [
   ['Meier', 'Hund', '24.07.2026'],
@@ -93,5 +93,44 @@ describe('datensatzText (Fusszeile)', () => {
 
   it('sagt bei einer Suche ohne Treffer, wovon nichts uebrig blieb', () => {
     expect(t({ gesamt: 250, sichtbar: 0, suchtAktiv: true })).toBe('Kein Treffer von 250 Datensätzen')
+  })
+})
+
+describe('zeigtEchteDaten (Leerzustand — B1, 2026-07-28)', () => {
+  // Der Fehler, den diese Faelle festnageln: bis 2026-07-28 entschied die
+  // Tabelle ueber `datenzeilen.length > 0`. Ein Tag ohne Saetze sah damit in
+  // der ECHTEN Maske aus wie der leere Editor — vier Striche „—" und
+  // „— Datensaetze", als wuerde noch geladen. Erfundene Werte in der Maske
+  // sind genau das, was Regel 7 verbietet.
+
+  it('Laufzeit mit Quelle zeigt echte Daten — AUCH wenn gerade keine Zeile passt', () => {
+    expect(zeigtEchteDaten(false, 'q-termine')).toBe(true)
+  })
+
+  it('Editor zeigt Platzhalter — auch mit angehaengter Quelle', () => {
+    // Im Editor darf nie ein echter Wert stehen, sonst waere die Vorschau
+    // eine Behauptung ueber Daten, die der Editor gar nicht hat.
+    expect(zeigtEchteDaten(true, 'q-termine')).toBe(false)
+  })
+
+  it('ohne Quelle immer Platzhalter — im Editor wie in der Maske', () => {
+    expect(zeigtEchteDaten(true, '')).toBe(false)
+    expect(zeigtEchteDaten(false, '')).toBe(false)
+    expect(zeigtEchteDaten(false, '   ')).toBe(false)
+  })
+
+  it('zusammen mit der Fusszeile: leerer Tag sagt „Keine Datensaetze", nicht „—"', () => {
+    // Das ist der Fall des Bedieners: Quelle dran, Tagesfilter auf einen Tag
+    // ohne Termine. Vorher unerreichbar — der Zweig war getestet, aber der
+    // Baustein kam nie dort an.
+    const hatQuelle = zeigtEchteDaten(false, 'q-termine')
+    expect(datensatzText({ hatQuelle, sichtbar: 0, gesamt: 0, suchtAktiv: false }))
+      .toBe('Keine Datensätze')
+  })
+
+  it('und im Editor bleibt es beim Strich', () => {
+    const hatQuelle = zeigtEchteDaten(true, 'q-termine')
+    expect(datensatzText({ hatQuelle, sichtbar: 0, gesamt: 0, suchtAktiv: false }))
+      .toBe('— Datensätze')
   })
 })

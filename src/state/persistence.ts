@@ -16,7 +16,12 @@ import {
   migrateRootKanbanToViewportFill,
   putzeAlteKartenDemos,
 } from './migrations'
-import { backupKeyFor, sichereUnlesbaren } from './notfallkopie'
+import {
+  backupKeyFor,
+  meldeSpeicherPanne,
+  merkeSpeicherErfolg,
+  sichereUnlesbaren,
+} from './notfallkopie'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
 export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
@@ -177,7 +182,8 @@ export function persistState(tree: BlockTree, selectedId: string | null): void {
       selectedId,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    merkeSpeicherErfolg(STORAGE_KEY)
   } catch (err) {
-    console.warn('Editor: localStorage-Speichern fehlgeschlagen', err)
+    meldeSpeicherPanne(STORAGE_KEY, 'Maske', err)
   }
 }

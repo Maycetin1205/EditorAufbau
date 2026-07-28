@@ -41,6 +41,22 @@ export function filtereZeilen(
   return zeilen.filter((z) => zeilePasst(z, suchtext)).map((z) => [...z])
 }
 
+// Zeigt die Tabelle ECHTE Daten oder Editor-Platzhalter?
+//
+// Die Frage entscheidet alles am Leerzustand: Striche „—" oder leere Zeilen,
+// „— Datensaetze" oder „Keine Datensaetze". Sie hat NICHTS damit zu tun, ob
+// gerade Zeilen da sind — bis 2026-07-28 stand genau das im Baustein
+// (`datenzeilen.length > 0`), und deshalb fiel die laufende Maske an einem
+// Tag ohne Saetze auf die Editor-Platzhalter zurueck (Regel-7-Bruch).
+//
+// `imEditor` kommt aus dem Attribut `data-ff-editor`, das der BlockHost an
+// jedem Editor-Element setzt und der Export nie. Eigene Funktion, damit die
+// Entscheidung pruefbar ist, statt im Rendern zu verschwinden — dasselbe
+// Muster wie ./sortierung und die Suche darueber.
+export function zeigtEchteDaten(imEditor: boolean, source: string): boolean {
+  return !imEditor && source.trim() !== ''
+}
+
 // Beschriftung der Fusszeile: wie viele Datensaetze sieht der Bediener?
 //
 // Drei Faelle, drei Saetze — der haeufigste Fehler waere, sie zu einem zu

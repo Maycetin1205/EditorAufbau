@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
-| Version | `package.json` (`0.1.1`) | SemVer |
+| Version | `package.json` (`0.1.2`) | SemVer |
 
 ## 3. Projektstruktur
 
@@ -51,9 +51,12 @@ src/
 │                   eine Meldestelle. Daneben die Ablagen der maskenweiten
 │                   Daten: DataSourceStore, RelationStore, SourceLinkStore
 │                   (je mit use*-Haken), Subject = der kleine Melder.
-│                   notfallkopie = DIE eine Stelle „unlesbarer Stand":
-│                   erst Rohdaten sichern (BACKUP_KEY), dann Klartext —
-│                   genutzt von persistence UND den drei Ablagen.
+│                   notfallkopie = DIE eine Stelle für Speicher-Pannen, beide
+│                   Richtungen: LESEN kaputt → erst Rohdaten sichern
+│                   (BACKUP_KEY), dann Klartext; SCHREIBEN kaputt → Klartext
+│                   EINMAL je Störungsphase, Merker je Speicherschlüssel, nach
+│                   Erfolg zurückgesetzt. Genutzt von persistence UND den drei
+│                   Ablagen (Schreib-Hälfte seit 2026-07-28, Befund B3).
 ├── core/
 │   ├── blocks/     Registry-KONZEPTE: BlockDefinition (Fähigkeiten wie
 │   │               allowedChildTypes, bindableSpots, actionValueSpots,
@@ -254,9 +257,13 @@ npx tsc -b && npx eslint src && npm run check:regeln && npm run check:runtime &&
   die zwei bekannten Abweichungen (Version 0.1.0→0.1.1, `test:e2e`).
 - Regel-Wächter `check:regeln` (2026-07-24, Nutzer-Entscheidung):
   `scripts/check-regeln.mjs` bewacht die BAUART gegen die Architektur-Regeln,
-  die vorher nur als Prosa in CLAUDE.md standen. Sechs Prüfungen:
-  (1) kein Bausteintyp-Vergleich in generischem Code · (2) jeder Baustein im
-  export.test UND in der Veralten-Positivliste · (3) Dateien ≤ 500 Zeilen
+  die vorher nur als Prosa in CLAUDE.md standen. Sieben Prüfungen:
+  (1) kein Bausteintyp-Vergleich in generischem Code (`===`/`!==`/`.includes`,
+  beide Quote-Arten; `case '<typ>'` bewusst NICHT — Eigenschaftsarten heißen
+  teils wie Bausteintypen) · (2) jeder Baustein im
+  export.test UND in der Veralten-Positivliste · (2b, seit 2026-07-28) jeder
+  Baustein auch im **Referenzabzug**, geprüft am Markup des Abzugs selbst,
+  nicht an einer Textstelle in der Quelldatei (Befund B2) · (3) Dateien ≤ 500 Zeilen
   (StepForm.tsx/Editor.ts als Altlast eingefroren, dürfen nur schrumpfen) ·
   (4) `any`/`ts-ignore` eingefroren · (5) keine Hex-Farben im Baustein-CSS ·
   (6) kein Baustein-IMPORT in generischem Code. Ausnahmen stehen einzeln MIT
@@ -269,8 +276,9 @@ npx tsc -b && npx eslint src && npm run check:regeln && npm run check:runtime &&
   nachdem ein Tabellen-Import im generischen BlockHost durch (1) schlüpfte.
 - **Test-Bremse:** KEINE neuen Browser-/e2e-Tests (die Playwright-Suite ist
   2026-07-23 entfernt). Berührt ein Paket Export/Laufzeit, deckt ein schlanker
-  vitest-Fall die Byte-/Kontrakt-Seite ab; die Bedienung prüft der bauende
-  Agent im Browser-Preview (Port 5173) und der Nutzer live.
+  vitest-Fall die Byte-/Kontrakt-Seite ab; die Bedienung prüft **allein der
+  Nutzer** (Ansage 2026-07-28) — der Agent startet keinen Dev-Server und
+  liefert stattdessen eine Klickanleitung.
 - Berührt ein Paket den Export → zusätzlich **SE-Echttest durch den Nutzer**
   in echter SoftEngine-Umgebung (wird auf Nutzer-Wunsch gebündelt).
 

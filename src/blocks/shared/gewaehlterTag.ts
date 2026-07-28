@@ -14,7 +14,7 @@
 // sichtbar). Der Filter ist damit von sich aus harmlos: eine Maske ohne
 // Tageswaehler verhaelt sich exakt wie vorher.
 
-import { heuteSchluessel, tagSchluessel } from './datumSchluessel'
+import { tagSchluessel } from './datumSchluessel'
 
 let tag = ''
 const horcher = new Set<() => void>()
@@ -41,10 +41,8 @@ export function aufTagHoeren(cb: () => void): void {
   horcher.add(cb)
 }
 
-// Startwert des Tageswaehlers: heute. Eigene Funktion, damit der Baustein
-// die Uhr nicht selbst anfasst und der Test einen festen Tag setzen kann.
-export function heuteSetzen(now: Date = new Date()): string {
-  const heute = heuteSchluessel(now)
-  setzeGewaehltenTag(heute)
-  return heute
-}
+// Hier stand bis 2026-07-28 ein `heuteSetzen`, dessen Kommentar behauptete,
+// der Baustein fasse die Uhr deshalb nicht selbst an. Beides war falsch: die
+// Funktion rief niemand, und der Tageswaehler holte sich „heute" die ganze
+// Zeit selbst (DatumBlock). Ein Kommentar, der etwas anderes behauptet als
+// der Code tut, ist schlimmer als gar keiner — darum ersatzlos entfernt.

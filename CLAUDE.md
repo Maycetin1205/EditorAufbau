@@ -72,10 +72,16 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
    `npx eslint src` + `npm run check:regeln` + `npm run check:runtime` +
    `npm run check:docs` + `npm test`), nie zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
-   die langsamen Browser-Tests fraßen Tokens und Zeit; der Nutzer prüft die
-   Bedienung selbst live, und der bauende Agent prüft VOR jedem „fertig"
-   selbst im Browser-Preview (Port 5173) — nie mehr den Nutzer als einzigen
-   Tester. Sicherheitsnetz = fünf Code-Wächter (export / seRuntime / persistence /
+   die langsamen Browser-Tests fraßen Tokens und Zeit.
+   **Wer was testet (Nutzer-Ansage 2026-07-28, „softengine und browser test
+   MACHE ICH"):** Die Bedienprüfung im Browser UND der SE-Echttest liegen
+   ALLEIN beim Nutzer. Der bauende Agent startet keinen Dev-Server, klickt
+   nicht im Preview und macht keine Screenshots; er prüft das Prüfbündel und
+   sein eigenes Code-Urteil. Statt „im Browser geprüft" liefert er zu jeder
+   Änderung eine kurze **Klickanleitung** (was öffnen, was tun, was zu sehen
+   sein muss) und nennt ausdrücklich, was er NICHT prüfen konnte. Damit ist
+   die Gegenrichtung vom 2026-07-23 („der Agent prüft vorher selbst im
+   Preview") überholt. Sicherheitsnetz = fünf Code-Wächter (export / seRuntime / persistence /
    Export-Referenzabzug / Bündel-Wächter `check:runtime`): sie prüfen genau
    das, was im Browser NICHT sichtbar ist — Export-Bytes + SE-Anschluss.
    Dazu ein Doku-Wächter `check:docs` (2026-07-24): er bewacht die Doku selbst
@@ -85,7 +91,9 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    er bewacht die BAUART gegen genau diese Regeln — kein Bausteintyp-Sondercode
    und kein Baustein-IMPORT in generischem Code (Regel 2, beides mit begründeten
    Ausnahmen im Script), jeder Baustein im Export-Test UND in der
-   Veralten-Positivliste, Dateien ≤ 500 Zeilen (zwei Altlasten eingefroren),
+   Veralten-Positivliste **UND im Referenzabzug** (seit 2026-07-28: geprüft am
+   Markup des Abzugs, nicht an einer Textstelle — eine Textsuche wäre schon von
+   einem Kommentar zu befriedigen), Dateien ≤ 500 Zeilen (zwei Altlasten eingefroren),
    `any`/stumme Warnungen eingefroren, keine Hex-Farben im Baustein-CSS.
    Anlass: Regeln als reine Prosa halten niemanden auf — der Tabellen-Bug
    2026-07-24 entstand, weil „neuer Baustein = Zeile im Export-Test" nur

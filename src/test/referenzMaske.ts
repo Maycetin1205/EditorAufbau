@@ -21,9 +21,13 @@ export interface ReferenzMaske {
 
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'p1'] },
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'p1'] },
     z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
-    datum1: { id: 'datum1', type: 'datum', props: { zeigt: 'datum' }, parentId: 'z1', childIds: [] },
+    // Ohne Eigenschaften: DatumBlock.defaultProps ist leer. Bis 2026-07-28
+    // stand hier ein `zeigt: 'datum'` aus einer alten Fassung — der Export
+    // warf es still weg, weil er nur bekannte Props schreibt. Genau deshalb
+    // faellt so etwas nie auf; die Testmaske soll den echten Stand zeigen.
+    datum1: { id: 'datum1', type: 'datum', props: {}, parentId: 'z1', childIds: [] },
     knopf: {
       id: 'knopf', type: 'button', props: { label: 'Nachfaß öffnen — ätsch' }, parentId: 'z1', childIds: [],
       events: {
@@ -79,12 +83,42 @@ export function referenzMaske(): ReferenzMaske {
         }],
       },
     },
+    // Tabelle, Text und Trenner fehlten bis 2026-07-28 in dieser Maske — der
+    // Byte-Waechter sah sie also nie (Befund B2). Ausgerechnet die Tabelle:
+    // ihr Spalten-Export war am 2026-07-24 still kaputt (umbenannte Titel
+    // fielen auf die Standardtitel zurueck) und niemandem fiel es auf.
+    // Darum steht hier GENAU dieser Fall: UMBENANNTE Titel + gebundene
+    // Feldcodes + Tagesfilter. `check:regeln` haelt die Luecke jetzt zu.
+    tab: {
+      id: 'tab', type: 'tabelle',
+      props: {
+        source: 'q-termine', suche: 'nein', tagField: '50_10',
+        spalten: [
+          { titel: 'Wer', feld: '40_20' },
+          { titel: 'Wann', feld: '10_5' },
+          { titel: 'Tier — Ärztin', feld: '30_10' },
+        ],
+        rasterX: 0, rasterY: 26, rasterW: 24, rasterH: 8,
+      },
+      parentId: 'root', childIds: [],
+    },
+    tr1: {
+      id: 'tr1', type: 'trenner',
+      props: { rasterX: 0, rasterY: 34, rasterW: 24, rasterH: 1 },
+      parentId: 'root', childIds: [],
+    },
+    txt: {
+      id: 'txt', type: 'text',
+      // Umlaut + Sonderzeichen: nimmt den Escaping-Weg des Serializers mit.
+      props: { text: 'Übersicht — Sprechstunde à la carte', rasterX: 0, rasterY: 35, rasterW: 12, rasterH: 2 },
+      parentId: 'root', childIds: [],
+    },
     p1: {
       id: 'p1', type: 'popup', props: { name: 'Neue Behandlung für Bello', breite: 480, hoehe: 320 },
       parentId: 'root', childIds: ['pz1'],
     },
     pz1: { id: 'pz1', type: 'zeile', props: {}, parentId: 'p1', childIds: ['pdatum'] },
-    pdatum: { id: 'pdatum', type: 'datum', props: { zeigt: 'beides' }, parentId: 'pz1', childIds: [] },
+    pdatum: { id: 'pdatum', type: 'datum', props: {}, parentId: 'pz1', childIds: [] },
   }
 
   const sources: DataSource[] = [
@@ -96,6 +130,9 @@ export function referenzMaske(): ReferenzMaske {
         { code: '10_5', label: 'Zeit' },
         { code: '30_10', label: 'Tier' },
         { code: '20_10', label: 'Status' },
+        // Datumsfeld fuer den Tagesfilter der Tabelle. Aendert die
+        // SEvariablen NICHT: eine IDB-Quelle exportiert FELDER:'*'.
+        { code: '50_10', label: 'Datum' },
       ],
     },
     {

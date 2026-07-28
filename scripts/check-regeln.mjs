@@ -79,8 +79,20 @@ for (const pfad of quellen) {
 
   const zeilen = lies(pfad).split('\n')
   for (const { typ } of bausteine) {
+    // EINE Regex fuer alle Schreibweisen: ===, !== und .includes(), jeweils
+    // mit einfachen ODER doppelten Anfuehrungszeichen. Bis 2026-07-28 stand
+    // hier ein Stueckwerk aus zwei String-Vergleichen; `.includes('tabelle')`
+    // rutschte glatt durch (Befund B5.4).
+    //
+    // `case '<typ>':` wird BEWUSST NICHT geprueft: Eigenschafts-ARTEN heissen
+    // teils wie Bausteintypen. Inspector.tsx hat ein voellig legitimes
+    // `case 'text':` fuer die Art „Textfeld", nicht fuer den Baustein `text`.
+    // Ein Waechter, der ab der ersten Sekunde falsch anschlaegt, wird
+    // weggedrueckt — und ein weggedrueckter Waechter ist schlimmer als keiner.
+    const roh = typ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const muster = new RegExp(`(===|!==)\\s*['"]${roh}['"]|\\.includes\\(\\s*['"]${roh}['"]`)
     zeilen.forEach((zeile, i) => {
-      if (zeile.includes(`=== '${typ}'`) || zeile.includes(`!== '${typ}'`)) {
+      if (muster.test(zeile)) {
         fehler.push(
           `Sondercode (Regel 2): ${pfad}:${i + 1} vergleicht auf den Bausteintyp '${typ}'.\n` +
           `      Statt dessen: eine Faehigkeit in der Registry deklarieren (BlockDefinition)\n` +
@@ -115,6 +127,39 @@ for (const { tag, typ } of bausteine) {
       `Luecke in der Veralten-Positivliste: '${tag}' (Baustein '${typ}') fehlt in export.test.ts.\n` +
       `      Ohne Eintrag merkt niemand, wenn der Baustein aus dem Runtime-Buendel faellt\n` +
       `      -- die Maske zeigt ihn dann in SoftEngine einfach nicht an.`
+    )
+  }
+}
+
+// --- 2b. Neuer Baustein = Knoten in der Referenzmaske (Befund B2) -----
+// Der Byte-Waechter (export/referenzabzug.test.ts) vergleicht den Export der
+// Referenzmaske Zeichen fuer Zeichen. Was dort NICHT vorkommt, bewacht er
+// nicht. Am 2026-07-28 fiel auf: tabelle, text und trenner fehlten — also
+// ausgerechnet der Baustein, dessen Export am 2026-07-24 schon einmal still
+// kaputt war. Pruefung 2 sah das nicht, weil sie nur export.test.ts kennt.
+// Geprueft wird der ABZUG, nicht die Quelldatei: dort steht, was am Ende
+// wirklich exportiert wurde. Eine Textsuche in referenzMaske.ts waere schon
+// von einem Kommentar zu befriedigen, der den Typnamen erwaehnt — derselbe
+// Papiertiger, der Pruefung 2 fast unterlaufen waere (Codex-Codereview
+// 2026-07-28).
+//
+// Nur der MARKUP-Teil zaehlt: hinter '<script>' folgt das Runtime-Buendel,
+// und dort kommt jeder Tag als Registrierungs-String vor — ein Baustein waere
+// dadurch immer "gefunden", auch wenn ihn die Maske gar nicht zeigt.
+const abzug = lies('src/export/referenz/maske.html.snap')
+const abzugMarkup = abzug.split('<script>')[0]
+for (const { tag, typ, pfad } of bausteine) {
+  // Auf die Tag-GRENZE pruefen, nicht auf das Praefix: '<ff-kanban' steckt
+  // auch in '<ff-kanban-spalte'. Ohne die Grenze bliebe der Waechter gruen,
+  // wenn das Board verschwaende und nur seine Spalten uebrig blieben
+  // (Codex-Codereview 2026-07-28, zweite Runde).
+  if (!new RegExp(`<${tag}(?=[\\s>])`).test(abzugMarkup)) {
+    fehler.push(
+      `Baustein fehlt im Referenzabzug: '${typ}' (${pfad}) — kein <${tag}> im Markup.\n` +
+      `      Der Byte-Waechter (export/referenzabzug.test.ts) vergleicht diesen Abzug\n` +
+      `      Zeichen fuer Zeichen. Was dort nicht vorkommt, kann im Export unbemerkt\n` +
+      `      kaputtgehen — genau so blieb der Tabellen-Bug 2026-07-24 unentdeckt.\n` +
+      `      Knoten in src/test/referenzMaske.ts ergaenzen, dann 'npx vitest run -u'.`
     )
   }
 }

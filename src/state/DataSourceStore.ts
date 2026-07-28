@@ -17,7 +17,7 @@ import {
   type DataSource,
 } from '../core/data/dataSources'
 import { deepClone } from '../lib/deepClone'
-import { sichereUnlesbaren } from './notfallkopie'
+import { meldeSpeicherPanne, merkeSpeicherErfolg, sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
 
 const STORAGE_KEY = 'aufbau_editor_datenquellen_v1'
@@ -105,8 +105,9 @@ export class DataSourceStore extends Subject<DataSourceStore> {
     this._saveTimer = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ sources: this._sources }))
+        merkeSpeicherErfolg(STORAGE_KEY)
       } catch (err) {
-        console.warn('DataSourceStore: localStorage-Speichern fehlgeschlagen', err)
+        meldeSpeicherPanne(STORAGE_KEY, 'Datenquellen', err)
       }
     }, SAVE_DEBOUNCE_MS)
   }

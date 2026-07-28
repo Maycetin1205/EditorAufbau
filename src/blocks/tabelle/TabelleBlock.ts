@@ -31,7 +31,7 @@ import type { ListenBindung } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereZeilen } from './sortierung'
-import { datensatzText, filtereZeilen } from './suche'
+import { datensatzText, filtereZeilen, zeigtEchteDaten } from './suche'
 import { tabelleStil } from './tabelleStil'
 import {
   SPALTEN_MAX,
@@ -39,6 +39,7 @@ import {
   STANDARD_TITEL,
   coerceSpalten,
   standardSpalten,
+  standardTitelFuer,
   tryCoerceSpalten,
   type Spalte,
 } from './spalten'
@@ -303,30 +304,40 @@ export class TabelleBlock extends BasicBlock {
     const stop = (e: Event): void => e.stopPropagation()
     // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle).
     const alleDaten = this.sichtbareZeilen()
-    // „Hat Daten" heisst: es KOMMEN Daten (Quelle haengt dran) — nicht, dass
-    // die Suche gerade etwas uebrig laesst. Sonst faellt die Tabelle bei
-    // einer Suche ohne Treffer auf die Editor-Platzhalter zurueck und
-    // behauptet Werte, die es nicht gibt (Regel 7).
-    const hatQuelle = this.datenzeilen.length > 0
-    const hatDaten = hatQuelle
+    // „Hat Quelle" heisst: es KOMMEN Daten — nicht, dass gerade welche da
+    // sind. Bis 2026-07-28 stand hier `datenzeilen.length > 0`, und damit
+    // fiel die LAUFENDE Maske auf die Editor-Platzhalter zurueck, sobald der
+    // Tagesfilter einen Tag ohne Saetze traf: vier Striche „—" und
+    // „— Datensaetze", als warte man noch auf Daten. Ein leerer Tag ist aber
+    // der Normalfall, und erfundene Striche in der echten Maske brechen
+    // Regel 7 (der Editor erfindet nie Daten — die Maske erst recht nicht).
+    //
+    // Unterschieden wird ueber `data-ff-editor`: der BlockHost setzt es an
+    // JEDEM Editor-Element, der Export nie — dieselbe Marke, an der auch
+    // datenAnschluss Editor-Elemente von der Daten-Mechanik fernhaelt.
+    // `editable` taugt dafuer NICHT: das ist im Editor nur am AUSGEWAEHLTEN
+    // Baustein true, ein nicht ausgewaehlter saehe sonst aus wie Laufzeit.
+    // Die Entscheidung selbst wohnt pruefbar in ./suche (zeigtEchteDaten).
+    const hatQuelle = zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
     // Paginierung (nur Laufzeit mit echten Daten).
     const gesamt = alleDaten.length
     const proSeite = this.proSeiteAktuell
-    const seiten = hatDaten ? Math.max(1, Math.ceil(gesamt / proSeite)) : 1
+    const seiten = hatQuelle ? Math.max(1, Math.ceil(gesamt / proSeite)) : 1
     // Seite einklemmen: eine geschrumpfte Datenmenge (neuer SE-Push) darf den
     // Bediener nicht auf einer Seite stehen lassen, die es nicht mehr gibt.
     const seite = Math.min(Math.max(this._seite, 0), seiten - 1)
-    const seitenDaten = hatDaten
+    const seitenDaten = hatQuelle
       ? alleDaten.slice(seite * proSeite, (seite + 1) * proSeite)
       : []
     // Zeilen auffuellen: immer mindestens proSeite (Laufzeit) bzw.
     // PLATZHALTER_ZEILEN (Editor) Zeilen mit Linien zeigen.
-    const sollZeilen = hatDaten ? proSeite : PLATZHALTER_ZEILEN
+    const sollZeilen = hatQuelle ? proSeite : PLATZHALTER_ZEILEN
     // Zwei verschiedene leere Zeilen, zwei verschiedene Bedeutungen:
-    //   ohne Daten (Editor): „—" = hier kommt spaeter ein Wert hin (Regel 7).
-    //   mit Daten (letzte Seite halb voll): LEER — es gibt schlicht nicht mehr.
-    // Ein „—" waere dort gelogen: es sieht aus wie ein fehlender Wert.
-    const fuellzeichen = hatDaten ? '' : '—'
+    //   ohne Quelle (Editor): „—" = hier kommt spaeter ein Wert hin (Regel 7).
+    //   mit Quelle (leerer Tag, letzte Seite halb voll): LEER — es gibt
+    //   schlicht nicht mehr. Ein „—" waere dort gelogen: es sieht aus wie ein
+    //   fehlender Wert, obwohl es gar keinen Satz gibt.
+    const fuellzeichen = hatQuelle ? '' : '—'
     const zeilen: (readonly string[] | null)[] = [
       ...seitenDaten,
       ...Array.from({ length: Math.max(0, sollZeilen - seitenDaten.length) }, () => null),
@@ -352,7 +363,10 @@ export class TabelleBlock extends BasicBlock {
             stop(e)
             const l = this.spaltenListe()
             if (l.length < SPALTEN_MAX) {
-              l.push({ titel: `Spalte ${l.length + 1}`, feld: '' })
+              // Titel aus ./spalten, nicht von Hand getippt: an DIESER Vorlage
+              // erkennt der Editor, dass der Bediener den Titel nicht selbst
+              // gesetzt hat und ihn beim Feld-Binden ersetzen darf.
+              l.push({ titel: standardTitelFuer(l.length), feld: '' })
               this.aendere(l)
             }
           }}

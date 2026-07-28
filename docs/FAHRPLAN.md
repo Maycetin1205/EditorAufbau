@@ -80,8 +80,11 @@ lesen, dann mit eigenem Plan neu bauen.
   „Quelle speichern" samt Aenderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD ·
   Projektkarte/project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) ·
   der Baustein-Baum (Nutzer 2026-07-21).
-- **Abnahme laeuft live:** der Nutzer prueft im Browser, der bauende Agent
-  prueft VOR jedem „fertig" selbst im Preview. Keine Screenshot-Galerien.
+- **Abnahme laeuft live — und zwar durch den Nutzer** (Ansage 2026-07-28):
+  Browser-Bedienpruefung UND SE-Echttest macht er selbst. Der bauende Agent
+  startet keinen Dev-Server und klickt nicht im Preview; er liefert das
+  Pruefbuendel plus eine kurze Klickanleitung und sagt, was er nicht pruefen
+  konnte. Keine Screenshot-Galerien.
 - **Codex ist wieder verfuegbar** (2026-07-27) — die TRIP-/codex-Skills in
   `.claude/skills/` werden im naechsten Paket real eingesetzt statt weiter
   ungenutzt zu liegen.
@@ -99,6 +102,10 @@ speichern/laden" fuer Sicherung und zweiten Arbeitsplatz (heute nur
 Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus exportMask
 herausziehen · Export wirft unbekannte Props still weg (Preflight-Meldung fehlt) ·
 Masken-Titel fest „Maske" ·
+Kassensturz „tote Exporte": ein Werkzeuglauf (knip, 2026-07-28) meldete rund
+zwoelf `export`-Symbole ohne Importeur — mindestens zwei Treffer waren aber
+falsch (`RASTER_FALLBACK`, `sanitizeTree` werden benutzt). Vor dem Aufraeumen
+Treffer fuer Treffer pruefen, sonst loescht man Benutztes ·
 Editor-UI-Testabdeckung duenn — auch Migrationen/Undo/SE-Datenschicht ohne eigene
 Tests, und `relations.test.ts` testet nur das Modell, nicht die gleichnamige
 Laufzeit-Datei (Nachzieh-Paket ~½ Tag, kein Export) · doppelter Schluessel-Scan

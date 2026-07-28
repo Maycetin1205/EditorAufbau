@@ -15,7 +15,7 @@
 
 import { sanitizeSourceLinks, type SourceLink } from '../core/data/sourceLinks'
 import { deepClone } from '../lib/deepClone'
-import { sichereUnlesbaren } from './notfallkopie'
+import { meldeSpeicherPanne, merkeSpeicherErfolg, sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
 
 const STORAGE_KEY = 'aufbau_editor_verknuepfungen_v1'
@@ -108,8 +108,9 @@ export class SourceLinkStore extends Subject<SourceLinkStore> {
     this._saveTimer = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ links: this._links }))
+        merkeSpeicherErfolg(STORAGE_KEY)
       } catch (err) {
-        console.warn('SourceLinkStore: localStorage-Speichern fehlgeschlagen', err)
+        meldeSpeicherPanne(STORAGE_KEY, 'Verknuepfungen', err)
       }
     }, SAVE_DEBOUNCE_MS)
   }
