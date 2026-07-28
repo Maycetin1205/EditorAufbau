@@ -87,6 +87,14 @@ export class SourceLinkStore extends Subject<SourceLinkStore> {
     this.notify(this)
   }
 
+  // Die GANZE Bibliothek ersetzen — nur fuer das Laden einer Maskendatei
+  // (2026-07-28). Begruendung fuer „ersetzen statt zusammenfuehren" steht
+  // bei DataSourceStore.ersetzeAlle.
+  ersetzeAlle(links: readonly SourceLink[]): void {
+    this._links = deepClone(links) as SourceLink[]
+    this.notify(this)
+  }
+
   remove(id: string): void {
     const next = this._links.filter((l) => l.id !== id)
     if (next.length === this._links.length) return

@@ -90,6 +90,14 @@ export class RelationStore extends Subject<RelationStore> {
     this.notify(this)
   }
 
+  // Die GANZE Bibliothek ersetzen — nur fuer das Laden einer Maskendatei
+  // (2026-07-28). Begruendung fuer „ersetzen statt zusammenfuehren" steht
+  // bei DataSourceStore.ersetzeAlle.
+  ersetzeAlle(relations: readonly RelationTemplate[]): void {
+    this._relations = deepClone(relations) as RelationTemplate[]
+    this.notify(this)
+  }
+
   remove(id: string): void {
     const next = this._relations.filter((r) => r.id !== id)
     if (next.length === this._relations.length) return

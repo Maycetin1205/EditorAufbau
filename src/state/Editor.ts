@@ -451,6 +451,23 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
+  // Die GANZE Maske ersetzen (Laden einer Maskendatei, 2026-07-28).
+  // Bewusst OHNE History-Schritt — der Verlauf wird geleert: ein Snapshot
+  // kennt nur Baum und Auswahl, die drei Bibliotheken haben kein Undo.
+  // Ein Strg+Z danach ergaebe alten Baum + neue Bibliotheken (Begruendung
+  // steht bei `Historie.leeren`). Laden ist wie das Oeffnen eines neuen
+  // Dokuments: nichts zum Zurueckgehen.
+  // Die aktive Seite faellt auf die Hauptseite zurueck — die geladene Maske
+  // hat andere Seiten-ids, ein Verweis auf die alte ginge ins Leere.
+  ersetzeMaske(tree: BlockTree): void {
+    this._tree = tree
+    this._selectedId = null
+    this._activePageId = ROOT_ID
+    this._historie.leeren()
+    this.scheduleSave()
+    this.notify(this)
+  }
+
   private scheduleSave(): void {
     if (this._saveTimer) clearTimeout(this._saveTimer)
     this._saveTimer = setTimeout(() => {

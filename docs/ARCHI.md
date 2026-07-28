@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
-| Version | `package.json` (`0.1.2`) | SemVer |
+| Version | `package.json` (`0.2.0`) | SemVer |
 
 ## 3. Projektstruktur
 
@@ -51,6 +51,11 @@ src/
 │                   eine Meldestelle. Daneben die Ablagen der maskenweiten
 │                   Daten: DataSourceStore, RelationStore, SourceLinkStore
 │                   (je mit use*-Haken), Subject = der kleine Melder.
+│                   maskenDatei = DIE eine Stelle für das Dateiformat
+│                   („Maske speichern/laden": Baum + die drei Bibliotheken;
+│                   nutzt DIESELBE Lade-Kette wie der Browser-Speicher,
+│                   `persistence.baumAusRohdaten` — ein Prüf-Eingang, zwei
+│                   Quellen). Laden ersetzt alles und LEERT die Historie.
 │                   notfallkopie = DIE eine Stelle für Speicher-Pannen, beide
 │                   Richtungen: LESEN kaputt → erst Rohdaten sichern
 │                   (BACKUP_KEY), dann Klartext; SCHREIBEN kaputt → Klartext

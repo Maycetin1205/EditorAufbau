@@ -97,9 +97,7 @@ bis dahin gilt die eingebaute Empfang-Liste in `src/blocks/card/tierIcon.ts`) ·
 Spaltenbreiten der Tabelle in der Maske dauerhaft merken · Sortierung wie
 Windows (Zahl/Datum/ABC) · Seiten-Leiste als kompakte Aufklappliste, falls viele
 Popups je Maske real werden · Vorlagen-Ablage: gespeicherte Popups/Baustein-
-Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, Ort offen) · „Maske als Datei
-speichern/laden" fuer Sicherung und zweiten Arbeitsplatz (heute nur
-Browser-Speicher + Export) · Markup-Bauen (nodeToHtml/styleAttr) aus exportMask
+Gruppen wiederverwenden (Nutzer-Idee 2026-07-21, Ort offen) · Markup-Bauen (nodeToHtml/styleAttr) aus exportMask
 herausziehen · Export wirft unbekannte Props still weg (Preflight-Meldung fehlt) ·
 Masken-Titel fest „Maske" ·
 Kassensturz „tote Exporte": ein Werkzeuglauf (knip, 2026-07-28) meldete rund

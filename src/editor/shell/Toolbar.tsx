@@ -6,8 +6,10 @@
 
 import {
   Download,
+  FolderOpen,
   MoreHorizontal,
   Redo2,
+  Save,
   SlidersHorizontal,
   Trash2,
   Undo2,
@@ -17,7 +19,10 @@ import { exportMask } from '../../export/exportMask'
 import { preflightMask } from '../../export/preflight'
 import { failedChecks, validateMaskHtml } from '../../export/validator'
 import { dataSourceStore } from '../../state/DataSourceStore'
+import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
+import { meldeVerworfeneTypen } from '../../state/persistence'
 import { relationStore } from '../../state/RelationStore'
+import { sourceLinkStore } from '../../state/SourceLinkStore'
 import { useEditor } from '../../state/useEditor'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -69,9 +74,65 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     downloadFile('index.basis.SEvariablen.json', sevariablen, 'application/json')
   }
 
+  // Maske als DATEI sichern (2026-07-28). Nicht zu verwechseln mit dem
+  // Export: der erzeugt die fertige SoftEngine-Maske und ist eine
+  // Einbahnstrasse. Diese Datei ist der BAUPLAN und laesst sich wieder laden.
+  // Dateiname mit Datum, damit Sicherungen sich von selbst sortieren und
+  // einander nicht ueberschreiben.
+  const handleSpeichern = () => {
+    const text = packeMaske({
+      tree: ed.tree,
+      datenquellen: [...dataSourceStore.list],
+      relationen: [...relationStore.list],
+      verknuepfungen: [...sourceLinkStore.list],
+    })
+    const heute = new Date().toISOString().slice(0, 10)
+    downloadFile(`aufbau-maske-${heute}.json`, text, 'application/json')
+  }
+
+  // Feste Reihenfolge (Codex-Planreview 2026-07-28): lesen -> GANZ pruefen
+  // -> Rueckfrage -> vollstaendig ersetzen -> erst DANN warnen. Andernfalls
+  // saehe der Bediener „Beim Laden entfernt: …", obwohl er gleich darauf
+  // abbricht und gar nichts geladen wurde.
+  const handleDateiGewaehlt = async (datei: File) => {
+    let text: string
+    try {
+      text = await datei.text()
+    } catch {
+      window.alert('Die Datei konnte nicht gelesen werden.')
+      return
+    }
+    const ergebnis = packeMaskeAus(text)
+    if (!ergebnis.ok) {
+      window.alert(ergebnis.grund)
+      return
+    }
+    // Laden ist der einzige Knopf, der mit einem Klick ALLES ueberschreibt —
+    // und es gibt danach kein Undo (die Historie wird geleert, s.
+    // Editor.ersetzeMaske). Diese Rueckfrage ist das einzige Netz; ihr Text
+    // passt bewusst zu OK/Abbrechen und verspricht keine Speicheraktion.
+    if (!window.confirm(
+      'Haben Sie den bisherigen Stand gespeichert?\n\n'
+      + 'Mit OK wird die offene Maske unwiderruflich ersetzt — das lässt sich '
+      + 'nicht rückgängig machen.',
+    )) return
+
+    dataSourceStore.ersetzeAlle(ergebnis.inhalt.datenquellen)
+    relationStore.ersetzeAlle(ergebnis.inhalt.relationen)
+    sourceLinkStore.ersetzeAlle(ergebnis.inhalt.verknuepfungen)
+    ed.ersetzeMaske(ergebnis.inhalt.tree)
+    meldeVerworfeneTypen(ergebnis.verworfen)
+  }
+
   return (
     <div className="flex items-center gap-1.5 justify-self-end">
-      <MoreMenu onClearAll={handleClear} clearDisabled={ed.blockCount === 0} />
+      <MoreMenu
+        onClearAll={handleClear}
+        clearDisabled={ed.blockCount === 0}
+        onSpeichern={handleSpeichern}
+        speichernDisabled={false}
+        onDatei={handleDateiGewaehlt}
+      />
 
       <Divider />
 
@@ -129,12 +190,19 @@ export function VerlaufKnoepfe() {
 function MoreMenu({
   onClearAll,
   clearDisabled,
+  onSpeichern,
+  speichernDisabled,
+  onDatei,
 }: {
   onClearAll: () => void
   clearDisabled: boolean
+  onSpeichern: () => void
+  speichernDisabled: boolean
+  onDatei: (datei: File) => void
 }) {
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
+  const dateiRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!open) return
@@ -163,11 +231,53 @@ function MoreMenu({
       >
         <MoreHorizontal size={15} />
       </IconButton>
+      {/* Verstecktes Datei-Feld: der Menue-Eintrag klickt es an. Der Wert wird
+          nach JEDEM Versuch geleert (finally) — sonst loest die Auswahl
+          DERSELBEN Datei kein zweites 'change' aus, und der Bediener klickt
+          ins Leere, ohne zu verstehen warum. */}
+      <input
+        ref={dateiRef}
+        type="file"
+        accept=".json,application/json"
+        className="hidden"
+        onChange={(e) => {
+          const datei = e.target.files?.[0]
+          try {
+            if (datei) onDatei(datei)
+          } finally {
+            e.target.value = ''
+          }
+        }}
+      />
       {open && (
         <div
           role="menu"
           className="absolute right-0 top-full z-50 mt-1 min-w-[11.875rem] rounded-md border border-border bg-popover p-1 shadow-md"
         >
+          <button
+            role="menuitem"
+            type="button"
+            disabled={speichernDisabled}
+            onClick={() => {
+              setOpen(false)
+              onSpeichern()
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Save size={13} /> Maske speichern…
+          </button>
+          <button
+            role="menuitem"
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              dateiRef.current?.click()
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
+          >
+            <FolderOpen size={13} /> Maske laden…
+          </button>
+          <div className="my-1 h-px bg-border" />
           <button
             role="menuitem"
             type="button"

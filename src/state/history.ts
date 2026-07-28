@@ -57,4 +57,17 @@ export class Historie {
     this._past.push(makeCurrent())
     return next
   }
+
+  // Verlauf verwerfen. Gebraucht beim Laden einer Maskendatei (2026-07-28):
+  // ein Snapshot enthaelt NUR Baum und Auswahl — die drei Bibliotheken
+  // (Datenquellen, Relationen, Verknuepfungen) haben gar kein Undo. Bliebe
+  // der Verlauf stehen, ergaebe Strg+Z nach dem Laden den ALTEN Baum mit den
+  // NEUEN Bibliotheken: Bindungen zeigen ins Leere, und der Bediener glaubt,
+  // er sei zurueck. Ein halb wiederhergestellter Stand ist schlimmer als gar
+  // keiner — darum ist Laden wie das Oeffnen eines neuen Dokuments.
+  leeren(): void {
+    this._past = []
+    this._future = []
+    this._txDepth = 0
+  }
 }

@@ -93,6 +93,17 @@ export class DataSourceStore extends Subject<DataSourceStore> {
     this.notify(this)
   }
 
+  // Die GANZE Bibliothek ersetzen — nur fuer das Laden einer Maskendatei
+  // (2026-07-28). Ersetzen statt Zusammenfuehren: eine Maskendatei ist ein
+  // vollstaendiger Stand, und Zusammenfuehren braeuchte Konfliktregeln
+  // (gleiche id, anderer Inhalt — wer gewinnt?), die niemand angefordert
+  // hat (Regel 10). Die Datei ist beim Auspacken bereits vollstaendig
+  // geprueft; hier wird nicht noch einmal bereinigt.
+  ersetzeAlle(sources: readonly DataSource[]): void {
+    this._sources = deepClone(sources) as DataSource[]
+    this.notify(this)
+  }
+
   remove(id: string): void {
     const next = this._sources.filter((s) => s.id !== id)
     if (next.length === this._sources.length) return

@@ -50,9 +50,15 @@ export interface LoadedState {
 // onDropType: meldet jeden verworfenen UNBEKANNTEN Typ (z. B. die 2026-07-14
 // abgeschafften Bausteine Text/Bereich/Infobox/Chip/Eingabefeld in alten
 // Speicherständen) — Nutzer-Regel: Verluste beim Laden passieren NIE still.
+// `putzeDemos` = Altbestands-Putzer fuer die frueheren Karten-Demotexte.
+// Standard true (Verhalten des Browser-Speichers unveraendert). Eine
+// AKTUELLE Maskendatei laesst ihn aus: dort waere „Heute" im Chip ein echter
+// Nutzerwert, und ihn wegzuputzen hiesse, eine eben gespeicherte Datei beim
+// Laden abzulehnen (Codex-Codereview 2026-07-28).
 export function sanitizeTree(
   raw: Record<string, unknown>,
   onDropType?: (type: string) => void,
+  putzeDemos = true,
 ): BlockTree {
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
@@ -93,7 +99,7 @@ export function sanitizeTree(
   const rootSrc = src[ROOT_ID]
   const rootChildren = rootSrc && Array.isArray(rootSrc.childIds) ? rootSrc.childIds : []
   for (const cid of rootChildren) addChild(ROOT_ID, cid)
-  putzeAlteKartenDemos(tree)
+  if (putzeDemos) putzeAlteKartenDemos(tree)
   return tree
 }
 
@@ -102,6 +108,84 @@ export function sanitizeTree(
 // `notfallkopie.ts` — dieselbe Stelle bedient auch die drei Bibliotheken.
 function backupUnreadableState(raw: string): void {
   sichereUnlesbaren(STORAGE_KEY, raw, 'Editor-Stand')
+}
+
+// DIE eine Lade-Kette: aus einem bereits geparsten Objekt einen brauchbaren
+// Baum machen — verteidigen, migrieren, verworfene Typen sammeln.
+//
+// Herausgeloest am 2026-07-28, damit ZWEI Leser sie teilen: der
+// Browser-Speicher (unten) und die Maskendatei (maskenDatei.ts). Haette der
+// Datei-Weg eine eigene Kette bekommen, gaebe es zwei Arten, eine Maske
+// einzulesen — und die eine driftet von der anderen ab. Genau diese Doppelung
+// hat den Tabellen-Bug 2026-07-24 erzeugt.
+//
+// Meldet NICHTS und rettet NICHTS: das Ergebnis sagt nur, WAS war
+// (`migrated`, `verworfen`), und der jeweilige Aufrufer entscheidet, was
+// daraus folgt. Der Browser-Speicher legt eine Notfallkopie an, die Datei
+// nicht (sie liegt ja schon beim Bediener); und die Datei zeigt ihre Warnung
+// erst, wenn sie die Gesamtpruefung bestanden hat — sonst meldete der Editor
+// etwas ueber eine Maske, die er gleich darauf ablehnt.
+export interface BaumErgebnis {
+  tree: BlockTree
+  selectedId: string | null
+  migrated: boolean
+  // Verworfene unbekannte Bausteintypen: Typname -> Anzahl.
+  verworfen: Map<string, number>
+}
+
+export function baumAusRohdaten(parsed: {
+  schemaVersion?: unknown
+  tree?: unknown
+  blocks?: unknown
+  selectedId?: unknown
+}, putzeDemos = true): BaumErgebnis | null {
+  let tree: BlockTree | null = null
+  // Verworfene unbekannte Typen sammeln (nie still): trifft v. a. die
+  // 2026-07-14 abgeschafften Bausteine in alten Staenden.
+  const verworfen = new Map<string, number>()
+  if (parsed.tree && typeof parsed.tree === 'object') {
+    tree = sanitizeTree(parsed.tree as Record<string, unknown>, (type) => {
+      verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
+    }, putzeDemos)
+  } else if (Array.isArray(parsed.blocks)) {
+    tree = migrateFlatBlocks(parsed.blocks)
+  }
+  // Gueltiges JSON, aber KEINE verwertbare Baum-/Block-Struktur.
+  if (!tree) return null
+
+  // Gestufte Migrationen: jede laeuft nur beim Aufstieg ueber IHRE
+  // Schwellenversion, damit ein schon migrierter Stand nicht erneut
+  // umgeschrieben wird (z. B. bewusst gesetzte Kanban-Pixelhoehen aus Schema 2
+  // ruehrt die 1→2-Migration nicht mehr an).
+  const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
+  let migrated = false
+  if (schemaVersion < 2) migrated = migrateRootKanbanToViewportFill(tree) || migrated
+  if (schemaVersion < 3) migrated = migrateFlowToRaster(tree) || migrated
+  // Schema 4: heilt die Riesen-Rahmen aus der ersten (kaputten) Raster-
+  // Migration bei Nutzern, deren Speicher schon auf Schema 3 stand.
+  if (schemaVersion < 4) migrated = migrateRasterBreitenReparatur(tree) || migrated
+  // Schema 5: setzt zu grosse Alt-Starthoehen (aus der ersten Raster-
+  // Migration) auf die neuen, engen Registry-Starthoehen zurueck — jetzt, wo
+  // der Baustein seine Zelle fuellt, liegt der Rahmen damit eng am Inhalt.
+  if (schemaVersion < 5) migrated = migrateRasterHoehenReset(tree) || migrated
+
+  const selectedId =
+    typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID
+      ? parsed.selectedId
+      : null
+  return { tree, selectedId, migrated, verworfen }
+}
+
+// Meldung ueber verworfene Bausteintypen — dieselbe fuer beide Leser.
+export function meldeVerworfeneTypen(verworfen: Map<string, number>): void {
+  if (verworfen.size === 0 || typeof alert !== 'function') return
+  const anzahl = [...verworfen.values()].reduce((a, b) => a + b, 0)
+  const typen = [...verworfen.keys()].map((t) => `"${t}"`).join(', ')
+  alert(
+    `Beim Laden entfernt: ${anzahl} Baustein(e) der nicht mehr vorhandenen Typen ${typen}.\n`
+    + 'Diese Bausteintypen gibt es im Editor nicht mehr. Ihr Inhalt wurde — '
+    + 'falls vorhanden — an ihrer Stelle eingegliedert; der Rest der Maske ist unverändert.',
+  )
 }
 
 export function loadFromStorage(): LoadedState | null {
@@ -115,54 +199,16 @@ export function loadFromStorage(): LoadedState | null {
       selectedId?: unknown
     }
 
-    let tree: BlockTree | null = null
-    // Verworfene unbekannte Typen sammeln und MELDEN (nie still): trifft
-    // v. a. die 2026-07-14 abgeschafften Bausteine in alten Speicherständen.
-    const verworfen = new Map<string, number>()
-    if (parsed.tree && typeof parsed.tree === 'object') {
-      tree = sanitizeTree(parsed.tree as Record<string, unknown>, (type) => {
-        verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
-      })
-    } else if (Array.isArray(parsed.blocks)) {
-      tree = migrateFlatBlocks(parsed.blocks)
-    }
-    if (!tree) {
+    const ergebnis = baumAusRohdaten(parsed)
+    if (!ergebnis) {
       // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder
       // oder halb-kaputter Inhalt, in dem echte Arbeit stecken könnte): wie
       // einen Lesefehler behandeln — sichern + melden, nicht still leer starten.
       backupUnreadableState(raw)
       return null
     }
-    // Gestufte Migrationen: jede läuft nur beim Aufstieg über IHRE
-    // Schwellenversion, damit ein schon migrierter Stand nicht erneut
-    // umgeschrieben wird (z. B. bewusst gesetzte Kanban-Pixelhöhen aus Schema 2
-    // rührt die 1→2-Migration nicht mehr an).
-    const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-    let migrated = false
-    if (schemaVersion < 2) migrated = migrateRootKanbanToViewportFill(tree) || migrated
-    if (schemaVersion < 3) migrated = migrateFlowToRaster(tree) || migrated
-    // Schema 4: heilt die Riesen-Rahmen aus der ersten (kaputten) Raster-
-    // Migration bei Nutzern, deren Speicher schon auf Schema 3 stand.
-    if (schemaVersion < 4) migrated = migrateRasterBreitenReparatur(tree) || migrated
-    // Schema 5: setzt zu grosse Alt-Starthoehen (aus der ersten Raster-
-    // Migration) auf die neuen, engen Registry-Starthoehen zurueck — jetzt, wo
-    // der Baustein seine Zelle fuellt, liegt der Rahmen damit eng am Inhalt.
-    if (schemaVersion < 5) migrated = migrateRasterHoehenReset(tree) || migrated
-    if (verworfen.size > 0 && typeof alert === 'function') {
-      const anzahl = [...verworfen.values()].reduce((a, b) => a + b, 0)
-      const typen = [...verworfen.keys()].map((t) => `"${t}"`).join(', ')
-      alert(
-        `Beim Laden entfernt: ${anzahl} Baustein(e) der nicht mehr vorhandenen Typen ${typen}.\n`
-        + 'Diese Bausteintypen gibt es im Editor nicht mehr. Ihr Inhalt wurde — '
-        + 'falls vorhanden — an ihrer Stelle eingegliedert; der Rest der Maske ist unverändert.',
-      )
-    }
-
-    const selectedId =
-      typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID
-        ? parsed.selectedId
-        : null
-    return { tree, selectedId, migrated }
+    meldeVerworfeneTypen(ergebnis.verworfen)
+    return { tree: ergebnis.tree, selectedId: ergebnis.selectedId, migrated: ergebnis.migrated }
   } catch (error) {
     // Unlesbarer Stand (kaputtes JSON, unerwarteter Fehler beim Aufbau):
     // NIE still leer starten und NIE vom Autosave überschreiben lassen —
