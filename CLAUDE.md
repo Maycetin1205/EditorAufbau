@@ -51,8 +51,20 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Alles Installations-Individuelle (Relations-NRs, Werkzeug-Nummern,
    Felder) sind **Daten** (Vorlagen), nie fest im Code.
    Jeder Export lädt das offizielle Interface über
-   `<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js`; ohne
-   diesen Anschluss bekommt WEBWARE weder SEFILELOOP-Daten noch Relationen.
+   `<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js`.
+   **Ehrlicher Stand dieses Anschlusses (Befund B4, geprüft 2026-07-28):**
+   belegt ist, dass die Maske die Bridge-Funktionen (`basisHTML_REGISTER`,
+   `basisHTML_SND_MSG`, `sendBWLinkIntern`) BRAUCHT — nicht, dass genau
+   dieser Import sie liefern muss. Dagegen spricht: die zwei eingecheckten,
+   echt laufenden Referenzmasken laden gar kein externes Skript, und frühe
+   Echttests (SEFILELOOP-Empfang, START_TOOL) bestanden VOR Einführung des
+   Tags. Der Tag kam in `2364726` — zusammen mit dem `var`→`window.FF_*`-Fix,
+   also ohne sauberen A/B-Beleg. Die zitierte Originalquelle
+   (JWHtmlStart.html / Monaco) liegt nicht in diesem Repo. Bis zu einem
+   kontrollierten WEBWARE-Test bleibt der Tag drin (defensiver
+   Kompatibilitäts-Anschluss), aber er gilt NICHT als belegter Kontrakt —
+   und „harmlos" ist er auch nicht bewiesen (404, Startverzögerung oder
+   Doppelanmeldung sind nicht ausgeschlossen).
 6. **Alter Editor = nur Funktionsliste.**
 7. **Bedienung am Ding:** Anfasser, Doppelklick, Klick auf die Stelle;
    Inspector nur für Unzeigbares; der Editor **erfindet nie Daten**
