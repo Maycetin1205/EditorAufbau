@@ -22,7 +22,12 @@
 // Technikwert; steht in DataSource.kind und so auch in der Maskendatei.
 // Handgeschrieben statt aus ARTEN abgeleitet, damit ein Tippfehler in der
 // Tabelle unten ein tsc-Fehler ist und nicht eine stille neue Art.
-export type DataSourceKind = 'idb' | 'adressstamm' | 'artikelstamm' | 'beleg'
+export type DataSourceKind =
+  | 'idb'
+  | 'adressstamm'
+  | 'artikelstamm'
+  | 'beleg'
+  | 'datei'
 
 export interface QuellenArt {
   // Derselbe Wert wie der Schluessel in ARTEN (die Liste unten braucht ihn
@@ -38,6 +43,11 @@ export interface QuellenArt {
   // nie — die gebundene Stelle bliebe leer. false = FELDER '*', SoftEngine
   // schickt ohnehin alles, die Feldliste dient nur den Klarnamen.
   felderEinzeln: boolean
+  // Wie die Kennung heisst, die der Bediener eingeben muss — leer, wo die
+  // Art eine feste hat (dann fragt das Formular nicht danach).
+  kennungLabel: string
+  // Ein echtes Beispiel dafuer, als Platzhalter im Eingabefeld.
+  kennungBeispiel: string
 }
 
 // Schluessel = id. Ein Record (keine Liste) ist hier Absicht: tsc verlangt
@@ -49,24 +59,47 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     name: 'IDB-Tabelle',
     tabellenId: '',
     felderEinzeln: false,
+    kennungLabel: 'IDB-ID',
+    kennungBeispiel: 'ID0001',
   },
   adressstamm: {
     id: 'adressstamm',
     name: 'Adressstamm',
     tabellenId: 'ADR',
     felderEinzeln: true,
+    kennungLabel: '',
+    kennungBeispiel: '',
   },
   artikelstamm: {
     id: 'artikelstamm',
     name: 'Artikelstamm',
     tabellenId: 'ART',
     felderEinzeln: true,
+    kennungLabel: '',
+    kennungBeispiel: '',
   },
   beleg: {
     id: 'beleg',
     name: 'Beleg',
     tabellenId: 'BEL',
     felderEinzeln: true,
+    kennungLabel: '',
+    kennungBeispiel: '',
+  },
+  // Jede andere ERP-Datei. BELEGT (2026-07-30) aus den 129 ausgelieferten
+  // SEvariablen-Dateien des Herstellers: SEFILELOOP-Kennungen sind dort
+  // freie Dateikuerzel — POS (Belegpositionen), SERPOS, CHAPOS, POIDX,
+  // ARTLG, JSDDWZE05 … ADR/ART/BEL sind drei davon, nicht die Auswahl.
+  // Ohne diese Zeile konnte der Bediener solche Dateien gar nicht anlegen.
+  // FELDER einzeln wie bei den Stammtabellen — so machen es die echten
+  // Masken (POS mit expliziter pos_len-Liste).
+  datei: {
+    id: 'datei',
+    name: 'Andere Datei',
+    tabellenId: '',
+    felderEinzeln: true,
+    kennungLabel: 'Dateikürzel',
+    kennungBeispiel: 'POS',
   },
 }
 

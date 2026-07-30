@@ -11,7 +11,7 @@ import { Plus, TriangleAlert } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import {
   artFuer,
-  idbIdAnzeige,
+  kennungAnzeige,
   type DataSource,
 } from '../../core/data/dataSources'
 import { bausteineMitQuelle } from '../../state/quellenOps'
@@ -46,7 +46,7 @@ export function DatenquellenBereich() {
   // Art — oder die eingegebene, wo die Art keine feste hat. Kein `if kind`.
   const kennung = (s: DataSource): string => {
     const feste = artFuer(s.kind).tabellenId
-    return feste !== '' ? feste : idbIdAnzeige(s.idbId)
+    return feste !== '' ? feste : kennungAnzeige(s.idbId)
   }
 
   function loeschen(s: DataSource) {

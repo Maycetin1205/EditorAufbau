@@ -36,8 +36,8 @@ import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
 import {
   artFuer,
-  idbIdAnzeige,
-  idbIdFromInput,
+  kennungAnzeige,
+  kennungFromInput,
   QUELLEN_ARTEN,
   type DataSource,
   type DataSourceKind,
@@ -60,7 +60,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const store = useDataSources()
   const [name, setName] = useState(source?.name ?? '')
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
-  const [idbEingabe, setIdbEingabe] = useState(idbIdAnzeige(source?.idbId))
+  const [kennungEingabe, setKennungEingabe] = useState(kennungAnzeige(source?.idbId))
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
       ? source.fields.map(zeileFromField)
@@ -72,14 +72,15 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // Hat die gewählte Art eine feste SoftEngine-Kennung, oder muss der
   // Bediener sie eingeben? Das ist die EINZIGE Frage, die dieses Formular
   // an die Art stellt — sie kommt aus der Arten-Tabelle, nicht aus einer
-  // Aufzählung hier.
-  const kennungEingeben = artFuer(kind).tabellenId === ''
+  // Aufzählung hier. Wie die Kennung dann heißt, sagt ebenfalls die Art.
+  const art = artFuer(kind)
+  const kennungEingeben = art.tabellenId === ''
 
   // ---------- Validierung (Fehlertexte '' = gültig) ----------
   const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
-  const idbFehler =
-    kennungEingeben && idbIdFromInput(idbEingabe) === ''
-      ? 'IDB-ID fehlt (z. B. ID0001).'
+  const kennungFehler =
+    kennungEingeben && kennungFromInput(kennungEingabe) === ''
+      ? `${art.kennungLabel} fehlt (z. B. ${art.kennungBeispiel}).`
       : ''
   const zeilenFehler = zeilen.map((z) => {
     if (z.label.trim() === '') return 'Klarname fehlt.'
@@ -91,7 +92,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
     ? 'Zwei Felder haben dieselbe Position + Länge.'
     : ''
-  const alleFehler = [nameFehler, idbFehler, doppeltFehler, ...zeilenFehler]
+  const alleFehler = [nameFehler, kennungFehler, doppeltFehler, ...zeilenFehler]
 
   function speichern() {
     if (alleFehler.some((f) => f !== '')) {
@@ -101,7 +102,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     const daten: Omit<DataSource, 'id'> = {
       name: name.trim(),
       kind,
-      ...(kennungEingeben ? { idbId: idbIdFromInput(idbEingabe) } : {}),
+      ...(kennungEingeben ? { idbId: kennungFromInput(kennungEingabe) } : {}),
       // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
       // bleibt, neue Quellen bekommen '0_10'.
       ...(source
@@ -143,14 +144,14 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
             Stammtabellen steht sie fest; danach zu fragen war vorher eine
             sinnlose Eingabe. Gezeigt wird sie im Detail der Liste. */}
         {kennungEingeben && (
-          <Field label="IDB-ID" error={zeigeFehler ? idbFehler : ''}>
+          <Field label={art.kennungLabel} error={zeigeFehler ? kennungFehler : ''}>
             {(f) => (
               <TextInput
                 {...f}
-                value={idbEingabe}
-                placeholder="z. B. ID0001"
-                className="w-28"
-                onChange={(e) => setIdbEingabe(e.target.value)}
+                value={kennungEingabe}
+                placeholder={`z. B. ${art.kennungBeispiel}`}
+                className="w-32"
+                onChange={(e) => setKennungEingabe(e.target.value)}
               />
             )}
           </Field>

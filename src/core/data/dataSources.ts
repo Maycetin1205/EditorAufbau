@@ -67,8 +67,11 @@ export interface DataSource {
   name: string
   // Art der Quelle (bestimmt Tabellen-ID + FELDER-Form, s. o.).
   kind: DataSourceKind
-  // SoftEngine-Tabellen-ID, z. B. 'IDBID0001' — NUR bei kind 'idb'
-  // (Stammtabellen haben feste IDs, siehe tableIdFor).
+  // Die EINGEGEBENE SoftEngine-Kennung, z. B. 'IDBID0001', 'IDBSE0880' oder
+  // 'POS' — nur bei Arten ohne feste Kennung (Stammtabellen haben eine, s.
+  // tableIdFor). Der Name `idbId` ist historisch: das Feld trug erst nur
+  // IDB-IDs. Umbenennen würde die Maskendatei ändern, darum steht es hier
+  // als Notiz statt als Umbau.
   idbId?: string
   // Feldcode der Datensatz-Nummer (pindex) — braucht der Schreibweg:
   // PUT_RELATION adressiert den Satz über diese Nummer. Kein Anzeige-Feld.
@@ -127,17 +130,36 @@ export function fieldCode(pos: string, len: string): string {
   return `${p}_${l}`
 }
 
-// IDB-ID-Eingabe -> Technikwert: 'ID0004' (auch 'IDBID0004' oder klein
-// geschrieben, Ziffern werden auf 4 Stellen aufgefüllt) -> 'IDBID0004'.
-export function idbIdFromInput(raw: string): string {
-  const m = /^(?:IDB)?ID(\d{1,4})$/i.exec(raw.trim())
-  return m ? `IDBID${m[1].padStart(4, '0')}` : ''
+// Eingegebene Kennung -> Technikwert, für jede Art, die keine feste hat.
+//
+// Zwei Formen, und die zweite fehlte bis 2026-07-30:
+//   1. Die IDB-Kurzform, die der Bediener in der SoftEngine-GUI sieht:
+//      'ID0004' (auch klein, auch schon mit IDB davor) -> 'IDBID0004',
+//      Ziffern auf vier Stellen aufgefüllt.
+//   2. Jede andere Kennung WÖRTLICH: 'IDBSE0880', 'POS', 'SERPOS',
+//      'JSDDWZE05'. Vorher fielen genau diese durch — die Prüfung kannte nur
+//      Form 1 und meldete „IDB-ID fehlt", obwohl es die Tabelle wirklich
+//      gibt (belegt in den 129 ausgelieferten SEvariablen-Dateien des
+//      Herstellers). Solche Tabellen waren im Editor nicht anlegbar.
+//
+// Ungültige Eingaben ergeben '' (das Formular zeigt dann einen Fehler); ein
+// Feldcode wie '2_8' ist keine Kennung und fällt durch, weil eine Kennung
+// mit einem Buchstaben beginnt.
+const KENNUNG_IDB_KURZ = /^(?:IDB)?ID(\d{1,4})$/i
+const KENNUNG_FREI = /^[A-Za-z][A-Za-z0-9]*$/
+
+export function kennungFromInput(raw: string): string {
+  const t = raw.trim()
+  const kurz = KENNUNG_IDB_KURZ.exec(t)
+  if (kurz) return `IDBID${kurz[1].padStart(4, '0')}`
+  return KENNUNG_FREI.test(t) ? t : ''
 }
 
-// Rückweg fürs Bearbeiten/Anzeigen: 'IDBID0004' -> 'ID0004'; sonst ''.
-export function idbIdAnzeige(idbId: string | undefined): string {
-  const m = /^IDB(ID\d{4})$/.exec(idbId ?? '')
-  return m ? m[1] : ''
+// Rückweg fürs Bearbeiten/Anzeigen: 'IDBID0004' -> 'ID0004' (die Kurzform,
+// die der Bediener kennt); alles andere bleibt, wie es ist.
+export function kennungAnzeige(kennung: string | undefined): string {
+  const m = /^IDB(ID\d{4})$/.exec(kennung ?? '')
+  return m ? m[1] : (kennung ?? '')
 }
 
 // Baut aus rohen (evtl. kaputten) localStorage-Daten eine saubere
