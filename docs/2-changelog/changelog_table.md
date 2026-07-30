@@ -2,6 +2,7 @@
 
 | Version | Week | Commit Message |
 | ------- | ---- | -------------- |
+| `0.4.0` | 1    | feat(design): Bausteine bekommen Tiefe, Statusfarbe und Bewegung (A+B+C) |
 | `0.3.1` | 1    | chore(release): v0.3.1 — Aufraeumen nach v0.3.0 (drei Aufgaben-Commits + Codex-Review-Nachzug) |
 | `0.3.0` | 1    | feat(quellen): mehrere Datenquellen je Baustein (v0.3.0) |
 | `0.2.0` | 1    | feat(maske): Maske als Datei speichern und laden |
@@ -12,6 +13,12 @@
 
 # Changelog Summary
 
+- **v0.4.0 (Bausteine: Tiefe, Statusfarbe, Bewegung — Woche 1, 30-07-2026)**:
+  Drei Schatten-Stufen statt des toten Werts `--se-shadow: none` (den kein
+  Baustein je benutzt hatte) · Statusfarbe als Streifen am Kartenkoerper,
+  ohne neue Eigenschaft · gemeinsame Bewegungsdauer `--se-move` mit
+  Ruecksicht auf „Bewegung reduzieren". Eine Werteliste + fuenf Bausteine.
+  Export beruehrt → SE-Echttest offen. Details: `w1_v0.4.0.md`
 - **v0.3.1 (Aufraeumen nach v0.3.0 — Woche 1, 30-07-2026)**:
   Verknuepfungs-Bibliothek der Kommandozentrale restlos entfernt
   (Maskendatei-Version 1 → 2, Bestandsdateien laden weiter) · Referenzabzug

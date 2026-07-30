@@ -32,7 +32,7 @@ Editor-Oberfläche.
 | Styling Editor | Tailwind 3 + shadcn-Muster (radix, cva, lucide) | helles, blaues Editor-UI |
 | Styling Masken | eigene CSS-Tokens (`--se-*`) | kantiges, grünes SoftEngine-Design |
 | Tests | Vitest 4 (Unit/Snapshot) | fünf Wächter + Prüfbündel (Playwright/e2e entfernt 2026-07-23) |
-| Version | `package.json` (`0.3.1`) | SemVer |
+| Version | `package.json` (`0.4.0`) | SemVer |
 
 ## 3. Projektstruktur
 
@@ -304,6 +304,14 @@ npx tsc -b && npx eslint src && npm run check:regeln && npm run check:runtime &&
 | Tokens | `--se-*` | shadcn/Tailwind |
 | Optik | kantig, Grün | hell, Blau |
 | Gilt für | Bausteine/Export | Canvas, Inspector, Steuerung |
+
+**Tiefe und Bewegung in der Masken-Welt** (2026-07-30, v0.4.0): drei
+Schatten-Stufen (`--se-shadow-ruhe/-hover/-popup`, kurz und hart, in der
+Textfarbe getönt) und EINE Bewegungsdauer (`--se-move`, 130 ms; per
+`prefers-reduced-motion` auf 0). Davor stand hier `--se-shadow: none` —
+ein Wert, den **kein Baustein je benutzt hat**: die Flachheit war nie
+eingestellt, sie war nie gebaut. Ebenen: Popup schwebt, Karte/Tabelle/
+Spalte ruhen, Karte und Knopf heben sich unter dem Zeiger.
 
 ## 11. Datenfluss (Lesen und Schreiben)
 

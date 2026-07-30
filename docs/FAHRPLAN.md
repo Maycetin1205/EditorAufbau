@@ -25,8 +25,19 @@ Schritt 2 (Auswahl steuert) ist noch nicht geplant.
    Deckt die frueheren Punkte „Verknuepfte Quellen Paket 3 + 4" und
    „Zeilen-Auswahl / Nachschlagen" zusammen ab; Zuschnitt am 2026-07-28 auf
    Nutzer-Ansage geaendert. SE-Echttest faellig, sobald die Laufzeit drankommt.
-2. **Optik-Feinschliff des Editors** — die Farbrichtung ist neu gesetzt
-   (warmes Papier statt kaltem Grau, 2026-07-27); der Rest ist offen.
+2. **Optik-Feinschliff** — zwei getrennte Baustellen:
+   - **Masken/Bausteine:** Tiefe, Statusfarbe und Bewegung sind am
+     2026-07-30 gebaut (v0.4.0, Paket A+B+C). Offen davon: **D · Waerme**
+     (die Maskenflaeche ist kaltes Blaugrau wie der Editor vor der Kur) —
+     braucht deine Entscheidung, ob die Maske sich neben fremden
+     SoftEngine-Masken einfuegen oder abheben soll. Dazu **E · Schrift-
+     Rangordnung** und **F · neue Elemente** (Statuspille, Avatar,
+     Leerzustaende).
+   - **Editor-Chrome:** die Farbrichtung ist gesetzt (warmes Papier statt
+     kaltem Grau, 2026-07-27), aber Tiefe und Bewegung fehlen dort noch
+     ganz (12 Bewegungen im ganzen Editor, davon 11 reine Farbwechsel;
+     9 Schatten ohne System). Stufen 1+2 der Bestandsaufnahme: rund
+     9 Dateien, kein Export.
 3. **Wizard** — mehrstufige Maske. Zuschnitt offen, braucht einen eigenen Plan;
    Fragen erst, wenn er dran ist.
 4. **Kommentar-Diaet** — rund 900 Zeilen tote Kapitel-/Paket-Verweise im Code.
