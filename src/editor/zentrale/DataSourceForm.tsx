@@ -1,71 +1,54 @@
 // DataSourceForm
-// Anlegen/Bearbeiten einer Datenquellen-Vorlage. Der Bediener
-// gibt Klarnamen + Positionen/Längen und die IDB-ID im SoftEngine-Format
-// ('ID0004') ein — der Technikwert ('IDBID0004', Feldcode 'pos_len')
-// entsteht unsichtbar (pure Helfer in dataSources.ts).
-// KEIN eigenes Formularfeld für die Datensatz-Nummer (Nutzer-Entscheidung
-// 2026-07-15): Felder pflegt allein die „+ Feld"-Liste. Der Schreibweg-
-// Technikwert indexField bleibt unsichtbar — Bestand behält seinen Wert,
-// neue Quellen bekommen das Terminplaner-Muster '0_10' (die bisherige
-// Vorbelegung, nur ohne Formularfeld).
+// Anlegen/Bearbeiten einer Datenquellen-Vorlage.
 //
-// Beim Bearbeiten bleibt die id der Vorlage stabil (angehängte Blöcke
+// NEU AUFGEBAUT 2026-07-30 (Nutzer-Auftrag „den Bereich Datenquelle komplett
+// neu aufbauen"). Vorher ein einziges Formular, das jeder Quellen-Art
+// dieselben Fragen stellte — inklusive der nach einer Tabellen-Kennung, die
+// bei Stammtabellen feststeht. Jetzt drei Fragen nacheinander:
+//
+//   1. WAS fuer eine Quelle?  — Auswahlliste
+//   2. WOHER genau?           — nur was die Art wirklich braucht
+//   3. WELCHE Felder?         — FeldListe (Zeile fuer Zeile)
+//
+// Zwischenzeitlich stand bei Frage 1 ein Kachel-Raster mit Bild und
+// Erklaersatz je Art. Wieder entfernt am selben Tag (Nutzer: „wieso
+// kacheln?") — vier Werbekaesten zu lesen ist mehr Arbeit als eine Zeile
+// aufzuklappen, und die Art ist eine Nebenfrage, keine Weggabelung.
+//
+// WAS eine Art ausmacht, steht nicht hier, sondern in der Arten-Tabelle
+// (core/data/quellenArten): dieses Formular fragt generisch „hat die Art
+// eine feste Kennung?" und stellt danach seine zweite Frage — es kennt
+// keine Art namentlich.
+//
+// Der Bediener gibt Klarnamen + Positionen/Laengen ein; der Technikwert
+// ('IDBID0004', Feldcode 'pos_len') entsteht unsichtbar (Regel 3).
+// KEIN eigenes Formularfeld fuer die Datensatz-Nummer (Nutzer-Entscheidung
+// 2026-07-15): Felder pflegt allein die Feld-Liste. Der Schreibweg-
+// Technikwert indexField bleibt unsichtbar — Bestand behaelt seinen Wert,
+// neue Quellen bekommen das Terminplaner-Muster '0_10'.
+//
+// Beim Bearbeiten bleibt die id der Vorlage stabil (angehaengte Bloecke
 // behalten ihre Quelle) — das erledigt dataSourceStore.update.
 
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
-import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
 import {
-  DATA_SOURCE_KINDS,
-  fieldCode,
+  artFuer,
   idbIdAnzeige,
   idbIdFromInput,
+  QUELLEN_ARTEN,
   type DataSource,
-  type DataSourceField,
   type DataSourceKind,
 } from '../../core/data/dataSources'
-import { splitFieldCode } from '../../core/data/relations'
 import { useDataSources } from '../../state/useDataSources'
 import { SelectControl } from '../inspector/controls/SelectControl'
+import { FeldListe } from './FeldListe'
+import { LEERE_ZEILE, zeileFromField, zeilenCode, type FeldZeile } from './feldZeile'
 import { FormularKarte } from './FormularKarte'
-import { KIND_LABELS } from './helfer'
 
 const FELDCODE = /^\d+_\d+$/
-
-// Eine Formular-Zeile des Feld-Wörterbuchs. `rawCode` trägt den bisherigen
-// Technikwert eines Bestandsfelds, dessen Code KEIN pos_len ist (direkter
-// Property-Name): lässt der Bediener Position/Länge leer, bleibt er erhalten
-// — sonst ersetzt die neue Eingabe den Code.
-interface FeldZeile {
-  label: string
-  pos: string
-  len: string
-  rawCode: string
-}
-
-function zeileFromField(f: DataSourceField): FeldZeile {
-  const pl = splitFieldCode(f.code)
-  return {
-    label: f.label,
-    pos: pl?.pos ?? '',
-    len: pl?.len ?? '',
-    rawCode: pl ? '' : f.code,
-  }
-}
-
-const LEERE_ZEILE: FeldZeile = { label: '', pos: '', len: '', rawCode: '' }
-
-// Spaltenraster der Feld-Liste: Klarname | Position | Länge | Entfernen.
-const FELD_SPALTEN = 'grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2'
-
-// Feldcode einer Zeile ('' = ungültig): Eingaben gewinnen, sonst rawCode.
-function zeilenCode(z: FeldZeile): string {
-  if (z.pos.trim() === '' && z.len.trim() === '' && z.rawCode !== '') return z.rawCode
-  return fieldCode(z.pos, z.len)
-}
 
 interface DataSourceFormProps {
   // Vorhandene Vorlage = Bearbeiten; undefined = Anlegen.
@@ -86,13 +69,16 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // Fehler erst nach dem ersten Speichern-Versuch anzeigen (nicht beim Tippen).
   const [zeigeFehler, setZeigeFehler] = useState(false)
 
-  const setZeile = (at: number, patch: Partial<FeldZeile>) =>
-    setZeilen((z) => z.map((row, i) => (i === at ? { ...row, ...patch } : row)))
+  // Hat die gewählte Art eine feste SoftEngine-Kennung, oder muss der
+  // Bediener sie eingeben? Das ist die EINZIGE Frage, die dieses Formular
+  // an die Art stellt — sie kommt aus der Arten-Tabelle, nicht aus einer
+  // Aufzählung hier.
+  const kennungEingeben = artFuer(kind).tabellenId === ''
 
   // ---------- Validierung (Fehlertexte '' = gültig) ----------
   const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
   const idbFehler =
-    kind === 'idb' && idbIdFromInput(idbEingabe) === ''
+    kennungEingeben && idbIdFromInput(idbEingabe) === ''
       ? 'IDB-ID fehlt (z. B. ID0001).'
       : ''
   const zeilenFehler = zeilen.map((z) => {
@@ -115,7 +101,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     const daten: Omit<DataSource, 'id'> = {
       name: name.trim(),
       kind,
-      ...(kind === 'idb' ? { idbId: idbIdFromInput(idbEingabe) } : {}),
+      ...(kennungEingeben ? { idbId: idbIdFromInput(idbEingabe) } : {}),
       // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
       // bleibt, neue Quellen bekommen '0_10'.
       ...(source
@@ -145,14 +131,18 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           )}
         </Field>
 
+        {/* 1. Art — Auswahlliste; die Namen kommen aus der Arten-Tabelle. */}
         <SelectControl
           label="Art"
           value={kind}
-          options={DATA_SOURCE_KINDS.map((k) => ({ value: k, label: KIND_LABELS[k] }))}
+          options={QUELLEN_ARTEN.map((a) => ({ value: a.id, label: a.name }))}
           onChange={(v) => setKind(v as DataSourceKind)}
         />
 
-        {kind === 'idb' && (
+        {/* 2. Herkunft — nur wo die Art keine feste Kennung hat. Bei den
+            Stammtabellen steht sie fest; danach zu fragen war vorher eine
+            sinnlose Eingabe. Gezeigt wird sie im Detail der Liste. */}
+        {kennungEingeben && (
           <Field label="IDB-ID" error={zeigeFehler ? idbFehler : ''}>
             {(f) => (
               <TextInput
@@ -166,60 +156,15 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </Field>
         )}
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[0.6875rem] font-medium">Felder</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setZeilen((z) => [...z, { ...LEERE_ZEILE }])}
-            >
-              <Plus size={14} /> Feld
-            </Button>
-          </div>
-          <div className={`${FELD_SPALTEN} text-[0.6875rem] text-muted-foreground`}>
-            <span>Klarname</span>
-            <span>Position</span>
-            <span>Länge</span>
-            <span />
-          </div>
-          {zeilen.map((z, i) => (
-            <div key={i} className="flex flex-col gap-1">
-              <div className={FELD_SPALTEN}>
-                <TextInput
-                  aria-label={`Feld ${i + 1}: Klarname`}
-                  value={z.label}
-                  placeholder="z. B. Vorname"
-                  onChange={(e) => setZeile(i, { label: e.target.value })}
-                />
-                <TextInput
-                  aria-label={`Feld ${i + 1}: Position`}
-                  value={z.pos}
-                  placeholder={z.rawCode !== '' ? '—' : '193'}
-                  onChange={(e) => setZeile(i, { pos: e.target.value })}
-                />
-                <TextInput
-                  aria-label={`Feld ${i + 1}: Länge`}
-                  value={z.len}
-                  placeholder={z.rawCode !== '' ? '—' : '30'}
-                  onChange={(e) => setZeile(i, { len: e.target.value })}
-                />
-                <IconButton
-                  aria-label={`Feld ${i + 1} entfernen`}
-                  onClick={() => setZeilen((rows) => rows.filter((_, at) => at !== i))}
-                >
-                  <X size={14} />
-                </IconButton>
-              </div>
-              {zeigeFehler && zeilenFehler[i] !== '' && (
-                <p className="text-xs text-destructive">{zeilenFehler[i]}</p>
-              )}
-            </div>
-          ))}
-          {zeigeFehler && doppeltFehler !== '' && (
-            <p className="text-xs text-destructive">{doppeltFehler}</p>
-          )}
-        </div>
+        {/* 3. Felder */}
+        <FeldListe
+          kind={kind}
+          zeilen={zeilen}
+          setZeilen={setZeilen}
+          zeilenFehler={zeilenFehler}
+          doppeltFehler={doppeltFehler}
+          zeigeFehler={zeigeFehler}
+        />
 
         <div className="flex justify-end gap-2 border-t border-border pt-3">
           <Button variant="outline" size="sm" onClick={onClose}>Abbrechen</Button>

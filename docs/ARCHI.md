@@ -71,8 +71,10 @@ src/
 │   │               listenBindung, raster …); bindingProp/bindingAttr = das
 │   │               Helferpaar für die EINE Bindungs-Attribut-Form
 │   └── data/       Aktionsketten-MODELL (Ereignis → Schritte, echte Union der
-│                   Schritt-Arten) + Datenquellen-Modell (dataSources) +
-│                   Schlüsselregel/weitere Quellen am Baustein (sourceLinks:
+│                   Schritt-Arten) + Datenquellen-Modell (dataSources; die
+│                   ARTEN als Tabelle in quellenArten = Kennung + FELDER-Form
+│                   je Art, neue Art = eine Zeile, nirgends `if kind ===`)
+│                   + Schlüsselregel/weitere Quellen am Baustein (sourceLinks:
 │                   1–3 Schlüsselpaare, UND-verknüpft; kein Partner → kein Wert)
 ├── blocks/         Die Bausteine, je Ordner: Definition + Web Component
 │   ├── base/       Gemeinsames (BlockHost-Anbindung)

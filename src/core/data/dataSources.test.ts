@@ -5,12 +5,7 @@
 // das nach, damit die Zusage nicht laenger nur Prosa ist.
 
 import { describe, expect, it } from 'vitest'
-import {
-  BUILTIN_DATA_SOURCES,
-  sanitizeDataSources,
-} from './dataSources'
-
-const FELDCODE = /^\d+_\d+$/
+import { sanitizeDataSources } from './dataSources'
 
 describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)', () => {
   const quelle = (fields: unknown) => [
@@ -45,11 +40,11 @@ describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)'
   })
 })
 
-describe('Regel 3 im Startbestand: Technikwert ist nie der Anzeigename', () => {
-  it.each(BUILTIN_DATA_SOURCES.map((s) => [s.name, s] as const))('%s', (_name, source) => {
-    for (const f of source.fields) {
-      expect(f.label, `${f.code} traegt einen Feldcode als Klarname`).not.toMatch(FELDCODE)
-      expect(f.label.trim()).not.toBe('')
-    }
-  })
-})
+// Hier stand bis 2026-07-30 eine Pruefung „Regel 3 im Startbestand:
+// Technikwert ist nie der Anzeigename" ueber BUILTIN_DATA_SOURCES. Der
+// Startbestand ist entfernt (Nutzer-Entscheidung: die Feldcodes einer
+// einzelnen Installation gehoeren nicht in den Code) — damit hat die
+// Pruefung kein Pruefobjekt mehr und faellt weg, statt sich ein neues zu
+// suchen. Fuer die Daten des Bedieners erzwingt Regel 3 das Formular
+// („Klarname darf kein Feldcode sein") und, beim Laden, der Test oben:
+// ein Feld ohne label wird verworfen.

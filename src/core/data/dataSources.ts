@@ -14,31 +14,34 @@
 //
 // Regel Technikwert ≠ Anzeigename: `id`, `idbId`, `code` und `indexField`
 // sind Technikwerte und erscheinen NIE sichtbar in der Maske; der Bediener
-// sieht ausschließlich `name` und `label` (maschinell erzwungen in
-// dataSources.test.ts).
+// sieht ausschließlich `name` und `label`. Erzwungen wird das beim EINGEBEN
+// (DataSourceForm: „Klarname darf kein Feldcode sein", Klarname darf nicht
+// leer sein) und beim LADEN (sanitizeDataSources wirft Felder ohne label
+// weg). Bis 2026-07-30 prüfte dataSources.test.ts zusätzlich den
+// mitgelieferten Startbestand — den gibt es nicht mehr, die Prüfung ist mit
+// ihm entfallen.
 
 // Quellen-ARTEN (Nutzer-Klarstellung 2026-07-07): nicht nur
-// IDB-Tabellen — auch Adressstamm, Artikelstamm, Belege (später MEMTAB/
-// ERPAPICALL). Die Art bestimmt die SEvariablen-Form: IDB → SEFILELOOP mit
-// FELDER '*', Stammtabellen → feste Tabellen-ID (ADR/ART/BEL) + explizite
-// pos_len-Liste. Beleg: behandlung-umbau empfang/index.basis.SEvariablen.json
-// ({ ID: 'ADR', FELDER: '2_8,…' } / { ID: 'BEL', FELDER: '1_1,…' } /
-// { ID: 'IDBID0001', FELDER: '*' }; ART analog in behandlung/).
+// IDB-Tabellen — auch Adressstamm, Artikelstamm, Belege. Die Art bestimmt
+// die SEvariablen-Form; sie und ihre Eigenschaften wohnen seit 2026-07-30
+// als TABELLE in `quellenArten.ts` (vorher als `kind === 'idb'`-Weichen
+// ueber sechs Stellen verstreut). Beleg fuer die Formen: behandlung-umbau
+// empfang/index.basis.SEvariablen.json ({ ID: 'ADR', FELDER: '2_8,…' } /
+// { ID: 'BEL', FELDER: '1_1,…' } / { ID: 'IDBID0001', FELDER: '*' }; ART
+// analog in behandlung/).
 
 import { QUELLEN_TRENNER } from '../blocks/BlockDefinition'
+import {
+  artFuer,
+  DATA_SOURCE_KINDS,
+  QUELLEN_ARTEN,
+  type DataSourceKind,
+} from './quellenArten'
 
-export type DataSourceKind = 'idb' | 'adressstamm' | 'artikelstamm' | 'beleg'
-
-export const DATA_SOURCE_KINDS: readonly DataSourceKind[] = [
-  'idb', 'adressstamm', 'artikelstamm', 'beleg',
-]
-
-// Feste SoftEngine-Tabellen-IDs der Stammtabellen (Technikwerte, Beleg s.o.).
-const STAMM_TABLE_IDS: Record<Exclude<DataSourceKind, 'idb'>, string> = {
-  adressstamm: 'ADR',
-  artikelstamm: 'ART',
-  beleg: 'BEL',
-}
+// Weitergereicht, damit die Quellen-Welt EINE Anlaufstelle bleibt: wer mit
+// Datenquellen arbeitet, importiert aus dataSources — die Arten-Tabelle
+// selbst muss er nicht kennen.
+export { artFuer, DATA_SOURCE_KINDS, QUELLEN_ARTEN, type DataSourceKind }
 
 // Eine FELD-ART (Text/Zahl/Datum/Uhrzeit) gab es hier am 2026-07-27 einen
 // halben Tag lang: sie sollte „Tag filtern nach" auf Datumsfelder verengen.
@@ -74,60 +77,39 @@ export interface DataSource {
   fields: readonly DataSourceField[]
 }
 
-// SoftEngine-Tabellen-ID einer Quelle: bei IDB die eingegebene IDB-ID,
-// bei Stammtabellen die feste ID der Art.
+// SoftEngine-Tabellen-ID einer Quelle: die feste ID der Art — und wo die
+// Art keine hat (eigene Tabellen), die eingegebene IDB-ID.
 export function tableIdFor(source: DataSource): string {
-  return source.kind === 'idb' ? (source.idbId ?? '') : STAMM_TABLE_IDS[source.kind]
+  const feste = artFuer(source.kind).tabellenId
+  return feste === '' ? (source.idbId ?? '') : feste
 }
 
-// FELDER-Eintrag der SEFILELOOP: IDB-Tabellen dürfen '*', Stammtabellen
-// brauchen die explizite pos_len-Liste (Reihenfolge = Feld-Wörterbuch).
+// FELDER-Eintrag der SEFILELOOP: explizite pos_len-Liste (Reihenfolge =
+// Feld-Wörterbuch), wo die Art einzeln bestellt — sonst '*'.
 export function felderFor(source: DataSource): string {
-  return source.kind === 'idb' ? '*' : source.fields.map((f) => f.code).join(',')
+  return artFuer(source.kind).felderEinzeln
+    ? source.fields.map((f) => f.code).join(',')
+    : '*'
 }
 
-// Mitgelieferter Startbestand (bleibt als Vorlage; ab jetzt nur
-// noch der SEED des DataSourceStore — die gelebte Wahrheit liegt im Store).
-export const BUILTIN_DATA_SOURCES: readonly DataSource[] = [
-  {
-    id: 'terminplaner',
-    name: 'Terminplaner',
-    kind: 'idb',
-    idbId: 'IDBID0001',
-    indexField: '0_10',
-    fields: [
-      { code: '10_8', label: 'Adressnummer' },
-      { code: '18_30', label: 'Tierart' },
-      { code: '48_30', label: 'Rasse' },
-      { code: '78_30', label: 'Tiername' },
-      { code: '108_10', label: 'Geburtsdatum' },
-      { code: '118_60', label: 'Behandlung' },
-      { code: '178_5', label: 'Uhrzeit' },
-      { code: '183_10', label: 'Datum' },
-      { code: '193_30', label: 'Vorname' },
-      { code: '223_30', label: 'Nachname' },
-      { code: '253_30', label: 'Zimmer' },
-      { code: '319_12', label: 'Priorität' },
-      { code: '331_12', label: 'Belegnummer' },
-    ],
-  },
-  {
-    id: 'kundenhaustiere',
-    name: 'Kundenhaustiere',
-    kind: 'idb',
-    idbId: 'IDBID0004',
-    fields: [
-      { code: '10_8', label: 'Adressnummer' },
-      { code: '18_30', label: 'Tiername' },
-      { code: '48_30', label: 'Tierart' },
-      { code: '78_30', label: 'Rasse' },
-      { code: '108_10', label: 'Geburtsdatum' },
-      { code: '118_10', label: 'Termindatum' },
-      { code: '128_350', label: 'Notiz' },
-      { code: '524_60', label: 'Behandlung' },
-    ],
-  },
-]
+// KEIN mitgelieferter Startbestand mehr (Nutzer-Entscheidung 2026-07-30:
+// „Raus, leer starten").
+//
+// Hier standen zwei fertige Quellen — Terminplaner IDBID0001 und
+// Kundenhaustiere IDBID0004 mit 21 Feldcodes. Das war die Wahrheit EINER
+// Installation, festgeschrieben im Code, und damit genau das, was Regel 5
+// verbietet: Feldpositionen und Tabellen-Kennungen sind installations-
+// individuelle DATEN. In einer zweiten Installation waren sie schlicht
+// falsch — und sahen trotzdem richtig aus.
+//
+// Ersatz gibt es KEINEN: der Bediener legt seine Quellen selbst an und
+// trägt die Felder Zeile für Zeile ein. Eine Abkürzung („Liste einfügen":
+// den FELDER-Text einer laufenden Maske hineinkippen) stand am selben Tag
+// eine Stunde da und ist auf Nutzer-Ansage restlos entfernt — nicht ohne
+// neue Entscheidung wieder einbauen.
+//
+// Der Store startet darum leer; bestehende Bibliotheken bleiben unberührt
+// (localStorage + Maskendatei tragen sie).
 
 // ---------- Pure Helfer für das Eingabe-Formular ----------
 // Regel Technikwert ≠ Anzeigename: der Bediener gibt Klarname + Position +

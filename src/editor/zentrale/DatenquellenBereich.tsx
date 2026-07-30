@@ -7,15 +7,19 @@
 // Quelle in der Maske benutzt wird (Registry-getrieben, kein `if type===`).
 
 import { useState } from 'react'
-import { Database, Plus } from 'lucide-react'
+import { Plus, TriangleAlert } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { idbIdAnzeige, type DataSource } from '../../core/data/dataSources'
+import {
+  artFuer,
+  idbIdAnzeige,
+  type DataSource,
+} from '../../core/data/dataSources'
+import { bausteineMitQuelle } from '../../state/quellenOps'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { DataSourceForm } from './DataSourceForm'
 import { Gruppe } from './Gruppe'
-import { bausteinName, KIND_LABELS } from './helfer'
+import { bausteinName, ikonFuer } from './helfer'
 
 export function DatenquellenBereich() {
   const store = useDataSources()
@@ -26,11 +30,24 @@ export function DatenquellenBereich() {
 
   const auswahl = store.list.find((s) => s.id === auswahlId) ?? store.list[0]
 
-  // Bausteine der Maske, die diese Quelle benutzen (Klarnamen für die Anzeige).
+  // Klarnamen der Bausteine, die diese Quelle benutzen. Die Baumsuche selbst
+  // wohnt in quellenOps (dort geprueft) — sie zaehlt seit 2026-07-30 auch die
+  // WEITEREN Quellen mit, s. dort.
   const verwendungFor = (id: string): string[] =>
-    Object.values(ed.tree)
-      .filter((n) => getBlockDefinition(n.type)?.acceptsDataSource && n.props.source === id)
-      .map((n) => bausteinName(n))
+    bausteineMitQuelle(ed.tree, id).map((n) => bausteinName(n))
+
+  // Eine Stammquelle OHNE Felder bestellt beim ERP nichts — sie sieht heil
+  // aus und liefert nie einen Wert. Bei IDB ist dieselbe Lage harmlos
+  // (SoftEngine schickt dort ohnehin alles), darum nur hier.
+  const unvollstaendig = (s: DataSource): boolean =>
+    artFuer(s.kind).felderEinzeln && s.fields.length === 0
+
+  // Die SoftEngine-Kennung einer Quelle, egal woher sie kommt: die feste der
+  // Art — oder die eingegebene, wo die Art keine feste hat. Kein `if kind`.
+  const kennung = (s: DataSource): string => {
+    const feste = artFuer(s.kind).tabellenId
+    return feste !== '' ? feste : idbIdAnzeige(s.idbId)
+  }
 
   function loeschen(s: DataSource) {
     const frage = verwendungFor(s.id).length > 0
@@ -59,6 +76,7 @@ export function DatenquellenBereich() {
           {store.list.map((s) => {
             const verwendet = verwendungFor(s.id).length
             const aktiv = modus !== 'neu' && auswahl?.id === s.id
+            const Icon = ikonFuer(s.kind)
             return (
               <button
                 key={s.id}
@@ -69,10 +87,13 @@ export function DatenquellenBereich() {
                 }`}
               >
                 <div className="flex items-center gap-1.5">
-                  <Database size={12} className="shrink-0 text-muted-foreground" />
+                  <Icon size={12} className="shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate font-medium">{s.name}</span>
+                  {unvollstaendig(s) && (
+                    <TriangleAlert size={12} className="shrink-0 text-destructive" />
+                  )}
                   <span className="shrink-0 rounded-full bg-secondary px-1.5 text-[0.625rem] text-muted-foreground">
-                    {KIND_LABELS[s.kind]}
+                    {artFuer(s.kind).name}
                   </span>
                 </div>
                 <div className="mt-0.5 pl-[1.125rem] text-[0.625rem] text-muted-foreground">
@@ -105,12 +126,17 @@ export function DatenquellenBereich() {
             <div>
               <h3 className="text-sm font-semibold">{auswahl.name}</h3>
               <p className="text-muted-foreground">
-                {KIND_LABELS[auswahl.kind]}
-                {auswahl.kind === 'idb' && idbIdAnzeige(auswahl.idbId) !== ''
-                  ? ` · ${idbIdAnzeige(auswahl.idbId)}`
-                  : ''}
+                {artFuer(auswahl.kind).name}
+                {kennung(auswahl) !== '' ? ` · ${kennung(auswahl)}` : ''}
               </p>
             </div>
+
+            {unvollstaendig(auswahl) && (
+              <p className="rounded-md border border-destructive/40 bg-destructive/5 px-2.5 py-2 text-destructive">
+                Ohne Felder liefert SoftEngine für diese Quelle nichts.
+                Bearbeiten und die Felder eintragen.
+              </p>
+            )}
 
             <Gruppe titel="Felder">
               <div className="overflow-hidden rounded-md border border-border">

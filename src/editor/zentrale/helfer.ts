@@ -1,18 +1,30 @@
 // zentrale/helfer — gemeinsame Anzeige-Helfer der Steuerung (nur Darstellung;
 // die Technikwerte und Vokabulare selbst wohnen in core/data/*).
 
+import { Boxes, Database, FileText, Users } from 'lucide-react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'
 import type { DataSourceKind } from '../../core/data/dataSources'
 import type { RelationTemplate } from '../../core/data/relations'
 
-// Klarnamen der Quellen-Arten (der Technikwert `kind` bleibt unsichtbar).
-export const KIND_LABELS: Record<DataSourceKind, string> = {
-  idb: 'IDB-Tabelle',
-  adressstamm: 'Adressstamm',
-  artikelstamm: 'Artikelstamm',
-  beleg: 'Beleg',
+// Der Klarname einer Quellen-Art steht NICHT mehr hier, sondern in der
+// Arten-Tabelle (core/data/quellenArten — `artFuer(kind).name`), zusammen mit
+// allem anderen, was die Art ausmacht. Diese Datei liefert nur noch, was
+// reine Editor-Optik ist: das Bild.
+
+// Ein Bild je Art, damit der Bediener dieselbe Quelle in Liste und Detail
+// wiedererkennt. Bewusst mit Rückfall: eine neue Art bleibt bedienbar, auch
+// wenn hier niemand ein Bild nachträgt.
+const KIND_ICONS: Partial<Record<DataSourceKind, typeof Database>> = {
+  idb: Database,
+  adressstamm: Users,
+  artikelstamm: Boxes,
+  beleg: FileText,
+}
+
+export function ikonFuer(kind: DataSourceKind): typeof Database {
+  return KIND_ICONS[kind] ?? Database
 }
 
 // Kürzel für kompakte Listenzeilen (Kontext, kein Anzeigename).

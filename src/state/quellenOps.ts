@@ -15,6 +15,7 @@ import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import type { DataSource } from '../core/data/dataSources'
 import {
   quellenAufloesen,
+  weitereQuellenAus,
   WEITERE_QUELLEN_PROP,
   type QuelleInReichweite,
 } from '../core/data/sourceLinks'
@@ -44,6 +45,25 @@ export function quellenInReichweite(
   const traeger = quellenTraeger(tree, id)
   if (!traeger) return []
   return quellenAufloesen(traeger.props.source, traeger.props[WEITERE_QUELLEN_PROP], bibliothek)
+}
+
+// Die Gegenrichtung: WELCHE Bausteine benutzen diese Quelle?
+//
+// Zaehlt BEIDE Wege — erste Quelle (`source`) UND weitere Quelle
+// (`weitereQuellen`). Die Steuerung sah bis 2026-07-30 nur die erste: eine
+// nur als Zusatz benutzte Quelle galt als „nicht verwendet", und die
+// Loeschen-Rueckfrage liess ihre Warnung weg. Wer sie dann loeschte, riss
+// eine Verknuepfung ein, ohne gewarnt zu werden.
+//
+// Ein Baustein zaehlt EINMAL, auch wenn er dieselbe Quelle auf beiden Wegen
+// nennt (moeglich nur in einem von Hand verbogenen Stand).
+export function bausteineMitQuelle(tree: BlockTree, quelleId: string): BlockNode[] {
+  if (quelleId === '') return []
+  return Object.values(tree).filter((n) => {
+    if (!getBlockDefinition(n.type)?.acceptsDataSource) return false
+    if (n.props.source === quelleId) return true
+    return weitereQuellenAus(n.props[WEITERE_QUELLEN_PROP]).some((q) => q.quelleId === quelleId)
+  })
 }
 
 // Nur die erste Quelle — der haeufige Fall (Zeilen, Tagesfilter, Schreibweg).

@@ -3,19 +3,17 @@
 // SoftEngine-Installation individuell. Dieser Store ist die gelebte Wahrheit
 // der Vorlagen-Bibliothek: persistiert in localStorage NEBEN den Bäumen
 // (Muster: Editor.ts — Subject + sanitize beim Laden + entprelltes Speichern).
-// Beim allerersten Start wird der mitgelieferte Startbestand
-// (BUILTIN_DATA_SOURCES) eingespielt; danach gehören die Vorlagen dem
-// Bediener (auch Löschen der mitgelieferten überlebt den Reload — es wird
-// nie ungefragt neu eingespielt).
+//
+// Ein frischer Browser startet LEER (Nutzer-Entscheidung 2026-07-30). Bis
+// dahin wurden zwei mitgelieferte Quellen eingespielt (Terminplaner
+// IDBID0001, Kundenhaustiere IDBID0004) — die Wahrheit einer einzigen
+// Installation, festgeschrieben im Code, s. dataSources.ts. Bestehende
+// Bibliotheken sind davon unberührt: was im Speicher liegt, wird geladen.
 //
 // Bewusst KEIN Undo/Redo: die Bibliothek ist kein Canvas-Gestenraum; vor
 // destruktiven Aktionen fragt die UI nach (wie das Kreuzchen).
 
-import {
-  BUILTIN_DATA_SOURCES,
-  sanitizeDataSources,
-  type DataSource,
-} from '../core/data/dataSources'
+import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
 import { deepClone } from '../lib/deepClone'
 import { meldeSpeicherPanne, merkeSpeicherErfolg, sichereUnlesbaren } from './notfallkopie'
 import { Subject } from './Subject'
@@ -23,13 +21,14 @@ import { Subject } from './Subject'
 const STORAGE_KEY = 'aufbau_editor_datenquellen_v1'
 const SAVE_DEBOUNCE_MS = 500
 
-// null = noch nie gespeichert (→ Seed); sonst die sanitierte Liste
-// (auch wenn leer — der Bediener hat dann alles gelöscht).
+// null = noch nie gespeichert (→ leere Bibliothek); sonst die sanitierte
+// Liste (auch wenn leer — der Bediener hat dann alles gelöscht).
 //
-// Ein BESCHÄDIGTER Stand ist etwas anderes als „noch nie gespeichert": bis
-// 2026-07-27 fielen beide still auf die mitgelieferten Vorlagen zurück, die
-// echten Datenquellen des Bedieners waren damit wortlos weg. Jetzt wird
-// gesichert und gemeldet (Regel „nichts scheitert still").
+// Ein BESCHÄDIGTER Stand endet in derselben leeren Liste, ist aber etwas
+// anderes: bis 2026-07-27 fielen beide still auf die mitgelieferten Vorlagen
+// zurück, die echten Datenquellen des Bedieners waren damit wortlos weg.
+// Darum wird ein unlesbarer Stand gesichert und GEMELDET, statt nur ersetzt
+// (Regel „nichts scheitert still").
 function loadFromStorage(): DataSource[] | null {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return null
@@ -56,7 +55,7 @@ export class DataSourceStore extends Subject<DataSourceStore> {
 
   constructor() {
     super()
-    this._sources = loadFromStorage() ?? deepClone(BUILTIN_DATA_SOURCES) as DataSource[]
+    this._sources = loadFromStorage() ?? []
     this._hydrated = true
   }
 
