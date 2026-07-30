@@ -255,7 +255,7 @@ npx tsc -b && npx eslint src && npm run check:regeln && npm run check:runtime &&
 - Fünf Wächter: export.test · seRuntime.test · persistence.test ·
   Export-Referenzabzug · Bündel-Wächter `check:runtime`. Nicht ohne Absprache
   aufblähen. (Playwright/e2e am 2026-07-23 entfernt — Nutzer-Entscheidung;
-  der Nutzer prüft die Bedienung live, der bauende Agent im Browser-Preview.)
+  die Bedienung prüft allein der Nutzer, Ansage 2026-07-28 — s. Test-Bremse.)
 - Bündel-Wächter (Nutzer-Go 2026-07-20): `npm run check:runtime`
   (`scripts/check-runtime-bundle.mjs`) baut das Runtime-Bündel über den echten
   CLI-Weg neu und vergleicht es inhaltlich mit dem eingecheckten

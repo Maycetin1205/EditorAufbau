@@ -2,12 +2,36 @@
 
 | Version | Week | Commit Message |
 | ------- | ---- | -------------- |
+| `0.3.1` | 1    | chore(release): v0.3.1 — Aufraeumen nach v0.3.0 (drei Aufgaben-Commits + Codex-Review-Nachzug) |
+| `0.3.0` | 1    | feat(quellen): mehrere Datenquellen je Baustein (v0.3.0) |
+| `0.2.0` | 1    | feat(maske): Maske als Datei speichern und laden |
+| `0.1.2` | 1    | fix(tabelle,state,waechter): vier Befunde aus der Gesamtanalyse |
 | `0.1.1` | 1    | fix: StepForm-Feinschliff — schmalere Quelle-Box, Trennlinien in der Relations-Liste (Nutzer-Fund) |
 | `0.1.0` | 1    | feat: „Feld übernehmen" am Schreib-Schritt (Auslöser am Parameter, V2) + sprechende Namen + Kleinputz |
 | `0.0.1` | 1    | chore: TRIP-Workflow eingerichtet (Skills, ARCHI.md, Codex-Anbindung) |
 
 # Changelog Summary
 
+- **v0.3.1 (Aufraeumen nach v0.3.0 — Woche 1, 30-07-2026)**:
+  Verknuepfungs-Bibliothek der Kommandozentrale restlos entfernt
+  (Maskendatei-Version 1 → 2, Bestandsdateien laden weiter) · Referenzabzug
+  entrauscht (1104 → 103 Zeilen, Runtime-Buendel exakt herausgeschnitten) ·
+  Inspector-Auswahlfelder angeglichen (SchrittSelect nach ui/atoms).
+  Codex-Review APPROVED (`docs/3-code-review/CR_w1_v0.3.1.md`). Export
+  unberuehrt. Details: `w1_v0.3.1.md`
+- **v0.3.0 (Mehrere Datenquellen je Baustein — Woche 1, 28-07-2026)**:
+  Quellen-Liste am Baustein (Inspector, „+ Datenquelle", Schluesselregel ab
+  Eintrag 2), Gruppen im Feld-Picker, Partnerzeile zur Laufzeit
+  (`fremdeQuellen`), weitere Quellen in der SEFILELOOP. Export beruehrt →
+  SE-Echttest beim Nutzer offen. Details: `w1_v0.3.0.md`
+- **v0.2.0 (Maske als Datei speichern und laden — Woche 1, 28-07-2026)**:
+  Maskendatei = Bauplan (Baum + Bibliotheken) mit strenger Verlust-Kontrolle:
+  eine beschaedigte Datei wird abgelehnt statt still erleichtert; Laden
+  ersetzt alles und leert die Historie. Details: `w1_v0.2.0.md`
+- **v0.1.2 (Befunde B1–B5 aus der Gesamtanalyse — Woche 1, 28-07-2026)**:
+  vier stille Fehler behoben (Tabelle/State/Waechter), Befund B4
+  (Interface-Anschluss) als Doku-Klaerung in Folgecommits.
+  Details: `w1_v0.1.2.md`
 - **v0.1.1 (StepForm-Feinschliff — Woche 1, 22-07-2026)**:
   - **Fix (Nutzer-Fund „1995-Look")**: Parameterzeilen passen jetzt in die 340-px-Spalte — Quelle-Box `w-32`→`w-24`, Label enger, Gaps kleiner (die „Fest"-Boxen waren viel zu breit). Relations-Einträge mit feinen Trennlinien (`divide-y`) getrennt. Rein Editor-UI, Export „identisch", keine neuen Tests.
 - **v0.1.0 („Feld übernehmen" V2 + sprechende Namen + Kleinputz — Woche 1, 22-07-2026)**:
