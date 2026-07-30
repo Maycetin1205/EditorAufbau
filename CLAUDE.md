@@ -94,7 +94,7 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Branch, an dem der jeweils andere Agent laut Auftrag arbeitet, ist tabu.
 9. **Prüfungen einmal gebündelt vor dem Commit** (`npx tsc -b` +
    `npx eslint src` + `npm run check:regeln` + `npm run check:runtime` +
-   `npm run check:docs` + `npm test`), nie zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
+   `npm test`), nie zwischendurch. **Playwright/e2e ENTFERNT (Nutzer-Entscheidung 2026-07-23):**
    die langsamen Browser-Tests fraßen Tokens und Zeit.
    **HARTE TEST-SPERRE (Nutzer-Ansage 2026-07-28, sehr deutlich):** KEINE
    neuen Testarten, keine neue Testumgebung, keine Anzeige-/Komponenten-/
@@ -115,10 +115,10 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Preview") überholt. Sicherheitsnetz = fünf Code-Wächter (export / seRuntime / persistence /
    Export-Referenzabzug / Bündel-Wächter `check:runtime`): sie prüfen genau
    das, was im Browser NICHT sichtbar ist — Export-Bytes + SE-Anschluss.
-   Dazu ein Doku-Wächter `check:docs` (2026-07-24): er bewacht die Doku selbst
-   (ARCHI.md-Version + genannte `npm run …`-Scripts gegen package.json; seit
-   2026-07-30 mit Nutzer-Go auch: aktuelle Version steht in der
-   Changelog-Tabelle), keinen Code. Nicht ohne Absprache aufblähen.
+   Einen Doku-Wächter `check:docs` gab es von 2026-07-24 bis 2026-07-30; er
+   bewachte ARCHI.md, die Changelog-Tabelle und die genannten `npm run …`-
+   Scripts. Entfernt mit der Doku, die er bewachte (s. u.) — es gibt keinen
+   Doku-Wächter mehr, und ohne Absprache kommt auch keiner zurück.
    **Und ein Regel-Wächter `check:regeln` (2026-07-24, Nutzer-Entscheidung):**
    er bewacht die BAUART gegen genau diese Regeln — kein Bausteintyp-Sondercode
    und kein Baustein-IMPORT in generischem Code (Regel 2, beides mit begründeten
@@ -183,36 +183,74 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
   Anlegen werden auch LEERE Felder geschrieben; Ketten brauchen
   adressierbare Ergebnisse je Schritt („Ergebnis von Schritt N").
 
-## Arbeitsablauf: TRIP + Codex-Zweitmeinung (Nutzer-Go 2026-07-20)
+## Arbeitsablauf (Schnitt 2026-07-30)
 
-- Skills in `.claude/skills/`: `/TRIP-1-plan` (planen; Codex/GPT 5.6
-  zerpflückt den Plan) → `/TRIP-2-implement` (Codex implementiert in
-  Batches, Claude prüft jeden Diff; Testing-Gate = Prüfbündel aus Regel 9)
-  → `/TRIP-3-release` (Changelog/Doku/Commit — Commit und Push weiterhin
-  NUR nach Nutzer-Go). Alle Skills bleiben installiert (Nutzer testet sie,
-  sobald sein Codex-Kontingent wieder frei ist); ist Codex nicht
-  verfügbar, übernimmt ein unabhängiger Prüf-Agent die Zweitprüfung —
-  transparent im Bericht.
-- Architektur-Karte für die Agenten: `docs/ARCHI.md` (Pflege nach
-  `docs/ARCHI-rules.md`). CLAUDE.md bleibt Regel- und Entscheidungsbuch —
-  bei Widerspruch gewinnt CLAUDE.md.
-- Die Rituale gelten in TRIP unverändert: Plan zeigen + „go" abwarten,
+- **Der TRIP-Ablauf ist weg.** Von sechzehn Skills sind VIER geblieben:
+  `codex-ask`, `codex-plan-review`, `codex-code-review`, `codex-implement` —
+  Zweitmeinung von Codex, ohne eigene Ablage. Gelöscht sind die drei
+  TRIP-Stufen (`TRIP-1-plan`/`-2-implement`/`-3-release`) und neun nie
+  benutzte (`TRIP-init` — einmalig zum Einrichten, das Projekt ist
+  eingerichtet —, `TRIP-upgrade`, `TRIP-research`, `TRIP-review`,
+  `TRIP-compact`, `TRIP-hotfix`, `TRIP-test`). Grund für die drei Stufen:
+  sie produzierten genau die Ablagen, die derselbe Schnitt gelöscht hat
+  (Plan-Datei, Changelog-Datei, Code-Review-Datei, ARCHI-Pflege).
+  **Nicht ohne neue Entscheidung wieder anlegen; die git-Historie hat sie.**
+- **Planen und Berichten läuft im Chat**, nicht in Dateien. Wo ein Plan
+  ausnahmsweise als Datei nützlich ist, gehört er in die git-Historie des
+  Commits, der ihn umsetzt — keine `docs/`-Ablage neu erfinden.
+- **Es gibt keine Architektur-Karte mehr.** `docs/ARCHI.md` +
+  `ARCHI-rules.md` sind gelöscht. Die vier Codex-Vorlagen verweisen an
+  einzelnen Stellen noch darauf — dort ist der Verweis ins Leere gerichtet
+  und der Schritt zu überspringen. Wer sich einlesen muss: CLAUDE.md, dann
+  der Code selbst („Wichtige Stellen" unten). CLAUDE.md bleibt Regel- und
+  Entscheidungsbuch — bei Widerspruch gewinnt CLAUDE.md.
+- **Die Rituale gelten unverändert:** Plan zeigen + „go" abwarten,
   Test-Bremse, SE-Echttest gebündelt, „Aufgefallen unterwegs". Dem Nutzer
   nie Datei-/Technik-Reviews vorlegen — nur fachliche Entscheidungen in
   Klartext (Lehre 2026-07-20).
 
-## Stand & Fahrplan
+## Stand
 
-**Ausgelagert: [`docs/FAHRPLAN.md`](docs/FAHRPLAN.md)** — Tagesordnung, feste
-Zusagen, Merkliste. Regeln und Tagesordnung bleiben getrennt: sonst ertrinken
-die Regeln in Prosa und werden ueberlesen. Bei Widerspruch gewinnt CLAUDE.md.
-Die Chronik „was wann gebaut wurde" steht NICHT dort, sondern in der
-git-Historie und in `docs/2-changelog/` (Doku-Diaet 2026-07-27).
+**Doku-Schnitt 2026-07-30 (Nutzer-Ansage „weg"):** gelöscht sind
+`docs/FAHRPLAN.md`, `docs/ARCHI.md` + `ARCHI-rules.md`, `docs/1-plans`,
+`docs/2-changelog`, `docs/3-code-review`, `docs/4-unit-tests`, `docs/6-memo`,
+`docs/decisions` und der Wächter `check:docs` — rund 2200 Zeilen. Begründung
+des Nutzers: er liest sie nicht, und die git-Historie erzählt dasselbe.
+**Die Chronik „was wann gebaut wurde" steht ab jetzt NUR in der git-Historie.**
+Keine Tagesordnung, keine Changelog-Dateien, keine Plan-Ablage mehr anlegen
+ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
+`docs/chef-maske/` (die zwei echten Masken) und `docs/softengine-wiki/`.
 
 ### Woran gerade gearbeitet wird
 
-**Tabelle stabil machen**, daneben **Verknuepfte Quellen** (Paket 3 von 4).
-Die vollstaendige Reihenfolge steht in FAHRPLAN.md.
+**Datenquellen** — Arten als Tabelle statt Sondercode (2026-07-30 gebaut),
+Kennung frei eingebbar. Als Nächstes: Verknüpfung von den Bausteinen an die
+Datenquelle heben (der Plan dazu lag in `docs/1-plans/F_0.5.0…` und steckt
+jetzt in Commit `fd827aa`). Offen daneben: Tabelle stabil machen, Optik-
+Feinschliff, Wizard.
+
+### Feste Zusagen — aus FAHRPLAN.md gerettet, weil es REGELN sind
+
+Diese Punkte sind keine Chronik, sondern Entscheidungen. **Nicht ohne neue
+Nutzer-Entscheidung anfassen:**
+
+- **Geschrieben wird nur über sichtbare Ketten** — kein Auto-PUT. Gelesen
+  wird automatisch aus der ERSTEN Zeile der Quelle.
+- **Ankreuzfeld bleibt unbindbar**, bis der SE-Wert-Kontrakt (J/N? 1/0?) an
+  einer echten Maske belegt ist.
+- **Kanban:** „Einsortieren nach" ist optional; ein Drop führt NUR die
+  sichtbare Kette „Karte verschoben" aus, einen eingebauten Schreibweg gibt
+  es nicht.
+- **Verknüpfung (Nutzer 2026-07-25):** höchstens 3 Schlüsselfelder,
+  UND-verknüpft · kein Partner gefunden → Feld bleibt leer, die Zeile bleibt
+  STEHEN (verschwundene Zeilen wären unsichtbarer Datenverlust) · nur EINE
+  Stufe, keine Ketten über mehrere Quellen.
+- **Restlos entfernt — nicht wieder einbauen:** „Quelle speichern" samt
+  Änderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD · Projektkarte/
+  project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) · der
+  Baustein-Baum (2026-07-21) · die Verknüpfungs-Bibliothek der
+  Kommandozentrale (2026-07-28) · der mitgelieferte Datenquellen-Startbestand,
+  die Feld-Vorlagen und „Liste einfügen" (alle 2026-07-30).
 
 ## Wichtige Stellen
 
@@ -224,8 +262,7 @@ Die vollstaendige Reihenfolge steht in FAHRPLAN.md.
   Block- UND Popup-Anfasser · `src/export/serializer.ts` = die eine
   Zeichen-Regel-Stelle · `bindingAttr()` in BlockDefinition = die EINE
   Stelle der Bindungs-Attribut-Form · `POPUP_RAND` (PopupBlock) = die
-  EINE Konstante für „Fläche − Rand". Historie der Aufräum-Schritte
-  A1–A7 und Kommentar-Historie: `docs/decisions/`.
+  EINE Konstante für „Fläche − Rand".
 - Registry-Konzepte: `src/core/blocks/` · Bausteine: `src/blocks/` ·
   Aktions-/Quellen-Modell: `src/core/data/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·

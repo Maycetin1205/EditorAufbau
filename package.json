@@ -11,7 +11,6 @@
     "test": "vitest run",
     "build:runtime": "vite build --config vite.runtime.config.ts",
     "check:runtime": "node scripts/check-runtime-bundle.mjs",
-    "check:docs": "node scripts/check-docs.mjs",
     "check:regeln": "node scripts/check-regeln.mjs"
   },
   "dependencies": {
