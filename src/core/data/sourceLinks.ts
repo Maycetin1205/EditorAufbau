@@ -11,8 +11,8 @@
 // nie Code (Regel 5).
 //
 // Die aeltere Bibliotheks-Variante desselben Gedankens (SourceLink/findLink,
-// gepflegt als eigener Bereich der Kommandozentrale) hat der Nutzer verworfen
-// und sie ist am 2026-07-28 restlos entfernt — die Schluesselregel lebt
+// gepflegt als eigener Bereich der Kommandozentrale) hat der Nutzer am
+// 2026-07-28 verworfen; entfernt am 2026-07-30 — die Schluesselregel lebt
 // seither NUR am Baustein, an dem sie wirkt (Regel 7, Bedienung am Ding).
 
 import type { DataSource } from './dataSources'

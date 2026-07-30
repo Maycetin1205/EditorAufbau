@@ -34,7 +34,7 @@ import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { SelectControl } from './controls/SelectControl'
 
-// Zwei Auswahl-Bauteile, je nach Platz (Angleichung 2026-07-28 — vorher ein
+// Zwei Auswahl-Bauteile, je nach Platz (Angleichung 2026-07-30 — vorher ein
 // selbstgebautes nacktes <select>, das anders aussah als die
 // Eigenschaftsfelder darueber im selben Panel):
 //   - Quellen-Auswahl je Eintrag (EIN beschriftetes Feld pro Zeile) →

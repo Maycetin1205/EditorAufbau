@@ -35,7 +35,7 @@ export const MASKEN_DATEI_ART = 'aufbau-editor-maske'
 // Format-Version der DATEI (nicht des Baums — der hat schemaVersion).
 // Erlaubt spaetere Aenderungen am Rahmen, ohne zu raten.
 //
-// Version 2 (2026-07-28): der Abschnitt „verknuepfungen" entfaellt — die
+// Version 2 (2026-07-30): der Abschnitt „verknuepfungen" entfaellt — die
 // Bibliotheks-Verknuepfung ist entfernt, die Schluesselregel haengt am
 // Baustein (`weitereQuellen` in den Block-Props, reist im Baum mit).
 // Version-1-Dateien laden weiter; ihr verknuepfungen-Abschnitt wird beim
@@ -333,7 +333,7 @@ function auspacken(text: string): AuspackErgebnis {
 
   // Ein „verknuepfungen"-Abschnitt (Dateiversion 1) wird AUSDRUECKLICH
   // angenommen und verworfen — ohne Verlust-Kontrolle, anders als die zwei
-  // Bibliotheken oben. Die Bibliotheks-Verknuepfung ist am 2026-07-28
+  // Bibliotheken oben. Die Bibliotheks-Verknuepfung ist am 2026-07-30
   // entfernt (die Schluesselregel haengt am Baustein, `weitereQuellen`),
   // und der Abschnitt hat nie etwas bewirkt: kein Produktivcode hat ihn je
   // gelesen. Es geht also nichts verloren, was je gewirkt hat — eine

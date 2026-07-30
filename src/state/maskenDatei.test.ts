@@ -131,7 +131,7 @@ describe('packeMaskeAus lehnt Dateien aus der ZUKUNFT ab', () => {
 
 describe('Dateiversion 1 laedt weiterhin (Bestandsdateien auf der Platte)', () => {
   // Version-1-Dateien tragen den Abschnitt „verknuepfungen" der am
-  // 2026-07-28 entfernten Bibliotheks-Verknuepfung. Er wird angenommen und
+  // 2026-07-30 entfernten Bibliotheks-Verknuepfung. Er wird angenommen und
   // bewusst verworfen — er hat nie etwas bewirkt, kein Produktivcode hat
   // ihn je gelesen. Ginge das kaputt, lehnte der Editor Dateien ab, die er
   // frueher selbst geschrieben hat.

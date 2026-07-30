@@ -14,7 +14,7 @@
 // LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
 //
 // Der Abzug hält Markup + Datenzeilen (window.FF_DATA_SOURCES/FF_RELATIONS)
-// fest — OHNE das Runtime-Bündel (entrauscht 2026-07-28). Das Minifikat
+// fest — OHNE das Runtime-Bündel (entrauscht 2026-07-30). Das Minifikat
 // stand hier mit rund 1000 von 1104 Zeilen und überdeckte jeden Diff: ob
 // sich die MASKE geändert hatte, war im Commit nicht mehr zu sehen. Das
 // Bündel hat eigene Wächter — check:runtime baut es über den echten CLI-Weg

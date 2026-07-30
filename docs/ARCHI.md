@@ -368,7 +368,7 @@ SEFILELOOP auf — sonst schickte SoftEngine ihre Daten nie.
   ersten Quelle), und **kein Gruppieren/Filtern** nach einem Fremdfeld
   („Einsortieren nach", „Tag filtern nach" bleiben bei der eigenen Quelle).
 - Die ältere Bibliotheks-Variante der Verknüpfung (`SourceLink`,
-  `VerknuepfungBereich` in der Kommandozentrale) ist am 2026-07-28 restlos
+  `VerknuepfungBereich` in der Kommandozentrale) ist am 2026-07-30 restlos
   entfernt (Maskendatei-Version 1 → 2; ein alter `verknuepfungen`-Abschnitt
   wird beim Laden angenommen und verworfen). Die Schlüsselregel lebt am
   Baustein (`weitereQuellen`).

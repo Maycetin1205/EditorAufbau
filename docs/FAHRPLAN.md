@@ -89,7 +89,7 @@ Produktivcode ruft `findLink` je auf, es wird also nichts Laufendes eingerissen.
 Das Datenmodell (`SchluesselPaar`, 3 Paare, UND-verknuepft) bleibt und wandert
 in die Baustein-Eigenschaften.
 
-**Stand 2026-07-28: Abriss ERLEDIGT** (noch am selben Tag, nach v0.3.0).
+**Stand 2026-07-30: Abriss ERLEDIGT** (v0.3.1).
 Entfernt sind `VerknuepfungBereich`, `SourceLinkStore`/`useSourceLinks` und
 `SourceLink`+`findLink`+`paareAusSicht` in `core/data/sourceLinks.ts`. Die
 Maskendatei schreibt keinen `verknuepfungen`-Abschnitt mehr (Dateiversion
@@ -136,8 +136,9 @@ lesen, dann mit eigenem Plan neu bauen.
   „Quelle speichern" samt Aenderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD ·
   Projektkarte/project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) ·
   der Baustein-Baum (Nutzer 2026-07-21) · die Verknuepfungs-Bibliothek der
-  Kommandozentrale (`VerknuepfungBereich`/`SourceLinkStore`; Nutzer
-  2026-07-28 — die Schluesselregel lebt am Baustein, `weitereQuellen`).
+  Kommandozentrale (`VerknuepfungBereich`/`SourceLinkStore`; Nutzer-Entscheid
+  2026-07-28, entfernt 2026-07-30 — die Schluesselregel lebt am Baustein,
+  `weitereQuellen`).
 - **Abnahme laeuft live — und zwar durch den Nutzer** (Ansage 2026-07-28):
   Browser-Bedienpruefung UND SE-Echttest macht er selbst. Der bauende Agent
   startet keinen Dev-Server und klickt nicht im Preview; er liefert das

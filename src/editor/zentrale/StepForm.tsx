@@ -15,7 +15,7 @@
 // diese Datei ueber den 500-Zeilen-Deckel gewachsen war):
 //   - ParameterZeile  eine Parameterzeile samt Wert-Steuerung
 //   - RelationAuswahl Vorlagen-Suche + -Liste mit Lesen/Schreiben-Tabs
-//   - SchrittSelect   das kompakte Auswahlfeld (seit 2026-07-28 in
+//   - SchrittSelect   das kompakte Auswahlfeld (seit 2026-07-30 in
 //                     ui/atoms — die QuellenListe ist der zweite Benutzer)
 
 import { useState } from 'react'

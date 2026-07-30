@@ -17,12 +17,12 @@
 // ist die wertvollste (eine zweite Panne wuerde sonst die erste Rettung
 // ueberschreiben).
 //
-// Vier Faelle teilen diese Stelle — der Block-Baum (persistence.ts) und die
-// drei Bibliotheken (Datenquellen, Relationen, Verknuepfungen). Der Baum
-// konnte das seit jeher, die drei Bibliotheken fielen bei kaputtem JSON
-// still auf ihren Startbestand zurueck: die echten Vorlagen des Bedieners
-// waren weg, ersetzt durch die mitgelieferten, ohne ein Wort. Gefunden im
-// Architektur-Review 2026-07-27.
+// Drei Faelle teilen diese Stelle — der Block-Baum (persistence.ts) und die
+// zwei Bibliotheken (Datenquellen, Relationen; bis 2026-07-30 auch die
+// entfernten Verknuepfungen). Der Baum konnte das seit jeher, die
+// Bibliotheken fielen bei kaputtem JSON still auf ihren Startbestand
+// zurueck: die echten Vorlagen des Bedieners waren weg, ersetzt durch die
+// mitgelieferten, ohne ein Wort. Gefunden im Architektur-Review 2026-07-27.
 
 export const BACKUP_SUFFIX = '__notfallkopie'
 
@@ -67,7 +67,7 @@ export function sichereUnlesbaren(
 // scheitert JEDER Versuch — eine Meldung pro Versuch machte den Editor
 // unbedienbar.
 //
-// Der Merker haengt am Speicherschluessel, nicht global: die vier Wege sind
+// Der Merker haengt am Speicherschluessel, nicht global: die drei Wege sind
 // unabhaengig. Ein globaler Merker wuerde von einem erfolgreichen
 // Datenquellen-Speichern zurueckgesetzt, und die naechste Panne derselben,
 // ununterbrochenen Masken-Stoerung meldete sich erneut.

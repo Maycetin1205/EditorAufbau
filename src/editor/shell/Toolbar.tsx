@@ -137,7 +137,7 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
         variant="outline"
         size="sm"
         onClick={onSteuerung}
-        title="Steuerung — Datenquellen, Verknüpfungen und Relationen der Maske"
+        title="Steuerung — Datenquellen und Relationen der Maske"
       >
         <SlidersHorizontal size={14} /> Steuerung
       </Button>

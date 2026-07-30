@@ -59,8 +59,8 @@ export class Historie {
   }
 
   // Verlauf verwerfen. Gebraucht beim Laden einer Maskendatei (2026-07-28):
-  // ein Snapshot enthaelt NUR Baum und Auswahl — die drei Bibliotheken
-  // (Datenquellen, Relationen, Verknuepfungen) haben gar kein Undo. Bliebe
+  // ein Snapshot enthaelt NUR Baum und Auswahl — die Bibliotheken
+  // (Datenquellen, Relationen) haben gar kein Undo. Bliebe
   // der Verlauf stehen, ergaebe Strg+Z nach dem Laden den ALTEN Baum mit den
   // NEUEN Bibliotheken: Bindungen zeigen ins Leere, und der Bediener glaubt,
   // er sei zurueck. Ein halb wiederhergestellter Stand ist schlimmer als gar

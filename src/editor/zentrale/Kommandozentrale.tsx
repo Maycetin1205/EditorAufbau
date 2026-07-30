@@ -4,7 +4,7 @@
 // als Master-Detail, Bearbeiten inline im Detail (kein Modal im Modal).
 // Die Ereignis-Ketten sind seit R3 (2026-07-21) an den Baustein umgezogen
 // (Inspector-Abschnitt „Aktionen"); der frühere Bereich „Aktionen" entfiel
-// dabei restlos. Der Bereich „Verknüpfungen" (2026-07-25 bis 2026-07-28)
+// dabei restlos. Der Bereich „Verknüpfungen" (2026-07-25 bis 2026-07-30)
 // ist ebenso restlos entfernt — der Nutzer hat die allgemeine Verknüpfung
 // verworfen, die Schlüsselregel lebt am Baustein (QuellenListe im
 // Inspector, Regel 7).

@@ -9,7 +9,7 @@
 // Layout-Klassen (Breite/Flex) gehoeren auf die Huelle; das <select> fuellt
 // sie immer ganz.
 //
-// Wohnt seit 2026-07-28 in ui/atoms: mit den Schluesselregel-Zeilen der
+// Wohnt seit 2026-07-30 in ui/atoms: mit den Schluesselregel-Zeilen der
 // QuellenListe (Inspector) gab es den zweiten echten Benutzer ausserhalb
 // der Steuerung — erst der zweite Fall erzwingt das Teilen (Regel 10).
 
