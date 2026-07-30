@@ -59,6 +59,11 @@
         border: 1px solid var(--se-line);
         border-radius: var(--se-r-lg);
         overflow: hidden;
+        /* Das Popup SCHWEBT (2026-07-30) — die staerkste der drei Stufen.
+           Die Abdunklung dahinter trennt es bereits inhaltlich; der Schatten
+           macht daraus auch raeumlich ein Fenster ueber der Maske statt
+           eines aufgeklebten Kastens. */
+        box-shadow: var(--se-shadow-popup);
       }
       .kopf {
         flex: none;
@@ -134,9 +139,18 @@
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
-        transition: background-color 120ms ease, border-color 120ms ease;
+        box-shadow: var(--se-shadow-ruhe);
+        /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
+           eine eigene 120ms-Angabe — zwei Bausteine mit knapp
+           unterschiedlichem Takt wirken unruhig. */
+        transition: background-color var(--se-move), border-color var(--se-move),
+          box-shadow var(--se-move), transform var(--se-move);
       }
-      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
+      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); box-shadow: var(--se-shadow-hover); }
+      /* Der Knopf gibt beim Druecken sichtbar nach — die einzige Stelle der
+         Maske, an der ein Klick sofort etwas ausloest. Ohne diese Rueckmeldung
+         weiss der Bediener nicht, ob er getroffen hat. */
+      button:active { transform: translateY(1px); box-shadow: var(--se-shadow-ruhe); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
       /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
          groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt
@@ -173,7 +187,28 @@
         border-radius: var(--se-r-md);
         padding: 8px 10px 9px;
         font-family: var(--se-font);
+        box-shadow: var(--se-shadow-ruhe);
+        transition: box-shadow var(--se-move), transform var(--se-move);
       }
+      /* Die Karte hebt sich unter dem Zeiger. Ein Blatt, das man anfassen
+         kann — nicht ein Bild. Bewusst nur 1px: mehr wirkt verspielt und
+         laesst die Nachbarkarten wackeln. */
+      .card:hover {
+        box-shadow: var(--se-shadow-hover);
+        transform: translateY(-1px);
+      }
+      /* Statusfarbe AM KOERPER (2026-07-30, Nutzer-Go).
+         Die Karte kennt ihren Status laengst — die Eigenschaft „Farbe"
+         faerbt seit jeher den Chip. Gezeigt hat der Koerper ihn nie: weisse
+         Flaeche, grauer Rahmen, egal ob Notfall oder erledigt. Ein schmaler
+         Streifen links macht ihn auf einen Blick lesbar. Kostet KEINE neue
+         Eigenschaft und KEINE neue Farbe — dieselben Statusfarben wie Chip
+         und Kanban-Spalte, dieselbe Klassen-Bauart (v-variante). */
+      .card { border-left-width: 3px; }
+      .card.v-info { border-left-color: var(--se-blue); }
+      .card.v-success { border-left-color: var(--se-green); }
+      .card.v-warning { border-left-color: var(--se-amber); }
+      .card.v-danger { border-left-color: var(--se-red); }
       .main {
         display: flex;
         align-items: center;
@@ -282,7 +317,7 @@
       data-ff-spot=${e}
       ?data-ff-bound=${this[`${e}Field`]!==``}
       @dblclick=${t=>this.inlineEdit(t,e)}
-    >${this[e]}</span>`}render(){let e=sn(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.heading)||n(this.heading2),i=n(this.time)||n(this.date);return b`<div class="card">
+    >${this[e]}</span>`}render(){let e=sn(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.heading)||n(this.heading2),i=n(this.time)||n(this.date);return b`<div class="card v-${e}">
       ${n(this.avatar)||r||n(this.meta)||i?b`<div class="main">
             ${n(this.avatar)?b`<span
                   class="avatar"
@@ -595,6 +630,10 @@
         border: 1px solid var(--col-line);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
+        /* Die Spalte ist die unterste Ebene der drei: sie TRAEGT die Karten,
+           also darf sie sich nur andeuten. Ohne jeden Schatten laege sie
+           auf derselben Hoehe wie ihre Karten (2026-07-30). */
+        box-shadow: var(--se-shadow-ruhe);
       }
       .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
@@ -711,6 +750,7 @@
         font-family: var(--se-font);
         font-size: var(--se-fs);
         color: var(--se-ink);
+        box-shadow: var(--se-shadow-ruhe);
       }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
@@ -824,6 +864,14 @@
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
         background: var(--se-panel);
+        transition: background-color var(--se-move);
+      }
+      /* Die Zeile unter dem Zeiger hinterlegt sich (2026-07-30). In einer
+         dichten Liste ist das kein Schmuck: es zeigt, WELCHE Zeile man
+         gleich anklickt — bei 32px Zeilenhoehe verrutscht man sonst leicht
+         um eine. Der Kopf ist ausgenommen, er ist keine Datenzeile. */
+      .koerper > .zeile:hover {
+        background: var(--se-panel-2);
       }
       .kopf > div,
       .zeile > div {

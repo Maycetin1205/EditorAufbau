@@ -116,6 +116,10 @@ export class KanbanSpalteBlock extends BasicBlock {
         border: 1px solid var(--col-line);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
+        /* Die Spalte ist die unterste Ebene der drei: sie TRAEGT die Karten,
+           also darf sie sich nur andeuten. Ohne jeden Schatten laege sie
+           auf derselben Hoehe wie ihre Karten (2026-07-30). */
+        box-shadow: var(--se-shadow-ruhe);
       }
       .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }

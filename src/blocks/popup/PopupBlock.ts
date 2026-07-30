@@ -101,6 +101,11 @@ export class PopupBlock extends BasicBlock {
         border: 1px solid var(--se-line);
         border-radius: var(--se-r-lg);
         overflow: hidden;
+        /* Das Popup SCHWEBT (2026-07-30) — die staerkste der drei Stufen.
+           Die Abdunklung dahinter trennt es bereits inhaltlich; der Schatten
+           macht daraus auch raeumlich ein Fenster ueber der Maske statt
+           eines aufgeklebten Kastens. */
+        box-shadow: var(--se-shadow-popup);
       }
       .kopf {
         flex: none;

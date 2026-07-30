@@ -140,7 +140,28 @@ export class CardBlock extends BasicBlock {
         border-radius: var(--se-r-md);
         padding: 8px 10px 9px;
         font-family: var(--se-font);
+        box-shadow: var(--se-shadow-ruhe);
+        transition: box-shadow var(--se-move), transform var(--se-move);
       }
+      /* Die Karte hebt sich unter dem Zeiger. Ein Blatt, das man anfassen
+         kann — nicht ein Bild. Bewusst nur 1px: mehr wirkt verspielt und
+         laesst die Nachbarkarten wackeln. */
+      .card:hover {
+        box-shadow: var(--se-shadow-hover);
+        transform: translateY(-1px);
+      }
+      /* Statusfarbe AM KOERPER (2026-07-30, Nutzer-Go).
+         Die Karte kennt ihren Status laengst — die Eigenschaft „Farbe"
+         faerbt seit jeher den Chip. Gezeigt hat der Koerper ihn nie: weisse
+         Flaeche, grauer Rahmen, egal ob Notfall oder erledigt. Ein schmaler
+         Streifen links macht ihn auf einen Blick lesbar. Kostet KEINE neue
+         Eigenschaft und KEINE neue Farbe — dieselben Statusfarben wie Chip
+         und Kanban-Spalte, dieselbe Klassen-Bauart (v-variante). */
+      .card { border-left-width: 3px; }
+      .card.v-info { border-left-color: var(--se-blue); }
+      .card.v-success { border-left-color: var(--se-green); }
+      .card.v-warning { border-left-color: var(--se-amber); }
+      .card.v-danger { border-left-color: var(--se-red); }
       .main {
         display: flex;
         align-items: center;
@@ -289,7 +310,7 @@ export class CardBlock extends BasicBlock {
     const titel = zeigt(this.heading) || zeigt(this.heading2)
     const wann = zeigt(this.time) || zeigt(this.date)
     const mitte = zeigt(this.avatar) || titel || zeigt(this.meta) || wann
-    return html`<div class="card">
+    return html`<div class="card v-${v}">
       ${mitte
         ? html`<div class="main">
             ${zeigt(this.avatar)

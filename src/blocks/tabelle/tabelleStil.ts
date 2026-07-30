@@ -34,6 +34,7 @@ export const tabelleStil = css`
         font-family: var(--se-font);
         font-size: var(--se-fs);
         color: var(--se-ink);
+        box-shadow: var(--se-shadow-ruhe);
       }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
@@ -147,6 +148,14 @@ export const tabelleStil = css`
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
         background: var(--se-panel);
+        transition: background-color var(--se-move);
+      }
+      /* Die Zeile unter dem Zeiger hinterlegt sich (2026-07-30). In einer
+         dichten Liste ist das kein Schmuck: es zeigt, WELCHE Zeile man
+         gleich anklickt — bei 32px Zeilenhoehe verrutscht man sonst leicht
+         um eine. Der Kopf ist ausgenommen, er ist keine Datenzeile. */
+      .koerper > .zeile:hover {
+        background: var(--se-panel-2);
       }
       .kopf > div,
       .zeile > div {

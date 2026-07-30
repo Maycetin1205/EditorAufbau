@@ -47,9 +47,18 @@ export class ButtonBlock extends BasicBlock {
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
-        transition: background-color 120ms ease, border-color 120ms ease;
+        box-shadow: var(--se-shadow-ruhe);
+        /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
+           eine eigene 120ms-Angabe — zwei Bausteine mit knapp
+           unterschiedlichem Takt wirken unruhig. */
+        transition: background-color var(--se-move), border-color var(--se-move),
+          box-shadow var(--se-move), transform var(--se-move);
       }
-      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
+      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); box-shadow: var(--se-shadow-hover); }
+      /* Der Knopf gibt beim Druecken sichtbar nach — die einzige Stelle der
+         Maske, an der ein Klick sofort etwas ausloest. Ohne diese Rueckmeldung
+         weiss der Bediener nicht, ob er getroffen hat. */
+      button:active { transform: translateY(1px); box-shadow: var(--se-shadow-ruhe); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
       /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
          groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt
