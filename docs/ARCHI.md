@@ -264,8 +264,10 @@ npx tsc -b && npx eslint src && npm run check:regeln && npm run check:runtime &&
   BEWUSST kein vitest-Test: In-Place-Bauen im vitest-Lauf würde die
   `?raw`-Leser (export.test.ts) flaky machen; darum eigener Schritt VOR vitest.
 - Doku-Wächter `check:docs` (2026-07-24): bewacht die Doku selbst — prüft, dass
-  ARCHI.md die richtige Version nennt und jedes genannte `npm run …` wirklich
-  existiert. Bewusst nur diese zwei Prüfungen (Regel 10). Fing bei Einführung
+  ARCHI.md die richtige Version nennt, jedes genannte `npm run …` wirklich
+  existiert und die aktuelle Version in der Changelog-Tabelle steht (dritte
+  Prüfung per Nutzer-Go 2026-07-30 — die Tabelle war still vier Versionen im
+  Rückstand). Bewusst nur diese drei Prüfungen (Regel 10). Fing bei Einführung
   die zwei bekannten Abweichungen (Version 0.1.0→0.1.1, `test:e2e`).
 - Regel-Wächter `check:regeln` (2026-07-24, Nutzer-Entscheidung):
   `scripts/check-regeln.mjs` bewacht die BAUART gegen die Architektur-Regeln,
@@ -352,7 +354,7 @@ SEFILELOOP auf — sonst schickte SoftEngine ihre Daten nie.
 | `npm run build:runtime` | ff-runtime-Bündel erneuern (nach Laufzeit-Änderungen Pflicht) |
 | `npm test` | Vitest (Unit/Snapshot) |
 | `npm run check:runtime` | Bündel-Wächter (läuft VOR vitest) |
-| `npm run check:docs` | Doku-Wächter: ARCHI.md-Version + genannte Scripts gegen package.json |
+| `npm run check:docs` | Doku-Wächter: ARCHI.md-Version + genannte Scripts + Changelog-Tabelle gegen package.json |
 | `npm run check:regeln` | Regel-Wächter: Bauart gegen die Architektur-Regeln (s. Abschnitt 9) |
 
 ## 13. Bewusste Grenzen (Stand 2026-07-28)

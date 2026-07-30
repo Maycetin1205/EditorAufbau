@@ -5,9 +5,13 @@
 // einzige Instrument des Menschen ist. Eine Doku, die luegt, ist
 // schlechter als gar keine.
 //
-// Zwei Pruefungen (bewusst nur zwei -- Regel 10, nichts auf Verdacht):
+// Drei Pruefungen (bewusst nur drei -- Regel 10, nichts auf Verdacht):
 //   1. Versionsnummer in ARCHI.md == package.json
 //   2. Jedes in der Doku genannte npm-Script existiert wirklich
+//   3. Die aktuelle Version steht in der Changelog-Tabelle
+//      (Nutzer-Go 2026-07-30: die Tabelle war vier Versionen im
+//      Rueckstand, weil Releases ohne den TRIP-3-Skill liefen -- genau
+//      dieses stille Veralten faengt die Pruefung ab jetzt)
 //
 // Aufruf: node scripts/check-docs.mjs
 
@@ -37,9 +41,20 @@ for (const s of [...genannt].sort()) {
   }
 }
 
+// --- 3. Changelog-Tabelle ---------------------------------------------
+// Die Tabelle buendelt alle Versionen an einer Stelle. Ohne Waechter
+// veraltet sie still, sobald ein Release am TRIP-3-Skill vorbei laeuft.
+const tabelle = readFileSync('docs/2-changelog/changelog_table.md', 'utf8')
+if (!tabelle.includes('`' + pkg.version + '`')) {
+  fehler.push(
+    `Changelog: docs/2-changelog/changelog_table.md kennt Version \`${pkg.version}\` nicht -- `
+    + 'ohne Zeile dort veraltet die Tabelle still (am 2026-07-30 fehlten so vier Versionen)',
+  )
+}
+
 // --- Ergebnis ---------------------------------------------------------
 if (fehler.length === 0) {
-  console.log('check-docs: ok (Version + Scripts stimmen)')
+  console.log('check-docs: ok (Version + Scripts + Changelog-Tabelle stimmen)')
   process.exit(0)
 }
 

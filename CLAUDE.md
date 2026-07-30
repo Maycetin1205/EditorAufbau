@@ -116,8 +116,9 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Export-Referenzabzug / Bündel-Wächter `check:runtime`): sie prüfen genau
    das, was im Browser NICHT sichtbar ist — Export-Bytes + SE-Anschluss.
    Dazu ein Doku-Wächter `check:docs` (2026-07-24): er bewacht die Doku selbst
-   (ARCHI.md-Version + genannte `npm run …`-Scripts gegen package.json),
-   keinen Code. Nutzer-Entscheidung, nicht ohne Absprache aufblähen.
+   (ARCHI.md-Version + genannte `npm run …`-Scripts gegen package.json; seit
+   2026-07-30 mit Nutzer-Go auch: aktuelle Version steht in der
+   Changelog-Tabelle), keinen Code. Nicht ohne Absprache aufblähen.
    **Und ein Regel-Wächter `check:regeln` (2026-07-24, Nutzer-Entscheidung):**
    er bewacht die BAUART gegen genau diese Regeln — kein Bausteintyp-Sondercode
    und kein Baustein-IMPORT in generischem Code (Regel 2, beides mit begründeten
