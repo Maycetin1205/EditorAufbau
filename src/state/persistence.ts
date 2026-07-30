@@ -32,6 +32,22 @@ export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
 export const BACKUP_KEY = backupKeyFor(STORAGE_KEY)
 export const SAVE_DEBOUNCE_MS = 500
 
+// Aufräumen hinter dem entfernten SourceLinkStore (Verknüpfungs-Bibliothek,
+// raus am 2026-07-30): sein Speicherstand läge sonst für immer in jedem
+// Browser, der den Editor je geöffnet hat — samt möglicher Notfallkopie.
+// Löschen ist hier KEIN stiller Verlust: der Bestand hat nie etwas bewirkt
+// (kein Produktivcode las ihn), und die Schlüsselregel lebt längst in den
+// Block-Props (`weitereQuellen`), die der Baum selbst trägt.
+// typeof-Wache: dieses Modul läuft auch in Umgebungen ohne localStorage.
+try {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('aufbau_editor_verknuepfungen_v1')
+    localStorage.removeItem(backupKeyFor('aufbau_editor_verknuepfungen_v1'))
+  }
+} catch {
+  // Speicher gesperrt — dann bleibt der tote Schlüssel eben liegen.
+}
+
 interface PersistedState {
   schemaVersion: number
   tree: BlockTree
