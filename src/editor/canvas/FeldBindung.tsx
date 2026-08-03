@@ -13,6 +13,15 @@
 // Generischer Editor-Code: importiert KEINEN Baustein (Regel 2) und kennt
 // weder „Tabelle" noch „Spalte" — Prop-Name und Schlüssel kommen aus dem
 // Registry-Eintrag. Reine Editor-Hilfe, erscheint nie im Export.
+//
+// BIBLIOTHEKS-ANGEBOT (Nutzer-Auftrag 2026-08-03, „eine Auswahl statt
+// zwei"): trägt der Träger dieses Bausteins noch KEINE Quelle, tat der
+// Klick auf eine bindbare Stelle bisher still gar nichts — der Bediener
+// musste erst im Inspector „Datenquelle 1" setzen und dann NOCH EINMAL
+// klicken. Jetzt bietet der Picker in dem Fall die GANZE Bibliothek an;
+// die Wahl setzt Quelle (am Träger) und Bindung in einem Schritt. Ohne
+// Träger in Reichweite bleibt alles beim Alten — es gäbe keinen Ort, an
+// dem die Quelle wohnen könnte.
 
 import { useCallback, useEffect, useState, type ReactNode, type RefObject } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
@@ -27,6 +36,8 @@ import {
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
 import { paarKlartext, type QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
+import { quellenTraeger } from '../../state/quellenOps'
+import { useDataSources } from '../../state/useDataSources'
 import { FieldPicker, type PickerGruppe } from './FieldPicker'
 import { bindingCode, useBindingPicker } from './useBindingPicker'
 
@@ -89,9 +100,14 @@ export function useFeldBindung({
   onDoubleClick: (e: ReactMouseEvent<HTMLDivElement>) => void
   pickers: ReactNode
 } {
-  // Ohne erste Quelle gibt es nichts zu binden — dieselbe Bedingung wie zuvor
-  // („Quelle in Reichweite"), nur aus der Liste gelesen.
+  const bibliothek = useDataSources().list
   const hatQuelle = quellen.length > 0
+  // Bibliotheks-Angebot (s. Kopfkommentar): kein Ersatz für „Quelle in
+  // Reichweite", sondern der Weg dorthin — nur wenn ein Träger existiert,
+  // der die gewählte Quelle aufnehmen kann, und die Bibliothek nicht leer ist.
+  const bibliotheksAngebot =
+    !hatQuelle && bibliothek.length > 0 && quellenTraeger(editor.tree, block.id) !== undefined
+  const hatAngebot = hatQuelle || bibliotheksAngebot
 
   // ---- Klick-auf-Stelle-Binding (feste Stellen) ----
   const { picker, closePicker, onClick, onDoubleClick } = useBindingPicker({
@@ -99,7 +115,7 @@ export function useFeldBindung({
     blockRef,
     selected,
     bindableSpots,
-    hatQuelle,
+    hatAngebot,
     onSelect,
   })
 
@@ -139,11 +155,39 @@ export function useFeldBindung({
     return () => el.removeEventListener('ff-listen-bind', handler)
   }, [containerRef, listenBindung])
 
-  const gruppen = pickerGruppen(quellen)
+  // Im Bibliotheks-Angebot sind ALLE Gruppen qualifiziert (quelleId gefüllt):
+  // die Wahl muss die Quelle mitbringen. Gespeichert wird trotzdem
+  // unqualifiziert — die gewählte Quelle wird ja zur ERSTEN des Trägers,
+  // und die erste wird NIE qualifiziert (s. bindungMitQuelle).
+  const gruppen = bibliotheksAngebot
+    ? bibliothek.map((s) => ({ quelleId: s.id, name: s.name, fields: s.fields }))
+    : pickerGruppen(quellen)
+
+  // Wahl aus dem Bibliotheks-Angebot anwenden: Quelle an den Träger,
+  // zurück kommt der nackte Feldcode ('' = nichts gewählt/nichts zu lösen).
+  function quelleSetzen(wert: string, blockId: string): string {
+    const ziel = zerlegeBindung(wert)
+    const traeger = quellenTraeger(editor.tree, blockId)
+    if (ziel.code === '' || ziel.quelleId === '' || !traeger) return ''
+    editor.updateProperty(traeger.id, 'source', ziel.quelleId)
+    return ziel.code
+  }
+
+  // Klarname im Bibliotheks-Angebot: gegen die GENANNTE Bibliotheks-Quelle
+  // aufgelöst — `quellen` ist in dem Moment noch leer, klarnameVon griffe
+  // ins Nichts und der Spaltentitel fiele auf den Feldcode zurück (Regel 3).
+  function klarnameAusBibliothek(roh: string): string {
+    const { quelleId, code } = zerlegeBindung(roh)
+    return (
+      bibliothek
+        .find((s) => s.id === quelleId)
+        ?.fields.find((f) => f.code === code)?.label ?? ''
+    )
+  }
 
   const pickers = (
     <>
-      {selected && picker && hatQuelle && (
+      {selected && picker && hatAngebot && (
         <FieldPicker
           spotLabel={picker.spot.label}
           gruppen={gruppen}
@@ -151,13 +195,19 @@ export function useFeldBindung({
           top={picker.top}
           left={picker.left}
           onPick={(wert) => {
-            editor.updateProperty(blockRef.current.id, bindingProp(picker.spot.prop), wert)
+            const prop = bindingProp(picker.spot.prop)
+            if (bibliotheksAngebot) {
+              const code = quelleSetzen(wert, blockRef.current.id)
+              if (code !== '') editor.updateProperty(blockRef.current.id, prop, code)
+            } else {
+              editor.updateProperty(blockRef.current.id, prop, wert)
+            }
             closePicker()
           }}
           onClose={closePicker}
         />
       )}
-      {selected && listenPicker && hatQuelle && listenBindung && (() => {
+      {selected && listenPicker && hatAngebot && listenBindung && (() => {
         const liste = listeLesen(block.props[listenBindung.prop], listenBindung)
         const eintrag = liste[listenPicker.index]
         if (!eintrag) return null
@@ -169,7 +219,17 @@ export function useFeldBindung({
             current={String(eintrag[listenBindung.feldKey] ?? '')}
             top={listenPicker.top}
             left={listenPicker.left}
-            onPick={(wert) => {
+            onPick={(roh) => {
+              // Bibliotheks-Angebot: Quelle setzen, weiter geht es mit dem
+              // nackten Feldcode — die Titel-Auflösung unten läuft dann
+              // gegen die frisch gesetzte Quelle aus der Bibliothek.
+              const wert = bibliotheksAngebot
+                ? quelleSetzen(roh, block.id)
+                : roh
+              if (bibliotheksAngebot && wert === '') {
+                closeListenPicker()
+                return
+              }
               const next = listeLesen(block.props[listenBindung.prop], listenBindung)
               const ziel = next[listenPicker.index]
               if (ziel) {
@@ -190,7 +250,9 @@ export function useFeldBindung({
                 // einem gleich codierten Feld der ersten.
                 ziel[listenBindung.titelKey] = wert === ''
                   ? listenStandardTitel(listenBindung, listenPicker.index)
-                  : klarnameVon(wert, quellen) || wert
+                  : (bibliotheksAngebot
+                      ? klarnameAusBibliothek(roh)
+                      : klarnameVon(wert, quellen)) || wert
                 ziel[listenBindung.feldKey] = wert
                 editor.updateProperty(block.id, listenBindung.prop, next)
               }

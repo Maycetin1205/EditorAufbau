@@ -23,10 +23,11 @@ interface BindingPickerArgs {
   blockRef: RefObject<BlockNode>
   selected: boolean | undefined
   bindableSpots: readonly BindableSpot[]
-  // Hat der Baustein überhaupt eine Quelle in Reichweite? Vorher stand hier
-  // die Quelle selbst, benutzt wurde aber nur ihr Vorhandensein — seit ein
-  // Baustein mehrere tragen kann, wäre „die eine Quelle" schlicht falsch.
-  hatQuelle: boolean
+  // Gibt es an dieser Stelle überhaupt etwas zu wählen? Quelle(n) in
+  // Reichweite ODER das Bibliotheks-Angebot (ohne zugewiesene Quelle bietet
+  // FeldBindung die ganze Bibliothek an und setzt die Quelle beim Wählen
+  // gleich mit — vorher tat der Klick dann still nichts, 2026-08-03).
+  hatAngebot: boolean
   onSelect?: () => void
 }
 
@@ -35,7 +36,7 @@ export function useBindingPicker({
   blockRef,
   selected,
   bindableSpots,
-  hatQuelle,
+  hatAngebot,
   onSelect,
 }: BindingPickerArgs) {
   const [picker, setPicker] = useState<{ spot: BindableSpot; top: number; left: number } | null>(null)
@@ -85,8 +86,8 @@ export function useBindingPicker({
     onSelect?.()
     clearPickerTimer()
     // Erst selektieren, dann binden: der Picker öffnet nur am Block, der
-    // beim Klick schon selektiert war — und nur mit Quelle in Reichweite.
-    if (!selected || !hatQuelle) return
+    // beim Klick schon selektiert war — und nur, wenn es etwas zu wählen gibt.
+    if (!selected || !hatAngebot) return
     if (e.detail > 1) return // Teil eines Doppelklicks — der entscheidet.
     const hit = spotAt(e)
     if (!hit) return
@@ -112,7 +113,7 @@ export function useBindingPicker({
   // Edit lässt das Event durch (BasicBlock) — stattdessen sofort den Picker.
   function onDoubleClick(e: ReactMouseEvent<HTMLDivElement>) {
     clearPickerTimer()
-    if (!selected || !hatQuelle) return
+    if (!selected || !hatAngebot) return
     const hit = spotAt(e)
     if (!hit || bindingCode(blockRef.current.props, hit.spot) === '') return
     e.stopPropagation()
