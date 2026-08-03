@@ -6,18 +6,20 @@
 // Löschen fragt nach, mit deutlicher Warnung, wenn die
 // Quelle in der Maske benutzt wird (Registry-getrieben, kein `if type===`).
 
-import { useState } from 'react'
-import { Plus, TriangleAlert } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { FileUp, Plus, TriangleAlert } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import {
   artFuer,
   kennungAnzeige,
   type DataSource,
 } from '../../core/data/dataSources'
+import { parseDtkBytes, type DtkTabelle } from '../../core/data/dtkImport'
 import { bausteineMitQuelle } from '../../state/quellenOps'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { DataSourceForm } from './DataSourceForm'
+import { DtkImportForm } from './DtkImportForm'
 import { Gruppe } from './Gruppe'
 import { bausteinName, ikonFuer } from './helfer'
 
@@ -25,8 +27,28 @@ export function DatenquellenBereich() {
   const store = useDataSources()
   const ed = useEditor()
   const [auswahlId, setAuswahlId] = useState<string | null>(store.list[0]?.id ?? null)
-  // 'lesen' = Detail ansehen; 'bearbeiten'/'neu' = Formular inline im Detail.
-  const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu'>('lesen')
+  // 'lesen' = Detail ansehen; 'bearbeiten'/'neu'/'import' = Formular inline im Detail.
+  const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu' | 'import'>('lesen')
+  // Ergebnis des zuletzt hochgeladenen SoftEngine-Exports (.DTK) — der
+  // Bediener lädt die Datei hoch, gelesen wird sie in core/data/dtkImport.
+  const [importStand, setImportStand] = useState<{
+    dateiName: string
+    tabellen: DtkTabelle[]
+  } | null>(null)
+  const dateiRef = useRef<HTMLInputElement>(null)
+
+  async function dtkGewaehlt(datei: File) {
+    // Unlesbar = leere Tabellenliste: der Import-Dialog sagt es dem
+    // Bediener in Klartext, statt still nichts zu tun.
+    let tabellen: DtkTabelle[]
+    try {
+      tabellen = parseDtkBytes(new Uint8Array(await datei.arrayBuffer()))
+    } catch {
+      tabellen = []
+    }
+    setImportStand({ dateiName: datei.name, tabellen })
+    setModus('import')
+  }
 
   const auswahl = store.list.find((s) => s.id === auswahlId) ?? store.list[0]
 
@@ -62,7 +84,7 @@ export function DatenquellenBereich() {
     <div className="flex min-h-0 min-w-0 flex-1">
       {/* Master: die Vorlagen-Liste */}
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
-        <div className="border-b border-border p-2">
+        <div className="flex flex-col gap-1 border-b border-border p-2">
           <Button
             variant="outline"
             size="sm"
@@ -71,11 +93,37 @@ export function DatenquellenBereich() {
           >
             <Plus size={14} /> Neue Datenquelle
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => dateiRef.current?.click()}
+          >
+            <FileUp size={14} /> Aus SoftEngine-Datei…
+          </Button>
+          {/* Verstecktes Datei-Feld (Muster: Toolbar). Der Wert wird nach
+              JEDEM Versuch geleert — sonst löst dieselbe Datei kein zweites
+              'change' aus und der Bediener klickt ins Leere. */}
+          <input
+            ref={dateiRef}
+            type="file"
+            accept=".dtk"
+            className="hidden"
+            onChange={(e) => {
+              const datei = e.target.files?.[0]
+              try {
+                if (datei) void dtkGewaehlt(datei)
+              } finally {
+                e.target.value = ''
+              }
+            }}
+          />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {store.list.map((s) => {
             const verwendet = verwendungFor(s.id).length
-            const aktiv = modus !== 'neu' && auswahl?.id === s.id
+            const aktiv =
+              (modus === 'lesen' || modus === 'bearbeiten') && auswahl?.id === s.id
             const Icon = ikonFuer(s.kind)
             return (
               <button
@@ -114,6 +162,13 @@ export function DatenquellenBereich() {
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
         {modus === 'neu' && (
           <DataSourceForm onClose={() => setModus('lesen')} />
+        )}
+        {modus === 'import' && importStand && (
+          <DtkImportForm
+            dateiName={importStand.dateiName}
+            tabellen={importStand.tabellen}
+            onClose={() => setModus('lesen')}
+          />
         )}
         {modus === 'bearbeiten' && auswahl && (
           <DataSourceForm source={auswahl} onClose={() => setModus('lesen')} />
