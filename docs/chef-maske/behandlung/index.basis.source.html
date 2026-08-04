@@ -313,8 +313,8 @@ var SE = {}, Util = {}, Icon = {}, DOM = {};
 
     window.__FF_SEFILELOOP = [
       { "INDEX_NR": 0, "ALIAS": "Adr",             "ID": "ADR",       "FELDER": "2_8,3292_30,3322_40,1114_20,1330_60,2187_46,2170_11,110_10,2233_40,512_350" },
-      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0001", "FELDER": "*" },
-      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0004", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0021", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0022", "FELDER": "*" },
       { "INDEX_NR": 0, "ALIAS": "Artikel",         "ID": "ART",       "FELDER": "1_25,51_60,36_5,8320_9,8329_9,901_30,931_20,951_20,971_100" }
     ];
     /* Tier-Stamm = Lieferadressen am Kunden. Kommen NICHT per SEFILELOOP,
@@ -448,6 +448,11 @@ var SE = {}, Util = {}, Icon = {}, DOM = {};
 <script>
 (function () {
 var FELD = {
+  /* Positionen aus der Feldliste der SE-GUI, Neuanlage 2026-08-04 (Nutzer-Screenshot).
+     Reihenfolge hier = Reihenfolge in der Tabelle. Feldverarbeitung laut GUI:
+     Geburtsdatum + TerminDatum = D, Uhrzeit = Z, alles andere L. Die Maske
+     schreibt/liest alle drei trotzdem als TEXT ("TT.MM.JJJJ", "HH:MM") --
+     ungeprueft gegen D/Z, siehe Bericht. */
   TP: {
     pindex:       '0_10',
     adr:          '10_8',
@@ -455,14 +460,14 @@ var FELD = {
     unterart:     '48_30',
     name:         '78_30',
     geburtsdatum: '108_10',
-    behandlung:   '118_60',
-    uhrzeit:      '178_5',
-    datum:        '183_10',
-    vorname:      '193_30',
-    nachname:     '223_30',
-    zimmer:       '253_30',
-    prioritaet:   '319_12', /* leer=Normal, "OP", "Notfall" (Nutzer-Feld 2026-06-12) */
-    belegnr:      '331_12' /* Belegnummer des Besuchs -- schreibt WF0020 (Beleg-Kette) */
+    uhrzeit:      '118_5',
+    behandlung:   '123_150',
+    datum:        '273_10',
+    vorname:      '283_30',
+    nachname:     '313_30',
+    zimmer:       '343_30',
+    prioritaet:   '373_12', /* leer=Normal, "OP", "Notfall" (Nutzer-Feld 2026-06-12) */
+    belegnr:      '385_12' /* Belegnummer des Besuchs -- schreibt WF0020 (Beleg-Kette) */
   },
 
   KH: {
@@ -472,14 +477,18 @@ var FELD = {
     tierart:      '48_30',
     rasse:        '78_30',
     geburtsdatum: '108_10',
-    termindatum:  '118_10',
-    notiz:        '128_350',
-    besuchId:     '514_10',
-    behandlung:   '524_60',
-    tierAdresse:  '584_30', /* Verknuepfung zur Tier-Stammakte (= FELD.HT.pindex, Lieferadress-Nr); Feld in ID0004 vom Nutzer angelegt, live getestet 2026-06-12 */
-    befund:       '614_500',  /* ID0004 (Kundenhaustiere), Felder vom Nutzer angelegt 2026-07-03 */
-    diagnose:     '1114_500',
-    therapie:     '1614_500'
+    termindatum:  '118_30',
+    notiz:        '148_350',
+    besuchId:     '498_12',
+    behandlung:   '510_150',
+    tierAdresse:  '660_30', /* Verknuepfung zur Tier-Stammakte (= FELD.HT.pindex, Lieferadress-Nr) */
+    /* ACHTUNG UNGEPRUEFT: diese drei Felder fehlen in der Neuanlage vom
+       2026-08-04. Werte hier sind GERECHNET fuer den Fall, dass sie in dieser
+       Reihenfolge direkt hinter Tier-Adresse (endet 690) angelegt werden.
+       Weicht die Anlage ab -> echte Positionen aus der GUI eintragen. */
+    befund:       '690_500',
+    diagnose:     '1190_500',
+    therapie:     '1690_500'
   },
 
   /* Tier-Stamm = Lieferadresse am Kunden (ERPAPICALL LIEFERADRESSE.GET,
@@ -1700,7 +1709,7 @@ function saveDoku(key, value) {
   } else {
     var kcode = FELD.KH[key];
     if (!kcode || /^TODO/.test(kcode) || !cur.khIdx) return;
-    stageFieldWrite('ID0004', cur.khIdx, kcode, v, {}, cur.petRow);
+    stageFieldWrite('ID0022', cur.khIdx, kcode, v, {}, cur.petRow);
   }
 }
 function saveImpf(code, value) {
@@ -1747,7 +1756,7 @@ function finish() {
     if (!sePutBelegPos(cur.belegnr, positions[i].artikelnr, qtyText(positions[i].qty))) { finishError('PUT 82 fuer eine Position fehlgeschlagen.'); return false; }
     positions[i].sent = true;
   }
-  if (!sePut('ID0001', pidx, [[FELD.TP.zimmer, 'Abrechnung']])) { finishError('Status konnte nicht auf Abrechnung gesetzt werden.'); return false; }
+  if (!sePut('ID0021', pidx, [[FELD.TP.zimmer, 'Abrechnung']])) { finishError('Status konnte nicht auf Abrechnung gesetzt werden.'); return false; }
   markerBump('Behandlungszimmer: abgeschlossen');
   delete SESSION_WRITES[pidx]; delete SESSION_POS[pidx];
   SESSION_FINISHED[pidx] = true; SELECTED_PIDX = '';
@@ -1776,7 +1785,7 @@ function holePatient(pidx) {
   var ziel = roomValue(SELECTED_ROOM);
   var rows = loadRows('Terminplaner');
   for (var i = 0; i < rows.length; i++) if (getField(rows[i], FELD.TP.pindex) === pidx) { rows[i][FELD.TP.zimmer] = ziel; break; }  /* optimistisch lokal */
-  sePut('ID0001', pidx, [[FELD.TP.zimmer, ziel]]);
+  sePut('ID0021', pidx, [[FELD.TP.zimmer, ziel]]);
   markerBump('Behandlungszimmer: Patient geholt');
   SELECTED_PIDX = pidx; SELECTED_PET_NAME = ''; render();
 }

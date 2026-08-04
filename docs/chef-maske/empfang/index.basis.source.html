@@ -579,8 +579,8 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1;}
        bleiben; pruefung.mjs (Check 7) erzwingt das und schlaegt bei Abweichung rot. */
     window.__FF_SEFILELOOP = [
       { "INDEX_NR": 0, "ALIAS": "Adr",             "ID": "ADR",       "FELDER": "2_8,3292_30,3322_40,1114_20,1330_60,2187_46,2170_11,110_10,2233_40,512_350" },
-      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0001", "FELDER": "*" },
-      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0004", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0021", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0022", "FELDER": "*" },
       { "INDEX_NR": 0, "ALIAS": "Belege",          "ID": "BEL",       "FELDER": "1_1,2_1,3_8,11_8,246_9,280_12,330_10" }
     ];
     /* Tier-Stamm = Lieferadressen am Kunden. Kommen NICHT per SEFILELOOP,
@@ -1150,6 +1150,11 @@ window.timeMin = timeMin;
      ================================================================ -->
 <script>
 var FELD = {
+  /* Positionen aus der Feldliste der SE-GUI, Neuanlage 2026-08-04 (Nutzer-Screenshot).
+     Reihenfolge hier = Reihenfolge in der Tabelle. Feldverarbeitung laut GUI:
+     Geburtsdatum + TerminDatum = D, Uhrzeit = Z, alles andere L. Die Maske
+     schreibt/liest alle drei trotzdem als TEXT ("TT.MM.JJJJ", "HH:MM") --
+     ungeprueft gegen D/Z, siehe Bericht. */
   TP: {
     pindex:       '0_10',
     adr:          '10_8',
@@ -1157,14 +1162,14 @@ var FELD = {
     unterart:     '48_30',
     name:         '78_30',
     geburtsdatum: '108_10',
-    behandlung:   '118_60',
-    uhrzeit:      '178_5',
-    datum:        '183_10',
-    vorname:      '193_30',
-    nachname:     '223_30',
-    zimmer:       '253_30',
-    prioritaet:   '319_12', /* leer=Normal, "OP", "Notfall" (Nutzer-Feld 2026-06-12) */
-    belegnr:      '331_12' /* Belegnummer des Besuchs -- schreibt belegAnlegen() via 1020 */
+    uhrzeit:      '118_5',
+    behandlung:   '123_150',
+    datum:        '273_10',
+    vorname:      '283_30',
+    nachname:     '313_30',
+    zimmer:       '343_30',
+    prioritaet:   '373_12', /* leer=Normal, "OP", "Notfall" (Nutzer-Feld 2026-06-12) */
+    belegnr:      '385_12' /* Belegnummer des Besuchs -- schreibt belegAnlegen() via 1020 */
   },
   KH: {
     adr:          '10_8',
@@ -1172,11 +1177,11 @@ var FELD = {
     tierart:      '48_30',
     rasse:        '78_30',
     geburtsdatum: '108_10',
-    termindatum:  '118_10',
-    notiz:        '128_350',
-    besuchId:     '514_10',
-    behandlung:   '524_60',
-    tierAdresse:  '584_30' /* Verknuepfung zur Tier-Stammakte (= FELD.HT.pindex, Lieferadress-Nr); Feld in ID0004 vom Nutzer angelegt, live getestet 2026-06-12 */
+    termindatum:  '118_30',
+    notiz:        '148_350',
+    besuchId:     '498_12',
+    behandlung:   '510_150',
+    tierAdresse:  '660_30' /* Verknuepfung zur Tier-Stammakte (= FELD.HT.pindex, Lieferadress-Nr) */
   },
   /* Tier-Stamm = Lieferadresse am Kunden (ERPAPICALL LIEFERADRESSE.GET,
      LFA_-Saetze; Mapping verifiziert per Sonde 2026-06-11, Felder ab 947
@@ -1430,8 +1435,8 @@ document.getElementById('app').innerHTML = `
 ;(function () {
 
 /* ===== SoftEngine-Konstanten (aus Fables Empfang uebernommen) ===== */
-var TP_IDBID = 'ID0001';
-var KH_IDBID = 'ID0004';
+var TP_IDBID = 'ID0021';
+var KH_IDBID = 'ID0022';
 /* Lieferadress-Schreibweg (SE-Doku via Nutzer, 2026-06-11):
    GET_RELATION[160]                         -> neue Lieferadresse, liefert LFANR
    PUT_RELATION[03!pos!len!vart!LFANR!!wert] -> Felder schreiben (wie 01 bei ADR)
@@ -1984,7 +1989,9 @@ function renderTermineWoche(box) {
 }
 function renderTermineTag(box) {
   var rows = termineAmTag(SELECTED_DATE);
-  rows.sort(function (a, b) { return timeMin({ '178_5': a.uhrzeit }) - timeMin({ '178_5': b.uhrzeit }); });
+  /* Feldcode NIE hart hinschreiben -- Position kommt aus der Karte (2026-08-04) */
+  function uhrRow(a) { var r = {}; r[FELD.TP.uhrzeit] = a.uhrzeit; return r; }
+  rows.sort(function (a, b) { return timeMin(uhrRow(a)) - timeMin(uhrRow(b)); });
   var html = calToolbar();
   if (!rows.length) { box.innerHTML = html + (seHaveData() ? '<div class="vview-leer">Keine Termine an diesem Tag.</div>' : ''); return; }
   html += '<div class="vcal-tag"><div class="vagenda">'; var lastH = null;
@@ -2224,7 +2231,7 @@ function setupDragDrop() {
 
 /* ===== Patientenkartei: dieser Patient, dieser Besuch =====
    Editierbar, wo ein VERIFIZIERTER Schreibweg existiert:
-   - Besuch (Uhrzeit, Behandlung) -> sePut ID0001 auf den Termin-Satz
+   - Besuch (Uhrzeit, Behandlung) -> sePut Terminplaner auf den Termin-Satz
    - Tier-Stammdaten -> PUT 03 auf die Lieferadress-Nr (FELD.HT.pindex)
    - Besitzer-Kontakt -> PUT 01 auf die Adressnummer */
 var KARTEI_PIDX = null;
@@ -2728,7 +2735,7 @@ function tmSave() {
     var primary = tiere[0];
     tmFeedback('Lege Termin an \u2026', '');
     seGetNewIndex(TP_IDBID, function (visitIdx) {
-      if (!visitIdx) { tmFeedback('Kein Index aus GET_RELATION (ID0001).', 'err'); if (btn) btn.disabled = false; return; }
+      if (!visitIdx) { tmFeedback('Kein Index aus GET_RELATION (' + TP_IDBID + ').', 'err'); if (btn) btn.disabled = false; return; }
       var jobs = [
         [FELD.TP.adr, adr],
         [FELD.TP.name, primary.name], [FELD.TP.tierart, primary.tierart],
@@ -2751,7 +2758,7 @@ function tmSave() {
         }
         tmFeedback('Lege Tier ' + (i + 1) + ' / ' + tiere.length + ' an \u2026', '');
         seGetNewIndex(KH_IDBID, function (petIdx) {
-          if (!petIdx) { tmFeedback('Kein Index f\u00fcr Tier ' + (i + 1) + ' (ID0004).', 'err'); if (btn) btn.disabled = false; return; }
+          if (!petIdx) { tmFeedback('Kein Index f\u00fcr Tier ' + (i + 1) + ' (' + KH_IDBID + ').', 'err'); if (btn) btn.disabled = false; return; }
           sePut(KH_IDBID, petIdx, [
             [FELD.KH.adr, adr], [FELD.KH.tierAdresse, tiere[i].tierAdresse], [FELD.KH.name, tiere[i].name],
             [FELD.KH.tierart, tiere[i].tierart], [FELD.KH.rasse, tiere[i].unterart],

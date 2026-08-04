@@ -1,8 +1,8 @@
 {
   "SEFILELOOP": [
       { "INDEX_NR": 0, "ALIAS": "Adr",             "ID": "ADR",       "FELDER": "2_8,3292_30,3322_40,1114_20,1330_60,2187_46,2170_11,110_10,2233_40,512_350" },
-      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0001", "FELDER": "*" },
-      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0004", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Terminplaner",    "ID": "IDBID0021", "FELDER": "*" },
+      { "INDEX_NR": 0, "ALIAS": "Kundenhaustiere", "ID": "IDBID0022", "FELDER": "*" },
       { "INDEX_NR": 0, "ALIAS": "Artikel",         "ID": "ART",       "FELDER": "1_25,51_60,36_5,8320_9,8329_9,901_30,931_20,951_20,971_100" }
     ],
   "ERPAPICALL": [
