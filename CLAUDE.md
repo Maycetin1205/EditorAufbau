@@ -4,10 +4,13 @@
 > schlagen diese Datei; bei Widerspruch nachfragen. Der Nutzer kann nicht
 > programmieren: diese Regeln + die Prüfungen sind sein Ersatz dafür, Code
 > lesen zu können. **Vor jeder Code-Änderung: Plan zeigen, „go" abwarten.**
-> **Jeder Paket-Abschlussbericht endet mit „Aufgefallen unterwegs"**
-> (Regel seit 2026-07-17): 0–3 konkrete Verbesserungsvorschläge, je mit
-> Preisschild (Aufwand; Export berührt? → SE-Echttest) — Vorschlagen ist
-> Pflicht, gebaut wird weiterhin NICHTS ohne „go".
+> **„Aufgefallen unterwegs" ist GESTRICHEN** (Nutzer-Ansage 2026-08-04; galt
+> 2026-07-17 bis 2026-08-04 als Pflicht-Rubrik am Berichtsende). Grund: eine
+> Rubrik, die Pflicht ist, ist niemals leer — sie produzierte bei jedem
+> Bericht Vorschläge, auch wenn es nichts zu melden gab, und lenkte vom
+> Gebauten ab. **Gemeldet wird nur noch, was den Auftrag blockiert oder etwas
+> kaputt macht.** Verbesserungsideen NUR auf Nachfrage; nicht als Rubrik
+> wieder einführen.
 > Sachlich, direkt, kein Cheerleading.
 
 ## Ziel (Nordstern)
@@ -208,7 +211,8 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   der Code selbst („Wichtige Stellen" unten). CLAUDE.md bleibt Regel- und
   Entscheidungsbuch — bei Widerspruch gewinnt CLAUDE.md.
 - **Die Rituale gelten unverändert:** Plan zeigen + „go" abwarten,
-  Test-Bremse, SE-Echttest gebündelt, „Aufgefallen unterwegs". Dem Nutzer
+  Test-Bremse, SE-Echttest gebündelt (die Vorschlags-Rubrik ist seit
+  2026-08-04 gestrichen, s. Kopf dieser Datei). Dem Nutzer
   nie Datei-/Technik-Reviews vorlegen — nur fachliche Entscheidungen in
   Klartext (Lehre 2026-07-20).
 
