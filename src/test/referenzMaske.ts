@@ -21,7 +21,7 @@ export interface ReferenzMaske {
 
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'p1'] },
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'txt2', 'p1'] },
     z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
     // Ohne Eigenschaften: DatumBlock.defaultProps ist leer. Bis 2026-07-28
     // stand hier ein `zeigt: 'datum'` aus einer alten Fassung — der Export
@@ -111,6 +111,23 @@ export function referenzMaske(): ReferenzMaske {
       id: 'txt', type: 'text',
       // Umlaut + Sonderzeichen: nimmt den Escaping-Weg des Serializers mit.
       props: { text: 'Übersicht — Sprechstunde à la carte', rasterX: 0, rasterY: 35, rasterW: 12, rasterH: 2 },
+      parentId: 'root', childIds: [],
+    },
+    // Der GEBUNDENE Text (2026-08-06): der Byte-Waechter sah bis hierher nur
+    // den getippten Text in Standardfarbe — also genau die zwei Wege NICHT,
+    // die der Text 2026-08-04 neu bekam (Bindung an ein Feld der Datenquelle,
+    // Farbe aus den Masken-Tokens). Faellt eines der beiden Attribute im
+    // Export weg, zeigt die Maske etwas anderes als der Editor (Regel 1) —
+    // und seit Standardwerte nicht mehr mitreisen, entscheidet sich genau
+    // hier, dass ein NICHT-Standard sehr wohl mitreist.
+    // Quelle/Feld sind die der Maske schon bekannten (Adressstamm, Name);
+    // die SEFILELOOP aendert sich dadurch nicht.
+    txt2: {
+      id: 'txt2', type: 'text',
+      props: {
+        text: 'Kundenname', source: 'q-adressen', textField: '10_30',
+        farbe: 'gedaempft', rasterX: 12, rasterY: 35, rasterW: 12, rasterH: 2,
+      },
       parentId: 'root', childIds: [],
     },
     p1: {
