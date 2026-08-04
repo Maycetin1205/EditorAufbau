@@ -18,9 +18,12 @@
 // Bediener gefilterte Folge-Tabellen ohne markierte Zeile und koennte nie
 // wieder rausklicken (Regel 4, nichts scheitert still).
 //
-// Kennt keinen Baustein (Regel 2): nur Zeilen, Abdruecke und Hoerer.
+// Kennt keinen Baustein (Regel 2): nur Zeilen, Abdruecke und Hoerer — und
+// seit 2026-08-06 auch die EINE Regel, wie eine Auswahl auf Zeilen wirkt
+// (zeilenNachAuswahl / ersteZeileNachAuswahl, ganz unten).
 
 import { AUSWAHL_FOLGE_PROP, type AuswahlFolge } from '../../core/data/auswahlFolge'
+import { getField } from '../../softengine/data'
 
 // JSON-Abdruck als Zeilen-Identitaet. Kaputte/zyklische Objekte liefern ''
 // — eine Zeile ohne Abdruck ist nie „dieselbe" und nie waehlbar.
@@ -129,4 +132,59 @@ export function folgenAusAttribut(el: HTMLElement): AuswahlFolge[] {
   } catch {
     return []
   }
+}
+
+// ---------------------------------------------------------------------------
+// Die Auswahl auf ZEILEN anwenden — die EINE Filterregel aller Folger.
+//
+// Bis 2026-08-06 stand sie in tabelle/seRuntime, weil die Tabelle der einzige
+// Folger war. Mit dem zweiten Folger (Einzelwert-Bausteine, s. unten) waere
+// eine Abschrift die schlimmste Loesung gewesen: Tabelle und Formularfeld
+// beantworteten dieselbe Frage dann getrennt — der Bediener saehe in der
+// Tabelle die Zeilen des gewaehlten Kunden und im Feld daneben die eines
+// anderen. Eine Regel, alle Folger.
+//
+// Ohne aktive Auswahl bleibt die Liste unveraendert — nichts passiert
+// automatisch (Nutzer 2026-08-05). Mit Auswahl bleiben nur Zeilen, deren
+// Schluesselfelder zur gewaehlten Zeile passen (alle Paare, UND). Ein LEERER
+// Schluesselwert beim Geber trifft NICHTS — dieselbe Regel wie schluesselAus
+// in fremdeQuellen: ein halber Schluessel traefe sonst jede Zeile mit
+// derselben Luecke.
+//
+// „Geber und Folger haengen an derselben Quelle" braucht hier keinen eigenen
+// Zweig: dann zeigen fromField und toField eben auf dasselbe Feld, und die
+// Regel trifft genau die gewaehlte Zeile wieder (Regel 2, kein Sonderfall).
+export function zeilenNachAuswahl(
+  el: HTMLElement,
+  rows: unknown[],
+): { rows: unknown[]; gefiltert: boolean } {
+  let raus = rows
+  let gefiltert = false
+  for (const folge of folgenAusAttribut(el)) {
+    const auswahl = auswahlFuer(folge.geberId)
+    if (auswahl === undefined) continue
+    gefiltert = true
+    raus = raus.filter((row) =>
+      folge.keyPairs.every((p) => {
+        const soll = getField(auswahl, p.fromField)
+        return soll !== '' && soll === getField(row, p.toField)
+      }),
+    )
+  }
+  return { rows: raus, gefiltert }
+}
+
+// Die EINE Zeile, die ein EINZELWERT-Baustein (Formularfeld …) anzeigt.
+//
+// Grundzustand bleibt, was er war: ohne Folge oder ohne aktive Auswahl die
+// ERSTE Zeile der Quelle (feste Zusage „gelesen wird automatisch aus der
+// ersten Zeile"). Mit Auswahl die erste PASSENDE Zeile.
+//
+// Passt KEINE Zeile, bleibt es ebenfalls bei der ersten (Nutzer-Vorgabe
+// 2026-08-06). Anders als bei der Tabelle, die dann eine leere Liste zeigt:
+// eine leere Liste ist eine sichtbare Aussage, ein leer geraeumtes Feld waere
+// von „kein Wert vorhanden" nicht zu unterscheiden.
+export function ersteZeileNachAuswahl(el: HTMLElement, rows: unknown[]): unknown {
+  const { rows: passende, gefiltert } = zeilenNachAuswahl(el, rows)
+  return gefiltert && passende.length > 0 ? passende[0] : rows[0]
 }

@@ -11,13 +11,12 @@
 // data-ff-editor und melden sich hier nie an — der Editor zeigt Platzhalter.
 
 import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+import { findRuntimeDataSource, rowsFor } from '../../softengine/data'
 import {
-  auswahlFuer,
   auswahlMerkmal,
-  folgenAusAttribut,
   klareAuswahl,
   merkmalVon,
+  zeilenNachAuswahl,
 } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
@@ -48,34 +47,6 @@ function spaltenFelder(el: HTMLElement): string[] {
   } catch {
     return []
   }
-}
-
-// Zeilen nach der Auswahl eines GEBERS filtern (Attribut `folgtauswahl`,
-// geschrieben aus core/data/auswahlFolge). Ohne aktive Auswahl bleibt die
-// Liste unveraendert — nichts passiert automatisch (Nutzer 2026-08-05).
-// Mit Auswahl bleiben nur Zeilen, deren Schluesselfelder zur gewaehlten
-// Zeile passen (alle Paare, UND). Ein LEERER Schluesselwert beim Geber
-// trifft NICHTS — dieselbe Regel wie schluesselAus in fremdeQuellen: ein
-// halber Schluessel traefe sonst jede Zeile mit derselben Luecke.
-// Exportiert fuer den gezielten Runtime-Test.
-export function zeilenNachAuswahl(
-  el: HTMLElement,
-  rows: unknown[],
-): { rows: unknown[]; gefiltert: boolean } {
-  let raus = rows
-  let gefiltert = false
-  for (const folge of folgenAusAttribut(el)) {
-    const auswahl = auswahlFuer(folge.geberId)
-    if (auswahl === undefined) continue
-    gefiltert = true
-    raus = raus.filter((row) =>
-      folge.keyPairs.every((p) => {
-        const soll = getField(auswahl, p.fromField)
-        return soll !== '' && soll === getField(row, p.toField)
-      }),
-    )
-  }
-  return { rows: raus, gefiltert }
 }
 
 // Exportiert fuer den gezielten Runtime-Test. Baut je Datenzeile ein Wert-Array,

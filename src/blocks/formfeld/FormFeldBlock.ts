@@ -18,8 +18,10 @@
 //
 // Die Datenanbindung ist registry-getrieben: das Feld deklariert Quelle,
 // Bindungsroute und bindbare Wert-Stelle. Die Export-Runtime liest die erste
-// Zeile der gewählten Quelle; Schreiben nach SoftEngine bleibt eine sichtbar
-// konfigurierte Aktionskette am Ereignis „Wert geändert".
+// Zeile der gewählten Quelle — oder, wenn das Feld einem Auswahl-Geber folgt,
+// die erste zur angeklickten Zeile PASSENDE (kannAuswahlFolgen, s. u.);
+// Schreiben nach SoftEngine bleibt eine sichtbar konfigurierte Aktionskette
+// am Ereignis „Wert geändert".
 //
 // Inspector: nur Feldtyp + Auswahl-Optionen (Klarnamen sichtbar,
 // Technikwerte text/number/... unsichtbar). Im EDITOR ist das
@@ -66,6 +68,11 @@ export class FormFeldBlock extends BasicBlock {
   static readonly displayName = 'Formularfeld'
   static readonly category: BlockCategory = 'eingabe'
   static readonly acceptsDataSource = true
+  // Folgt der Auswahl eines Gebers (Tabelle/Kanban): klickt der Bediener in
+  // der laufenden Maske eine Zeile an, zeigt das Feld den Wert der dazu
+  // PASSENDEN Zeile seiner eigenen Quelle statt stur der ersten. Ohne
+  // Auswahl bleibt alles wie bisher — bestehende Masken aendern sich nicht.
+  static readonly kannAuswahlFolgen = true
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [{ prop: 'value', label: 'Wert' }]
   // Aktueller Eingabewert - ausdruecklich auch ohne Datenquellen-Bindung.
   static readonly actionValueSpots: ActionValueSpotsFor<typeof FormFeldBlock.defaultProps> = [

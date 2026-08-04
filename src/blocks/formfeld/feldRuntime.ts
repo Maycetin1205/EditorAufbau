@@ -8,6 +8,7 @@
 import { bindingAttr, zerlegeBindung } from '../../core/blocks/BlockDefinition'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
+import { ersteZeileNachAuswahl } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { runEvent } from '../shared/seAktionen'
@@ -67,7 +68,15 @@ export function hydrateField(field: RuntimeFieldElement): void {
     return
   }
 
-  const row = rowsFor(seGlobal().SEDATA, source.name, source.tableId)[0]
+  // Welche Zeile das Feld zeigt, entscheidet die gemeinsame Auswahl-Regel
+  // (shared/auswahl): mit aktiver Auswahl die erste dazu PASSENDE Zeile,
+  // sonst — wie seit jeher — die erste Zeile der Quelle. Der Schreibweg
+  // haengt an DERSELBEN Zeile: was der Bediener sieht, aendert er auch
+  // (PINDEX unten kommt aus genau dieser Zeile).
+  const row = ersteZeileNachAuswahl(
+    field,
+    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
+  )
   if (row === undefined) {
     fieldData.delete(field)
     field.value = ''
