@@ -54,17 +54,8 @@ import {
 
 // SoftEngine-Anschluss aus JWHtmlStart.html / Monaco-Referenz (Quelle liegt
 // NICHT in diesem Repo). Der EditorPfad-Platzhalter wird von SoftEngine
-// aufgelöst.
-//
-// Ehrlicher Beleg-Stand (Befund B4, 2026-07-28): Gebraucht werden die
-// Bridge-Funktionen (basisHTML_REGISTER / basisHTML_SND_MSG /
-// sendBWLinkIntern) — dass genau DIESER Import sie liefern muss, ist nicht
-// belegt. Die beiden echt laufenden Referenzmasken in docs/chef-maske/ laden
-// kein externes Skript, und frühe Echttests bestanden vor Einführung des
-// Tags; eingeführt wurde er zusammen mit dem window.FF_*-Fix (2364726), also
-// ohne sauberen A/B-Vergleich. Bleibt als defensiver Anschluss drin, bis ein
-// kontrollierter WEBWARE-Test entscheidet — nicht ohne diesen Test entfernen
-// UND nicht als bewiesenen Kontrakt zitieren.
+// aufgelöst. Der Tag bleibt drin, wird aber nicht als bewiesener SE-Kontrakt
+// zitiert. Beweislage: CLAUDE.md, Regel 5 / Befund B4.
 const SE_INTERFACE_SCRIPT = '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>'
 
 // Layout-Props reisen NICHT als Element-Attribut, sondern als style (Fluss:

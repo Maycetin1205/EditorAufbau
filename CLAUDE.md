@@ -149,6 +149,9 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
 10. **Nichts auf Verdacht bauen** — Gemeinsames erst herausziehen bzw.
     Neues erst bauen, wenn ein echter zweiter Fall es erzwingt.
 
+**Namens-Konvention (Beschluss 2026-08-04):** neue Bezeichner deutsch;
+bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
+
 ## SoftEngine-Kontrakte (hart erarbeitet — nie verlieren)
 
 - **Export-Dateien:** `index.basis.source.html` + `index.basis.SEvariablen.json`
