@@ -15,15 +15,27 @@
 // WYSIWYG — Muster Schaltflaechen-Beschriftung); der Default-Text ist
 // Platzhalter-Inhalt zum Ueberschreiben, keine erfundenen Daten (Regel 7).
 //
-// Keine Datenbindung, keine Ereignisse. Farben aus Masken-Tokens (--se-*);
-// strukturelle Groessen als Literale wie bei Button.
+// DATENBINDUNG (2026-08-04): der Text kann statt getippt auch aus einem Feld
+// der Datenquelle kommen — EINE bindbare Stelle (`text`, Bindung in
+// `textField`), dieselbe Bauart wie Karte und Formularfeld. Ungebunden bleibt
+// alles wie zuvor: getippter Text, Inline-Edit. Gebunden zeigt der EDITOR den
+// Feld-Klarnamen (Regel 7: nie ein erfundener Wert — die Vorschau setzt
+// useLitElement generisch), die MASKE den Feldwert (seRuntime daneben).
+// Er kann dabei der AUSWAHL eines Gebers folgen (kannAuswahlFolgen): dann
+// zeigt er den Wert der angeklickten Zeile — und ohne Auswahl nichts.
+//
+// Keine Ereignisse (kein Schreibweg — geschrieben wird nur ueber sichtbare
+// Ketten, und der Text nimmt keine Eingabe an). Farben aus Masken-Tokens
+// (--se-*); strukturelle Groessen als Literale wie bei Button.
 
 import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
+import type { BindableSpotsFor } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { connectText, disconnectText } from './seRuntime'
 
 // Grenzen der freien Pixelgröße — großzügig, aber nie 0/negativ/absurd.
 const GROESSE_MIN = 6
@@ -60,6 +72,16 @@ export class TextBlock extends BasicBlock {
   static readonly tagName = 'ff-text'
   static readonly displayName = 'Text'
   static readonly category: BlockCategory = 'anzeige'
+  static readonly acceptsDataSource = true
+  // Folgt der Auswahl eines Gebers (Tabelle/Kanban) — dieselbe Faehigkeit wie
+  // beim Formularfeld: mit Auswahl der Wert der angeklickten Zeile, ohne
+  // Auswahl nichts. Nur wo der Bauer die Folge einstellt; ohne sie gilt
+  // weiterhin die erste Zeile der Quelle.
+  static readonly kannAuswahlFolgen = true
+  // EINE bindbare Stelle: der Text selbst.
+  static readonly bindableSpots: BindableSpotsFor<typeof TextBlock.defaultProps> = [
+    { prop: 'text', label: 'Text' },
+  ]
   // Volle Breite: Fliesstext bricht dann im Container um, und die
   // Ausrichtung (Mitte/Rechts) hat eine echte Bezugsflaeche. Der
   // Breiten-Anfasser bleibt aktiv (Doppelklick stellt den Standard wieder her).
@@ -69,6 +91,11 @@ export class TextBlock extends BasicBlock {
     gewicht: 'normal',
     ausrichtung: 'links',
     text: 'Text',
+    // Datenquelle (Technikwert = Vorlagen-id) und Bindung der Stelle
+    // (Feldcode, '' = ungebunden). Beide MUESSEN hier stehen, damit
+    // Persistenz und Export sie mitnehmen (Bindungs-Konvention).
+    source: '',
+    textField: '',
   }
 
   // Raster-Startgröße auf der Maskenfläche (im Browser gemessen 2026-07-23:
@@ -136,6 +163,8 @@ export class TextBlock extends BasicBlock {
   @property() gewicht = 'normal'
   @property() ausrichtung = 'links'
   @property() text = 'Text'
+  @property() source = ''
+  @property() textField = ''
 
   render(): TemplateResult {
     // Freie Werte als Inline-Stil (styleMap) — Klassen-Stufen gibt es nicht mehr.
@@ -144,12 +173,28 @@ export class TextBlock extends BasicBlock {
       fontWeight: GEWICHTE[coerceGewicht(this.gewicht)],
       textAlign: AUSRICHTUNGEN[coerceAusrichtung(this.ausrichtung)],
     }
+    // Die Stelle traegt data-ff-spot (Klick-Ziel des Feld-Pickers) und
+    // data-ff-bound, wenn sie gebunden ist (Daten-Markierung, sichtbar nur im
+    // Editor — BasicBlock-CSS; gebunden faellt der Doppelklick durch zum
+    // Picker statt ins Inline-Edit).
     return html`<div
       class="text"
       style=${styleMap(stil)}
       data-ff-editable
+      data-ff-spot="text"
+      ?data-ff-bound=${this.textField !== ''}
       @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'text')}
     >${this.text}</div>`
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback()
+    connectText(this)
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    disconnectText(this)
   }
 }
 

@@ -23,6 +23,7 @@ const standardTestSpalten = [
   { titel: 'Größe', feld: '' },
 ]
 import type { BlockTree } from '../core/blocks/BlockData'
+import type { DataSource } from '../core/data/dataSources'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
@@ -310,6 +311,34 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(html).toContain('ausrichtung="mitte"')
     // & -> &amp;, < -> &lt;, > -> &gt;, " -> &quot;, ä -> &#xE4; (serializer).
     expect(html).toContain('text="A &amp; B &lt; C &gt; &quot;D&quot; &#xE4;"')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Text: Datenbindung (Quelle + Feld) reist als Attribut mit', () => {
+    // 2026-08-04: der Text ist bindbar. Ohne diese zwei Attribute zeigte die
+    // exportierte Maske stur den getippten Text, waehrend der Editor den
+    // Feld-Klarnamen anbietet — WYSIWYG-Bruch (Regel 1).
+    const sources: DataSource[] = [{
+      id: 'q-termine', name: 'Terminplaner', kind: 'idb', idbId: 'IDBID0004',
+      indexField: '0_10', fields: [{ code: '40_20', label: 'Titel' }],
+    }]
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
+      t: {
+        id: 't', type: 'text',
+        props: { text: 'Titel', source: 'q-termine', textField: '40_20', width: 'fill' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const { html, sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(html).toMatch(/<ff-text[^>]*\ssource="q-termine"/)
+    expect(html).toMatch(/<ff-text[^>]*\stextfield="40_20"/)
+    // Die Quelle des Textes muss in der SEFILELOOP stehen — sonst schiebt
+    // SoftEngine ihre Daten nie, und die Stelle bliebe leer.
+    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0004', FELDER: '*' },
+    ])
+    expect(preflightMask(tree, sources, [])).toEqual([])
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
