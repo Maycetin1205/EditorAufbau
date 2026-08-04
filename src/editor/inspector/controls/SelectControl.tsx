@@ -14,11 +14,17 @@ import {
 } from '@/ui/atoms/select'
 import { Field } from '@/ui/molecules/field'
 
+// Optionaler Technik-Zusatz je Option (2026-08-06, Nutzer-Wunsch: „nicht
+// nur der Alias, auch die ID0001"): dezent in Mono und gedaempft HINTER dem
+// Klarnamen — der Klarname traegt, die Kennung informiert. Reine
+// Darstellungssache, darum HIER erweitert und nicht im Registry-Typ.
+type SelectOption = PropertySelectOption & { detail?: string }
+
 interface SelectControlProps {
   label: string
   description?: string
   value: string
-  options: PropertySelectOption[]
+  options: SelectOption[]
   onChange: (value: string) => void
 }
 
@@ -34,6 +40,11 @@ export function SelectControl({ label, description, value, options, onChange }: 
             {options.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
+                {o.detail !== undefined && o.detail !== '' && (
+                  <span className="ml-2 font-mono text-[0.6875rem] text-muted-foreground">
+                    {o.detail}
+                  </span>
+                )}
               </SelectItem>
             ))}
           </SelectContent>

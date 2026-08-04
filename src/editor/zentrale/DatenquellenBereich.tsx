@@ -11,7 +11,7 @@ import { FileUp, Plus, TriangleAlert } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import {
   artFuer,
-  kennungAnzeige,
+  quellenKennung,
   type DataSource,
 } from '../../core/data/dataSources'
 import { parseDtkBytes, type DtkTabelle } from '../../core/data/dtkImport'
@@ -64,12 +64,10 @@ export function DatenquellenBereich() {
   const unvollstaendig = (s: DataSource): boolean =>
     artFuer(s.kind).felderEinzeln && s.fields.length === 0
 
-  // Die SoftEngine-Kennung einer Quelle, egal woher sie kommt: die feste der
-  // Art — oder die eingegebene, wo die Art keine feste hat. Kein `if kind`.
-  const kennung = (s: DataSource): string => {
-    const feste = artFuer(s.kind).tabellenId
-    return feste !== '' ? feste : kennungAnzeige(s.idbId)
-  }
+  // Die SoftEngine-Kennung einer Quelle, egal woher sie kommt — die EINE
+  // Anzeige-Logik wohnt seit 2026-08-06 in dataSources (quellenKennung),
+  // weil Dropdowns und Feld-Picker sie jetzt ebenfalls zeigen.
+  const kennung = (s: DataSource): string => quellenKennung(s)
 
   function loeschen(s: DataSource) {
     const frage = verwendungFor(s.id).length > 0
@@ -145,6 +143,11 @@ export function DatenquellenBereich() {
                   </span>
                 </div>
                 <div className="mt-0.5 pl-[1.125rem] text-[0.625rem] text-muted-foreground">
+                  {/* Kennung zuerst und in Mono — dieselbe dezente
+                      Technik-Marke wie in Dropdowns und Feld-Picker. */}
+                  {kennung(s) !== '' && (
+                    <span className="font-mono">{kennung(s)} · </span>
+                  )}
                   {s.fields.length} Felder · {verwendet > 0 ? `verwendet von ${verwendet}` : 'nicht verwendet'}
                 </div>
               </button>

@@ -34,6 +34,7 @@ import {
   type ListenBindung,
 } from '../../core/blocks/BlockDefinition'
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
+import { quellenKennung } from '../../core/data/dataSources'
 import { paarKlartext, type QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
 import { quellenTraeger } from '../../state/quellenOps'
@@ -62,10 +63,16 @@ interface FeldBindungArgs {
 function pickerGruppen(quellen: readonly QuelleInReichweite[]): PickerGruppe[] {
   const erste = quellen[0]?.source
   return quellen.map((q, i) => (i === 0
-    ? { quelleId: '', name: q.source.name, fields: q.source.fields }
+    ? {
+        quelleId: '',
+        name: q.source.name,
+        kennung: quellenKennung(q.source),
+        fields: q.source.fields,
+      }
     : {
         quelleId: q.source.id,
         name: q.source.name,
+        kennung: quellenKennung(q.source),
         hinweis: paarKlartext(q.paare ?? [], erste),
         fields: q.source.fields,
       }))
@@ -160,7 +167,12 @@ export function useFeldBindung({
   // unqualifiziert — die gewählte Quelle wird ja zur ERSTEN des Trägers,
   // und die erste wird NIE qualifiziert (s. bindungMitQuelle).
   const gruppen = bibliotheksAngebot
-    ? bibliothek.map((s) => ({ quelleId: s.id, name: s.name, fields: s.fields }))
+    ? bibliothek.map((s) => ({
+        quelleId: s.id,
+        name: s.name,
+        kennung: quellenKennung(s),
+        fields: s.fields,
+      }))
     : pickerGruppen(quellen)
 
   // Wahl aus dem Bibliotheks-Angebot anwenden: Quelle an den Träger,

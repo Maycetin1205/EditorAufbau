@@ -5,7 +5,7 @@
 // das nach, damit die Zusage nicht laenger nur Prosa ist.
 
 import { describe, expect, it } from 'vitest'
-import { sanitizeDataSources } from './dataSources'
+import { quellenKennung, sanitizeDataSources, type DataSource } from './dataSources'
 
 describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)', () => {
   const quelle = (fields: unknown) => [
@@ -48,3 +48,23 @@ describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)'
 // suchen. Fuer die Daten des Bedieners erzwingt Regel 3 das Formular
 // („Klarname darf kein Feldcode sein") und, beim Laden, der Test oben:
 // ein Feld ohne label wird verworfen.
+
+describe('quellenKennung (dezente Technik-Marke, 2026-08-06)', () => {
+  const quelle = (kind: DataSource['kind'], idbId?: string): DataSource => ({
+    id: 'q', name: 'Quelle', kind, ...(idbId ? { idbId } : {}), fields: [],
+  })
+
+  it('IDB-Tabellen zeigen die Bediener-Kurzform', () => {
+    expect(quellenKennung(quelle('idb', 'IDBID0001'))).toBe('ID0001')
+  })
+
+  it('Stammtabellen zeigen ihre feste Kennung', () => {
+    expect(quellenKennung(quelle('adressstamm'))).toBe('ADR')
+    expect(quellenKennung(quelle('beleg'))).toBe('BEL')
+  })
+
+  it('andere Dateien zeigen ihr Kuerzel woertlich; ohne Kennung bleibt es leer', () => {
+    expect(quellenKennung(quelle('datei', 'POS'))).toBe('POS')
+    expect(quellenKennung(quelle('idb'))).toBe('')
+  })
+})

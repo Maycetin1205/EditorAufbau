@@ -162,6 +162,16 @@ export function kennungAnzeige(kennung: string | undefined): string {
   return m ? m[1] : (kennung ?? '')
 }
 
+// Die SoftEngine-Kennung einer Quelle in BEDIENER-Form — fuer die dezente
+// Technik-Marke neben dem Klarnamen (Nutzer-Wunsch 2026-08-06: „nicht nur
+// der Alias, auch die ID0001"): die feste Tabellen-ID der Art (ADR/ART/BEL)
+// oder die eingegebene Kennung in Kurzform (ID0001, POS, …). EINE Stelle —
+// vorher stand dieselbe Ableitung lokal im DatenquellenBereich.
+export function quellenKennung(source: DataSource): string {
+  const feste = artFuer(source.kind).tabellenId
+  return feste !== '' ? feste : kennungAnzeige(source.idbId)
+}
+
 // Baut aus rohen (evtl. kaputten) localStorage-Daten eine saubere
 // Vorlagen-Liste (Muster: sanitizeTree in Editor.ts — strukturell prüfen,
 // Unbrauchbares verwerfen, nie raten). Inhaltliche Regeln (Klarname kein

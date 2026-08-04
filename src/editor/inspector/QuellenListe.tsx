@@ -22,6 +22,7 @@ import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import type { BlockNode } from '../../core/blocks/BlockData'
+import { quellenKennung } from '../../core/data/dataSources'
 import {
   MAX_SCHLUESSELPAARE,
   quelleBrauchbar,
@@ -95,7 +96,14 @@ export function QuellenListe({ block }: QuellenListeProps) {
       value={wert === '' ? KEINE : wert}
       options={[
         { value: KEINE, label: '— keine —' },
-        ...optionen(wert).map((s) => ({ value: s.id, label: s.name })),
+        // Die SE-Kennung dezent hinter dem Klarnamen (Nutzer 2026-08-06):
+        // der Bediener erkennt „Kunden" — und weiss trotzdem, dass ID0001
+        // gemeint ist.
+        ...optionen(wert).map((s) => ({
+          value: s.id,
+          label: s.name,
+          detail: quellenKennung(s),
+        })),
         ...(fehlt(wert) ? [{ value: wert, label: '(gelöschte Quelle)' }] : []),
       ]}
       onChange={(v) => onWert(v === KEINE ? '' : v)}

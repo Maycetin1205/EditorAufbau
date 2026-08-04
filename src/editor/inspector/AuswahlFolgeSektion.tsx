@@ -31,6 +31,7 @@ import {
   folgeBrauchbar,
   type AuswahlFolge,
 } from '../../core/data/auswahlFolge'
+import { quellenKennung } from '../../core/data/dataSources'
 import { MAX_SCHLUESSELPAARE, type SchluesselPaar } from '../../core/data/sourceLinks'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -68,11 +69,14 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
   const geberQuelle = quelleVon(geberNode)
   const eigeneQuelle = quelleVon(block)
 
-  // Klarname eines Kandidaten: Baustein-Name, plus Quellen-Name zur
+  // Klarname eines Kandidaten: Baustein-Name plus Quellen-Name zur
   // Unterscheidung — zwei Tabellen heissen sonst beide nur „Tabelle".
-  const anzeige = (n: BlockNode): string => {
+  // Die SE-Kennung dazu als dezente Technik-Marke (detail, 2026-08-06).
+  const anzeige = (n: BlockNode): { label: string; detail?: string } => {
     const q = quelleVon(n)
-    return q ? `${bausteinName(n)} (${q.name})` : bausteinName(n)
+    return q
+      ? { label: `${bausteinName(n)} (${q.name})`, detail: quellenKennung(q) }
+      : { label: bausteinName(n) }
   }
 
   function setze(neu: AuswahlFolge[]): void {
@@ -108,7 +112,7 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
         value={folge && folge.geberId !== '' ? folge.geberId : KEINER}
         options={[
           { value: KEINER, label: '— keinem —' },
-          ...kandidaten.map((n) => ({ value: n.id, label: anzeige(n) })),
+          ...kandidaten.map((n) => ({ value: n.id, ...anzeige(n) })),
           // Geber geloescht: den Zustand benennen statt still leer (Regel 4);
           // der Preflight blockt den Export dazu im Klartext. (Leere Geber-id
           // faellt auf „keinem" zurueck — Radix verbietet '' als Wert.)
