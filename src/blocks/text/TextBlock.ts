@@ -192,13 +192,25 @@ export class TextBlock extends BasicBlock {
            der Ausgangswert, damit die Stelle auch ohne gesetzte Prop Text
            in der Haus-Textfarbe zeigt. */
         color: var(--se-ink);
-        line-height: 1.35;
+        /* EINE Zeilenhoehe fuer beides: die Zeile des gesetzten Textes UND die
+           Hoehe, die ein leerer Text freihaelt (s. unten). Zwei getrennte
+           Zahlen liefen beim naechsten Nachstellen auseinander. */
+        --text-zeilenhoehe: 1.35;
+        line-height: var(--text-zeilenhoehe);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
+      /* Ein LEERER Text hat kein Zeilenfeld: in der Maske klappte er auf Hoehe
+         0 zusammen — der Baustein war unsichtbar und das Layout sprang, sobald
+         ein gebundener Text ohne Auswahl leer blieb (SE-Echttest 2026-08-04).
+         Er haelt jetzt immer genau EINE Zeile frei. Relativ gerechnet
+         (Schriftgroesse x Zeilenhoehe), damit die Luecke mit jeder frei
+         eingestellten Groesse mitwaechst statt an einer Pixelzahl zu kleben. */
+      .text:empty { min-height: calc(1em * var(--text-zeilenhoehe)); }
       /* Leerer Text bleibt im Editor ein greifbares Klick-Ziel (Regel 7:
-         Platzhalter statt erfundener Wert); die Maske zeigt bei leerem Text
-         schlicht nichts. */
+         Platzhalter statt erfundener Wert) — der Griff fuellt dieselbe eine
+         Zeile, die Editor-Hilfe sieht also unveraendert aus; die Maske zeigt
+         bei leerem Text weiterhin nichts, nur ohne einzuklappen. */
       :host([data-ff-editor]) .text:empty::before {
         content: 'Text …';
         color: var(--se-faint);
