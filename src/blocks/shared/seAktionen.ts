@@ -83,7 +83,12 @@ function seStartTool(nr: string, params: readonly string[]): void {
 export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean): void {
   if (name.trim() === '') return
   for (const el of Array.from(root.querySelectorAll(PopupBlock.tagName))) {
-    if ((el.getAttribute('name') ?? '') !== name) continue
+    // Fehlendes Attribut = STANDARDNAME, nicht leer. Seit der Export
+    // Standardwerte weglaesst (2026-08-06), traegt ein nie umbenanntes Popup
+    // gar kein name-Attribut mehr — die Kette sucht aber nach dem Klarnamen
+    // „Popup" und faende es sonst NIE: der Knopf klickte ins Leere, still
+    // (Regel 4). Der Standard kommt aus der EINEN Quelle, den defaultProps.
+    if ((el.getAttribute('name') ?? PopupBlock.defaultProps.name) !== name) continue
     if (oeffnen) el.setAttribute('offen', '')
     else el.removeAttribute('offen')
   }

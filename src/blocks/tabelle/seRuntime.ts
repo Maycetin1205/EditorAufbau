@@ -22,6 +22,7 @@ import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
 import { zeilenAmTag } from '../shared/tagFilter'
+import { tryCoerceSpalten } from './spalten'
 
 export interface RuntimeTableElement extends HTMLElement {
   datenzeilen: string[][]
@@ -30,23 +31,17 @@ export interface RuntimeTableElement extends HTMLElement {
   durchAuswahlGefiltert: boolean
 }
 
-// Feldcodes der Spalten aus dem `spalten`-Attribut (JSON {titel,feld}[]) —
-// dieselbe Quelle wie der Baustein rendert (Attribut-Form der Spalten). Kaputtes
-// JSON / fremde Struktur -> leere Codes (die Spalte bleibt dann leer, nie raten).
+// Feldcodes der Spalten aus dem `spalten`-Attribut (JSON {titel,feld}[]).
+// Gelesen wird ueber GENAU DIESELBE Wandlung wie im Attribut-Wandler des
+// Bausteins (tryCoerceSpalten, s. TabelleBlock) — sonst laufen Kopfzeile und
+// Zellen auseinander: fehlendes/kaputtes Attribut ergab hier bisher NULL
+// Spalten, waehrend der Baustein daraus die Standardspalten rendert. Seit der
+// Export Standardwerte weglaesst (2026-08-06), ist der fehlende Fall echt —
+// eine nie angefasste Tabelle traegt kein spalten-Attribut mehr.
+// Kaputtes JSON / fremde Struktur -> Standardspalten mit leeren Codes (die
+// Zelle bleibt leer, nie raten).
 function spaltenFelder(el: HTMLElement): string[] {
-  const raw = el.getAttribute('spalten') ?? ''
-  if (raw === '') return []
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.map((x) =>
-      x && typeof x === 'object' && typeof (x as Record<string, unknown>).feld === 'string'
-        ? ((x as Record<string, unknown>).feld as string)
-        : '',
-    )
-  } catch {
-    return []
-  }
+  return tryCoerceSpalten(el.getAttribute('spalten') ?? '').map((s) => s.feld)
 }
 
 // Exportiert fuer den gezielten Runtime-Test. Baut je Datenzeile ein Wert-Array,

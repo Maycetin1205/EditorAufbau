@@ -124,7 +124,13 @@ function hydrate(board: HTMLElement): void {
     gewaehlterTag(),
   )
   // Titel = Datenwert (2026-07-14): heading reist als Export-Attribut mit.
-  const columnValues = columns.map((c) => c.getAttribute('heading') ?? '')
+  // Fehlendes Attribut = STANDARDTITEL, nicht leer: seit der Export
+  // Standardwerte weglaesst (2026-08-06), traegt eine nie umbenannte Spalte
+  // kein heading — sie soll dann den Wert vergleichen, den sie ANZEIGT
+  // (Lit-Standard = derselbe defaultProps-Wert), nicht den leeren String.
+  const columnValues = columns.map(
+    (c) => c.getAttribute('heading') ?? KanbanSpalteBlock.defaultProps.heading,
+  )
   const spots = spotsForTag(template.tagName)
   const catchIdx = catchColumnIndex(columns.map((c) => c.getAttribute('auffang')))
   // Weitere Quellen haengen am BOARD (es traegt die Datenquelle), nicht an

@@ -27,7 +27,6 @@ import type { DataSource } from '../core/data/dataSources'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
-import { escapeHtmlText } from './serializer'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import {
   registerTestBlocks,
@@ -67,6 +66,43 @@ describe('exportMask', () => {
     const interfaceTag = '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>'
     expect(html).toContain(interfaceTag)
     expect(html.indexOf(interfaceTag)).toBeLessThan(html.indexOf('<script>'))
+  })
+
+  it('Standard reist nicht: unangetastete Eigenschaften stehen NICHT im Markup', () => {
+    // Der Testblock hat text:'Standard' als Registry-Standard, der Testbereich
+    // direction:'column'. Wer sie nie anfasst, soll sie auch nicht im Export
+    // tragen — sonst steht in jeder Maske Zeile fuer Zeile, was ohnehin gilt,
+    // und ein Export-Diff zeigt nicht mehr, was der Bauer eingestellt hat.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t', 'b'] },
+      t: { id: 't', type: TEST_BLOCK, props: { text: 'Standard' }, parentId: 'root', childIds: [] },
+      b: { id: 'b', type: TEST_BOX, props: { direction: 'column' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    // Nur die BEIDEN Element-Anfaenge pruefen, nicht das ganze Dokument: im
+    // eingebetteten Runtime-Buendel steht `text=` als Minifikat-Zuweisung.
+    const tagVon = (name: string): string => new RegExp(`<${name}[^>]*`).exec(html)?.[0] ?? ''
+    expect(tagVon('ff-t-block')).not.toContain('text=')
+    expect(tagVon('ff-t-box')).not.toContain('direction=')
+    // Das Element selbst bleibt natuerlich stehen — nur nackt.
+    expect(html).toMatch(/<ff-t-block[^>]*><\/ff-t-block>/)
+    // Und Pflicht-/Layout-Attribute sind davon unberuehrt.
+    expect(html).toContain('grid-column:')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Nicht-Standard reist: jede abweichende Eigenschaft steht im Markup', () => {
+    // Gegenprobe zum Fall darueber — Wert um EIN Zeichen verschieden, und das
+    // Attribut muss da sein. Sonst zeigte die Maske etwas anderes als der
+    // Editor (WYSIWYG-Bruch, Regel 1).
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t', 'b'] },
+      t: { id: 't', type: TEST_BLOCK, props: { text: 'Standard ' }, parentId: 'root', childIds: [] },
+      b: { id: 'b', type: TEST_BOX, props: { direction: 'row' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toContain('text="Standard "')
+    expect(html).toContain('direction="row"')
   })
 
   it('serialisiert den Baum als verschachtelte Custom Elements', () => {
@@ -206,40 +242,9 @@ describe('exportMask', () => {
 
 })
 
-describe('validateMaskHtml (Verteidigung)', () => {
-  it('meldet fehlende Marker, CRLF und Nicht-ASCII', () => {
-    const { html } = exportMask(demoTree())
-    const kaputt = html.replace('<!--SOFTENGINE-VAR!JWHtmlStart-->', 'x')
-    expect(failedChecks(validateMaskHtml(kaputt)).length).toBeGreaterThan(0)
-
-    const crlf = html.replace(/\n/, '\r\n')
-    expect(failedChecks(validateMaskHtml(crlf)).map((f) => f.name)).toContain('LF-only')
-
-    const umlaut = html.replace('</body>', 'ä</body>')
-    expect(failedChecks(validateMaskHtml(umlaut)).map((f) => f.name)).toContain('ASCII-only')
-  })
-
-  it('blockiert einen Export ohne SoftEngine-Interface', () => {
-    const { html } = exportMask(demoTree())
-    const ohneInterface = html.replace(
-      '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS/basis.html.interface.js"></script>\n',
-      '',
-    )
-    expect(failedChecks(validateMaskHtml(ohneInterface)).map((f) => f.name))
-      .toContain('SoftEngine-Interface vorhanden')
-  })
-
-  it('blockiert einen Export mit leerem Runtime-Buendel', () => {
-    const { html } = exportMask(demoTree())
-    const start = html.indexOf('(function(){')
-    const end = html.lastIndexOf('\n</script>')
-    expect(start).toBeGreaterThan(0)
-    expect(end).toBeGreaterThan(start)
-    const ohneRuntime = html.slice(0, start) + html.slice(end)
-    expect(failedChecks(validateMaskHtml(ohneRuntime)).map((f) => f.name))
-      .toContain('Runtime-Buendel eingebettet')
-  })
-})
+// Die Verteidigung (Validator: Marker/LF/ASCII/Interface/Buendel) und die
+// Zeichen-Regeln des Serializers stehen seit 2026-08-06 in validator.test.ts —
+// diese Datei war ueber den 500-Zeilen-Deckel gewachsen (check:regeln).
 
 describe('Runtime-Bündel', () => {
   it('ist nach dem ASCII-Escaping weiterhin gültiges JavaScript', () => {
@@ -459,16 +464,4 @@ describe('Tabelle (Fahrplan 4)', () => {
   })
 })
 
-describe('serializer (ASCII-Regel)', () => {
-  it('escaped Umlaute wie bisher, aber Emoji als GANZEN Codepoint (kein Surrogat-Bruch)', () => {
-    // Umlaute: byte-identisch zur alten Fassung — Regressionsschutz, damit der
-    // Referenzabzug vom Emoji-Fix NICHT beruehrt wird.
-    expect(escapeHtmlText('Grüße')).toBe('Gr&#xFC;&#xDF;e')
-    // Emoji (U+1F600): frueher zwei ungueltige Surrogat-Haelften
-    // (&#xD83D;&#xDE00;), jetzt EIN gueltiger Codepoint.
-    expect(escapeHtmlText('Status 😀')).toBe('Status &#x1F600;')
-    // Keine isolierte Surrogat-Referenz (D800..DFFF) mehr im Ergebnis.
-    expect(escapeHtmlText('😀')).not.toMatch(/&#xD[89A-F][0-9A-F][0-9A-F];/i)
-  })
-})
 

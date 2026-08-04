@@ -73,6 +73,16 @@ export interface MaskExport {
 // (Zeichen-Regeln — ASCII-Escaping, Skript-Schutz, CSS-Bereinigung —
 // wohnen seit A6 im serializer; hier entstehen Markup und Reihenfolge.)
 
+// Ein Prop-Wert in seiner ATTRIBUT-Form (der String, der im Markup stünde).
+// Listen reisen als JSON (komma- und umlautsicher) — String(array) joint mit
+// Komma und ist nicht mehr eindeutig rueckgewinnbar; der Baustein liest das
+// JSON ueber seinen Attribut-Wandler zurueck. Alles andere als Text.
+// EINE Stelle, weil zwei Leser dieselbe Form brauchen: das geschriebene
+// Attribut UND der Vergleich gegen den Registry-Standard (attribute).
+function attributWert(value: unknown): string {
+  return Array.isArray(value) ? JSON.stringify(value) : String(value ?? '')
+}
+
 // camelCase-Style-Objekt → CSS-Deklarationen (kebab-case). EINE Stelle für
 // das Block-style-Attribut UND die Wurzel-Grid-Regel.
 function styleToCss(style: Record<string, string | number>): string {
@@ -152,20 +162,25 @@ function nodeToHtml(
   const attrs = Object.keys(def.defaultProps)
     .filter((key) => !LAYOUT_ATTR_AUSNAHME.has(key))
     .map((key) => {
-      const value = node.props[key] ?? def.defaultProps[key]
-      // LEERE Liste reist gar nicht mit. Ein `weiterequellen="[]"` haenge sonst
-      // an JEDEM Baustein mit Datenquelle in JEDER Maske und sagte nichts —
-      // die Laufzeit-Leser behandeln fehlendes und leeres Attribut ohnehin
-      // gleich (getAttribute(...) ?? '' -> leere Liste). Nebenwirkung, die
-      // hier beabsichtigt ist: bestehende Masken exportieren dadurch weiter
-      // Byte fuer Byte identisch, obwohl alle Bausteine die neue Prop tragen
-      // (Beweis: der Referenzabzug bleibt ohne Erneuerung gruen).
-      if (Array.isArray(value) && value.length === 0) return ''
-      // Listen reisen als JSON (komma- und umlautsicher) — String(array) joint
-      // mit Komma und ist nicht mehr eindeutig rueckgewinnbar; der Baustein
-      // liest das JSON ueber seinen Attribut-Wandler zurueck. Alles andere als
-      // Text wie bisher.
-      const roh = Array.isArray(value) ? JSON.stringify(value) : String(value ?? '')
+      const standard = def.defaultProps[key]
+      const roh = attributWert(node.props[key] ?? standard)
+      // STANDARDWERT reist NICHT mit (2026-08-06). Vorher trug jeder Baustein
+      // jede Nicht-Layout-Eigenschaft im Markup — auch die nie angefasste:
+      // an JEDEM Text hing farbe="standard" source="" textfield="", an JEDER
+      // Karte acht leere Bindungen. Das blaeht die Maske auf und verdeckt in
+      // jedem Export-Diff das Wenige, was der Bauer wirklich eingestellt hat.
+      // Verglichen wird die ATTRIBUT-Form (attributWert), nicht der rohe Wert:
+      // entscheidend ist, ob im Markup derselbe String stuende — 520 und '520'
+      // sind dasselbe Attribut.
+      // Die frueherer Sonderregel „leere Liste reist nicht" (weitereQuellen,
+      // folgtAuswahl) geht hier auf: deren Standard IST die leere Liste.
+      // BEDINGUNG dieser Regel: die Laufzeit muss „Attribut fehlt" wie den
+      // Standard lesen. Bei Lit-Properties gilt das von selbst (der Klassen-
+      // Standardwert bleibt stehen); die drei Laufzeit-Leser, die direkt
+      // getAttribute benutzen und einen NICHT-leeren Standard haben, ziehen
+      // ihren Standard seit demselben Commit aus der Registry
+      // (blocks/shared/seAktionen, kanban/seRuntime, tabelle/seRuntime).
+      if (roh === attributWert(standard)) return ''
       return ` ${key.toLowerCase()}="${escapeHtmlAttr(roh)}"`
     })
     .join('')

@@ -69,17 +69,18 @@ describe('Tagesfilter im Export', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('ohne eingestelltes Datumsfeld reist das Attribut LEER mit — und filtert nicht', () => {
-    // Der Export schreibt jede Registry-Eigenschaft, auch leere (so steht
-    // heute schon valuefield="" in der Referenzmaske). Leer heisst fuer die
-    // Laufzeit ausdruecklich „nicht filtern" (zeilenAmTag laesst alles
-    // durch) — Masken ohne Tageswaehler verhalten sich deshalb wie vorher.
+  it('ohne eingestelltes Datumsfeld reist das Attribut GAR NICHT — und es filtert nicht', () => {
+    // Bis 2026-08-06 stand hier `tagField=""`: der Export schrieb jede
+    // Registry-Eigenschaft, auch die unangetastete. Seither bleibt der
+    // Standardwert weg. Fuer die Laufzeit ist das dasselbe — sie liest
+    // getAttribute(...) ?? '' und laesst bei leer alles durch (zeilenAmTag).
+    // Masken ohne Tageswaehler verhalten sich deshalb wie vorher.
     const tree = maskeMitTagesfilter()
     tree.tab.props = { width: 'fill', spalten }
     tree.kan.props = { width: 'fill', height: 'fill' }
     const { html } = exportMask(tree)
-    expect(html).toMatch(/<ff-tabelle[^>]*\stagField=""/i)
-    expect(html).toMatch(/<ff-kanban[^>]*\stagField=""/i)
+    expect(html).not.toMatch(/<ff-tabelle[^>]*\stagField=/i)
+    expect(html).not.toMatch(/<ff-kanban[^>]*\stagField=/i)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })

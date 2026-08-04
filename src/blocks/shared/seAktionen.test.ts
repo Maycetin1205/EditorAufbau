@@ -7,8 +7,10 @@ import { applyPopupStep } from './seAktionen'
 import { resolveActionParam } from '../../softengine/relations'
 import type { ActionParamBinding } from '../../core/data/aktionen'
 
-function fakePopup(name: string) {
-  const attrs = new Map<string, string>([['name', name]])
+// `name: null` = Popup OHNE name-Attribut (so exportiert der Export seit
+// 2026-08-06 ein nie umbenanntes Popup — Standardwerte reisen nicht mit).
+function fakePopup(name: string | null) {
+  const attrs = new Map<string, string>(name === null ? [] : [['name', name]])
   return {
     getAttribute: (k: string) => attrs.get(k) ?? null,
     setAttribute: (k: string, v: string) => { attrs.set(k, v) },
@@ -35,6 +37,15 @@ describe('applyPopupStep', () => {
 
     applyPopupStep(root, 'Neue Behandlung', false)
     expect(behandlung.offen()).toBe(false)
+  })
+
+  it('ohne name-Attribut gilt der STANDARDNAME (sonst klickte der Knopf ins Leere)', () => {
+    // Ein nie umbenanntes Popup heisst „Popup" und traegt seit 2026-08-06 kein
+    // Attribut mehr. Die Kette sucht trotzdem nach dem Klarnamen — findet sie
+    // ihn nicht, passiert beim Klick NICHTS und niemand sieht warum (Regel 4).
+    const unbenannt = fakePopup(null)
+    applyPopupStep(fakeRoot([unbenannt]), 'Popup', true)
+    expect(unbenannt.offen()).toBe(true)
   })
 
   it('leerer Name oder kein Treffer: nichts passiert (still-harmlos)', () => {
