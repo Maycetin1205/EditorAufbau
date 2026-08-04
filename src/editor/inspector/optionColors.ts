@@ -30,6 +30,19 @@ const OPTION_COLORS: Record<string, string> = {
   success: 'var(--se-green)',  // „Erfolg"
   warning: 'var(--se-amber)',  // „Warnung"
   danger: 'var(--se-red)',     // „Fehler"
+  // Textfarben des Text-Bausteins (2026-08-04). Eigene Technikwerte statt der
+  // Status-Werte oben: „Standard/Gedaempft/Akzent" haben im Status-Vokabular
+  // kein Gegenstueck, und EINE Eigenschaft mit gemischten Werten (deutsch +
+  // englisch) waere schlimmer als drei Zeilen mehr Tabelle. Die Farbe selbst
+  // steht NUR im Baustein (FARBEN in blocks/text/TextBlock.ts) — hier
+  // dieselben Tokens, damit die Kachel im Inspector die echte Maskenfarbe
+  // zeigt statt einer Nachbildung.
+  standard: 'var(--se-ink)',
+  gedaempft: 'var(--se-muted)',
+  akzent: 'var(--se-accent)',
+  erfolg: 'var(--se-green)',
+  warnung: 'var(--se-amber)',
+  fehler: 'var(--se-red)',
 }
 
 export function optionColor(value: string): string | undefined {

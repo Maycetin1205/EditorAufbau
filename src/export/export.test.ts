@@ -314,6 +314,25 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
+  it('Text: die Farbe reist als Technikwert-Attribut mit (Token, kein Hex)', () => {
+    // Die Farbe ist eine Maskeneinstellung: faellt das Attribut weg, zeigt die
+    // exportierte Maske eine andere Farbe als der Editor (WYSIWYG-Bruch).
+    // Im Markup steht der TECHNIKWERT — den Token loest der Baustein selbst
+    // auf (FARBEN), damit im Export nirgends eine Farbe fest verdrahtet ist.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
+      t: {
+        id: 't', type: 'text',
+        props: { text: 'Notfall', farbe: 'fehler', width: 'fill' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toMatch(/<ff-text[^>]*\sfarbe="fehler"/)
+    expect(html).not.toMatch(/<ff-text[^>]*#[0-9a-fA-F]{3}/)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
   it('Text: Datenbindung (Quelle + Feld) reist als Attribut mit', () => {
     // 2026-08-04: der Text ist bindbar. Ohne diese zwei Attribute zeigte die
     // exportierte Maske stur den getippten Text, waehrend der Editor den

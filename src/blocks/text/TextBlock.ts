@@ -10,6 +10,10 @@
 //   - ausrichtung: Links / Mitte / Rechts
 // Alle drei teilen sich im Inspector EINE kompakte Zeile „Text-Stil"
 // (inspectorRow — Registry-Daten, kein Sondercode im Inspector).
+// Dazu (2026-08-04) die FARBE: feste Auswahl aus den Masken-Tokens, keine
+// freie Farbwahl — s. FARBEN unten. Im Inspector eine eigene Zeile mit
+// Farb-Kacheln (der vorhandene Mechanismus optionColors/ColorTileControl,
+// nichts Neues gebaut).
 //
 // Der Text wird per Doppelklick DIREKT am Ding bearbeitet (Inline-Edit,
 // WYSIWYG — Muster Schaltflaechen-Beschriftung); der Default-Text ist
@@ -48,6 +52,22 @@ type Gewicht = keyof typeof GEWICHTE
 const AUSRICHTUNGEN = { links: 'left', mitte: 'center', rechts: 'right' } as const
 type Ausrichtung = keyof typeof AUSRICHTUNGEN
 
+// Farbe (Technikwert -> Masken-Token). KEINE freie Farbwahl und keine
+// Hex-Werte: der Bediener waehlt aus den Farben, die die Maske ohnehin
+// benutzt — dadurch sieht der Export aus wie der Editor (WYSIWYG) und eine
+// spaetere Token-Aenderung zieht ueberall mit. Nur Tokens, die
+// masken-tokens.css wirklich hergibt.
+const FARBEN = {
+  standard: 'var(--se-ink)',
+  gedaempft: 'var(--se-muted)',
+  akzent: 'var(--se-accent)',
+  erfolg: 'var(--se-green)',
+  warnung: 'var(--se-amber)',
+  fehler: 'var(--se-red)',
+} as const
+type Farbe = keyof typeof FARBEN
+const FARBE_STANDARD: Farbe = 'standard'
+
 // Freie Pixelzahl; die Stufen-Werte der ersten Fassung (ueberschrift/
 // normal/klein) werden still auf ihre damaligen Pixel abgebildet, damit
 // heute angelegte Bloecke nicht kippen.
@@ -65,6 +85,11 @@ function coerceGewicht(v: unknown): Gewicht {
 
 function coerceAusrichtung(v: unknown): Ausrichtung {
   return typeof v === 'string' && v in AUSRICHTUNGEN ? (v as Ausrichtung) : 'links'
+}
+
+// Unbekannte/alte Werte fallen auf Standard zurueck — nie eine leere Farbe.
+function coerceFarbe(v: unknown): Farbe {
+  return typeof v === 'string' && v in FARBEN ? (v as Farbe) : FARBE_STANDARD
 }
 
 export class TextBlock extends BasicBlock {
@@ -90,6 +115,7 @@ export class TextBlock extends BasicBlock {
     groesse: GROESSE_STANDARD,
     gewicht: 'normal',
     ausrichtung: 'links',
+    farbe: FARBE_STANDARD,
     text: 'Text',
     // Datenquelle (Technikwert = Vorlagen-id) und Bindung der Stelle
     // (Feldcode, '' = ungebunden). Beide MUESSEN hier stehen, damit
@@ -137,6 +163,24 @@ export class TextBlock extends BasicBlock {
       ],
       inspectorRow: 'Text-Stil',
     },
+    // Eigene Zeile UNTER „Text-Stil": der Inspector zeigt hier Farb-Kacheln
+    // statt Dropdown, weil alle Werte in seiner Farbtabelle stehen
+    // (editor/inspector/optionColors) — die Kachel traegt die ECHTE
+    // Maskenfarbe. Innerhalb der geteilten Zeile gaebe es dafuer keine
+    // Kompaktform, dort stuende ein zweites Label „Farbe" im Label „Text-Stil".
+    {
+      attributeName: 'farbe',
+      name: 'Farbe',
+      description: 'Textfarbe aus den Farben der Maske.',      kind: 'select',
+      options: [
+        { value: 'standard', label: 'Standard' },
+        { value: 'gedaempft', label: 'Gedämpft' },
+        { value: 'akzent', label: 'Akzent' },
+        { value: 'erfolg', label: 'Erfolg' },
+        { value: 'warnung', label: 'Warnung' },
+        { value: 'fehler', label: 'Fehler' },
+      ],
+    },
   ]
 
   static styles = [
@@ -144,6 +188,9 @@ export class TextBlock extends BasicBlock {
     css`
       .text {
         font-family: var(--se-font);
+        /* Farbe kommt als Inline-Stil aus FARBEN (styleMap) — hier steht nur
+           der Ausgangswert, damit die Stelle auch ohne gesetzte Prop Text
+           in der Haus-Textfarbe zeigt. */
         color: var(--se-ink);
         line-height: 1.35;
         white-space: pre-wrap;
@@ -162,6 +209,7 @@ export class TextBlock extends BasicBlock {
   @property({ type: Number }) groesse: number = GROESSE_STANDARD
   @property() gewicht = 'normal'
   @property() ausrichtung = 'links'
+  @property() farbe: string = FARBE_STANDARD
   @property() text = 'Text'
   @property() source = ''
   @property() textField = ''
@@ -172,6 +220,7 @@ export class TextBlock extends BasicBlock {
       fontSize: `${coerceGroesse(this.groesse)}px`,
       fontWeight: GEWICHTE[coerceGewicht(this.gewicht)],
       textAlign: AUSRICHTUNGEN[coerceAusrichtung(this.ausrichtung)],
+      color: FARBEN[coerceFarbe(this.farbe)],
     }
     // Die Stelle traegt data-ff-spot (Klick-Ziel des Feld-Pickers) und
     // data-ff-bound, wenn sie gebunden ist (Daten-Markierung, sichtbar nur im
