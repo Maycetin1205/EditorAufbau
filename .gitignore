@@ -28,6 +28,13 @@ grundlast/
 # Nutzer-Entscheidung 2026-07-20. Kurzfassung des Inhalts: CLAUDE.md, Fahrplan Punkt 4.
 docs/Test-note*
 
+# SoftEngine-Mitschnitte des Nutzers (Debugger-Protokolle, oft mehrere MB) —
+# bleiben LOKAL, Nutzer-Entscheidung 2026-08-04. Sie sind Arbeitsmaterial:
+# was daraus belegt wurde (Relations-Nummern, Aufruf-Formen), steht in
+# docs/softengine-wiki bzw. CLAUDE.md; das Rohprotokoll blaeht nur das Repo.
+docs/chef-maske/Test.txt
+docs/chef-maske/*.log
+
 # TRIP/Codex-Skills: Laufzeit-Zustand (Thread-IDs, Review-Text, Event-Logs)
 # je Plan/Sitzung — Skripte/Prompts bleiben getrackt, der Zustand nicht.
 .claude/skills/*/state/

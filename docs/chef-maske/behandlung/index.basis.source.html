@@ -40,7 +40,13 @@
   --overlay:rgba(16,40,48,.34);--scroll:#c9d3d8;--shadow:0 1px 0 rgba(16,31,39,.03);--shadow-live:rgba(40,35,26,.30);--shadow-toast:0 4px 14px rgba(40,35,26,.12);
   --focus:0 0 0 2px rgba(11,111,120,.10);--focus-strong:0 0 0 2px rgba(11,111,120,.12);--inset-field:inset 0 1px 0 rgba(16,31,39,.03);
   --queue-op-line:rgba(138,97,22,.35);--queue-urgent-line:rgba(180,35,24,.40);--queue-active-muted:rgba(255,255,255,.86);
-  --font:"Segoe UI",Tahoma,Arial,sans-serif;--mono:Consolas,"Segoe UI Mono","Courier New",monospace;
+  /* Schrift-Kette, identisch in beiden Masken. "Segoe UI Variable Text" ist die feinere
+     Fassung ab Windows 11 (besser abgestimmt auf 12-14px), Windows 10 faellt still auf
+     "Segoe UI" zurueck. Tahoma steht ABSICHTLICH nicht drin: genau die Schrift, die
+     SoftEngine global aufzwingt und die wir unten wieder ausschalten. Zahlen bleiben
+     Consolas, weil schmal und untereinander stehend. Alle genannten Schriften sind lokal
+     installiert -- es wird KEINE nachgeladen, das kann SoftEngine nicht. */
+  --font:"Segoe UI Variable Text","Segoe UI",system-ui,Arial,sans-serif;--mono:Consolas,"Segoe UI Mono","Courier New",monospace;
   --radius:2px;--gap:14px;--pad:16px;--head-h:44px;
   --body-cols:minmax(300px,360px) minmax(480px,1.2fr) minmax(340px,420px);--body-cols-compact:310px minmax(420px,1fr) 330px;
   --pos-cols:64px minmax(0,1fr) 54px 90px 28px;--wiz-cols:minmax(0,1fr) 82px 72px 112px;--wiz-cols-compact:minmax(0,1fr) 72px 64px 98px;
@@ -50,6 +56,14 @@
 *{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--scroll) transparent;}
 html,body{margin:0;padding:0;height:100%;}
 body{font-family:var(--font);font-size:14px;line-height:1.35;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+/* SoftENGINE-Allgemein.css setzt global *{font-family:Tahoma}. Das schlaegt die von body
+   GEERBTE Schrift auf allen unklassierten Elementen (div/span/Karten), weil eine *-Regel
+   jedes Element direkt trifft und Vererbung immer verliert. Unser <style> laedt NACH SE,
+   darum gewinnt unsere eigene *-Regel bei gleicher Spezifitaet. .mono und .wz-qty (0,1,0)
+   bleiben unberuehrt, Formularfelder (0,0,1) ebenfalls. Im Browser ist SE-CSS nicht da --
+   deshalb sah die Maske dort immer richtig aus und in SoftEngine trotzdem nach Tahoma.
+   Uebernommen aus empfang, dort belegt seit 2026-06-18. 2026-08-04 */
+*{font-family:var(--font);}
 body>#room,#room{height:100%;}
 input,select,textarea,button{font:inherit;color:var(--text);}textarea{font-family:inherit;}button{cursor:pointer;}
 input::placeholder,textarea::placeholder{color:var(--text-faint);opacity:1;}
@@ -1156,18 +1170,30 @@ function petMasterOf(adr, name, lfanr) {
 }
 
 /* ===== Artikelstamm nach Warengruppe =====
-   Warengruppen-Nummern aus der SE-GUI (Nutzer-Angabe 2026-08-04). Sie sind je
-   Installation individuell: aendert sich der Artikelstamm, aendert sich NUR
-   diese Tabelle, sonst nichts. "wgr" ist eine Liste, weil ein Reiter mehrere
-   Warengruppen einsammeln darf -- Leistungen liegen hier auf 2 UND 3.
+   1:1 der Warengruppen-Stamm der Installation (Nutzer-Screenshot 2026-08-04).
+   Dort heissen die Felder WGR-Nr 1_5 und Bezeichnung 32_30 -- notiert, damit die
+   Maske die Reiter irgendwann selbst aus dieser Tabelle bauen kann, sobald die
+   SEFILELOOP-Kennung des Warengruppen-Stamms belegt ist. Bis dahin: Nummern sind
+   installationsspezifisch, aendert sich der Stamm, aendert sich NUR diese Liste.
+   Reihenfolge = Alltag zuerst, Grosstier hinten. "wgr" ist eine Liste, damit ein
+   Reiter mehrere Warengruppen einsammeln kann; aktuell braucht keiner das.
    Warengruppen, die in keinem Reiter stehen, sind im Wizard nicht erreichbar. */
 var CATS = [
-  { key: 'leistungen',   label: 'Leistungen',   code: 'Leist.', wgr: ['2', '3'] },
-  { key: 'medikamente',  label: 'Medikamente',  code: 'Med.',   wgr: ['1'] },
-  { key: 'impfstoffe',   label: 'Impfstoffe',   code: 'Impf',   wgr: ['4'] },
-  { key: 'kleintier',    label: 'Kleintier',    code: 'Klein',  wgr: ['7'] },
-  { key: 'futtermittel', label: 'Futtermittel', code: 'Futter', wgr: ['5'] },
-  { key: 'allgemein',    label: 'Allgemein',    code: 'Allg.',  wgr: ['31'] }
+  { key: 'leistungen',   label: 'Leistungen',              code: 'Leist.',  wgr: ['3'] },
+  { key: 'medikamente',  label: 'Medikamente',             code: 'Med.',    wgr: ['1'] },
+  { key: 'impfstoffe',   label: 'Impfstoffe',              code: 'Impf',    wgr: ['4'] },
+  { key: 'artikel',      label: 'Artikel',                 code: 'Art.',    wgr: ['2'] },
+  { key: 'kleintier',    label: 'Kleintier',               code: 'Klein',   wgr: ['7'] },
+  { key: 'futtermittel', label: 'Futtermittel',            code: 'Futter',  wgr: ['5'] },
+  { key: 'labor',        label: 'Labor',                   code: 'Labor',   wgr: ['37'] },
+  { key: 'koffer',       label: 'Koffer/St\u00FCcklisten', code: 'Koffer',  wgr: ['6'] },
+  { key: 'allgemein',    label: 'Allgemein',               code: 'Allg.',   wgr: ['31'] },
+  { key: 'alpaka',       label: 'Alpaka',                  code: 'Alpaka',  wgr: ['32'] },
+  { key: 'kalb',         label: 'Kalb',                    code: 'Kalb',    wgr: ['33'] },
+  { key: 'rind',         label: 'Rind',                    code: 'Rind',    wgr: ['34'] },
+  { key: 'schafziege',   label: 'Schaf / Ziege',           code: 'Schaf',   wgr: ['35'] },
+  { key: 'schwein',      label: 'Schwein',                 code: 'Schwein', wgr: ['36'] },
+  { key: 'ferkel',       label: 'Ferkel',                  code: 'Ferkel',  wgr: ['361'] }
 ];
 function catByKey(k) { for (var i = 0; i < CATS.length; i++) if (CATS[i].key === k) return CATS[i]; return CATS[0]; }
 function wgrEq(a, b) {
