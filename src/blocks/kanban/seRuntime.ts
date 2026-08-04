@@ -20,6 +20,7 @@ import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+import { auswahlMerkmal, klareAuswahl, merkmalVon, waehleAuswahl } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
@@ -161,6 +162,30 @@ function hydrate(board: HTMLElement): void {
     cardData.set(card, { row, pindex })
     card.draggable = true
   }
+
+  // Auswahl-Markierung (2026-08-05): das Board ist ein Auswahl-GEBER. Die
+  // Karten sind nach jeder Hydrierung NEUE Elemente — die gemerkte Auswahl
+  // (shared/auswahl, Identitaet = JSON-Abdruck der Zeile) wird deshalb hier
+  // wieder angeheftet. Ist die gewaehlte Zeile verschwunden (anderer Tag,
+  // geloescht), wird die Auswahl AUFGEHOBEN — sonst filterten Folger nach
+  // einer Karte, die niemand mehr sieht (Regel 4).
+  const geberId = board.getAttribute('data-ff-id') ?? ''
+  if (geberId !== '') {
+    const merkmal = auswahlMerkmal(geberId)
+    if (merkmal !== '') {
+      let gefunden = false
+      for (const col of columns) {
+        for (const card of cardsOf(col)) {
+          const data = cardData.get(card)
+          if (data && merkmalVon(data.row) === merkmal) {
+            card.setAttribute('data-ff-auswahl', '')
+            gefunden = true
+          }
+        }
+      }
+      if (!gefunden) klareAuswahl(geberId)
+    }
+  }
 }
 
 // ---------- Karten-Drag im Export ----------
@@ -206,12 +231,16 @@ function wireDrag(board: HTMLElement): void {
   wiredBoards.add(board)
   // Z2: Aktionskette „Karte angeklickt" — nur echte Datenkarten mit
   // Datensatz-Nummer lösen aus (dieselbe Regel wie das Ziehen: cardData).
+  // Seit 2026-08-05 setzt DERSELBE Klick auch die Auswahl (Toggle) — beides
+  // gehört zusammen: anklicken heißt „mit dieser Karte arbeiten".
   board.addEventListener('click', (e) => {
     const card = (e.composedPath().find(
       (el) => el instanceof HTMLElement && cardData.has(el),
     ) ?? null) as HTMLElement | null
     if (!card) return
-    void runEvent(board, 'onCardClick', { PINDEX: cardData.get(card)?.pindex ?? '' })
+    const data = cardData.get(card)
+    if (data) waehleAuswahl(board.getAttribute('data-ff-id') ?? '', data.row)
+    void runEvent(board, 'onCardClick', { PINDEX: data?.pindex ?? '' })
   })
   board.addEventListener('dragstart', (e) => {
     const card = (e.composedPath().find(

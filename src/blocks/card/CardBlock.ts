@@ -162,6 +162,18 @@ export class CardBlock extends BasicBlock {
       .card.v-success { border-left-color: var(--se-green); }
       .card.v-warning { border-left-color: var(--se-amber); }
       .card.v-danger { border-left-color: var(--se-red); }
+      /* Die GEWAEHLTE Karte (Auswahl-Geber Kanban, 2026-08-05): getoente
+         Akzentflaeche + Akzentrahmen — dieselbe Handschrift wie die
+         gewaehlte Tabellenzeile. Das Attribut setzt NUR die Laufzeit
+         (kanban/seRuntime), der Editor erfindet keine Auswahl (Regel 7).
+         Der linke STATUS-Streifen bleibt sichtbar: er traegt Bedeutung
+         (Notfall!), darum nur die drei anderen Kanten in Akzent. */
+      :host([data-ff-auswahl]) .card {
+        border-top-color: var(--se-accent);
+        border-right-color: var(--se-accent);
+        border-bottom-color: var(--se-accent);
+        background: var(--se-accent-soft);
+      }
       .main {
         display: flex;
         align-items: center;

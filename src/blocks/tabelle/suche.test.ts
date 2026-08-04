@@ -3,7 +3,7 @@
 // mehrere Woerter sind ein UND, leere Eingabe blendet nie etwas aus.
 
 import { describe, expect, it } from 'vitest'
-import { datensatzText, filtereZeilen, zeigtEchteDaten, zeilePasst } from './suche'
+import { datensatzText, filtereZeilen, passendeIndizes, zeigtEchteDaten, zeilePasst } from './suche'
 
 const zeilen = [
   ['Meier', 'Hund', '24.07.2026'],
@@ -68,6 +68,19 @@ describe('filtereZeilen', () => {
   })
 })
 
+describe('passendeIndizes (Zeilen-Identitaet fuer die Auswahl, 2026-08-05)', () => {
+  it('liefert die ROHINDIZES der Treffer — dieselben Zeilen wie filtereZeilen', () => {
+    expect(passendeIndizes(zeilen, 'katze')).toEqual([1, 2])
+    expect(passendeIndizes(zeilen, '')).toEqual([0, 1, 2, 3])
+    expect(passendeIndizes(zeilen, 'gibtsnicht')).toEqual([])
+  })
+
+  it('filtereZeilen ist exakt die Werte-Form derselben Logik', () => {
+    expect(filtereZeilen(zeilen, 'meier'))
+      .toEqual(passendeIndizes(zeilen, 'meier').map((i) => zeilen[i]))
+  })
+})
+
 describe('datensatzText (Fusszeile)', () => {
   const t = (o: Partial<Parameters<typeof datensatzText>[0]>): string =>
     datensatzText({ hatQuelle: true, sichtbar: 0, gesamt: 0, suchtAktiv: false, ...o })
@@ -93,6 +106,18 @@ describe('datensatzText (Fusszeile)', () => {
 
   it('sagt bei einer Suche ohne Treffer, wovon nichts uebrig blieb', () => {
     expect(t({ gesamt: 250, sichtbar: 0, suchtAktiv: true })).toBe('Kein Treffer von 250 Datensätzen')
+  })
+
+  it('sagt dazu, wenn die Auswahl eines anderen Bausteins filtert (Regel 4)', () => {
+    expect(t({ gesamt: 12, sichtbar: 12, auswahlAktiv: true }))
+      .toBe('12 Datensätze · durch Auswahl gefiltert')
+    expect(t({ gesamt: 0, sichtbar: 0, auswahlAktiv: true }))
+      .toBe('Keine Datensätze · durch Auswahl gefiltert')
+    // Auch in Kombination mit der Suche bleibt der Zusatz dran.
+    expect(t({ gesamt: 12, sichtbar: 3, suchtAktiv: true, auswahlAktiv: true }))
+      .toBe('3 von 12 Datensätzen · durch Auswahl gefiltert')
+    // Ohne Quelle bleibt der Strich ein Strich — nichts wird angehaengt.
+    expect(t({ hatQuelle: false, auswahlAktiv: true })).toBe('— Datensätze')
   })
 })
 

@@ -92,28 +92,29 @@ export function erkenneArt(werte: readonly string[]): Art {
 // Gross/Klein egal, eingebettete Zahlen natuerlich ("Pos 2" vor "Pos 10").
 const textVergleich = new Intl.Collator('de', { numeric: true, sensitivity: 'base' })
 
-// Zeilen nach einer Spalte sortieren. Gibt IMMER eine neue Liste zurueck
-// (die Eingabe bleibt unangetastet) und ist stabil: gleiche Werte behalten
-// ihre urspruengliche Reihenfolge.
-export function sortiereZeilen(
+// Sortier-REIHENFOLGE als Index-Liste — seit der waehlbaren Zeile
+// (2026-08-05) braucht die Tabelle die Identitaet einer Zeile durch die
+// Sortierung hindurch: die Markierung klebt am Rohindex, nicht am Platz.
+// Stabil: gleiche Werte behalten ihre urspruengliche Reihenfolge.
+export function sortiereIndizes(
   zeilen: readonly (readonly string[])[],
   spalte: number,
   aufsteigend: boolean,
-): string[][] {
-  if (spalte < 0 || zeilen.length === 0) return zeilen.map((z) => [...z])
+): number[] {
+  if (spalte < 0 || zeilen.length === 0) return zeilen.map((_, i) => i)
 
-  const zelle = (z: readonly string[]): string => z[spalte] ?? ''
-  const art = erkenneArt(zeilen.map(zelle))
+  const zelle = (i: number): string => zeilen[i][spalte] ?? ''
+  const art = erkenneArt(zeilen.map((z) => z[spalte] ?? ''))
   const richtung = aufsteigend ? 1 : -1
 
   return zeilen
-    .map((zeile, i) => ({ zeile, i })) // Index mitfuehren = stabile Sortierung
+    .map((_, i) => i)
     .sort((a, b) => {
-      const wa = zelle(a.zeile).trim()
-      const wb = zelle(b.zeile).trim()
+      const wa = zelle(a).trim()
+      const wb = zelle(b).trim()
 
       // Leer immer ans Ende — unabhaengig von der Richtung.
-      if (wa === '' && wb === '') return a.i - b.i
+      if (wa === '' && wb === '') return a - b
       if (wa === '') return LEER_ZULETZT
       if (wb === '') return -LEER_ZULETZT
 
@@ -123,7 +124,17 @@ export function sortiereZeilen(
         : textVergleich.compare(wa, wb)
 
       // Gleichstand -> urspruengliche Reihenfolge (stabil).
-      return d !== 0 ? d * richtung : a.i - b.i
+      return d !== 0 ? d * richtung : a - b
     })
-    .map((x) => [...x.zeile])
+}
+
+// Zeilen nach einer Spalte sortieren. Gibt IMMER eine neue Liste zurueck
+// (die Eingabe bleibt unangetastet). DIESELBE Logik wie sortiereIndizes —
+// die Werte-Form bleibt als geprueftes Verhalten bestehen.
+export function sortiereZeilen(
+  zeilen: readonly (readonly string[])[],
+  spalte: number,
+  aufsteigend: boolean,
+): string[][] {
+  return sortiereIndizes(zeilen, spalte, aufsteigend).map((i) => [...zeilen[i]])
 }

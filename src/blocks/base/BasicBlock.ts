@@ -26,6 +26,7 @@ import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { registerBlockType } from '../../core/blocks/blockRegistry'
 import { FLOW_DEFAULTS } from '../../core/blocks/flowLayout'
 import { RASTER_DEFAULTS } from '../../core/blocks/rasterLayout'
+import { AUSWAHL_FOLGE_DEFAULTS } from '../../core/data/auswahlFolge'
 import { QUELLEN_DEFAULTS } from '../../core/data/sourceLinks'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
@@ -161,6 +162,9 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
         ...FLOW_DEFAULTS,
         ...RASTER_DEFAULTS,
         ...(BlockClass.acceptsDataSource ? QUELLEN_DEFAULTS : null),
+        // Auswahl-Folge nur fuer Bausteine, die folgen KOENNEN — gleiche
+        // Bauart: leere Liste = kein Export-Attribut, kein Byte aendert sich.
+        ...(BlockClass.kannAuswahlFolgen ? AUSWAHL_FOLGE_DEFAULTS : null),
         ...BlockClass.defaultProps,
       },
       customProperties: BlockClass.customProperties,
@@ -177,6 +181,8 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       containerHint: BlockClass.containerHint,
       addChildButton: BlockClass.addChildButton,
       acceptsDataSource: BlockClass.acceptsDataSource,
+      auswahlGeber: BlockClass.auswahlGeber,
+      kannAuswahlFolgen: BlockClass.kannAuswahlFolgen,
       bindableSpots: BlockClass.bindableSpots,
       actionValueSpots: BlockClass.actionValueSpots,
       listenBindung: BlockClass.listenBindung,

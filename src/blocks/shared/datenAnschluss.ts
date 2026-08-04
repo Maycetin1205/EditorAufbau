@@ -14,6 +14,7 @@
 // befuellen kann". Was befuellt wird, gibt der Baustein herein.
 
 import { bootSe, hasSeData, onSeDaten } from '../../softengine/bridge'
+import { aufAuswahlHoeren } from './auswahl'
 import { aufTagHoeren } from './gewaehlterTag'
 
 export interface DatenAnschluss<T extends HTMLElement> {
@@ -57,6 +58,9 @@ export function macheDatenAnschluss<T extends HTMLElement>(opts: {
       // Kanban und Tabelle den Tagesfilter geschenkt bekommen und keiner
       // von ihnen den Tageswaehler kennen muss (Regel 2).
       aufTagHoeren(hydriereAlle)
+      // Dritter Anlass: eine Zeile/Karte wurde gewaehlt oder abgewaehlt
+      // (shared/auswahl) — Geber zeichnen ihre Markierung, Folger filtern.
+      aufAuswahlHoeren(hydriereAlle)
     }
     bootSe()
     // Kommen die Daten schon vor diesem Baustein an, sofort nachziehen.

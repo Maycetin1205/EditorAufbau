@@ -157,6 +157,21 @@ export const tabelleStil = css`
       .koerper > .zeile:hover {
         background: var(--se-panel-2);
       }
+      /* Waehlbare Zeile (nur Laufzeit mit echten Daten, Klasse setzt der
+         Baustein): der Zeiger sagt „hier passiert etwas". */
+      .koerper > .zeile.waehlbar { cursor: pointer; }
+      /* Die GEWAEHLTE Zeile (2026-08-05): getoente Akzentflaeche + kraeftiger
+         Balken an der linken Kante — kantig, eindeutig, dieselbe Handschrift
+         wie der Rest der Maske. inset-Schatten statt Rahmen, damit die
+         Spaltenbreiten keinen Pixel verrutschen. Der Text wird voll lesbar
+         (--se-ink statt --se-muted): die gewaehlte Zeile ist die, mit der
+         der Bediener gerade arbeitet. */
+      .zeile.gewaehlt,
+      .koerper > .zeile.gewaehlt:hover {
+        background: var(--se-accent-soft);
+        box-shadow: inset 3px 0 0 var(--se-accent);
+      }
+      .zeile.gewaehlt > div { color: var(--se-ink); }
       .kopf > div,
       .zeile > div {
         /* KEIN senkrechter Innenabstand: die Zeilenhoehe steht fest, der

@@ -29,9 +29,10 @@ import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { waehleAuswahl } from '../shared/auswahl'
 import { connectTable, disconnectTable } from './seRuntime'
-import { sortiereZeilen } from './sortierung'
-import { datensatzText, filtereZeilen, zeigtEchteDaten } from './suche'
+import { sortiereIndizes } from './sortierung'
+import { datensatzText, passendeIndizes, zeigtEchteDaten } from './suche'
 import { tabelleStil } from './tabelleStil'
 import {
   SPALTEN_MAX,
@@ -64,6 +65,12 @@ export class TabelleBlock extends BasicBlock {
   // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
   // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
   static readonly acceptsDataSource = true
+  // Auswahl (2026-08-05): die Tabelle GIBT eine Auswahl (Zeile anklicken,
+  // zweiter Klick hebt auf) und kann der Auswahl eines anderen Gebers
+  // FOLGEN (zeigt dann nur die passenden Zeilen). Beides Registry-
+  // Faehigkeiten — Export, Inspector und Laufzeit lesen sie generisch.
+  static readonly auswahlGeber = true
+  static readonly kannAuswahlFolgen = true
   // Jede SPALTE ist eine bindbare Stelle (Regel 2): der Editor oeffnet den
   // Feld-Picker generisch ueber diesen Eintrag — er kennt die Tabelle nicht.
   static readonly listenBindung: ListenBindung = {
@@ -132,6 +139,20 @@ export class TabelleBlock extends BasicBlock {
   // Im Editor bleibt es [] -> Platzhalter-Striche (Regel 7).
   @property({ attribute: false }) datenzeilen: string[][] = []
 
+  // Die ROHEN Zeilenobjekte, an datenzeilen ausgerichtet (gleicher Index).
+  // Braucht die Auswahl: die Folger vergleichen Schluesselfelder der
+  // gewaehlten Zeile, und die stehen nicht unbedingt in einer Spalte.
+  @property({ attribute: false }) rohzeilen: unknown[] = []
+
+  // Index der GEWAEHLTEN Zeile in datenzeilen (-1 = keine). Setzt die
+  // Laufzeit (seRuntime) aus dem gemeinsamen Auswahl-Zustand — der Baustein
+  // haelt selbst keinen: nach jedem SoftEngine-Push waere er veraltet.
+  @property({ attribute: false }) auswahlIndex = -1
+
+  // Zeigt die Tabelle gerade WENIGER, weil sie der Auswahl eines anderen
+  // Bausteins folgt? Nur fuer die ehrliche Fusszeile (Regel 4).
+  @property({ attribute: false }) durchAuswahlGefiltert = false
+
   // Sortier-Zustand (nur Laufzeit/Export, nicht persistiert).
   private _sortSpalte = -1
   private _sortAuf = true
@@ -151,14 +172,28 @@ export class TabelleBlock extends BasicBlock {
     return coerceSpalten(this.spalten)
   }
 
-  // Die Zeilen, die der Bediener gerade sehen soll: ERST suchen, DANN
-  // sortieren. Andersherum waere die Arbeit umsonst — sortiert wird nur,
-  // was uebrig bleibt. Beides sind eigene, getestete Stellen
-  // (./suche, ./sortierung).
-  private sichtbareZeilen(): string[][] {
-    const gefiltert = filtereZeilen(this.datenzeilen, this._suchtext)
+  // Die Zeilen, die der Bediener gerade sehen soll — als ROHINDIZES in
+  // datenzeilen: ERST suchen, DANN sortieren. Indizes statt Werte, weil die
+  // Auswahl-Markierung an der ZEILE kleben muss, egal wie gefiltert oder
+  // sortiert wird. Beides sind eigene, getestete Stellen (./suche, ./sortierung).
+  private sichtbareIndizes(): number[] {
+    const gefiltert = passendeIndizes(this.datenzeilen, this._suchtext)
     if (this._sortSpalte < 0) return gefiltert
-    return sortiereZeilen(gefiltert, this._sortSpalte, this._sortAuf)
+    const rows = gefiltert.map((i) => this.datenzeilen[i])
+    return sortiereIndizes(rows, this._sortSpalte, this._sortAuf).map((k) => gefiltert[k])
+  }
+
+  // Klick auf eine Datenzeile in der LAUFZEIT: Auswahl setzen bzw. mit dem
+  // zweiten Klick auf dieselbe Zeile wieder aufheben (Toggle). Der Zustand
+  // wohnt im gemeinsamen Auswahl-Modul (shared/auswahl) — von dort kommt er
+  // ueber die Neu-Hydrierung als auswahlIndex zurueck. Im Editor passiert
+  // nichts (keine erfundene Auswahl, Regel 7).
+  private klickZeile(rohIndex: number | null): void {
+    if (rohIndex === null || this.hasAttribute('data-ff-editor')) return
+    const geberId = this.getAttribute('data-ff-id') ?? ''
+    const zeile = this.rohzeilen[rohIndex]
+    if (geberId === '' || zeile === undefined) return
+    waehleAuswahl(geberId, zeile)
   }
 
   // Tippen in der Suchzeile: zurueck auf Seite 1 — sonst steht der Bediener
@@ -302,8 +337,9 @@ export class TabelleBlock extends BasicBlock {
     const spalten = this.spaltenListe()
     const cols = { gridTemplateColumns: `repeat(${spalten.length}, minmax(0, 1fr))` }
     const stop = (e: Event): void => e.stopPropagation()
-    // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle).
-    const alleDaten = this.sichtbareZeilen()
+    // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle) —
+    // als Rohindizes, damit die Auswahl-Markierung an ihrer Zeile klebt.
+    const alleSichtbar = this.sichtbareIndizes()
     // „Hat Quelle" heisst: es KOMMEN Daten — nicht, dass gerade welche da
     // sind. Bis 2026-07-28 stand hier `datenzeilen.length > 0`, und damit
     // fiel die LAUFENDE Maske auf die Editor-Platzhalter zurueck, sobald der
@@ -320,14 +356,14 @@ export class TabelleBlock extends BasicBlock {
     // Die Entscheidung selbst wohnt pruefbar in ./suche (zeigtEchteDaten).
     const hatQuelle = zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
     // Paginierung (nur Laufzeit mit echten Daten).
-    const gesamt = alleDaten.length
+    const gesamt = alleSichtbar.length
     const proSeite = this.proSeiteAktuell
     const seiten = hatQuelle ? Math.max(1, Math.ceil(gesamt / proSeite)) : 1
     // Seite einklemmen: eine geschrumpfte Datenmenge (neuer SE-Push) darf den
     // Bediener nicht auf einer Seite stehen lassen, die es nicht mehr gibt.
     const seite = Math.min(Math.max(this._seite, 0), seiten - 1)
-    const seitenDaten = hatQuelle
-      ? alleDaten.slice(seite * proSeite, (seite + 1) * proSeite)
+    const seitenIndizes = hatQuelle
+      ? alleSichtbar.slice(seite * proSeite, (seite + 1) * proSeite)
       : []
     // Zeilen auffuellen: immer mindestens proSeite (Laufzeit) bzw.
     // PLATZHALTER_ZEILEN (Editor) Zeilen mit Linien zeigen.
@@ -338,9 +374,9 @@ export class TabelleBlock extends BasicBlock {
     //   schlicht nicht mehr. Ein „—" waere dort gelogen: es sieht aus wie ein
     //   fehlender Wert, obwohl es gar keinen Satz gibt.
     const fuellzeichen = hatQuelle ? '' : '—'
-    const zeilen: (readonly string[] | null)[] = [
-      ...seitenDaten,
-      ...Array.from({ length: Math.max(0, sollZeilen - seitenDaten.length) }, () => null),
+    const zeilen: (number | null)[] = [
+      ...seitenIndizes,
+      ...Array.from({ length: Math.max(0, sollZeilen - seitenIndizes.length) }, () => null),
     ]
     return html`<div class="tabelle" style=${styleMap({ '--spalten-zahl': String(spalten.length) })}>
       <div class="steuerung">
@@ -404,9 +440,14 @@ export class TabelleBlock extends BasicBlock {
         )}
       </div>
         ${zeilen.map(
-          (row) => html`<div class="zeile" style=${styleMap(cols)}>
-            ${row
-              ? row.map((wert) => html`<div>${wert}</div>`)
+          (rohIndex) => html`<div
+            class="zeile${rohIndex !== null && hatQuelle ? ' waehlbar' : ''}${
+              rohIndex !== null && rohIndex === this.auswahlIndex ? ' gewaehlt' : ''}"
+            style=${styleMap(cols)}
+            @click=${() => this.klickZeile(rohIndex)}
+          >
+            ${rohIndex !== null
+              ? (this.datenzeilen[rohIndex] ?? []).map((wert) => html`<div>${wert}</div>`)
               : spalten.map(() => html`<div>${fuellzeichen}</div>`)}
           </div>`,
         )}
@@ -424,6 +465,7 @@ export class TabelleBlock extends BasicBlock {
           sichtbar: gesamt,
           gesamt: this.datenzeilen.length,
           suchtAktiv: this._suchtext.trim() !== '',
+          auswahlAktiv: this.durchAuswahlGefiltert,
         })}</div>
         <div class="seiten-nav">
           <select

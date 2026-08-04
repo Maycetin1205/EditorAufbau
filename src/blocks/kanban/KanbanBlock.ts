@@ -51,6 +51,10 @@ export class KanbanBlock extends BasicBlock {
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
   static readonly acceptsDataSource = true
+  // Auswahl (2026-08-05): das Board GIBT eine Auswahl — Karte anklicken
+  // markiert sie (zweiter Klick hebt auf), Folger filtern danach. Es folgt
+  // selbst NIEMANDEM (Nutzer-Entscheidung: „kanban muss niemanden folgen").
+  static readonly auswahlGeber = true
   // Ereignisse des Boards (Kommandozentrale Z1): Klarnamen für die
   // Aktions-Übersicht; die keys sind das Technikwert-Vokabular des alten
   // Editors (onCardClick/onCardDrop) — Aktionsketten hängen ab Z2 daran.

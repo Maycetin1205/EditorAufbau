@@ -189,12 +189,20 @@ function nodeToHtml(
   const actionValueIdAttr = (def.actionValueSpots?.length ?? 0) > 0
     ? ` ${ACTION_VALUE_ID_ATTR}="${escapeHtmlAttr(node.id)}"`
     : ''
+  // Auswahl-GEBER tragen ihre Baum-id als data-ff-id (2026-08-05): darueber
+  // merkt sich die Laufzeit die gewaehlte Zeile je Baustein, und Folger
+  // adressieren ihren Geber (folgtAuswahl.geberId = derselbe Wert). IMMER
+  // gestempelt, nicht nur bei Verweis — ein Codepfad, und die Markierung
+  // funktioniert auch ohne Folger (bausteininterne Auswahl).
+  const auswahlIdAttr = def.auswahlGeber === true
+    ? ` data-ff-id="${escapeHtmlAttr(node.id)}"`
+    : ''
 
   // Rasterflaeche: das Wurzel-Kind fuellt seine Zelle (DIESELBE Marke wie im
   // Editor, useLitElement/'fuellt') — sein Baustein-CSS streckt den Inhalt auf
   // die Zellhoehe. Popup-Overlays (pageBlock) sind kein Rasterkind.
   const fuelltAttr = rasterEbene && def.pageBlock !== true ? ' fuellt' : ''
-  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${fuelltAttr}${styleAttr(node, parentDirection, def.lockedWidth, rasterEbene, def.pageBlock === true)}>`
+  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${auswahlIdAttr}${fuelltAttr}${styleAttr(node, parentDirection, def.lockedWidth, rasterEbene, def.pageBlock === true)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }

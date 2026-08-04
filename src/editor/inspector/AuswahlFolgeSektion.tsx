@@ -1,0 +1,194 @@
+// AuswahlFolgeSektion — Inspector-Sektion „Auswahl folgen".
+//
+// Der Fall (Nutzer 2026-08-05): Tabelle 1 zeigt Kunden, Tabelle 2 Belege.
+// HIER, an Tabelle 2, stellt der Bauer ein: „folgt der Auswahl von
+// Tabelle 1" plus die Feldpaare, an denen man die zusammengehoerigen
+// Zeilen erkennt (Adressnummer = Adressnummer). In der laufenden Maske
+// filtert Tabelle 2 dann nach der angeklickten Kundenzeile — ohne Auswahl
+// zeigt sie alles, nichts passiert automatisch.
+//
+// Bedienmuster und Bauteile sind DIESELBEN wie in der QuellenListe daneben
+// (SelectControl fuer die Wahl, SchrittSelect-Zeilen fuer „Feld = Feld") —
+// zwei Verknuepfungs-Formulare, die verschieden aussehen, waeren fuer den
+// Bediener zwei Sprachen fuer dieselbe Sache.
+//
+// Der Bediener sieht ausschliesslich Klarnamen (Baustein-Name + Quellen-
+// Name, Feld-Klarnamen); die Technikwerte (Baum-id, Feldcodes) arbeiten
+// unsichtbar (Regel 3). Kein Speichern-Knopf: jede Aenderung geht sofort
+// in den Baum. Wer Geber sein kann, sagt die Registry (auswahlGeber) —
+// kein Bausteintyp-Wissen hier (Regel 2).
+
+import { Plus, X } from 'lucide-react'
+import { Button } from '@/ui/atoms/button'
+import { IconButton } from '@/ui/atoms/icon-button'
+import { SchrittSelect } from '@/ui/atoms/schritt-select'
+import { cn } from '@/lib/utils'
+import type { BlockNode } from '../../core/blocks/BlockData'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import {
+  AUSWAHL_FOLGE_PROP,
+  auswahlFolgenAus,
+  folgeBrauchbar,
+  type AuswahlFolge,
+} from '../../core/data/auswahlFolge'
+import { MAX_SCHLUESSELPAARE, type SchluesselPaar } from '../../core/data/sourceLinks'
+import { useDataSources } from '../../state/useDataSources'
+import { useEditor } from '../../state/useEditor'
+import { bausteinName } from '../zentrale/helfer'
+import { SelectControl } from './controls/SelectControl'
+
+// Radix-Select verbietet '' als Option-Wert — Platzhalter wie in QuellenListe.
+const KEINER = '__keiner__'
+
+interface AuswahlFolgeSektionProps {
+  block: BlockNode
+  // true = ueber der Sektion steht schon Inhalt -> feine Trennlinie davor
+  // (dieselbe Optik wie die Nachbarsektionen im Inspector).
+  mitTrenner: boolean
+}
+
+export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionProps) {
+  const ed = useEditor()
+  const bibliothek = useDataSources().list
+
+  // Die Oberflaeche fuehrt genau EINE Folge (eine Stufe, ein Geber).
+  const folge: AuswahlFolge | undefined = auswahlFolgenAus(block.props[AUSWAHL_FOLGE_PROP])[0]
+
+  // Geber-Kandidaten: alle Auswahl-Geber im Baum ausser diesem Baustein.
+  const kandidaten = Object.values(ed.tree).filter(
+    (n) => n.id !== block.id && getBlockDefinition(n.type)?.auswahlGeber === true,
+  )
+  // Nichts anzubieten und nichts eingestellt: Sektion ganz weglassen —
+  // ein leeres Formular ohne waehlbaren Geber waere nur Raetselraten.
+  if (kandidaten.length === 0 && !folge) return null
+
+  const quelleVon = (n: BlockNode | undefined) =>
+    bibliothek.find((s) => s.id === (typeof n?.props.source === 'string' ? n.props.source : ''))
+  const geberNode = folge ? ed.tree[folge.geberId] : undefined
+  const geberQuelle = quelleVon(geberNode)
+  const eigeneQuelle = quelleVon(block)
+
+  // Klarname eines Kandidaten: Baustein-Name, plus Quellen-Name zur
+  // Unterscheidung — zwei Tabellen heissen sonst beide nur „Tabelle".
+  const anzeige = (n: BlockNode): string => {
+    const q = quelleVon(n)
+    return q ? `${bausteinName(n)} (${q.name})` : bausteinName(n)
+  }
+
+  function setze(neu: AuswahlFolge[]): void {
+    ed.updateProperty(block.id, AUSWAHL_FOLGE_PROP, neu)
+  }
+  function setzeGeber(v: string): void {
+    if (v === KEINER) {
+      setze([])
+      return
+    }
+    setze([{
+      geberId: v,
+      keyPairs: folge && folge.keyPairs.length > 0
+        ? folge.keyPairs
+        : [{ fromField: '', toField: '' }],
+    }])
+  }
+  function setzePaar(at: number, teil: Partial<SchluesselPaar>): void {
+    if (!folge) return
+    setze([{
+      ...folge,
+      keyPairs: folge.keyPairs.map((p, i) => (i === at ? { ...p, ...teil } : p)),
+    }])
+  }
+
+  return (
+    <div className={cn('flex flex-col gap-2', mitTrenner && 'mt-4 border-t border-border pt-4')}>
+      <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
+        Auswahl folgen
+      </span>
+      <SelectControl
+        label="Folgt der Auswahl von"
+        value={folge && folge.geberId !== '' ? folge.geberId : KEINER}
+        options={[
+          { value: KEINER, label: '— keinem —' },
+          ...kandidaten.map((n) => ({ value: n.id, label: anzeige(n) })),
+          // Geber geloescht: den Zustand benennen statt still leer (Regel 4);
+          // der Preflight blockt den Export dazu im Klartext. (Leere Geber-id
+          // faellt auf „keinem" zurueck — Radix verbietet '' als Wert.)
+          ...(folge && folge.geberId !== '' && !kandidaten.some((k) => k.id === folge.geberId)
+            ? [{ value: folge.geberId, label: '(gelöschter Baustein)' }]
+            : []),
+        ]}
+        onChange={setzeGeber}
+      />
+      {folge && (
+        <>
+          <span className="text-xs text-muted-foreground">
+            Woran erkennt man die zusammengehörigen Zeilen?
+          </span>
+          {folge.keyPairs.map((paar, at) => (
+            <div key={at} className="flex items-center gap-1.5">
+              <SchrittSelect
+                className="min-w-0 flex-1"
+                aria-label={`Feld ${at + 1} beim Auswahl-Geber`}
+                value={paar.fromField}
+                onChange={(e) => setzePaar(at, { fromField: e.target.value })}
+              >
+                <option value="">— Feld —</option>
+                {(geberQuelle?.fields ?? []).map((f) => (
+                  <option key={f.code} value={f.code}>{f.label}</option>
+                ))}
+              </SchrittSelect>
+              <span className="shrink-0 text-xs text-muted-foreground">=</span>
+              <SchrittSelect
+                className="min-w-0 flex-1"
+                aria-label={`Feld ${at + 1} in diesem Baustein`}
+                value={paar.toField}
+                onChange={(e) => setzePaar(at, { toField: e.target.value })}
+              >
+                <option value="">— Feld —</option>
+                {(eigeneQuelle?.fields ?? []).map((f) => (
+                  <option key={f.code} value={f.code}>{f.label}</option>
+                ))}
+              </SchrittSelect>
+              {folge.keyPairs.length > 1 && (
+                <IconButton
+                  aria-label={`Feldpaar ${at + 1} entfernen`}
+                  onClick={() => setze([{
+                    ...folge,
+                    keyPairs: folge.keyPairs.filter((_, x) => x !== at),
+                  }])}
+                >
+                  <X size={13} />
+                </IconButton>
+              )}
+            </div>
+          ))}
+          {folge.keyPairs.length < MAX_SCHLUESSELPAARE && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => setze([{
+                ...folge,
+                keyPairs: [...folge.keyPairs, { fromField: '', toField: '' }],
+              }])}
+            >
+              <Plus size={13} /> Feld dazu
+            </Button>
+          )}
+          {/* Klartext statt stillem Nichtstun (Regel 4). */}
+          {(!geberQuelle || !eigeneQuelle) && (
+            <p className="text-xs text-muted-foreground">
+              Beide Bausteine brauchen zuerst eine Datenquelle — sonst gibt es
+              keine Felder, an denen man die Zeilen erkennen könnte.
+            </p>
+          )}
+          {geberQuelle && eigeneQuelle && !folgeBrauchbar(folge) && (
+            <p className="text-xs text-muted-foreground">
+              Noch nicht wirksam: es fehlt ein Feldpaar, bei dem <em>beide</em>{' '}
+              Seiten gefüllt sind.
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

@@ -423,3 +423,57 @@ describe('serializer (ASCII-Regel)', () => {
     expect(escapeHtmlText('😀')).not.toMatch(/&#xD[89A-F][0-9A-F][0-9A-F];/i)
   })
 })
+
+describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
+  // Zwei Tabellen: die zweite folgt der Auswahl der ersten. Der Fall des
+  // Nutzers: Kunden-Tabelle + Belege-Tabelle, verbunden ueber die
+  // Adressnummer. LEITPLANKE: Tests niemals loeschen/abschwaechen.
+  const folge = [{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }]
+  const paarTree = (folgtAuswahl: unknown): BlockTree => ({
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'folger'] },
+    geber: {
+      id: 'geber',
+      type: 'tabelle',
+      props: { width: 'fill', spalten: standardTestSpalten, rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 4 },
+      parentId: 'root',
+      childIds: [],
+    },
+    folger: {
+      id: 'folger',
+      type: 'tabelle',
+      props: { width: 'fill', spalten: standardTestSpalten, folgtAuswahl, rasterX: 0, rasterY: 4, rasterW: 24, rasterH: 4 },
+      parentId: 'root',
+      childIds: [],
+    },
+  })
+
+  it('Auswahl-Geber tragen ihre Baum-id als data-ff-id — auch ohne Folger', () => {
+    const { html } = exportMask(paarTree([]))
+    // BEIDE Tabellen sind Geber (Registry auswahlGeber) und werden gestempelt:
+    // die Markierung funktioniert auch, wenn (noch) niemand folgt.
+    expect(html).toMatch(/<ff-tabelle[^>]*\sdata-ff-id="geber"/)
+    expect(html).toMatch(/<ff-tabelle[^>]*\sdata-ff-id="folger"/)
+  })
+
+  it('folgtAuswahl reist als JSON-Attribut und kommt unversehrt zurueck', () => {
+    const { html } = exportMask(paarTree(folge))
+    const attr = /<ff-tabelle[^>]*\sfolgtauswahl="([^"]*)"/.exec(html)?.[1] ?? ''
+    expect(attr).not.toBe('')
+    expect(JSON.parse(attr.replace(/&quot;/g, '"'))).toEqual(folge)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('eine LEERE Folge-Liste reist gar nicht mit (bestehende Masken bleiben byte-identisch)', () => {
+    const { html } = exportMask(paarTree([]))
+    expect(html).not.toContain('folgtauswahl')
+  })
+
+  it('Preflight blockt einen geloeschten Geber und ein halbes Feldpaar im Klartext', () => {
+    const kaputt = preflightMask(paarTree([{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }]), [], [])
+    expect(kaputt.some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
+    const halb = preflightMask(paarTree([{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '' }] }]), [], [])
+    expect(halb.some((r) => r.name === 'Auswahl-Folge unvollstaendig')).toBe(true)
+    const sauber = preflightMask(paarTree(folge), [], [])
+    expect(sauber.filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
+  })
+})

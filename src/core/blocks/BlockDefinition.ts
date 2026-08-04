@@ -264,6 +264,16 @@ export interface BlockDefinition {
   // Vorlagen-id aus core/data/dataSources); der Inspector zeigt die Sektion
   // "Daten", der Export erzeugt daraus den SEFILELOOP. Kein `if type===`.
   acceptsDataSource?: boolean
+  // true = der Block zeigt Zeilen an und GIBT eine Auswahl: der Bediener
+  // klickt in der laufenden Maske eine Zeile/Karte an (Toggle, zweiter
+  // Klick hebt auf). Der Export stempelt data-ff-id, damit Folger den
+  // Geber adressieren; die Auswahl selbst wohnt in blocks/shared/auswahl.
+  auswahlGeber?: boolean
+  // true = der Block kann der Auswahl eines Gebers FOLGEN (Prop
+  // `folgtAuswahl`, core/data/auswahlFolge): mit Auswahl zeigt er nur die
+  // Zeilen, deren Schluesselfelder zur gewaehlten Zeile passen — ohne
+  // Auswahl alles. Inspector zeigt dann die Sektion „Auswahl folgen".
+  kannAuswahlFolgen?: boolean
   // Bindbare Stellen des Blocks — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
   // Aktuelle Bausteinwerte, die als Parameterquelle angeboten werden.

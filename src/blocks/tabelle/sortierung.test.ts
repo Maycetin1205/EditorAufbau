@@ -3,7 +3,7 @@
 // Diese Faelle sind genau die, die der Bediener in der Maske sofort sieht.
 
 import { describe, expect, it } from 'vitest'
-import { alsDatum, alsZahl, erkenneArt, sortiereZeilen } from './sortierung'
+import { alsDatum, alsZahl, erkenneArt, sortiereIndizes, sortiereZeilen } from './sortierung'
 
 const spalte0 = (zeilen: string[][]): string[] => zeilen.map((z) => z[0])
 
@@ -89,5 +89,23 @@ describe('Zeilen sortieren', () => {
     expect(sortiereZeilen([['a'], []], 0, true)).toHaveLength(2)
     expect(spalte0(sortiereZeilen([['b'], ['a']], -1, true))).toEqual(['b', 'a'])
     expect(sortiereZeilen([], 0, true)).toEqual([])
+  })
+})
+
+describe('sortiereIndizes (Zeilen-Identitaet fuer die Auswahl, 2026-08-05)', () => {
+  const zeilen = [['10'], ['9'], [''], ['2']]
+
+  it('liefert die Reihenfolge als ROHINDIZES — Leeres ans Ende', () => {
+    expect(sortiereIndizes(zeilen, 0, true)).toEqual([3, 1, 0, 2])
+    expect(sortiereIndizes(zeilen, 0, false)).toEqual([0, 1, 3, 2])
+  })
+
+  it('ungueltige Spalte = urspruengliche Reihenfolge', () => {
+    expect(sortiereIndizes(zeilen, -1, true)).toEqual([0, 1, 2, 3])
+  })
+
+  it('sortiereZeilen ist exakt die Werte-Form derselben Logik', () => {
+    expect(sortiereZeilen(zeilen, 0, true))
+      .toEqual(sortiereIndizes(zeilen, 0, true).map((i) => zeilen[i]))
   })
 })

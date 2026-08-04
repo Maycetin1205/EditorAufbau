@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { StepForm } from '../zentrale/StepForm'
 import { eigenerText } from '../zentrale/helfer'
 import { AktionenSektion } from './AktionenSektion'
+import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
 import { QuellenListe } from './QuellenListe'
 import { ColorTileControl } from './controls/ColorTileControl'
 import { NumberControl } from './controls/NumberControl'
@@ -374,6 +375,15 @@ export function Inspector() {
             {def.acceptsDataSource && <QuellenListe block={block} />}
             {dataProps.map(renderPropControl)}
           </div>
+        )}
+        {/* Auswahl folgen (2026-08-05): nur fuer Bausteine, die es per
+            Registry koennen (kannAuswahlFolgen) — kein Typ-Check. Die
+            Sektion laesst sich selbst weg, wenn es keinen Geber gibt. */}
+        {def.kannAuswahlFolgen && (
+          <AuswahlFolgeSektion
+            block={block}
+            mitTrenner={generalProps.length > 0 || showDataSection}
+          />
         )}
         {/* Aktionen (R3 2026-07-21): die Ereignis-Ketten des Bausteins wohnen
             jetzt hier, nicht mehr in der Steuerung. Nur für Bausteine, die per

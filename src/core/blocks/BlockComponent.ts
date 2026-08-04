@@ -54,6 +54,9 @@ export interface BlockComponentStatic {
   readonly addChildButton?: { label: string; childType: string }
   // Datenquellen-Fähigkeit — Bedeutung siehe BlockDefinition.
   readonly acceptsDataSource?: boolean
+  // Auswahl geben / einer Auswahl folgen — Bedeutung siehe BlockDefinition.
+  readonly auswahlGeber?: boolean
+  readonly kannAuswahlFolgen?: boolean
   // Bindbare Stellen — Bedeutung siehe BlockDefinition.
   readonly bindableSpots?: readonly BindableSpot[]
   // Als Aktionsparameter auslesbare Stellen — Bedeutung siehe BlockDefinition.

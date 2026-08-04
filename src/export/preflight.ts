@@ -14,6 +14,7 @@ import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDef
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { actionValueTargets } from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor, stepProblem } from '../core/data/aktionen'
+import { AUSWAHL_FOLGE_PROP, auswahlFolgenAus, folgeBrauchbar } from '../core/data/auswahlFolge'
 import type { DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import { quellenInReichweite, quellenTraeger } from '../state/quellenOps'
@@ -149,6 +150,32 @@ export function preflightMask(
             name: 'Kennzeichen mehrfach vergeben',
             ok: false,
             detail: `Im Baustein "${def?.displayName ?? node.type}" tragen ${count} Bausteine "${childDef?.displayName ?? childType}" das Kennzeichen "${prop.name}" — hoechstens einer darf es tragen.`,
+          })
+        }
+      }
+    }
+    // S-A (2026-08-05): eine Auswahl-Folge, deren Geber geloescht wurde oder
+    // kein Auswahl-Geber (mehr) ist, filterte in der Maske stumm NIE — die
+    // zweite Tabelle zeigte einfach immer alles, und niemand wuesste warum.
+    // Ebenso eine Folge ohne ein einziges vollstaendiges Feldpaar: die
+    // Laufzeit ignoriert sie (bewusst, halbe Schluessel treffen sonst
+    // Falsches) — dann muss es der Export im Klartext sagen (Regel 4).
+    if (def?.kannAuswahlFolgen) {
+      for (const folge of auswahlFolgenAus(node.props[AUSWAHL_FOLGE_PROP])) {
+        if (folge.geberId === '') continue // bewusst (noch) kein Geber gewaehlt
+        const geber = tree[folge.geberId]
+        const geberDef = geber ? getBlockDefinition(geber.type) : undefined
+        if (!geber || geberDef?.auswahlGeber !== true) {
+          results.push({
+            name: 'Auswahl-Geber fehlt',
+            ok: false,
+            detail: `Baustein "${def.displayName ?? node.type}" folgt der Auswahl eines geloeschten oder dafuer ungeeigneten Bausteins — unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
+          })
+        } else if (!folgeBrauchbar(folge)) {
+          results.push({
+            name: 'Auswahl-Folge unvollstaendig',
+            ok: false,
+            detail: `Baustein "${def.displayName ?? node.type}" folgt "${geberDef.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
           })
         }
       }
