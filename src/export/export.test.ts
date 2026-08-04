@@ -286,6 +286,13 @@ describe('Runtime-Bündel', () => {
     // muss schon ohne empfangenes Datenpaket im Export vorhanden sein.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — feste Kartenhöhe fehlt')
       .toContain('height: 112px')
+    // Ein GEBUNDENES Formularfeld zeigt in der Maske NIE seinen Platzhalter
+    // (2026-08-04): sonst steht in SoftEngine "Feldname", wo der Editor die
+    // Klarnamen-Vorschau der Bindung zeigt. Die Regel steckt im Baustein-CSS
+    // und reist AUSSCHLIESSLICH ueber das Buendel mit — fehlt sie hier, ist
+    // die Maske wieder kaputt, ohne dass ein Markup-Wächter es merkt.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Platzhalter-Regel des gebundenen Felds fehlt')
+      .toContain('.huelle[data-ff-bound] .ph { display: none; }')
     for (const marker of ['body.REGMSG', 'Empfangene Pakete', 'nach 10s kein Interface']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — Diagnose ${marker} fehlt`)
         .toContain(marker)

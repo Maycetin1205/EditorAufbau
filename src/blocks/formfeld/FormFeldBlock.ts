@@ -15,6 +15,8 @@
 // Text in Editor UND Maske identisch sitzt und im Editor editierbar ist;
 // die Maske blendet ihn beim Tippen bzw. nach einer Auswahl aus (input-/
 // change-Event — die Komponente lebt in beiden Welten, 1 Render-Quelle).
+// Ein GEBUNDENES Feld zeigt ihn in der Maske gar nicht — dort stehen Daten,
+// und leer bleibt leer (Regel im CSS bei `.ph`, SE-Echttest 2026-08-04).
 //
 // Die Datenanbindung ist registry-getrieben: das Feld deklariert Quelle,
 // Bindungsroute und bindbare Wert-Stelle. Die Export-Runtime liest die erste
@@ -179,6 +181,23 @@ export class FormFeldBlock extends BasicBlock {
         pointer-events: none;
       }
       .ph[hidden] { display: none; }
+      /* GEBUNDEN heisst: an dieser Stelle stehen DATEN, kein Text. Deshalb
+         zeigt die MASKE den Platzhalter eines gebundenen Felds NIE — auch
+         nicht, solange der Wert leer ist (Auswahl-Folge ohne Auswahl, leeres
+         Datenfeld). Vorher las der Bediener in SoftEngine ploetzlich
+         "Feldname", wo der Editor die Klarnamen-Vorschau der Bindung
+         ("Tiername") gezeigt hatte — Bedien-Bruch, gefunden im SE-Echttest
+         2026-08-04. Leer bleibt jetzt leer, genau wie beim gebundenen Text.
+         Ungebunden bleibt der Platzhalter unveraendert die Beschriftung des
+         Felds, und der EDITOR bleibt unberuehrt: dort ist der Platzhalter das
+         Umbenennen-Ziel und traegt die Bindungs-Vorschau.
+         Als CSS und nicht als ?hidden im Template, weil "Editor oder Maske"
+         am Attribut data-ff-editor haengt — das ist keine reaktive Property,
+         ein Re-Render nach dem Setzen wuerde also nicht garantiert stimmen.
+         Und NICHT in feldRuntime: die Runtime kennt nur source/valuefield/
+         value und darf nichts ueber die Innenteile EINES Bausteins wissen
+         (Regel 2) — sie bedient auch andere. */
+      :host(:not([data-ff-editor])) .huelle[data-ff-bound] .ph { display: none; }
       /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
          Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
       .ph-select {
