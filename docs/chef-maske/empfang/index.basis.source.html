@@ -588,7 +588,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1;}
        verifiziert 2026-06-11). Antwort: SEDATA.Daten.ErpApiCall.Haustiere
        .Zeilen[] mit Schluesseln LFA_pos_len. */
     window.__FF_ERPAPICALL = [
-      { "ID": "LIEFERADRESSE.GET", "ALIAS": "Haustiere", "FELDER": "LFA_2_8,LFA_10_8,LFA_20_30,LFA_400_3,LFA_406_30,LFA_436_500,LFA_936_10,LFA_946_1,LFA_947_30,LFA_977_12,LFA_2000_60,LFA_2060_6,LFA_2066_1,LFA_2067_1" }
+      { "ID": "LIEFERADRESSE.GET", "ALIAS": "Haustiere", "FELDER": "LFA_2_8,LFA_10_8,LFA_400_30,LFA_430_30,LFA_460_500,LFA_960_10,LFA_970_1,LFA_971_30,LFA_2000_12,LFA_2012_60,LFA_2072_6,LFA_2078_1,LFA_2079_1" }
     ];
     window.__FF_SEVARS = { "SEFILELOOP": window.__FF_SEFILELOOP, "ERPAPICALL": window.__FF_ERPAPICALL };
 
@@ -653,7 +653,10 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1;}
     /* Lieferadress-Tiere (ERPAPICALL "Haustiere") als SEFileLoop-Alias
        'Haustiere' einhaengen, damit loadRows('Haustiere') unveraendert
        funktioniert. Tier-Filter gegen Demo-/echte Lieferadressen:
-       Kundennr (LFA_10_8) gefuellt UND (Rasse 406_30 ODER Geb. 936_10). */
+       Kundennr (LFA_10_8) gefuellt UND (Rasse 430_30 ODER Geb. 960_10).
+       ACHTUNG: die drei Codes stehen hier hart, weil dieser Block laeuft,
+       bevor die FELD-Karte da ist. Aendern sich die Lieferadress-Positionen,
+       muss BEIDES nachgezogen werden -- hier und in FELD.HT. */
     function __ffMergeTiere(daten) {
       try {
         var e = daten && daten.ErpApiCall;
@@ -664,8 +667,8 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1;}
         for (var i = 0; i < z.length; i++) {
           var r = z[i] || {};
           var kunde = String(r.LFA_10_8 == null ? '' : r.LFA_10_8).trim();
-          var rasse = String(r.LFA_406_30 == null ? '' : r.LFA_406_30).trim();
-          var geb = String(r.LFA_936_10 == null ? '' : r.LFA_936_10).trim();
+          var rasse = String(r.LFA_430_30 == null ? '' : r.LFA_430_30).trim();
+          var geb = String(r.LFA_960_10 == null ? '' : r.LFA_960_10).trim();
           if (!kunde || kunde === '0') continue;
           if (!rasse && !geb) continue;
           tiere.push(r);
@@ -847,8 +850,13 @@ window.parseDatum = parseDatum;
 <script>
 var SE_PUT_NR = '174';
 var SE_GET_NEW_NR = '640';
+/* Feld-Art im PUT_RELATION: 'L' Text, 'D' Datum, 'Z' Zeit. Muss zur
+   Feldverarbeitung in der SE-GUI passen -- ein Datumsfeld mit 'L' beschrieben
+   bekommt Text hineingeschrieben. Jeder Schreibweg, der ein Datums- oder
+   Zeitfeld anfasst, MUSS die Art mitgeben (dritter Wert im Job). */
 var SE_VART = 'L';
 var SE_VART_DATUM = 'D';
+var SE_VART_ZEIT = 'Z';
 
 function seSend(code, obj) {
   try {
@@ -1100,6 +1108,7 @@ window.SE_PUT_NR = SE_PUT_NR;
 window.SE_GET_NEW_NR = SE_GET_NEW_NR;
 window.SE_VART = SE_VART;
 window.SE_VART_DATUM = SE_VART_DATUM;
+window.SE_VART_ZEIT = SE_VART_ZEIT;
 window.seSend = seSend;
 window.seStartTool = seStartTool;
 window.seDeepIndex = seDeepIndex;
@@ -1184,23 +1193,23 @@ var FELD = {
     tierAdresse:  '660_30' /* Verknuepfung zur Tier-Stammakte (= FELD.HT.pindex, Lieferadress-Nr) */
   },
   /* Tier-Stamm = Lieferadresse am Kunden (ERPAPICALL LIEFERADRESSE.GET,
-     LFA_-Saetze; Mapping verifiziert per Sonde 2026-06-11, Felder ab 947
-     vom Nutzer in der GUI angelegt 2026-06-12). */
+     LFA_-Saetze). Positionen aus der Feldliste der SE-GUI, Neuanlage
+     2026-08-04 (Nutzer-Screenshot, Freifelder 01-18). "alter" ist weg:
+     die alte Position 400_3 ist jetzt der Anfang von Tiername. */
   HT: {
     pindex:          '2_8',    /* eigene Tier-/Lieferadress-Nr (Schreib-Index) */
     adr:             '10_8',   /* Kundennummer */
-    name:            '20_30',
-    alter:           '400_3',
-    unterart:        '406_30', /* Rasse */
-    anamnese:        '436_500',
-    geburtsdatum:    '936_10',
-    kastriert:       '946_1',  /* ANJ: J/N */
-    tierart:         '947_30',
-    geschlecht:      '977_12',
-    allergie:        '2000_60',
-    gewicht:         '2060_6', /* loest 403_3 ab (das fasste nur 3 Zeichen); Alt-Testdaten stehen ggf. noch in 403_3 */
-    blutergebnis:    '2066_1', /* ANJ: J/N */
-    einverstaendnis: '2067_1'  /* ANJ: J/N */
+    name:            '400_30',
+    unterart:        '430_30', /* Rasse */
+    anamnese:        '460_500',
+    geburtsdatum:    '960_10', /* D: Datum */
+    kastriert:       '970_1',  /* ANJ: J/N */
+    tierart:         '971_30',
+    geschlecht:      '2000_12',
+    allergie:        '2012_60',
+    gewicht:         '2072_6',
+    blutergebnis:    '2078_1', /* ANJ: J/N */
+    einverstaendnis: '2079_1'  /* ANJ: J/N */
   },
   ADR: {
     adr:        '2_8',
@@ -2404,7 +2413,8 @@ function karteiSpeichern() {
     var quelle = teile[0], code = teile[1], wert = inp.value.trim();
     if (quelle === 'TP') {
       t[code] = wert;
-      tpJobs.push([code, wert]);
+      /* Uhrzeit ist im Terminplaner ein Zeitfeld -> Art 'Z' (type=time liefert HH:MM). */
+      tpJobs.push([code, wert, code === FELD.TP.uhrzeit ? SE_VART_ZEIT : undefined]);
     } else if (quelle === 'HT') {
       if (!lfanr) { karteiFeedback('Tier hat keine Stammakte.', 'err'); return; }
       if (code === FELD.HT.geburtsdatum) {
@@ -2739,9 +2749,9 @@ function tmSave() {
       var jobs = [
         [FELD.TP.adr, adr],
         [FELD.TP.name, primary.name], [FELD.TP.tierart, primary.tierart],
-        [FELD.TP.unterart, primary.unterart], [FELD.TP.geburtsdatum, primary.geburtsdatum],
+        [FELD.TP.unterart, primary.unterart], [FELD.TP.geburtsdatum, primary.geburtsdatum, SE_VART_DATUM],
         [FELD.TP.vorname, vorname], [FELD.TP.nachname, nachname],
-        [FELD.TP.datum, datum], [FELD.TP.uhrzeit, uhrzeit],
+        [FELD.TP.datum, datum, SE_VART_DATUM], [FELD.TP.uhrzeit, uhrzeit, SE_VART_ZEIT],
         [FELD.TP.prioritaet, val('tmPrio')],
         [FELD.TP.behandlung, TM.behByName[primary.name] || '']
       ];
@@ -2762,7 +2772,7 @@ function tmSave() {
           sePut(KH_IDBID, petIdx, [
             [FELD.KH.adr, adr], [FELD.KH.tierAdresse, tiere[i].tierAdresse], [FELD.KH.name, tiere[i].name],
             [FELD.KH.tierart, tiere[i].tierart], [FELD.KH.rasse, tiere[i].unterart],
-            [FELD.KH.geburtsdatum, tiere[i].geburtsdatum], [FELD.KH.termindatum, datum],
+            [FELD.KH.geburtsdatum, tiere[i].geburtsdatum, SE_VART_DATUM], [FELD.KH.termindatum, datum, SE_VART_DATUM],
             [FELD.KH.behandlung, TM.behByName[tiere[i].name] || ''], [FELD.KH.besuchId, visitIdx]
           ]);
           saveKH(i + 1);
@@ -2876,8 +2886,10 @@ window.addEventListener('resize', ensureFullWidth);
 window.addEventListener('load', ensureFullWidth);
 seBoot(renderCurrent);
 
-/* ===== Live-Sync v2 \u2014 Marker-Tabelle ID0005 (Logik von Fable) ===== */
-var MARKER_IDB = 'ID0005', MARKER_FELD = '10_30';
+/* ===== Live-Sync v2 \u2014 Marker-Tabelle ID0023 (Logik von Fable) =====
+   Tabelle laut GUI-Neuanlage 2026-08-04: Index R0 0_10 (= Schreib-Index),
+   Zeitstempel L 10_60 (das ist MARKER_FELD), Refresh L 70_60 (unbenutzt). */
+var MARKER_IDB = 'ID0023', MARKER_FELD = '10_60';
 var __markerBase = -1;
 var __markerBusy = false;
 var __markerPending = false;
@@ -2894,13 +2906,13 @@ function markerStamp(quelle) {
   return quelle + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
 }
 
-/* D4 -- WACHSTUM: markerBump haengt pro Aktion einen NEUEN Satz an ID0005 an;
+/* D4 -- WACHSTUM: markerBump haengt pro Aktion einen NEUEN Satz an die Marker-Tabelle an;
    die Tabelle waechst unbegrenzt. NICHT auf einen einzelnen Hochzaehl-Satz umbauen!
    Die Aenderungs-Erkennung unten zaehlt Saetze (seCountRows); die Eindeutigkeit der
    seGetNewIndex-Indizes ist hier der Nebenlaeufigkeits-Schutz: bei zwei gleichzeitigen
    Aktionen sehen BEIDE Arbeitsplaetze die jeweils andere Aenderung. Ein gemeinsamer
    Zaehler (read-modify-write) wuerde unter Gleichzeitigkeit Benachrichtigungen
-   verlieren (Lost-Update). Sicherer Bounded-Fix = ID0005 in einem ruhigen Fenster
+   verlieren (Lost-Update). Sicherer Bounded-Fix = die Marker-Tabelle in einem ruhigen Fenster
    leeren (z.B. nachts / Praxis zu); der "n < __markerBase"-Zweig unten faengt das
    bereits als stille Re-Baseline ab. Umsetzung + Test nur mit echter SoftEngine
    (Mehrplatz, Timing). */

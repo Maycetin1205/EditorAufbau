@@ -322,7 +322,7 @@ var SE = {}, Util = {}, Icon = {}, DOM = {};
        verifiziert 2026-06-11). Antwort: SEDATA.Daten.ErpApiCall.Haustiere
        .Zeilen[] mit Schluesseln LFA_pos_len. */
     window.__FF_ERPAPICALL = [
-      { "ID": "LIEFERADRESSE.GET", "ALIAS": "Haustiere", "FELDER": "LFA_2_8,LFA_10_8,LFA_20_30,LFA_400_3,LFA_406_30,LFA_436_500,LFA_936_10,LFA_946_1,LFA_947_30,LFA_977_12,LFA_2000_60,LFA_2060_6,LFA_2066_1,LFA_2067_1,LFA_2100_30,LFA_2168_1,LFA_2169_1,LFA_2172_10,LFA_2170_1,LFA_2182_10,LFA_2171_1,LFA_2192_10" }
+      { "ID": "LIEFERADRESSE.GET", "ALIAS": "Haustiere", "FELDER": "LFA_2_8,LFA_10_8,LFA_400_30,LFA_430_30,LFA_460_500,LFA_960_10,LFA_970_1,LFA_971_30,LFA_2000_12,LFA_2012_60,LFA_2072_6,LFA_2078_1,LFA_2079_1,LFA_2080_30,LFA_2110_1,LFA_2111_10,LFA_2121_30,LFA_2151_1,LFA_2152_30,LFA_2182_10" }
     ];
     window.__FF_SEVARS = { "SEFILELOOP": window.__FF_SEFILELOOP, "ERPAPICALL": window.__FF_ERPAPICALL };
 
@@ -387,7 +387,10 @@ var SE = {}, Util = {}, Icon = {}, DOM = {};
     /* Lieferadress-Tiere (ERPAPICALL "Haustiere") als SEFileLoop-Alias
        'Haustiere' einhaengen, damit loadRows('Haustiere') unveraendert
        funktioniert. Tier-Filter gegen Lieferadressen:
-       Kundennr (LFA_10_8) gefuellt UND (Rasse 406_30 ODER Geb. 936_10). */
+       Kundennr (LFA_10_8) gefuellt UND (Rasse 430_30 ODER Geb. 960_10).
+       ACHTUNG: die drei Codes stehen hier hart, weil dieser Block laeuft,
+       bevor die FELD-Karte da ist. Aendern sich die Lieferadress-Positionen,
+       muss BEIDES nachgezogen werden -- hier und in FELD.HT. */
     function __ffMergeTiere(daten) {
       try {
         var e = daten && daten.ErpApiCall;
@@ -398,8 +401,8 @@ var SE = {}, Util = {}, Icon = {}, DOM = {};
         for (var i = 0; i < z.length; i++) {
           var r = z[i] || {};
           var kunde = String(r.LFA_10_8 == null ? '' : r.LFA_10_8).trim();
-          var rasse = String(r.LFA_406_30 == null ? '' : r.LFA_406_30).trim();
-          var geb = String(r.LFA_936_10 == null ? '' : r.LFA_936_10).trim();
+          var rasse = String(r.LFA_430_30 == null ? '' : r.LFA_430_30).trim();
+          var geb = String(r.LFA_960_10 == null ? '' : r.LFA_960_10).trim();
           if (!kunde || kunde === '0') continue;
           if (!rasse && !geb) continue;
           tiere.push(r);
@@ -482,51 +485,46 @@ var FELD = {
     besuchId:     '498_12',
     behandlung:   '510_150',
     tierAdresse:  '660_30', /* Verknuepfung zur Tier-Stammakte (= FELD.HT.pindex, Lieferadress-Nr) */
-    /* ACHTUNG UNGEPRUEFT: diese drei Felder fehlen in der Neuanlage vom
-       2026-08-04. Werte hier sind GERECHNET fuer den Fall, dass sie in dieser
-       Reihenfolge direkt hinter Tier-Adresse (endet 690) angelegt werden.
-       Weicht die Anlage ab -> echte Positionen aus der GUI eintragen. */
+    /* Angelegt in der GUI-Neuanlage 2026-08-04 (Nutzer-Bestaetigung "ich habe
+       alle felder gemacht"): je 500 Zeichen L, in dieser Reihenfolge direkt
+       hinter Tier-Adresse. */
     befund:       '690_500',
     diagnose:     '1190_500',
     therapie:     '1690_500'
   },
 
   /* Tier-Stamm = Lieferadresse am Kunden (ERPAPICALL LIEFERADRESSE.GET,
-     LFA_-Saetze; Mapping verifiziert per Sonde 2026-06-11, Felder ab 947
-     vom Nutzer in der GUI angelegt 2026-06-12). */
+     LFA_-Saetze). Positionen aus der Feldliste der SE-GUI, Neuanlage
+     2026-08-04 (Nutzer-Screenshot, Freifelder 01-18). "alter" ist weg:
+     die alte Position 400_3 ist jetzt der Anfang von Tiername. */
   HT: {
     pindex:          '2_8',    /* eigene Tier-/Lieferadress-Nr (Schreib-Index) */
     adr:             '10_8',   /* Kundennummer */
-    name:            '20_30',
-    alter:           '400_3',
-    unterart:        '406_30', /* Rasse */
-    anamnese:        '436_500',   /* neu anzulegen */
-    geburtsdatum:    '936_10',
-    kastriert:       '946_1',  /* ANJ: J/N */
-    tierart:         '947_30',
-    geschlecht:      '977_12',
-    allergie:        '2000_60',
-    gewicht:         '2060_6', /* loest 403_3 ab (das fasste nur 3 Zeichen); Alt-Daten stehen ggf. noch in 403_3 */
-    blutergebnis:    '2066_1', /* ANJ: J/N */
-    einverstaendnis: '2067_1', /* ANJ: J/N */
-    chipnr:          '2100_30', /* L  : Mikrochip-Nr. (Lieferadresse) */
-    datenschutz:     '2168_1',  /* ANJ: J/N (Lieferadresse) */
-    impfTollwut:     '2169_1',  impfTollwutDat: '2172_10',  /* Impfstatus (Lieferadresse): Flag J/N + Datum, vom Nutzer angelegt 2026-07-03 */
-    impfShppi:       '2170_1',  impfShppiDat:   '2182_10',
-    impfLepto:       '2171_1',  impfLeptoDat:   '2192_10'
-  },
-
-  MED: {
-    adr:        '10_8',
-    tiername:   '18_30',
-    medikament: '48_60',
-    form:       '108_20',
-    dosierung:  '128_30',
-    haeufigkeit:'158_30',
-    tageszeit:  '188_10',
-    von:        '198_10',
-    bis:        '208_10',
-    hinweis:    '218_30'
+    name:            '400_30',
+    unterart:        '430_30', /* Rasse */
+    anamnese:        '460_500',
+    geburtsdatum:    '960_10', /* D: Datum */
+    kastriert:       '970_1',  /* ANJ: J/N */
+    tierart:         '971_30',
+    geschlecht:      '2000_12',
+    allergie:        '2012_60',
+    gewicht:         '2072_6',
+    blutergebnis:    '2078_1', /* ANJ: J/N */
+    einverstaendnis: '2079_1', /* ANJ: J/N */
+    chipnr:          '2080_30', /* L: Mikrochip-Nr. */
+    /* Datenschutz-Einwilligung ist am 2026-08-04 restlos aus der Maske entfernt
+       (Nutzer-Entscheidung): in der neuen Lieferadresse gibt es das Feld nicht,
+       und ein Status ohne Datenquelle darf nicht angezeigt werden. Nicht wieder
+       einbauen ohne neue Entscheidung. Einverstaendnis (2079_1) bleibt. */
+    /* Impfstatus: je Impfung Flag + Datum. Tollwut ist ein saubereres Paar
+       (1/ANJ + 10/D). Bei SHPPi und Lepto hat die GUI je ein 30er L-Feld --
+       zugeordnet nach dem einzigen Muster, das aufgeht: das 30er bei SHPPi
+       (2121) ist das Datum, das 30er bei Lepto (2152) ist das Flag. Laenge und
+       Eingabeart sind dort falsch, gelesen/geschrieben wird beides als Text --
+       laeuft, aber im ERP ohne Datumsfeld bzw. ohne J/N-Auswahl. */
+    impfTollwut:     '2110_1',  impfTollwutDat: '2111_10',
+    impfShppi:       '2151_1',  impfShppiDat:   '2121_30',
+    impfLepto:       '2152_30', impfLeptoDat:   '2182_10'
   },
 
   ADR: {
@@ -671,7 +669,11 @@ SE.loadRows = loadRows;
 (function () {
 var SE_PUT_NR = '174';
 var SE_GET_NEW_NR = '640';
+/* Feld-Art im PUT_RELATION: 'L' Text, 'D' Datum. Muss zur Feldverarbeitung in
+   der SE-GUI passen -- ein Datumsfeld mit 'L' beschrieben bekommt Text hinein.
+   Wer ein Datumsfeld schreibt, gibt die Art als dritten Wert im Job mit. */
 var SE_VART = 'L';
+var SE_VART_DATUM = 'D';
 
 function seSend(code, obj) {
   try {
@@ -889,6 +891,7 @@ SE.msgKeys     = seMsgKeys;
 SE.getNewIndex = seGetNewIndex;
 SE.countRows   = seCountRows;
 SE.put         = sePut;
+SE.VART_DATUM  = SE_VART_DATUM;
 SE.putBelegPos = sePutBelegPos;
 SE.haveData    = seHaveData;
 SE.boot        = seBoot;
@@ -1010,7 +1013,7 @@ var $ = DOM.$;
 var FELD = SE.FELD, getField = SE.getField, loadRows = SE.loadRows, timeMin = SE.timeMin,
     sePut = SE.put, sePutBelegPos = SE.putBelegPos, seStartTool = SE.startTool, seGetNewIndex = SE.getNewIndex,
     seCountRows = SE.countRows, seHaveData = SE.haveData, seBoot = SE.boot,
-    seCanSend = SE.canSend, seSyncBusy = SE.syncBusy;
+    seCanSend = SE.canSend, seSyncBusy = SE.syncBusy, SE_VART_DATUM = SE.VART_DATUM;
 
 /* ===== Feste Werte aus der Vorlage ===== */
 var ROOMS = ['1', '2', '3', '4'];
@@ -1152,12 +1155,19 @@ function petMasterOf(adr, name, lfanr) {
   return byAdr || {};
 }
 
-/* ===== Artikelstamm nach Warengruppe (WGR 10=Med, 20=Leist., 30=OP, 40=Zeit) ===== */
+/* ===== Artikelstamm nach Warengruppe =====
+   Warengruppen-Nummern aus der SE-GUI (Nutzer-Angabe 2026-08-04). Sie sind je
+   Installation individuell: aendert sich der Artikelstamm, aendert sich NUR
+   diese Tabelle, sonst nichts. "wgr" ist eine Liste, weil ein Reiter mehrere
+   Warengruppen einsammeln darf -- Leistungen liegen hier auf 2 UND 3.
+   Warengruppen, die in keinem Reiter stehen, sind im Wizard nicht erreichbar. */
 var CATS = [
-  { key: 'leistungen',  label: 'Leistungen',   code: 'Leist.', wgr: '20' },
-  { key: 'ops',         label: "OP's",         code: 'OP',     wgr: '30' },
-  { key: 'medikamente', label: 'Medikamente',  code: 'Med.',   wgr: '10' },
-  { key: 'arbeitszeit', label: 'Arbeitszeit',  code: 'Zeit',   wgr: '40' }
+  { key: 'leistungen',   label: 'Leistungen',   code: 'Leist.', wgr: ['2', '3'] },
+  { key: 'medikamente',  label: 'Medikamente',  code: 'Med.',   wgr: ['1'] },
+  { key: 'impfstoffe',   label: 'Impfstoffe',   code: 'Impf',   wgr: ['4'] },
+  { key: 'kleintier',    label: 'Kleintier',    code: 'Klein',  wgr: ['7'] },
+  { key: 'futtermittel', label: 'Futtermittel', code: 'Futter', wgr: ['5'] },
+  { key: 'allgemein',    label: 'Allgemein',    code: 'Allg.',  wgr: ['31'] }
 ];
 function catByKey(k) { for (var i = 0; i < CATS.length; i++) if (CATS[i].key === k) return CATS[i]; return CATS[0]; }
 function wgrEq(a, b) {
@@ -1165,11 +1175,17 @@ function wgrEq(a, b) {
   b = String(b == null ? '' : b).trim().replace(/^0+(?=\d)/, '');
   return a !== '' && a === b;
 }
+/* wgr = eine Warengruppe ODER eine Liste davon (concat vertraegt beides). */
 function articlesByWgr(wgr) {
+  var gesucht = [].concat(wgr);
   return loadRows('Artikel').map(function (a) {
     return { artikelnr: getField(a, FELD.ART.artikelnr), label: getField(a, FELD.ART.bezeichnung),
              wgr: getField(a, FELD.ART.warengruppe), brutto: getField(a, FELD.ART.vkBrutto) };
-  }).filter(function (a) { return wgrEq(a.wgr, wgr) && (a.artikelnr || a.label); });
+  }).filter(function (a) {
+    if (!(a.artikelnr || a.label)) return false;
+    for (var i = 0; i < gesucht.length; i++) if (wgrEq(a.wgr, gesucht[i])) return true;
+    return false;
+  });
 }
 
 function articleByNr(artikelnr) {
@@ -1182,14 +1198,12 @@ function articleByNr(artikelnr) {
   return null;
 }
 
-/* ===== Gating-Entscheidung (Consent) -- einzige Quelle fuer block/warn/dsOK/evOK ===== */
+/* ===== Gating-Entscheidung (Consent) -- einzige Quelle fuer block/evOK ===== */
 function gatingOf(master, isOP) {
-  var dsOK = String(getField(master, FELD.HT.datenschutz) || '').trim().toUpperCase() === 'J';
   var evOK = String(getField(master, FELD.HT.einverstaendnis) || '').trim().toUpperCase() === 'J';
   return {
-    dsOK: dsOK, evOK: evOK,
-    block: (isOP && !evOK) ? 'Einverst\xE4ndniserkl\xE4rung' : '',   /* hart gesperrt: Einverstaendnis bei OP */
-    warn: !dsOK ? 'Datenschutzerkl\xE4rung' : ''                       /* nur Warnung: Datenschutz */
+    evOK: evOK,
+    block: (isOP && !evOK) ? 'Einverst\xE4ndniserkl\xE4rung' : ''   /* hart gesperrt: Einverstaendnis bei OP */
   };
 }
 
@@ -1219,7 +1233,7 @@ function buildData(sel, pet, termine, tiere) {
     allergie: getField(master, FELD.HT.allergie),
     kastriert: getField(master, FELD.HT.kastriert),
     prio: String(getField(sel, FELD.TP.prioritaet) || '').toLowerCase(),
-    isOP: isOP, dsOK: g.dsOK, evOK: g.evOK, gatingBlock: g.block, gatingWarn: g.warn,
+    isOP: isOP, evOK: g.evOK, gatingBlock: g.block,
     anlass: getField(sel, FELD.TP.behandlung),
     note: getField(cust, FELD.ADR.notizKunde),
     phone: getField(cust, FELD.ADR.mobil),
@@ -1354,7 +1368,7 @@ function petTabsHTML(pets, activeKey) {
   }).join('') + '</div>';
 }
 
-/* ===== Spalte 1: Dokumentation -- EIN Freitextfeld (Anamnese inkl. Befund/Diagnose/Therapie) -> HT.anamnese 436_500 ===== */
+/* ===== Spalte 1: Dokumentation -- EIN Freitextfeld (Anamnese inkl. Befund/Diagnose/Therapie) -> HT.anamnese 460_500 ===== */
 function dokuColHTML(d) {
   function field(rec, code, key, label) {
     var val = (code && !/^TODO/.test(code)) ? getField(rec, code) : '';
@@ -1439,7 +1453,7 @@ function finishBtnHTML(block) {
 /* ===== Spalte 3a: Warnhinweise (aus Prioritaet + Allergie) ===== */
 function warnHTML(d) {
   /* Topbar: medizinische Warnungen links, Verwaltungsstatus rechts. Bleibt als schlanker stabiler Slot sichtbar. */
-  var dsOK = !!d.dsOK, evOK = !!d.evOK;
+  var evOK = !!d.evOK;
   var IC_ALERT = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>';
   var IC_OK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>';
   var IC_LOCK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
@@ -1454,10 +1468,10 @@ function warnHTML(d) {
   if (d.prio && d.prio.indexOf('notfall') !== -1) items += al('danger', IC_ALERT, 'Notfall', '');
   else if (d.prio && d.prio.indexOf('op') !== -1) items += al('warn', IC_ALERT, 'OP geplant', '');
   if (d.isOP && !evOK) items += al('danger', IC_LOCK, 'Abschluss gesperrt', 'Einverst\u00E4ndnis fehlt');
-  if (!dsOK) items += al('warn', IC_ALERT, 'Datenschutz offen', '');
+  else if (!evOK) items += al('warn', IC_ALERT, 'Einverst\u00E4ndnis offen', '');
   return '<div id="warnCard" class="alerts' + (items ? '' : ' alerts-empty') + '">' +
     '<div class="alerts-main alerts-row">' + (items || '<span class="alert-placeholder"></span>') + '</div>' +
-    '<div class="alerts-state alerts-row">' + st(dsOK, 'Datenschutz') + st(evOK, 'Einverst\u00E4ndnis') + '</div>' +
+    '<div class="alerts-state alerts-row">' + st(evOK, 'Einverst\u00E4ndnis') + '</div>' +
   '</div>';
 }
 
@@ -1502,14 +1516,16 @@ function consentCell(d, key) {
 }
 function stammHTML(d) {
   function row(k, vHtml) { return '<div class="d-row"><span class="d-row-k">' + esc(k) + '</span><span class="d-row-v">' + vHtml + '</span></div>'; }
+  /* Reine Anzeige-Zeilen zuerst, die eine klickbare Zeile zuletzt: seit die
+     Datenschutz-Zeile weg ist (2026-08-04), stand Einverstaendnis als einziges
+     Bedienelement mitten zwischen Textzeilen. */
   var body =
     row('Gewicht', esc(d.gewichtD) || '') +
     row('Alter', esc(d.alter) || '') +
     row('Kastriert', esc(jn(d.kastriert)) || '') +
     row('Chip-Nr.', esc(getField(d.master, FELD.HT.chipnr)) || '') +
-    row('Datenschutz', consentCell(d, 'datenschutz')) +
-    row('Einverst\u00E4ndnis', consentCell(d, 'einverstaendnis')) +
-    row('Blutergebnis', esc(jn(getField(d.master, FELD.HT.blutergebnis))) || '');
+    row('Blutergebnis', esc(jn(getField(d.master, FELD.HT.blutergebnis))) || '') +
+    row('Einverst\u00E4ndnis', consentCell(d, 'einverstaendnis'));
   return '<div class="card flex-0" id="stammCard">' +
     '<div class="card-hd"><span class="card-title label-caps">Stammdaten</span></div>' +
     '<div class="stamm-body panel-fill">' + body + '</div>' +
@@ -1536,7 +1552,7 @@ function verlaufHTML(d, termine, tiere, selTp) {
   '</div>';
 }
 
-/* ===== Erfassungs-Wizard (Kategorien = 4 Warengruppen aus dem Artikelstamm) ===== */
+/* ===== Erfassungs-Wizard (Reiter = die Warengruppen aus CATS) ===== */
 function wizEmptyHTML(text) {
   return '<div class="empty-msg empty-msg-wz">' + esc(text) + '</div>';
 }
@@ -1611,7 +1627,7 @@ function updateVet() { var el = $('behVet'); if (el) { el.textContent = BEDIENER
 function refreshGating() {
   var d = window.__D; if (!d) { render(); return; }
   var g = gatingOf((window.__CUR || {}).masterRow || d.master, d.isOP);
-  d.dsOK = g.dsOK; d.evOK = g.evOK; d.gatingBlock = g.block; d.gatingWarn = g.warn;
+  d.evOK = g.evOK; d.gatingBlock = g.block;
   if (window.__CUR) window.__CUR.gatingBlock = d.gatingBlock;
   var wc = document.getElementById('warnCard'); if (wc) wc.outerHTML = warnHTML(d);
   var sc = document.getElementById('stammCard'); if (sc) sc.outerHTML = stammHTML(d);
@@ -1672,7 +1688,7 @@ function render() {
     var empty = '<div class="empty-state">' +
       (haveData ? ('Zimmer ' + esc(SELECTED_ROOM) + ' ist frei. ' + (warteliste.length ? 'Patient aus dem Wartezimmer holen (Leiste oben).' : 'Kein Patient an diesem Tag.')) : 'Warte auf SoftEngine-Daten \u2026') +
     '</div>';
-    room.innerHTML = outer(emptyHeaderHTML(SELECTED_ROOM, SELECTED_DATE, BEDIENER) + warnHTML({ dsOK:true, evOK:true, allergie:'', prio:'', isOP:false, gatingWarn:'' }) + selStripHTML(liste, warteliste, tiere, SELECTED_ROOM, SELECTED_PIDX) + empty);
+    room.innerHTML = outer(emptyHeaderHTML(SELECTED_ROOM, SELECTED_DATE, BEDIENER) + warnHTML({ evOK:true, allergie:'', prio:'', isOP:false }) + selStripHTML(liste, warteliste, tiere, SELECTED_ROOM, SELECTED_PIDX) + empty);
     bindControls(); return;
   }
 
@@ -1715,7 +1731,10 @@ function saveDoku(key, value) {
 function saveImpf(code, value) {
   var cur = window.__CUR || {};
   var idx = cur.htIdx; if (!idx || !code) return;
-  stageFieldWrite('', idx, code, String(value == null ? '' : value).trim(), { putNr: LFA_PUT_NR }, cur.masterRow);
+  /* Die beiden 10er Impfdatums-Felder sind in der GUI echte Datumsfelder -> Art 'D'.
+     Das 30er SHPPi-Datum bleibt Text ('L'), s. Kommentar an FELD.HT. */
+  var vart = (code === FELD.HT.impfTollwutDat || code === FELD.HT.impfLeptoDat) ? SE_VART_DATUM : undefined;
+  stageFieldWrite('', idx, code, String(value == null ? '' : value).trim(), { putNr: LFA_PUT_NR, defaultVart: vart }, cur.masterRow);
 }
 function consentSet(key, val) {
   var code = FELD.HT[key];
@@ -1851,8 +1870,10 @@ function bindControls() {
 
 /* Bediener-Laden + String-Extraktor sind in den SE-Adapter gewandert (SE.getOperator). */
 
-/* ===== Live-Sync v2 -- Marker-Tabelle ID0005 (Logik 1:1 aus Original, Banner in B-Farbe) ===== */
-var MARKER_IDB = 'ID0005', MARKER_FELD = '10_30', REFRESH_TOOL = '1951';
+/* ===== Live-Sync v2 -- Marker-Tabelle ID0023 (Logik 1:1 aus Original, Banner in B-Farbe) =====
+   Tabelle laut GUI-Neuanlage 2026-08-04: Index R0 0_10 (= Schreib-Index),
+   Zeitstempel L 10_60 (das ist MARKER_FELD), Refresh L 70_60 (unbenutzt). */
+var MARKER_IDB = 'ID0023', MARKER_FELD = '10_60', REFRESH_TOOL = '1951';
 var __markerBase = -1, __markerBusy = false, __markerPending = false, __lastSync = 0, __lastActivity = Date.now();
 ['mousemove', 'mousedown', 'keydown', 'input', 'scroll', 'touchstart', 'dragstart'].forEach(function (evt) {
   window.addEventListener(evt, function () { __lastActivity = Date.now(); }, true);
