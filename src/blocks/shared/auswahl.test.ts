@@ -189,18 +189,39 @@ describe('ersteZeileNachAuswahl (Einzelwert-Bausteine, 2026-08-06)', () => {
     expect(ersteZeileNachAuswahl(ohneFolge, belege)).toBe(belege[0])
   })
 
-  it('mit Folge, aber ohne aktive Auswahl ebenfalls die erste Zeile', () => {
-    expect(ersteZeileNachAuswahl(folger(paar), belege)).toBe(belege[0])
-  })
-
   it('mit Auswahl die erste PASSENDE Zeile', () => {
     waehleAuswahl('kunden', { '2_8': '20002' })
     expect(ersteZeileNachAuswahl(folger(paar), belege)).toBe(belege[1])
   })
 
-  it('keine passende Zeile -> erste Zeile (Nutzer-Vorgabe: Grundzustand)', () => {
+  // Strenge Leer-Regel (Nutzer-Entscheidung 2026-08-06 nach dem SE-Echttest):
+  // wer der Auswahl folgt, zeigt NUR, was die Auswahl liefert. „Die erste
+  // Zeile" waere ein konkreter Datensatz, den der Bediener fuer den
+  // ausgewaehlten haelt.
+  it('mit Folge, aber ohne Auswahl: LEER — nicht die erste Zeile', () => {
+    expect(ersteZeileNachAuswahl(folger(paar), belege)).toBeUndefined()
+  })
+
+  it('wieder rausgeklickt: LEER', () => {
+    const el = folger(paar)
+    waehleAuswahl('kunden', { '2_8': '20002' })
+    expect(ersteZeileNachAuswahl(el, belege)).toBe(belege[1])
+    // Dieselbe Zeile noch einmal = abgewaehlt (Toggle).
+    waehleAuswahl('kunden', { '2_8': '20002' })
+    expect(ersteZeileNachAuswahl(el, belege)).toBeUndefined()
+  })
+
+  it('gewaehlt, aber kein Partner in der eigenen Quelle: LEER', () => {
     waehleAuswahl('kunden', { '2_8': '99999' })
-    expect(ersteZeileNachAuswahl(folger(paar), belege)).toBe(belege[0])
+    expect(ersteZeileNachAuswahl(folger(paar), belege)).toBeUndefined()
+  })
+
+  it('HALBES Feldpaar zaehlt nicht: Grundzustand, kein Leer-Blinken beim Einstellen', () => {
+    // Der Bediener hat den Geber gewaehlt und tippt gerade am Feldpaar.
+    const halb = folger([{ fromField: '2_8', toField: '' }])
+    expect(ersteZeileNachAuswahl(halb, belege)).toBe(belege[0])
+    waehleAuswahl('kunden', { '2_8': '20002' })
+    expect(ersteZeileNachAuswahl(halb, belege)).toBe(belege[0])
   })
 
   it('leere Quelle bleibt leer — nichts wird erfunden', () => {

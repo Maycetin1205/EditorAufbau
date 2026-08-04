@@ -69,10 +69,12 @@ export function hydrateField(field: RuntimeFieldElement): void {
   }
 
   // Welche Zeile das Feld zeigt, entscheidet die gemeinsame Auswahl-Regel
-  // (shared/auswahl): mit aktiver Auswahl die erste dazu PASSENDE Zeile,
-  // sonst — wie seit jeher — die erste Zeile der Quelle. Der Schreibweg
-  // haengt an DERSELBEN Zeile: was der Bediener sieht, aendert er auch
-  // (PINDEX unten kommt aus genau dieser Zeile).
+  // (shared/auswahl): OHNE eingestellte Folge wie seit jeher die erste Zeile
+  // der Quelle; MIT Folge nur die zur Auswahl passende — und ohne Auswahl gar
+  // keine (das Feld bleibt dann leer, s. unten). Der Schreibweg haengt an
+  // DERSELBEN Zeile: was der Bediener sieht, aendert er auch (PINDEX unten
+  // kommt aus genau dieser Zeile). Keine Zeile = kein Schreib-Eintrag, also
+  // kann ein leeres Feld auch nichts ueberschreiben.
   const row = ersteZeileNachAuswahl(
     field,
     rowsFor(seGlobal().SEDATA, source.name, source.tableId),

@@ -176,15 +176,27 @@ export function zeilenNachAuswahl(
 
 // Die EINE Zeile, die ein EINZELWERT-Baustein (Formularfeld …) anzeigt.
 //
-// Grundzustand bleibt, was er war: ohne Folge oder ohne aktive Auswahl die
-// ERSTE Zeile der Quelle (feste Zusage „gelesen wird automatisch aus der
-// ersten Zeile"). Mit Auswahl die erste PASSENDE Zeile.
+// OHNE Folge: die ERSTE Zeile der Quelle — die feste Zusage „gelesen wird
+// automatisch aus der ersten Zeile" gilt unveraendert, bestehende Masken
+// aendern sich nicht.
 //
-// Passt KEINE Zeile, bleibt es ebenfalls bei der ersten (Nutzer-Vorgabe
-// 2026-08-06). Anders als bei der Tabelle, die dann eine leere Liste zeigt:
-// eine leere Liste ist eine sichtbare Aussage, ein leer geraeumtes Feld waere
-// von „kein Wert vorhanden" nicht zu unterscheiden.
+// MIT Folge: NUR, was die Auswahl liefert. Nichts gewaehlt (oder wieder
+// rausgeklickt) -> nichts. Gewaehlt, aber kein Partner in der eigenen Quelle
+// -> ebenfalls nichts. Eine Regel, kein Sonderfall — und nie ein falscher
+// Satz auf dem Schirm.
+//
+// Bis 2026-08-06 fiel dieser Fall auf die erste Zeile zurueck (Nutzer-Vorgabe
+// beim Bau). Der SE-Echttest desselben Tages hat den Denkfehler gezeigt: bei
+// der TABELLE heisst „keine Auswahl" = alle Zeilen zeigen, dafuer gibt es beim
+// Einzelwert kein Gegenstueck. „Die erste Zeile" ist dort kein neutraler
+// Grundzustand, sondern ein konkreter Datensatz — und der Bediener haelt ihn
+// fuer den ausgewaehlten (Nutzer-Befund: „sollte doch leer sein oder nicht?").
+//
+// Halbfertige Folgen zaehlen nicht (folgenAusAttribut ist streng): waehrend
+// der Bediener das Feldpaar noch einstellt, bleibt es beim Grundzustand,
+// statt dass das Feld zwischendurch leer blinkt.
 export function ersteZeileNachAuswahl(el: HTMLElement, rows: unknown[]): unknown {
+  if (folgenAusAttribut(el).length === 0) return rows[0]
   const { rows: passende, gefiltert } = zeilenNachAuswahl(el, rows)
-  return gefiltert && passende.length > 0 ? passende[0] : rows[0]
+  return gefiltert ? passende[0] : undefined
 }
