@@ -1,12 +1,14 @@
 // main.tsx
 // Einstiegspunkt der React-App.
-// Built-in-Blocks werden ueber blocks/register importiert (zentrale Side-Effect-Datei).
+// Built-in-Blocks werden ueber blocks/registerEditorAngaben importiert: das
+// laedt blocks/register (die Bausteine selbst) und dazu ihr Editor-Gesicht,
+// das der Export NICHT braucht (Icon, Inspector-Hinweis).
 // index.css zieht Tailwind + shadcn-CSS-Variablen rein (Editor-UI).
 // masken-tokens.css ist die Werteliste fuer die Bloecke (Masken-Design, --se-*).
 
 import './index.css'
 import './design/masken-tokens.css'
-import './blocks/register'
+import './blocks/registerEditorAngaben'
 
 import { createRoot } from 'react-dom/client'
 import { App } from './app/App'

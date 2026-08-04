@@ -1,14 +1,18 @@
 // BlockPalette
 // Zeigt die registrierten MVP-Blocks und legt per Klick neue BlockData an.
 
-import { Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Component, Plus, Search } from 'lucide-react'
+import { createElement, useMemo, useState } from 'react'
 import { canContain, getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
+import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { setNewBlockDrag } from '../canvas/dnd'
 import { useEditor } from '../../state/useEditor'
 import { cn } from '@/lib/utils'
-import { blockIcon } from './blockIcons'
+
+// Ersatz-Icon fuer Bausteine, die (noch) keines deklarieren: ein neutraler
+// Baustein. Die Bibliothek bleibt so immer bedienbar.
+const ERSATZ_SYMBOL = Component
 
 const CATEGORY_LABEL: Record<BlockCategory, string> = {
   layout: 'Layout',
@@ -117,10 +121,15 @@ interface PaletteCardProps {
 }
 
 function PaletteCard({ def, onAdd }: PaletteCardProps) {
-  // Icon aus der Editor-Zuordnungstabelle (blockIcons, Regel 2). Der Text
-  // bleibt der EINZIGE Textknoten im Knopf — die Icons tragen keinen
-  // Textwert, der zugaengliche Name bleibt exakt der Klarname (e2e-Vertrag:
+  // Icon aus der Registry — deklariert vom Baustein selbst in
+  // blocks/<x>/editorAngaben.ts (Regel 2: kein Sondercode je Bausteintyp
+  // hier). Der Text bleibt der EINZIGE Textknoten im Knopf — die Icons tragen
+  // keinen Textwert, der zugaengliche Name bleibt exakt der Klarname (Vertrag:
   // `getByRole('button', { name: 'Zeile', exact: true })`).
+  //
+  // createElement statt JSX-Tag: die Icon-Komponente kommt als WERT aus der
+  // Registry, so entsteht beim Rendern kein neuer Komponenten-Wert
+  // (react-hooks/static-components).
   return (
     <button
       type="button"
@@ -137,7 +146,7 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
       )}
     >
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground group-hover:bg-background group-hover:text-foreground">
-        {blockIcon(def.type, { size: 14 })}
+        {createElement(editorAngabenVon(def.type).symbol ?? ERSATZ_SYMBOL, { size: 14 })}
       </span>
       <span className="truncate font-medium">{def.displayName}</span>
       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">

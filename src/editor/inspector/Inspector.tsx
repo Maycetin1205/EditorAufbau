@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react'
 import { Copy, MousePointer2, Trash } from 'lucide-react'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
@@ -36,7 +37,6 @@ import { SegmentControl } from './controls/SegmentControl'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
-import { blockHinweis } from './blockHinweise'
 import { allOptionsHaveColor } from './optionColors'
 
 // Offene Unteraufgabe des Inspector-Panels (null = normale Property-Ansicht).
@@ -124,6 +124,9 @@ export function Inspector() {
   }
 
   const def = getBlockDefinition(block.type)
+  // Hinweiszeile des Bausteins (blocks/<x>/editorAngaben.ts) — fehlt sie,
+  // zeigt das Panel keine.
+  const hinweis = editorAngabenVon(block.type).hinweis
   if (!def) {
     return (
       <SidePanel title="Inspector">
@@ -403,10 +406,11 @@ export function Inspector() {
             />
           </div>
         )}
-        {/* Hinweiszeile (blockHinweise, Editor-Tabelle): nur für Bausteine,
-            deren Panel sonst leer/fast leer aussieht — sagt in EINEM Satz,
-            wo die Bedienung stattdessen stattfindet (Regel 7). */}
-        {blockHinweis(block.type) && (
+        {/* Hinweiszeile aus der Registry — deklariert vom Baustein selbst in
+            blocks/<x>/editorAngaben.ts: nur für Bausteine, deren Panel sonst
+            leer/fast leer aussieht — sagt in EINEM Satz, wo die Bedienung
+            stattdessen stattfindet (Regel 7). */}
+        {hinweis && (
           <p
             className={cn(
               'text-xs leading-relaxed text-muted-foreground',
@@ -414,7 +418,7 @@ export function Inspector() {
                 || (def.blockEvents && def.blockEvents.length > 0)) && 'mt-3',
             )}
           >
-            {blockHinweis(block.type)}
+            {hinweis}
           </p>
         )}
         {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14):

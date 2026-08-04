@@ -1,10 +1,24 @@
 // optionColors — Options-Wert einer Auswahl -> echte Masken-Farbe (Kachel).
 //
-// Reine Editor-seitige Zuordnungstabelle (Muster blockIcons.ts; Regel 2:
-// Daten-Tabelle statt `if attr === …`). BEWUSST hier und NICHT in den
-// Baustein-Dateien: `src/blocks/*` speist das Runtime-Buendel/den Export —
-// die Eigenschafts-Art bleibt dort ein `select`, check:runtime „Buendel
-// identisch". Nur der Inspector rendert daraus Farb-Kacheln.
+// Reine Editor-seitige Zuordnungstabelle (Regel 2: Daten-Tabelle statt
+// `if attr === …`). BEWUSST hier und NICHT in den Baustein-Dateien:
+// `src/blocks/*` speist das Runtime-Buendel/den Export — die Eigenschafts-Art
+// bleibt dort ein `select`, check:runtime „Buendel identisch". Nur der
+// Inspector rendert daraus Farb-Kacheln.
+//
+// Bleibt hier — geprueft am 2026-08-04, als Icons und Inspector-Hinweise in
+// die Registry gewandert sind (core/blocks/editorAngaben). Zwei Gruende, warum
+// diese Tabelle NICHT mitkommt:
+//  1. Sie ist nicht nach Bausteintyp geschluesselt, sondern nach OPTIONS-WERT
+//     (info/success/warning/danger aus blocks/shared/statusVariant.ts). Sie
+//     enthaelt also gar kein Baustein-Wissen, das ein Baustein erklaeren
+//     koennte — Regel 2 ist hier nicht verletzt.
+//  2. Ihr natuerlicher Platz waere die Options-Liste selbst
+//     (customProperties) — und die steht in der Baustein-Klasse, also im
+//     Runtime-Buendel. Sie dorthin zu heben, wuerde jede exportierte Maske
+//     um Farbwerte verlaengern, die nur der Inspector liest. Die Werte je
+//     Baustein zu wiederholen (Karte UND Kanban-Spalte nutzen dieselben vier)
+//     waere Doppelpflege mit Driftgefahr.
 //
 // Der Inspector zeigt Kacheln statt Dropdown, wenn ALLE Options-Werte einer
 // select-Eigenschaft hier stehen (allOptionsHaveColor). Die Farbe ist der
