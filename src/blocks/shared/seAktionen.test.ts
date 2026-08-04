@@ -96,3 +96,35 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
     expect(resolveActionParam({ ...binding, blockId: 'weg' }, values, runtime)).toBe('')
   })
 })
+
+describe('resolveActionParam: „Feld der gewaehlten Zeile" (2026-08-06)', () => {
+  const binding: ActionParamBinding = {
+    source: 'gewaehlte_zeile', blockId: 'kunden', value: '0_10',
+  }
+
+  it('liest den Feldwert aus der Zeile, die der Geber gerade haelt', () => {
+    const values = {
+      context: {},
+      previousResult: '',
+      gewaehlteZeile: (id: string) => (id === 'kunden' ? { '0_10': '271', '2_8': '10001' } : undefined),
+    }
+    expect(resolveActionParam(binding, values, {})).toBe('271')
+    // Der Satz-Index der gewaehlten Zeile ist damit als PUT-Parameter da —
+    // genau das ging vorher nicht (nur der Ausloeser trug {PINDEX}).
+    expect(resolveActionParam({ ...binding, value: '2_8' }, values, {})).toBe('10001')
+  })
+
+  it('ohne Auswahl, ohne Geber und ohne Zulieferer bleibt es LEER (kein Raten)', () => {
+    const ohneAuswahl = { context: {}, previousResult: '', gewaehlteZeile: () => undefined }
+    expect(resolveActionParam(binding, ohneAuswahl, {})).toBe('')
+    // Anderer Geber angeklickt: dieser Parameter bleibt trotzdem leer.
+    const anderer = {
+      context: {},
+      previousResult: '',
+      gewaehlteZeile: (id: string) => (id === 'belege' ? { '0_10': '99' } : undefined),
+    }
+    expect(resolveActionParam(binding, anderer, {})).toBe('')
+    // Gar kein Zulieferer (Kette ausserhalb der Maske): ebenfalls leer.
+    expect(resolveActionParam(binding, { context: {}, previousResult: '' }, {})).toBe('')
+  })
+})

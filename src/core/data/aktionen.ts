@@ -1,9 +1,7 @@
 // Aktionsketten am Baustein je Ereignis. Die Ketten sind reine Daten im
 // Block-Baum; die konkrete Ausfuehrung gehoert in die Export-Runtime.
 
-import type { DataSource } from './dataSources'
 import type { RelationTemplate } from './relations'
-import { unknownPlaceholders } from './relations'
 
 // ---------- Schritt-Typen ----------
 
@@ -43,11 +41,20 @@ export const ACTION_VALUE_ID_ATTR = 'data-ff-block-id'
 // anlegen" (GET 640 → PUTs auf den Index; ZWEI GET-Ergebnisse
 // gleichzeitig in Gebrauch). SE-Echttest 2026-07-22: die Stelle aus
 // Schritt 1 kam im echten PUT an (…!L!271!…).
+// gewaehlte_zeile = „Feld der gewaehlten Zeile" (2026-08-06): wie data_field,
+// liest aber nicht die erste Zeile einer Quelle, sondern die Zeile, die der
+// Bediener in einem Auswahl-Geber (Tabelle/Kanban) ANGEKLICKT hat. Damit ist
+// auch deren Satz-Index (z. B. 0_10) als PUT-Parameter erreichbar — bis dahin
+// gab es dafuer keinen Weg: {PINDEX} traegt nur, wer das Ereignis ausloest,
+// und ein Knopf daneben weiss von der Auswahl nichts. Der Geber steht in
+// `blockId` (dieselbe Baum-id wie block_value und wie folgtAuswahl.geberId),
+// der Feldcode in `value`.
 export const ACTION_PARAM_SOURCES = [
   'fixed',
   'context',
   'data_field',
   'block_value',
+  'gewaehlte_zeile',
   'previous_result',
   'step_result',
   'se_variable',
@@ -59,6 +66,7 @@ export interface ActionParamBinding {
   source: ActionParamSource
   // fixed: Wert, context: PINDEX/VALUE/NOW_DATE, data_field: Feldcode,
   // block_value: freigegebene Prop eines Bausteins,
+  // gewaehlte_zeile: Feldcode in der gewaehlten Zeile des Gebers,
   // se_variable: Variablenname. previous_result braucht keinen Wert.
   // step_result: im EDITOR die stabile Schritt-id (übersteht Umsortieren,
   // Muster popupId), in der MASKE die Position in der Kette (Editor-ids
@@ -67,8 +75,11 @@ export interface ActionParamBinding {
   // Nur data_field: stabile ID der Datenquellen-Vorlage. Der Feldcode allein
   // ist zwischen verschiedenen Tabellen nicht eindeutig.
   dataSourceId?: string
-  // Nur block_value: stabile ID des Bausteins. Sein Klarname darf sich
-  // aendern; `value` traegt die Registry-freigegebene Prop.
+  // block_value: stabile ID des Bausteins, dessen Prop gelesen wird
+  // (`value` = die Registry-freigegebene Prop).
+  // gewaehlte_zeile: stabile ID des Auswahl-GEBERS, dessen angeklickte Zeile
+  // gelesen wird (`value` = Feldcode). Beide Male dieselbe Sache — „welcher
+  // Baustein in dieser Maske" —, darum dasselbe Feld statt eines zweiten.
   blockId?: string
 }
 
@@ -387,98 +398,4 @@ export function parseBlockEvents(raw: string | null): Record<string, RuntimeStep
     if (!broken && steps.length > 0) out[key] = steps
   }
   return out
-}
-
-// ---------- Vollstaendigkeit ----------
-
-function bindingProblem(binding: ActionParamBinding | undefined): boolean {
-  if (!binding) return true
-  if (binding.source === 'fixed' || binding.source === 'previous_result') return false
-  if (binding.source === 'data_field') {
-    return !binding.dataSourceId?.trim() || binding.value.trim() === ''
-  }
-  if (binding.source === 'block_value') {
-    return !binding.blockId?.trim() || binding.value.trim() === ''
-  }
-  return binding.value.trim() === ''
-}
-
-export function stepProblem(
-  step: ActionStep,
-  relations?: readonly RelationTemplate[],
-  dataSources?: readonly DataSource[],
-  // Vorhandene Popup-Seiten (ids) — nur wer sie kennt (Zentrale, Preflight),
-  // bekommt die Meldung über eine gelöschte Seite.
-  popupIds?: readonly string[],
-  // Gültige „Ergebnis von Schritt"-Ziele für DIESEN Schritt (ids der GET-
-  // Schritte davor, ergebnisSchritteVor) — nur wer die Kette kennt, prüft.
-  ergebnisIds?: readonly string[],
-  // Gueltige auslesbare Bausteinwerte der Maske. Nur Aufrufer mit Baumblick
-  // (Editor/Preflight) pruefen geloeschte oder nicht mehr freigegebene Ziele.
-  actionValues?: readonly { blockId: string; prop: string }[],
-): string | null {
-  // step_result muss auf einen GET-Schritt DAVOR zeigen — ein gelöschter,
-  // späterer oder Nicht-GET-Schritt liefe in der Maske still auf ''.
-  const ergebnisKaputt = (binding: ActionParamBinding | undefined): boolean =>
-    binding?.source === 'step_result'
-    && ergebnisIds !== undefined
-    && !ergebnisIds.includes(binding.value)
-  if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
-    const name = stepTypeName(step.type)
-    if (step.popupId.trim() === '') return `Schritt "${name}" hat kein Popup gewählt.`
-    if (popupIds && !popupIds.includes(step.popupId)) {
-      return `Schritt "${name}" verweist auf eine gelöschte Popup-Seite.`
-    }
-    return null
-  }
-  if (step.type === 'START_TOOL') {
-    if (step.toolNr.trim() === '') {
-      // Codex-Wortlaut 2026-07-15 (Erklärtexte raus): „Nummer", nicht „Werkzeug-Nummer".
-      return `Schritt "${stepTypeName(step.type)}" hat keine Nummer.`
-    }
-    if (step.toolParams.some((param) => param.trim() === '')) {
-      return `Schritt "${stepTypeName(step.type)}" hat einen leeren Parameter.`
-    }
-    const unknown = step.toolParams.flatMap((param) => unknownPlaceholders(param, AKTIONS_PLATZHALTER))
-    if (unknown.length > 0) {
-      return `Schritt "${stepTypeName(step.type)}" hat einen unbekannten Platzhalter.`
-    }
-    return null
-  }
-  if (step.relationId === '') return 'Schritt "Relation" hat keine Vorlage.'
-  if (!relations) return null
-  const relation = relations.find((entry) => entry.id === step.relationId)
-  if (!relation) return 'Schritt "Relation" verweist auf eine geloeschte Vorlage.'
-  if (step.params.length !== relation.params.length) {
-    return 'Schritt "Relation" hat nicht alle Syntaxparameter uebernommen.'
-  }
-  const missing = step.params.findIndex(bindingProblem)
-  if (missing >= 0) return `Schritt "Relation": Parameter ${missing + 1} ist unvollstaendig.`
-  if (!relation.allowExtraParams && step.extraParams.length > 0) {
-    return 'Schritt "Relation" hat nicht erlaubte Zusatzparameter.'
-  }
-  if (step.extraParams.some(bindingProblem)) {
-    return 'Schritt "Relation" hat einen leeren Zusatzparameter.'
-  }
-  const allBindings = [
-    ...step.params,
-    ...step.extraParams,
-  ]
-  const missingSource = allBindings.find((binding) =>
-    binding?.source === 'data_field'
-    && dataSources
-    && !dataSources.some((source) => source.id === binding.dataSourceId),
-  )
-  if (missingSource) return 'Schritt "Relation" verweist auf eine geloeschte Datenquelle.'
-  const missingBlock = allBindings.find((binding) =>
-    binding?.source === 'block_value'
-    && actionValues
-    && !actionValues.some((target) =>
-      target.blockId === binding.blockId && target.prop === binding.value),
-  )
-  if (missingBlock) return 'Schritt "Relation" verweist auf einen geloeschten Baustein.'
-  if (allBindings.some(ergebnisKaputt)) {
-    return 'Schritt "Relation": ein Parameter zeigt auf keinen GET-Schritt davor.'
-  }
-  return null
 }

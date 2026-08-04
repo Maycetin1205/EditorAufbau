@@ -21,7 +21,7 @@ import {
 } from '../../core/data/aktionen'
 import type { DataSource } from '../../core/data/dataSources'
 import type { FeldUebernahmeZiel } from './feldUebernahme'
-import { blockValueKey, type BlockValueOption } from './helfer'
+import { blockValueKey, type AuswahlGeberOption, type BlockValueOption } from './helfer'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'
 
 // Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
@@ -36,6 +36,7 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   context: 'Ereigniswert',
   data_field: 'Datenfeld',
   block_value: 'Baustein',
+  gewaehlte_zeile: 'Gewählte Zeile',
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
@@ -46,12 +47,14 @@ function BindingValue({
   binding,
   dataSources,
   blockValues,
+  geber,
   schritte,
   onChange,
 }: {
   binding: ActionParamBinding
   dataSources: readonly DataSource[]
   blockValues: readonly BlockValueOption[]
+  geber: readonly AuswahlGeberOption[]
   schritte: readonly ErgebnisSchritt[]
   onChange: (binding: ActionParamBinding) => void
 }) {
@@ -119,6 +122,44 @@ function BindingValue({
       </div>
     )
   }
+  if (binding.source === 'gewaehlte_zeile') {
+    // Zwei Auswahlfelder wie bei „Datenfeld": erst WER die Auswahl gibt,
+    // dann WELCHES Feld seiner Zeile. Die Felder kommen aus der Quelle des
+    // Gebers — die gewaehlte Zeile stammt von dort, andere Felder gaebe es
+    // in ihr gar nicht (Regel 7: nichts erfinden).
+    const gewaehlter = geber.find((g) => g.blockId === binding.blockId)
+    return (
+      <div className="grid grid-cols-2 gap-1">
+        <SchrittSelect
+          className="min-w-0"
+          aria-label="Auswahl-Geber"
+          value={binding.blockId ?? ''}
+          onChange={(e) => onChange({ ...binding, blockId: e.target.value, value: '' })}
+        >
+          <option value="">— Baustein —</option>
+          {geber.map((g) => (
+            <option key={g.blockId} value={g.blockId}>{g.label}</option>
+          ))}
+          {/* Geber geloescht: den Zustand benennen statt still leer (Regel 4);
+              der Preflight blockt den Export dazu im Klartext. */}
+          {binding.blockId && !gewaehlter && (
+            <option value={binding.blockId}>(gelöschter Baustein)</option>
+          )}
+        </SchrittSelect>
+        <SchrittSelect
+          className="min-w-0"
+          aria-label="Feld der gewählten Zeile"
+          value={binding.value}
+          onChange={(e) => onChange({ ...binding, value: e.target.value })}
+        >
+          <option value="">— Feld —</option>
+          {gewaehlter?.felder.map((f) => (
+            <option key={f.code} value={f.code}>{f.label}</option>
+          ))}
+        </SchrittSelect>
+      </div>
+    )
+  }
   if (binding.source === 'block_value') {
     const current = binding.blockId ? blockValueKey(binding.blockId, binding.value) : ''
     return (
@@ -152,6 +193,7 @@ export function ParameterZeile({
   binding,
   dataSources,
   blockValues,
+  geber,
   schritte,
   removable = false,
   ausloeser,
@@ -163,6 +205,7 @@ export function ParameterZeile({
   binding: ActionParamBinding
   dataSources: readonly DataSource[]
   blockValues: readonly BlockValueOption[]
+  geber: readonly AuswahlGeberOption[]
   schritte: readonly ErgebnisSchritt[]
   removable?: boolean
   ausloeser?: FeldUebernahmeZiel
@@ -174,6 +217,12 @@ export function ParameterZeile({
     if (source === 'block_value' && blockValues.length === 1) {
       const target = blockValues[0]
       onChange({ source, blockId: target.blockId, value: target.prop })
+      return
+    }
+    // Genau EIN Auswahl-Geber in der Maske: direkt vorwaehlen — dann bleibt
+    // nur noch das Feld zu klicken (dieselbe Abkuerzung wie oben).
+    if (source === 'gewaehlte_zeile' && geber.length === 1) {
+      onChange({ source, blockId: geber[0].blockId, value: '' })
       return
     }
     const value = source === 'context'
@@ -200,6 +249,8 @@ export function ParameterZeile({
             value={source}
             disabled={(source === 'data_field' && dataSources.length === 0)
               || (source === 'block_value' && blockValues.length === 0)
+              // Ohne Auswahl-Geber in der Maske gaebe es nichts zu waehlen.
+              || (source === 'gewaehlte_zeile' && geber.length === 0)
               || (source === 'step_result' && schritte.length === 0)}
           >
             {QUELLEN_NAMEN[source]}
@@ -218,6 +269,7 @@ export function ParameterZeile({
           binding={binding}
           dataSources={dataSources}
           blockValues={blockValues}
+          geber={geber}
           schritte={schritte}
           onChange={onChange}
         />

@@ -12,8 +12,9 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
-import { actionValueTargets } from '../core/blocks/treeQuery'
-import { ergebnisSchritteVor, stepProblem } from '../core/data/aktionen'
+import { actionValueTargets, auswahlGeberImBaum } from '../core/blocks/treeQuery'
+import { ergebnisSchritteVor } from '../core/data/aktionen'
+import { stepProblem } from '../core/data/schrittPruefung'
 import { AUSWAHL_FOLGE_PROP, auswahlFolgenAus, folgeBrauchbar } from '../core/data/auswahlFolge'
 import type { DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
@@ -43,6 +44,11 @@ export function preflightMask(
     blockId: node.id,
     prop: spot.prop,
   }))
+  // Vorhandene Auswahl-Geber — dieselbe Baum-Abfrage, die auch die Steuerung
+  // zum Anbieten benutzt. Ein Ketten-Parameter „Feld der gewaehlten Zeile" auf
+  // einen geloeschten Geber loeste in der Maske still zu '' auf: der PUT
+  // schriebe dann auf einen leeren Satz-Index (Regel 4, darum blocken).
+  const auswahlGeberIds = auswahlGeberImBaum(tree).map((n) => n.id)
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
     const def = getBlockDefinition(node.type)
@@ -188,7 +194,8 @@ export function preflightMask(
       const eventName = def?.blockEvents?.find((e) => e.key === eventKey)?.name ?? eventKey
       for (const step of steps) {
         const problem = stepProblem(step, relations, sources, popupIds,
-          ergebnisSchritteVor(steps, step.id, relations).map((g) => g.id), actionValues)
+          ergebnisSchritteVor(steps, step.id, relations).map((g) => g.id), actionValues,
+          auswahlGeberIds)
         if (problem) {
           results.push({
             name: 'Aktion unvollstaendig',

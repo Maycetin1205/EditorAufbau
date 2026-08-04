@@ -18,13 +18,13 @@ import { ArrowDown, ArrowUp, Copy, Pencil, Plus, X } from 'lucide-react'
 import { IconButton } from '@/ui/atoms/icon-button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'
-import { actionValueTargets } from '../../core/blocks/treeQuery'
+import { actionValueTargets, auswahlGeberImBaum } from '../../core/blocks/treeQuery'
 import {
   ergebnisSchritteVor,
-  stepProblem,
   stepTypeName,
   type ActionStep,
 } from '../../core/data/aktionen'
+import { stepProblem } from '../../core/data/schrittPruefung'
 import { formatRelationSyntax } from '../../core/data/relations'
 import { istUngetaufteVorlage, relationAnzeige } from '../zentrale/relationAnzeige'
 import { useDataSources } from '../../state/useDataSources'
@@ -82,6 +82,10 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
     blockId: node.id,
     prop: spot.prop,
   }))
+  // Auswahl-Geber der Maske — sonst bliebe ein Parameter „Feld der gewählten
+  // Zeile" auf einem gelöschten Geber in dieser Liste unauffällig und
+  // schlüge erst beim Export zu.
+  const geberIds = auswahlGeberImBaum(ed.tree).map((n) => n.id)
 
   return (
     <div className="flex flex-col gap-2">
@@ -110,6 +114,7 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                     s, relations.list, dataSources.list, popupSeiten.map((seite) => seite.id),
                     ergebnisSchritteVor(steps, s.id, relations.list).map((g) => g.id),
                     actionValueRefs,
+                    geberIds,
                   )
                   const relation = s.type === 'RELATION' ? relations.get(s.relationId) : undefined
                   const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'

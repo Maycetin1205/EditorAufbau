@@ -24,6 +24,7 @@
 // Verdacht).
 
 import { parseBlockEvents } from '../../core/data/aktionen'
+import { auswahlFuer } from './auswahl'
 import { PopupBlock } from '../popup/PopupBlock'
 import {
   formatNowDate,
@@ -143,7 +144,15 @@ export async function runEvent(
         stepResults.push('')
         continue
       }
-      const runtimeValues = { context: values, previousResult, stepResults }
+      // Die Auswahl reicht die Baustein-Schicht herein (auswahlFuer); die
+      // SE-Schicht kennt sie nicht selbst — sonst muesste src/softengine/
+      // einen Baustein importieren (Schicht-Regel).
+      const runtimeValues = {
+        context: values,
+        previousResult,
+        stepResults,
+        gewaehlteZeile: auswahlFuer,
+      }
       const params = [...step.params, ...step.extraParams]
         .map((binding) => resolveActionParam(binding, runtimeValues))
       const result = await executeRelation(relation, params)

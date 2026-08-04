@@ -27,13 +27,13 @@ import {
   STEP_TYPES,
   defaultRelationParams,
   ergebnisSchritteVor,
-  stepProblem,
   type ActionParamBinding,
   type ActionStep,
   type StepTypeKey,
 } from '../../core/data/aktionen'
+import { stepProblem } from '../../core/data/schrittPruefung'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { actionValueTargets } from '../../core/blocks/treeQuery'
+import { actionValueTargets, auswahlGeberImBaum } from '../../core/blocks/treeQuery'
 import { relationMatchesSearch } from '../../core/data/relations'
 import { FeldUebernahmePicker } from './FeldUebernahmePicker'
 import {
@@ -43,7 +43,12 @@ import {
   uebernahmeIdbQuellen,
   uebernahmeQuellen,
 } from './feldUebernahme'
-import { blockValueKey, eigenerText, type BlockValueOption } from './helfer'
+import {
+  auswahlGeberOptionen,
+  blockValueKey,
+  eigenerText,
+  type BlockValueOption,
+} from './helfer'
 import { ParameterZeile } from './ParameterZeile'
 import { RelationAuswahl } from './RelationAuswahl'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'
@@ -84,6 +89,11 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     }
   })
   const actionValueRefs = blockValues.map(({ blockId, prop }) => ({ blockId, prop }))
+  // Auswahl-Geber der Maske (Registry auswahlGeber) für die Parameterquelle
+  // „Feld der gewählten Zeile". Gibt es keinen, ist die Quelle nicht wählbar
+  // (ParameterZeile) — ein Formular ohne wählbaren Geber wäre Rätselraten.
+  const geber = auswahlGeberOptionen(auswahlGeberImBaum(ed.tree), dataSources.list)
+  const geberIds = geber.map((g) => g.blockId)
   const [typ, setTyp] = useState<StepTypeKey>(step?.type ?? 'START_TOOL')
   const [toolNr, setToolNr] = useState(step?.type === 'START_TOOL' ? step.toolNr : '')
   const [popupId, setPopupId] = useState(
@@ -214,12 +224,12 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
 
   const popupIds = popupSeiten.map((seite) => seite.id)
   const problem = stepProblem(
-    candidate(), relations.list, dataSources.list, popupIds, ergebnisIds, actionValueRefs,
+    candidate(), relations.list, dataSources.list, popupIds, ergebnisIds, actionValueRefs, geberIds,
   )
 
   function speichern() {
     const next = candidate()
-    if (stepProblem(next, relations.list, dataSources.list, popupIds, ergebnisIds, actionValueRefs)) {
+    if (stepProblem(next, relations.list, dataSources.list, popupIds, ergebnisIds, actionValueRefs, geberIds)) {
       setZeigeFehler(true)
       return
     }
@@ -299,6 +309,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                       binding={bindingFor(index)}
                       dataSources={dataSources.list}
                       blockValues={blockValues}
+                      geber={geber}
                       schritte={ergebnisSchritte}
                       ausloeser={ausloeser}
                       onChange={(binding) => setBinding(index, binding)}
@@ -350,6 +361,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                   binding={binding}
                   dataSources={dataSources.list}
                   blockValues={blockValues}
+                  geber={geber}
                   schritte={ergebnisSchritte}
                   removable
                   onChange={(next) => setExtraParams((current) => current.map((value, at) => at === index ? next : value))}

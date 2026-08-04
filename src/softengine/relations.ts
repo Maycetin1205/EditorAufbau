@@ -242,6 +242,13 @@ export interface RuntimeActionValues {
   // die Liste; nur GET-Schritte liefern etwas, alle anderen ''). Der
   // Zwischenspeicher des Nutzers: „Ergebnis von Schritt N" (2026-07-17).
   stepResults?: readonly string[]
+  // Die aktuell angeklickte Zeile eines Auswahl-Gebers (Parameterquelle
+  // „Feld der gewählten Zeile", 2026-08-06). Wird als FUNKTION hereingereicht,
+  // nicht importiert: der Auswahl-Zustand wohnt in der Baustein-Schicht
+  // (blocks/shared/auswahl), und diese Schicht kennt NIE einen Baustein.
+  // Fehlt sie oder gibt es keine Auswahl -> undefined -> der Parameter löst
+  // zu '' auf (nichts wird geraten).
+  gewaehlteZeile?: (geberId: string) => unknown
 }
 
 function resolveBlockValue(binding: ActionParamBinding, runtime: unknown): string {
@@ -270,6 +277,14 @@ export function resolveActionParam(
     return Number.isInteger(idx) && idx >= 0 ? values.stepResults?.[idx] ?? '' : ''
   }
   if (binding.source === 'block_value') return resolveBlockValue(binding, runtime)
+  if (binding.source === 'gewaehlte_zeile') {
+    // Keine Auswahl (nie geklickt oder wieder rausgeklickt) -> ''. Bewusst
+    // NICHT auf die erste Zeile ausweichen wie die Anzeige: ein Schreibweg,
+    // der ohne Auswahl den falschen Satz trifft, waere genau das stille
+    // Scheitern aus Regel 4. Leer bleibt leer, und die Kette sagt es.
+    const zeile = values.gewaehlteZeile?.(binding.blockId ?? '')
+    return zeile === undefined ? '' : getField(zeile, binding.value)
+  }
   if (!isRecord(runtime)) return ''
 
   if (binding.source === 'se_variable') {

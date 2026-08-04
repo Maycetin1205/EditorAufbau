@@ -29,6 +29,22 @@ export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
   return result
 }
 
+// Alle Auswahl-GEBER der Maske in Baum-Reihenfolge (Registry: auswahlGeber).
+// Wer eine Auswahl gibt, sagt die Registry — kein Bausteintyp-Wissen hier
+// (Regel 2). Dieselbe Wahrheit fuer Steuerung (Parameterquelle „Feld der
+// gewaehlten Zeile") und Preflight: bietet der Editor einen Geber an, den der
+// Preflight nicht kennt, blockt der Export etwas gerade Eingestelltes.
+export function auswahlGeberImBaum(tree: BlockTree): BlockNode[] {
+  const result: BlockNode[] = []
+  const visit = (node: BlockNode | undefined): void => {
+    if (!node) return
+    if (getBlockDefinition(node.type)?.auswahlGeber === true) result.push(node)
+    for (const childId of node.childIds) visit(tree[childId])
+  }
+  visit(tree[ROOT_ID])
+  return result
+}
+
 export function firstDescendantOfType(
   tree: BlockTree,
   rootId: string,

@@ -7,11 +7,13 @@ import {
   parseBlockEvents,
   sanitizeBlockEvents,
   serializeBlockEvents,
-  stepProblem,
   type BlockEventsMap,
   type RelationStep,
   type StartToolStep,
 } from './aktionen'
+// Die Vollstaendigkeits-Pruefung wohnt seit 2026-08-06 nebenan
+// (schrittPruefung) — dieselbe Funktion, nur eine Datei weiter.
+import { stepProblem } from './schrittPruefung'
 
 const relation: RelationTemplate = {
   id: 'rel-1',

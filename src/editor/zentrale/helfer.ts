@@ -5,7 +5,7 @@ import { Boxes, Database, FileText, Users } from 'lucide-react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'
-import type { DataSourceKind } from '../../core/data/dataSources'
+import type { DataSource, DataSourceField, DataSourceKind } from '../../core/data/dataSources'
 import type { RelationTemplate } from '../../core/data/relations'
 
 // Der Klarname einer Quellen-Art steht NICHT mehr hier, sondern in der
@@ -114,4 +114,33 @@ export interface BlockValueOption {
 // Datei mit React-Komponenten nichts anderes exportieren soll (Fast Refresh).
 export function blockValueKey(blockId: string, prop: string): string {
   return `${encodeURIComponent(blockId)}:${encodeURIComponent(prop)}`
+}
+
+// Ein Auswahl-GEBER als Auswahl-Eintrag der Parameterquelle „Feld der
+// gewählten Zeile" (2026-08-06). `felder` sind die Felder SEINER Quelle —
+// die gewählte Zeile stammt von dort, also stehen auch nur deren Feldcodes
+// zur Wahl. Ohne Quelle bleibt die Liste leer (nichts zu raten).
+export interface AuswahlGeberOption {
+  blockId: string
+  label: string
+  felder: readonly DataSourceField[]
+}
+
+// Die Geber-Einträge bauen: Klarname des Bausteins plus Quellen-Name zur
+// Unterscheidung — zwei Tabellen heißen sonst beide nur „Tabelle" (dieselbe
+// Anzeige-Regel wie in der Inspector-Sektion „Auswahl folgen").
+export function auswahlGeberOptionen(
+  geber: readonly BlockNode[],
+  sources: readonly DataSource[],
+): AuswahlGeberOption[] {
+  return geber.map((node) => {
+    const quelle = sources.find(
+      (s) => s.id === (typeof node.props.source === 'string' ? node.props.source : ''),
+    )
+    return {
+      blockId: node.id,
+      label: quelle ? `${bausteinName(node)} (${quelle.name})` : bausteinName(node),
+      felder: quelle?.fields ?? [],
+    }
+  })
 }

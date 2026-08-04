@@ -12,9 +12,12 @@ import { describe, expect, it } from 'vitest'
 import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
+import { registerTestBlocks, TEST_EVENT_BLOCK } from '../test/testBlocks'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
+
+registerTestBlocks()
 
 // Spalten fuer die Tabellen-Faelle: Umlaut + Komma + gebundene/ungebundene
 // Spalte in einem — deckt Escaping UND Feldcodes ab.
@@ -102,5 +105,64 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     expect(halb.some((r) => r.name === 'Auswahl-Folge unvollstaendig')).toBe(true)
     const sauber = preflightMask(paarTree(folge), [], [])
     expect(sauber.filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
+  })
+})
+
+describe('Parameterquelle „Feld der gewaehlten Zeile" (2026-08-06)', () => {
+  // Der Fall: eine Tabelle zeigt Saetze, ein Knopf daneben schreibt auf den
+  // ANGEKLICKTEN Satz. {PINDEX} traegt nur, wer das Ereignis ausloest — der
+  // Knopf weiss von der Auswahl nichts. Ueber diese Quelle erreicht er den
+  // Satz-Index (0_10) der gewaehlten Zeile.
+  const relations = [{
+    id: 'rel-put', name: 'Bemerkung schreiben', verb: 'PUT_RELATION', nr: '0174',
+    params: ['{PINDEX}'], allowExtraParams: false,
+  }] as const
+
+  const knopfTree = (blockId: string): BlockTree => ({
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'knopf'] },
+    geber: {
+      id: 'geber', type: 'tabelle',
+      // Ungebundene Spalte: hier geht es um den KETTEN-Parameter, nicht um
+      // die Anzeige — eine gebundene Spalte ohne Datenquelle brachte nur
+      // Preflight-Meldungen, die mit diesem Fall nichts zu tun haben.
+      props: { width: 'fill', spalten: [{ titel: 'Kunde', feld: '' }] },
+      parentId: 'root', childIds: [],
+    },
+    knopf: {
+      id: 'knopf', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
+      events: {
+        onClick: [{
+          id: 'put', type: 'RELATION', resultKey: '', relationId: 'rel-put',
+          params: [{ source: 'gewaehlte_zeile', blockId, value: '0_10' }],
+          extraParams: [],
+        }],
+      },
+    },
+  })
+
+  it('reist in der Kette mit und nennt Geber + Feldcode', () => {
+    const tree = knopfTree('geber')
+    const { html } = exportMask(tree, 'Maske', [], relations)
+    expect(html).toContain('&quot;source&quot;:&quot;gewaehlte_zeile&quot;')
+    expect(html).toContain('&quot;blockId&quot;:&quot;geber&quot;')
+    expect(html).toContain('&quot;value&quot;:&quot;0_10&quot;')
+    // Der Geber traegt data-ff-id — genau darueber findet die Laufzeit seine
+    // gewaehlte Zeile wieder.
+    expect(html).toMatch(/<ff-tabelle[^>]*\sdata-ff-id="geber"/)
+    expect(preflightMask(tree, [], relations)).toEqual([])
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Preflight blockt einen geloeschten Geber im Klartext', () => {
+    const meldungen = preflightMask(knopfTree('gibt-es-nicht'), [], relations)
+    expect(meldungen.some((r) => r.detail.includes('gewaehlte Zeile eines Bausteins'))).toBe(true)
+  })
+
+  it('Preflight blockt einen Parameter ohne gewaehltes Feld', () => {
+    const tree = knopfTree('geber')
+    const step = tree.knopf.events!.onClick[0]
+    if (step.type === 'RELATION') step.params = [{ source: 'gewaehlte_zeile', blockId: 'geber', value: '' }]
+    expect(preflightMask(tree, [], relations).some((r) =>
+      r.detail.includes('Parameter 1 ist unvollstaendig'))).toBe(true)
   })
 })
