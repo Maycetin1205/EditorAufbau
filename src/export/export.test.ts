@@ -286,19 +286,14 @@ describe('Runtime-Bündel', () => {
     // muss schon ohne empfangenes Datenpaket im Export vorhanden sein.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — feste Kartenhöhe fehlt')
       .toContain('height: 112px')
-    // Ein GEBUNDENES Formularfeld zeigt in der Maske NIE seinen Platzhalter
-    // (2026-08-04): sonst steht in SoftEngine "Feldname", wo der Editor die
-    // Klarnamen-Vorschau der Bindung zeigt. Die Regel steckt im Baustein-CSS
-    // und reist AUSSCHLIESSLICH ueber das Buendel mit — fehlt sie hier, ist
-    // die Maske wieder kaputt, ohne dass ein Markup-Wächter es merkt.
-    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Platzhalter-Regel des gebundenen Felds fehlt')
-      .toContain('.huelle[data-ff-bound] .ph { display: none; }')
-    // Ein LEERER Text haelt in der Maske genau EINE Zeile frei (2026-08-04):
-    // ohne diese Regel klappt er auf Hoehe 0 zusammen und das Layout springt,
-    // sobald ein gebundener Text ohne Auswahl leer bleibt. Steckt ebenfalls nur
-    // im Baustein-CSS und reist allein ueber das Buendel mit.
-    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Zeilenhöhe des leeren Textes fehlt')
-      .toContain('.text:empty { min-height: calc(1em')
+    // KEINE Marker auf Baustein-CSS (Nutzer-Entscheidung 2026-08-04). Hier
+    // standen zwei wortwörtliche CSS-Suchen (Platzhalter des gebundenen Felds,
+    // Zeilenhöhe des leeren Textes). Sie sind wieder weg: ein Leerzeichen
+    // anders im CSS färbt sie rot, obwohl die Maske stimmt — und umgekehrt
+    // beweist der gefundene Text NICHT, dass es richtig aussieht. Optik prüft
+    // allein der SE-Echttest des Nutzers. Neue CSS-Marker deshalb nicht
+    // einführen; die Tags-Positivliste oben bleibt (sie prüft Existenz, nicht
+    // Aussehen).
     for (const marker of ['body.REGMSG', 'Empfangene Pakete', 'nach 10s kein Interface']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — Diagnose ${marker} fehlt`)
         .toContain(marker)
