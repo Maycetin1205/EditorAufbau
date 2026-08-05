@@ -7,29 +7,15 @@
 // nicht ins Rendering. Ausserdem waere TabelleBlock sonst ueber den
 // 500-Zeilen-Deckel gewachsen.
 //
-// Verhalten bewusst so, wie es ein Bediener erwartet, der Windows kennt:
-//   - Gross/Klein egal.
-//   - Es genuegt, dass der Text IRGENDWO in IRGENDEINER Zelle vorkommt.
-//   - Mehrere Woerter sind ein UND: „meier 2026" findet Zeilen, in denen
-//     beides steht — auch in VERSCHIEDENEN Spalten. Das ist der Unterschied
-//     zu einer stumpfen Textsuche und der Grund, warum man ueberhaupt
-//     mehrere Woerter tippt.
-//   - Leere Eingabe = alles zeigen (nie versehentlich alles ausblenden).
+// Die Entscheidung „passt diese Zeile?" wohnt seit dem Nachschlage-Feld
+// (2026-08-05) in ../shared/textSuche: das Fenster dort sucht genau so wie
+// diese Suchzeile, und zwei Abschriften wuerden irgendwann verschieden
+// treffen (Regel 10 — der zweite Aufrufer hat den Umzug erzwungen).
+// Hier weiter-exportiert, damit die Tabellen-Suche an ihrem angestammten
+// Namen erreichbar bleibt.
+import { zeilePasst } from '../shared/textSuche'
 
-// Ein Suchbegriff wird in Woerter zerlegt; Leerraum jeder Art trennt.
-function woerterVon(text: string): string[] {
-  return text.trim().toLowerCase().split(/\s+/).filter((w) => w !== '')
-}
-
-// Passt EINE Zeile auf den Suchtext? Exportiert fuer den gezielten Test.
-export function zeilePasst(zeile: readonly string[], suchtext: string): boolean {
-  const woerter = woerterVon(suchtext)
-  if (woerter.length === 0) return true
-  // Alle Zellen zu EINEM Text zusammenziehen: so findet „meier 2026" auch,
-  // wenn der Name in Spalte 1 und das Datum in Spalte 4 steht.
-  const zeileText = zeile.join(' ').toLowerCase()
-  return woerter.every((wort) => zeileText.includes(wort))
-}
+export { zeilePasst }
 
 // Indizes der passenden Zeilen — seit der waehlbaren Zeile (2026-08-05)
 // braucht die Tabelle die IDENTITAET einer Zeile (ihren Rohindex) durch

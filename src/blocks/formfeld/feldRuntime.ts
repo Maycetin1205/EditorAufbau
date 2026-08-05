@@ -56,6 +56,17 @@ function currentValue(field: RuntimeFieldElement): string {
 // lowercase: HTML normalisiert valueField beim Export zu valuefield
 // (Attribut-Form der Bindungs-Konvention — bindingAttr = die eine Stelle).
 export function hydrateField(field: RuntimeFieldElement): void {
+  // Am NACHSCHLAGE-Feld gibt es keine Wert-Bindung: der Wert entsteht durch
+  // die Auswahl im Fenster. Eine Bindung obendrauf ueberschriebe ihn bei
+  // jedem SoftEngine-Push — der Bediener waehlt einen Kunden, das naechste
+  // Datenpaket setzt das Feld zurueck, und niemand sagt ihm warum. Der
+  // Inspector bietet die Bindung fuer diesen Feldtyp gar nicht erst an
+  // (visibleWhen notEquals); hier faellt zusaetzlich ab, was aus
+  // Altbestaenden oder von Hand gebauten Masken noch im Attribut steht.
+  if (field.getAttribute('fieldtype') === 'nachschlagen') {
+    fieldData.delete(field)
+    return
+  }
   // Quelle -> Zeile -> Wert macht die geteilte Leseleitung
   // (shared/gebundeneStelle). WELCHE Zeile gilt, entscheidet darin die
   // gemeinsame Auswahl-Regel: OHNE eingestellte Folge wie seit jeher die

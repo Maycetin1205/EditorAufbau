@@ -16,6 +16,13 @@ export type PropertyKind =
   | 'number'
   | 'segment'
   | 'field'
+  // quelle speichert die id einer DATENQUELLE — eine ZWEITE Quelle am
+  // Baustein, fuer einen eigenen Zweck neben der Quelle, aus der er seinen
+  // Inhalt liest (acceptsDataSource). Beispiel: die Liste, aus der das
+  // Nachschlage-Feld waehlen laesst. Der Export sammelt sie mit in die
+  // SEFILELOOP; ohne das schickte SoftEngine ihre Daten nie und das Fenster
+  // bliebe in der fertigen Maske leer.
+  | 'quelle'
   | 'relation'
 
 export interface PropertySelectOption {
@@ -25,7 +32,29 @@ export interface PropertySelectOption {
 
 export interface PropertyVisibilityCondition {
   attributeName: string
-  equals: unknown
+  // Genau EINE der beiden Formen: equals (sichtbar, wenn gleich) oder
+  // notEquals (sichtbar, wenn UNGLEICH — z. B. das normale Feld-Control an
+  // jedem Feldtyp AUSSER Nachschlagen, wo der Wert aus dem Fenster kommt
+  // statt aus einer Bindung). Ohne notEquals muesste jeder einzelne Feldtyp
+  // aufgezaehlt werden, und ein neuer Typ fiele still hinten runter.
+  equals?: unknown
+  notEquals?: unknown
+}
+
+// DIE eine Auswertung der Bedingung. Inspector, Export und Preflight muessen
+// dieselbe Antwort bekommen: eine Prop, die der Inspector versteckt, darf der
+// Export nicht mitnehmen (sonst laedt die Maske eine Tabelle, die kein
+// Baustein liest) und der Preflight nicht verlangen (sonst blockte er wegen
+// eines Feldes, das der Bauer nirgends sehen kann). Ohne Bedingung: immer.
+export function propertySichtbar(
+  bedingung: PropertyVisibilityCondition | undefined,
+  props: Record<string, unknown>,
+): boolean {
+  if (!bedingung) return true
+  if ('notEquals' in bedingung) {
+    return !Object.is(props[bedingung.attributeName], bedingung.notEquals)
+  }
+  return Object.is(props[bedingung.attributeName], bedingung.equals)
 }
 
 export interface PropertyDescription {
@@ -44,4 +73,27 @@ export interface PropertyDescription {
   visibleWhen?: PropertyVisibilityCondition
   requiresDataSource?: boolean
   exclusiveAmongSiblings?: boolean
+  /**
+   * Nur kind 'field': die waehlbaren Felder kommen aus der Datenquelle, deren
+   * id in DIESER Nachbar-Prop (kind 'quelle') steht — statt aus der Quelle in
+   * Reichweite des Bausteins. Das Nachschlagen braucht es: seine Felder
+   * gehoeren zur NACHSCHLAGE-Quelle, nicht zur eigenen (die es meist gar
+   * nicht hat).
+   */
+  quelleProp?: string
+  /**
+   * Nur kind 'field': Prop-Name, in dem der KLARNAME des gewaehlten Feldes
+   * mitgefuehrt wird (leer bei '— keins —').
+   *
+   * Warum es das braucht: die laufende Maske kennt nur Feldcodes. Ihre
+   * Quellen-Definitionen tragen bewusst KEIN Feld-Woerterbuch — Bindungen
+   * reisen als Feldcode-Attribute, und das reicht ueberall dort, wo ein Feld
+   * nur GELESEN wird. Sobald ein Baustein den Feldnamen aber ANZEIGEN muss,
+   * haette er nur „10_30" — sichtbarer Technikwert, Regel-3-Bruch. Statt das
+   * ganze Woerterbuch in jeden Export zu legen, traegt der Baustein den einen
+   * Klarnamen selbst; dieselbe Bauart wie der Titel einer Tabellenspalte.
+   * Der Inspector setzt beide Props generisch, ohne einen Bausteintyp zu
+   * kennen (Regel 2).
+   */
+  klarnameProp?: string
 }

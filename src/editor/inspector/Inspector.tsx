@@ -17,7 +17,7 @@ import { Copy, MousePointer2, Trash } from 'lucide-react'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
-import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
 import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -199,15 +199,24 @@ export function Inspector() {
   const amBausteinGebunden = new Set<string>(
     (def.bindableSpots ?? []).map((spot) => bindingProp(spot.prop)),
   )
+  // Klarname-Props (klarnameProp) haben KEIN eigenes Bedienelement: sie
+  // werden beim Feld-Wählen mitgeschrieben. Ein zweites Control dafür wären
+  // zwei Schalter für einen Wert (Regel 7).
+  const klarnameProps = new Set<string>(
+    def.customProperties.map((p) => p.klarnameProp).filter((n): n is string => n !== undefined),
+  )
   const visibleProps = def.customProperties.filter((p) => {
     if (amBausteinGebunden.has(p.attributeName)) return false
-    if (!p.visibleWhen) return true
-    return Object.is(block.props[p.visibleWhen.attributeName], p.visibleWhen.equals)
+    if (klarnameProps.has(p.attributeName)) return false
+    // propertySichtbar ist DIE eine Auswertung — Export und Preflight fragen
+    // dieselbe Stelle, sonst zeigt der eine ein Control, dessen Einstellung
+    // der andere als unsichtbar überspringt.
+    return propertySichtbar(p.visibleWhen, block.props)
   })
   // Daten-Controls gehören in die Sektion "Daten", nicht in
   // die allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
   const dataProps = visibleProps.filter(
-    (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'relation',
+    (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'quelle' || p.kind === 'relation',
   )
   const generalProps = visibleProps.filter((p) => !dataProps.includes(p))
   // Sektion zeigen, wenn der Block eine Quelle anhängen kann (Kanban) ODER

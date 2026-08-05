@@ -12,6 +12,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import { actionValueTargets, auswahlGeberImBaum } from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor } from '../core/data/aktionen'
 import { stepProblem } from '../core/data/schrittPruefung'
@@ -134,6 +135,48 @@ export function preflightMask(
         const titel = String(eintrag[b.titelKey] ?? '') || `Nr. ${i + 1}`
         pruefeBindung(eintrag[b.feldKey], titel)
       })
+    }
+    // Quellen-Properties (kind 'quelle', z. B. die Nachschlage-Liste des
+    // Formularfelds): halb eingestellt taete das Fenster in der Maske nichts
+    // Sichtbares — der Bediener klickt die Lupe und bekommt nur den
+    // Fehlerbalken. Darum blockiert der Export, sobald eine Quelle GEWAEHLT
+    // ist, aber eines ihrer Felder fehlt oder in der Quelle nicht mehr
+    // existiert. Die ganz leere Einstellung (nie eine Quelle gewaehlt) blockt
+    // bewusst NICHT — wie ein Knopf ohne Kette: gemeldet wird, was begonnen
+    // und nicht fertig ist (Regel 4).
+    for (const prop of def?.customProperties ?? []) {
+      if (prop.kind !== 'quelle') continue
+      if (!propertySichtbar(prop.visibleWhen, node.props)) continue
+      const quelleId = String(node.props[prop.attributeName] ?? '')
+      if (quelleId === '') continue
+      const quelle = sources.find((s) => s.id === quelleId)
+      if (!quelle) {
+        results.push({
+          name: 'Datenquelle unbekannt',
+          ok: false,
+          detail: `Baustein "${def?.displayName ?? node.type}", "${prop.name}" nennt eine geloeschte oder unbekannte Datenquelle — die Stelle bliebe in der Maske leer.`,
+        })
+        continue
+      }
+      // Die Felder, die AUF diese Quelle zeigen (quelleProp): beide muessen
+      // stehen, sonst weiss das Fenster nicht, was es zeigt bzw. merkt.
+      for (const feldProp of def?.customProperties ?? []) {
+        if (feldProp.kind !== 'field' || feldProp.quelleProp !== prop.attributeName) continue
+        const code = String(node.props[feldProp.attributeName] ?? '')
+        if (code === '') {
+          results.push({
+            name: 'Feld fehlt',
+            ok: false,
+            detail: `Baustein "${def?.displayName ?? node.type}": "${prop.name}" ist auf "${quelle.name}" gestellt, aber "${feldProp.name}" ist leer — in der Maske liesse sich hier nichts waehlen.`,
+          })
+        } else if (!quelle.fields.some((f) => f.code === code)) {
+          results.push({
+            name: 'Gebundenes Feld fehlt',
+            ok: false,
+            detail: `Baustein "${def?.displayName ?? node.type}": "${feldProp.name}" gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — Feld neu waehlen oder in der Datenquelle wieder anlegen. (Feldcode ${code})`,
+          })
+        }
+      }
     }
     // B2: exklusive Geschwister-Kennzeichen (exclusiveAmongSiblings in der
     // PropertyDescription, z. B. die Auffangspalte). Der Store verhindert

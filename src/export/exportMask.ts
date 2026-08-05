@@ -20,6 +20,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import { firstDescendantOfType } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
@@ -259,6 +260,19 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
       // Quelle des Bausteins, dann seine weiteren (deterministisch).
       for (const q of weitereQuellenAus(node.props[WEITERE_QUELLEN_PROP])) {
         if (quelleBrauchbar(q)) add(q.quelleId)
+      }
+    }
+    // Und Quellen, die als PROPERTY am Baustein haengen (kind 'quelle', z. B.
+    // die Nachschlage-Liste des Formularfelds) — registry-getrieben, kein
+    // Bausteintyp hier. Dieselbe Begruendung wie oben: ohne diesen Schritt
+    // stuende sie in KEINER SEFILELOOP und das Fenster bliebe leer.
+    // NUR Props, die zum aktuellen Zustand gehoeren (propertySichtbar —
+    // derselbe Auswerter wie im Inspector und im Preflight): der
+    // Nachschlage-Rest eines laengst auf „Text" zurueckgestellten Feldes
+    // luede sonst eine ganze Tabelle in die Maske, die kein Baustein liest.
+    for (const prop of getBlockDefinition(node.type)?.customProperties ?? []) {
+      if (prop.kind === 'quelle' && propertySichtbar(prop.visibleWhen, node.props)) {
+        add(node.props[prop.attributeName])
       }
     }
     node.childIds.forEach((id) => visit(tree[id]))

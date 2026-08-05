@@ -35,7 +35,7 @@
 // keine Fallbacks; strukturelle Groessen (Padding, Positionen) als
 // Literale wie bei Karte/Spalte.
 
-import { css, html, nothing, type TemplateResult } from 'lit'
+import { html, nothing, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
@@ -50,9 +50,11 @@ import {
   disconnectField,
   inputValueToDate,
 } from './feldRuntime'
+import { feldStil } from './feldStil'
+import { oeffneNachschlagen } from './nachschlagen'
 
 // Feldtypen (Technikwerte) — der Bediener sieht nur die Klarnamen unten.
-const FELD_TYPEN = ['text', 'number', 'textarea', 'select', 'date', 'checkbox'] as const
+const FELD_TYPEN = ['text', 'number', 'textarea', 'select', 'date', 'checkbox', 'nachschlagen'] as const
 type FeldTyp = (typeof FELD_TYPEN)[number]
 
 function coerceFeldTyp(v: unknown): FeldTyp {
@@ -62,7 +64,7 @@ function coerceFeldTyp(v: unknown): FeldTyp {
 // Typen mit sichtbarem Platzhalter IM Feld. Beim Select liegt darunter eine
 // leere, deaktivierte Startoption: der Platzhalter beschreibt das Feld, ist
 // aber selbst nie ein auswählbarer Wert.
-const MIT_PLATZHALTER: readonly FeldTyp[] = ['text', 'number', 'textarea', 'select']
+const MIT_PLATZHALTER: readonly FeldTyp[] = ['text', 'number', 'textarea', 'select', 'nachschlagen']
 
 export class FormFeldBlock extends BasicBlock {
   static readonly blockType = 'formfeld'
@@ -92,6 +94,14 @@ export class FormFeldBlock extends BasicBlock {
     source: '',
     value: '',
     valueField: '',
+    // Nachschlagen: Quelle + zwei Felder (Technikwerte) und deren Klarnamen
+    // als Spaltenkoepfe im Fenster (klarnameProp, Regel 3 — die Maske kennt
+    // sonst nur Feldcodes). Alles leer = kein Nachschlagen.
+    nachschlagQuelle: '',
+    anzeigeFeld: '',
+    anzeigeTitel: '',
+    speicherFeld: '',
+    speicherTitel: '',
   }
 
   // Raster-Startgröße auf der Maskenfläche (kalibriert im Browser 2026-07-23):
@@ -110,6 +120,7 @@ export class FormFeldBlock extends BasicBlock {
         { value: 'select', label: 'Auswahl' },
         { value: 'date', label: 'Datum' },
         { value: 'checkbox', label: 'Ankreuzfeld' },
+        { value: 'nachschlagen', label: 'Nachschlagen' },
       ],
     },
     {
@@ -119,134 +130,43 @@ export class FormFeldBlock extends BasicBlock {
       visibleWhen: { attributeName: 'fieldType', equals: 'select' },
     },
     {
+      attributeName: 'nachschlagQuelle',
+      name: 'Quelle',
+      description: 'Nur bei Feldtyp "Nachschlagen": aus dieser Datenquelle wählt der Bediener eine Zeile.',
+      kind: 'quelle',
+      visibleWhen: { attributeName: 'fieldType', equals: 'nachschlagen' },
+    },
+    {
+      attributeName: 'anzeigeFeld',
+      name: 'Angezeigt wird',
+      description: 'Feld der Nachschlage-Quelle, dessen Wert der Bediener sieht (z. B. der Name).',
+      kind: 'field',
+      quelleProp: 'nachschlagQuelle',
+      klarnameProp: 'anzeigeTitel',
+      visibleWhen: { attributeName: 'fieldType', equals: 'nachschlagen' },
+    },
+    {
+      attributeName: 'speicherFeld',
+      name: 'Gespeichert wird',
+      description: 'Feld der Nachschlage-Quelle, dessen Wert die Maske sich merkt und die Kette "Wert geändert" weitergibt (z. B. die Nummer).',
+      kind: 'field',
+      quelleProp: 'nachschlagQuelle',
+      klarnameProp: 'speicherTitel',
+      visibleWhen: { attributeName: 'fieldType', equals: 'nachschlagen' },
+    },
+    {
       attributeName: 'valueField',
       name: 'Feld',
       description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',      kind: 'field',
+      // NICHT am Nachschlage-Feld: dort ENTSTEHT der Wert durch die Auswahl
+      // im Fenster. Eine Datenbindung obendrauf ueberschriebe ihn bei jedem
+      // SE-Push, waehrend das Feld weiter den Klarwert zeigte — Anzeige und
+      // Ketten-Wert liefen still auseinander.
+      visibleWhen: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
     },
   ]
 
-  static override styles = [
-    BasicBlock.styles,
-    css`
-      .feld {
-        font-family: var(--se-font);
-        /* Innenabstände EINMAL definiert — .ctrl und .ph leiten sich beide
-           daraus ab, damit der Platzhalter exakt an der Textposition sitzt.
-           (N1: keine Magic Numbers, die beim Padding-Ändern auseinanderlaufen.) */
-        --feld-pad-y: 7px;
-        --feld-pad-x: 10px;
-        --feld-rand: 1px;
-      }
-      /* Anker für den im Feld sitzenden Platzhalter. */
-      .huelle { position: relative; }
-      /* .ctrl exakt nach Referenz-Optik: Rahmen, Panel-Flaeche, kantiger
-         Radius; Fokus = Hausfarbe als Rahmen + 1px-Ring (kein weicher
-         Schatten — Flaechen leben von Rahmen). */
-      .ctrl {
-        box-sizing: border-box;
-        width: 100%;
-        padding: var(--feld-pad-y) var(--feld-pad-x);
-        border: var(--feld-rand) solid var(--se-line);
-        background: var(--se-panel);
-        border-radius: var(--se-r-sm);
-        font-family: var(--se-font);
-        font-size: var(--se-fs);
-        color: var(--se-ink);
-      }
-      .ctrl:focus {
-        outline: none;
-        border-color: var(--se-accent);
-        box-shadow: 0 0 0 1px var(--se-accent);
-      }
-      textarea.ctrl {
-        display: block;
-        resize: vertical;
-        min-height: 64px;
-        line-height: 1.5;
-      }
-      select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
-      /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
-         1px Rahmen + 7px/10px Innenabstand), faengt keine Klicks der
-         Maske ab und verschwindet, sobald das Feld Inhalt hat. */
-      .ph {
-        position: absolute;
-        top: calc(var(--feld-pad-y) + var(--feld-rand));
-        left: calc(var(--feld-pad-x) + var(--feld-rand));
-        right: calc(var(--feld-pad-x) + var(--feld-rand));
-        color: var(--se-faint);
-        font-size: var(--se-fs);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        pointer-events: none;
-      }
-      .ph[hidden] { display: none; }
-      /* GEBUNDEN heisst: an dieser Stelle stehen DATEN, kein Text. Deshalb
-         zeigt die MASKE den Platzhalter eines gebundenen Felds NIE — auch
-         nicht, solange der Wert leer ist (Auswahl-Folge ohne Auswahl, leeres
-         Datenfeld). Vorher las der Bediener in SoftEngine ploetzlich
-         "Feldname", wo der Editor die Klarnamen-Vorschau der Bindung
-         ("Tiername") gezeigt hatte — Bedien-Bruch, gefunden im SE-Echttest
-         2026-08-04. Leer bleibt jetzt leer, genau wie beim gebundenen Text.
-         Ungebunden bleibt der Platzhalter unveraendert die Beschriftung des
-         Felds, und der EDITOR bleibt unberuehrt: dort ist der Platzhalter das
-         Umbenennen-Ziel und traegt die Bindungs-Vorschau.
-         Als CSS und nicht als ?hidden im Template, weil "Editor oder Maske"
-         am Attribut data-ff-editor haengt — das ist keine reaktive Property,
-         ein Re-Render nach dem Setzen wuerde also nicht garantiert stimmen.
-         Und NICHT in feldRuntime: die Runtime kennt nur source/valuefield/
-         value und darf nichts ueber die Innenteile EINES Bausteins wissen
-         (Regel 2) — sie bedient auch andere. */
-      :host(:not([data-ff-editor])) .huelle[data-ff-bound] .ph { display: none; }
-      /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
-         Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
-      .ph-select {
-        top: calc(var(--feld-pad-y) - 1px + var(--feld-rand));
-        left: calc(var(--feld-pad-x) - 2px + var(--feld-rand));
-        right: 25px; /* Platz für den Aufklapp-Pfeil */
-      }
-      /* Ankreuzfeld: Kästchen + Beschriftung in EINER Zeile (Referenz
-         .impf-chk) — bewusst ohne <label for>-Kopplung: im Editor ist die
-         Beschriftung das Umbenennen-Ziel. Den Haken-Klick auf den Text
-         übernimmt in der MASKE ein eigener Handler (N1, s. onTextClick). */
-      .zeile {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: var(--se-fs);
-        color: var(--se-ink);
-      }
-      input[type='checkbox'].ctrl {
-        width: 15px;
-        height: 15px;
-        padding: 0;
-        flex: none;
-        accent-color: var(--se-accent);
-      }
-      /* Im Editor wird gestaltet, nicht ausgefuellt: das Eingabeelement
-         nimmt dort keine Bedienung an — dafuer wird der Platzhalter
-         anfassbar (Doppelklick = Text im Feld aendern). Ein leerer
-         Platzhalter bekommt nur im Editor einen greifbaren Hinweis. */
-      :host([data-ff-editor]) .ctrl { pointer-events: none; }
-      :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
-      :host([data-ff-editor]) .huelle[data-ff-bound] .ctrl {
-        border-style: dotted;
-        border-color: var(--se-accent);
-      }
-      /* N1: der "Text …"-Griff gilt für JEDEN geleerten Inline-Edit-Text —
-         auch die Ankreuzfeld-Beschriftung bleibt im Editor anfassbar. */
-      :host([data-ff-editor]) [data-ff-editable]:empty::before { content: 'Text …'; opacity: 0.6; }
-      /* N1: in der MASKE schaltet die Beschriftung den Haken (Windows-
-         Gewohnheit) — klickbar zeigen, Textauswahl beim Klicken vermeiden. */
-      :host(:not([data-ff-editor])) .zeile .text { cursor: pointer; user-select: none; }
-      /* Rasterflaeche: das Eingabefeld fuellt seine Zelle in Breite und Hoehe
-         (Ziehen macht das FELD groesser). Nur die Text-artigen Felder in der
-         .huelle strecken sich; das Ankreuzfeld (.zeile) bleibt 15px. */
-      :host([fuellt]) .feld,
-      :host([fuellt]) .huelle { height: 100%; }
-      :host([fuellt]) .huelle .ctrl { height: 100%; }
-    `,
-  ]
+  static override styles = [BasicBlock.styles, feldStil]
 
   @property() fieldType = 'text'
   @property() placeholder = 'Feldname'
@@ -254,6 +174,16 @@ export class FormFeldBlock extends BasicBlock {
   @property() source = ''
   @property() value = ''
   @property() valueField = ''
+  @property() nachschlagQuelle = ''
+  @property() anzeigeFeld = ''
+  @property() anzeigeTitel = ''
+  @property() speicherFeld = ''
+  @property() speicherTitel = ''
+
+  // Der ANGEZEIGTE Klarwert des Nachschlagens (z. B. „Berger, Anna").
+  // @state, kein Bauplan-Wert: er entsteht erst, wenn der Bediener in der
+  // Maske eine Zeile uebernimmt — `value` traegt derweil den Technikwert.
+  @state() private anzeige = ''
 
   // Der Haken des Ankreuzfelds. Bewusst @state und NICHT @property: er ist
   // kein Bauplan-Wert und reist nicht in den Export — er entsteht erst, wenn
@@ -329,6 +259,24 @@ export class FormFeldBlock extends BasicBlock {
             : eintraege.map((o) => html`<option value=${o}>${o}</option>`)}
         </select>`
       }
+      case 'nachschlagen':
+        // Anzeige-Text nur lesbar (gesucht wird im Fenster, nicht im Feld —
+        // der Wert ENTSTEHT durch Auswahl, Regel 3: angezeigt wird der
+        // Klarwert, gespeichert der Technikwert in `value`). Die Lupe oeffnet
+        // das Fenster; im Editor ist sie reine Optik (pointer-events aus).
+        return html`<div class="nachschlag">
+          <input class="ctrl" type="text" readonly .value=${this.anzeige} />
+          <button
+            class="lupe"
+            type="button"
+            aria-label="Nachschlagen"
+            title="Nachschlagen"
+            @click=${this.onLupe}
+          ><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+            <line x1="10.4" y1="10.4" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
+          </svg></button>
+        </div>`
       default:
         // text / number / date teilen das eine Input-Element.
         return html`<input
@@ -339,6 +287,31 @@ export class FormFeldBlock extends BasicBlock {
           @change=${this.onChange}
         />`
     }
+  }
+
+  // Lupe gedrueckt (nur in der MASKE erreichbar): Fenster oeffnen. Die
+  // Uebernahme setzt beide Werte und feuert 'change' am Host — daran haengt
+  // die Kette „Wert geändert" (feldRuntime), exakt wie bei jedem Feldtyp.
+  private onLupe(): void {
+    if (this.hasAttribute('data-ff-editor')) return
+    oeffneNachschlagen({
+      quelleId: this.nachschlagQuelle,
+      anzeigeFeld: this.anzeigeFeld,
+      speicherFeld: this.speicherFeld,
+      anzeigeTitel: this.anzeigeTitel,
+      speicherTitel: this.speicherTitel,
+      titel: this.placeholder,
+      onUebernehmen: (anzeige, wert) => {
+        // Ein Satz mit leerem Anzeige-Feld bleibt SICHTBAR uebernommen: dann
+        // steht der Wert selbst im Feld. Sonst saehe das Feld leer aus,
+        // truege aber einen Technikwert — Auswahl und Nicht-Auswahl waeren
+        // nicht zu unterscheiden. Der Wert stand dem Bediener im Fenster
+        // ohnehin vor Augen (Wert-Spalte).
+        this.anzeige = anzeige !== '' ? anzeige : wert
+        this.value = wert
+        this.dispatchEvent(new Event('change'))
+      },
+    })
   }
 
   override render(): TemplateResult {
