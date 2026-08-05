@@ -170,8 +170,8 @@ for (const { tag, typ, pfad } of bausteine) {
 // KEINE mehr -- jede Quelldatei faellt unter denselben Deckel.
 // StepForm.tsx stand hier bis 2026-07-24 mit 722 Zeilen (geteilt in
 // ParameterZeile / RelationAuswahl / SchrittSelect); Editor.ts bis
-// 2026-07-27 mit 559 -- jetzt 422, weil Seiten, Raster und Auswahl in
-// eigene Faecher gezogen wurden (pageOps / rasterOps / selectionOps).
+// 2026-07-27 mit 559, bis Seiten, Raster und Auswahl in eigene Faecher
+// gezogen wurden (pageOps / rasterOps / selectionOps).
 // Damit ist die Ausnahme ersatzlos entfallen: der Zustandsspeicher kann
 // nicht mehr unbemerkt zum Monolithen wachsen.
 const DECKEL = 500

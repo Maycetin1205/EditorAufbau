@@ -22,8 +22,6 @@ export interface DatenAnschluss<T extends HTMLElement> {
   connect: (el: T) => void
   // Vom Baustein in disconnectedCallback rufen.
   disconnect: (el: T) => void
-  // Alle angemeldeten Elemente neu befuellen (fuer gezielte Laufzeit-Tests).
-  hydriereAlle: () => void
 }
 
 export function macheDatenAnschluss<T extends HTMLElement>(opts: {
@@ -71,5 +69,8 @@ export function macheDatenAnschluss<T extends HTMLElement>(opts: {
     elemente.delete(el)
   }
 
-  return { connect, disconnect, hydriereAlle }
+  // `hydriereAlle` gab es bis 2026-08-05 auch nach draussen, angeblich "fuer
+  // gezielte Laufzeit-Tests" — kein Test hat sie je gerufen. Sie bleibt
+  // intern (die drei Abos oben brauchen sie).
+  return { connect, disconnect }
 }

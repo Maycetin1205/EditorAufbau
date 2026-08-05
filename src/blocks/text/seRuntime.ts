@@ -40,8 +40,7 @@ function gebunden(el: RuntimeTextElement): { sourceId: string; code: string } | 
   return sourceId === '' || code === '' ? undefined : { sourceId, code }
 }
 
-// Exportiert fuer den gezielten Runtime-Test.
-export function hydriereText(el: RuntimeTextElement): void {
+function hydriereText(el: RuntimeTextElement): void {
   const bindung = gebunden(el)
   if (!bindung) return // ungebunden: der getippte Text bleibt unangetastet
 

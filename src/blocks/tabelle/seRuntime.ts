@@ -44,9 +44,9 @@ function spaltenFelder(el: HTMLElement): string[] {
   return tryCoerceSpalten(el.getAttribute('spalten') ?? '').map((s) => s.feld)
 }
 
-// Exportiert fuer den gezielten Runtime-Test. Baut je Datenzeile ein Wert-Array,
-// an die Spaltenreihenfolge ausgerichtet (leeres Feld -> leere Zelle).
-export function hydrateTable(el: RuntimeTableElement): void {
+// Baut je Datenzeile ein Wert-Array, an die Spaltenreihenfolge ausgerichtet
+// (leeres Feld -> leere Zelle).
+function hydrateTable(el: RuntimeTableElement): void {
   const sourceId = el.getAttribute('source') ?? ''
   if (sourceId === '') {
     el.datenzeilen = []

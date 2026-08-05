@@ -1,9 +1,12 @@
-// feldRuntime — gemeinsames Datenverhalten einwertiger Blöcke im Export.
+// feldRuntime — Datenverhalten eines EINWERTIGEN Blocks im Export.
 //
-// Die Runtime kennt nur den gemeinsamen Vertrag source + valuefield + value.
-// Formularfeld und Datumsanzeige verwenden ihn identisch. Die Quelle und
-// Zeilen kommen aus der SoftEngine-Schicht; der konkrete Baustein bleibt ein
-// normales Web Component. Editor-Elemente melden sich nie an.
+// Die Runtime kennt nur den Vertrag source + valuefield + value, nie einen
+// Bausteintyp. Benutzt wird sie derzeit von genau einem Baustein: dem
+// Formularfeld. (Bis 2026-08-05 behauptete hier eine "Datumsanzeige"
+// mitzunutzen — die gibt es nicht; der Datum-Baustein ist der Tageswaehler
+// und hat gar keine Datenquelle.) Die Quelle und Zeilen kommen aus der
+// SoftEngine-Schicht; der konkrete Baustein bleibt ein normales Web
+// Component. Editor-Elemente melden sich nie an.
 
 import { bindingAttr, zerlegeBindung } from '../../core/blocks/BlockDefinition'
 import { seGlobal } from '../../softengine/bridge'
