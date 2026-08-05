@@ -104,12 +104,14 @@
   --se-r-md:   5px;
   --se-r-lg:   7px;
 
-  /* Schrift — Fellnase: Fraunces (Schmuck) + Figtree (Werk).
-     Beide reisen als eingebettete Daten in der Maske mit
-     (masken-schriften.css); die Namen danach sind der Notnagel, falls
-     das Einbetten je entfaellt. */
+  /* Schrift — Fellnase: Figtree als Werk-Schrift. Sie reist als
+     eingebettete Daten in der Maske mit (masken-schriften.css); die
+     Namen danach sind der Notnagel, falls das Einbetten je entfaellt.
+     Die Schmuck-Schrift ist bewusst NICHT eingebettet und faengt
+     direkt bei Georgia an (Begruendung: masken-schriften.css) — der
+     Serifen-Kontrast zum Fliesstext bleibt, das Gewicht nicht. */
   --se-font: "Figtree", "Segoe UI", Tahoma, sans-serif;
-  --se-font-schmuck: "Fraunces", Georgia, "Times New Roman", serif;
+  --se-font-schmuck: Georgia, "Times New Roman", serif;
   --se-mono: "IBM Plex Mono", Consolas, monospace; /* Zeiten, Nummern, Codes */
   --se-fs:    13.5px; /* Grundgroesse (dicht, Werkzeug-Charakter) */
   --se-fs-sm: 12px;
