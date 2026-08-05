@@ -39,13 +39,22 @@ export interface NachschlagenArgs {
   onUebernehmen: (anzeige: string, wert: string, satz: unknown) => void
 }
 
-interface Eintrag {
+export interface Eintrag {
   anzeige: string
   wert: string
   // Die ROHZEILE hinter dem Eintrag. Das Fenster zeigt nur zwei Spalten, das
   // Feld gibt aber den ganzen SATZ als Auswahl ab (Geber) — Folger holen sich
   // daraus beliebige Schluesselfelder, nicht nur die zwei sichtbaren.
   satz: unknown
+}
+
+// Was die Einstellungen eines Nachschlage-Felds ausmacht. Beide Wege — die
+// Lupe und die stille Uebernahme — brauchen genau das.
+export interface NachschlagEinstellung {
+  el: HTMLElement
+  quelleId: string
+  anzeigeFeld: string
+  speicherFeld: string
 }
 
 const SEITENGROESSE = 10
@@ -82,7 +91,13 @@ export function nachschlagTreffer(eintraege: readonly Eintrag[], suchtext: strin
 // Fall des Nutzers: ein Kunde-Feld und ein Haustier-Feld, das ihm folgt — die
 // Lupe zeigt dann nur die Haustiere DIESES Kunden statt aller 8.000.
 // Ohne Auswahl beim Geber bleiben alle Zeilen stehen, genau wie bei der
-// folgenden Tabelle: nichts passiert automatisch (Nutzer 2026-08-05).
+// folgenden Tabelle.
+//
+// Von SELBST passiert dabei normalerweise nichts — der Bediener uebernimmt mit
+// einem Klick, und nur er (Standard, Nutzer 2026-08-05). Die eine bewusste
+// Ausnahme schaltet der Bauer je Feld frei („Einzigen Treffer uebernehmen",
+// s. einzigenTrefferFinden unten): bleibt genau ein Satz uebrig, gibt es nichts mehr
+// zu waehlen, und die Lupe waere eine Handbewegung ohne Wahl.
 //
 // Gefiltert wird mit der GETEILTEN Mechanik (shared/auswahl), nie mit einer
 // zweiten Filter-Logik daneben: sonst zeigte dieses Fenster die Haustiere eines
@@ -94,6 +109,43 @@ export function fensterEintraege(
   speicherFeld: string,
 ): Eintrag[] {
   return nachschlagEintraege(zeilenNachAuswahl(el, rows).rows, anzeigeFeld, speicherFeld)
+}
+
+// Die Einstellungen sind halb fertig, oder die Quelle steht nicht in der
+// Maske. WAS dann geschieht, entscheidet der Aufrufer: die Lupe sagt es im
+// Klartext (Bedienerhandlung, Regel 4), der stille Weg tut einfach nichts.
+export type EintraegeErgebnis =
+  | { ok: true; eintraege: Eintrag[] }
+  | { ok: false; grund: 'unvollstaendig' | 'quelleFehlt' }
+
+// Die Eintraege des Fensters beschaffen: Quelle finden, Zeilen holen, filtern,
+// Spalten bauen. EINE Stelle fuer die Lupe UND die stille Uebernahme — zwei
+// Abschriften koennten verschieden urteilen, und dann uebernaehme das Feld von
+// selbst einen anderen Satz als den, den die Lupe zeigt.
+export function holeEintraege(e: NachschlagEinstellung): EintraegeErgebnis {
+  if (e.quelleId === '' || e.anzeigeFeld === '' || e.speicherFeld === '') {
+    return { ok: false, grund: 'unvollstaendig' }
+  }
+  const quelle = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, e.quelleId)
+  if (!quelle) return { ok: false, grund: 'quelleFehlt' }
+  const rows = rowsFor(seGlobal().SEDATA, quelle.name, quelle.tableId)
+  return { ok: true, eintraege: fensterEintraege(e.el, rows, e.anzeigeFeld, e.speicherFeld) }
+}
+
+// „Es gibt nichts mehr zu waehlen": genau EIN Eintrag ist uebrig und das Feld
+// ist noch leer — dann ist DAS der Satz, den der Bediener meinen kann.
+// Nutzer-Entscheidung 2026-08-05, nur mit der Einstellung am Feld
+// (`einzigerTreffer` — die Einstellung ist das Substantiv, dies hier das Verb).
+//
+// Die Bedingung „Feld leer" ist nicht Bequemlichkeit, sondern der Riegel gegen
+// zwei Fehler: ein bestaetigter Wert darf nie still durch einen anderen
+// ersetzt werden, und ins gefuellte Feld nichts zu schreiben heisst, dass
+// derselbe Anlass beliebig oft laufen kann, ohne sich aufzuschaukeln.
+export function einzigenTrefferFinden(
+  eintraege: readonly Eintrag[],
+  feldLeer: boolean,
+): Eintrag | null {
+  return feldLeer && eintraege.length === 1 ? eintraege[0] : null
 }
 
 // Passt der schon uebernommene Satz noch zur Auswahl des Gebers?
@@ -147,31 +199,25 @@ function seitenKnopf(text: string, label: string): HTMLButtonElement {
 }
 
 export function oeffneNachschlagen(args: NachschlagenArgs): void {
-  // Halb eingestellt: der Preflight blockt so etwas schon beim Export, aber
-  // eine alte Maske kann es tragen. Dann sagt die Maske im Klartext, was
-  // fehlt, statt still nichts zu tun (Regel 4).
-  if (args.quelleId === '' || args.anzeigeFeld === '' || args.speicherFeld === '') {
-    meldeFehler('Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).')
-    return
-  }
-
-  const quelle = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, args.quelleId)
-  if (!quelle) {
-    meldeFehler('Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.')
-    return
-  }
-
-  schliesse()
   // Die Eintraege stehen fest, sobald das Fenster aufgeht: die Auswahl des
   // Gebers kann sich waehrend des Suchens nicht aendern (der Bediener steht
   // hier drin), und ein Daten-Push mitten in der Liste liesse ihn suchen,
   // waehrend sich die Zeilen unter dem Finger verschieben.
-  const eintraege = fensterEintraege(
-    args.el,
-    rowsFor(seGlobal().SEDATA, quelle.name, quelle.tableId),
-    args.anzeigeFeld,
-    args.speicherFeld,
-  )
+  const ergebnis = holeEintraege(args)
+  if (!ergebnis.ok) {
+    // Die Lupe ist eine BEDIENERHANDLUNG: sie darf nie still nichts tun
+    // (Regel 4). Halb eingestellt blockt der Preflight schon beim Export, aber
+    // eine alte Maske kann es tragen — dann sagt die Maske im Klartext, was
+    // fehlt. Zwei Ursachen, zwei Meldungen: die eine heilt der Bauer im
+    // Editor, die andere steckt in den Daten der Maske.
+    meldeFehler(ergebnis.grund === 'unvollstaendig'
+      ? 'Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).'
+      : 'Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.')
+    return
+  }
+  const eintraege = ergebnis.eintraege
+
+  schliesse()
 
   const dialog = document.createElement(DIALOG_RAHMEN_TAG) as DialogRahmen
   dialog.setAttribute('data-ff-nachschlagen', '')

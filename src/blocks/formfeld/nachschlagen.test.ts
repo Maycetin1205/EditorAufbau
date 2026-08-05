@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setzeAuswahlZurueck, waehleAuswahl } from '../shared/auswahl'
 import {
+  einzigenTrefferFinden,
   fensterEintraege,
   nachschlagEintraege,
   nachschlagTreffer,
@@ -112,6 +113,34 @@ describe('fensterEintraege (das Fenster folgt der Auswahl)', () => {
   it('kein Partner: das Fenster ist ehrlich leer statt falsch gefuellt', () => {
     waehleAuswahl('kunde', { '110_10': '99999' })
     expect(fensterEintraege(folgerFeld, [...HAUSTIERE], '18_30', '2_8')).toEqual([])
+  })
+})
+
+// „Einzigen Treffer uebernehmen" (Nutzer-Entscheidung 2026-08-05). Hier die
+// Kern-Bedingung; dass sie an denselben Anlaessen wie das Leeren geprueft wird,
+// steht im Baustein (pruefeEigenenWert) und liegt in der Klickpruefung.
+describe('einzigenTrefferFinden', () => {
+  const einer = nachschlagEintraege([HAUSTIERE[1]], '18_30', '2_8')
+  const zwei = nachschlagEintraege(HAUSTIERE, '18_30', '2_8')
+
+  it('genau ein Eintrag ins LEERE Feld: das ist der Satz', () => {
+    expect(einzigenTrefferFinden(einer, true)?.anzeige).toBe('Minka')
+  })
+
+  it('mehrere Eintraege: der Bediener waehlt selbst', () => {
+    expect(einzigenTrefferFinden(zwei, true)).toBeNull()
+  })
+
+  it('gar kein Eintrag: nichts zu uebernehmen', () => {
+    expect(einzigenTrefferFinden([], true)).toBeNull()
+  })
+
+  it('Feld schon gefuellt: NIE still ersetzen', () => {
+    // Zwei Gruende in einem: ein bestaetigter Wert darf nicht heimlich durch
+    // einen anderen getauscht werden, und weil ins gefuellte Feld nichts
+    // geschrieben wird, kann derselbe Anlass beliebig oft laufen, ohne sich
+    // aufzuschaukeln.
+    expect(einzigenTrefferFinden(einer, false)).toBeNull()
   })
 })
 

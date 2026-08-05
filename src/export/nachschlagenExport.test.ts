@@ -85,6 +85,22 @@ describe('Nachschlage-Feld im Export', () => {
     expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
   })
 
+  it('„Einzigen Treffer übernehmen" ueberlebt den Export', () => {
+    // Nutzer-Entscheidung 2026-08-05. Faellt das Attribut weg, wartet die Maske
+    // auf einen Lupen-Klick, den der Bauer dem Bediener ersparen wollte — und
+    // niemand sieht, dass die Einstellung verloren ging (WYSIWYG-Bruch,
+    // Regel 1). Nur der TAG wird geprueft, nicht das ganze Dokument: das
+    // eingebettete Runtime-Buendel enthaelt denselben Namen als minifizierte
+    // Zuweisung.
+    const tag = (html: string): string => /<ff-formfeld[^>]*>/.exec(html)?.[0] ?? ''
+    const an = tag(exportMask(baumMit({ ...KUNDE_PROPS, einzigerTreffer: 'ja' }), 'M', ADRESSEN).html)
+    expect(an).toMatch(/\seinzigerTreffer="ja"/i)
+    // Standard (nein) schreibt KEIN Attribut — sonst waere jede bestehende
+    // Maske im Export anders, und der Byte-Waechter haette angeschlagen.
+    const aus = tag(exportMask(baumMit(KUNDE_PROPS), 'M', ADRESSEN).html)
+    expect(aus).not.toMatch(/einzigerTreffer=/i)
+  })
+
   it('halb eingestellt blockiert den Export im Klartext', () => {
     // Quelle gewaehlt, aber „Gespeichert wird" fehlt: die Lupe koennte in der
     // Maske nur den Fehlerbalken zeigen.

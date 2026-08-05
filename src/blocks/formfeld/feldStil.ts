@@ -111,12 +111,18 @@ export const feldStil = css`
      dieser Wert kommt aus Daten, nicht aus der Tastatur. */
   .nachschlag { position: relative; }
   .nachschlag .ctrl { padding-right: 34px; border-style: dashed; }
-  .lupe {
+  /* Steht ein Wert drin, sitzt links von der Lupe das × — der Text braucht
+     dann Platz fuer BEIDE Knoepfe, sonst laeuft er darunter. */
+  .nachschlag.mit-loeschen .ctrl { padding-right: 58px; }
+  /* Lupe und × teilen ihre Optik: gleiche Hoehe, gleiche Handschrift, nur
+     verschieden breit und verschieden weit rechts. Getrennt aufgeschrieben
+     waeren es zwei Knoepfe, die im selben Feld nebeneinander sitzen und mit
+     der Zeit auseinanderdriften. */
+  .lupe,
+  .loeschen {
     position: absolute;
-    right: var(--feld-rand);
     top: var(--feld-rand);
     bottom: var(--feld-rand);
-    width: 30px;
     display: grid;
     place-items: center;
     padding: 0;
@@ -126,13 +132,21 @@ export const feldStil = css`
     cursor: pointer;
     transition: background var(--se-move);
   }
-  .lupe:hover { background: var(--se-accent-soft); color: var(--se-ink); }
-  .lupe:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
+  .lupe { right: var(--feld-rand); width: 30px; }
+  /* Das × sitzt LINKS der Lupe (30px breit): nachschlagen ist die Haupt-
+     handlung und bleibt am gewohnten Platz am Rand; das Loeschen ist der
+     seltenere Griff und weicht nach innen. */
+  .loeschen { right: calc(var(--feld-rand) + 30px); width: 24px; }
+  .lupe:hover,
+  .loeschen:hover { background: var(--se-accent-soft); color: var(--se-ink); }
+  .lupe:focus-visible,
+  .loeschen:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
   /* Im Editor wird gestaltet, nicht ausgefuellt: das Eingabeelement
      nimmt dort keine Bedienung an — dafuer wird der Platzhalter
      anfassbar (Doppelklick = Text im Feld aendern). Ein leerer
      Platzhalter bekommt nur im Editor einen greifbaren Hinweis. */
   :host([data-ff-editor]) .ctrl,
+  :host([data-ff-editor]) .loeschen,
   :host([data-ff-editor]) .lupe { pointer-events: none; }
   :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
   :host([data-ff-editor]) .huelle[data-ff-bound] .ctrl {

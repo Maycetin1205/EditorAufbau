@@ -45,8 +45,8 @@ import type {
   QuellenFaehigkeit,
   SatzWahl,
 } from '../../core/blocks/BlockDefinition'
-import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { geberIdVon, klareAuswahl, setzeAuswahl } from '../shared/auswahl'
+import { FELD_EIGENSCHAFTEN } from './feldEigenschaften'
 import {
   connectField,
   dateValueToInput,
@@ -54,7 +54,12 @@ import {
   inputValueToDate,
 } from './feldRuntime'
 import { feldStil } from './feldStil'
-import { oeffneNachschlagen, satzPasstZurAuswahl } from './nachschlagen'
+import {
+  einzigenTrefferFinden,
+  holeEintraege,
+  oeffneNachschlagen,
+  satzPasstZurAuswahl,
+} from './nachschlagen'
 
 // Feldtypen (Technikwerte) — der Bediener sieht nur die Klarnamen unten.
 const FELD_TYPEN = ['text', 'number', 'textarea', 'select', 'date', 'checkbox', 'nachschlagen'] as const
@@ -138,69 +143,16 @@ export class FormFeldBlock extends BasicBlock {
     anzeigeTitel: '',
     speicherFeld: '',
     speicherTitel: '',
+    // Bleibt nach der Folge-Filterung genau EIN Satz uebrig, uebernimmt das
+    // Feld ihn von selbst (Standard nein — s. feldEigenschaften).
+    einzigerTreffer: 'nein',
   }
 
   // Raster-Startgröße auf der Maskenfläche (kalibriert im Browser 2026-07-23):
   // ein Eingabefeld, Zelle eng am Inhalt.
   static readonly raster = { startW: 6, startH: 2, minW: 2, minH: 2 }
 
-  static override readonly customProperties: PropertyDescription[] = [
-    {
-      attributeName: 'fieldType',
-      name: 'Feldtyp',
-      description: 'Welche Art Eingabe das Feld annimmt.',      kind: 'select',
-      options: [
-        { value: 'text', label: 'Text' },
-        { value: 'number', label: 'Zahl' },
-        { value: 'textarea', label: 'Mehrzeilig' },
-        { value: 'select', label: 'Auswahl' },
-        { value: 'date', label: 'Datum' },
-        { value: 'checkbox', label: 'Ankreuzfeld' },
-        { value: 'nachschlagen', label: 'Nachschlagen' },
-      ],
-    },
-    {
-      attributeName: 'options',
-      name: 'Auswahl-Optionen',
-      description: 'Nur bei Feldtyp "Auswahl": Einträge durch Komma getrennt (z. B. "Zimmer 1, Zimmer 2") — jeder Eintrag wird eine Dropdown-Zeile.',      kind: 'text',
-      visibleWhen: { attributeName: 'fieldType', equals: 'select' },
-    },
-    {
-      attributeName: 'nachschlagQuelle',
-      name: 'Quelle',
-      description: 'Nur bei Feldtyp "Nachschlagen": aus dieser Datenquelle wählt der Bediener eine Zeile.',
-      kind: 'quelle',
-      visibleWhen: { attributeName: 'fieldType', equals: 'nachschlagen' },
-    },
-    {
-      attributeName: 'anzeigeFeld',
-      name: 'Angezeigt wird',
-      description: 'Feld der Nachschlage-Quelle, dessen Wert der Bediener sieht (z. B. der Name).',
-      kind: 'field',
-      quelleProp: 'nachschlagQuelle',
-      klarnameProp: 'anzeigeTitel',
-      visibleWhen: { attributeName: 'fieldType', equals: 'nachschlagen' },
-    },
-    {
-      attributeName: 'speicherFeld',
-      name: 'Gespeichert wird',
-      description: 'Feld der Nachschlage-Quelle, dessen Wert die Maske sich merkt und die Kette "Wert geändert" weitergibt (z. B. die Nummer).',
-      kind: 'field',
-      quelleProp: 'nachschlagQuelle',
-      klarnameProp: 'speicherTitel',
-      visibleWhen: { attributeName: 'fieldType', equals: 'nachschlagen' },
-    },
-    {
-      attributeName: 'valueField',
-      name: 'Feld',
-      description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',      kind: 'field',
-      // NICHT am Nachschlage-Feld: dort ENTSTEHT der Wert durch die Auswahl
-      // im Fenster. Eine Datenbindung obendrauf ueberschriebe ihn bei jedem
-      // SE-Push, waehrend das Feld weiter den Klarwert zeigte — Anzeige und
-      // Ketten-Wert liefen still auseinander.
-      visibleWhen: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
-    },
-  ]
+  static override readonly customProperties = FELD_EIGENSCHAFTEN
 
   static override styles = [BasicBlock.styles, feldStil]
 
@@ -215,6 +167,7 @@ export class FormFeldBlock extends BasicBlock {
   @property() anzeigeTitel = ''
   @property() speicherFeld = ''
   @property() speicherTitel = ''
+  @property() einzigerTreffer = 'nein'
 
   // Der ANGEZEIGTE Klarwert des Nachschlagens (z. B. „Berger, Anna").
   // @state, kein Bauplan-Wert: er entsteht erst, wenn der Bediener in der
@@ -224,7 +177,7 @@ export class FormFeldBlock extends BasicBlock {
   // Die ROHZEILE des uebernommenen Satzes. Sie zeichnet nichts (darum weder
   // @property noch @state) und reist nie in den Export — sie ist nur da, um
   // nachpruefen zu koennen, ob der uebernommene Satz noch zur Auswahl des
-  // Gebers passt (pruefeAuswahlPassung).
+  // Gebers passt (pruefeEigenenWert).
   private satz: unknown = undefined
 
   // Der Haken des Ankreuzfelds. Bewusst @state und NICHT @property: er ist
@@ -301,13 +254,28 @@ export class FormFeldBlock extends BasicBlock {
             : eintraege.map((o) => html`<option value=${o}>${o}</option>`)}
         </select>`
       }
-      case 'nachschlagen':
+      case 'nachschlagen': {
         // Anzeige-Text nur lesbar (gesucht wird im Fenster, nicht im Feld —
         // der Wert ENTSTEHT durch Auswahl, Regel 3: angezeigt wird der
         // Klarwert, gespeichert der Technikwert in `value`). Die Lupe oeffnet
         // das Fenster; im Editor ist sie reine Optik (pointer-events aus).
-        return html`<div class="nachschlag">
+        //
+        // Das × steht nur da, wenn wirklich etwas zu loeschen ist: ein leeres
+        // Feld mit Loesch-Knopf fragt den Bediener, was er wegnehmen soll.
+        // Im Editor ist es darum nie zu sehen — dort gibt es keinen Wert.
+        const hatWert = this.anzeige !== '' || this.value !== ''
+        return html`<div class="nachschlag${hatWert ? ' mit-loeschen' : ''}">
           <input class="ctrl" type="text" readonly .value=${this.anzeige} />
+          ${hatWert ? html`<button
+            class="loeschen"
+            type="button"
+            aria-label="Wert löschen"
+            title="Wert löschen"
+            @click=${this.onLoeschen}
+          ><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+            <line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
+            <line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
+          </svg></button>` : nothing}
           <button
             class="lupe"
             type="button"
@@ -319,6 +287,7 @@ export class FormFeldBlock extends BasicBlock {
             <line x1="10.4" y1="10.4" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
           </svg></button>
         </div>`
+      }
       default:
         // text / number / date teilen das eine Input-Element.
         return html`<input
@@ -346,54 +315,119 @@ export class FormFeldBlock extends BasicBlock {
       anzeigeTitel: this.anzeigeTitel,
       speicherTitel: this.speicherTitel,
       titel: this.placeholder,
+      // Der Klick im Fenster ist eine BEDIENERHANDLUNG: dieselbe Uebernahme wie
+      // beim einzigen Treffer, plus das change-Ereignis — daran haengt die
+      // Kette „Wert geändert" (feldRuntime), exakt wie bei jedem Feldtyp.
       onUebernehmen: (anzeige, wert, satz) => {
-        // Ein Satz mit leerem Anzeige-Feld bleibt SICHTBAR uebernommen: dann
-        // steht der Wert selbst im Feld. Sonst saehe das Feld leer aus,
-        // truege aber einen Technikwert — Auswahl und Nicht-Auswahl waeren
-        // nicht zu unterscheiden. Der Wert stand dem Bediener im Fenster
-        // ohnehin vor Augen (Wert-Spalte).
-        this.anzeige = anzeige !== '' ? anzeige : wert
-        this.value = wert
-        this.satz = satz
-        // Den GANZEN Satz abgeben, damit Folger nach ihm filtern koennen
-        // (2026-08-06): das Feld ist Auswahl-Geber, und ein Geber, der in der
-        // Liste steht aber nie etwas abgibt, liesse jeden Folger stumm nie
-        // filtern (Regel 4). Nicht `waehleAuswahl`: dessen Toggle wuerde den
-        // zweimal bestaetigten Kunden wieder abwaehlen — hier ist Uebernehmen
-        // immer ein Setzen. Absichtlich KEIN Wiederfinden nach dem SE-Push:
-        // der bestaetigte Satz bleibt stehen, so wie der angezeigte Wert.
-        setzeAuswahl(geberIdVon(this), satz)
+        this.uebernimmSatz(anzeige, wert, satz)
         this.dispatchEvent(new Event('change'))
       },
     })
   }
 
-  // Die Auswahl des Gebers hat sich geaendert — passt der uebernommene Satz
-  // noch dazu?
+  // DER eine Weg zum leeren Nachschlage-Feld. Zwei Anlaesse teilen ihn (das ×
+  // des Bedieners und das automatische Leeren beim Geber-Wechsel), damit sie
+  // nicht auseinanderlaufen koennen: es waere sonst genau die Art Doppelung,
+  // bei der einer der beiden Wege ein Stueck vergisst — etwa die abgegebene
+  // Auswahl (klareAuswahl), und SEINE Folger filterten weiter nach einem Satz,
+  // den es nirgends mehr gibt.
   //
-  // Nutzer-Entscheidung 2026-08-06: passt er NICHT mehr, LEERT sich das Feld.
-  // Der Fall: Kunde gewaehlt, sein Haustier uebernommen, dann einen anderen
-  // Kunden gewaehlt — das Haustier gehoert jetzt zu niemandem mehr. Stehen
-  // liesse es einen falschen Wert, der richtig aussieht.
+  // Alles vier gehoert zusammen: der gemerkte Satz, die Anzeige, der
+  // Technikwert und die abgegebene Auswahl. Ein leeres Feld gibt keinen Satz ab.
   //
-  // Das Leeren ist eine HYDRIERUNG, keine Bedienung: KEIN change-Event, also
-  // keine Kette „Wert geaendert". Ketten laufen nur auf Bedienerhandlung (feste
-  // Zusage: geschrieben wird ausschliesslich ueber sichtbare Ketten). Die eigene
-  // abgegebene Auswahl geht mit weg — ein leeres Feld gibt keinen Satz ab, sonst
-  // filterten SEINE Folger weiter nach einem Satz, der nirgends mehr steht.
+  // Das change-Ereignis feuert hier bewusst NICHT — es haengt am Anlass, nicht
+  // am Leeren (siehe onLoeschen bzw. pruefeEigenenWert).
+  private leereNachschlagen(): void {
+    this.satz = undefined
+    this.anzeige = ''
+    this.value = ''
+    klareAuswahl(geberIdVon(this))
+  }
+
+  // Das Gegenstueck: DER eine Weg zum uebernommenen Satz. Auch ihn teilen zwei
+  // Anlaesse — der Klick im Fenster und (wenn der Bauer es erlaubt hat) der
+  // einzige uebrige Treffer. Dieselben vier Dinge wie beim Leeren, nur
+  // umgekehrt, und ebenfalls OHNE change: das haengt am Anlass.
+  private uebernimmSatz(anzeige: string, wert: string, satz: unknown): void {
+    // Ein Satz mit leerem Anzeige-Feld bleibt SICHTBAR uebernommen: dann steht
+    // der Wert selbst im Feld. Sonst saehe das Feld leer aus, truege aber einen
+    // Technikwert — Auswahl und Nicht-Auswahl waeren nicht zu unterscheiden.
+    this.anzeige = anzeige !== '' ? anzeige : wert
+    this.value = wert
+    this.satz = satz
+    // Den GANZEN Satz abgeben, damit Folger nach ihm filtern koennen
+    // (2026-08-06): das Feld ist Auswahl-Geber, und ein Geber, der in der Liste
+    // steht aber nie etwas abgibt, liesse jeden Folger stumm nie filtern
+    // (Regel 4). Nicht `waehleAuswahl`: dessen Toggle wuerde den zweimal
+    // bestaetigten Kunden wieder abwaehlen — Uebernehmen ist immer ein Setzen.
+    // Absichtlich KEIN Wiederfinden nach dem SE-Push: der bestaetigte Satz
+    // bleibt stehen, so wie der angezeigte Wert.
+    setzeAuswahl(geberIdVon(this), satz)
+  }
+
+  // Das × gedrueckt (nur in der MASKE erreichbar, dieselbe Bedingung wie die
+  // Lupe): das ist eine BEDIENERHANDLUNG, darum feuert 'change' und die Kette
+  // „Wert geändert" laeuft mit LEEREM Wert. Genau so muss es sein: hat der
+  // Bediener vorher einen Kunden in einen Satz geschrieben, muss das
+  // Wegnehmen auch dort ankommen — sonst stuende in SoftEngine weiter der alte
+  // Wert, waehrend die Maske leer aussieht.
+  private onLoeschen(): void {
+    if (this.hasAttribute('data-ff-editor')) return
+    this.leereNachschlagen()
+    this.dispatchEvent(new Event('change'))
+  }
+
+  // Der eigene Wert des Nachschlage-Felds in Ordnung bringen. ZWEI Schritte in
+  // dieser REIHENFOLGE — erst raeumen, dann fuellen:
+  //
+  //   1. Passt der uebernommene Satz noch zur Auswahl des Gebers? Der Fall:
+  //      Kunde gewaehlt, sein Haustier uebernommen, dann einen anderen Kunden
+  //      gewaehlt — das Haustier gehoert jetzt zu niemandem mehr. Stehen liesse
+  //      es einen falschen Wert, der richtig aussieht (Nutzer 2026-08-06).
+  //   2. Ist danach genau EIN Satz uebrig und das Feld leer, wird er
+  //      uebernommen — aber nur, wenn der Bauer es erlaubt hat (Nutzer
+  //      2026-08-05). Erst in dieser Reihenfolge greift beides im selben
+  //      Durchlauf: der Kundenwechsel raeumt das alte Haustier weg, und hat der
+  //      neue Kunde genau eines, steht es sofort da.
+  //
+  // Beides ist HYDRIERUNG, keine Bedienung: KEIN change-Event, also keine Kette
+  // „Wert geaendert". Ketten laufen nur auf Bedienerhandlung (feste Zusage:
+  // geschrieben wird ausschliesslich ueber sichtbare Ketten). Genau das ist der
+  // EINZIGE Unterschied zum × und zum Klick im Fenster — deshalb steht er hier
+  // und nicht in leereNachschlagen/uebernimmSatz.
   //
   // Gerufen wird das von der Feld-Hydrierung (feldRuntime): sie laeuft bei
   // Daten-Push, Tageswechsel UND jeder Auswahl-Aenderung — die drei Anlaesse
   // haengen an EINER Anmeldung (shared/datenAnschluss). Ein eigenes Abo hier
   // waere ein zweites, das sich nie wieder abmelden liesse.
-  pruefeAuswahlPassung(): void {
+  pruefeEigenenWert(): void {
     if (coerceFeldTyp(this.fieldType) !== 'nachschlagen') return
-    if (this.satz === undefined) return
-    if (satzPasstZurAuswahl(this, this.satz)) return
-    this.satz = undefined
-    this.anzeige = ''
-    this.value = ''
-    klareAuswahl(geberIdVon(this))
+    if (this.satz !== undefined && !satzPasstZurAuswahl(this, this.satz)) {
+      this.leereNachschlagen()
+    }
+    this.uebernimmEinzigenTreffer()
+  }
+
+  // „Es gibt nichts zu waehlen" — der einzige uebrige Satz wird still
+  // uebernommen. Nur mit der Einstellung am Feld (Standard nein) und nur ins
+  // LEERE Feld: ein bestaetigter Wert wird nie still ersetzt, und derselbe
+  // Anlass darf beliebig oft laufen, ohne sich aufzuschaukeln.
+  //
+  // Der stille Weg wirft NIE Meldungen (anders als die Lupe): ist das
+  // Nachschlagen unvollstaendig eingestellt oder die Quelle nicht in der Maske,
+  // passiert einfach nichts. Klartext-Meldungen gehoeren der Bedienerhandlung —
+  // ein Fehlerbalken, den niemand ausgeloest hat, waere nicht zuzuordnen.
+  private uebernimmEinzigenTreffer(): void {
+    if (this.einzigerTreffer !== 'ja') return
+    const ergebnis = holeEintraege({
+      el: this,
+      quelleId: this.nachschlagQuelle,
+      anzeigeFeld: this.anzeigeFeld,
+      speicherFeld: this.speicherFeld,
+    })
+    if (!ergebnis.ok) return
+    const treffer = einzigenTrefferFinden(ergebnis.eintraege, this.satz === undefined)
+    if (treffer) this.uebernimmSatz(treffer.anzeige, treffer.wert, treffer.satz)
   }
 
   override render(): TemplateResult {
