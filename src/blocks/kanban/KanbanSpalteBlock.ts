@@ -86,7 +86,7 @@ export class KanbanSpalteBlock extends BasicBlock {
 
   // Strukturelle Größen (padding, font-weight, 9px-Punkt, 22px-Zähler) als
   // Literale exakt nach Zielbild; Farben + Radius + Schriftgrößen aus Tokens.
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       /* Die Spalte fuellt die Board-Hoehe in BEIDEN Welten (P1.2-Fix eines
@@ -196,7 +196,7 @@ export class KanbanSpalteBlock extends BasicBlock {
       .length
   }
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     const v = coerceStatusVariant(this.variant)
     return html`<div class="col v-${v}">
       <div class="head">

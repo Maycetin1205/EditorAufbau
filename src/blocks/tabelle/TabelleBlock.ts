@@ -88,7 +88,7 @@ export class TabelleBlock extends BasicBlock {
     // unsichtbar). Leer = kein Tagesfilter, alle Saetze.
     tagField: '',
   }
-  static readonly customProperties: PropertyDescription[] = [
+  static override readonly customProperties: PropertyDescription[] = [
     {
       attributeName: 'suche',
       name: 'Suchzeile',
@@ -320,20 +320,20 @@ export class TabelleBlock extends BasicBlock {
     ziel.addEventListener('keydown', onKey)
   }
 
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback()
     connectTable(this)
   }
 
-  disconnectedCallback(): void {
+  override disconnectedCallback(): void {
     super.disconnectedCallback()
     this.klickTimerAus()
     disconnectTable(this)
   }
 
-  static styles = [BasicBlock.styles, tabelleStil]
+  static override styles = [BasicBlock.styles, tabelleStil]
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     const spalten = this.spaltenListe()
     const cols = { gridTemplateColumns: `repeat(${spalten.length}, minmax(0, 1fr))` }
     const stop = (e: Event): void => e.stopPropagation()

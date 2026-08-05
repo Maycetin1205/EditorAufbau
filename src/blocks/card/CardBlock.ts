@@ -124,7 +124,7 @@ export class CardBlock extends BasicBlock {
   // Tokens. .heading setzt --se-ink explizit (Shadow DOM erbt sonst je nach
   // Umgebung unterschiedlich — WYSIWYG). Titelzeile + Unterzeile bleiben
   // einzeilig (ellipsis).
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     chipStyles,
     css`
@@ -311,7 +311,7 @@ export class CardBlock extends BasicBlock {
     >${this[prop]}</span>`
   }
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     const v = coerceStatusVariant(this.chipVariant)
     // Leer-Regel: die Maske rendert leere Stellen (und komplett leere
     // Zeilen) gar nicht; der Editor zeigt jede Stelle als Klick-Ziel.

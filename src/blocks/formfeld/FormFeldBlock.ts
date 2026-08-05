@@ -125,7 +125,7 @@ export class FormFeldBlock extends BasicBlock {
     },
   ]
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       .feld {
@@ -341,7 +341,7 @@ export class FormFeldBlock extends BasicBlock {
     }
   }
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     const typ = coerceFeldTyp(this.fieldType)
     if (typ === 'checkbox') {
       return html`<div class="feld">
@@ -370,12 +370,12 @@ export class FormFeldBlock extends BasicBlock {
     </div>`
   }
 
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback()
     connectField(this)
   }
 
-  disconnectedCallback(): void {
+  override disconnectedCallback(): void {
     super.disconnectedCallback()
     disconnectField(this)
   }

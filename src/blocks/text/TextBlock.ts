@@ -183,7 +183,7 @@ export class TextBlock extends BasicBlock {
     },
   ]
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       .text {
@@ -226,7 +226,7 @@ export class TextBlock extends BasicBlock {
   @property() source = ''
   @property() textField = ''
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     // Freie Werte als Inline-Stil (styleMap) — Klassen-Stufen gibt es nicht mehr.
     const stil = {
       fontSize: `${coerceGroesse(this.groesse)}px`,
@@ -248,12 +248,12 @@ export class TextBlock extends BasicBlock {
     >${this.text}</div>`
   }
 
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback()
     connectText(this)
   }
 
-  disconnectedCallback(): void {
+  override disconnectedCallback(): void {
     super.disconnectedCallback()
     disconnectText(this)
   }

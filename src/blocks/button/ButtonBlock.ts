@@ -33,7 +33,7 @@ export class ButtonBlock extends BasicBlock {
 
   // Aussehen kommt AUSSCHLIESSLICH aus den Masken-Tokens (--se-*),
   // siehe src/design/masken-tokens.css. Keine Literale, keine Fallbacks.
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       button {
@@ -69,7 +69,7 @@ export class ButtonBlock extends BasicBlock {
 
   @property() label = 'Klick mich'
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     return html`<button
       data-ff-editable
       @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'label')}
@@ -79,7 +79,7 @@ export class ButtonBlock extends BasicBlock {
   // Z2: in der EXPORTIERTEN Maske führt der Klick die Aktionskette aus
   // (data-ff-aktionen-Attribut). Editor-Buttons tragen data-ff-editor und
   // verdrahten nie — Muster connectBoard des Kanbans.
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback()
     connectClickAktionen(this, 'onClick')
   }

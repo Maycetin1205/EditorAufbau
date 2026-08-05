@@ -24,19 +24,19 @@ interface FehlergrenzeState {
 }
 
 export class Fehlergrenze extends Component<FehlergrenzeProps, FehlergrenzeState> {
-  state: FehlergrenzeState = { fehler: null }
+  override state: FehlergrenzeState = { fehler: null }
 
   static getDerivedStateFromError(fehler: unknown): FehlergrenzeState {
     return { fehler: fehler instanceof Error ? fehler : new Error(String(fehler)) }
   }
 
-  componentDidCatch(fehler: Error, info: ErrorInfo): void {
+  override componentDidCatch(fehler: Error, info: ErrorInfo): void {
     // Fuer die Fehlersuche: der Stapel steht nur hier, nicht im Text fuer
     // den Bediener.
     console.error('Editor abgestuerzt:', fehler, info.componentStack)
   }
 
-  render(): ReactNode {
+  override render(): ReactNode {
     const { fehler } = this.state
     if (!fehler) return this.props.children
     return (

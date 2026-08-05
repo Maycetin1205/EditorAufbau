@@ -36,7 +36,7 @@ export class ZeileBlock extends BasicBlock {
   static readonly raster = { startW: 24, startH: 2, minW: 2, minH: 1 }
   static override readonly customProperties: PropertyDescription[] = []
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       /* Wie die Maskenwurzel, nur waagerecht: Kinder beginnen oben
@@ -56,7 +56,7 @@ export class ZeileBlock extends BasicBlock {
     `,
   ]
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     return html`<div class="zeile"><slot></slot></div>`
   }
 }

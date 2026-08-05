@@ -21,7 +21,7 @@ export class TrennerBlock extends BasicBlock {
   static readonly raster = { startW: 24, startH: 1, minW: 1, minH: 1 }
   static override readonly customProperties: PropertyDescription[] = []
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       /* Fester dezenter Aussenabstand (--se-gap-sm) ober-/unterhalb der Linie;
@@ -35,7 +35,7 @@ export class TrennerBlock extends BasicBlock {
     `,
   ]
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     return html`<div class="linie"></div>`
   }
 }

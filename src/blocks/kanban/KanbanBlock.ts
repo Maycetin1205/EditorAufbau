@@ -104,7 +104,7 @@ export class KanbanBlock extends BasicBlock {
     { type: SPALTE, props: { heading: 'Fertig', variant: 'success' } },
   ]
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       /* K0/Entscheidung A: ALLE Spalten sind IMMER nebeneinander sichtbar —
@@ -132,19 +132,19 @@ export class KanbanBlock extends BasicBlock {
     `,
   ]
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     return html`<div class="board"><slot></slot></div>`
   }
 
   // in der EXPORTIERTEN Maske meldet sich das Board bei der
   // SoftEngine-Anbindung an (Zeilen -> Karten, Spalten-Feld -> Spalte).
   // Editor-Boards tragen data-ff-editor und werden dort sofort abgewiesen.
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback()
     connectBoard(this)
   }
 
-  disconnectedCallback(): void {
+  override disconnectedCallback(): void {
     super.disconnectedCallback()
     disconnectBoard(this)
   }

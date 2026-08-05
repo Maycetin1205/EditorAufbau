@@ -46,7 +46,7 @@ export class DatumBlock extends BasicBlock {
   // natuerliche Hoehe des Riegels.
   static readonly raster = { startW: 9, startH: 2, minW: 5, minH: 2 }
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       /* EINE Hoehe fuer Riegel und „Heute" — vorher liefen sie mit 36px und
@@ -173,7 +173,7 @@ export class DatumBlock extends BasicBlock {
     this.tag = gewaehlterTag()
   }
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     return html`<div class="waehler">
       <div class="riegel">
         <button class="pfeil" title="Vortag" @click=${() => this.setzeTag(tagPlus(this.tag, -1))}>‹</button>
@@ -189,7 +189,7 @@ export class DatumBlock extends BasicBlock {
     </div>`
   }
 
-  connectedCallback(): void {
+  override connectedCallback(): void {
     super.connectedCallback()
     // Startwert ist der heutige Tag (Referenz: SELECTED_DATE = todayKey()).
     // Ein schon gesetzter Tag gewinnt, damit zwei Waehler in derselben Maske
@@ -205,7 +205,7 @@ export class DatumBlock extends BasicBlock {
     this.tagAbmelden = aufTagHoeren(() => { this.tag = gewaehlterTag() })
   }
 
-  disconnectedCallback(): void {
+  override disconnectedCallback(): void {
     super.disconnectedCallback()
     this.tagAbmelden?.()
     this.tagAbmelden = null

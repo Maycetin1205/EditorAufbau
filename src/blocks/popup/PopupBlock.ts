@@ -57,7 +57,7 @@ export class PopupBlock extends BasicBlock {
     hoehe: 380,
   }
 
-  static styles = [
+  static override styles = [
     BasicBlock.styles,
     css`
       /* Geschlossen = restlos unsichtbar (Export-Zustand bis P-B öffnet).
@@ -169,7 +169,7 @@ export class PopupBlock extends BasicBlock {
     this.removeAttribute('offen')
   }
 
-  render(): TemplateResult {
+  override render(): TemplateResult {
     const b = px(this.breite, 520)
     const h = px(this.hoehe, 380)
     return html`<div class="abdunklung"></div>
