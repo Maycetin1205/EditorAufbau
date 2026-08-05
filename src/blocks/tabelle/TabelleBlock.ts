@@ -1,15 +1,19 @@
 // TabelleBlock
 // Tabellen-Baustein. EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
 // (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel UND ein Feld:
-//   - Titel je Spalte per Doppelklick am Kopf umbenennen (./titelEdit)
+//   - Titel je Spalte per Doppelklick am Kopf umbenennen (./spaltenBearbeiten)
 //   - „+" / „−" oben rechts: Spalte hinzufügen / letzte entfernen
 //   - feld = Feldcode der Datenquelle (Technikwert, unsichtbar) — welchen Wert
 //     die Spalte je Zeile zeigt. Einfacher Klick auf den Spaltenkopf oeffnet
 //     im Editor den Feld-Picker (generisch ueber `listenBindung`).
 // Alles Editor-Sichtbare (Steuerung/Inline-Edit) NUR im Editor (data-ff-editor),
 // im Export nie (WYSIWYG). KEIN Spaltenbreite-Ziehen (Nutzer 2026-07-23).
-// Wie viele Zeilen eine Seite zeigt, rechnet ./seitengroesse aus der HOEHE;
-// die Bedienleiste unten wohnt in ./tabelleFuss.
+//
+// Zeilen pro Seite: der Bauer stellt sie im Editor unten AM DING ein
+// (./tabelleFuss), Standard „passend zur Hoehe" — dann rechnet
+// ./seitengroesse sie aus der gemessenen Hoehe (./rumpfMessung). Ob der
+// Bediener in der Maske umstellen darf, ist eine eigene Einstellung
+// (`zeilenWaehler`, Standard nein — Nutzer-Entscheidung 2026-08-05).
 //
 // Daten: an die Tabelle laesst sich eine Datenquelle haengen (acceptsDataSource,
 // `source`-Prop -> Inspector-Sektion „Daten", Export -> SEFILELOOP). Zur
@@ -29,13 +33,20 @@ import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
-import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
-import { OHNE_MESSUNG, passendeZeilen, seitenAufteilung, ZEILEN_HOEHE } from './seitengroesse'
+import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
+import {
+  OHNE_MESSUNG,
+  PASSEND,
+  proSeiteAusEinstellung,
+  seitenAufteilung,
+  ZEILEN_HOEHE,
+} from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereIndizes } from './sortierung'
 import { spaltenSteuerung, starteTitelEdit } from './spaltenBearbeiten'
 import { passendeIndizes, zeigtEchteDaten } from './suche'
+import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
 import { tabelleStil } from './tabelleStil'
 import {
@@ -91,29 +102,14 @@ export class TabelleBlock extends BasicBlock {
     // Feldcode des Datumsfelds fuer den Tageswaehler (Technikwert,
     // unsichtbar). Leer = kein Tagesfilter, alle Saetze.
     tagField: '',
+    // Wie viele Zeilen eine Seite zeigt — der BAUPLAN-Wert, den der Bauer im
+    // Editor unten am Ding einstellt (PASSEND oder eine Zahl als Text).
+    proSeite: PASSEND,
+    // Darf der BEDIENER das in der Maske umstellen? Standard nein: ein Waehler
+    // in jeder Maske war eine Einstellung, die niemand bestellt hatte.
+    zeilenWaehler: 'nein',
   }
-  static override readonly customProperties: PropertyDescription[] = [
-    {
-      attributeName: 'suche',
-      name: 'Suchzeile',
-      description: 'Zeigt ueber der Tabelle ein Feld, mit dem der Bediener den Inhalt durchsucht.',
-      kind: 'segment',
-      options: [{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }],
-      requiresDataSource: true,
-    },
-    // „Zeilen pro Seite" war bis 2026-07-27 zweimal da: hier im Inspector
-    // UND unten in der Fusszeile der Tabelle. Beides ersatzlos auf EINEN
-    // Ort zusammengezogen (Nutzer-Entscheidung) — die Fusszeile, wo der
-    // Bediener es in der laufenden Maske umstellt. Die Maske startet immer
-    // mit ZEILEN_PRO_SEITE[0]; es gibt keinen einstellbaren Startwert mehr
-    // und darum auch kein Attribut im Export.
-    {
-      attributeName: 'tagField',
-      name: 'Tag filtern nach',
-      description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt die Tabelle nur Saetze des Tages, den der Tageswaehler zeigt. Leer = alle Saetze.',
-      kind: 'field',
-    },
-  ]
+  static override readonly customProperties = TABELLE_EIGENSCHAFTEN
   // Raster-Startgröße (Erstwert — im Browser nachzukalibrieren).
   static readonly raster = { startW: 14, startH: 8, minW: 6, minH: 4 }
 
@@ -134,6 +130,12 @@ export class TabelleBlock extends BasicBlock {
 
   // Suchzeile ueber der Tabelle ein-/ausschaltbar ('ja' | 'nein').
   @property() suche = 'ja'
+
+  // Bauplan: wie viele Zeilen eine Seite zeigt (PASSEND oder Zahl als Text).
+  @property() proSeite = PASSEND
+
+  // Bauplan: darf der Bediener das in der Maske umstellen ('ja' | 'nein')?
+  @property() zeilenWaehler = 'nein'
 
   // Was der Bediener zur Laufzeit in die Suchzeile getippt hat.
   private _suchtext = ''
@@ -163,54 +165,59 @@ export class TabelleBlock extends BasicBlock {
 
   // Paginierung (nur Laufzeit, nicht persistiert).
   private _seite = 0
-  // Was der BEDIENER unten in der Fusszeile gewaehlt hat (null = nichts
-  // umgestellt, dann gilt die gemessene Hoehe). Es gibt keine
-  // Maskeneinstellung mehr — die Seitengroesse ist reine Laufzeit-Sache des
-  // Bedieners.
-  private _proSeiteWahl: number | null = null
+  // Was der BEDIENER in der Maske umgestellt hat (null = nichts umgestellt,
+  // dann gilt der Bauplan `proSeite`). Bewusst nicht persistiert: seine Wahl
+  // gilt fuer seine Sitzung, sie aendert die Maske nicht.
+  private _proSeiteWahl: string | null = null
 
   // Wie viele Zeilen bei der aktuellen Hoehe passen — gemessen, nicht geraten
   // (siehe messeRumpf). null = noch nicht bzw. nicht messbar.
   private _proSeiteGemessen: number | null = null
   private _beobachter: ResizeObserver | null = null
 
-  private get proSeiteAktuell(): number {
-    // Reihenfolge: bewusste Uebersteuerung des Bedieners gewinnt, dann die
-    // Messung, dann der Rueckfall. Ohne Messung (altes WinUI ohne
-    // ResizeObserver) laeuft die Tabelle genau wie bis 2026-08-06.
-    return this._proSeiteWahl ?? this._proSeiteGemessen ?? OHNE_MESSUNG
+  // Die gerade wirksame Einstellung: die Uebersteuerung des Bedieners, sonst
+  // der Bauplan. Das ist auch, was der Waehler als gewaehlt anzeigt.
+  private get einstellung(): string {
+    return this._proSeiteWahl ?? this.proSeite
   }
 
-  // Die Hoehe des Rumpfes beobachten und daraus die Zeilenzahl rechnen.
-  // Editor UND Maske, eine Render-Quelle (Regel 1): im Editor zieht der Bauer
-  // den Baustein groesser und sieht sofort, was in der Maske stehen wird.
-  //
-  // Gemessen wird NUR auf der Rasterflaeche — daran, dass das Attribut
-  // 'fuellt' steht (dieselbe Marke setzen Editor und Export, siehe
-  // BasicBlock). Nur dort ist die Hoehe VORGEGEBEN und der Rumpf (flex:1,
-  // scrollend) unabhaengig von seinem Inhalt. Steht die Tabelle dagegen im
-  // Fluss, z. B. in einer Zeile, hat sie gar keine vorgegebene Hoehe: dort
-  // faellt `height: 100%` auf `auto` und sie WAECHST mit ihrem Inhalt. Messen
-  // wuerde sich dann aufschaukeln — mehr Zeilen, hoeherer Rumpf, wieder mehr
-  // Zeilen, bis der Browser die Notbremse zieht. Im Fluss gilt darum
-  // OHNE_MESSUNG, genau wie ohne ResizeObserver.
-  //
-  // Neu gezeichnet wird ausserdem nur, wenn sich die ZAHL aendert: eine
-  // Scrollleiste, die kommt oder geht, aendert die Breite und darf keine
-  // Zeichen-Schleife anstossen.
-  private messeRumpf(): void {
-    if (!this.hasAttribute('fuellt')) {
-      // Aus dem Raster in einen Container gezogen: die alte Messung gilt nicht
-      // mehr, sonst bliebe eine Zahl stehen, zu der es keine Hoehe gibt.
-      if (this._proSeiteGemessen === null) return
-      this._proSeiteGemessen = null
-      this.requestUpdate()
-      return
+  private get proSeiteAktuell(): number {
+    // Reihenfolge: eine feste Zahl gewinnt, sonst die Messung, sonst der
+    // Rueckfall. Ohne Messung (kein ResizeObserver, oder kein Raster mit
+    // vorgegebener Hoehe) laeuft die Tabelle wie bis 2026-08-06.
+    return proSeiteAusEinstellung(this.einstellung) ?? this._proSeiteGemessen ?? OHNE_MESSUNG
+  }
+
+  // Der Waehler ist bedient worden. Der EINE Unterschied zwischen den Welten:
+  // im Editor schreibt er den BAUPLAN (persistent, mit Undo, im Export als
+  // Attribut), in der Maske gilt er nur fuer diese Sitzung. Am Attribut
+  // data-ff-editor unterschieden, nicht an `editable`: letzteres ist nur am
+  // AUSGEWAEHLTEN Baustein true, ein nicht ausgewaehlter schriebe sonst still
+  // Laufzeit-Werte, die niemand wiederfindet.
+  private waehleProSeite(wert: string): void {
+    if (this.hasAttribute('data-ff-editor')) {
+      this.dispatchEvent(new CustomEvent('ff-prop-change', {
+        detail: { attr: 'proSeite', value: wert },
+        bubbles: true,
+        composed: true,
+      }))
+    } else {
+      this._proSeiteWahl = wert
     }
-    const rumpf = this.renderRoot.querySelector('.koerper')
-    const kopf = this.renderRoot.querySelector('.kopf')
-    if (!(rumpf instanceof HTMLElement) || !(kopf instanceof HTMLElement)) return
-    const zahl = passendeZeilen(rumpf.clientHeight, kopf.offsetHeight)
+    this._seite = 0
+    this.requestUpdate()
+  }
+
+  // Nachmessen (./rumpfMessung kennt das WIE und das Warum). Editor UND Maske,
+  // eine Render-Quelle (Regel 1): im Editor zieht der Bauer den Baustein
+  // groesser und sieht sofort, was in der Maske stehen wird.
+  //
+  // Neu gezeichnet wird nur, wenn sich die ZAHL aendert: eine Scrollleiste,
+  // die kommt oder geht, aendert die Breite und darf keine Zeichen-Schleife
+  // anstossen. null (nicht messbar, z. B. im Fluss ohne vorgegebene Hoehe)
+  // ist ein gueltiges Ergebnis — dann greift der Rueckfall.
+  private messeRumpf(): void {
+    const zahl = gemesseneZeilen(this)
     if (zahl === this._proSeiteGemessen) return
     this._proSeiteGemessen = zahl
     this.requestUpdate()
@@ -320,7 +327,7 @@ export class TabelleBlock extends BasicBlock {
   }
 
   // Inline-Umbenennen des TITELS einer Spalte am Kopf. Die Mechanik wohnt in
-  // ./titelEdit, hier bleibt nur, was die Tabelle daran fachlich ausmacht:
+  // ./spaltenBearbeiten, hier bleibt nur, was die Tabelle daran fachlich ausmacht:
   // der Titel landet an SEINER Stelle in der Liste, das Feld der Spalte
   // bleibt erhalten.
   private bearbeiteTitel(e: MouseEvent, index: number): void {
@@ -333,32 +340,27 @@ export class TabelleBlock extends BasicBlock {
     })
   }
 
-  // Den Rumpf beobachten. Aus BEIDEN Einstiegen aufgerufen: beim ersten Mal
-  // gibt es noch kein gezeichnetes Innenleben (firstUpdated holt es nach),
-  // beim Wieder-Einhaengen ins DOM steht es schon (connectedCallback) — und
-  // dort MUSS neu angemeldet werden, weil disconnectedCallback abmeldet.
-  // Sonst maesse ein verschobener Baustein nie wieder.
-  //
-  // RUECKFALL PFLICHT: ohne ResizeObserver (altes WinUI) wird nicht gemessen —
-  // dann bleibt _proSeiteGemessen null und es gilt OHNE_MESSUNG. Kein Fehler,
-  // kein Absturz, nur die feste Zahl von vor 2026-08-06.
-  private beobachteRumpf(): void {
-    if (this._beobachter || typeof ResizeObserver === 'undefined') return
-    const rumpf = this.renderRoot.querySelector('.koerper')
-    if (!rumpf) return
-    this._beobachter = new ResizeObserver(() => this.messeRumpf())
-    this._beobachter.observe(rumpf)
-    this.messeRumpf()
+  // Anmelden. Aus BEIDEN Einstiegen aufgerufen: beim ersten Mal gibt es noch
+  // kein gezeichnetes Innenleben (firstUpdated holt es nach), beim
+  // Wieder-Einhaengen ins DOM steht es schon (connectedCallback) — und dort
+  // MUSS neu angemeldet werden, weil disconnectedCallback abmeldet. Sonst
+  // maesse ein verschobener Baustein nie wieder. Bleibt der Beobachter null
+  // (kein ResizeObserver, noch kein Rumpf), wird es beim naechsten Einstieg
+  // erneut versucht.
+  private beobachte(): void {
+    if (this._beobachter) return
+    this._beobachter = beobachteRumpf(this, () => this.messeRumpf())
+    if (this._beobachter) this.messeRumpf()
   }
 
   override connectedCallback(): void {
     super.connectedCallback()
     connectTable(this)
-    this.beobachteRumpf()
+    this.beobachte()
   }
 
   protected override firstUpdated(): void {
-    this.beobachteRumpf()
+    this.beobachte()
   }
 
   override disconnectedCallback(): void {
@@ -465,15 +467,14 @@ export class TabelleBlock extends BasicBlock {
         gesamt: this.datenzeilen.length,
         suchtAktiv: this._suchtext.trim() !== '',
         auswahlAktiv: this.durchAuswahlGefiltert,
-        proSeiteWahl: this._proSeiteWahl,
+        // Im Editor steht der Waehler IMMER — dort stellt der Bauer ihn ein.
+        // In der Maske nur, wenn er es erlaubt hat.
+        zeigeWaehler: this.hasAttribute('data-ff-editor') || this.zeilenWaehler === 'ja',
+        einstellung: this.einstellung,
         seite,
         seiten,
       }, {
-        waehleProSeite: (wert) => {
-          this._proSeiteWahl = wert
-          this._seite = 0
-          this.requestUpdate()
-        },
+        waehleProSeite: (wert) => this.waehleProSeite(wert),
         blaettere: (zu) => {
           this._seite = zu
           this.requestUpdate()

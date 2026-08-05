@@ -427,28 +427,38 @@ describe('Tabelle (Fahrplan 4)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Tabelle: „Tag filtern nach" ueberlebt den Export', () => {
-    // Die Tabelle braucht mindestens EINEN Attribut-Round-Trip (Regel 9,
-    // Lehre aus dem stillen Tabellen-Bug 2026-07-24). Bis 2026-07-27 stand
-    // hier „Zeilen pro Seite"; die Einstellung ist abgeschafft (nur noch in
-    // der Fusszeile zur Laufzeit), also uebernimmt das Datumsfeld des
-    // Tagesfilters — ohne Attribut filtert die exportierte Maske nicht und
-    // zeigt andere Zeilen als der Editor (WYSIWYG-Bruch, Regel 1).
-    const tree: BlockTree = {
+  it('Tabelle: die Maskeneinstellungen ueberleben den Export', () => {
+    // Die Tabelle braucht mindestens EINEN Attribut-Round-Trip (Regel 9, Lehre
+    // aus dem stillen Tabellen-Bug 2026-07-24). Geprueft wird alles, was der
+    // Bauer einstellt und die Maske brauchen MUSS: das Datumsfeld des
+    // Tagesfilters, die Zeilenzahl und der Zeilen-Waehler (die letzten zwei
+    // seit der Nutzer-Entscheidung 2026-08-05). Faellt eines weg, zeigt
+    // SoftEngine andere Zeilen als der Editor bzw. einen Waehler, den der Bauer
+    // nicht wollte — und zwar still (WYSIWYG-Bruch, Regel 1).
+    const tab = (props: Record<string, unknown>): BlockTree => ({
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
       tab: {
-        id: 'tab',
-        type: 'tabelle',
-        props: { width: 'fill', spalten: standardTestSpalten, tagField: '118_10' },
-        parentId: 'root',
-        childIds: [],
+        id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
+        props: { width: 'fill', spalten: standardTestSpalten, ...props },
       },
-    }
-    const { html } = exportMask(tree)
-    expect(html).toMatch(/<ff-tabelle[^>]*\stagField="118_10"/i)
-    // Die abgeschaffte Einstellung darf NICHT wieder auftauchen.
-    expect(html).not.toMatch(/proSeite=/i)
-    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+    })
+    // Nur der TABELLEN-TAG zaehlt, nicht das ganze Dokument: das eingebettete
+    // Runtime-Buendel enthaelt dieselben Namen als minifizierte Zuweisungen
+    // (`proSeite=`), eine Suche im ganzen HTML traefe also immer.
+    const tag = (html: string): string => /<ff-tabelle[^>]*>/i.exec(html)?.[0] ?? ''
+    const gesetzt = exportMask(tab({
+      tagField: '118_10', proSeite: '25', zeilenWaehler: 'ja',
+    })).html
+    expect(tag(gesetzt)).toMatch(/\stagField="118_10"/i)
+    expect(tag(gesetzt)).toMatch(/\sproSeite="25"/i)
+    expect(tag(gesetzt)).toMatch(/\szeilenWaehler="ja"/i)
+    expect(failedChecks(validateMaskHtml(gesetzt))).toEqual([])
+    // Die Standardwerte („passend zur Hoehe", kein Waehler) schreiben KEIN
+    // Attribut: sonst waere jede bestehende Maske im Export anders — und der
+    // Byte-Waechter (referenzabzug) haette bei diesem Paket angeschlagen.
+    const standard = tag(exportMask(tab({ proSeite: 'passend', zeilenWaehler: 'nein' })).html)
+    expect(standard).not.toMatch(/proSeite=/i)
+    expect(standard).not.toMatch(/zeilenWaehler=/i)
   })
 
   it('coerceSpalten faengt alte Staende defensiv ab (Titel-Strings, Zahl, kaputt)', () => {

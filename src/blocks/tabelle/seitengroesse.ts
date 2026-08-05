@@ -10,6 +10,12 @@
 // und darunter leeres Lineal. Beides bricht den Nordstern — was zu sehen ist,
 // IST der Export, und im Export sieht es genauso krumm aus.
 //
+// Wer die Zahl bestimmt (Nutzer-Entscheidung 2026-08-05): der BAUER stellt sie
+// im Editor am Ding ein (Prop `proSeite`, Standard PASSEND). Ob der BEDIENER
+// sie in der Maske noch umstellen darf, ist eine eigene Maskeneinstellung
+// (`zeilenWaehler`, Standard nein) — wie die Suchzeile. Vorher stand der
+// Waehler bedingungslos in jeder exportierten Maske.
+//
 // Warum die Zeilenhoehe HIER wohnt und nicht mehr im CSS: sie war die Zahl,
 // mit der das Aussehen (tabelleStil) und die Rechnung (diese Datei) beide
 // arbeiten muessen. Stand sie nur im CSS, muesste die Rechnung sie erraten —
@@ -24,18 +30,31 @@
 // und sah nach vier Zeilen sichtbar krumm aus (Nutzer 2026-07-25).
 export const ZEILEN_HOEHE = 32
 
-// Die bewussten Uebersteuerungen im Fusszeilen-Waehler. „Passend zur Hoehe"
-// ist die Voreinstellung und steht NICHT hier: sie ist kein fester Wert,
-// sondern das Ergebnis der Messung (PASSEND als Waehler-Kennung).
+// Die festen Zahlen zur Wahl. „Passend zur Hoehe" steht NICHT hier: das ist
+// kein fester Wert, sondern das Ergebnis der Messung (PASSEND als Kennung).
 export const ZEILEN_PRO_SEITE = [10, 25, 50] as const
 
-// Waehler-Wert fuer „passend zur Hoehe". 0 ist kein moeglicher echter Wert
-// (eine Seite mit null Zeilen gibt es nicht), taugt also als Kennung.
-export const PASSEND = 0
+// Kennung fuer „passend zur Hoehe" — gleichzeitig der Wert der Prop `proSeite`
+// am Baustein UND der Wert im Waehler: EINE Schreibweise fuer dieselbe Sache,
+// damit Bauplan und Bedienung nicht auseinanderlaufen. Auch der Standard.
+export const PASSEND = 'passend'
 
 // Rueckfall, wenn nicht gemessen werden kann (kein ResizeObserver im alten
-// WinUI): dieselbe Zahl, mit der die Tabelle bis 2026-08-06 immer lief.
+// WinUI, oder kein Raster mit vorgegebener Hoehe).
 export const OHNE_MESSUNG = ZEILEN_PRO_SEITE[0]
+
+// Die Einstellung („passend" oder eine Zahl als Text, wie sie im Attribut
+// steht) in eine Zeilenzahl uebersetzen. null heisst „gemessen" — dann
+// entscheidet passendeZeilen bzw. der Rueckfall.
+//
+// Defensiv gegen alles Unbekannte: ein Attribut aus einem alten Stand oder von
+// Hand verstellt fuehrt auf „passend" zurueck, nie auf einen Absturz und nie
+// auf eine erfundene Zahl. Nur die Zahlen aus ZEILEN_PRO_SEITE gelten — sonst
+// koennte eine „1000" im Attribut die Maske in eine endlose Seite verwandeln.
+export function proSeiteAusEinstellung(wert: string): number | null {
+  const zahl = Number(wert)
+  return ZEILEN_PRO_SEITE.some((n) => n === zahl) ? zahl : null
+}
 
 // Wie viele Zeilen passen in einen Rumpf dieser Hoehe? Der Kopf sitzt IM
 // scrollenden Rumpf (siehe tabelleStil) und geht darum ab.

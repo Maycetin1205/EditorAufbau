@@ -15,7 +15,7 @@
 // Seiteneinstellung. Ohne Daten steht statt einer erfundenen Zahl ein Strich
 // (Regel 7) — das entscheidet datensatzText in ./suche.
 
-import { html, type TemplateResult } from 'lit'
+import { html, nothing, type TemplateResult } from 'lit'
 import { PASSEND, ZEILEN_PRO_SEITE } from './seitengroesse'
 import { datensatzText } from './suche'
 
@@ -27,15 +27,23 @@ export interface FussLage {
   gesamt: number
   suchtAktiv: boolean
   auswahlAktiv: boolean
-  // Was der Bediener gewaehlt hat — null = „passend zur Hoehe" (gemessen).
-  proSeiteWahl: number | null
+  // Steht der Zeilen-Waehler hier? Im Editor immer (dort STELLT der Bauer ihn
+  // ein), in der Maske nur, wenn er es erlaubt hat (Prop `zeilenWaehler`).
+  // Blaetter-Knoepfe und Zeilen-Info bleiben in jedem Fall — sie sind keine
+  // Einstellung, sondern das Blaettern selbst.
+  zeigeWaehler: boolean
+  // Die gerade wirksame Einstellung, wie sie auch im Attribut steht:
+  // PASSEND oder eine Zahl als Text.
+  einstellung: string
   seite: number
   seiten: number
 }
 
 export interface FussHandeln {
-  // Feste Zahl gewaehlt, oder null fuer „passend zur Hoehe".
-  waehleProSeite: (wert: number | null) => void
+  // Der gewaehlte Wert, wie er in der Prop steht (PASSEND oder Zahl als Text).
+  // Was damit passiert, entscheidet der Baustein: im Editor wird er
+  // PERSISTENT gesetzt, in der Maske gilt er nur bis zum Neuladen.
+  waehleProSeite: (wert: string) => void
   blaettere: (zu: number) => void
   // Klicks in der Leiste duerfen den Baustein nicht anfassen (Editor: Auswahl).
   stop: (e: Event) => void
@@ -51,24 +59,22 @@ export function tabelleFuss(lage: FussLage, tun: FussHandeln): TemplateResult {
       auswahlAktiv: lage.auswahlAktiv,
     })}</div>
     <div class="seiten-nav">
-      <select
+      ${lage.zeigeWaehler ? html`<select
         aria-label="Zeilen pro Seite"
         @pointerdown=${tun.stop}
-        @change=${(e: Event) => {
-          const wahl = Number((e.target as HTMLSelectElement).value)
-          tun.waehleProSeite(wahl === PASSEND ? null : wahl)
-        }}
+        @change=${(e: Event) => tun.waehleProSeite((e.target as HTMLSelectElement).value)}
       >
-        <!-- „Passend zur Hoehe" ist die VOREINSTELLUNG (2026-08-06): die
-             Tabelle zeigt so viele Zeilen, wie in ihre Hoehe passen — kein
-             Scrollen bei einer hohen Tabelle, kein leerer Rest bei einer
-             flachen. Die festen Zahlen bleiben als bewusste Uebersteuerung;
-             wer sie waehlt, nimmt das Scrollen in Kauf. -->
-        <option value=${PASSEND} ?selected=${lage.proSeiteWahl === null}>passend zur Höhe</option>
+        <!-- „Passend zur Hoehe" ist der Standard: die Tabelle zeigt so viele
+             Zeilen, wie in ihre Hoehe passen — kein Scrollen bei einer hohen
+             Tabelle, kein leerer Rest bei einer flachen. Die festen Zahlen
+             sind die bewusste Uebersteuerung; wer sie waehlt, nimmt das
+             Scrollen in Kauf. Im EDITOR schreibt diese Wahl den Bauplan, in
+             der MASKE gilt sie nur fuer diese Sitzung. -->
+        <option value=${PASSEND} ?selected=${lage.einstellung === PASSEND}>passend zur Höhe</option>
         ${ZEILEN_PRO_SEITE.map(
-          (n) => html`<option value=${n} ?selected=${lage.proSeiteWahl === n}>${n} pro Seite</option>`,
+          (n) => html`<option value=${n} ?selected=${lage.einstellung === String(n)}>${n} pro Seite</option>`,
         )}
-      </select>
+      </select>` : nothing}
       <button
         aria-label="Seite zurück"
         ?disabled=${lage.seite <= 0}

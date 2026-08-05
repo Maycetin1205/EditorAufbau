@@ -2,7 +2,36 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-import { passendeZeilen, seitenAufteilung, ZEILEN_HOEHE } from './seitengroesse'
+import {
+  PASSEND,
+  passendeZeilen,
+  proSeiteAusEinstellung,
+  seitenAufteilung,
+  ZEILEN_HOEHE,
+} from './seitengroesse'
+
+describe('proSeiteAusEinstellung', () => {
+  it('uebersetzt die festen Zahlen', () => {
+    expect(proSeiteAusEinstellung('10')).toBe(10)
+    expect(proSeiteAusEinstellung('25')).toBe(25)
+    expect(proSeiteAusEinstellung('50')).toBe(50)
+  })
+
+  it('„passend" heisst gemessen (null)', () => {
+    expect(proSeiteAusEinstellung(PASSEND)).toBeNull()
+  })
+
+  it('faellt bei allem Unbekannten auf gemessen zurueck, nie auf eine erfundene Zahl', () => {
+    // Ein Attribut aus einem alten Stand, von Hand verstellt oder leer: nie
+    // ein Absturz, nie eine Zahl, die niemand gewaehlt hat. Besonders „1000"
+    // waere gefaehrlich — das machte die Maske zu einer endlosen Seite.
+    expect(proSeiteAusEinstellung('1000')).toBeNull()
+    expect(proSeiteAusEinstellung('7')).toBeNull()
+    expect(proSeiteAusEinstellung('')).toBeNull()
+    expect(proSeiteAusEinstellung('viele')).toBeNull()
+    expect(proSeiteAusEinstellung('-10')).toBeNull()
+  })
+})
 
 describe('passendeZeilen', () => {
   it('rechnet den freien Rumpf in ganze Zeilen um', () => {
