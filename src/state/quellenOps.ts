@@ -14,7 +14,7 @@
 import type { BlockNode, BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
-import { traegtEigeneQuelle } from '../core/blocks/treeQuery'
+import { quellenIdsInKettenVon, traegtEigeneQuelle } from '../core/blocks/treeQuery'
 import type { DataSource } from '../core/data/dataSources'
 import {
   quellenAufloesen,
@@ -66,9 +66,12 @@ export function quellenInReichweite(
 //
 // Ein Baustein zaehlt EINMAL, auch wenn er dieselbe Quelle mehrfach nennt.
 //
-// NICHT zu verwechseln mit collectDataSources im Export: das beantwortet die
-// andere Frage („welche Quelle muss SoftEngine schieben") und darf deshalb
-// weniger einsammeln.
+// Das Gegenstueck im Export (collectDataSources) beantwortet die verwandte
+// Frage „welche Quelle muss SoftEngine schieben" und zaehlt dieselben vier
+// Wege — mit EINEM Unterschied: dort fallen unbrauchbare weitere Quellen
+// (quelleBrauchbar: ohne vollstaendiges Schluesselpaar) heraus, weil die Maske
+// mit ihnen nichts anfangen kann. Hier zaehlen sie mit: eingestellt ist
+// eingestellt, und beim Loeschen soll gewarnt werden.
 export function bausteineMitQuelle(tree: BlockTree, quelleId: string): BlockNode[] {
   if (quelleId === '') return []
   return Object.values(tree).filter((n) => nutztQuelle(n, quelleId))
@@ -93,18 +96,10 @@ function nutztQuelle(n: BlockNode, quelleId: string): boolean {
     if (prop.kind !== 'quelle' || !propertySichtbar(prop.visibleWhen, n.props)) continue
     if (n.props[prop.attributeName] === quelleId) return true
   }
-  // Weg 4: die Parameter der Aktionsketten. Nur RELATION-Schritte tragen
-  // Parameter; `dataSourceId` steht allein an der Quelle 'data_field'.
-  for (const event of def?.blockEvents ?? []) {
-    for (const step of n.events?.[event.key] ?? []) {
-      if (step.type !== 'RELATION') continue
-      const trifft = [...step.params, ...step.extraParams].some(
-        (b) => b.source === 'data_field' && b.dataSourceId === quelleId,
-      )
-      if (trifft) return true
-    }
-  }
-  return false
+  // Weg 4: die Parameter der Aktionsketten (Parameter „Feld einer
+  // Datenquelle"). Dieselbe Stelle, aus der auch der Export diese Quellen
+  // einsammelt — quellenIdsInKettenVon.
+  return quellenIdsInKettenVon(n).includes(quelleId)
 }
 
 // Nur die erste Quelle — der haeufige Fall (Zeilen, Tagesfilter, Schreibweg).

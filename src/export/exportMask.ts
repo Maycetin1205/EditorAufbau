@@ -28,6 +28,7 @@ import {
   firstDescendantOfType,
   istAuswahlGeber,
   QUELLE_PROP,
+  quellenIdsInKettenVon,
   relationIdsVon,
   traegtEigeneQuelle,
 } from '../core/blocks/treeQuery'
@@ -297,6 +298,14 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
         add(node.props[prop.attributeName])
       }
     }
+    // Und die Quellen, die nur in einer AKTIONSKETTE gelesen werden (Parameter
+    // „Feld einer Datenquelle"). Der Waehler in der Steuerung bietet die ganze
+    // Bibliothek an — eine so benutzte Quelle haengt an KEINEM Baustein und
+    // fehlte bis 2026-08-06 in SEFILELOOP und FF_DATA_SOURCES: SoftEngine
+    // schickte ihre Daten nie, die Laufzeit fand die id nicht, und der
+    // Parameter ging als LEERER String hinaus — ein PUT schrieb damit Leere,
+    // ein GET suchte nach nichts. Still, in der fertigen Maske (Regel 4).
+    for (const id of quellenIdsInKettenVon(node)) add(id)
     node.childIds.forEach((id) => visit(tree[id]))
   }
   visit(tree[ROOT_ID])

@@ -14,7 +14,7 @@ import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
-import { registerTestBlocks, TEST_DATA_BOX } from '../test/testBlocks'
+import { registerTestBlocks, TEST_DATA_BOX, TEST_EVENT_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
 
@@ -110,5 +110,42 @@ describe('exportMask: Datenquellen', () => {
       },
     }
     expect(exportMask(tree, 'Maske', []).html).not.toContain('weiterequellen')
+  })
+
+  // Eine Quelle, die NUR ein Ketten-Parameter liest („Feld einer Datenquelle").
+  // Der Waehler in der Steuerung bietet die ganze Bibliothek an — so eine
+  // Quelle haengt an keinem Baustein und fiel bis 2026-08-06 aus BEIDEN
+  // Ausgaengen: kein SEFILELOOP (SoftEngine schickte ihre Daten nie) und kein
+  // FF_DATA_SOURCES (die Laufzeit fand die id nicht). Der Parameter ging als
+  // LEERER String hinaus — ein PUT schrieb Leere, ein GET suchte nach nichts.
+  it('nimmt eine nur in einer Aktionskette gelesene Quelle mit', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['knopf'] },
+      knopf: {
+        id: 'knopf', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
+        events: {
+          onClick: [{
+            id: 's1',
+            type: 'RELATION',
+            resultKey: '',
+            relationId: 'rel-put',
+            params: [{ source: 'data_field', value: '30_10', dataSourceId: 'parameter' }],
+            extraParams: [],
+          }],
+        },
+      },
+    }
+    const sources = [
+      { id: 'parameter', name: 'Parametertabelle', kind: 'idb' as const, idbId: 'IDBID0009', fields: [] },
+    ]
+    const relations = [
+      { id: 'rel-put', name: 'Schreiben', verb: 'PUT_RELATION' as const, nr: '174', params: ['', '', '', '', '', ''] },
+    ]
+    const { html, sevariablen } = exportMask(tree, 'Maske', sources, relations)
+
+    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Parametertabelle', ID: 'IDBID0009', FELDER: '*' },
+    ])
+    expect(html).toContain('window.FF_DATA_SOURCES = [{"id":"parameter"')
   })
 })

@@ -33,6 +33,31 @@ export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
 // Prop-Name der normalen Datenquelle eines Bausteins (acceptsDataSource).
 export const QUELLE_PROP = 'source'
 
+// Welche Datenquellen liest DIESER Baustein in seinen AKTIONSKETTEN? Als ids,
+// in deterministischer Reihenfolge (Ereignis-, dann Schritt-, dann
+// Parameter-Reihenfolge). `dataSourceId` steht allein an Parametern der Quelle
+// 'data_field' („Feld einer Datenquelle").
+//
+// Das ist ein Weg fuer sich: der Parameter-Waehler bietet die GANZE Bibliothek
+// an, nicht nur Quellen in Reichweite — eine so benutzte Quelle haengt an
+// keinem Baustein. Sowohl der Export (sie muss in SEFILELOOP und
+// FF_DATA_SOURCES) als auch die Verwendungs-Anzeige (BENUTZT-Warnung beim
+// Loeschen) fragen deshalb hier.
+export function quellenIdsInKettenVon(node: BlockNode): string[] {
+  const ids: string[] = []
+  for (const event of getBlockDefinition(node.type)?.blockEvents ?? []) {
+    for (const step of node.events?.[event.key] ?? []) {
+      if (step.type !== 'RELATION') continue
+      for (const binding of [...step.params, ...step.extraParams]) {
+        if (binding.source !== 'data_field') continue
+        const id = binding.dataSourceId ?? ''
+        if (id !== '') ids.push(id)
+      }
+    }
+  }
+  return ids
+}
+
 // Welche Relation-Vorlagen benutzt DIESER Baustein? Als ids, in
 // deterministischer Reihenfolge: erst die registry-getriebenen
 // Relation-Properties (Registry-Reihenfolge), dann die Aktionsketten
