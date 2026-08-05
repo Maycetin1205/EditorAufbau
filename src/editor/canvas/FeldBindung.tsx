@@ -175,6 +175,20 @@ export function useFeldBindung({
       }))
     : pickerGruppen(quellen)
 
+  // Eine Feldwahl im Bibliotheks-Angebot schreibt ZWEI Props (Quelle an den
+  // Traeger, Bindung an den Baustein) — als EIN Undo-Eintrag, wie sonst im
+  // Projekt auch (updateBlockEvents, eingabeSitzung, zieheGroesse). Bis
+  // 2026-08-06 waren es zwei: EIN Strg+Z liess die frisch gesetzte Quelle mit
+  // der alten Bindung stehen, und zwei Bedienschritte lagen auf einem.
+  function inEinemSchritt(tun: () => void): void {
+    editor.beginTransaction()
+    try {
+      tun()
+    } finally {
+      editor.endTransaction()
+    }
+  }
+
   // Wahl aus dem Bibliotheks-Angebot anwenden: Quelle an den Träger,
   // zurück kommt der nackte Feldcode ('' = nichts gewählt/nichts zu lösen).
   function quelleSetzen(wert: string, blockId: string): string {
@@ -209,8 +223,10 @@ export function useFeldBindung({
           onPick={(wert) => {
             const prop = bindingProp(picker.spot.prop)
             if (bibliotheksAngebot) {
-              const code = quelleSetzen(wert, blockRef.current.id)
-              if (code !== '') editor.updateProperty(blockRef.current.id, prop, code)
+              inEinemSchritt(() => {
+                const code = quelleSetzen(wert, blockRef.current.id)
+                if (code !== '') editor.updateProperty(blockRef.current.id, prop, code)
+              })
             } else {
               editor.updateProperty(blockRef.current.id, prop, wert)
             }
@@ -232,19 +248,18 @@ export function useFeldBindung({
             top={listenPicker.top}
             left={listenPicker.left}
             onPick={(roh) => {
-              // Bibliotheks-Angebot: Quelle setzen, weiter geht es mit dem
-              // nackten Feldcode — die Titel-Auflösung unten läuft dann
-              // gegen die frisch gesetzte Quelle aus der Bibliothek.
-              const wert = bibliotheksAngebot
-                ? quelleSetzen(roh, block.id)
-                : roh
-              if (bibliotheksAngebot && wert === '') {
-                closeListenPicker()
-                return
-              }
-              const next = listeLesen(block.props[listenBindung.prop], listenBindung)
-              const ziel = next[listenPicker.index]
-              if (ziel) {
+              inEinemSchritt(() => {
+                // Bibliotheks-Angebot: Quelle setzen, weiter geht es mit dem
+                // nackten Feldcode — die Titel-Auflösung unten läuft dann
+                // gegen die frisch gesetzte Quelle aus der Bibliothek.
+                const wert = bibliotheksAngebot
+                  ? quelleSetzen(roh, block.id)
+                  : roh
+                // Nichts gewaehlt: dann hat quelleSetzen auch nichts geschrieben.
+                if (bibliotheksAngebot && wert === '') return
+                const next = listeLesen(block.props[listenBindung.prop], listenBindung)
+                const ziel = next[listenPicker.index]
+                if (!ziel) return
                 // Feld gewaehlt = Klarname in den Titel, IMMER (Nutzer-
                 // Entscheidung 2026-07-27). Die Vorfassung schuetzte selbst
                 // getippte Titel — nach dem ersten Binden galt aber der
@@ -267,7 +282,7 @@ export function useFeldBindung({
                       : klarnameVon(wert, quellen)) || wert
                 ziel[listenBindung.feldKey] = wert
                 editor.updateProperty(block.id, listenBindung.prop, next)
-              }
+              })
               closeListenPicker()
             }}
             onClose={closeListenPicker}

@@ -157,6 +157,14 @@ export function PropControl({
           onChange={(v) => {
             const neueId = v === KEIN_FELD ? '' : v
             if (neueId === String(value ?? '')) return
+            // EIN Bedienschritt = EIN Undo-Eintrag (Muster updateBlockEvents,
+            // eingabeSitzung, zieheGroesse). Ohne die Klammer legte jeder
+            // Teilschritt seinen eigenen Eintrag an: ein Dropdown-Klick am
+            // Nachschlage-Feld kostete bis 2026-08-06 fuenf der 50
+            // Undo-Plaetze — und EIN Strg+Z stellte genau den Mischzustand
+            // her, den das Leeren unten verhindern soll (neue Quelle, alte
+            // Feldcodes).
+            ed.beginTransaction()
             set(neueId)
             // Die Felder, die AN dieser Quelle hängen, samt ihrer Klarnamen
             // leeren: sie zeigen sonst weiter auf Felder der VORHERIGEN
@@ -170,6 +178,7 @@ export function PropControl({
                 ed.updateProperty(block.id, andere.klarnameProp, '')
               }
             }
+            ed.endTransaction()
           }}
         />
       )
@@ -187,6 +196,10 @@ export function PropControl({
           value={value === '' || value == null ? KEIN_FELD : String(value)}
           onChange={(v) => {
             const code = v === KEIN_FELD ? '' : v
+            // Feldcode und Klarname gehoeren zusammen — EIN Undo-Eintrag fuer
+            // beide (s. Klammer beim 'quelle'-Control oben). Getrennt liesse ein
+            // Strg+Z den neuen Code mit dem alten Klarnamen stehen.
+            ed.beginTransaction()
             set(code)
             // klarnameProp: der KLARNAME des gewählten Feldes wandert
             // zusätzlich in eine eigene Prop. Die Maske kennt sonst nur
@@ -196,6 +209,7 @@ export function PropControl({
               const klarname = feldQuelle?.fields.find((f) => f.code === code)?.label ?? ''
               ed.updateProperty(block.id, property.klarnameProp, klarname)
             }
+            ed.endTransaction()
           }}
         />
       )
