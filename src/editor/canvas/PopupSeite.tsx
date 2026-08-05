@@ -8,11 +8,11 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { POPUP_RAND } from '../../blocks/popup/PopupBlock'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
 import { NodeList } from './CanvasNode'
-import { isNewBlockDrag } from './dnd'
+import { isNewBlockDrag, newBlockDragType } from './dnd'
 import { commitDrop, useDnd } from './dndState'
 import { zieheGroesse } from './zieheGroesse'
 
@@ -81,6 +81,22 @@ export function PopupSeite({ popupId }: { popupId: string }) {
       onDragOver={(e) => {
         // Freie Fläche der Popup-Seite: Drop ans Ende des Popup-Rumpfs.
         if (dnd.dragId === null && !isNewBlockDrag(e.dataTransfer)) return
+        // … aber nur, wenn das Popup den gezogenen Typ ueberhaupt aufnimmt
+        // (canContain, wie die Geschwister-Pfade Canvas.onGridDragOver und
+        // CanvasNode.onDragOver). Ohne die Pruefung zeigte die Flaeche fuer
+        // eine Kanban-Karte oder -Spalte (allowedParentTypes!) eine
+        // Einfuege-Vorschau und nahm den Drop an — ed.moveNode/addBlock lehnten
+        // ihn danach still ab, und der Bediener sah seinen Baustein einfach
+        // verschwinden (Regel 4: nichts scheitert still).
+        // Der Typ reist beim Palette-Drag im MIME-Namen mit; Daten sind
+        // waehrend dragover nicht lesbar.
+        const gezogenerTyp = dnd.dragId !== null
+          ? ed.getNode(dnd.dragId)?.type ?? null
+          : newBlockDragType(e.dataTransfer)
+        if (gezogenerTyp === null || !canContain(node.type, gezogenerTyp)) {
+          dnd.setDropTarget(null)
+          return
+        }
         e.preventDefault()
         dnd.setDropTarget({ kind: 'flow', parentId: node.id, index: ed.childNodesOf(node.id).length })
       }}
