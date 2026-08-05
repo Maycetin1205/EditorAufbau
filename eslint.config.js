@@ -53,6 +53,24 @@ export default defineConfig([
       },
     },
   },
+  // Typ-gestuetztes Linten NUR fuer diese eine Regel. Anlass: vier
+  // nebenlaeufig gestartete Aktionsketten verschluckten jeden Fehler, weil
+  // niemand `.catch` daran haengte (Befund A3) — ein `void` davor sah aus wie
+  // Absicht. Diese Regel braucht den Typpruefer, darum `projectService`.
+  // Bewusst NICHT der ganze `recommendedTypeChecked`-Satz: der brachte
+  // hunderte Funde ohne Anlass (Regel 10).
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: rootDir,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
   restrictCoreImports(['src/core/*.{ts,tsx}'], 1),
   restrictCoreImports(['src/core/*/*.{ts,tsx}'], 2),
   restrictCoreImports(['src/core/*/*/*.{ts,tsx}'], 3),
