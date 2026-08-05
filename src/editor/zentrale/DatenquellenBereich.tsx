@@ -34,19 +34,24 @@ export function DatenquellenBereich() {
   const [importStand, setImportStand] = useState<{
     dateiName: string
     tabellen: DtkTabelle[]
+    pannenGrund?: string
   } | null>(null)
   const dateiRef = useRef<HTMLInputElement>(null)
 
   async function dtkGewaehlt(datei: File) {
     // Unlesbar = leere Tabellenliste: der Import-Dialog sagt es dem
-    // Bediener in Klartext, statt still nichts zu tun.
+    // Bediener in Klartext, statt still nichts zu tun. Der GRUND der Panne
+    // reist mit — ohne ihn saehe eine kaputte Datei genauso aus wie eine
+    // heile ohne IDB-Tabellen, und niemand wuesste, welcher Fall vorliegt.
     let tabellen: DtkTabelle[]
+    let pannenGrund: string | undefined
     try {
       tabellen = parseDtkBytes(new Uint8Array(await datei.arrayBuffer()))
-    } catch {
+    } catch (fehler) {
       tabellen = []
+      pannenGrund = fehler instanceof Error ? fehler.message : String(fehler)
     }
-    setImportStand({ dateiName: datei.name, tabellen })
+    setImportStand({ dateiName: datei.name, tabellen, pannenGrund })
     setModus('import')
   }
 
@@ -170,6 +175,7 @@ export function DatenquellenBereich() {
           <DtkImportForm
             dateiName={importStand.dateiName}
             tabellen={importStand.tabellen}
+            pannenGrund={importStand.pannenGrund}
             onClose={() => setModus('lesen')}
           />
         )}

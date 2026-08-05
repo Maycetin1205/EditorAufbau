@@ -26,10 +26,13 @@ import { FormularKarte } from './FormularKarte'
 interface DtkImportFormProps {
   dateiName: string
   tabellen: DtkTabelle[]
+  // Grund, falls das Lesen der Datei GEWORFEN hat. Ohne ihn saehe eine
+  // kaputte Datei genauso aus wie eine heile ohne IDB-Tabellen.
+  pannenGrund?: string
   onClose: () => void
 }
 
-export function DtkImportForm({ dateiName, tabellen, onClose }: DtkImportFormProps) {
+export function DtkImportForm({ dateiName, tabellen, pannenGrund, onClose }: DtkImportFormProps) {
   const store = useDataSources()
   // Kennungen, die es in der Bibliothek schon gibt (nur eigene Tabellen
   // tragen eine — Stammtabellen-Quellen haben kein idbId und stören nicht).
@@ -94,6 +97,7 @@ export function DtkImportForm({ dateiName, tabellen, onClose }: DtkImportFormPro
           <p className="rounded-md border border-destructive/40 bg-destructive/5 px-2.5 py-2 text-destructive">
             Keine IDB-Tabellen gefunden. Ist das ein SoftEngine-IDB-Export
             (in SoftEngine: „IDB exportieren", Dateiendung .DTK)?
+            {pannenGrund && <><br />Die Datei liess sich nicht lesen: {pannenGrund}</>}
           </p>
         ) : (
           <>

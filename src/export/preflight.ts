@@ -212,7 +212,7 @@ export function preflightMask(
   // blockieren (der Öffnen-Schritt träfe sonst still das falsche Fenster).
   const popupSeiten = (tree[ROOT_ID]?.childIds ?? [])
     .map((id) => tree[id])
-    .filter((n): n is BlockNode => Boolean(n) && getBlockDefinition(n!.type)?.pageBlock === true)
+    .filter((n): n is BlockNode => n !== undefined && getBlockDefinition(n.type)?.pageBlock === true)
   const popupIds = popupSeiten.map((n) => n.id)
   const nameZaehler = new Map<string, number>()
   for (const seite of popupSeiten) {

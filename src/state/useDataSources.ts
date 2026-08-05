@@ -6,10 +6,13 @@
 import { useSyncExternalStore } from 'react'
 import { dataSourceStore } from './DataSourceStore'
 
+// Modulweit konstant, nicht je Render neu: eine wechselnde subscribe-Funktion
+// laesst React das Abo bei JEDEM Render ab- und wieder anmelden. Der Store ist
+// ein Singleton, also braucht es dafuer nicht einmal einen Hook.
+const abonniere = (cb: () => void) => dataSourceStore.subscribe(cb)
+const standVon = () => dataSourceStore.version
+
 export function useDataSources() {
-  useSyncExternalStore(
-    (cb) => dataSourceStore.subscribe(() => cb()),
-    () => dataSourceStore.version,
-  )
+  useSyncExternalStore(abonniere, standVon)
   return dataSourceStore
 }

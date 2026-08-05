@@ -6,10 +6,12 @@
 import { useSyncExternalStore } from 'react'
 import { relationStore } from './RelationStore'
 
+// Modulweit konstant, s. useDataSources: eine je Render neue subscribe-
+// Funktion liesse React das Abo jedes Mal ab- und wieder anmelden.
+const abonniere = (cb: () => void) => relationStore.subscribe(cb)
+const standVon = () => relationStore.version
+
 export function useRelations() {
-  useSyncExternalStore(
-    (cb) => relationStore.subscribe(() => cb()),
-    () => relationStore.version,
-  )
+  useSyncExternalStore(abonniere, standVon)
   return relationStore
 }
