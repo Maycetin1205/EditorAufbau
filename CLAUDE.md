@@ -231,12 +231,53 @@ ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
 
 ### Woran gerade gearbeitet wird
 
-**ZUERST (Code-Review 2026-08-05, wegen Token-Knappheit abgebrochen):** 14
-belegte, aber UNGEPRÜFTE Funde (8× kaputt, 2× riskant) liegen in
-`docs/code-review-2026-08-05.md` — der Reihe nach abarbeiten (Stelle vor dem
-Fixen selbst nachlesen!), je Thema ein Commit, danach die Datei löschen.
-Nur 2 von 7 Bereichen wurden geprüft (Zustands-Kern + React-Oberfläche);
-Bausteine/Export/SoftEngine/Handwerk/Architektur stehen noch aus.
+**Code-Review 2026-08-05/06 — ABGEARBEITET (14 Funde + 5 nachgeholte Bereiche,
+14 Commits).** Alle 14 Funde waren nachprüfbar echt, keiner widerlegt; die
+Review-Datei ist danach gelöscht (Chronik: git-Historie). Weg sind: der
+Demo-Putzer, der aktuelle Eingaben aus dem Browser-Speicher löschte · das
+Phantom-Undo beim Antippen eines Größen-Anfassers · die Auswahl auf einer
+unsichtbaren Popup-Seite (auch über Undo) · zwei blinde Verwendungs-Anzeigen in
+der Steuerung (Relationen in Ketten, Nachschlage-Quelle + Schritt-Parameter) ·
+fünf Undo-Schritte für einen Quellwechsel · das Baustein-Verschieben beim
+Text-Markieren · die Drop-Vorschau des Popups für Typen, die es nicht aufnimmt ·
+der Arbeitsverlust beim Fenster-Schließen (jetzt schreibt `pagehide` einen
+ausstehenden Stand, Mechanik in `speicherPlaner`) · der lose Download-Anker ·
+die stille Umleitung von addBlock auf die Wurzel · der tote Löschen-Knopf an der
+Musterkarte (Erklärung jetzt an EINER Stelle, `state/loescheBaustein`). Dazu aus
+der Fortsetzung: **eine nur in einer Aktionskette gelesene Datenquelle fehlte im
+Export** (keine SEFILELOOP, kein FF_DATA_SOURCES → Parameter ging leer hinaus).
+Nicht selbst prüfbar und daher offen: die Bedienprobe im Browser und der
+SE-Echttest (Regel 9). Nicht angefasst, weil es die Ausliefer-Form ändert und
+damit eine Nutzer-Entscheidung ist: dass ein Export-Klick ZWEI automatische
+Downloads auslöst (Chromium fragt dann nach Berechtigung; ein abgelehnter
+zweiter Download verschwindet still) — Abhilfe wäre eine ZIP.
+
+**Design-Übernahme („Fellnase") — NOCH NICHT zusammengeführt (Befund
+2026-08-05, gerettet aus der gelöschten Review-Datei):** Das neue
+Masken-Design liegt in drei Commits NUR auf `claude/opus-hat-fehler-c5f5ey`:
+`b724521` (Trenner senkrecht), `0e2bdff` (Palette/Kanten/Flachheit in den
+Bausteinen), `3cc13cf` (Schriften Fraunces+Figtree eingebettet). `main` ist eine
+alte, um ~50 Commits abgewichene Linie und NICHT der lebende Stand;
+`claude/kleintierpraxis-design-system-e4ye3x` enthält nur den Musterbogen
+(`designsprache/`), keinen Editor-Code. `0e2bdff` ändert ButtonBlock, CardBlock,
+KanbanSpalteBlock, tabelleStil, DialogRahmen, statusVariant, masken-tokens.css,
+das Runtime-Bündel und den Referenzabzug — **erst die Review-Fixes (sind jetzt
+drin), dann die drei Commits per Merge/Cherry-Pick holen** und den Referenzabzug
+mit `npx vitest run -u` erneuern; nie parallel. Mechanisch ist die Übernahme
+sauber (Farben nur über Tokens, Bündel + Abzug im selben Commit erneuert,
+Schriften als Daten-URI: 115 KB je Maske, an EINER Stelle wieder ausbaubar).
+Wie es AUSSIEHT, beurteilt allein der Nutzer.
+
+**Nutzer-Urteil zur Editor-Optik (2026-08-05, gilt als Auftrag, OFFEN):**
+1. Die kleinen „Avatare" an den Bausteinen in der linken Palette ergeben keinen
+   Sinn und sehen schlimm aus → durch nüchterne, erkennbare Symbole ersetzen
+   (das Icon deklariert der Baustein selbst, seit `3c65f5b`).
+2. Menüs teils zu eng, Felder passen nicht ganz (Inspector/Zentrale) →
+   Abstände/Breiten durchgehen; Editor-UI-Stile leben NUR in `src/index.css`
+   (nie mit Masken-Tokens mischen).
+3. Ob die Maske eine Schmuck-Serifenschrift (Fraunces) tragen soll, ist eine
+   offene Nutzer-Entscheidung — vor dem Übernehmen der drei Design-Commits
+   einmal in einem Satz nachfragen.
 
 **Datenquellen** — Arten als Tabelle statt Sondercode (2026-07-30 gebaut),
 Kennung frei eingebbar. Seither gebaut (2026-08-04/05): Auswahl geben/folgen
