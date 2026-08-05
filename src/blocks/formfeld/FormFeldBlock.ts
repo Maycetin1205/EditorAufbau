@@ -42,8 +42,10 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
   ActionValueSpotsFor,
   BindableSpotsFor,
+  SatzWahl,
 } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { geberIdVon, setzeAuswahl } from '../shared/auswahl'
 import {
   connectField,
   dateValueToInput,
@@ -78,6 +80,16 @@ export class FormFeldBlock extends BasicBlock {
   // Auswahl gar nichts. Nur wo der Bauer die Folge einstellt: Felder ohne
   // sie zeigen weiter die erste Zeile, bestehende Masken bleiben gleich.
   static readonly kannAuswahlFolgen = true
+  // Und es GIBT selbst einen Satz ab — aber nur als NACHSCHLAGE-Feld: dort
+  // greift der Bediener im Fenster einen Satz heraus (bei jedem anderen
+  // Feldtyp tippt er bloss). Der Satz stammt aus der Nachschlage-Quelle, nicht
+  // aus der eigenen — darum `quelleProp`. Ob das Feld damit wirklich
+  // Auswahl-Geber IST, leitet istAuswahlGeber daraus ab: ohne eingestellte
+  // Nachschlage-Quelle gibt es kein Fenster und nichts abzugeben.
+  static readonly satzWahl: SatzWahl = {
+    quelleProp: 'nachschlagQuelle',
+    wenn: { attributeName: 'fieldType', equals: 'nachschlagen' },
+  }
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [{ prop: 'value', label: 'Wert' }]
   // Aktueller Eingabewert - ausdruecklich auch ohne Datenquellen-Bindung.
   static readonly actionValueSpots: ActionValueSpotsFor<typeof FormFeldBlock.defaultProps> = [
@@ -301,7 +313,7 @@ export class FormFeldBlock extends BasicBlock {
       anzeigeTitel: this.anzeigeTitel,
       speicherTitel: this.speicherTitel,
       titel: this.placeholder,
-      onUebernehmen: (anzeige, wert) => {
+      onUebernehmen: (anzeige, wert, satz) => {
         // Ein Satz mit leerem Anzeige-Feld bleibt SICHTBAR uebernommen: dann
         // steht der Wert selbst im Feld. Sonst saehe das Feld leer aus,
         // truege aber einen Technikwert — Auswahl und Nicht-Auswahl waeren
@@ -309,6 +321,14 @@ export class FormFeldBlock extends BasicBlock {
         // ohnehin vor Augen (Wert-Spalte).
         this.anzeige = anzeige !== '' ? anzeige : wert
         this.value = wert
+        // Den GANZEN Satz abgeben, damit Folger nach ihm filtern koennen
+        // (2026-08-06): das Feld ist Auswahl-Geber, und ein Geber, der in der
+        // Liste steht aber nie etwas abgibt, liesse jeden Folger stumm nie
+        // filtern (Regel 4). Nicht `waehleAuswahl`: dessen Toggle wuerde den
+        // zweimal bestaetigten Kunden wieder abwaehlen — hier ist Uebernehmen
+        // immer ein Setzen. Absichtlich KEIN Wiederfinden nach dem SE-Push:
+        // der bestaetigte Satz bleibt stehen, so wie der angezeigte Wert.
+        setzeAuswahl(geberIdVon(this), satz)
         this.dispatchEvent(new Event('change'))
       },
     })

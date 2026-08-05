@@ -6,7 +6,10 @@
 import type { BlockCategory } from './BlockComponent'
 import type { FlowDirection, FlowWidth } from './flowLayout'
 import type { RasterSpec } from './rasterLayout'
-import type { PropertyDescription } from './PropertyDescription'
+import type {
+  PropertyDescription,
+  PropertyVisibilityCondition,
+} from './PropertyDescription'
 
 export type { BlockCategory }
 
@@ -208,6 +211,32 @@ export interface BlockEventSpec {
   name: string
 }
 
+// SatzWahl: der Bediener greift an diesem Baustein einen SATZ heraus — Zeile
+// anklicken (Tabelle), Karte anklicken (Kanban), Satz im Nachschlage-Fenster
+// uebernehmen (Formularfeld).
+//
+// Das ist die EINE Haelfte des Auswahl-GEBERS. Die andere ist eine wirklich
+// angehaengte Datenquelle: ohne Saetze gibt es nichts herauszugreifen. Wer
+// Geber IST, wird daraus hergeleitet (istAuswahlGeber in treeQuery) — bis
+// 2026-08-06 stand daneben ein absoluter Hand-Schalter `auswahlGeber`, den
+// jeder Baustein selbst setzte. Der war falsch in beide Richtungen: das
+// Nachschlage-Feld greift offensichtlich einen Satz heraus und stand trotzdem
+// nicht in der Geber-Liste, und eine Tabelle OHNE Quelle stand darin, obwohl
+// sie nur Platzhalter zeigt — ein Folger haette ihr stumm nie folgen koennen.
+export interface SatzWahl {
+  // Prop, die die Quelle des herausgegriffenen Satzes traegt. Ohne Angabe die
+  // normale Datenquelle des Bausteins ('source'). Das Nachschlage-Feld nennt
+  // hier seine ZWEITE Quelle: der uebernommene Satz stammt aus ihr, also holen
+  // Folger auch ihre Schluesselfelder von dort.
+  quelleProp?: string
+  // Nur in diesem Zustand greift der Bediener wirklich einen Satz heraus
+  // (Formularfeld: nur beim Feldtyp „Nachschlagen" — sonst tippt er einfach).
+  // Ohne Bedingung gilt sie immer (Tabelle/Kanban). DIESELBE Bedingungs-Form
+  // und -Auswertung wie visibleWhen der Properties (propertySichtbar): eine
+  // zweite Sprache fuer „wann gilt das" waere eine zweite Fehlerquelle.
+  wenn?: PropertyVisibilityCondition
+}
+
 export interface BlockDefinition {
   type: string
   tagName: string
@@ -264,11 +293,8 @@ export interface BlockDefinition {
   // Vorlagen-id aus core/data/dataSources); der Inspector zeigt die Sektion
   // "Daten", der Export erzeugt daraus den SEFILELOOP. Kein `if type===`.
   acceptsDataSource?: boolean
-  // true = der Block zeigt Zeilen an und GIBT eine Auswahl: der Bediener
-  // klickt in der laufenden Maske eine Zeile/Karte an (Toggle, zweiter
-  // Klick hebt auf). Der Export stempelt data-ff-id, damit Folger den
-  // Geber adressieren; die Auswahl selbst wohnt in blocks/shared/auswahl.
-  auswahlGeber?: boolean
+  // Der Bediener greift an diesem Baustein einen SATZ heraus — siehe SatzWahl.
+  satzWahl?: SatzWahl
   // true = der Block kann der Auswahl eines Gebers FOLGEN (Prop
   // `folgtAuswahl`, core/data/auswahlFolge): mit Auswahl zeigt er nur die
   // Zeilen, deren Schluesselfelder zur gewaehlten Zeile passen — ohne

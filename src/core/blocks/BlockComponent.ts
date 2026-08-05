@@ -12,6 +12,7 @@ import type {
   BlockEventSpec,
   DefaultChildSpec,
   ListenBindung,
+  SatzWahl,
 } from './BlockDefinition'
 import type { FlowDirection, FlowWidth } from './flowLayout'
 import type { RasterSpec } from './rasterLayout'
@@ -54,8 +55,8 @@ export interface BlockComponentStatic {
   readonly addChildButton?: { label: string; childType: string }
   // Datenquellen-Fähigkeit — Bedeutung siehe BlockDefinition.
   readonly acceptsDataSource?: boolean
-  // Auswahl geben / einer Auswahl folgen — Bedeutung siehe BlockDefinition.
-  readonly auswahlGeber?: boolean
+  // Satz herausgreifen / einer Auswahl folgen — Bedeutung siehe BlockDefinition.
+  readonly satzWahl?: SatzWahl
   readonly kannAuswahlFolgen?: boolean
   // Bindbare Stellen — Bedeutung siehe BlockDefinition.
   readonly bindableSpots?: readonly BindableSpot[]

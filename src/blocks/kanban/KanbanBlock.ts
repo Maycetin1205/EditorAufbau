@@ -14,7 +14,7 @@
 import { css, html, type TemplateResult } from 'lit'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { DefaultChildSpec } from '../../core/blocks/BlockDefinition'
+import type { DefaultChildSpec, SatzWahl } from '../../core/blocks/BlockDefinition'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
@@ -51,10 +51,14 @@ export class KanbanBlock extends BasicBlock {
   // Sektion "Daten"). `source` = Technikwert (Vorlagen-id), unsichtbar —
   // der Bediener sieht nur den Anzeigenamen. Leer = keine Quelle.
   static readonly acceptsDataSource = true
-  // Auswahl (2026-08-05): das Board GIBT eine Auswahl — Karte anklicken
-  // markiert sie (zweiter Klick hebt auf), Folger filtern danach. Es folgt
-  // selbst NIEMANDEM (Nutzer-Entscheidung: „kanban muss niemanden folgen").
-  static readonly auswahlGeber = true
+  // Auswahl (2026-08-05): der Bediener greift hier einen Satz heraus, indem er
+  // eine KARTE anklickt (zweiter Klick hebt auf), Folger filtern danach —
+  // immer und aus der eigenen Datenquelle, darum eine SatzWahl ohne Bedingung
+  // und ohne eigene Quellen-Prop; ob das Board damit wirklich Geber IST,
+  // leitet istAuswahlGeber ab (ohne Quelle keine Karten, also nichts
+  // abzugeben). Es folgt selbst NIEMANDEM (Nutzer-Entscheidung: „kanban muss
+  // niemanden folgen").
+  static readonly satzWahl: SatzWahl = {}
   // Ereignisse des Boards (Kommandozentrale Z1): Klarnamen für die
   // Aktions-Übersicht; die keys sind das Technikwert-Vokabular des alten
   // Editors (onCardClick/onCardDrop) — Aktionsketten hängen ab Z2 daran.

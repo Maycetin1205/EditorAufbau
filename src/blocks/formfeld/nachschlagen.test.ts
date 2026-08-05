@@ -16,21 +16,30 @@ const ROHZEILEN = [
 describe('nachschlagEintraege', () => {
   it('baut Anzeige + Wert je Zeile aus den zwei Feldcodes', () => {
     const e = nachschlagEintraege(ROHZEILEN, '10_30', '2_8')
-    expect(e[0]).toEqual({ anzeige: 'Berger, Anna', wert: '10024' })
-    expect(e[1]).toEqual({ anzeige: 'Hofmann, Peter', wert: '10031' })
+    expect(e[0]).toEqual({ anzeige: 'Berger, Anna', wert: '10024', satz: ROHZEILEN[0] })
+    expect(e[1]).toEqual({ anzeige: 'Hofmann, Peter', wert: '10031', satz: ROHZEILEN[1] })
+  })
+
+  it('traegt die ROHZEILE mit — das Feld gibt den ganzen Satz als Auswahl ab', () => {
+    // 2026-08-06: das Nachschlage-Feld ist Auswahl-Geber. Folger holen sich
+    // BELIEBIGE Schluesselfelder aus dem uebernommenen Satz, nicht nur die zwei
+    // Spalten, die das Fenster zeigt — ohne die Rohzeile waere davon nichts da.
+    const e = nachschlagEintraege(ROHZEILEN, '10_30', '2_8')
+    expect(e[0].satz).toBe(ROHZEILEN[0])
   })
 
   it('laesst nur voellig leere Zeilen weg — halbe bleiben unterscheidbar', () => {
     const e = nachschlagEintraege(ROHZEILEN, '10_30', '2_8')
     expect(e).toHaveLength(3)
-    expect(e[2]).toEqual({ anzeige: '', wert: '10048' })
+    expect(e[2]).toEqual({ anzeige: '', wert: '10048', satz: ROHZEILEN[2] })
   })
 
   it('liest auch pos_len aus dem SATZ-Rohstring (getField-Weg)', () => {
     // getField trimmt den Rohstring VOR dem Ausschnitt — Positionen zaehlen
     // ab dem ersten Nicht-Leerzeichen ('10077  Vogler').
-    const e = nachschlagEintraege([{ SATZ: '  10077  Vogler' }], '7_6', '0_5')
-    expect(e).toEqual([{ anzeige: 'Vogler', wert: '10077' }])
+    const satz = { SATZ: '  10077  Vogler' }
+    const e = nachschlagEintraege([satz], '7_6', '0_5')
+    expect(e).toEqual([{ anzeige: 'Vogler', wert: '10077', satz }])
   })
 })
 

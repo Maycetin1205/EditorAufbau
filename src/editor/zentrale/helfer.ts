@@ -5,6 +5,7 @@ import { Boxes, Database, FileText, Users } from 'lucide-react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'
+import { satzQuelleIdVon } from '../../core/blocks/treeQuery'
 import type { DataSource, DataSourceField, DataSourceKind } from '../../core/data/dataSources'
 import type { RelationTemplate } from '../../core/data/relations'
 
@@ -134,9 +135,10 @@ export function auswahlGeberOptionen(
   sources: readonly DataSource[],
 ): AuswahlGeberOption[] {
   return geber.map((node) => {
-    const quelle = sources.find(
-      (s) => s.id === (typeof node.props.source === 'string' ? node.props.source : ''),
-    )
+    // Die Quelle, aus der der gewaehlte Satz STAMMT (satzQuelleIdVon) — beim
+    // Nachschlage-Feld seine Nachschlage-Quelle, nicht die eigene. Mit den
+    // Feldcodes der falschen Tabelle laesen die Ketten-Parameter still nichts.
+    const quelle = sources.find((s) => s.id === satzQuelleIdVon(node))
     return {
       blockId: node.id,
       label: quelle ? `${bausteinName(node)} (${quelle.name})` : bausteinName(node),

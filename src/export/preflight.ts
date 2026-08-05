@@ -13,7 +13,11 @@ import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockDat
 import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
-import { actionValueTargets, auswahlGeberImBaum } from '../core/blocks/treeQuery'
+import {
+  actionValueTargets,
+  auswahlGeberImBaum,
+  istAuswahlGeber,
+} from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor } from '../core/data/aktionen'
 import { stepProblem } from '../core/data/schrittPruefung'
 import { AUSWAHL_FOLGE_PROP, auswahlFolgenAus, folgeBrauchbar } from '../core/data/auswahlFolge'
@@ -209,22 +213,27 @@ export function preflightMask(
     // Ebenso eine Folge ohne ein einziges vollstaendiges Feldpaar: die
     // Laufzeit ignoriert sie (bewusst, halbe Schluessel treffen sonst
     // Falsches) — dann muss es der Export im Klartext sagen (Regel 4).
+    //
+    // Seit die Geber-Eigenschaft HERGELEITET wird (istAuswahlGeber, 2026-08-06)
+    // faengt derselbe Zweig zwei weitere stille Faelle: dem Geber wurde die
+    // Datenquelle weggenommen, oder das Nachschlage-Feld steht wieder auf
+    // Feldtyp Text. Beides sah man vorher nirgends — der Geber galt weiter,
+    // gab aber nie einen Satz ab.
     if (def?.kannAuswahlFolgen) {
       for (const folge of auswahlFolgenAus(node.props[AUSWAHL_FOLGE_PROP])) {
         if (folge.geberId === '') continue // bewusst (noch) kein Geber gewaehlt
         const geber = tree[folge.geberId]
-        const geberDef = geber ? getBlockDefinition(geber.type) : undefined
-        if (!geber || geberDef?.auswahlGeber !== true) {
+        if (!geber || !istAuswahlGeber(geber)) {
           results.push({
             name: 'Auswahl-Geber fehlt',
             ok: false,
-            detail: `Baustein "${def.displayName ?? node.type}" folgt der Auswahl eines geloeschten oder dafuer ungeeigneten Bausteins — unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
+            detail: `Baustein "${def.displayName ?? node.type}" folgt der Auswahl eines Bausteins, der geloescht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen laesst. Unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
           })
         } else if (!folgeBrauchbar(folge)) {
           results.push({
             name: 'Auswahl-Folge unvollstaendig',
             ok: false,
-            detail: `Baustein "${def.displayName ?? node.type}" folgt "${geberDef.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
+            detail: `Baustein "${def.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
           })
         }
       }

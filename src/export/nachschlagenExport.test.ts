@@ -8,7 +8,12 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
+// Side-Effect-Importe: registrieren die beteiligten Bausteine. Die TABELLE
+// gehoert dazu, seit hier ein Folger vorkommt — ohne ihre Registrierung waere
+// `type: 'tabelle'` dem Preflight unbekannt, und er pruefte an ihr GAR NICHTS.
+// Genau so entsteht ein gruener Test, den das Produkt nie erreicht (Befund B1).
 import '../blocks/formfeld/FormFeldBlock'
+import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -82,6 +87,55 @@ describe('Nachschlage-Feld im Export', () => {
       speicherFeld: '', speicherTitel: '',
     })
     expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
+  })
+
+  it('das Feld ist Auswahl-GEBER und traegt data-ff-id — ein Textfeld nicht', () => {
+    // Hergeleitet, nicht angemeldet (2026-08-06): das Nachschlage-Feld laesst
+    // den Bediener im Fenster einen Satz herausgreifen und hat dafuer eine
+    // Quelle — also gibt es eine Auswahl ab, und Folger brauchen seine Kennung.
+    // Vorher stand es trotz sichtbarer Satz-Wahl in keiner Geber-Liste.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kunde', 'notiz'] },
+      kunde: { id: 'kunde', type: 'formfeld', props: KUNDE_PROPS, parentId: 'root', childIds: [] },
+      notiz: { id: 'notiz', type: 'formfeld', props: TEXT_PROPS, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree, 'Maske', ADRESSEN)
+    expect(html).toMatch(/<ff-formfeld[^>]*\sdata-ff-id="kunde"/)
+    expect(html).not.toMatch(/<ff-formfeld[^>]*\sdata-ff-id="notiz"/)
+  })
+
+  it('ohne eingestellte Nachschlage-Quelle kein data-ff-id — es gibt kein Fenster', () => {
+    const { html } = exportMask(
+      baumMit({ ...KUNDE_PROPS, nachschlagQuelle: '', anzeigeFeld: '', anzeigeTitel: '', speicherFeld: '', speicherTitel: '' }),
+      'Maske', ADRESSEN,
+    )
+    // Am TAG geprueft: das eingebettete Laufzeit-Buendel enthaelt den
+    // Attributnamen als Code-Text.
+    expect(html).not.toMatch(/<ff-formfeld[^>]*\sdata-ff-id=/)
+  })
+
+  it('eine Tabelle darf dem Nachschlage-Feld FOLGEN (Preflight sagt ja)', () => {
+    // Der Fall: Kunde nachschlagen, darunter seine Belege. Bis 2026-08-06 war
+    // dieser Geber nicht waehlbar — die Verbindung liess sich gar nicht bauen.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kunde', 'belege'] },
+      kunde: { id: 'kunde', type: 'formfeld', props: KUNDE_PROPS, parentId: 'root', childIds: [] },
+      belege: {
+        id: 'belege', type: 'tabelle',
+        props: {
+          width: 'fill', source: 'q-adr', spalten: [{ titel: 'Name', feld: '10_30' }],
+          // fromField = Feld der NACHSCHLAGE-Quelle (dort stammt der Satz her).
+          folgtAuswahl: [{ geberId: 'kunde', keyPairs: [{ fromField: '110_10', toField: '110_10' }] }],
+        },
+        parentId: 'root', childIds: [],
+      },
+    }
+    expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
+
+    // Und die Gegenprobe: Feldtyp zurueck auf Text -> kein Geber mehr, und der
+    // Export blockt die dann stumme Folge im Klartext.
+    tree.kunde.props = { ...KUNDE_PROPS, fieldType: 'text' }
+    expect(preflightMask(tree, ADRESSEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
   })
 
   it('zurueckgestellter Feldtyp laesst die Nachschlage-Quelle daheim', () => {

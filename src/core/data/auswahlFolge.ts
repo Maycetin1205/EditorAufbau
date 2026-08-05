@@ -7,11 +7,11 @@
 // zweiter Klick auf dieselbe Zeile hebt die Auswahl wieder auf. Nichts
 // passiert automatisch, nichts verschwindet ohne Bedienerhandlung.
 //
-// Reine DATEN (kein Bildschirm, kein SoftEngine, kein Baustein): welcher
-// Baustein Auswahl GIBT und wer folgen KANN, deklariert die Registry
-// (auswahlGeber / kannAuswahlFolgen in BlockDefinition, Regel 2). Die
-// Schluesselregel ist DIESELBE wie bei den weiteren Datenquellen
-// (SchluesselPaar aus sourceLinks) — eine Logik, zwei Nutzer.
+// Reine DATEN (kein Bildschirm, kein SoftEngine, kein Baustein): wer folgen
+// KANN, deklariert die Registry (kannAuswahlFolgen in BlockDefinition, Regel 2);
+// wer Auswahl GIBT, wird hergeleitet (satzWahl + Datenquelle -> istAuswahlGeber
+// in treeQuery). Die Schluesselregel ist DIESELBE wie bei den weiteren
+// Datenquellen (SchluesselPaar aus sourceLinks) — eine Logik, zwei Nutzer.
 //
 // EINE Stufe je Beziehung: jede Folge nennt genau EINEN Geber-Baustein.
 // Die Prop ist trotzdem eine LISTE — dieselbe Bauart wie weitereQuellen:

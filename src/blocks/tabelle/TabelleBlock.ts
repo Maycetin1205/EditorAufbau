@@ -27,7 +27,7 @@ import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { ListenBindung } from '../../core/blocks/BlockDefinition'
+import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { connectTable, disconnectTable } from './seRuntime'
@@ -65,11 +65,15 @@ export class TabelleBlock extends BasicBlock {
   // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
   // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
   static readonly acceptsDataSource = true
-  // Auswahl (2026-08-05): die Tabelle GIBT eine Auswahl (Zeile anklicken,
-  // zweiter Klick hebt auf) und kann der Auswahl eines anderen Gebers
-  // FOLGEN (zeigt dann nur die passenden Zeilen). Beides Registry-
-  // Faehigkeiten — Export, Inspector und Laufzeit lesen sie generisch.
-  static readonly auswahlGeber = true
+  // Auswahl (2026-08-05): der Bediener greift hier einen Satz heraus, indem er
+  // eine ZEILE anklickt (zweiter Klick hebt auf) — immer und aus der eigenen
+  // Datenquelle, darum eine SatzWahl ohne Bedingung und ohne eigene
+  // Quellen-Prop. Ob die Tabelle damit wirklich Auswahl-Geber IST, leitet
+  // istAuswahlGeber daraus ab: ohne Quelle zeigt sie nur Platzhalter, dann gibt
+  // es nichts abzugeben. Ausserdem kann sie der Auswahl eines anderen Gebers
+  // FOLGEN (zeigt dann nur die passenden Zeilen). Beides Registry-Faehigkeiten
+  // — Export, Inspector und Laufzeit lesen sie generisch.
+  static readonly satzWahl: SatzWahl = {}
   static readonly kannAuswahlFolgen = true
   // Jede SPALTE ist eine bindbare Stelle (Regel 2): der Editor oeffnet den
   // Feld-Picker generisch ueber diesen Eintrag — er kennt die Tabelle nicht.

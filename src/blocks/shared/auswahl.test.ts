@@ -11,6 +11,7 @@ import {
   folgenAusAttribut,
   klareAuswahl,
   merkmalVon,
+  setzeAuswahl,
   setzeAuswahlZurueck,
   waehleAuswahl,
   zeilenNachAuswahl,
@@ -64,6 +65,35 @@ describe('waehleAuswahl (Toggle, Nutzer 2026-08-05: „rausklicken")', () => {
     klareAuswahl('t1')
     klareAuswahl('t1') // schon leer -> keine Meldung
     expect(rufe).toBe(2)
+  })
+})
+
+describe('setzeAuswahl (Uebernehmen-Geste, 2026-08-06)', () => {
+  const zeile = { '2_8': '10024', name: 'Berger' }
+
+  it('setzt die Zeile — und DERSELBE Satz noch einmal hebt sie NICHT auf', () => {
+    // Der Unterschied zum Anklicken: wer im Nachschlage-Fenster denselben
+    // Kunden ein zweites Mal bestaetigt, meint „ja, den" — ein Toggle machte
+    // aus der Bestaetigung ein Loeschen.
+    setzeAuswahl('feld', zeile)
+    setzeAuswahl('feld', { '2_8': '10024', name: 'Berger' })
+    expect(auswahlFuer('feld')).toEqual(zeile)
+  })
+
+  it('ein anderer Satz ersetzt, und nur echte Aenderungen melden', () => {
+    let rufe = 0
+    aufAuswahlHoeren(() => { rufe++ })
+    setzeAuswahl('feld', zeile)
+    setzeAuswahl('feld', zeile) // schon gesetzt -> keine Meldung, kein Neuzeichnen
+    setzeAuswahl('feld', { '2_8': '10031' })
+    expect(auswahlFuer('feld')).toEqual({ '2_8': '10031' })
+    expect(rufe).toBe(2)
+  })
+
+  it('ohne Geber-id oder ohne brauchbaren Satz passiert nichts', () => {
+    setzeAuswahl('', zeile)
+    setzeAuswahl('feld', null)
+    expect(auswahlFuer('feld')).toBeUndefined()
   })
 })
 

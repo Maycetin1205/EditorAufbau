@@ -47,7 +47,7 @@ export function stepProblem(
   // Gueltige auslesbare Bausteinwerte der Maske. Nur Aufrufer mit Baumblick
   // (Editor/Preflight) pruefen geloeschte oder nicht mehr freigegebene Ziele.
   actionValues?: readonly { blockId: string; prop: string }[],
-  // Baum-ids der vorhandenen Auswahl-GEBER (Registry auswahlGeber). Ebenfalls
+  // Baum-ids der vorhandenen Auswahl-GEBER (auswahlGeberImBaum). Ebenfalls
   // nur fuer Aufrufer mit Baumblick — ein Parameter „Feld der gewaehlten
   // Zeile" auf einen geloeschten Geber loeste in der Maske still zu '' auf.
   auswahlGeberIds?: readonly string[],

@@ -32,12 +32,16 @@ export interface NachschlagenArgs {
   anzeigeTitel: string
   speicherTitel: string
   titel: string
-  onUebernehmen: (anzeige: string, wert: string) => void
+  onUebernehmen: (anzeige: string, wert: string, satz: unknown) => void
 }
 
 interface Eintrag {
   anzeige: string
   wert: string
+  // Die ROHZEILE hinter dem Eintrag. Das Fenster zeigt nur zwei Spalten, das
+  // Feld gibt aber den ganzen SATZ als Auswahl ab (Geber) — Folger holen sich
+  // daraus beliebige Schluesselfelder, nicht nur die zwei sichtbaren.
+  satz: unknown
 }
 
 const SEITENGROESSE = 10
@@ -55,7 +59,7 @@ export function nachschlagEintraege(
   for (const row of rows) {
     const anzeige = getField(row, anzeigeFeld).trim()
     const wert = getField(row, speicherFeld).trim()
-    if (anzeige !== '' || wert !== '') eintraege.push({ anzeige, wert })
+    if (anzeige !== '' || wert !== '') eintraege.push({ anzeige, wert, satz: row })
   }
   return eintraege
 }
@@ -242,7 +246,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
 
       const uebernehmen = (): void => {
         schliesse()
-        args.onUebernehmen(trefferZeile.anzeige, trefferZeile.wert)
+        args.onUebernehmen(trefferZeile.anzeige, trefferZeile.wert, trefferZeile.satz)
       }
       zeile.addEventListener('click', uebernehmen)
       zeile.addEventListener('keydown', (event) => {

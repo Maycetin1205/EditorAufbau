@@ -15,8 +15,11 @@
 // Der Bediener sieht ausschliesslich Klarnamen (Baustein-Name + Quellen-
 // Name, Feld-Klarnamen); die Technikwerte (Baum-id, Feldcodes) arbeiten
 // unsichtbar (Regel 3). Kein Speichern-Knopf: jede Aenderung geht sofort
-// in den Baum. Wer Geber sein kann, sagt die Registry (auswahlGeber) —
-// kein Bausteintyp-Wissen hier (Regel 2).
+// in den Baum. Wer Geber ist, leitet istAuswahlGeber aus Registry + Zustand
+// her — kein Bausteintyp-Wissen hier (Regel 2). Angeboten wird damit auch das
+// Nachschlage-Feld (es greift im Fenster einen Satz heraus), und NICHT
+// angeboten wird eine Tabelle ohne Datenquelle: ihr zu folgen sah eingestellt
+// aus und filterte nie.
 
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
@@ -24,7 +27,7 @@ import { IconButton } from '@/ui/atoms/icon-button'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import { cn } from '@/lib/utils'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { istAuswahlGeber, satzQuelleIdVon } from '../../core/blocks/treeQuery'
 import {
   AUSWAHL_FOLGE_PROP,
   auswahlFolgenAus,
@@ -57,23 +60,29 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
 
   // Geber-Kandidaten: alle Auswahl-Geber im Baum ausser diesem Baustein.
   const kandidaten = Object.values(ed.tree).filter(
-    (n) => n.id !== block.id && getBlockDefinition(n.type)?.auswahlGeber === true,
+    (n) => n.id !== block.id && istAuswahlGeber(n),
   )
   // Nichts anzubieten und nichts eingestellt: Sektion ganz weglassen —
   // ein leeres Formular ohne waehlbaren Geber waere nur Raetselraten.
   if (kandidaten.length === 0 && !folge) return null
 
-  const quelleVon = (n: BlockNode | undefined) =>
-    bibliothek.find((s) => s.id === (typeof n?.props.source === 'string' ? n.props.source : ''))
+  // Die Felder LINKS in „Feld = Feld" gehoeren der Quelle, aus der der Satz des
+  // Gebers stammt — beim Nachschlage-Feld ist das seine Nachschlage-Quelle, nicht
+  // die eigene (satzQuelleIdVon). Rechts steht immer die eigene Datenquelle des
+  // Folgers: nach ihr filtert er seine Zeilen.
+  const eigeneQuelle = bibliothek.find(
+    (s) => s.id === (typeof block.props.source === 'string' ? block.props.source : ''),
+  )
+  const geberQuelleVon = (n: BlockNode | undefined) =>
+    bibliothek.find((s) => s.id === satzQuelleIdVon(n))
   const geberNode = folge ? ed.tree[folge.geberId] : undefined
-  const geberQuelle = quelleVon(geberNode)
-  const eigeneQuelle = quelleVon(block)
+  const geberQuelle = geberQuelleVon(geberNode)
 
   // Klarname eines Kandidaten: Baustein-Name plus Quellen-Name zur
   // Unterscheidung — zwei Tabellen heissen sonst beide nur „Tabelle".
   // Die SE-Kennung dazu als dezente Technik-Marke (detail, 2026-08-06).
   const anzeige = (n: BlockNode): { label: string; detail?: string } => {
-    const q = quelleVon(n)
+    const q = geberQuelleVon(n)
     return q
       ? { label: `${bausteinName(n)} (${q.name})`, detail: quellenKennung(q) }
       : { label: bausteinName(n) }

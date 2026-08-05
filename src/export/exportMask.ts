@@ -21,7 +21,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
-import { firstDescendantOfType } from '../core/blocks/treeQuery'
+import { firstDescendantOfType, istAuswahlGeber } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
@@ -198,10 +198,14 @@ function nodeToHtml(
     : ''
   // Auswahl-GEBER tragen ihre Baum-id als data-ff-id (2026-08-05): darueber
   // merkt sich die Laufzeit die gewaehlte Zeile je Baustein, und Folger
-  // adressieren ihren Geber (folgtAuswahl.geberId = derselbe Wert). IMMER
-  // gestempelt, nicht nur bei Verweis — ein Codepfad, und die Markierung
-  // funktioniert auch ohne Folger (bausteininterne Auswahl).
-  const auswahlIdAttr = def.auswahlGeber === true
+  // adressieren ihren Geber (folgtAuswahl.geberId = derselbe Wert). Gestempelt
+  // wird bei jedem Geber, nicht nur bei Verweis — ein Codepfad, und die
+  // Markierung funktioniert auch ohne Folger (bausteininterne Auswahl).
+  // WER Geber ist, leitet istAuswahlGeber aus Registry + Zustand her (seit
+  // 2026-08-06, davor ein Registry-Schalter je Bausteintyp): dieselbe Antwort
+  // wie im Inspector und im Preflight — ein Baustein, dem der Editor keine
+  // Folger anbietet, bekommt auch keine Kennung, und umgekehrt.
+  const auswahlIdAttr = istAuswahlGeber(node)
     ? ` data-ff-id="${escapeHtmlAttr(node.id)}"`
     : ''
 

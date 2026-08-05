@@ -109,7 +109,9 @@ export function auswahlWiederfinden<T>(
   return treffer
 }
 
-// Zeile waehlen — dieselbe Zeile noch einmal = abwaehlen (Toggle).
+// Zeile waehlen — dieselbe Zeile noch einmal = abwaehlen (Toggle). Das ist die
+// ANKLICK-Geste (Tabellenzeile, Kanban-Karte): dort ist der zweite Klick auf
+// dasselbe Ding erkennbar ein „doch nicht".
 export function waehleAuswahl(geberId: string, zeile: unknown): void {
   if (geberId === '') return
   const merkmal = merkmalVon(zeile)
@@ -117,6 +119,20 @@ export function waehleAuswahl(geberId: string, zeile: unknown): void {
   const alt = zustand.get(geberId)
   if (alt && alt.merkmal === merkmal) zustand.delete(geberId)
   else zustand.set(geberId, { zeile, merkmal })
+  melde()
+}
+
+// Zeile SETZEN, ohne Toggle — die UEBERNEHMEN-Geste (Satz im Nachschlage-
+// Fenster). Der Bediener hat die Lupe gedrueckt, gesucht und bestaetigt;
+// denselben Kunden ein zweites Mal zu bestaetigen heisst „ja, den" und darf
+// die Auswahl nicht aufheben. Derselbe Zustand, andere Geste — deshalb zwei
+// benannte Wege statt eines Schalters am Aufrufer.
+export function setzeAuswahl(geberId: string, zeile: unknown): void {
+  if (geberId === '') return
+  const merkmal = merkmalVon(zeile)
+  if (merkmal === '') return
+  if (zustand.get(geberId)?.merkmal === merkmal) return // schon gesetzt, keine Meldung
+  zustand.set(geberId, { zeile, merkmal })
   melde()
 }
 
