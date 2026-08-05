@@ -231,6 +231,19 @@ ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
 
 ### Woran gerade gearbeitet wird
 
+**Branch-Konsolidierung 2026-08-05 (Nutzer-Entscheidung): es gibt nur noch
+`main`, gearbeitet wird ab jetzt direkt dort.** Die zehn `claude/…`-Branches
+sind erledigt; ihr Inhalt steckt in main oder ist bewusst verworfen. Gerettet
+wurde daraus genau dreierlei: die senkrechte Trennlinie und die zwei
+Fellnase-Design-Commits (Palette/Kanten/Flachheit + die eingebetteten
+Schriften). Nicht übernommen und nicht wieder anzufangen: der Musterbogen in
+`designsprache/` samt den acht Tierzeichen. Der einmalige Force-Push auf main
+war ausdrücklich erlaubt und ist verbraucht — ab hier gilt wieder Regel 8:
+nie force-pushen, vor Arbeitsbeginn und vor jedem Push `git fetch`.
+Von der Designsprache trägt die Maske Figtree eingebettet (~28 KB); die
+Schmuck-Schrift Fraunces ist wieder raus, weil sie allein 88 KB für zwei
+Überschriften kostete — `--se-font-schmuck` zeigt jetzt auf Georgia.
+
 **Code-Review 2026-08-05/06 — ABGEARBEITET (14 Funde + 5 nachgeholte Bereiche,
 14 Commits).** Alle 14 Funde waren nachprüfbar echt, keiner widerlegt; die
 Review-Datei ist danach gelöscht (Chronik: git-Historie). Weg sind: der
