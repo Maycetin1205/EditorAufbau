@@ -15,8 +15,11 @@
 // Text in Editor UND Maske identisch sitzt und im Editor editierbar ist;
 // die Maske blendet ihn beim Tippen bzw. nach einer Auswahl aus (input-/
 // change-Event — die Komponente lebt in beiden Welten, 1 Render-Quelle).
-// Ein GEBUNDENES Feld zeigt ihn in der Maske gar nicht — dort stehen Daten,
-// und leer bleibt leer (Regel im CSS bei `.ph`, SE-Echttest 2026-08-04).
+// An einem GEBUNDENEN Feld traegt der Platzhalter nicht die getippte
+// Beschriftung, sondern den Feld-KLARNAMEN ("Tiername") — in der Maske
+// genauso wie im Editor: der Export loest ihn beim Exportieren auf und
+// schreibt ihn ins Markup (bindungsVorschau). Das Feld sieht leer aus wie
+// SoftEngine vor dem ersten Daten-Push und verraet trotzdem, wozu es gehoert.
 //
 // Die Datenanbindung ist registry-getrieben: das Feld deklariert Quelle,
 // Bindungsroute und bindbare Wert-Stelle. Die Export-Runtime liest die erste
@@ -118,7 +121,15 @@ export class FormFeldBlock extends BasicBlock {
   // duerfte dort keinen Bindungs-Picker oeffnen — die Bindung waere nur beim
   // naechsten SoftEngine-Push zu sehen, und zwar als ueberschriebener Wert.
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [
-    { prop: 'value', label: 'Wert', wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' } },
+    {
+      prop: 'value',
+      label: 'Wert',
+      wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
+      // Die Vorschau steht im Platzhalter, nicht im Wert: das Feld sieht leer
+      // aus wie in SoftEngine, und der Feld-Klarname verraet grau, was
+      // angeschlossen ist (s. BindableSpot.vorschauProp).
+      vorschauProp: 'placeholder',
+    },
   ]
   // Aktueller Eingabewert - ausdruecklich auch ohne Datenquellen-Bindung.
   static readonly actionValueSpots: ActionValueSpotsFor<typeof FormFeldBlock.defaultProps> = [

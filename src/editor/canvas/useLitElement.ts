@@ -34,17 +34,6 @@ interface PropChangeDetail {
   value: unknown
 }
 
-// Formular-Eingaben zeigen die Klarnamen-Vorschau als PLATZHALTER statt als
-// Wert (Nutzer-Go 2026-07-22): das Feld wirkt leer — so wie die Maske ohne
-// Daten startet — und verrät trotzdem grau, was angeschlossen ist. Das
-// Formularfeld bringt die Platzhalter-Optik selbst mit (eigener .ph-Text,
-// sichtbar solange value leer ist, alle Feldarten). Editor-Tabelle
-// „Baustein-Typ.Stelle → Ziel-Property"; reine Anzeige an dieser EINEN
-// Übergabestelle — Baum, Export und Bündel bleiben unberührt.
-const VORSCHAU_ALS_PLATZHALTER: Record<string, string> = {
-  'formfeld.value': 'placeholder',
-}
-
 interface LitElementArgs {
   editor: Editor
   // Aktueller Knoten in einer Ref, damit einmal registrierte Event-Listener
@@ -144,8 +133,13 @@ export function useLitElement({
         : quellen.find((q) => q.source.id === quelleId)?.source
       const field = quelle?.fields.find((f) => f.code === code)
       if (field) {
-        const ziel = VORSCHAU_ALS_PLATZHALTER[`${block.type}.${spot.prop}`] ?? spot.prop
-        elAny[ziel] = field.label + (quelleId === '' ? '' : FREMD_ZEICHEN)
+        // WOHIN die Vorschau geht, sagt die Registry (vorschauProp): das
+        // Formularfeld schickt sie in seinen Platzhalter statt in den Wert.
+        // Früher stand das hier in einer Tabelle mit dem Bausteintyp im
+        // Schlüssel — Sondercode je Typ (Regel 2), den auch nur der Editor
+        // kannte; der Export zeigte in der Maske deshalb etwas anderes.
+        elAny[spot.vorschauProp ?? spot.prop] = field.label
+          + (quelleId === '' ? '' : FREMD_ZEICHEN)
       } else {
         elAny[bindingProp(spot.prop)] = ''
       }

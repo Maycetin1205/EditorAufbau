@@ -49,6 +49,18 @@ export interface BindableSpot {
   // Wer die gerade bindbaren Stellen eines Knotens braucht, fragt
   // bindbareStellenVon (treeQuery): Editor, Export und Preflight gemeinsam.
   wenn?: PropertyVisibilityCondition
+  // Die Klarnamen-Vorschau der Bindung landet NICHT in `prop`, sondern in
+  // dieser anderen Prop. Das Formularfeld tut das: sein Wert-Feld soll leer
+  // aussehen wie in SoftEngine vor dem ersten Daten-Push, der Feld-Klarname
+  // steht grau als PLATZHALTER daneben (Nutzer-Go 2026-07-22).
+  // Registry-Eintrag und kein Sondercode, weil ZWEI Seiten ihn brauchen und
+  // beide dieselbe Antwort geben muessen (Regel 2): der Editor setzt die
+  // Vorschau als DOM-Property (useLitElement), der Export schreibt denselben
+  // Klarnamen als Attribut in die Maske (exportMask). Bis 2026-08-06 stand das
+  // nur im Editor, in einer Tabelle mit dem Bausteintyp im Schluessel
+  // ('formfeld.value') — die Maske wusste davon nichts und versteckte den
+  // Platzhalter stattdessen per CSS.
+  vorschauProp?: string
 }
 
 export interface ActionValueSpot {
@@ -206,11 +218,17 @@ export type BindableSpotProp<Props> = keyof Props extends infer K
   ? K extends BindingProp<infer P> ? P : never
   : never
 
-export type BindableSpotsFor<Props> = ReadonlyArray<{
-  prop: BindableSpotProp<Props>
-  label: string
-  wenn?: PropertyVisibilityCondition
-}>
+// Abgeleitet von BindableSpot statt nachgebaut: eine zweite Feldliste waere
+// beim naechsten Zusatz auseinandergelaufen (vorschauProp fehlte hier prompt).
+// `vorschauProp` zusaetzlich gegen die defaultProps geprueft — eine Vorschau
+// in eine Prop, die der Baustein gar nicht hat, kaeme sonst erst in der Maske
+// als leere Stelle heraus.
+export type BindableSpotsFor<Props> = ReadonlyArray<
+  Omit<BindableSpot, 'prop' | 'vorschauProp'> & {
+    prop: BindableSpotProp<Props>
+    vorschauProp?: keyof Props & string
+  }
+>
 
 // Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff): was bei
 // diesem Baustein passieren kann. `name` = Klarname für den Bediener

@@ -38,21 +38,14 @@ import { quelleBrauchbar, WEITERE_QUELLEN_PROP, weitereQuellenAus } from '../cor
 import { dataSourceStore } from '../state/DataSourceStore'
 import { relationStore } from '../state/RelationStore'
 import {
-  flowItemHeightStyle,
-  flowItemStyle,
-  parseFlowHeight,
-  parseFlowWidth,
   resolveChildDirection,
   ROOT_FLOW,
   type FlowDirection,
-  type FlowWidth,
 } from '../core/blocks/flowLayout'
-import {
-  parseRasterPos,
-  rasterFlaecheStyle,
-  rasterItemStyle,
-} from '../core/blocks/rasterLayout'
+import { rasterFlaecheStyle } from '../core/blocks/rasterLayout'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
+import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
+import { styleAttr, styleToCss } from './knotenStil'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import {
   escapeHtmlAttr,
@@ -99,41 +92,9 @@ function attributWert(value: unknown): string {
   return Array.isArray(value) ? JSON.stringify(value) : String(value ?? '')
 }
 
-// camelCase-Style-Objekt → CSS-Deklarationen (kebab-case). EINE Stelle für
-// das Block-style-Attribut UND die Wurzel-Grid-Regel.
-function styleToCss(style: Record<string, string | number>): string {
-  return Object.entries(style)
-    .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
-    .join(';')
-}
-
-// Layout-Style eines Blocks als HTML-style-Attribut — DIESELBE Quelle wie der
-// Canvas-Wrapper (WYSIWYG). Auf der Rasterebene (direkte Wurzel-Kinder)
-// bestimmt die Zelle Platz+Größe (rasterItemStyle); Popup-Overlays (pageBlock)
-// positionieren sich selbst über position:absolute (kein Layout-Style);
-// INNERHALB von Containern gilt weiter der Fluss (flowItemStyle).
-function styleAttr(
-  node: BlockNode,
-  parentDirection: FlowDirection,
-  lockedWidth: FlowWidth | undefined,
-  rasterEbene: boolean,
-  istPage: boolean,
-): string {
-  let style: Record<string, string | number>
-  if (istPage) {
-    style = {}
-  } else if (rasterEbene) {
-    style = rasterItemStyle(parseRasterPos(node.props))
-  } else {
-    style = {
-      ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
-      // Feste Höhe — DIESELBE Quelle wie der Canvas-Wrapper.
-      ...flowItemHeightStyle(parseFlowHeight(node.props.height), parentDirection),
-    }
-  }
-  const css = styleToCss(style)
-  return css ? ` style="${escapeHtmlAttr(css)}"` : ''
-}
+// Layout-Style eines Knotens: styleAttr/styleToCss wohnen in knotenStil
+// (2026-08-06, 500-Zeilen-Deckel) — hier entstehen Markup und Reihenfolge,
+// dort die Umrechnung Fluss/Raster → CSS.
 
 // Musterkarten-Kontext: unterhalb eines Blocks mit templateChild erscheinen
 // Instanzen dieses Typs NIE sichtbar in der Maske (Nutzer-Entscheidung
@@ -155,6 +116,8 @@ function nodeToHtml(
   // Übersetzt Popup-Schritt-ids in Klarnamen: der Baumblick entsteht
   // EINMAL in exportMask, die Rekursion reicht ihn nur durch.
   popupName: (id: string) => string,
+  // Vorlagen-Bibliothek: nur fuer die Klarnamen-Vorschau (bindungsVorschau).
+  sources: readonly DataSource[],
   templateCtx?: TemplateCtx,
   // true = dieser Knoten liegt auf der Raster-Ebene (direktes Wurzel-Kind der
   // Hauptseite). Die Rekursion in Container/Popups reicht false weiter (Fluss);
@@ -167,7 +130,7 @@ function nodeToHtml(
   const pad = '  '.repeat(depth)
   if (templateCtx && node.type === templateCtx.type) {
     if (node.id !== templateCtx.id) return '' // Demo-Karte: nie exportieren
-    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, popupName, undefined)
+    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, popupName, sources, undefined)
     return `${pad}<template data-ff-template>\n${inner}\n${pad}</template>`
   }
 
@@ -176,12 +139,16 @@ function nodeToHtml(
   // Editor bietet die Bindung dort nicht an, die Laufzeit liest sie nicht — ein
   // Attribut dafuer saehe im Export eingestellt aus (dieselbe Linie wie die
   // daheim gebliebene Auswahl-Folge unten).
-  const bindbar = new Set(bindbareStellenVon(node).map((spot) => spot.prop))
+  const bindbareStellen = bindbareStellenVon(node)
+  const bindbar = new Set(bindbareStellen.map((spot) => spot.prop))
   const stilleBindungen = new Set<string>(
     (def.bindableSpots ?? [])
       .filter((spot) => !bindbar.has(spot.prop))
       .map((spot) => bindingProp(spot.prop)),
   )
+  // Vorschau in eine ANDERE Prop (Registry: das Formularfeld schickt den
+  // Klarnamen in seinen Platzhalter).
+  const vorschauStellen = vorschauStellenVon(node)
 
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
   // Layout-Props (width/height im Fluss, rasterX/Y/W/H auf dem Raster) werden
@@ -207,7 +174,9 @@ function nodeToHtml(
       if (EIGENE_QUELLE_PROPS.has(key) && !traegtEigeneQuelle(node)) return ''
       if (stilleBindungen.has(key)) return ''
       const standard = def.defaultProps[key]
-      const roh = attributWert(node.props[key] ?? standard)
+      const roh = vorschauStellen.has(key)
+        ? vorschauRoh(node, vorschauStellen.get(key)!, sources, standard)
+        : attributWert(node.props[key] ?? standard)
       // STANDARDWERT reist NICHT mit (2026-08-06). Vorher trug jeder Baustein
       // jede Nicht-Layout-Eigenschaft im Markup — auch die nie angefasste:
       // an JEDEM Text hing farbe="standard" source="" textfield="", an JEDER
@@ -270,7 +239,7 @@ function nodeToHtml(
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))
-    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, childCtx))
+    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, sources, childCtx))
     .filter((html) => html !== '')
     .join('\n')
   return children === ''
@@ -395,7 +364,7 @@ export function exportMask(
     .map((id) => tree[id])
     .filter((n): n is BlockNode => Boolean(n))
     // Direkte Wurzel-Kinder = Raster-Ebene (rasterEbene=true).
-    .map((n) => nodeToHtml(tree, n, 'column', 2, popupName, undefined, true))
+    .map((n) => nodeToHtml(tree, n, 'column', 2, popupName, sources, undefined, true))
     .join('\n')
 
   const used = collectDataSources(tree, sources)
@@ -409,6 +378,9 @@ export function exportMask(
   // Global auf. DIESELBE collectDataSources-Quelle wie die SEFILELOOP
   // (Export-Grundsatz a); nur was die Runtime braucht (kein Feld-Wörterbuch:
   // Bindungen reisen längst als Feldcode-Attribute).
+  // Auch die Feld-KLARNAMEN bleiben draußen (bestätigt 2026-08-06, Begründung
+  // in bindungsVorschau): Sichtbares löst der Export auf und schreibt es ins
+  // Markup.
   //
   // SE-KONTRAKT (WEBWARE/WebUI, Beleg SE-Echttest 2026-07-15): explizit ans
   // window hängen, NIEMALS `var`. WinUI (BüroWARE) lädt die Maske als ganze

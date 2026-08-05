@@ -64,23 +64,17 @@ export const feldStil = css`
     pointer-events: none;
   }
   .ph[hidden] { display: none; }
-  /* GEBUNDEN heisst: an dieser Stelle stehen DATEN, kein Text. Deshalb
-     zeigt die MASKE den Platzhalter eines gebundenen Felds NIE — auch
-     nicht, solange der Wert leer ist (Auswahl-Folge ohne Auswahl, leeres
-     Datenfeld). Vorher las der Bediener in SoftEngine ploetzlich
-     "Feldname", wo der Editor die Klarnamen-Vorschau der Bindung
-     ("Tiername") gezeigt hatte — Bedien-Bruch, gefunden im SE-Echttest
-     2026-08-04. Leer bleibt jetzt leer, genau wie beim gebundenen Text.
-     Ungebunden bleibt der Platzhalter unveraendert die Beschriftung des
-     Felds, und der EDITOR bleibt unberuehrt: dort ist der Platzhalter das
-     Umbenennen-Ziel und traegt die Bindungs-Vorschau.
-     Als CSS und nicht als ?hidden im Template, weil "Editor oder Maske"
-     am Attribut data-ff-editor haengt — das ist keine reaktive Property,
-     ein Re-Render nach dem Setzen wuerde also nicht garantiert stimmen.
-     Und NICHT in feldRuntime: die Runtime kennt nur source/valuefield/
-     value und darf nichts ueber die Innenteile EINES Bausteins wissen
-     (Regel 2) — sie bedient auch andere. */
-  :host(:not([data-ff-editor])) .huelle[data-ff-bound] .ph { display: none; }
+  /* Der Platzhalter eines GEBUNDENEN Felds braucht hier keine Sonderregel:
+     im Export steht dort bereits der Feld-Klarname ("Tiername"), derselbe
+     Text, den der Editor an der Stelle zeigt (exportMask/bindungsVorschau).
+     Er verschwindet wie jeder Platzhalter, sobald ein Wert da ist.
+     Bis 2026-08-06 versteckte an dieser Stelle eine Regel den Platzhalter
+     gebundener Felder in der Maske ganz. Grund war, dass die Maske damals
+     den GETIPPTEN Text zeigte: der Bediener las in SoftEngine ploetzlich
+     "Feldname", wo der Editor "Tiername" gezeigt hatte (SE-Echttest
+     2026-08-04). Verstecken war die ehrliche Notloesung — ein leeres Feld
+     verriet aber nicht mehr, wozu es gehoert. Jetzt stimmt der Text, und
+     die Regel ist ueberfluessig. */
   /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
      Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
   .ph-select {
