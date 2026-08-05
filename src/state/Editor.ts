@@ -9,22 +9,18 @@
 //   pageOps       — Seiten der Maske (Hauptseite + Popups), Fluss-Kinder
 //   rasterOps     — Rasterfläche: Bewegen, Größe, Einfügen an der Zelle
 //   selectionOps  — Aufklapp-Auswahl (Board → Spalte → Karte)
-// Außenverhalten und öffentliche Schnittstelle sind UNVERÄNDERT.
+//   speicherPlaner— entprellt speichern + „sofort" beim Verlassen der Seite
 //
-// Die Fächer rechnen NUR — sie halten keinen Zustand, hören auf niemanden und
-// melden nichts. Sie bekommen den Baum herein und geben den neuen zurück
-// (null = nichts zu tun). Den Baum übernehmen, die Historie schreiben und
-// EINMAL melden: allein hier. Ein Horchposten, eine Meldestelle.
+// Die REINEN Fächer rechnen nur (treeOps, templateRules, pageOps, rasterOps,
+// selectionOps): kein Zustand, kein Horchen, kein Melden — Baum rein, neuer
+// Baum raus (null = nichts zu tun). Den Baum übernehmen, die Historie schreiben
+// und EINMAL melden: allein hier. Ein Horchposten, eine Meldestelle.
 //
 // Speichert nur einen serialisierbaren BlockNode-Baum (flache Map + Wurzel) und
-// benachrichtigt React per Subject. Position = Verschachtelung + Reihenfolge
-// (Flow), keine Koordinaten.
+// benachrichtigt React per Subject. Wo ein Baustein sitzt, steht in seinen Props
+// (Fluss-Reihenfolge in Containern, Zelle auf der Rasterflaeche).
 
-import {
-  ROOT_ID,
-  type BlockNode,
-  type BlockTree,
-} from '../core/blocks/BlockData'
+import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getAllBlockDefinitions, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { parseRasterPos, rasterSpecOf } from '../core/blocks/rasterLayout'
@@ -209,12 +205,15 @@ export class Editor extends Subject<Editor> {
   // ans Ende). `index` = Einfüge-Position innerhalb der Kinder (für Drop).
   // Beispieldaten (defaultChildren) kommen als kompletter Teilbaum mit —
   // ein Undo entfernt alles wieder. Verweigert Typen, die der Zielcontainer
-  // nicht aufnimmt (allowedChildTypes) — dann kein History-Eintrag, null.
+  // nicht aufnimmt (allowedChildTypes), und ebenso eine parentId, die es im
+  // Baum nicht (mehr) gibt — beide Male kein History-Eintrag, null. Bis
+  // 2026-08-06 fiel eine unbekannte parentId still auf die Wurzel zurueck: ein
+  // veraltetes Drop-Ziel sah dann aus wie ein Erfolg an falscher Stelle.
   // Ohne parentId landet der Block auf der AKTIVEN Seite — die
   // Bibliothek bestückt damit automatisch die Seite, die gerade offen ist.
   addBlock(type: string, parentId?: string, index?: number): BlockNode | null {
-    const parent = this._tree[parentId ?? this.rootId] ?? this._tree[ROOT_ID]
-    if (!canContain(parent.type, type)) return null
+    const parent = this._tree[parentId ?? this.rootId]
+    if (!parent || !canContain(parent.type, type)) return null
     this.pushHistory()
     const { nodes, rootId } = createBlockSubtree(type)
     const node = nodes[rootId]
