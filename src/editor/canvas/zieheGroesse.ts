@@ -46,7 +46,21 @@ export function zieheGroesse(
   e.preventDefault()
   e.stopPropagation()
   const startPos = auftrag.achse === 'x' ? e.clientX : e.clientY
-  editor.beginTransaction()
+  // Die Transaktion oeffnet erst die ERSTE echte Groessen-Aenderung — dasselbe
+  // Muster wie eingabeSitzung („Begonnen wird beim ERSTEN Tastendruck"). Bis
+  // 2026-08-06 oeffnete schon das pointerdown, und Historie.begin legt einen
+  // Snapshot ab UND leert den Redo-Stapel: wer nur einen Anfasser antippte
+  // (oder um 1-2 px zitterte), verlor damit unwiederbringlich sein Redo und
+  // bekam einen Leer-Schritt in den Verlauf — das naechste Strg+Z tat dann
+  // scheinbar nichts. `letzter` haelt den zuletzt geschriebenen Wert: nur eine
+  // Abweichung davon ist eine Aenderung. Auch der Weg zurueck auf die
+  // Startgroesse ist eine (sonst blieb der Block auf dem Zwischenwert stehen).
+  // Startwert in DERSELBEN Form, die die Formel unten liefert (gerundet +
+  // Untergrenze): im Fluss ist `start` die gemessene Ist-Groesse und damit
+  // krumm (123.45) — unrund verglichen waere schon ein Zeiger-Ereignis ohne
+  // Weg eine „Aenderung" auf 123.
+  let letzter = Math.max(auftrag.min, Math.round(auftrag.start))
+  let offen = false
   const onMove = (ev: PointerEvent) => {
     const pos = auftrag.achse === 'x' ? ev.clientX : ev.clientY
     const rohDelta = (pos - startPos) * (auftrag.faktor ?? 1)
@@ -57,6 +71,12 @@ export function zieheGroesse(
       ? Math.round(rohDelta / auftrag.schritt)
       : rohDelta
     const next = Math.max(auftrag.min, Math.round(auftrag.start + delta))
+    if (next === letzter) return
+    letzter = next
+    if (!offen) {
+      offen = true
+      editor.beginTransaction()
+    }
     if (auftrag.anwenden) auftrag.anwenden(auftrag.getId(), next)
     else editor.updateProperty(auftrag.getId(), auftrag.prop, next)
   }
@@ -68,11 +88,14 @@ export function zieheGroesse(
   // Touch-Geste) und blur (Fenster verlassen, waehrend die Taste haelt —
   // das pointerup kommt dann nie bei uns an). Beenden ist EINMALIG:
   // `beendet` schuetzt davor, dass zwei Wege endTransaction doppelt rufen.
+  // Geschlossen wird nur, was auch geoeffnet wurde (`offen`) — ein blosser
+  // Klick auf den Anfasser hat gar keine Transaktion begonnen; ein
+  // endTransaction darauf schloesse eine fremde.
   let beendet = false
   const beende = () => {
     if (beendet) return
     beendet = true
-    editor.endTransaction()
+    if (offen) editor.endTransaction()
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', beende)
     window.removeEventListener('pointercancel', beende)
