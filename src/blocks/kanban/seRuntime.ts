@@ -20,7 +20,7 @@ import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
-import { auswahlMerkmal, klareAuswahl, merkmalVon, waehleAuswahl } from '../shared/auswahl'
+import { auswahlWiederfinden, geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
@@ -184,23 +184,13 @@ function hydrate(board: HTMLElement): void {
   // wieder angeheftet. Ist die gewaehlte Zeile verschwunden (anderer Tag,
   // geloescht), wird die Auswahl AUFGEHOBEN — sonst filterten Folger nach
   // einer Karte, die niemand mehr sieht (Regel 4).
-  const geberId = board.getAttribute('data-ff-id') ?? ''
-  if (geberId !== '') {
-    const merkmal = auswahlMerkmal(geberId)
-    if (merkmal !== '') {
-      let gefunden = false
-      for (const col of columns) {
-        for (const card of cardsOf(col)) {
-          const data = cardData.get(card)
-          if (data && merkmalVon(data.row) === merkmal) {
-            card.setAttribute('data-ff-auswahl', '')
-            gefunden = true
-          }
-        }
-      }
-      if (!gefunden) klareAuswahl(geberId)
-    }
-  }
+  const karten = columns.flatMap(cardsOf)
+  const treffer = auswahlWiederfinden(
+    geberIdVon(board),
+    karten,
+    (card) => cardData.get(card)?.row,
+  )
+  for (const i of treffer) karten[i].setAttribute('data-ff-auswahl', '')
 }
 
 // ---------- Karten-Drag im Export ----------
@@ -255,7 +245,7 @@ function wireDrag(board: HTMLElement): void {
     ) ?? null) as HTMLElement | null
     if (!card) return
     const data = cardData.get(card)
-    if (data) waehleAuswahl(board.getAttribute('data-ff-id') ?? '', data.row)
+    if (data) waehleAuswahl(geberIdVon(board), data.row)
     runEvent(board, 'onCardClick', { PINDEX: data?.pindex ?? '' })
       .catch(meldeKettenFehler)
   })

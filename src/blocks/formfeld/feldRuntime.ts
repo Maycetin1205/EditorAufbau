@@ -8,12 +8,10 @@
 // SoftEngine-Schicht; der konkrete Baustein bleibt ein normales Web
 // Component. Editor-Elemente melden sich nie an.
 
-import { bindingAttr, zerlegeBindung } from '../../core/blocks/BlockDefinition'
-import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor, setField } from '../../softengine/data'
-import { ersteZeileNachAuswahl } from '../shared/auswahl'
+import { bindingAttr } from '../../core/blocks/BlockDefinition'
+import { getField, setField } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
-import { macheFeldLeser } from '../shared/fremdeQuellen'
+import { leseGebundeneStelle } from '../shared/gebundeneStelle'
 import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 
 export interface RuntimeFieldElement extends HTMLElement {
@@ -58,45 +56,28 @@ function currentValue(field: RuntimeFieldElement): string {
 // lowercase: HTML normalisiert valueField beim Export zu valuefield
 // (Attribut-Form der Bindungs-Konvention — bindingAttr = die eine Stelle).
 export function hydrateField(field: RuntimeFieldElement): void {
-  const sourceId = field.getAttribute('source') ?? ''
-  const code = field.getAttribute(bindingAttr('value')) ?? ''
-  if (sourceId === '' || code === '') {
+  // Quelle -> Zeile -> Wert macht die geteilte Leseleitung
+  // (shared/gebundeneStelle). WELCHE Zeile gilt, entscheidet darin die
+  // gemeinsame Auswahl-Regel: OHNE eingestellte Folge wie seit jeher die
+  // erste Zeile der Quelle; MIT Folge nur die zur Auswahl passende — und ohne
+  // Auswahl gar keine (das Feld bleibt dann leer). Der Schreibweg haengt an
+  // DERSELBEN Zeile: was der Bediener sieht, aendert er auch. Keine Zeile =
+  // kein Schreib-Eintrag, also kann ein leeres Feld nichts ueberschreiben.
+  const stelle = leseGebundeneStelle(field, bindingAttr('value'))
+  if (stelle.art !== 'wert') {
     fieldData.delete(field)
+    // Ungebunden oder Quelle weg: der Wert bleibt stehen wie bisher. Nur eine
+    // fehlende ZEILE leert das Feld.
+    if (stelle.art === 'ohneZeile') field.value = ''
     return
   }
 
-  const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, sourceId)
-  if (!source) {
-    fieldData.delete(field)
-    return
-  }
-
-  // Welche Zeile das Feld zeigt, entscheidet die gemeinsame Auswahl-Regel
-  // (shared/auswahl): OHNE eingestellte Folge wie seit jeher die erste Zeile
-  // der Quelle; MIT Folge nur die zur Auswahl passende — und ohne Auswahl gar
-  // keine (das Feld bleibt dann leer, s. unten). Der Schreibweg haengt an
-  // DERSELBEN Zeile: was der Bediener sieht, aendert er auch (PINDEX unten
-  // kommt aus genau dieser Zeile). Keine Zeile = kein Schreib-Eintrag, also
-  // kann ein leeres Feld auch nichts ueberschreiben.
-  const row = ersteZeileNachAuswahl(
-    field,
-    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
-  )
-  if (row === undefined) {
-    fieldData.delete(field)
-    field.value = ''
-    return
-  }
-
-  const pindex = source.indexField === '' ? '' : getField(row, source.indexField)
-  const { quelleId, code: reinerCode } = zerlegeBindung(code)
+  const { zeile, quelle, quelleId, reinerCode, wert } = stelle
+  const pindex = quelle.indexField === '' ? '' : getField(zeile, quelle.indexField)
   // Nur eine Bindung an die ERSTE Quelle bekommt einen Schreib-Eintrag.
-  if (quelleId === '') fieldData.set(field, { row, code: reinerCode, pindex })
+  if (quelleId === '') fieldData.set(field, { row: zeile, code: reinerCode, pindex })
   else fieldData.delete(field)
-  // Der Fremd-Leser baut einen Zeilen-Index ueber die weitere Quelle. Fuer
-  // eine Bindung an die erste Quelle waere das reine Arbeit ohne Ertrag —
-  // ein Formular mit zehn Feldern indizierte die Fremdtabelle sonst zehnmal.
-  field.value = quelleId === '' ? getField(row, reinerCode) : macheFeldLeser(field)(row, code)
+  field.value = wert
 }
 
 function writeLocal(field: RuntimeFieldElement): FieldData | undefined {

@@ -77,6 +77,38 @@ export function auswahlMerkmal(geberId: string): string {
   return zustand.get(geberId)?.merkmal ?? ''
 }
 
+// Die Geber-Kennung eines Bausteins: das data-ff-id, das der Export setzt.
+// '' = der Baustein ist kein Auswahl-Geber.
+export function geberIdVon(el: Element): string {
+  return el.getAttribute('data-ff-id') ?? ''
+}
+
+// Eine gemerkte Auswahl nach der Neu-Hydrierung wiederfinden.
+//
+// Zeilen und Karten sind nach jedem Daten-Push NEUE Objekte — die Auswahl
+// muss darum jedes Mal neu zugeordnet werden (Identitaet = JSON-Abdruck).
+// Liefert die PLAETZE aller passenden Kandidaten; leer heisst „kein Geber,
+// keine Auswahl oder nichts gefunden".
+//
+// Ist die gewaehlte Zeile verschwunden (anderer Tag, geloescht), wird die
+// Auswahl AUFGEHOBEN — sonst filterten Folger nach etwas, das niemand mehr
+// sieht, und der Bediener koennte nie wieder rausklicken (Regel 4).
+export function auswahlWiederfinden<T>(
+  geberId: string,
+  kandidaten: readonly T[],
+  zeileVon: (kandidat: T) => unknown,
+): number[] {
+  if (geberId === '') return []
+  const merkmal = auswahlMerkmal(geberId)
+  if (merkmal === '') return []
+  const treffer: number[] = []
+  kandidaten.forEach((kandidat, i) => {
+    if (merkmalVon(zeileVon(kandidat)) === merkmal) treffer.push(i)
+  })
+  if (treffer.length === 0) klareAuswahl(geberId)
+  return treffer
+}
+
 // Zeile waehlen — dieselbe Zeile noch einmal = abwaehlen (Toggle).
 export function waehleAuswahl(geberId: string, zeile: unknown): void {
   if (geberId === '') return

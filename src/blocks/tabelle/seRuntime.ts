@@ -13,9 +13,8 @@
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, rowsFor } from '../../softengine/data'
 import {
-  auswahlMerkmal,
-  klareAuswahl,
-  merkmalVon,
+  auswahlWiederfinden,
+  geberIdVon,
   zeilenNachAuswahl,
 } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
@@ -68,20 +67,10 @@ function hydrateTable(el: RuntimeTableElement): void {
   )
   // Auswahl-Folge NACH dem Tagesfilter: beide engen nur ein.
   const { rows, gefiltert } = zeilenNachAuswahl(el, amTag)
-  // Ist DIESE Tabelle ein Geber mit gemerkter Auswahl, die gewaehlte Zeile
-  // in den NEUEN Zeilen wiederfinden (Identitaet = JSON-Abdruck). Ist sie
-  // verschwunden (anderer Tag, geloescht), wird die Auswahl AUFGEHOBEN —
-  // sonst filterten Folger nach einer Zeile, die niemand mehr sieht, und
-  // der Bediener koennte nie wieder rausklicken (Regel 4).
-  const geberId = el.getAttribute('data-ff-id') ?? ''
-  let auswahlIndex = -1
-  if (geberId !== '') {
-    const merkmal = auswahlMerkmal(geberId)
-    if (merkmal !== '') {
-      auswahlIndex = rows.findIndex((r) => merkmalVon(r) === merkmal)
-      if (auswahlIndex < 0) klareAuswahl(geberId)
-    }
-  }
+  // Ist DIESE Tabelle ein Geber mit gemerkter Auswahl, die gewaehlte Zeile in
+  // den NEUEN Zeilen wiederfinden (shared/auswahl — dieselbe Hilfe wie beim
+  // Kanban-Board, samt Aufheben einer verschwundenen Auswahl).
+  const auswahlIndex = auswahlWiederfinden(geberIdVon(el), rows, (r) => r)[0] ?? -1
   // Werte holen ueber den gemeinsamen Feld-Leser: er kennt die weiteren
   // Quellen des Bausteins und loest eine Spalte, die auf eine davon zeigt,
   // ueber die Partnerzeile auf (shared/fremdeQuellen). Fuer Spalten der

@@ -29,7 +29,7 @@ import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
-import { waehleAuswahl } from '../shared/auswahl'
+import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereIndizes } from './sortierung'
 import { datensatzText, passendeIndizes, zeigtEchteDaten } from './suche'
@@ -190,7 +190,7 @@ export class TabelleBlock extends BasicBlock {
   // nichts (keine erfundene Auswahl, Regel 7).
   private klickZeile(rohIndex: number | null): void {
     if (rohIndex === null || this.hasAttribute('data-ff-editor')) return
-    const geberId = this.getAttribute('data-ff-id') ?? ''
+    const geberId = geberIdVon(this)
     const zeile = this.rohzeilen[rohIndex]
     if (geberId === '' || zeile === undefined) return
     waehleAuswahl(geberId, zeile)

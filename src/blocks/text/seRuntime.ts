@@ -11,18 +11,15 @@
 //     passende, und ohne Auswahl gar keine.
 //   - Anmeldung/Neuzeichnen bei Daten-Push, Tageswechsel, Auswahl:
 //     macheDatenAnschluss (shared/datenAnschluss).
-//   - Wert eines Feldcodes: getField bzw. macheFeldLeser (shared/fremdeQuellen)
-//     fuer eine Bindung an eine WEITERE Quelle des Bausteins.
+//   - Quelle -> Zeile -> Wert in einem Zug: leseGebundeneStelle
+//     (shared/gebundeneStelle), dieselbe Leseleitung wie beim Formularfeld.
 //
 // Editor-Elemente melden sich nie an (datenAnschluss prueft data-ff-editor):
 // im Editor zeigt die Stelle den Feld-Klarnamen als Vorschau.
 
-import { bindingAttr, zerlegeBindung } from '../../core/blocks/BlockDefinition'
-import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
-import { ersteZeileNachAuswahl } from '../shared/auswahl'
+import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
-import { macheFeldLeser } from '../shared/fremdeQuellen'
+import { leseGebundeneStelle } from '../shared/gebundeneStelle'
 
 export interface RuntimeTextElement extends HTMLElement {
   text: string
@@ -41,33 +38,12 @@ function gebunden(el: RuntimeTextElement): { sourceId: string; code: string } | 
 }
 
 function hydriereText(el: RuntimeTextElement): void {
-  const bindung = gebunden(el)
-  if (!bindung) return // ungebunden: der getippte Text bleibt unangetastet
-
-  const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, bindung.sourceId)
-  // Quelle nicht in der Maske (geloescht, nie mitexportiert): leer statt
-  // getippter Text — die Stelle zeigt Daten, und die gibt es hier nicht.
-  // Der Preflight hat das beim Export im Klartext gemeldet.
-  if (!source) {
-    el.text = ''
-    return
-  }
-
-  const zeile = ersteZeileNachAuswahl(
-    el,
-    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
-  )
-  if (zeile === undefined) {
-    el.text = ''
-    return
-  }
-  const { quelleId, code: reinerCode } = zerlegeBindung(bindung.code)
-  // Der Fremd-Leser baut einen Zeilen-Index ueber die weitere Quelle. Fuer eine
-  // Bindung an die ERSTE Quelle waere das Arbeit ohne Ertrag (dieselbe
-  // Abwaegung wie in feldRuntime).
-  el.text = quelleId === ''
-    ? getField(zeile, reinerCode)
-    : macheFeldLeser(el)(zeile, bindung.code)
+  const stelle = leseGebundeneStelle(el, TEXT_ATTR)
+  // Ungebunden: der getippte Text bleibt unangetastet. Gebunden, aber Quelle
+  // oder Zeile fehlt: LEER statt getippter Text — die Stelle zeigt Daten, und
+  // die gibt es hier nicht.
+  if (stelle.art === 'ungebunden') return
+  el.text = stelle.art === 'wert' ? stelle.wert : ''
 }
 
 // Ein GEBUNDENER Text zeigt in der Maske nie seinen getippten Text: bis zum
