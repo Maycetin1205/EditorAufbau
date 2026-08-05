@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { eigenerText } from './helfer'
+import { eigenerText } from './bausteinName'
 
 describe('eigenerText', () => {
   it('liefert leer ohne Eigentext-Prop', () => {

@@ -8,8 +8,17 @@
 //
 // Rein (kein DOM), damit in Node testbar. Nutzt CheckResult aus validator.ts,
 // damit die Toolbar beide Pruefungen identisch behandelt (failedChecks + alert).
+//
+// JEDE Meldung nennt den Baustein mit seinem KLARNAMEN (bausteinName, seit
+// 2026-08-06): der Bauer hat sein Feld „Kunde" genannt, und genau so muss die
+// Meldung es nennen. Vorher stand dort nur der Bausteintyp — bei fuenf
+// Formularfeldern in einer Maske war schlicht nicht zu erkennen, WELCHES
+// gemeint ist. Der Bediener konnte den Export also nicht entblocken, obwohl
+// die Meldung fachlich stimmte (Regel 3, Regel 4: kein stilles Scheitern —
+// eine unbrauchbare Meldung scheitert genauso).
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
+import { bausteinName } from '../core/blocks/bausteinName'
 import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
@@ -72,7 +81,7 @@ export function preflightMask(
         results.push({
           name: 'Datenquelle fehlt',
           ok: false,
-          detail: `Baustein "${def?.displayName ?? node.type}" verweist auf eine geloeschte oder unbekannte Datenquelle.`,
+          detail: `Baustein "${bausteinName(node)}" verweist auf eine geloeschte oder unbekannte Datenquelle.`,
         })
       }
     }
@@ -90,7 +99,7 @@ export function preflightMask(
     // Spalte aus einer weiteren Quelle) waere damit ungeprueft geblieben.
     const pruefeBindung = (wert: unknown, stelle: string): void => {
       if (typeof wert !== 'string' || wert === '') return
-      const bausteinName = def?.displayName ?? node.type
+      const name = bausteinName(node)
       const erreichbar = quellenInReichweite(tree, node.id, sources)
       // Wichtig: gefragt ist die Quelle des TRAEGERS, nicht die des Bausteins
       // selbst. Eine Karte im Kanban hat gar keine source-Prop — laese man
@@ -105,7 +114,7 @@ export function preflightMask(
         results.push({
           name: 'Bindung ohne Datenquelle',
           ok: false,
-          detail: `Baustein "${bausteinName}", Stelle "${stelle}" ist an ein Feld gebunden, aber weder der Baustein noch ein Baustein darueber hat eine Datenquelle gewaehlt — die Stelle bliebe in der Maske leer.`,
+          detail: `Baustein "${name}", Stelle "${stelle}" ist an ein Feld gebunden, aber weder der Baustein noch ein Baustein darueber hat eine Datenquelle gewaehlt — die Stelle bliebe in der Maske leer.`,
         })
         return
       }
@@ -122,12 +131,12 @@ export function preflightMask(
           ? {
               name: 'Verbindung fehlt',
               ok: false,
-              detail: `Baustein "${bausteinName}", Stelle "${stelle}" holt ihren Wert aus "${inBibliothek.name}" — diese Datenquelle haengt aber nicht (mehr) vollstaendig an dem Baustein. Unter Daten die Datenquelle wieder hinzufuegen und die Felder angeben, an denen die zusammengehoerige Zeile erkannt wird.`,
+              detail: `Baustein "${name}", Stelle "${stelle}" holt ihren Wert aus "${inBibliothek.name}" — diese Datenquelle haengt aber nicht (mehr) vollstaendig an dem Baustein. Unter Daten die Datenquelle wieder hinzufuegen und die Felder angeben, an denen die zusammengehoerige Zeile erkannt wird.`,
             }
           : {
               name: 'Datenquelle unbekannt',
               ok: false,
-              detail: `Baustein "${bausteinName}", Stelle "${stelle}" holt ihren Wert aus einer geloeschten oder unbekannten Datenquelle — die Stelle bliebe in der Maske leer.`,
+              detail: `Baustein "${name}", Stelle "${stelle}" holt ihren Wert aus einer geloeschten oder unbekannten Datenquelle — die Stelle bliebe in der Maske leer.`,
             })
         return
       }
@@ -135,7 +144,7 @@ export function preflightMask(
         results.push({
           name: 'Gebundenes Feld fehlt',
           ok: false,
-          detail: `Baustein "${bausteinName}", Stelle "${stelle}": das gebundene Feld gibt es in der Datenquelle "${ziel.source.name}" nicht (mehr) — die Stelle bliebe in der Maske leer. Feld neu waehlen oder das Feld in der Datenquelle wieder anlegen. (Feldcode ${code})`,
+          detail: `Baustein "${name}", Stelle "${stelle}": das gebundene Feld gibt es in der Datenquelle "${ziel.source.name}" nicht (mehr) — die Stelle bliebe in der Maske leer. Feld neu waehlen oder das Feld in der Datenquelle wieder anlegen. (Feldcode ${code})`,
         })
       }
     }
@@ -171,7 +180,7 @@ export function preflightMask(
         results.push({
           name: 'Datenquelle unbekannt',
           ok: false,
-          detail: `Baustein "${def?.displayName ?? node.type}", "${prop.name}" nennt eine geloeschte oder unbekannte Datenquelle — die Stelle bliebe in der Maske leer.`,
+          detail: `Baustein "${bausteinName(node)}", "${prop.name}" nennt eine geloeschte oder unbekannte Datenquelle — die Stelle bliebe in der Maske leer.`,
         })
         continue
       }
@@ -184,13 +193,13 @@ export function preflightMask(
           results.push({
             name: 'Feld fehlt',
             ok: false,
-            detail: `Baustein "${def?.displayName ?? node.type}": "${prop.name}" ist auf "${quelle.name}" gestellt, aber "${feldProp.name}" ist leer — in der Maske liesse sich hier nichts waehlen.`,
+            detail: `Baustein "${bausteinName(node)}": "${prop.name}" ist auf "${quelle.name}" gestellt, aber "${feldProp.name}" ist leer — in der Maske liesse sich hier nichts waehlen.`,
           })
         } else if (!quelle.fields.some((f) => f.code === code)) {
           results.push({
             name: 'Gebundenes Feld fehlt',
             ok: false,
-            detail: `Baustein "${def?.displayName ?? node.type}": "${feldProp.name}" gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — Feld neu waehlen oder in der Datenquelle wieder anlegen. (Feldcode ${code})`,
+            detail: `Baustein "${bausteinName(node)}": "${feldProp.name}" gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — Feld neu waehlen oder in der Datenquelle wieder anlegen. (Feldcode ${code})`,
           })
         }
       }
@@ -215,7 +224,9 @@ export function preflightMask(
           results.push({
             name: 'Kennzeichen mehrfach vergeben',
             ok: false,
-            detail: `Im Baustein "${def?.displayName ?? node.type}" tragen ${count} Bausteine "${childDef?.displayName ?? childType}" das Kennzeichen "${prop.name}" — hoechstens einer darf es tragen.`,
+            // Der Traeger wird mit Klarnamen genannt, die Kinder mit ihrem TYP:
+            // gemeint sind hier mehrere Geschwister auf einmal, nicht eines.
+            detail: `Im Baustein "${bausteinName(node)}" tragen ${count} Bausteine "${childDef?.displayName ?? childType}" das Kennzeichen "${prop.name}" — hoechstens einer darf es tragen.`,
           })
         }
       }
@@ -247,13 +258,13 @@ export function preflightMask(
           results.push({
             name: 'Auswahl-Geber fehlt',
             ok: false,
-            detail: `Baustein "${def?.displayName ?? node.type}" folgt der Auswahl eines Bausteins, der geloescht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen laesst. Unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
+            detail: `Baustein "${bausteinName(node)}" folgt der Auswahl eines Bausteins, der geloescht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen laesst. Unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
           })
         } else if (!folgeBrauchbar(folge)) {
           results.push({
             name: 'Auswahl-Folge unvollstaendig',
             ok: false,
-            detail: `Baustein "${def?.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
+            detail: `Baustein "${bausteinName(node)}" folgt "${bausteinName(geber)}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
           })
         } else {
           // Das Feld RECHTS im Feldpaar (toField) gehoert der Quelle, deren
@@ -273,7 +284,7 @@ export function preflightMask(
             results.push({
               name: 'Auswahl-Folge Feld fehlt',
               ok: false,
-              detail: `Baustein "${def?.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}": das Feld, an dem die zusammengehoerige Zeile erkannt wird, gibt es in der Datenquelle "${zeilenQuelle.name}" nicht (mehr) — es wuerde nie eine Zeile passen. Unter "Auswahl folgen" das rechte Feld neu waehlen. (Feldcode ${paar.toField})`,
+              detail: `Baustein "${bausteinName(node)}" folgt "${bausteinName(geber)}": das Feld, an dem die zusammengehoerige Zeile erkannt wird, gibt es in der Datenquelle "${zeilenQuelle.name}" nicht (mehr) — es wuerde nie eine Zeile passen. Unter "Auswahl folgen" das rechte Feld neu waehlen. (Feldcode ${paar.toField})`,
             })
           }
         }
@@ -293,7 +304,7 @@ export function preflightMask(
           results.push({
             name: 'Aktion unvollstaendig',
             ok: false,
-            detail: `Baustein "${def?.displayName ?? node.type}", Ereignis "${eventName}": ${problem}`,
+            detail: `Baustein "${bausteinName(node)}", Ereignis "${eventName}": ${problem}`,
           })
         }
       }

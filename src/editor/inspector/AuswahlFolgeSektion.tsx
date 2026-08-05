@@ -43,7 +43,7 @@ import { quellenKennung } from '../../core/data/dataSources'
 import { MAX_SCHLUESSELPAARE, type SchluesselPaar } from '../../core/data/sourceLinks'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
-import { bausteinName } from '../zentrale/helfer'
+import { bausteinName } from '../../core/blocks/bausteinName'
 import { SelectControl } from './controls/SelectControl'
 
 // Radix-Select verbietet '' als Option-Wert — Platzhalter wie in QuellenListe.

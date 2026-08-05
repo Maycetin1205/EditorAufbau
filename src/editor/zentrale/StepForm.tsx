@@ -43,10 +43,10 @@ import {
   uebernahmeIdbQuellen,
   uebernahmeQuellen,
 } from './feldUebernahme'
+import { eigenerText } from '../../core/blocks/bausteinName'
 import {
   auswahlGeberOptionen,
   blockValueKey,
-  eigenerText,
   type BlockValueOption,
 } from './helfer'
 import { ParameterZeile } from './ParameterZeile'

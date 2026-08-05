@@ -3,7 +3,7 @@
 
 import { Boxes, Database, FileText, Users } from 'lucide-react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { bausteinName } from '../../core/blocks/bausteinName'
 import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'
 import { auswahlQuelleIdVon } from '../../core/blocks/treeQuery'
 import type { DataSource, DataSourceField, DataSourceKind } from '../../core/data/dataSources'
@@ -69,37 +69,11 @@ export function parameterBedeutung(param: string): string {
     .join(' · ')
 }
 
-// Der Anzeigename allein ist für mehrere gleichartige Bausteine nicht
-// eindeutig — ein kurzer Eigentext macht Listeneinträge sprechend.
-// `placeholder` gehört dazu: das Formularfeld trägt seinen Namen dort
-// („Vorname"), nicht in label/heading/title/text.
-const TEXT_PROPS = ['label', 'heading', 'title', 'text', 'placeholder'] as const
-
-// `defaults` (die Registry-Default-Props des Bausteins) sind optional: ist ein
-// Text noch unverändert Default (z. B. das Formularfeld-„Feldname"), gilt er
-// NICHT als Eigenname — dann bleibt der Baustein-Typ der Anzeigename. Das
-// läuft generisch über die Defaults, nicht an „Feldname" verdrahtet (Regel 2).
-export function eigenerText(
-  props: Record<string, unknown>,
-  defaults?: Record<string, unknown>,
-): string {
-  for (const key of TEXT_PROPS) {
-    const value = props[key]
-    if (typeof value !== 'string' || value.trim() === '') continue
-    if (defaults && value === defaults[key]) continue
-    const text = value.trim()
-    return text.length > 28 ? `${text.slice(0, 27)}…` : text
-  }
-  return ''
-}
-
-// Sprechender Name eines Bausteins für Listen: Anzeigename + Eigentext.
-export function bausteinName(node: BlockNode): string {
-  const def = getBlockDefinition(node.type)
-  const basis = def?.displayName ?? node.type
-  const text = eigenerText(node.props, def?.defaultProps)
-  return text === '' ? basis : `${basis} — ${text}`
-}
+// Der Klarname eines Bausteins („Formularfeld — Kunde") wohnte bis 2026-08-06
+// hier. Er ist nach core/blocks/bausteinName gezogen, weil die Export-Preflight
+// in ihren Meldungen dieselben Namen nennt und die Editor-Schicht nicht kennen
+// darf. Bewusst KEIN Weiterreichen von hier: eine Durchreiche-Schicht macht aus
+// einer Quelle wieder zwei Adressen. Alle Aufrufer holen ihn direkt dort.
 
 // Ein auslesbarer Bausteinwert als Auswahl-Eintrag (Registry: actionValueSpots).
 export interface BlockValueOption {

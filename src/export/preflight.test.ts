@@ -51,6 +51,27 @@ describe('preflightMask', () => {
     expect(kaputt.some((r) => r.name === 'Gebundenes Feld fehlt')).toBe(false)
   })
 
+  it('nennt den Baustein mit seinem Klarnamen, nicht nur mit dem Typ (2026-08-06)', () => {
+    // Zwei Formularfelder, beide kaputt gebunden. Stand vorher in beiden
+    // Meldungen nur "Formularfeld", war nicht zu erkennen, WELCHES gemeint
+    // ist — der Bediener konnte den Export nicht entblocken.
+    const feld = (id: string, name: string) => ({
+      id, type: 'formfeld', parentId: 'root', childIds: [],
+      props: {
+        fieldType: 'text', placeholder: name, options: '',
+        source: '', value: '', valueField: '99_9', width: 240,
+      },
+    })
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'b'] },
+      a: feld('a', 'Kunde'),
+      b: feld('b', 'Haustier'),
+    }
+    const texte = preflightMask(tree, [], []).map((r) => r.detail)
+    expect(texte.some((t) => t.includes('Formularfeld — Kunde'))).toBe(true)
+    expect(texte.some((t) => t.includes('Formularfeld — Haustier'))).toBe(true)
+  })
+
   it('Popup-Schritt reist mit dem Klarnamen; Preflight blockt gelöschte Ziele und Doppelnamen (P-B)', () => {
     const popup = (id: string, name: string) => ({
       id, type: 'popup',

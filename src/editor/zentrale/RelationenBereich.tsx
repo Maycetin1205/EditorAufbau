@@ -23,7 +23,8 @@ import { useRelations } from '../../state/useRelations'
 import { SegmentControl } from '../inspector/controls/SegmentControl'
 import { Gruppe } from './Gruppe'
 import { RelationForm } from './RelationForm'
-import { bausteinName, parameterBedeutung, RELATION_GRUPPEN, VERB_KURZ } from './helfer'
+import { bausteinName } from '../../core/blocks/bausteinName'
+import { parameterBedeutung, RELATION_GRUPPEN, VERB_KURZ } from './helfer'
 
 export function RelationenBereich() {
   const store = useRelations()

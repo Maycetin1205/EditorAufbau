@@ -21,7 +21,8 @@ import { useEditor } from '../../state/useEditor'
 import { DataSourceForm } from './DataSourceForm'
 import { DtkImportForm } from './DtkImportForm'
 import { Gruppe } from './Gruppe'
-import { bausteinName, ikonFuer } from './helfer'
+import { bausteinName } from '../../core/blocks/bausteinName'
+import { ikonFuer } from './helfer'
 
 export function DatenquellenBereich() {
   const store = useDataSources()
