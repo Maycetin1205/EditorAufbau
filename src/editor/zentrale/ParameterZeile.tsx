@@ -49,6 +49,7 @@ function BindingValue({
   blockValues,
   geber,
   schritte,
+  platzhalter,
   onChange,
 }: {
   binding: ActionParamBinding
@@ -56,6 +57,7 @@ function BindingValue({
   blockValues: readonly BlockValueOption[]
   geber: readonly AuswahlGeberOption[]
   schritte: readonly ErgebnisSchritt[]
+  platzhalter?: string
   onChange: (binding: ActionParamBinding) => void
 }) {
   if (binding.source === 'previous_result') {
@@ -179,10 +181,15 @@ function BindingValue({
       </SchrittSelect>
     )
   }
+  // Der Platzhalter zeigt grau, was OHNE eigene Eingabe gilt: den Wert aus der
+  // Relations-Syntax. Frueher stand dieser Wert als echter Text im Feld — der
+  // Bauer sah zehn ausgefuellte Felder und musste raten, welche davon er
+  // selbst gesetzt hatte. Grau heisst: kommt aus der Vorlage, fasst du nichts
+  // an, wird genau das geschickt.
   return (
     <TextInput
       value={binding.value}
-      placeholder={binding.source === 'se_variable' ? 'Variablenname' : 'Wert'}
+      placeholder={platzhalter ?? (binding.source === 'se_variable' ? 'Variablenname' : 'Wert')}
       onChange={(e) => onChange({ ...binding, value: e.target.value })}
     />
   )
@@ -195,11 +202,11 @@ export function ParameterZeile({
   blockValues,
   geber,
   schritte,
-  removable = false,
+  platzhalter,
+  entfernen,
   ausloeser,
   onChange,
   onAusloeser,
-  onRemove,
 }: {
   label: string
   binding: ActionParamBinding
@@ -207,11 +214,16 @@ export function ParameterZeile({
   blockValues: readonly BlockValueOption[]
   geber: readonly AuswahlGeberOption[]
   schritte: readonly ErgebnisSchritt[]
-  removable?: boolean
+  // Was OHNE eigene Eingabe gilt, grau im Feld. Leer = kein Vorlagenwert.
+  platzhalter?: string
+  // Das × am Zeilenende. ZWEI Bedeutungen, darum kommt die Beschriftung von
+  // aussen: ein Zusatzparameter verschwindet ganz, ein Vorlagen-Parameter
+  // KANN nicht verschwinden (seine Position gehoert zur SoftEngine-Syntax) —
+  // er faellt auf den Vorlagenwert zurueck. Fehlt der Eintrag, gibt es kein ×.
+  entfernen?: { label: string; onClick: () => void }
   ausloeser?: FeldUebernahmeZiel
   onChange: (binding: ActionParamBinding) => void
   onAusloeser?: (anchor: HTMLElement) => void
-  onRemove?: () => void
 }) {
   const setSource = (source: ActionParamSource) => {
     if (source === 'block_value' && blockValues.length === 1) {
@@ -271,6 +283,7 @@ export function ParameterZeile({
           blockValues={blockValues}
           geber={geber}
           schritte={schritte}
+          platzhalter={platzhalter}
           onChange={onChange}
         />
       </div>
@@ -282,8 +295,10 @@ export function ParameterZeile({
           <Link2 size={13} />
         </IconButton>
       )}
-      {removable && onRemove && (
-        <IconButton aria-label={`${label} entfernen`} onClick={onRemove}><X size={13} /></IconButton>
+      {entfernen && (
+        <IconButton aria-label={entfernen.label} onClick={entfernen.onClick}>
+          <X size={13} />
+        </IconButton>
       )}
     </div>
   )

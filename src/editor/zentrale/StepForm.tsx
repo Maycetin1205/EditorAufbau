@@ -126,6 +126,38 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const defaultParams = relation ? defaultRelationParams(relation) : []
   const bindingFor = (index: number): ActionParamBinding =>
     relationParams[index] ?? defaultParams[index] ?? { source: 'fixed', value: '' }
+
+  // WAS IM FELD STEHT vs. WAS GESCHICKT WIRD (Nutzer-Ansage 2026-08-06).
+  //
+  // Bis hierher stand der Wert aus der Relations-Syntax als echter Text in
+  // jedem Feld: zehn ausgefuellte Kaesten, und der Bauer musste raten, welchen
+  // davon er selbst gesetzt hatte. Jetzt bleibt ein Feld LEER, solange es beim
+  // Vorlagenwert steht — der Wert steht grau als Platzhalter daneben.
+  //
+  // Am Gespeicherten aendert das nichts: leer heisst „nimm die Vorlage", und
+  // beim Speichern faellt die Zeile genau darauf zurueck (candidate). Ein
+  // Vorlagenwert kann NICHT weggeloescht werden — seine Position gehoert zur
+  // SoftEngine-Syntax, ein leerer String an Stelle 3 waere kein leeres Feld,
+  // sondern ein kaputter Aufruf (Regel 4: nichts scheitert still).
+  //
+  // Nur feste Werte: die anderen Quellen zeigen Auswahlfelder, die ihren
+  // Zustand selbst benennen („— waehlen —").
+  const stehtBeiVorlage = (index: number): boolean => {
+    const binding = bindingFor(index)
+    const standard = defaultParams[index]
+    return binding.source === 'fixed'
+      && standard?.source === 'fixed'
+      && binding.value === standard.value
+  }
+  const anzeigeBinding = (index: number): ActionParamBinding =>
+    stehtBeiVorlage(index) ? { source: 'fixed', value: '' } : bindingFor(index)
+  // Grau im Feld: der Vorlagenwert. Ist er leer, sagt das Feld das ausdruecklich
+  // statt gar nichts zu zeigen.
+  const platzhalterFor = (index: number): string | undefined => {
+    const standard = defaultParams[index]
+    if (!standard || standard.source !== 'fixed') return undefined
+    return standard.value === '' ? '(leer)' : standard.value
+  }
   const setBinding = (index: number, binding: ActionParamBinding) => {
     setUebernahmeBestaetigung('')
     setRelationParams((current) => {
@@ -206,7 +238,14 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     const normalizedParams = relation
       ? relation.params.map((_, index) => {
           const binding = bindingFor(index)
-          return { ...binding, value: binding.value.trim() }
+          const wert = binding.value.trim()
+          // Leer gelassener fester Wert = „nimm die Vorlage" (s. anzeigeBinding).
+          // Der Vorlagenwert kann selbst leer sein — dann bleibt es leer, aber
+          // aus der Vorlage heraus und nicht aus Versehen.
+          if (binding.source === 'fixed' && wert === '' && defaultParams[index]) {
+            return { ...defaultParams[index] }
+          }
+          return { ...binding, value: wert }
         })
       : []
     return {
@@ -306,11 +345,16 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                   const row = (
                     <ParameterZeile
                       label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
-                      binding={bindingFor(index)}
+                      binding={anzeigeBinding(index)}
                       dataSources={dataSources.list}
                       blockValues={blockValues}
                       geber={geber}
                       schritte={ergebnisSchritte}
+                      platzhalter={platzhalterFor(index)}
+                      entfernen={stehtBeiVorlage(index) ? undefined : {
+                        label: `Parameter ${index + 1} auf den Vorlagenwert zuruecksetzen`,
+                        onClick: () => setBinding(index, defaultParams[index]),
+                      }}
                       ausloeser={ausloeser}
                       onChange={(binding) => setBinding(index, binding)}
                       onAusloeser={ausloeser
@@ -363,9 +407,11 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                   blockValues={blockValues}
                   geber={geber}
                   schritte={ergebnisSchritte}
-                  removable
+                  entfernen={{
+                    label: `Zusatzparameter ${index + 1} entfernen`,
+                    onClick: () => setExtraParams((current) => current.filter((_, at) => at !== index)),
+                  }}
                   onChange={(next) => setExtraParams((current) => current.map((value, at) => at === index ? next : value))}
-                  onRemove={() => setExtraParams((current) => current.filter((_, at) => at !== index))}
                 />
               ))}
             </div>
