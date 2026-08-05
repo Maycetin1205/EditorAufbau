@@ -30,6 +30,24 @@ function schluckeKlick(ev: MouseEvent): void {
   ev.preventDefault()
 }
 
+// Liegt der Zeiger in einer offenen Inline-Bearbeitung? Dann gehoert die Geste
+// dem TEXT, nicht dem Baustein: wer im Edit-Modus (Doppelklick auf eine Stelle,
+// BasicBlock.inlineEdit setzt contenteditable) Text per Ziehen markiert,
+// bewegte bis 2026-08-06 stattdessen den ganzen Baustein — bei Zellwechsel
+// sprang er mitten im Tippen woanders hin, und der Klick-Schlucker frass den
+// Folgeklick. Die Editierfelder der Tabelle schuetzen sich seit je mit
+// @pointerdown=stop; der generische Inline-Edit-Pfad kann das nicht, weil der
+// Zug am Raster-Wrapper AUSSERHALB des Bausteins beginnt.
+// composedPath, weil die bearbeitete Stelle im Shadow DOM des Bausteins liegt
+// (Muster spotAt in useBindingPicker).
+function inTextBearbeitung(e: ReactPointerEvent<HTMLElement>): boolean {
+  for (const t of e.nativeEvent.composedPath()) {
+    if (t === e.currentTarget) return false
+    if (t instanceof HTMLElement && t.isContentEditable) return true
+  }
+  return false
+}
+
 export function ziehePosition(
   editor: Editor,
   dnd: DndState,
@@ -38,6 +56,7 @@ export function ziehePosition(
   parentId: string,
 ): void {
   if (e.button !== 0) return
+  if (inTextBearbeitung(e)) return
   const wrapper = e.currentTarget
   // Der Wrapper ist direktes Grid-Item; sein Elternteil IST die Rasterfläche.
   const gridEl = wrapper.parentElement
