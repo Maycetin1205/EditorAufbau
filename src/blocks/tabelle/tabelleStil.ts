@@ -1,4 +1,4 @@
-﻿// tabelleStil — das Aussehen des Tabellen-Bausteins.
+// tabelleStil — das Aussehen des Tabellen-Bausteins.
 //
 // Aus TabelleBlock herausgeloest (2026-07-25), weil die Datei mit der
 // Suchzeile ueber den 500-Zeilen-Deckel wuchs (check:regeln). Der Schnitt

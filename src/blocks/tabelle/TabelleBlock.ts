@@ -1,4 +1,4 @@
-﻿// TabelleBlock
+// TabelleBlock
 // Tabellen-Baustein (Fahrplan-Punkt 4). EIN Baustein, EIN Rahmen: die Spalten
 // stecken INNEN (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel
 // UND ein Feld:

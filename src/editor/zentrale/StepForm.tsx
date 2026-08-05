@@ -1,4 +1,4 @@
-﻿// StepForm — ein Schritt im Ablauf: Baustein -> Ereignis -> Aktion.
+// StepForm — ein Schritt im Ablauf: Baustein -> Ereignis -> Aktion.
 //
 // START_TOOL und RELATION teilen nur die Huelle; ihre Felder bleiben durch
 // das typisierte Kernmodell strikt getrennt. START_TOOL traegt nur die
