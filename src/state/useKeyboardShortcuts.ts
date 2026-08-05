@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react'
 import { useEditorInstance } from './EditorContext'
+import { loescheBaustein } from './loescheBaustein'
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
@@ -28,7 +29,7 @@ export function useKeyboardShortcuts() {
       if (!mod && e.key === 'Delete') {
         if (editor.selectedId) {
           e.preventDefault()
-          editor.removeBlock(editor.selectedId)
+          loescheBaustein(editor, editor.selectedId)
         }
         return
       }

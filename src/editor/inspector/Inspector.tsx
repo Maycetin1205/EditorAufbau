@@ -20,6 +20,7 @@ import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { darfAuswahlFolgen, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import type { ActionStep } from '../../core/data/aktionen'
+import { loescheBaustein } from '../../state/loescheBaustein'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -250,7 +251,7 @@ export function Inspector() {
           <IconButton
             aria-label="Löschen (Entf)"
             title="Löschen"
-            onClick={() => ed.removeBlock(block.id)}
+            onClick={() => loescheBaustein(ed, block.id)}
           >
             <Trash size={14} />
           </IconButton>

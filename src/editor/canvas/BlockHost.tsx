@@ -28,6 +28,7 @@ import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { rasterSpecOf } from '../../core/blocks/rasterLayout'
 import { bindbareStellenVon, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import { useEditorInstance } from '../../state/EditorContext'
+import { loescheBaustein } from '../../state/loescheBaustein'
 import { useDataSources } from '../../state/useDataSources'
 import { useFeldBindung } from './FeldBindung'
 import { useBlockResize } from './useBlockResize'
@@ -123,20 +124,16 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   function onRemoveClick(e: ReactMouseEvent<HTMLButtonElement>) {
     e.stopPropagation()
     const node = blockRef.current
-    if (editor.isRemoveProtected(node.id)) {
-      window.alert(
-        'Hier liegt die Musterkarte — aus ihr entstehen die Datenkarten, sie kann nicht gelöscht werden. Ziehe sie erst in eine andere Spalte.',
-      )
-      return
-    }
-    const n = node.childIds.length
-    if (
-      n > 0
-      && !window.confirm(
+    // Schutz-Erklaerung + Entfernen liegen in loescheBaustein (dieselbe Stelle
+    // wie Inspector-Knopf und Entf-Taste); die Inhalts-Rueckfrage ist die
+    // Zusatzfrage NUR dieses Wegs.
+    loescheBaustein(editor, node.id, () => {
+      const n = node.childIds.length
+      if (n === 0) return true
+      return window.confirm(
         `„${def?.displayName ?? node.type}" mit ${n} ${n === 1 ? 'Element' : 'Elementen'} darin löschen?`,
       )
-    ) return
-    editor.removeBlock(node.id)
+    })
   }
 
   return (
