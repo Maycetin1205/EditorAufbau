@@ -26,7 +26,7 @@ import {
   type BlockTree,
 } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
-import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
+import { canContain, getAllBlockDefinitions, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { parseRasterPos, rasterSpecOf } from '../core/blocks/rasterLayout'
 import { type BlockEventsMap } from '../core/data/aktionen'
 import { type DataSource } from '../core/data/dataSources'
@@ -115,11 +115,18 @@ export class Editor extends Subject<Editor> {
   // eindeutigem Klarnamen; die Seite wird sofort aktiv. Transaktion =
   // Anlegen + Benennen sind zusammen EIN Undo-Schritt.
   addPopupPage(): BlockNode | null {
+    // Welcher Baustein eine Seite IST, sagt die Registry (pageBlock) — nicht
+    // ein Typ-Name hier im Store (Regel 2). Als Funktionsargument haette der
+    // fest verdrahtete 'popup'-String den Wächter nie ausgeloest; pageOps
+    // macht es zwei Dateien weiter schon richtig. Der sichtbare Name "Popup"
+    // unten ist davon unberuehrt — das ist Anzeige, kein Typ.
+    const typ = getAllBlockDefinitions().find((d) => d.pageBlock)?.type
+    if (!typ) return null
     const vergeben = new Set(this.pages.map((p) => p.name))
     let name = 'Popup'
     for (let n = 2; vergeben.has(name); n++) name = `Popup ${n}`
     this.beginTransaction()
-    const node = this.addBlock('popup', ROOT_ID)
+    const node = this.addBlock(typ, ROOT_ID)
     if (node) {
       this._activePageId = node.id
       this.updateProperty(node.id, 'name', name)
