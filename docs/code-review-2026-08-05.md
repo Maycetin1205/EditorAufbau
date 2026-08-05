@@ -163,3 +163,42 @@ definitions entsteht bei jedem Render als neues Array (getAllBlockDefinitions().
 - Die Zieh-Mechaniken (zieheGroesse.ts, rasterMove.ts) denken die Nicht-Happy-Paths mit: pointercancel UND window-blur als Abschlusswege, ein Einmal-Guard gegen doppeltes endTransaction, und der Kommentar erklaert ehrlich, warum (ein Transaktions-Leak haette still das gesamte Undo lahmgelegt). Der Klick-Schlucker in rasterMove raeumt sogar liegengebliebene once-Listener frueherer Zuege ab. _(Bereich: die React-Seite — src/app, src/editor, s)_
 - eingabeSitzung.ts (eine Tipp-Sitzung = EIN Undo-Schritt) ist ein echtes Problem sauber geloest: Beginn erst beim ersten Tastendruck, Unmount-Cleanup schliesst offen gebliebene Transaktionen, und die Callbacks bleiben ueber eine Ref stabil, damit das Aufraeumen wirklich nur an der Unmontierung haengt. _(Bereich: die React-Seite — src/app, src/editor, s)_
 - React-Muster werden korrekt statt kultisch eingesetzt: 'State waehrend des Renderns anpassen' anstelle von Effekt-Kaskaden (Inspector.tsx aufgabenBlock, NumberControl Entwurf/Basis, useBindingPicker), Escape-Schichtung ueber capture+stopPropagation funktioniert nachvollziehbar (FormularKarte vs. Kommandozentrale), und die A11y-Disziplin ist durchgaengig (IconButton erzwingt aria-label per Typsystem, Field verdrahtet aria-describedby/aria-invalid genau einmal). _(Bereich: die React-Seite — src/app, src/editor, s)_
+
+---
+
+## Nachtrag 2026-08-05: Design-Übernahme („Fellnase") und Editor-Optik
+
+**Befund Branch-Lage (WICHTIG, zuerst lesen):** Das neue Masken-Design ist
+NIRGENDS zusammengeführt. Es liegt in drei Commits NUR auf
+`claude/opus-hat-fehler-c5f5ey`: `b724521` (Trenner senkrecht), `0e2bdff`
+(Fellnase-Palette/Kanten/Flachheit in den Bausteinen), `3cc13cf` (Schriften
+Fraunces+Figtree eingebettet). Dieser Review-Branch hier basiert auf derselben
+Linie, aber OHNE diese drei Commits. `main` ist eine alte, um ~50 Commits
+abgewichene Linie — main ist NICHT der lebende Stand. Der Branch
+`claude/kleintierpraxis-design-system-e4ye3x` enthält nur den Musterbogen
+(`designsprache/` — atome.css, Tier-Avatare), keinen Editor-Code.
+
+**Konfliktgefahr:** `0e2bdff` ändert ButtonBlock, CardBlock, KanbanSpalteBlock,
+tabelleStil, DialogRahmen, statusVariant, masken-tokens.css, ff-runtime und den
+Referenzabzug — dieselben Dateien, die die Review-Fixes berühren können.
+**Reihenfolge daher: ERST die Review-Funde fixen, DANN die drei Design-Commits
+per Merge/Cherry-Pick auf diesen Branch holen** (Referenzabzug danach mit
+`npx vitest run -u` erneuern), nie parallel.
+
+**Qualität der Design-Übernahme, soweit am Code prüfbar:** mechanisch sauber —
+Farben über masken-tokens.css (keine Hex-Werte in Baustein-CSS), Runtime-Bündel
+und Referenzabzug im selben Commit erneuert, Schriften als Daten-URI (Export
+bleibt eine Datei, kein Netzzugriff; Preis 115 KB pro Maske ist dokumentiert
+und an EINER Stelle wieder ausbaubar). NICHT prüfbar von hier: wie es
+AUSSIEHT — das beurteilt der Nutzer im Browser.
+
+**Nutzer-Urteil zur Editor-Optik (2026-08-05, gilt als Auftrag):**
+1. Die kleinen „Avatare" an den Bausteinen in der linken Palette ergeben keinen
+   Sinn und sehen schlimm aus → durch nüchterne, erkennbare Symbole ersetzen
+   (Icon deklariert der Baustein selbst, seit `3c65f5b`).
+2. Menüs teils zu eng, Felder passen nicht ganz (Inspector/Zentrale) →
+   Abstände/Breiten durchgehen; Editor-UI-Stile leben NUR in src/index.css
+   (nie mit Masken-Tokens mischen).
+3. Ob die Maske eine Schmuck-Serifenschrift (Fraunces) tragen soll, ist eine
+   offene Nutzer-Entscheidung — vor dem Übernehmen der drei Design-Commits
+   einmal in einem Satz nachfragen.
