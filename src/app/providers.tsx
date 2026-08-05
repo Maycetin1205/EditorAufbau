@@ -7,6 +7,7 @@
 import { useState, type ReactNode } from 'react'
 import { Editor } from '../state/Editor'
 import { EditorProvider } from '../state/EditorProvider'
+import { Fehlergrenze } from './Fehlergrenze'
 
 interface ProvidersProps {
   children: ReactNode
@@ -15,5 +16,9 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   // Lazy-Init: genau EINE Instanz für die Lebenszeit der App.
   const [editor] = useState(() => new Editor())
-  return <EditorProvider editor={editor}>{children}</EditorProvider>
+  return (
+    <EditorProvider editor={editor}>
+      <Fehlergrenze>{children}</Fehlergrenze>
+    </EditorProvider>
+  )
 }

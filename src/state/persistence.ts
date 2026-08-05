@@ -205,7 +205,19 @@ export function meldeVerworfeneTypen(verworfen: Map<string, number>): void {
 }
 
 export function loadFromStorage(): LoadedState | null {
-  const raw = localStorage.getItem(STORAGE_KEY)
+  // Gleiche Schutzform wie oben beim Aufraeumen: in Umgebungen ohne
+  // localStorage (Node-Tests) und bei gesperrtem Speicher (Privatmodus,
+  // blockierte Cookies) WIRFT schon der Zugriff. Ohne diese Wache riss der
+  // Fehler den ganzen Editor-Start mit — weisse Seite, keine Meldung.
+  // Behandelt wie "nichts gespeichert"; ein console.warn statt eines
+  // Alerts, denn ungespeichert ist noch nichts verloren.
+  let raw: string | null = null
+  try {
+    if (typeof localStorage !== 'undefined') raw = localStorage.getItem(STORAGE_KEY)
+  } catch (err) {
+    console.warn('Browser-Speicher nicht lesbar — der Editor startet leer.', err)
+    return null
+  }
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as {

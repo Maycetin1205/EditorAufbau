@@ -63,7 +63,21 @@ export interface VorlagenBauplan<T extends VorlagenEintrag> {
 // scheitert still", siehe notfallkopie.ts — dieselbe Behandlung wie beim
 // Block-Baum).
 function ladeAusSpeicher<T extends VorlagenEintrag>(bauplan: VorlagenBauplan<T>): T[] | null {
-  const roh = localStorage.getItem(bauplan.schluessel)
+  // Diese Funktion laeuft schon beim MODUL-Import (die Singletons unten),
+  // also VOR dem Aufbau der Oberflaeche. Wirft der Speicherzugriff
+  // (Privatmodus, gesperrte Cookies), startete der Editor bis 2026-08-05 als
+  // weisse Seite ohne ein Wort. Jetzt: wie "noch nie gespeichert" weiter,
+  // einmal console.warn — kein Alert, denn verloren ist nichts.
+  let roh: string | null = null
+  try {
+    if (typeof localStorage !== 'undefined') roh = localStorage.getItem(bauplan.schluessel)
+  } catch (err) {
+    console.warn(
+      `Browser-Speicher nicht lesbar — „${bauplan.klarnameLesen}" startet leer.`,
+      err,
+    )
+    return null
+  }
   if (!roh) return null
   try {
     const gelesen = JSON.parse(roh) as Record<string, unknown> | null
