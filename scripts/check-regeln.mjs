@@ -295,6 +295,45 @@ for (const pfad of quellen) {
   })
 }
 
+// --- 7. Saubere Zeichen: keine Steuerzeichen, keine BOM (Befund A7) ---
+//
+// Anlass: FieldPicker.tsx trug jahrelang ein rohes Null-Byte in einem
+// Template-String. Folge -- git und JEDES Suchwerkzeug hielten die Datei fuer
+// binaer: kein Diff im Commit, von jeder Codesuche uebersprungen. Genau so
+// konnte sie unsichtbar bleiben, und nebenbei war sie als einzige Datei im
+// Repo CRLF-codiert. Vier weitere Dateien trugen eine BOM.
+//
+// Erlaubt sind Tab (0x09), LF (0x0A) und CR (0x0D) -- alles andere unter
+// 0x20 ist ein Fehler. Wer ein Steuerzeichen als WERT braucht, schreibt es
+// als Escape (' '): das ist lesbar, durchsuchbar und diffbar.
+for (const pfad of quellen) {
+  const text = lies(pfad)
+  if (text.startsWith('\uFEFF')) {
+    fehler.push(
+      `BOM am Dateianfang: ${pfad}\n` +
+      `      Die Datei als UTF-8 OHNE BOM speichern. Eine BOM ist ein unsichtbares\n` +
+      `      Zeichen vor der ersten Zeile -- sie verwirrt Werkzeuge und Diffs, ohne\n` +
+      `      dass man sie sieht.`
+    )
+  }
+  const zeilen = text.split('\n')
+  for (let i = 0; i < zeilen.length; i++) {
+    // Als Escapes geschrieben, nicht als rohe Zeichen -- sonst braeche
+    // dieser Waechter genau die Regel, die er bewacht.
+    const treffer = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.exec(zeilen[i])
+    if (!treffer) continue
+    const code = '0x' + treffer[0].charCodeAt(0).toString(16).padStart(2, '0')
+    fehler.push(
+      `Steuerzeichen ${code} im Quelltext: ${pfad}:${i + 1}\n` +
+      `      Ein rohes Steuerzeichen macht die Datei fuer git und die Suchwerkzeuge\n` +
+      `      BINAER: kein Diff, von jeder Codesuche uebersprungen. Genau so blieb das\n` +
+      `      Null-Byte in FieldPicker.tsx jahrelang unsichtbar. Als Escape schreiben\n` +
+      `      ('\\u0000') oder eine benannte Konstante nehmen.`
+    )
+    break // eine Meldung je Datei reicht
+  }
+}
+
 // --- Ergebnis ---------------------------------------------------------
 
 for (const h of hinweise) console.log('  hinweis: ' + h)
