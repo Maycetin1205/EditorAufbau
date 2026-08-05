@@ -4,10 +4,6 @@
 > schlagen diese Datei; bei Widerspruch nachfragen. Der Nutzer kann nicht
 > programmieren: diese Regeln + die Prüfungen sind sein Ersatz dafür, Code
 > lesen zu können. **Vor jeder Code-Änderung: Plan zeigen, „go" abwarten.**
-> Ausnahme (Nutzer-Go 2026-08-05): ein eingecheckter, vom Nutzer bereits
-> freigegebener Abarbeitungsplan (aktuell `AUFRAEUMPLAN.md`) IST das Go für
-> genau seine Schritte — abarbeiten ohne weitere Rückfrage; nur wer vom Plan
-> abweichen muss, stoppt und fragt.
 > **„Aufgefallen unterwegs" ist GESTRICHEN** (Nutzer-Ansage 2026-08-04; galt
 > 2026-07-17 bis 2026-08-04 als Pflicht-Rubrik am Berichtsende). Grund: eine
 > Rubrik, die Pflicht ist, ist niemals leer — sie produzierte bei jedem
@@ -244,17 +240,22 @@ Datenquelle heben (der Plan dazu lag in `docs/1-plans/F_0.5.0…` und steckt
 jetzt in Commit `fd827aa`). Offen daneben: Tabelle stabil machen, Optik-
 Feinschliff, Wizard.
 
-**Check-up 2026-08-05 (Nutzer-Auftrag, kompletter Code-Durchgang):** Die
-Bauart trägt — Registry echt generisch, Typ-Disziplin sehr hoch (1× `any`,
-begründet), Abhängigkeiten schlank (9, alle benutzt), Prüfbündel grün. ABER:
-6 echte Fehler und eine Reihe Konsistenz-/Ehrlichkeits-Befunde. Alles
-Reparierbare steht als Pakete A/B in `AUFRAEUMPLAN.md` — **Go dafür ist
-erteilt** (s. Kopf dieser Datei). Nach Abarbeitung: Plan-Datei löschen (die
-git-Historie hat sie) und diesen Absatz auf das Ergebnis eindampfen. Bewusst
-NICHT im Plan (brauchen je eine eigene Nutzer-Entscheidung): ein Vokabular
-pro Begriff (Schritt/Step, QuellenArt/DataSourceKind — kollidiert mit der
-Namens-Konvention oben) · Bibliotheken-Singletons vs. Provider-Bauart ·
-ein README als menschliche Eingangstür (kollidiert mit dem Doku-Schnitt).
+**Check-up 2026-08-05 — ABGEARBEITET (2026-08-05, 15 Schritte, 15 Commits):**
+Die Bauart trägt; die 6 echten Fehler sind weg (Kanban-Zug bei Daten-Push ·
+Undo spülte beim Tippen die Historie weg · verschluckte Ketten-/Brücken-
+Fehler · zweiter Tageswähler zog nicht nach · weißer Editor-Start bei
+gesperrtem Speicher · Geist-Baustein nach Fenster-Wechsel). Dazu:
+Null-Byte/BOM aus den Quellen, `noImplicitOverride`, drei kopierte
+Code-Stellen zusammengezogen, unwahre Kommentare korrigiert, Review-Chronik
+eingedampft. Zwei neue Wächter: Steuerzeichen/BOM in `check:regeln` und
+`no-floating-promises` (typ-gestützt, nur diese eine Regel). Übersprungen:
+nichts. Nicht selbst prüfbar: der Privatmodus-Fall (braucht Safari), und
+kein DnD-Test für den Kanban-Fix (wäre eine neue Test-Gattung, Regel 9).
+Bewusst ausgeklammert, je eine eigene Nutzer-Entscheidung nötig: ein
+Vokabular pro Begriff (Schritt/Step, QuellenArt/DataSourceKind — kollidiert
+mit der Namens-Konvention oben) · Bibliotheken-Singletons vs.
+Provider-Bauart · ein README als menschliche Eingangstür (kollidiert mit dem
+Doku-Schnitt).
 
 ### Feste Zusagen — aus FAHRPLAN.md gerettet, weil es REGELN sind
 
