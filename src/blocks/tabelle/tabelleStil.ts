@@ -12,15 +12,15 @@ import { css } from 'lit'
 
 export const tabelleStil = css`
       :host { min-width: 0; height: 100%; }
-      /* Der Takt der Tabelle. WICHTIG: dieser Wert wird VORGEGEBEN, nicht
-         geschaetzt — Kopf und Zeilen bekommen ihn als feste Hoehe, der
-         Text wird ueber line-height darin zentriert. Vorher stand hier ein
-         geschaetzter Wert (29px), waehrend die Zeilen sich aus Schrift +
-         Innenabstand auf 33,25px ergaben. Die weitergezeichneten Linien
-         liefen dadurch 4,25px je Zeile aus dem Takt — nach vier Zeilen
-         17px Versatz, und genau das sah krumm aus (Nutzer 2026-07-25).
-         Vorgeben statt schaetzen: jetzt koennen sie nicht mehr abweichen. */
-      .tabelle { --zeilen-hoehe: 32px; }
+      /* --zeilen-hoehe ist der Takt der Tabelle. Die ZAHL steht nicht mehr
+         hier, sondern in ./seitengroesse (ZEILEN_HOEHE) — der Baustein setzt
+         sie beim Zeichnen als Variable. Grund (2026-08-06): seit die Tabelle
+         ihre Zeilenzahl aus der eigenen Hoehe RECHNET, brauchen Optik und
+         Rechnung denselben Wert. Zwei Stellen hiessen: beim naechsten
+         Feinschliff rechnet die Seitengroesse still falsch.
+         Vorgegeben (nicht aus Schrift + Innenabstand geschaetzt) bleibt er
+         weiterhin: ein geschaetzter Wert lief hier schon 4,25px je Zeile aus
+         dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
       .tabelle {
         position: relative;
         box-sizing: border-box;

@@ -1,0 +1,65 @@
+// Tests der Seitengroesse — reine Rechnung, darum ohne DOM pruefbar.
+// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
+
+import { describe, expect, it } from 'vitest'
+import { passendeZeilen, seitenAufteilung, ZEILEN_HOEHE } from './seitengroesse'
+
+describe('passendeZeilen', () => {
+  it('rechnet den freien Rumpf in ganze Zeilen um', () => {
+    // 300px Rumpf minus 32px Kopf = 268px frei -> 8 ganze Zeilen (8,375).
+    expect(passendeZeilen(300, ZEILEN_HOEHE)).toBe(8)
+    // Genau aufgehend: 10 Zeilen plus Kopf.
+    expect(passendeZeilen(ZEILEN_HOEHE * 11, ZEILEN_HOEHE)).toBe(10)
+  })
+
+  it('rundet ab — eine halb sichtbare Zeile ist keine Zeile', () => {
+    expect(passendeZeilen(ZEILEN_HOEHE * 5 + ZEILEN_HOEHE - 1, ZEILEN_HOEHE)).toBe(4)
+  })
+
+  it('liefert nie weniger als eine Zeile', () => {
+    // Flacher als der Kopf (im Aufbau, waehrend das Raster noch zieht):
+    // eine Seite mit null Zeilen zeigte gar nichts und liesse sich nicht
+    // durchblaettern.
+    expect(passendeZeilen(40, ZEILEN_HOEHE)).toBe(1)
+    expect(passendeZeilen(0, ZEILEN_HOEHE)).toBe(1)
+    expect(passendeZeilen(-100, ZEILEN_HOEHE)).toBe(1)
+  })
+})
+
+describe('seitenAufteilung', () => {
+  const frage = (mehr: Partial<Parameters<typeof seitenAufteilung>[0]> = {}) => seitenAufteilung({
+    sichtbar: [0, 1, 2, 3, 4],
+    hatQuelle: true,
+    proSeite: 2,
+    wunschSeite: 0,
+    platzhalterZeilen: 4,
+    ...mehr,
+  })
+
+  it('teilt die sichtbaren Zeilen auf Seiten', () => {
+    expect(frage()).toEqual({ seiten: 3, seite: 0, zeilen: [0, 1] })
+    expect(frage({ wunschSeite: 1 }).zeilen).toEqual([2, 3])
+  })
+
+  it('fuellt die letzte Seite NICHT mit leeren Zeilen auf (2026-08-06)', () => {
+    // Fuenf Saetze, zwei pro Seite: die dritte Seite zeigt EINE Zeile.
+    // Vorher stand daneben eine leere, die sich beim Ueberfahren hinterlegte
+    // und beim Klick nichts tat — sie sah aus wie ein ladender Satz.
+    expect(frage({ wunschSeite: 2 }).zeilen).toEqual([4])
+    // Und gar keine Saetze heisst gar keine Zeilen (leerer Tag im Tagesfilter).
+    expect(frage({ sichtbar: [] }).zeilen).toEqual([])
+  })
+
+  it('zeigt ohne Quelle die Platzhalter-Zeilen des Editors', () => {
+    const ohne = frage({ hatQuelle: false, sichtbar: [] })
+    expect(ohne.zeilen).toEqual([null, null, null, null])
+    expect(ohne.seiten).toBe(1)
+  })
+
+  it('klemmt eine veraltete Seite in die Grenzen (geschrumpfter SE-Push)', () => {
+    expect(frage({ wunschSeite: 99 }).seite).toBe(2)
+    expect(frage({ wunschSeite: -5 }).seite).toBe(0)
+    // Leere Menge: Seite 1 von 1, nicht "Seite 1 von 0".
+    expect(frage({ sichtbar: [] }).seiten).toBe(1)
+  })
+})

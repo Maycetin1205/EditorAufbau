@@ -1,14 +1,15 @@
 // TabelleBlock
-// Tabellen-Baustein (Fahrplan-Punkt 4). EIN Baustein, EIN Rahmen: die Spalten
-// stecken INNEN (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel
-// UND ein Feld:
-//   - Titel je Spalte per Doppelklick am Kopf umbenennen (Inline-Edit)
-//   - „+ Spalte" / „−" oben rechts: hinzufügen / letzte entfernen
+// Tabellen-Baustein. EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
+// (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel UND ein Feld:
+//   - Titel je Spalte per Doppelklick am Kopf umbenennen (./titelEdit)
+//   - „+" / „−" oben rechts: Spalte hinzufügen / letzte entfernen
 //   - feld = Feldcode der Datenquelle (Technikwert, unsichtbar) — welchen Wert
-//     die Spalte je Zeile zeigt. Das Setzen kommt in der naechsten Stufe
-//     (Feld am Spaltenkopf); bis dahin bleibt feld leer.
+//     die Spalte je Zeile zeigt. Einfacher Klick auf den Spaltenkopf oeffnet
+//     im Editor den Feld-Picker (generisch ueber `listenBindung`).
 // Alles Editor-Sichtbare (Steuerung/Inline-Edit) NUR im Editor (data-ff-editor),
 // im Export nie (WYSIWYG). KEIN Spaltenbreite-Ziehen (Nutzer 2026-07-23).
+// Wie viele Zeilen eine Seite zeigt, rechnet ./seitengroesse aus der HOEHE;
+// die Bedienleiste unten wohnt in ./tabelleFuss.
 //
 // Daten: an die Tabelle laesst sich eine Datenquelle haengen (acceptsDataSource,
 // `source`-Prop -> Inspector-Sektion „Daten", Export -> SEFILELOOP). Zur
@@ -30,17 +31,17 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
+import { OHNE_MESSUNG, passendeZeilen, seitenAufteilung, ZEILEN_HOEHE } from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereIndizes } from './sortierung'
-import { datensatzText, passendeIndizes, zeigtEchteDaten } from './suche'
+import { spaltenSteuerung, starteTitelEdit } from './spaltenBearbeiten'
+import { passendeIndizes, zeigtEchteDaten } from './suche'
+import { tabelleFuss } from './tabelleFuss'
 import { tabelleStil } from './tabelleStil'
 import {
-  SPALTEN_MAX,
-  SPALTEN_MIN,
   STANDARD_TITEL,
   coerceSpalten,
   standardSpalten,
-  standardTitelFuer,
   tryCoerceSpalten,
   type Spalte,
 } from './spalten'
@@ -49,7 +50,6 @@ import {
 export { coerceSpalten, type Spalte } from './spalten'
 
 const PLATZHALTER_ZEILEN = 4
-const ZEILEN_PRO_SEITE = [10, 25, 50] as const
 
 // Wartezeit, bis ein Einzelklick auf den Spaltenkopf als Einzelklick gilt.
 // Darunter waere ein Doppelklick (Umbenennen) nicht mehr sauber abzugrenzen,
@@ -164,12 +164,56 @@ export class TabelleBlock extends BasicBlock {
   // Paginierung (nur Laufzeit, nicht persistiert).
   private _seite = 0
   // Was der BEDIENER unten in der Fusszeile gewaehlt hat (null = nichts
-  // umgestellt, dann gilt die Startgroesse). Es gibt keine Maskeneinstellung
-  // mehr — die Seitengroesse ist reine Laufzeit-Sache des Bedieners.
+  // umgestellt, dann gilt die gemessene Hoehe). Es gibt keine
+  // Maskeneinstellung mehr — die Seitengroesse ist reine Laufzeit-Sache des
+  // Bedieners.
   private _proSeiteWahl: number | null = null
 
+  // Wie viele Zeilen bei der aktuellen Hoehe passen — gemessen, nicht geraten
+  // (siehe messeRumpf). null = noch nicht bzw. nicht messbar.
+  private _proSeiteGemessen: number | null = null
+  private _beobachter: ResizeObserver | null = null
+
   private get proSeiteAktuell(): number {
-    return this._proSeiteWahl ?? ZEILEN_PRO_SEITE[0]
+    // Reihenfolge: bewusste Uebersteuerung des Bedieners gewinnt, dann die
+    // Messung, dann der Rueckfall. Ohne Messung (altes WinUI ohne
+    // ResizeObserver) laeuft die Tabelle genau wie bis 2026-08-06.
+    return this._proSeiteWahl ?? this._proSeiteGemessen ?? OHNE_MESSUNG
+  }
+
+  // Die Hoehe des Rumpfes beobachten und daraus die Zeilenzahl rechnen.
+  // Editor UND Maske, eine Render-Quelle (Regel 1): im Editor zieht der Bauer
+  // den Baustein groesser und sieht sofort, was in der Maske stehen wird.
+  //
+  // Gemessen wird NUR auf der Rasterflaeche — daran, dass das Attribut
+  // 'fuellt' steht (dieselbe Marke setzen Editor und Export, siehe
+  // BasicBlock). Nur dort ist die Hoehe VORGEGEBEN und der Rumpf (flex:1,
+  // scrollend) unabhaengig von seinem Inhalt. Steht die Tabelle dagegen im
+  // Fluss, z. B. in einer Zeile, hat sie gar keine vorgegebene Hoehe: dort
+  // faellt `height: 100%` auf `auto` und sie WAECHST mit ihrem Inhalt. Messen
+  // wuerde sich dann aufschaukeln — mehr Zeilen, hoeherer Rumpf, wieder mehr
+  // Zeilen, bis der Browser die Notbremse zieht. Im Fluss gilt darum
+  // OHNE_MESSUNG, genau wie ohne ResizeObserver.
+  //
+  // Neu gezeichnet wird ausserdem nur, wenn sich die ZAHL aendert: eine
+  // Scrollleiste, die kommt oder geht, aendert die Breite und darf keine
+  // Zeichen-Schleife anstossen.
+  private messeRumpf(): void {
+    if (!this.hasAttribute('fuellt')) {
+      // Aus dem Raster in einen Container gezogen: die alte Messung gilt nicht
+      // mehr, sonst bliebe eine Zahl stehen, zu der es keine Hoehe gibt.
+      if (this._proSeiteGemessen === null) return
+      this._proSeiteGemessen = null
+      this.requestUpdate()
+      return
+    }
+    const rumpf = this.renderRoot.querySelector('.koerper')
+    const kopf = this.renderRoot.querySelector('.kopf')
+    if (!(rumpf instanceof HTMLElement) || !(kopf instanceof HTMLElement)) return
+    const zahl = passendeZeilen(rumpf.clientHeight, kopf.offsetHeight)
+    if (zahl === this._proSeiteGemessen) return
+    this._proSeiteGemessen = zahl
+    this.requestUpdate()
   }
 
   private spaltenListe(): Spalte[] {
@@ -275,63 +319,53 @@ export class TabelleBlock extends BasicBlock {
     }
   }
 
-  // Inline-Umbenennen des TITELS einer Spalte am Kopf (Muster BasicBlock.inlineEdit,
-  // angepasst auf den Listen-Index). Das Feld der Spalte bleibt dabei erhalten.
+  // Inline-Umbenennen des TITELS einer Spalte am Kopf. Die Mechanik wohnt in
+  // ./titelEdit, hier bleibt nur, was die Tabelle daran fachlich ausmacht:
+  // der Titel landet an SEINER Stelle in der Liste, das Feld der Spalte
+  // bleibt erhalten.
   private bearbeiteTitel(e: MouseEvent, index: number): void {
     if (!this.editable) return
-    const ziel = e.currentTarget as HTMLElement | null
-    if (!ziel) return
-    e.stopPropagation()
-    e.preventDefault()
-    const originalNodes = Array.from(ziel.childNodes)
-    const original = ziel.textContent ?? ''
-    ziel.setAttribute('contenteditable', 'plaintext-only')
-    ziel.focus()
-    const sel = window.getSelection()
-    const range = document.createRange()
-    range.selectNodeContents(ziel)
-    sel?.removeAllRanges()
-    sel?.addRange(range)
-
-    let fertig = false
-    const abschluss = (commit: boolean): void => {
-      if (fertig) return
-      fertig = true
-      ziel.removeAttribute('contenteditable')
-      ziel.removeEventListener('blur', onBlur)
-      ziel.removeEventListener('keydown', onKey)
-      const neu = (ziel.textContent ?? '').trim()
+    starteTitelEdit(e, (neu) => {
       const liste = this.spaltenListe()
-      if (commit && neu && neu !== original.trim() && index < liste.length) {
-        liste[index] = { ...liste[index], titel: neu }
-        this.aendere(liste)
-      } else {
-        // Verwerfen: Original-Knoten zurück (Lit-Marker bleiben heil).
-        ziel.replaceChildren(...originalNodes)
-      }
-    }
-    const onBlur = (): void => abschluss(true)
-    const onKey = (ev: KeyboardEvent): void => {
-      if (ev.key === 'Enter') {
-        ev.preventDefault()
-        ziel.blur()
-      } else if (ev.key === 'Escape') {
-        ev.preventDefault()
-        abschluss(false)
-      }
-    }
-    ziel.addEventListener('blur', onBlur)
-    ziel.addEventListener('keydown', onKey)
+      if (index >= liste.length) return
+      liste[index] = { ...liste[index], titel: neu }
+      this.aendere(liste)
+    })
+  }
+
+  // Den Rumpf beobachten. Aus BEIDEN Einstiegen aufgerufen: beim ersten Mal
+  // gibt es noch kein gezeichnetes Innenleben (firstUpdated holt es nach),
+  // beim Wieder-Einhaengen ins DOM steht es schon (connectedCallback) — und
+  // dort MUSS neu angemeldet werden, weil disconnectedCallback abmeldet.
+  // Sonst maesse ein verschobener Baustein nie wieder.
+  //
+  // RUECKFALL PFLICHT: ohne ResizeObserver (altes WinUI) wird nicht gemessen —
+  // dann bleibt _proSeiteGemessen null und es gilt OHNE_MESSUNG. Kein Fehler,
+  // kein Absturz, nur die feste Zahl von vor 2026-08-06.
+  private beobachteRumpf(): void {
+    if (this._beobachter || typeof ResizeObserver === 'undefined') return
+    const rumpf = this.renderRoot.querySelector('.koerper')
+    if (!rumpf) return
+    this._beobachter = new ResizeObserver(() => this.messeRumpf())
+    this._beobachter.observe(rumpf)
+    this.messeRumpf()
   }
 
   override connectedCallback(): void {
     super.connectedCallback()
     connectTable(this)
+    this.beobachteRumpf()
+  }
+
+  protected override firstUpdated(): void {
+    this.beobachteRumpf()
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback()
     this.klickTimerAus()
+    this._beobachter?.disconnect()
+    this._beobachter = null
     disconnectTable(this)
   }
 
@@ -359,59 +393,27 @@ export class TabelleBlock extends BasicBlock {
     // Baustein true, ein nicht ausgewaehlter saehe sonst aus wie Laufzeit.
     // Die Entscheidung selbst wohnt pruefbar in ./suche (zeigtEchteDaten).
     const hatQuelle = zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
-    // Paginierung (nur Laufzeit mit echten Daten).
+    // Paginierung: die Rechnung wohnt in ./seitengroesse (rein + getestet).
+    // In der Maske wird NICHT aufgefuellt — ein Satz ist eine Zeile; den
+    // leeren Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen
+    // Platzhalter-Zeilen mit „—" (Regel 7: hier kommt spaeter ein Wert hin).
     const gesamt = alleSichtbar.length
     const proSeite = this.proSeiteAktuell
-    const seiten = hatQuelle ? Math.max(1, Math.ceil(gesamt / proSeite)) : 1
-    // Seite einklemmen: eine geschrumpfte Datenmenge (neuer SE-Push) darf den
-    // Bediener nicht auf einer Seite stehen lassen, die es nicht mehr gibt.
-    const seite = Math.min(Math.max(this._seite, 0), seiten - 1)
-    const seitenIndizes = hatQuelle
-      ? alleSichtbar.slice(seite * proSeite, (seite + 1) * proSeite)
-      : []
-    // Zeilen auffuellen: immer mindestens proSeite (Laufzeit) bzw.
-    // PLATZHALTER_ZEILEN (Editor) Zeilen mit Linien zeigen.
-    const sollZeilen = hatQuelle ? proSeite : PLATZHALTER_ZEILEN
-    // Zwei verschiedene leere Zeilen, zwei verschiedene Bedeutungen:
-    //   ohne Quelle (Editor): „—" = hier kommt spaeter ein Wert hin (Regel 7).
-    //   mit Quelle (leerer Tag, letzte Seite halb voll): LEER — es gibt
-    //   schlicht nicht mehr. Ein „—" waere dort gelogen: es sieht aus wie ein
-    //   fehlender Wert, obwohl es gar keinen Satz gibt.
-    const fuellzeichen = hatQuelle ? '' : '—'
-    const zeilen: (number | null)[] = [
-      ...seitenIndizes,
-      ...Array.from({ length: Math.max(0, sollZeilen - seitenIndizes.length) }, () => null),
-    ]
-    return html`<div class="tabelle" style=${styleMap({ '--spalten-zahl': String(spalten.length) })}>
-      <div class="steuerung">
-        <button
-          title="Letzte Spalte entfernen"
-          @pointerdown=${stop}
-          @click=${(e: Event) => {
-            stop(e)
-            const l = this.spaltenListe()
-            if (l.length > SPALTEN_MIN) {
-              l.pop()
-              this.aendere(l)
-            }
-          }}
-        >−</button>
-        <button
-          title="Spalte hinzufügen"
-          @pointerdown=${stop}
-          @click=${(e: Event) => {
-            stop(e)
-            const l = this.spaltenListe()
-            if (l.length < SPALTEN_MAX) {
-              // Titel aus ./spalten, nicht von Hand getippt: an DIESER Vorlage
-              // erkennt der Editor, dass der Bediener den Titel nicht selbst
-              // gesetzt hat und ihn beim Feld-Binden ersetzen darf.
-              l.push({ titel: standardTitelFuer(l.length), feld: '' })
-              this.aendere(l)
-            }
-          }}
-        >+</button>
-      </div>
+    const { seiten, seite, zeilen } = seitenAufteilung({
+      sichtbar: alleSichtbar,
+      hatQuelle,
+      proSeite,
+      wunschSeite: this._seite,
+      platzhalterZeilen: PLATZHALTER_ZEILEN,
+    })
+    return html`<div class="tabelle" style=${styleMap({
+      '--spalten-zahl': String(spalten.length),
+      // EINE Zahl, EINE Stelle: der Takt kommt aus ./seitengroesse, damit die
+      // Optik (Linien) und die Rechnung (wie viele passen) nicht auseinander
+      // laufen koennen.
+      '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
+    })}>
+      ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
       ${this.suche === 'ja' ? html`<div class="suchzeile">
         <input
           type="search"
@@ -452,42 +454,32 @@ export class TabelleBlock extends BasicBlock {
           >
             ${rohIndex !== null
               ? (this.datenzeilen[rohIndex] ?? []).map((wert) => html`<div>${wert}</div>`)
-              : spalten.map(() => html`<div>${fuellzeichen}</div>`)}
+              : spalten.map(() => html`<div>—</div>`)}
           </div>`,
         )}
         <div class="lineal"></div>
       </div>
-      <!-- Fusszeile IMMER: sie gehoert zum Aufbau der Tabelle, also muss der
-           Editor sie zeigen (Regel 1 — was zu sehen ist, IST der Export).
-           Vorher erschien sie nur mit Daten; im Editor fehlte sie damit
-           komplett, und der Bediener suchte vergeblich nach der
-           Seiteneinstellung. Ohne Daten steht statt einer erfundenen Zahl
-           ein Strich (Regel 7). -->
-      <div class="fusszeile">
-        <div class="seiten-info">${datensatzText({
-          hatQuelle,
-          sichtbar: gesamt,
-          gesamt: this.datenzeilen.length,
-          suchtAktiv: this._suchtext.trim() !== '',
-          auswahlAktiv: this.durchAuswahlGefiltert,
-        })}</div>
-        <div class="seiten-nav">
-          <select
-            aria-label="Zeilen pro Seite"
-            @pointerdown=${stop}
-            @change=${(e: Event) => {
-              this._proSeiteWahl = Number((e.target as HTMLSelectElement).value)
-              this._seite = 0
-              this.requestUpdate()
-            }}
-          >${ZEILEN_PRO_SEITE.map(
-            (n) => html`<option value=${n} ?selected=${n === proSeite}>${n} pro Seite</option>`,
-          )}</select>
-          <button aria-label="Seite zurück" ?disabled=${seite <= 0} @click=${() => { this._seite = seite - 1; this.requestUpdate() }}>‹</button>
-          <span>Seite ${seite + 1} von ${seiten}</span>
-          <button aria-label="Seite vor" ?disabled=${seite >= seiten - 1} @click=${() => { this._seite = seite + 1; this.requestUpdate() }}>›</button>
-        </div>
-      </div>
+      ${tabelleFuss({
+        hatQuelle,
+        sichtbar: gesamt,
+        gesamt: this.datenzeilen.length,
+        suchtAktiv: this._suchtext.trim() !== '',
+        auswahlAktiv: this.durchAuswahlGefiltert,
+        proSeiteWahl: this._proSeiteWahl,
+        seite,
+        seiten,
+      }, {
+        waehleProSeite: (wert) => {
+          this._proSeiteWahl = wert
+          this._seite = 0
+          this.requestUpdate()
+        },
+        blaettere: (zu) => {
+          this._seite = zu
+          this.requestUpdate()
+        },
+        stop,
+      })}
     </div>`
   }
 }
