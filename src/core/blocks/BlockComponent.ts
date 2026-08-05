@@ -11,7 +11,6 @@ import type {
   BindableSpot,
   BlockEventSpec,
   DefaultChildSpec,
-  KannAuswahlFolgen,
   ListenBindung,
   SatzWahl,
 } from './BlockDefinition'
@@ -58,7 +57,7 @@ export interface BlockComponentStatic {
   readonly acceptsDataSource?: boolean
   // Satz herausgreifen / einer Auswahl folgen — Bedeutung siehe BlockDefinition.
   readonly satzWahl?: SatzWahl
-  readonly kannAuswahlFolgen?: KannAuswahlFolgen
+  readonly kannAuswahlFolgen?: boolean
   // Bindbare Stellen — Bedeutung siehe BlockDefinition.
   readonly bindableSpots?: readonly BindableSpot[]
   // Als Aktionsparameter auslesbare Stellen — Bedeutung siehe BlockDefinition.

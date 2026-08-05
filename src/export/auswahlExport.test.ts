@@ -50,19 +50,27 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
   // Nutzers: Kunden-Tabelle + Belege-Tabelle, verbunden ueber die
   // Adressnummer.
   const folge = [{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }]
-  const paarTree = (folgtAuswahl: unknown, quelle = 'q-saetze'): BlockTree => ({
+  // Geber- und Folger-Quelle EINZELN stellbar: seit 2026-08-06 haengt an der
+  // Quelle beides — ohne sie gibt der eine keinen Satz ab (istAuswahlGeber) und
+  // der andere hat keine Zeilen, die eine Auswahl einengen koennte
+  // (darfAuswahlFolgen). Die Faelle darunter brauchen genau diese Trennung.
+  const paarTree = (
+    folgtAuswahl: unknown,
+    geberQuelle = 'q-saetze',
+    folgerQuelle = 'q-saetze',
+  ): BlockTree => ({
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'folger'] },
     geber: {
       id: 'geber',
       type: 'tabelle',
-      props: { width: 'fill', source: quelle, spalten, rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 4 },
+      props: { width: 'fill', source: geberQuelle, spalten, rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 4 },
       parentId: 'root',
       childIds: [],
     },
     folger: {
       id: 'folger',
       type: 'tabelle',
-      props: { width: 'fill', source: quelle, spalten, folgtAuswahl, rasterX: 0, rasterY: 4, rasterW: 24, rasterH: 4 },
+      props: { width: 'fill', source: folgerQuelle, spalten, folgtAuswahl, rasterX: 0, rasterY: 4, rasterW: 24, rasterH: 4 },
       parentId: 'root',
       childIds: [],
     },
@@ -80,10 +88,21 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     // Hergeleitet statt angemeldet (2026-08-06). Vorher trug jede Tabelle die
     // Kennung, auch die ganz ohne Daten: der Inspector bot sie als Geber an,
     // und der Folger filterte in der Maske stumm nie.
-    const { html } = exportMask(paarTree([], ''))
+    const { html } = exportMask(paarTree([], '', ''))
     // Am TAG geprueft, nicht am ganzen Dokument: das eingebettete
     // Laufzeit-Buendel enthaelt den Attributnamen als Code-Text.
     expect(html).not.toMatch(/<ff-tabelle[^>]*\sdata-ff-id=/)
+  })
+
+  it('OHNE eigene Datenquelle reist die Folge nicht mit — es gibt keine Zeilen zu filtern', () => {
+    // Gegenstueck zum Geber (2026-08-06): folgen darf nur, wer Zeilen HAT.
+    // Vorher trug auch eine quellenlose Tabelle das Attribut, filterte aber
+    // nie — eingestellt aussehen und nichts tun ist genau der stille Fall.
+    const ohne = paarTree(folge, 'q-saetze', '')
+    const { html } = exportMask(ohne, 'Maske', QUELLEN)
+    expect(html).not.toMatch(/<ff-tabelle[^>]*\sfolgtauswahl=/)
+    // Und blockiert wird sie auch nicht: unsichtbar ist nicht halbfertig.
+    expect(preflightMask(ohne, QUELLEN, []).filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
   })
 
   it('folgtAuswahl reist als JSON-Attribut und kommt unversehrt zurueck', () => {
@@ -114,7 +133,10 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
         id: 'feld', type: 'formfeld',
         props: {
           fieldType: 'text', placeholder: 'Tiername', options: '',
-          source: '', value: '', valueField: '', width: 240, folgtAuswahl: folge,
+          // Eigene Quelle: aus ihr holt das Feld seinen Wert, und ihre Zeilen
+          // engt die Auswahl ein. Ohne sie folgt seit 2026-08-06 gar nichts
+          // (darfAuswahlFolgen) — es gaebe keine Zeile, aus der zu lesen waere.
+          source: 'q-saetze', value: '', valueField: '10_12', width: 240, folgtAuswahl: folge,
         },
         parentId: 'root', childIds: [],
       },
@@ -126,48 +148,63 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('am NACHSCHLAGE-Feld bleibt die Folge daheim: kein Attribut, kein Blocker', () => {
-    // Beim Nachschlagen ENTSTEHT der Wert durch die Auswahl im Fenster —
-    // eine Folge obendrauf konkurrierte um denselben Wert. Der Inspector
-    // bietet sie dort nicht an (darfAuswahlFolgen), also nimmt der Export
-    // sie nicht mit und der Preflight verlangt nichts zu ihr: unsichtbar
-    // ist nicht halbfertig. Die Props BEHALTEN die Folge (unsichtbar ist
-    // nicht geloescht) — als Text-Feld gilt sie wieder (Gegenprobe unten).
-    const feldTree = (fieldType: string): BlockTree => ({
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'feld'] },
-      geber: {
-        id: 'geber', type: 'tabelle',
-        props: { width: 'fill', source: 'q-saetze', spalten },
-        parentId: 'root', childIds: [],
+  // Ein Nachschlage-Feld mit einer absichtlich KAPUTTEN Folge (Geber
+  // geloescht). Wirkt die Folge, MUSS der Preflight blocken; ist sie
+  // unsichtbar, darf er es nicht.
+  const nachschlagFeldTree = (nachschlagQuelle: string): BlockTree => ({
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'feld'] },
+    geber: {
+      id: 'geber', type: 'tabelle',
+      props: { width: 'fill', source: 'q-saetze', spalten },
+      parentId: 'root', childIds: [],
+    },
+    feld: {
+      id: 'feld', type: 'formfeld',
+      props: {
+        fieldType: 'nachschlagen', placeholder: 'Kunde', options: '',
+        // KEINE eigene Datenquelle: das Nachschlage-Feld liest seinen Wert
+        // nicht aus einer Bindung, sondern aus dem Fenster.
+        source: '', value: '', valueField: '', width: 240,
+        nachschlagQuelle,
+        anzeigeFeld: nachschlagQuelle === '' ? '' : '2_8',
+        anzeigeTitel: nachschlagQuelle === '' ? '' : 'Kundennummer',
+        speicherFeld: nachschlagQuelle === '' ? '' : '0_10',
+        speicherTitel: nachschlagQuelle === '' ? '' : 'Satz-Nr.',
+        folgtAuswahl: [{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }],
       },
-      feld: {
-        id: 'feld', type: 'formfeld',
-        props: {
-          fieldType, placeholder: 'Kunde', options: '', source: '', value: '',
-          valueField: '', width: 240,
-          nachschlagQuelle: 'q-saetze', anzeigeFeld: '2_8', anzeigeTitel: 'Kundennummer',
-          speicherFeld: '0_10', speicherTitel: 'Satz-Nr.',
-          // Absichtlich KAPUTT (Geber geloescht): saehe der Preflight die
-          // Folge, muesste er blocken — genau das darf er hier nicht.
-          folgtAuswahl: [{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }],
-        },
-        parentId: 'root', childIds: [],
-      },
-    })
+      parentId: 'root', childIds: [],
+    },
+  })
 
-    const nachschlagen = feldTree('nachschlagen')
-    const { html } = exportMask(nachschlagen, 'Maske', QUELLEN)
+  it('am NACHSCHLAGE-Feld reist die Folge MIT — dort folgt das FENSTER', () => {
+    // Nutzer-Entscheidung 2026-08-06, Kehrtwende gegenueber dem Tag zuvor:
+    // damals durfte ein Nachschlage-Feld gar nicht folgen, weil der WERT mit
+    // der Auswahl im Fenster um dieselbe Stelle konkurriert haette. Gefolgt
+    // wird jetzt mit dem FENSTER — die Lupe zeigt nur die Saetze, die zur
+    // gewaehlten Zeile des Gebers passen (Kunde-Feld -> nur seine Haustiere).
+    // Der Wert entsteht unveraendert erst beim Uebernehmen.
+    //
+    // Ohne dieses Attribut im Export zeigte die Lupe in SoftEngine weiter ALLE
+    // Saetze, waehrend der Editor die Einstellung anbietet — WYSIWYG-Bruch.
+    const tree = nachschlagFeldTree('q-saetze')
+    const { html } = exportMask(tree, 'Maske', QUELLEN)
+    expect(html).toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
+    // Und weil sie wirkt, blockt der Preflight den geloeschten Geber.
+    expect(preflightMask(tree, QUELLEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
+  })
+
+  it('ohne Nachschlage-Quelle bleibt sie daheim: kein Fenster, keine Zeilen', () => {
+    // Der Randfall: es gibt gar keine Liste, die eine Auswahl einengen
+    // koennte — also bietet der Inspector die Folge dort nicht an
+    // (darfAuswahlFolgen), der Export nimmt sie nicht mit, und der Preflight
+    // verlangt nichts zu ihr. Unsichtbar ist nicht halbfertig; haengt der Bauer
+    // eine Quelle an, gilt die liegen gebliebene Folge wieder.
+    const tree = nachschlagFeldTree('')
+    const { html } = exportMask(tree, 'Maske', QUELLEN)
     // Am TAG geprueft: das eingebettete Laufzeit-Buendel enthaelt den
     // Attributnamen als Code-Text.
     expect(html).not.toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
-    expect(preflightMask(nachschlagen, QUELLEN, [])).toEqual([])
-
-    // Gegenprobe am SELBEN Baum als Text-Feld: die Folge reist wieder als
-    // Attribut, und der Preflight blockt den geloeschten Geber im Klartext.
-    const text = feldTree('text')
-    const { html: textHtml } = exportMask(text, 'Maske', QUELLEN)
-    expect(textHtml).toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
-    expect(preflightMask(text, QUELLEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
+    expect(preflightMask(tree, QUELLEN, [])).toEqual([])
   })
 
   it('Preflight blockt einen geloeschten Geber und ein halbes Feldpaar im Klartext', () => {
@@ -183,9 +220,21 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     // Neuer Fall seit der Herleitung (2026-08-06): der Geber steht noch im
     // Baum, ist aber keiner mehr. Vorher blieb das voellig still — die Folge
     // sah eingestellt aus und filterte nie.
-    const ohneQuelle = preflightMask(paarTree(folge, ''), QUELLEN, [])
+    const ohneQuelle = preflightMask(paarTree(folge, '', 'q-saetze'), QUELLEN, [])
     expect(ohneQuelle.some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
     expect(ohneQuelle.some((r) => r.detail.includes('keine Auswahl (mehr) gibt'))).toBe(true)
+  })
+
+  it('Preflight blockt ein Schluesselfeld, das es in der eigenen Quelle nicht gibt', () => {
+    // Das Feld RECHTS im Feldpaar gehoert der Quelle, deren ZEILEN der Folger
+    // einengt. Zeigt es ins Leere, passt KEINE Zeile — die Tabelle bliebe leer,
+    // und niemand sagte warum (Regel 4).
+    const meldungen = preflightMask(
+      paarTree([{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '999_9' }] }]),
+      QUELLEN, [],
+    )
+    expect(meldungen.some((r) => r.name === 'Auswahl-Folge Feld fehlt')).toBe(true)
+    expect(meldungen.some((r) => r.detail.includes('999_9'))).toBe(true)
   })
 })
 

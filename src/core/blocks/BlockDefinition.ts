@@ -228,6 +228,11 @@ export interface SatzWahl {
   // normale Datenquelle des Bausteins ('source'). Das Nachschlage-Feld nennt
   // hier seine ZWEITE Quelle: der uebernommene Satz stammt aus ihr, also holen
   // Folger auch ihre Schluesselfelder von dort.
+  //
+  // Dieselbe Angabe beantwortet die FOLGER-Richtung mit (auswahlQuelleIdVon in
+  // treeQuery): welche Zeilen engt eine Auswahl an diesem Baustein ein? Es sind
+  // dieselben — man waehlt aus den Zeilen, die man zeigt. Beim Nachschlage-Feld
+  // sind das die Zeilen seines Fensters.
   quelleProp?: string
   // Nur in diesem Zustand greift der Bediener wirklich einen Satz heraus
   // (Formularfeld: nur beim Feldtyp „Nachschlagen" — sonst tippt er einfach).
@@ -236,18 +241,6 @@ export interface SatzWahl {
   // zweite Sprache fuer „wann gilt das" waere eine zweite Fehlerquelle.
   wenn?: PropertyVisibilityCondition
 }
-
-// KannAuswahlFolgen: der Baustein kann der Auswahl eines Gebers FOLGEN —
-// true = in jedem Zustand (Tabelle/Text), mit `wenn` nur in diesem Zustand.
-// Das Formularfeld folgt an jedem Feldtyp AUSSER „Nachschlagen": dort
-// ENTSTEHT der Wert durch die Auswahl im Fenster — eine Folge obendrauf
-// konkurrierte um denselben Wert (dieselbe Begruendung wie beim dort
-// versteckten valueField). DIESELBE Bedingungs-Form und -Auswertung wie
-// satzWahl.wenn (propertySichtbar): eine zweite Sprache fuer „wann gilt
-// das" waere eine zweite Fehlerquelle. Ob ein Baustein GERADE folgen darf,
-// beantwortet darfAuswahlFolgen (treeQuery) fuer Inspector, Export und
-// Preflight gemeinsam.
-export type KannAuswahlFolgen = boolean | { wenn: PropertyVisibilityCondition }
 
 export interface BlockDefinition {
   type: string
@@ -309,10 +302,15 @@ export interface BlockDefinition {
   satzWahl?: SatzWahl
   // Der Block kann der Auswahl eines Gebers FOLGEN (Prop `folgtAuswahl`,
   // core/data/auswahlFolge): mit Auswahl zeigt er nur die Zeilen, deren
-  // Schluesselfelder zur gewaehlten Zeile passen — ohne Auswahl alles.
-  // Inspector zeigt dann die Sektion „Auswahl folgen". Zustands-Bedingung:
-  // siehe KannAuswahlFolgen.
-  kannAuswahlFolgen?: KannAuswahlFolgen
+  // Schluesselfelder zur gewaehlten Zeile passen — ohne Auswahl alles. Das
+  // Nachschlage-Feld folgt mit seinem FENSTER (die Lupe zeigt dann nur die
+  // Haustiere des gewaehlten Kunden), die Tabelle mit ihren Zeilen, der Text
+  // mit seinem einen Wert.
+  //
+  // Ob er GERADE folgen darf, beantwortet darfAuswahlFolgen (treeQuery) fuer
+  // Inspector, Export und Preflight gemeinsam: dazu gehoert eine Quelle, deren
+  // Zeilen sich einengen liessen.
+  kannAuswahlFolgen?: boolean
   // Bindbare Stellen des Blocks — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
   // Aktuelle Bausteinwerte, die als Parameterquelle angeboten werden.

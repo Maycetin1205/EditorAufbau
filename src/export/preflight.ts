@@ -16,6 +16,7 @@ import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import {
   actionValueTargets,
   auswahlGeberImBaum,
+  auswahlQuelleIdVon,
   darfAuswahlFolgen,
   istAuswahlGeber,
 } from '../core/blocks/treeQuery'
@@ -24,6 +25,7 @@ import { stepProblem } from '../core/data/schrittPruefung'
 import { AUSWAHL_FOLGE_PROP, auswahlFolgenAus, folgeBrauchbar } from '../core/data/auswahlFolge'
 import type { DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
+import { vollstaendigePaare } from '../core/data/sourceLinks'
 import { quellenInReichweite, quellenTraeger } from '../state/quellenOps'
 import type { CheckResult } from './validator'
 
@@ -221,11 +223,12 @@ export function preflightMask(
     // Feldtyp Text. Beides sah man vorher nirgends — der Geber galt weiter,
     // gab aber nie einen Satz ab.
     //
-    // Gefragt wird darfAuswahlFolgen (nicht der rohe Registry-Eintrag): am
-    // Nachschlage-Feld ist eine liegen gebliebene Folge unsichtbar, der
-    // Export nimmt sie nicht mit — unsichtbar ist nicht halbfertig, also
-    // kein Blocker (dieselbe Linie wie die daheim gebliebene
-    // Nachschlage-Quelle beim zurueckgestellten Feldtyp).
+    // Gefragt wird darfAuswahlFolgen (nicht der rohe Registry-Eintrag): ohne
+    // Quelle hat der Baustein gar keine Zeilen, die eine Auswahl einengen
+    // koennte — dann bietet der Inspector die Sektion nicht an, der Export
+    // nimmt die liegen gebliebene Folge nicht mit, und hier blockt sie nichts.
+    // Unsichtbar ist nicht halbfertig (dieselbe Linie wie die daheim
+    // gebliebene Nachschlage-Quelle beim zurueckgestellten Feldtyp).
     if (darfAuswahlFolgen(node)) {
       for (const folge of auswahlFolgenAus(node.props[AUSWAHL_FOLGE_PROP])) {
         if (folge.geberId === '') continue // bewusst (noch) kein Geber gewaehlt
@@ -242,6 +245,27 @@ export function preflightMask(
             ok: false,
             detail: `Baustein "${def?.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
           })
+        } else {
+          // Das Feld RECHTS im Feldpaar (toField) gehoert der Quelle, deren
+          // ZEILEN dieser Baustein einengt (auswahlQuelleIdVon) — beim
+          // Nachschlage-Feld also seiner NACHSCHLAGE-Quelle, nicht der eigenen.
+          // Zeigt es auf ein Feld, das es dort nicht gibt, passte in der Maske
+          // KEINE Zeile: die Tabelle bliebe leer, das Nachschlage-Fenster
+          // ebenfalls — und niemand sagte, warum (Regel 4). Der Fall entsteht
+          // real, wenn das Feld in der Datenquelle umbenannt/entfernt wird oder
+          // der Bauer die Quelle wechselt.
+          const zeilenQuelle = sources.find((s) => s.id === auswahlQuelleIdVon(node))
+          // Quelle unauffindbar: das meldet S1a bzw. die Quellen-Prop-Pruefung
+          // oben schon — nicht doppelt.
+          if (!zeilenQuelle) continue
+          for (const paar of vollstaendigePaare(folge)) {
+            if (zeilenQuelle.fields.some((f) => f.code === paar.toField)) continue
+            results.push({
+              name: 'Auswahl-Folge Feld fehlt',
+              ok: false,
+              detail: `Baustein "${def?.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}": das Feld, an dem die zusammengehoerige Zeile erkannt wird, gibt es in der Datenquelle "${zeilenQuelle.name}" nicht (mehr) — es wuerde nie eine Zeile passen. Unter "Auswahl folgen" das rechte Feld neu waehlen. (Feldcode ${paar.toField})`,
+            })
+          }
         }
       }
     }

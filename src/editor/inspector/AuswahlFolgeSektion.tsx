@@ -20,6 +20,11 @@
 // Nachschlage-Feld (es greift im Fenster einen Satz heraus), und NICHT
 // angeboten wird eine Tabelle ohne Datenquelle: ihr zu folgen sah eingestellt
 // aus und filterte nie.
+//
+// Am Nachschlage-Feld heisst „folgen" etwas anderes, ohne dass diese Sektion
+// davon wissen muss: dort engt die Auswahl das FENSTER ein (die Lupe zeigt nur
+// die Haustiere des gewaehlten Kunden), nicht einen angezeigten Wert. Die
+// Einstellung ist dieselbe — Geber plus Feldpaare.
 
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
@@ -27,7 +32,7 @@ import { IconButton } from '@/ui/atoms/icon-button'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import { cn } from '@/lib/utils'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import { istAuswahlGeber, satzQuelleIdVon } from '../../core/blocks/treeQuery'
+import { auswahlQuelleIdVon, istAuswahlGeber } from '../../core/blocks/treeQuery'
 import {
   AUSWAHL_FOLGE_PROP,
   auswahlFolgenAus,
@@ -66,23 +71,24 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
   // ein leeres Formular ohne waehlbaren Geber waere nur Raetselraten.
   if (kandidaten.length === 0 && !folge) return null
 
-  // Die Felder LINKS in „Feld = Feld" gehoeren der Quelle, aus der der Satz des
-  // Gebers stammt — beim Nachschlage-Feld ist das seine Nachschlage-Quelle, nicht
-  // die eigene (satzQuelleIdVon). Rechts steht immer die eigene Datenquelle des
-  // Folgers: nach ihr filtert er seine Zeilen.
-  const eigeneQuelle = bibliothek.find(
-    (s) => s.id === (typeof block.props.source === 'string' ? block.props.source : ''),
-  )
-  const geberQuelleVon = (n: BlockNode | undefined) =>
-    bibliothek.find((s) => s.id === satzQuelleIdVon(n))
+  // BEIDE Seiten von „Feld = Feld" fragen DIESELBE Herleitung
+  // (auswahlQuelleIdVon): links die Quelle, aus der der Satz des GEBERS stammt,
+  // rechts die Quelle, deren Zeilen DIESER Baustein einengt. Meist ist das
+  // schlicht die Datenquelle des jeweiligen Bausteins — beim Nachschlage-Feld
+  // aber seine Nachschlage-Quelle, auf beiden Seiten: aus ihr stammt der Satz,
+  // den es abgibt, und ihre Zeilen zeigt sein Fenster. Mit den Feldcodes der
+  // falschen Tabelle liefe die Folge in der Maske still ins Leere.
+  const quelleVon = (n: BlockNode | undefined) =>
+    bibliothek.find((s) => s.id === auswahlQuelleIdVon(n))
+  const eigeneQuelle = quelleVon(block)
   const geberNode = folge ? ed.tree[folge.geberId] : undefined
-  const geberQuelle = geberQuelleVon(geberNode)
+  const geberQuelle = quelleVon(geberNode)
 
   // Klarname eines Kandidaten: Baustein-Name plus Quellen-Name zur
   // Unterscheidung — zwei Tabellen heissen sonst beide nur „Tabelle".
   // Die SE-Kennung dazu als dezente Technik-Marke (detail, 2026-08-06).
   const anzeige = (n: BlockNode): { label: string; detail?: string } => {
-    const q = geberQuelleVon(n)
+    const q = quelleVon(n)
     return q
       ? { label: `${bausteinName(n)} (${q.name})`, detail: quellenKennung(q) }
       : { label: bausteinName(n) }

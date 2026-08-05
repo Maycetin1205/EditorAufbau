@@ -166,9 +166,10 @@ function nodeToHtml(
     .map((key) => {
       // Die Auswahl-FOLGE reist nur mit, wenn der Baustein in seinem
       // aktuellen Zustand folgen darf (darfAuswahlFolgen — dieselbe Antwort
-      // wie Inspector und Preflight): am Nachschlage-Feld bleibt eine
-      // liegen gebliebene Folge in den Props, aber die Laufzeit steigt dort
-      // aus — ein Attribut, das nie wirkt, saehe im Export eingestellt aus.
+      // wie Inspector und Preflight): ohne Quelle hat er keine Zeilen, die
+      // eine Auswahl einengen koennte, und eine liegen gebliebene Folge
+      // bliebe wirkungslos — ein Attribut, das nie wirkt, saehe im Export
+      // eingestellt aus.
       if (key === AUSWAHL_FOLGE_PROP && !darfAuswahlFolgen(node)) return ''
       const standard = def.defaultProps[key]
       const roh = attributWert(node.props[key] ?? standard)

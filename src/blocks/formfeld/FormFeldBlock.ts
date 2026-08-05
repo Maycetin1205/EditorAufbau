@@ -42,11 +42,10 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
   ActionValueSpotsFor,
   BindableSpotsFor,
-  KannAuswahlFolgen,
   SatzWahl,
 } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
-import { geberIdVon, setzeAuswahl } from '../shared/auswahl'
+import { geberIdVon, klareAuswahl, setzeAuswahl } from '../shared/auswahl'
 import {
   connectField,
   dateValueToInput,
@@ -54,7 +53,7 @@ import {
   inputValueToDate,
 } from './feldRuntime'
 import { feldStil } from './feldStil'
-import { oeffneNachschlagen } from './nachschlagen'
+import { oeffneNachschlagen, satzPasstZurAuswahl } from './nachschlagen'
 
 // Feldtypen (Technikwerte) — der Bediener sieht nur die Klarnamen unten.
 const FELD_TYPEN = ['text', 'number', 'textarea', 'select', 'date', 'checkbox', 'nachschlagen'] as const
@@ -75,18 +74,20 @@ export class FormFeldBlock extends BasicBlock {
   static readonly displayName = 'Formularfeld'
   static readonly category: BlockCategory = 'eingabe'
   static readonly acceptsDataSource = true
-  // Folgt der Auswahl eines Gebers (Tabelle/Kanban): klickt der Bediener in
-  // der laufenden Maske eine Zeile an, zeigt das Feld den Wert der dazu
-  // PASSENDEN Zeile seiner eigenen Quelle statt stur der ersten — und ohne
-  // Auswahl gar nichts. Nur wo der Bauer die Folge einstellt: Felder ohne
-  // sie zeigen weiter die erste Zeile, bestehende Masken bleiben gleich.
-  // NICHT als Nachschlage-Feld (wenn, 2026-08-06): dort ENTSTEHT der Wert
-  // durch die Auswahl im Fenster — eine Folge obendrauf konkurrierte um
-  // denselben Wert (dieselbe Begruendung wie beim dort versteckten
-  // valueField). Der Ausstieg in hydrateField bleibt als zweiter Boden.
-  static readonly kannAuswahlFolgen: KannAuswahlFolgen = {
-    wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
-  }
+  // Folgt der Auswahl eines Gebers (Tabelle/Kanban/anderes Nachschlage-Feld).
+  // Was dabei folgt, haengt am Feldtyp — und ist beides dieselbe Regel „zeig
+  // nur, was zur gewaehlten Zeile passt":
+  //   - normale Feldtypen: der WERT. Klickt der Bediener eine Zeile an, zeigt
+  //     das Feld den Wert der dazu passenden Zeile seiner Quelle statt stur der
+  //     ersten — und ohne Auswahl gar nichts.
+  //   - Nachschlagen: das FENSTER. Die Lupe zeigt nur noch die Saetze, die zur
+  //     gewaehlten Zeile passen (Nutzer-Fall: Kunde-Feld + Haustier-Feld, das
+  //     ihm folgt -> nur die Haustiere dieses Kunden). Der WERT folgt hier
+  //     bewusst NICHT: er ENTSTEHT durch die Auswahl im Fenster, eine Bindung
+  //     obendrauf konkurrierte um denselben Wert (siehe valueField unten).
+  // Nur wo der Bauer die Folge einstellt: Felder ohne sie verhalten sich
+  // unveraendert, bestehende Masken bleiben gleich.
+  static readonly kannAuswahlFolgen = true
   // Und es GIBT selbst einen Satz ab — aber nur als NACHSCHLAGE-Feld: dort
   // greift der Bediener im Fenster einen Satz heraus (bei jedem anderen
   // Feldtyp tippt er bloss). Der Satz stammt aus der Nachschlage-Quelle, nicht
@@ -204,6 +205,12 @@ export class FormFeldBlock extends BasicBlock {
   // Maske eine Zeile uebernimmt — `value` traegt derweil den Technikwert.
   @state() private anzeige = ''
 
+  // Die ROHZEILE des uebernommenen Satzes. Sie zeichnet nichts (darum weder
+  // @property noch @state) und reist nie in den Export — sie ist nur da, um
+  // nachpruefen zu koennen, ob der uebernommene Satz noch zur Auswahl des
+  // Gebers passt (pruefeAuswahlPassung).
+  private satz: unknown = undefined
+
   // Der Haken des Ankreuzfelds. Bewusst @state und NICHT @property: er ist
   // kein Bauplan-Wert und reist nicht in den Export — er entsteht erst, wenn
   // der Bediener in der fertigen Maske klickt. Bis 2026-07-27 hing er allein
@@ -314,6 +321,9 @@ export class FormFeldBlock extends BasicBlock {
   private onLupe(): void {
     if (this.hasAttribute('data-ff-editor')) return
     oeffneNachschlagen({
+      // Das Feld selbst: daran haengt das folgtauswahl-Attribut, mit dem das
+      // Fenster seine Zeilen auf die Auswahl des Gebers einengt.
+      el: this,
       quelleId: this.nachschlagQuelle,
       anzeigeFeld: this.anzeigeFeld,
       speicherFeld: this.speicherFeld,
@@ -328,6 +338,7 @@ export class FormFeldBlock extends BasicBlock {
         // ohnehin vor Augen (Wert-Spalte).
         this.anzeige = anzeige !== '' ? anzeige : wert
         this.value = wert
+        this.satz = satz
         // Den GANZEN Satz abgeben, damit Folger nach ihm filtern koennen
         // (2026-08-06): das Feld ist Auswahl-Geber, und ein Geber, der in der
         // Liste steht aber nie etwas abgibt, liesse jeden Folger stumm nie
@@ -339,6 +350,34 @@ export class FormFeldBlock extends BasicBlock {
         this.dispatchEvent(new Event('change'))
       },
     })
+  }
+
+  // Die Auswahl des Gebers hat sich geaendert — passt der uebernommene Satz
+  // noch dazu?
+  //
+  // Nutzer-Entscheidung 2026-08-06: passt er NICHT mehr, LEERT sich das Feld.
+  // Der Fall: Kunde gewaehlt, sein Haustier uebernommen, dann einen anderen
+  // Kunden gewaehlt — das Haustier gehoert jetzt zu niemandem mehr. Stehen
+  // liesse es einen falschen Wert, der richtig aussieht.
+  //
+  // Das Leeren ist eine HYDRIERUNG, keine Bedienung: KEIN change-Event, also
+  // keine Kette „Wert geaendert". Ketten laufen nur auf Bedienerhandlung (feste
+  // Zusage: geschrieben wird ausschliesslich ueber sichtbare Ketten). Die eigene
+  // abgegebene Auswahl geht mit weg — ein leeres Feld gibt keinen Satz ab, sonst
+  // filterten SEINE Folger weiter nach einem Satz, der nirgends mehr steht.
+  //
+  // Gerufen wird das von der Feld-Hydrierung (feldRuntime): sie laeuft bei
+  // Daten-Push, Tageswechsel UND jeder Auswahl-Aenderung — die drei Anlaesse
+  // haengen an EINER Anmeldung (shared/datenAnschluss). Ein eigenes Abo hier
+  // waere ein zweites, das sich nie wieder abmelden liesse.
+  pruefeAuswahlPassung(): void {
+    if (coerceFeldTyp(this.fieldType) !== 'nachschlagen') return
+    if (this.satz === undefined) return
+    if (satzPasstZurAuswahl(this, this.satz)) return
+    this.satz = undefined
+    this.anzeige = ''
+    this.value = ''
+    klareAuswahl(geberIdVon(this))
   }
 
   override render(): TemplateResult {

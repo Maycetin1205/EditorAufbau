@@ -291,11 +291,9 @@ export function Inspector() {
           </div>
         )}
         {/* Auswahl folgen (2026-08-05): nur fuer Bausteine, die es per
-            Registry koennen UND in ihrem aktuellen Zustand duerfen
-            (darfAuswahlFolgen — am Nachschlage-Feld entsteht der Wert im
-            Fenster, eine Folge obendrauf konkurrierte um denselben Wert;
-            kein Typ-Check). Die Sektion laesst sich selbst weg, wenn es
-            keinen Geber gibt. */}
+            Registry koennen UND gerade wirklich Zeilen haben, die eine
+            Auswahl einengen koennte (darfAuswahlFolgen; kein Typ-Check).
+            Die Sektion laesst sich selbst weg, wenn es keinen Geber gibt. */}
         {darfAuswahlFolgen(block) && (
           <AuswahlFolgeSektion
             block={block}

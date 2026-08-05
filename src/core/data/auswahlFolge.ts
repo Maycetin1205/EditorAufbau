@@ -8,11 +8,12 @@
 // passiert automatisch, nichts verschwindet ohne Bedienerhandlung.
 //
 // Reine DATEN (kein Bildschirm, kein SoftEngine, kein Baustein): wer folgen
-// KANN, deklariert die Registry (kannAuswahlFolgen in BlockDefinition, Regel 2,
-// notfalls mit Zustands-Bedingung -> darfAuswahlFolgen in treeQuery);
-// wer Auswahl GIBT, wird hergeleitet (satzWahl + Datenquelle -> istAuswahlGeber
-// in treeQuery). Die Schluesselregel ist DIESELBE wie bei den weiteren
-// Datenquellen (SchluesselPaar aus sourceLinks) — eine Logik, zwei Nutzer.
+// KANN, deklariert die Registry (kannAuswahlFolgen in BlockDefinition, Regel 2)
+// — ob er es GERADE darf, wird hergeleitet (Faehigkeit + Quelle, deren Zeilen
+// sich einengen liessen -> darfAuswahlFolgen in treeQuery). Wer Auswahl GIBT,
+// ebenso (satzWahl + Datenquelle -> istAuswahlGeber). Die Schluesselregel ist
+// DIESELBE wie bei den weiteren Datenquellen (SchluesselPaar aus sourceLinks) —
+// eine Logik, zwei Nutzer.
 //
 // EINE Stufe je Beziehung: jede Folge nennt genau EINEN Geber-Baustein.
 // Die Prop ist trotzdem eine LISTE — dieselbe Bauart wie weitereQuellen:

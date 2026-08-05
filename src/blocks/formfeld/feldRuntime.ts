@@ -16,6 +16,13 @@ import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 
 export interface RuntimeFieldElement extends HTMLElement {
   value: string
+  // Optional: der Baustein prueft bei jeder Hydrierung selbst nach, ob sein
+  // EIGENER Wert noch gilt. Das Nachschlage-Feld braucht es — sein Wert kommt
+  // nicht aus einer Bindung, sondern aus dem Fenster, und wird ungueltig, wenn
+  // der Bediener beim Geber etwas anderes waehlt. Was „noch gueltig" heisst,
+  // weiss nur der Baustein; hier steht bloss der Anlass (die Hydrierung laeuft
+  // bei Daten-Push, Tageswechsel und Auswahl-Aenderung).
+  pruefeAuswahlPassung?: () => void
 }
 
 interface FieldData {
@@ -56,6 +63,12 @@ function currentValue(field: RuntimeFieldElement): string {
 // lowercase: HTML normalisiert valueField beim Export zu valuefield
 // (Attribut-Form der Bindungs-Konvention — bindingAttr = die eine Stelle).
 export function hydrateField(field: RuntimeFieldElement): void {
+  // Zuerst den Baustein selbst nachpruefen lassen, ob sein eigener Wert noch
+  // gilt (Nachschlage-Feld: passt der uebernommene Satz noch zur Auswahl des
+  // Gebers?). Ob dabei ueberhaupt etwas zu pruefen ist, entscheidet der
+  // Baustein — hier steht nur der Anlass, und der ist fuer jeden Feldtyp
+  // derselbe.
+  field.pruefeAuswahlPassung?.()
   // Am NACHSCHLAGE-Feld gibt es keine Wert-Bindung: der Wert entsteht durch
   // die Auswahl im Fenster. Eine Bindung obendrauf ueberschriebe ihn bei
   // jedem SoftEngine-Push — der Bediener waehlt einen Kunden, das naechste

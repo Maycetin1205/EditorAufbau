@@ -29,6 +29,23 @@ const ADRESSEN = [{
   ],
 }]
 
+// Zweite Quelle fuer den Folge-Fall: die Haustiere tragen die Adressnummer
+// ihres Halters (2_8) — daran erkennt man, welche zu einem Kunden gehoeren.
+const TIERE = [{
+  id: 'q-tiere',
+  name: 'Kundenhaustiere',
+  kind: 'idb' as const,
+  idbId: 'IDBID0018',
+  indexField: '0_10',
+  fields: [
+    { code: '0_10', label: 'Satz-Nr.' },
+    { code: '18_30', label: 'Tiername' },
+    { code: '2_8', label: 'Adressnummer' },
+  ],
+}]
+
+const BEIDE = [...ADRESSEN, ...TIERE]
+
 // Ein vollstaendig eingestelltes Nachschlage-Feld.
 const KUNDE_PROPS = {
   fieldType: 'nachschlagen', placeholder: 'Kunde', options: '',
@@ -136,6 +153,48 @@ describe('Nachschlage-Feld im Export', () => {
     // Export blockt die dann stumme Folge im Klartext.
     tree.kunde.props = { ...KUNDE_PROPS, fieldType: 'text' }
     expect(preflightMask(tree, ADRESSEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
+  })
+
+  // Der Fall des Nutzers (2026-08-06): Kunde-Feld (Geber) + Haustier-Feld, das
+  // ihm folgt. Die Lupe am Haustier-Feld zeigt dann nur die Haustiere DIESES
+  // Kunden. Das Feld RECHTS im Feldpaar gehoert der Quelle, deren Zeilen das
+  // FENSTER zeigt (Kundenhaustiere) — nicht der eigenen Datenbindung des
+  // Feldes, die es hier gar nicht hat.
+  const kundeUndTier = (toField: string): BlockTree => ({
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kunde', 'tier'] },
+    kunde: { id: 'kunde', type: 'formfeld', props: KUNDE_PROPS, parentId: 'root', childIds: [] },
+    tier: {
+      id: 'tier', type: 'formfeld',
+      props: {
+        fieldType: 'nachschlagen', placeholder: 'Haustier', options: '',
+        source: '', value: '', valueField: '', width: 240,
+        nachschlagQuelle: 'q-tiere', anzeigeFeld: '18_30', anzeigeTitel: 'Tiername',
+        speicherFeld: '0_10', speicherTitel: 'Satz-Nr.',
+        // fromField = Adressnummer in der Nachschlage-Quelle des GEBERS.
+        folgtAuswahl: [{ geberId: 'kunde', keyPairs: [{ fromField: '110_10', toField }] }],
+      },
+      parentId: 'root', childIds: [],
+    },
+  })
+
+  it('ein Nachschlage-Feld folgt einem anderen: die Folge reist mit', () => {
+    const tree = kundeUndTier('2_8')
+    const { html, sevariablen } = exportMask(tree, 'Maske', BEIDE)
+    const tierTag = /<ff-formfeld[^>]*placeholder="Haustier"[^>]*/.exec(html)?.[0] ?? ''
+    expect(tierTag).toContain('folgtauswahl=')
+    // Beide Nachschlage-Quellen muessen in den SEvariablen stehen — sonst
+    // schickt SoftEngine die Haustiere nie und das Fenster bleibt leer.
+    expect(JSON.parse(sevariablen).SEFILELOOP).toHaveLength(2)
+    expect(preflightMask(tree, BEIDE, [])).toEqual([])
+  })
+
+  it('Preflight prueft das Schluesselfeld gegen die NACHSCHLAGE-Quelle', () => {
+    // 110_10 gibt es nur in den Adressen, nicht in den Haustieren. Nimmt man
+    // dort das Feld der falschen Tabelle, passt in der Maske KEIN Satz: die
+    // Lupe waere immer leer, und niemand sagte warum.
+    const falsch = preflightMask(kundeUndTier('110_10'), BEIDE, [])
+    expect(falsch.some((r) => r.name === 'Auswahl-Folge Feld fehlt')).toBe(true)
+    expect(falsch.some((r) => r.detail.includes('Kundenhaustiere'))).toBe(true)
   })
 
   it('zurueckgestellter Feldtyp laesst die Nachschlage-Quelle daheim', () => {

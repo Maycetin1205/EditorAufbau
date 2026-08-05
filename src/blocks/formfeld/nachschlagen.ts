@@ -18,6 +18,7 @@
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { meldeFehler } from '../../softengine/meldung'
+import { zeilenNachAuswahl } from '../shared/auswahl'
 import {
   DIALOG_RAHMEN_TAG,
   DIALOG_SCHLIESSEN_EVENT,
@@ -26,6 +27,9 @@ import {
 import { zeilePasst } from '../shared/textSuche'
 
 export interface NachschlagenArgs {
+  // Das Feld selbst. Aus seinen Attributen liest die Folge-Mechanik, WESSEN
+  // Auswahl das Fenster einengt — dieselbe Stelle, aus der die Tabelle es liest.
+  el: HTMLElement
   quelleId: string
   anzeigeFeld: string
   speicherFeld: string
@@ -68,6 +72,46 @@ export function nachschlagEintraege(
 // (shared/textSuche), damit derselbe Kunde hier und dort gefunden wird.
 export function nachschlagTreffer(eintraege: readonly Eintrag[], suchtext: string): Eintrag[] {
   return eintraege.filter((eintrag) => zeilePasst([eintrag.anzeige, eintrag.wert], suchtext))
+}
+
+// Die Eintraege, die das Fenster ZEIGT — der ganze Datenweg der Lupe in einer
+// Zeile: erst die Folge-Filterung, dann die zwei sichtbaren Spalten.
+//
+// FOLGE (2026-08-06): steht am Feld eine Auswahl-Folge, zeigt die Lupe nur die
+// Zeilen, deren Schluesselfelder zur gewaehlten Zeile des Gebers passen. Der
+// Fall des Nutzers: ein Kunde-Feld und ein Haustier-Feld, das ihm folgt — die
+// Lupe zeigt dann nur die Haustiere DIESES Kunden statt aller 8.000.
+// Ohne Auswahl beim Geber bleiben alle Zeilen stehen, genau wie bei der
+// folgenden Tabelle: nichts passiert automatisch (Nutzer 2026-08-05).
+//
+// Gefiltert wird mit der GETEILTEN Mechanik (shared/auswahl), nie mit einer
+// zweiten Filter-Logik daneben: sonst zeigte dieses Fenster die Haustiere eines
+// anderen Kunden als die Tabelle daneben.
+export function fensterEintraege(
+  el: HTMLElement,
+  rows: unknown[],
+  anzeigeFeld: string,
+  speicherFeld: string,
+): Eintrag[] {
+  return nachschlagEintraege(zeilenNachAuswahl(el, rows).rows, anzeigeFeld, speicherFeld)
+}
+
+// Passt der schon uebernommene Satz noch zur Auswahl des Gebers?
+//
+// Der Bediener waehlt einen Kunden, uebernimmt dessen Haustier — und wechselt
+// dann den Kunden. Das Haustier gehoert jetzt zu niemandem mehr: ein falscher
+// Wert, der richtig aussieht. Der Baustein leert sich daraufhin (FormFeldBlock).
+//
+// Geprueft wird mit DERSELBEN Schluessel-Logik wie die Fenster-Filterung, nur
+// angewandt auf den EINEN gemerkten Satz — kein zweites Vergleichen daneben,
+// das anders urteilen koennte als das Fenster.
+//
+// Ohne aktive Auswahl beim Geber (nichts gewaehlt, wieder rausgeklickt) passt
+// er weiter: dann zeigt das Fenster ohnehin alles, und ein Wert, den der
+// Bediener selbst bestaetigt hat, verschwindet nicht von allein.
+export function satzPasstZurAuswahl(el: HTMLElement, satz: unknown): boolean {
+  const { rows, gefiltert } = zeilenNachAuswahl(el, [satz])
+  return !gefiltert || rows.length > 0
 }
 
 // Es ist immer hoechstens EIN Fenster offen: ein zweites ueber dem ersten
@@ -118,7 +162,12 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   }
 
   schliesse()
-  const eintraege = nachschlagEintraege(
+  // Die Eintraege stehen fest, sobald das Fenster aufgeht: die Auswahl des
+  // Gebers kann sich waehrend des Suchens nicht aendern (der Bediener steht
+  // hier drin), und ein Daten-Push mitten in der Liste liesse ihn suchen,
+  // waehrend sich die Zeilen unter dem Finger verschieben.
+  const eintraege = fensterEintraege(
+    args.el,
     rowsFor(seGlobal().SEDATA, quelle.name, quelle.tableId),
     args.anzeigeFeld,
     args.speicherFeld,
