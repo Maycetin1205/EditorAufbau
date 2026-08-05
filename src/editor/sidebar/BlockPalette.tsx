@@ -145,8 +145,15 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
         'transition-colors hover:border-primary/40 hover:bg-accent hover:text-accent-foreground',
       )}
     >
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground group-hover:bg-background group-hover:text-foreground">
-        {createElement(editorAngabenVon(def.type).symbol ?? ERSATZ_SYMBOL, { size: 14 })}
+      {/* Das Symbol steht BLANK da — einfarbig über currentColor, wie überall
+          sonst im Editor (Inspector, Steuerung, Toolbar). Bis 2026-08-05 saß
+          es in einer getönten 24er-Kachel mit eigener Farbe, die beim Zeigen
+          umschlug: neben dem Kachel-Rahmen des Knopfs die zweite Umrandung um
+          dasselbe Ding, und als einzige Icon-Stelle des Editors zweifarbig.
+          Die feste 24er-Breite bleibt — sie hält die Klarnamen in einer
+          Spalte, gleich wie breit ein Symbol zeichnet. */}
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-muted-foreground group-hover:text-foreground">
+        {createElement(editorAngabenVon(def.type).symbol ?? ERSATZ_SYMBOL, { size: 16 })}
       </span>
       <span className="truncate font-medium">{def.displayName}</span>
       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
