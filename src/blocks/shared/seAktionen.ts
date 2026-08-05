@@ -32,6 +32,7 @@ import {
   type RelationContext,
 } from '../../core/data/relations'
 import { bootSe, seGlobal } from '../../softengine/bridge'
+import { meldeFehler } from '../../softengine/meldung'
 import {
   executeRelation,
   findRuntimeRelation,
@@ -99,6 +100,15 @@ export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean)
 // Laufende Ketten je Element (Sperre gegen erneutes Ausloesen desselben
 // Ereignisses, solange die Kette laeuft).
 const laufend = new WeakMap<HTMLElement, Set<string>>()
+
+// Eine Kette wird immer nebenlaeufig gestartet (der Ausloeser wartet nie auf
+// sie). Ohne dieses Auffangnetz verschwand jeder Fehler darin spurlos: der
+// Bediener klickte, nichts geschah, und nichts sagte ihm warum (Regel 4 —
+// nichts scheitert still). An JEDEN nebenlaeufigen runEvent-Aufruf haengen.
+export function meldeKettenFehler(fehler: unknown): void {
+  const text = fehler instanceof Error ? fehler.message : String(fehler)
+  meldeFehler('Aktionskette fehlgeschlagen: ' + text)
+}
 
 // Fuehrt die Kette eines Ereignisses aus. `context` liefert die Werte der
 // Platzhalter ({PINDEX}/{VALUE}; {NOW_DATE} fuellt diese Funktion selbst).
@@ -189,6 +199,6 @@ export function connectClickAktionen(el: HTMLElement, eventKey: string): void {
     bootSe()
   }
   el.addEventListener('click', () => {
-    void runEvent(el, eventKey, {})
+    runEvent(el, eventKey, {}).catch(meldeKettenFehler)
   })
 }

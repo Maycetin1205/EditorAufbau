@@ -20,6 +20,8 @@
 // diese Schicht kennt NIE einen Baustein.
 
 import { isRecord, messagePayload, payloadDaten } from './data'
+// meldung importiert selbst NICHTS — kein Kreis zurueck auf bridge.
+import { meldeFehler } from './meldung'
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- SEDATA/selib sind
    fremde, untypisierte SoftEngine-Globals (Formen siehe Referenzmaske). */
@@ -193,6 +195,12 @@ function registerSe(tries = 0): void {
   } else {
     refreshDiagnoseEnvironment()
     diagnoseSet('Registrierung', 'nach 10s kein Interface')
+    // Bis 2026-08-05 stand das NUR in der versteckten Diagnose: die Maske sah
+    // fertig aus, blieb aber fuer immer ohne Daten, und niemand erfuhr warum
+    // (Regel 4). Jetzt sagt es der Balken.
+    meldeFehler(
+      'SoftEngine-Anschluss nicht gefunden — die Maske bleibt ohne Daten (Strg+Alt+D für Details).',
+    )
   }
 }
 
@@ -241,6 +249,9 @@ export function bootSe(): void {
     } else if (tries > 100) {
       clearInterval(poll)
       diagnoseSet('Daten-Wartezeit', 'nach 30s ohne Daten')
+      meldeFehler(
+        'Keine Daten von SoftEngine empfangen — die Maske zeigt nichts an (Strg+Alt+D für Details).',
+      )
     }
   }, 300)
 }

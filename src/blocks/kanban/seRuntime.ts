@@ -25,7 +25,7 @@ import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
 import { zeilenAmTag } from '../shared/tagFilter'
-import { runEvent } from '../shared/seAktionen'
+import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
 
@@ -238,7 +238,8 @@ function handleDrop(board: HTMLElement, column: HTMLElement): void {
   const data = cardData.get(dragged.card)
   if (!data) return
   const targetValue = column.getAttribute('heading') ?? ''
-  void runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
+  runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
+    .catch(meldeKettenFehler)
 }
 
 function wireDrag(board: HTMLElement): void {
@@ -255,7 +256,8 @@ function wireDrag(board: HTMLElement): void {
     if (!card) return
     const data = cardData.get(card)
     if (data) waehleAuswahl(board.getAttribute('data-ff-id') ?? '', data.row)
-    void runEvent(board, 'onCardClick', { PINDEX: data?.pindex ?? '' })
+    runEvent(board, 'onCardClick', { PINDEX: data?.pindex ?? '' })
+      .catch(meldeKettenFehler)
   })
   board.addEventListener('dragstart', (e) => {
     const card = (e.composedPath().find(

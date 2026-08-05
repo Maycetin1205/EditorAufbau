@@ -11,7 +11,7 @@ import { findRuntimeDataSource, getField, rowsFor, setField } from '../../soften
 import { ersteZeileNachAuswahl } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
-import { runEvent } from '../shared/seAktionen'
+import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 
 export interface RuntimeFieldElement extends HTMLElement {
   value: string
@@ -108,10 +108,10 @@ function wireField(field: RuntimeFieldElement): void {
   field.addEventListener('input', () => { writeLocal(field) })
   field.addEventListener('change', () => {
     const data = writeLocal(field)
-    void runEvent(field, 'onChange', {
+    runEvent(field, 'onChange', {
       VALUE: currentValue(field),
       PINDEX: data?.pindex ?? '',
-    })
+    }).catch(meldeKettenFehler)
   })
 }
 
