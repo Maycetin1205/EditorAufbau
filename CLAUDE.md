@@ -4,6 +4,10 @@
 > schlagen diese Datei; bei Widerspruch nachfragen. Der Nutzer kann nicht
 > programmieren: diese Regeln + die Prüfungen sind sein Ersatz dafür, Code
 > lesen zu können. **Vor jeder Code-Änderung: Plan zeigen, „go" abwarten.**
+> Ausnahme (Nutzer-Go 2026-08-05): ein eingecheckter, vom Nutzer bereits
+> freigegebener Abarbeitungsplan (aktuell `AUFRAEUMPLAN.md`) IST das Go für
+> genau seine Schritte — abarbeiten ohne weitere Rückfrage; nur wer vom Plan
+> abweichen muss, stoppt und fragt.
 > **„Aufgefallen unterwegs" ist GESTRICHEN** (Nutzer-Ansage 2026-08-04; galt
 > 2026-07-17 bis 2026-08-04 als Pflicht-Rubrik am Berichtsende). Grund: eine
 > Rubrik, die Pflicht ist, ist niemals leer — sie produzierte bei jedem
@@ -128,7 +132,8 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Ausnahmen im Script), jeder Baustein im Export-Test UND in der
    Veralten-Positivliste **UND im Referenzabzug** (seit 2026-07-28: geprüft am
    Markup des Abzugs, nicht an einer Textstelle — eine Textsuche wäre schon von
-   einem Kommentar zu befriedigen), Dateien ≤ 500 Zeilen (zwei Altlasten eingefroren),
+   einem Kommentar zu befriedigen), Dateien ≤ 500 Zeilen (KEINE Altlasten mehr —
+   die zwei früheren sind längst geteilt, jede Datei fällt unter denselben Deckel),
    `any`/stumme Warnungen eingefroren, keine Hex-Farben im Baustein-CSS.
    Anlass: Regeln als reine Prosa halten niemanden auf — der Tabellen-Bug
    2026-07-24 entstand, weil „neuer Baustein = Zeile im Export-Test" nur
@@ -205,10 +210,10 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   ausnahmsweise als Datei nützlich ist, gehört er in die git-Historie des
   Commits, der ihn umsetzt — keine `docs/`-Ablage neu erfinden.
 - **Es gibt keine Architektur-Karte mehr.** `docs/ARCHI.md` +
-  `ARCHI-rules.md` sind gelöscht. Die vier Codex-Vorlagen verweisen an
-  einzelnen Stellen noch darauf — dort ist der Verweis ins Leere gerichtet
-  und der Schritt zu überspringen. Wer sich einlesen muss: CLAUDE.md, dann
-  der Code selbst („Wichtige Stellen" unten). CLAUDE.md bleibt Regel- und
+  `ARCHI-rules.md` sind gelöscht. Die vier Codex-Vorlagen sind seit
+  2026-08-05 entsprechend bereinigt (sie verweisen auf CLAUDE.md und den
+  Code, nicht mehr auf gelöschte Dateien). Wer sich einlesen muss: CLAUDE.md,
+  dann der Code selbst („Wichtige Stellen" unten). CLAUDE.md bleibt Regel- und
   Entscheidungsbuch — bei Widerspruch gewinnt CLAUDE.md.
 - **Die Rituale gelten unverändert:** Plan zeigen + „go" abwarten,
   Test-Bremse, SE-Echttest gebündelt (die Vorschlags-Rubrik ist seit
@@ -231,10 +236,25 @@ ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
 ### Woran gerade gearbeitet wird
 
 **Datenquellen** — Arten als Tabelle statt Sondercode (2026-07-30 gebaut),
-Kennung frei eingebbar. Als Nächstes: Verknüpfung von den Bausteinen an die
+Kennung frei eingebbar. Seither gebaut (2026-08-04/05): Auswahl geben/folgen
+(Tabelle/Kanban geben die angeklickte Zeile, Einzelwert-Bausteine folgen ihr),
+Text-Baustein bindbar + Farbe aus Masken-Tokens, Export ohne
+Standardwert-Attribute. Als Nächstes: Verknüpfung von den Bausteinen an die
 Datenquelle heben (der Plan dazu lag in `docs/1-plans/F_0.5.0…` und steckt
 jetzt in Commit `fd827aa`). Offen daneben: Tabelle stabil machen, Optik-
 Feinschliff, Wizard.
+
+**Check-up 2026-08-05 (Nutzer-Auftrag, kompletter Code-Durchgang):** Die
+Bauart trägt — Registry echt generisch, Typ-Disziplin sehr hoch (1× `any`,
+begründet), Abhängigkeiten schlank (9, alle benutzt), Prüfbündel grün. ABER:
+6 echte Fehler und eine Reihe Konsistenz-/Ehrlichkeits-Befunde. Alles
+Reparierbare steht als Pakete A/B in `AUFRAEUMPLAN.md` — **Go dafür ist
+erteilt** (s. Kopf dieser Datei). Nach Abarbeitung: Plan-Datei löschen (die
+git-Historie hat sie) und diesen Absatz auf das Ergebnis eindampfen. Bewusst
+NICHT im Plan (brauchen je eine eigene Nutzer-Entscheidung): ein Vokabular
+pro Begriff (Schritt/Step, QuellenArt/DataSourceKind — kollidiert mit der
+Namens-Konvention oben) · Bibliotheken-Singletons vs. Provider-Bauart ·
+ein README als menschliche Eingangstür (kollidiert mit dem Doku-Schnitt).
 
 ### Feste Zusagen — aus FAHRPLAN.md gerettet, weil es REGELN sind
 
@@ -262,9 +282,12 @@ Nutzer-Entscheidung anfassen:**
 ## Wichtige Stellen
 
 - Store: `src/state/Editor.ts` (nur Zustand + öffentliche Methoden;
-  Fächer daneben: treeOps/history/persistence/migrations/templateRules).
-  KEINE Weltvariable: die eine Instanz entsteht in `src/app/providers.tsx`
-  und reist über EditorProvider/EditorContext. `useLitElement` = die EINE
+  Fächer daneben: treeOps/history/persistence/migrations/templateRules/
+  pageOps/rasterOps/selectionOps/quellenOps). Die eine Editor-Instanz
+  entsteht in `src/app/providers.tsx` und reist über EditorProvider/
+  EditorContext; die Bibliotheken (DataSourceStore/RelationStore) sind
+  dagegen Modul-Singletons — zwei Bauarten, ehrlich benannt (Befund
+  Check-up 2026-08-05, Vereinheitlichung = offene Nutzer-Entscheidung). `useLitElement` = die EINE
   React↔Lit-Übergabestelle · `zieheGroesse` = die EINE Zieh-Mechanik für
   Block- UND Popup-Anfasser · `src/export/serializer.ts` = die eine
   Zeichen-Regel-Stelle · `bindingAttr()` in BlockDefinition = die EINE

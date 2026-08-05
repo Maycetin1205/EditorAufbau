@@ -8,7 +8,7 @@ argument-hint: "<plan-path> [extra context] | reset <plan-path> | show <plan-pat
 
 Iterative code review via Codex CLI on uncommitted changes. Codex reads the plan and runs `git status -s` / `git diff HEAD` to inspect the change set.
 
-Review output stays in `state/<key>.review.txt` — not `docs/3-code-review/`. Promotion to `docs/3-code-review/CR_wa_vx.y.z.md` happens after convergence, not per-turn.
+Review output stays in `state/<key>.review.txt`. Es gibt KEINE Ablage mehr (Doku-Schnitt 2026-07-30): Befunde werden im Chat abgearbeitet, die git-Historie ist das Archiv.
 
 State persisted under `.claude/skills/codex-code-review/state/<sanitized-target>.{thread,review.txt,events.ndjson}`. Shared scripts live under `.claude/skills/codex-plan-review/scripts/`; always export before invoking:
 
@@ -18,7 +18,7 @@ export STATE_DIR=".claude/skills/codex-code-review/state"
 
 ## Arguments
 
-- `<target>` — auto: start if no thread, resume if exists. Usually a plan path (`docs/1-plans/F_*.plan.md`) or a free-form label for unplanned work.
+- `<target>` — auto: start if no thread, resume if exists. Usually a committed plan file (e.g. `AUFRAEUMPLAN.md`) or a free-form label for unplanned work.
 - `reset <target>` — drop state, next call starts fresh.
 - `show <target>` — display latest review without calling Codex.
 
@@ -47,8 +47,9 @@ Codex uses `git status -s` / `git diff HEAD` in read-only sandbox. If those fail
 
 ## After Convergence
 
-1. Promote `state/<key>.review.txt` to `docs/3-code-review/CR_wa_vx.y.z.md` using `.claude/skills/TRIP-review/cr-template.md`.
-2. Continue with `TRIP-3-release`.
+Befunde sind abgearbeitet oder begründet zurückgewiesen — das steht im Chat
+und in den Commits. Nichts wird promoted oder archiviert (Doku-Schnitt
+2026-07-30); weiter geht es mit dem normalen Prüfbündel + Commit.
 
 ## Notes
 
@@ -65,5 +66,5 @@ turn 1: start.sh -> REQUEST_CHANGES (Critical: A, Major: B C)
          address A B C
 turn 2: resume.sh -> REQUEST_CHANGES (A B addressed, Minor: C partial, Suggestion: D)
          address C, optionally D
-turn 3: resume.sh -> APPROVED -> promote, continue with TRIP-3-release
+turn 3: resume.sh -> APPROVED -> fertig (Prüfbündel + Commit)
 ```

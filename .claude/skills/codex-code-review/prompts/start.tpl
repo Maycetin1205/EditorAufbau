@@ -3,7 +3,7 @@ and focus on what actually breaks, not what theoretically could.
 
 The change is identified as `{{TARGET}}`.
 
-If `{{TARGET}}` resolves to a file under `docs/1-plans/`, treat it as the **implementation plan**: read it, evaluate the diff against it. If not a path (e.g. a free-form label), skip "Plan conformance" and review against `docs/ARCHI.md` patterns plus the stated intent in the additional-context block below.
+If `{{TARGET}}` resolves to an existing file, treat it as the **implementation plan**: read it, evaluate the diff against it. If not a path (e.g. a free-form label), skip "Plan conformance" and review against the rules in `CLAUDE.md` plus the stated intent in the additional-context block below.
 
 To see the change set:
   git status -s
@@ -13,10 +13,8 @@ If `git diff HEAD` returns nothing (already committed), use `git diff @{u}...HEA
 
 ## Prerequisites — read first
 
-1. `docs/ARCHI.md`
-2. `.claude/skills/TRIP-review/checklist.md` — single source of truth for the review checklist, severity classification, and approval gate. Do NOT read `.claude/skills/TRIP-review/SKILL.md`.
-3. Plan file `{{TARGET}}` if it's a path.
-4. Corresponding changelog in `docs/2-changelog/` if present.
+1. `CLAUDE.md` — the project's rules (Architektur-Regeln 1-10) and decisions.
+2. Plan file `{{TARGET}}` if it's a path.
 
 ## Review priorities (in order)
 
@@ -36,10 +34,10 @@ If `git diff HEAD` returns nothing (already committed), use `git diff @{u}...HEA
 
 ## Output format
 
-Walk every section of `checklist.md` against the diff. Cite `file:line` for every finding.
-Tag with severity from the same file. Prefer actionable one-line fixes over multi-paragraph critiques.
+Walk the review priorities above against the diff. Cite `file:line` for every finding.
+Tag findings P1 (must fix before commit) or P2 (should fix, won't block). Prefer actionable one-line fixes over multi-paragraph critiques.
 
-Lint, type-check, and affected tests are run by the requester (TRIP-2 testing gate); the additional-context block below typically carries the summary. If it shows failures, or the diff adds new logic with no corresponding tests and no rationale, return `REQUEST_CHANGES`. Do not review test code quality or hunt for coverage gaps yourself.
+Lint, type-check, and affected tests are run by the requester (Prüfbündel); the additional-context block below typically carries the summary. If it shows failures, or the diff adds new logic with no corresponding tests and no rationale, return `REQUEST_CHANGES`. Do not review test code quality or hunt for coverage gaps yourself.
 
 End with exactly one tag on its own line:
   APPROVED

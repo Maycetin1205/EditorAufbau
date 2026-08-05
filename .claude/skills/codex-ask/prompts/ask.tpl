@@ -4,8 +4,8 @@ task to execute.
 
 Topic label: `{{TARGET}}`
 
-Ground your answer in the actual repository: read any files you need (`docs/ARCHI.md` is the
-architecture overview if present). Be direct and specific. Disagree where warranted — the
+Ground your answer in the actual repository: read any files you need (`CLAUDE.md` is the
+rule and decision book; the architecture reference is the code itself). Be direct and specific. Disagree where warranted — the
 whole point of asking you is that you may see what the requester missed. Distinguish clearly
 between what you verified in the repo and what you are inferring.
 

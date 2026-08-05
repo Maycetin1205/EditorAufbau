@@ -4,16 +4,12 @@ This is the canonical record of how this change was reviewed. Cover every findin
 
 ## Format
 
-Read `.claude/skills/TRIP-review/cr-template.md` and produce output conforming to its markdown skeleton.
-
-Fill-in guide:
+Plain markdown, no template file. Sections:
 - **Title**: feature/change name from `{{TARGET}}`
 - **Review Date**: today's date (YYYY-MM-DD)
-- **Version**: leave as `<x.y.z>` (requester fills from TRIP-2 Step 2)
 - **Files Reviewed**: from `git diff --name-only HEAD`
-- **Plan**: `{{TARGET}}` if path under `docs/1-plans/`, else "no plan — unplanned change"
-- **Findings**: every finding from all rounds with `file:line` and disposition
-- **Checklist**: tick passing sections, caveat the rest
+- **Plan**: `{{TARGET}}` if it is a file path, else "no plan — unplanned change"
+- **Findings**: every finding from all rounds with `file:line` and disposition (addressed / overridden with rationale / open)
 - **Verdict**: `APPROVED` / `APPROVED with observations` / `NEEDS REVISION`
 
 Output only the rendered markdown — no preamble or commentary.

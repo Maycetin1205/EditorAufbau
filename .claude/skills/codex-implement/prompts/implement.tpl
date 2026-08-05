@@ -3,15 +3,15 @@ access to the working tree — edit files directly.
 
 The target is `{{TARGET}}`.
 
-If `{{TARGET}}` resolves to a file under `docs/1-plans/`, it is the **implementation plan**: read
+If `{{TARGET}}` resolves to an existing file, it is the **implementation plan**: read
 ALL of it and implement it. If it is not a path (a free-form label), implement from the
 instruction block at the bottom of this prompt.
 
 ## Read first
 
-1. `docs/ARCHI.md` — architecture single source of truth
-2. The project's agent instructions (`AGENTS.md` or `CLAUDE.md`) — conventions and commands
-3. The plan `{{TARGET}}` (if a path)
+1. `CLAUDE.md` — rules (Architektur-Regeln 1-10), decisions, conventions and commands
+2. The plan `{{TARGET}}` (if a path)
+3. The code around the target — module boundaries live in the code itself
 
 ## Scope & rules
 
@@ -19,8 +19,8 @@ instruction block at the bottom of this prompt.
   narrows the scope to a **batch** of the plan's checkboxes (e.g. "Implement only: …"). Never
   exceed the stated scope or start future items — the requester will ask for the next batch
   in a later turn.
-- Follow the existing codebase patterns documented in ARCHI.md (module boundaries, error
-  handling, naming). Apply DRY and KISS.
+- Follow the existing codebase patterns (module boundaries, error handling, naming —
+  new identifiers in German per CLAUDE.md). Apply DRY and KISS.
 - Tick the checkboxes in the plan's To-dos for tasks you complete.
 - Run the project's lint and type-check/build commands (from the agent instructions) when done;
   fix your own failures before finishing.
