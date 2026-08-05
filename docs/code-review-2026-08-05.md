@@ -202,3 +202,56 @@ AUSSIEHT — das beurteilt der Nutzer im Browser.
 3. Ob die Maske eine Schmuck-Serifenschrift (Fraunces) tragen soll, ist eine
    offene Nutzer-Entscheidung — vor dem Übernehmen der drei Design-Commits
    einmal in einem Satz nachfragen.
+
+---
+
+## Fortsetzung 2026-08-06: die fünf fehlenden Bereiche (geprüft, EIN echter Fund)
+
+### KAPUTT-9: Eine nur in einer Aktionskette gelesene Datenquelle fehlt im Export
+**Stelle:** `src/export/exportMask.ts:259` (collectDataSources)
+
+collectDataSources sammelte nur Quellen, die an einem BAUSTEIN hängen (eigene
+Quelle, weitere Quellen, kind-'quelle'-Property). Der Parameter-Wähler der
+Steuerung bietet für „Feld einer Datenquelle" (data_field) aber die GANZE
+Bibliothek an (ParameterZeile.tsx:110-118) — so eine Quelle hängt an keinem
+Baustein und fiel damit aus beiden Ausgängen: keine SEFILELOOP-Zeile (SoftEngine
+schickt ihre Daten nie) und kein FF_DATA_SOURCES-Eintrag (die Laufzeit findet
+die id nicht). resolveActionParam liefert dann '' (relations.ts:301 →
+findRuntimeDataSource ohne Treffer). Folge in der fertigen Maske: ein PUT
+schreibt Leere in das Feld, ein GET sucht nach nichts — still. Die Preflight
+konnte es nicht fangen: schrittPruefung prüft nur, ob die Quelle noch in der
+BIBLIOTHEK steht (Zeile 107), nicht ob sie exportiert wird.
+
+**GEFIXT** in `380f829`: die Regel steht einmal in
+`treeQuery.quellenIdsInKettenVon`, Export und Verwendungs-Anzeige lesen sie von
+dort. Neuer Fall in `datenquellen.test.ts`. Referenzabzug unverändert (dort ist
+die Ketten-Quelle zugleich die Quelle des Kanbans). **Berührt den Export →
+SE-Echttest.**
+
+### Geprüft und NICHTS gefunden
+
+- **Bausteine/Lit** (src/blocks, src/core/blocks): connected/disconnected sind
+  paarweise sauber; ButtonBlock hat bewusst kein disconnectedCallback (sein
+  Listener sitzt am Element selbst und stirbt mit ihm, WeakSet gegen
+  Doppelanmeldung). Alle drei `verdrahte`-Haken (Kanban-Drag, Formularfeld,
+  Text) schützen sich gegen Doppel-Verdrahtung; `macheDatenAnschluss` meldet
+  sich genau EINMAL je Maske an der Brücke an. TabelleBlock meldet seinen
+  ResizeObserver bei jedem Wieder-Einhängen neu an und räumt Timer + Observer im
+  disconnectedCallback ab. DialogRahmen registriert seinen document-keydown
+  zustandsgeführt und meldet ihn beim Abhängen ab. Die drei seRuntime-Dateien
+  sind dünn und teilen alles Gemeinsame — keine schädlichen Kopien.
+- **Export** (src/export): deterministisch (kein Date, kein Math.random, keine
+  Sortierung über instabile Schlüssel); Escaping an EINER Stelle (serializer)
+  und surrogatsicher — im HTML über Codepoints, in JS/JSON als gültiges
+  \uXXXX-Paar. Der eine Fund oben war der einzige stille Fehlerpfad.
+- **SoftEngine** (src/softengine, seRuntime, seAktionen): die GET-Warteschlange
+  hält genau EINE Anfrage in Flug, abonniert VOR dem Senden, `finish` läuft
+  einmal und räumt Poll + Timeout ab; alle drei Fehlerwege melden Klartext.
+  bootSe ist idempotent, der message-Fallback läuft nur OHNE Register-Weg (kein
+  doppelter Empfang). Ketten sind je Element+Ereignis gesperrt.
+- **Handwerk**: kein `as any` außer der einen begründeten, eslint-abgeschalteten
+  Stelle für die fremden SoftEngine-Globals (bridge.ts:29); kein @ts-ignore,
+  kein Non-Null-`!` außerhalb von Tests. Kein toter Code: 17 Symbole sind
+  exportiert, ohne dass ein zweites Modul sie liest — alle werden aber in ihrer
+  eigenen Datei benutzt (unnötiges `export`, nichts Unerreichbares).
+- **Architektur**: keine Abstraktion ohne zweiten Nutzer gefunden.
