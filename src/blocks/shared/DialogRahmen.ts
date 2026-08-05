@@ -69,9 +69,8 @@ export class DialogRahmen extends LitElement {
       max-height: calc(100% - ${DIALOG_RAND}px);
       overflow: hidden;
       background: var(--se-panel);
-      border: 1px solid var(--se-line);
+      border: var(--se-border) solid var(--se-line);
       border-radius: var(--se-r-lg);
-      box-shadow: var(--se-shadow-popup);
     }
     .kopf {
       flex: none;
@@ -80,14 +79,17 @@ export class DialogRahmen extends LitElement {
       gap: 8px;
       padding: 6px 6px 6px 12px;
       background: var(--se-panel-2);
-      border-bottom: 1px solid var(--se-line-soft);
+      border-bottom: var(--se-border) solid var(--se-line-soft);
     }
     .titel {
       flex: 1;
       min-width: 0;
       overflow: hidden;
       color: var(--se-ink);
-      font-size: var(--se-fs);
+      /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
+         nie im Fliesstext — sonst verliert sie ihre Wirkung. */
+      font-family: var(--se-font-schmuck);
+      font-size: var(--se-fs-lg);
       font-weight: 600;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -116,7 +118,7 @@ export class DialogRahmen extends LitElement {
       display: none;
       flex: none;
       padding: 7px 10px;
-      border-bottom: 1px solid var(--se-line-soft);
+      border-bottom: var(--se-border) solid var(--se-line-soft);
       background: var(--se-panel-2);
     }
     :host([mit-werkzeug]) .werkzeug { display: block; }

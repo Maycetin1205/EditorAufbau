@@ -40,25 +40,24 @@ export class ButtonBlock extends BasicBlock {
         box-sizing: border-box;
         padding: 7px 16px;
         cursor: pointer;
-        border-radius: var(--se-r-sm);
-        border: 1px solid var(--se-accent);
+        border-radius: var(--se-r-md);
+        border: var(--se-border) solid var(--se-accent);
         background: var(--se-accent);
         color: var(--se-panel);
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
-        box-shadow: var(--se-shadow-ruhe);
         /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
            eine eigene 120ms-Angabe — zwei Bausteine mit knapp
            unterschiedlichem Takt wirken unruhig. */
-        transition: background-color var(--se-move), border-color var(--se-move),
-          box-shadow var(--se-move), transform var(--se-move);
+        transition: background-color var(--se-move), border-color var(--se-move);
       }
-      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); box-shadow: var(--se-shadow-hover); }
-      /* Der Knopf gibt beim Druecken sichtbar nach — die einzige Stelle der
-         Maske, an der ein Klick sofort etwas ausloest. Ohne diese Rueckmeldung
-         weiss der Bediener nicht, ob er getroffen hat. */
-      button:active { transform: translateY(1px); box-shadow: var(--se-shadow-ruhe); }
+      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
+      /* Der Knopf muss beim Druecken sichtbar antworten — ohne Rueckmeldung
+         weiss der Bediener nicht, ob er getroffen hat. Flach geloest
+         (Fellnase Regel 4, "die Kante macht die Arbeit"): die Kante springt
+         auf Espresso. Bis 2026-08-06 sank der Knopf stattdessen um 1px. */
+      button:active { background: var(--se-accent-dark); border-color: var(--se-ink); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
       /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
          groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt

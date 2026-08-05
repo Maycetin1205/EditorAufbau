@@ -56,14 +56,13 @@
         max-width: calc(100% - ${24}px);
         max-height: calc(100% - ${24}px);
         background: var(--se-panel);
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-lg);
         overflow: hidden;
-        /* Das Popup SCHWEBT (2026-07-30) — die staerkste der drei Stufen.
-           Die Abdunklung dahinter trennt es bereits inhaltlich; der Schatten
-           macht daraus auch raeumlich ein Fenster ueber der Maske statt
-           eines aufgeklebten Kastens. */
-        box-shadow: var(--se-shadow-popup);
+        /* Flach (Fellnase Regel 4): was das Popup abhebt, ist die
+           Abdunklung dahinter (--se-scrim) und die 1,5px-Kante — kein
+           Schatten. Bis 2026-08-06 lag hier die staerkste von drei
+           Schatten-Stufen. */
       }
       .kopf {
         flex: none;
@@ -72,11 +71,14 @@
         gap: 8px;
         padding: 6px 6px 6px 12px;
         background: var(--se-panel-2);
-        border-bottom: 1px solid var(--se-line-soft);
+        border-bottom: var(--se-border) solid var(--se-line-soft);
       }
       .titel {
         font-weight: 600;
-        font-size: var(--se-fs);
+        /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
+           nie im Fliesstext — sonst verliert sie ihre Wirkung. */
+        font-family: var(--se-font-schmuck);
+        font-size: var(--se-fs-lg);
         color: var(--se-ink);
         white-space: nowrap;
         overflow: hidden;
@@ -132,25 +134,24 @@
         box-sizing: border-box;
         padding: 7px 16px;
         cursor: pointer;
-        border-radius: var(--se-r-sm);
-        border: 1px solid var(--se-accent);
+        border-radius: var(--se-r-md);
+        border: var(--se-border) solid var(--se-accent);
         background: var(--se-accent);
         color: var(--se-panel);
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
-        box-shadow: var(--se-shadow-ruhe);
         /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
            eine eigene 120ms-Angabe — zwei Bausteine mit knapp
            unterschiedlichem Takt wirken unruhig. */
-        transition: background-color var(--se-move), border-color var(--se-move),
-          box-shadow var(--se-move), transform var(--se-move);
+        transition: background-color var(--se-move), border-color var(--se-move);
       }
-      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); box-shadow: var(--se-shadow-hover); }
-      /* Der Knopf gibt beim Druecken sichtbar nach — die einzige Stelle der
-         Maske, an der ein Klick sofort etwas ausloest. Ohne diese Rueckmeldung
-         weiss der Bediener nicht, ob er getroffen hat. */
-      button:active { transform: translateY(1px); box-shadow: var(--se-shadow-ruhe); }
+      button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
+      /* Der Knopf muss beim Druecken sichtbar antworten — ohne Rueckmeldung
+         weiss der Bediener nicht, ob er getroffen hat. Flach geloest
+         (Fellnase Regel 4, "die Kante macht die Arbeit"): die Kante springt
+         auf Espresso. Bis 2026-08-06 sank der Knopf stattdessen um 1px. */
+      button:active { background: var(--se-accent-dark); border-color: var(--se-ink); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
       /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
          groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt
@@ -161,19 +162,37 @@
       @dblclick=${e=>this.inlineEdit(e,`label`)}
     >${this.label}</button>`}connectedCallback(){super.connectedCallback(),Cn(this,`onClick`)}};A([k()],wn.prototype,`label`,void 0),j.defineAndRegister(wn);var Tn=[`info`,`success`,`warning`,`danger`];function En(e){return Tn.includes(e)?e:`info`}function Dn(e,t){return{attributeName:e,name:`Farbe`,description:t,kind:`select`,options:[{value:`info`,label:`Hinweis`},{value:`success`,label:`Erfolg`},{value:`warning`,label:`Warnung`},{value:`danger`,label:`Fehler`}]}}var On=o`
   .chip {
-    display: inline-block;
-    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px 3px 7px;
     border-radius: var(--se-r-sm);
+    /* der 45deg-Schnitt oben rechts — 6px tief */
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
     font-family: var(--se-font);
     font-size: var(--se-fs-xs);
     font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--se-ink);
+    background: var(--se-panel-2);
+    white-space: nowrap;
   }
-  .chip.v-info { background: var(--se-blue-soft); color: var(--se-blue); }
-  .chip.v-success { background: var(--se-green-soft); color: var(--se-green); }
-  .chip.v-warning { background: var(--se-amber-soft); color: var(--se-amber); }
-  .chip.v-danger { background: var(--se-red-soft); color: var(--se-red); }
+  /* der quadratische Punkt: bewusst OHNE border-radius */
+  .chip::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    background: var(--chip-punkt, var(--se-faint));
+  }
+  .chip.v-info { background: var(--se-blue-soft); --chip-punkt: var(--se-blue); }
+  .chip.v-success { background: var(--se-green-soft); --chip-punkt: var(--se-green); }
+  .chip.v-warning { background: var(--se-amber-soft); --chip-punkt: var(--se-amber); }
+  .chip.v-danger {
+    background: var(--se-red);
+    color: var(--se-panel);
+    --chip-punkt: var(--se-panel);
+  }
 `,kn={dog:T`<ellipse cx="12" cy="13.5" rx="6.3" ry="7"></ellipse><ellipse cx="5.2" cy="11.5" rx="2.4" ry="5.2" transform="rotate(14 5.2 11.5)"></ellipse><ellipse cx="18.8" cy="11.5" rx="2.4" ry="5.2" transform="rotate(-14 18.8 11.5)"></ellipse>`,cat:T`<path d="M5.2 10.5 L3.6 3.2 L10 6.4 Z"></path><path d="M18.8 10.5 L20.4 3.2 L14 6.4 Z"></path><circle cx="12" cy="13.5" r="7"></circle>`,rabbit:T`<ellipse cx="8.8" cy="6.5" rx="2.3" ry="5.6" transform="rotate(-10 8.8 6.5)"></ellipse><ellipse cx="15.2" cy="6.5" rx="2.3" ry="5.6" transform="rotate(10 15.2 6.5)"></ellipse><circle cx="12" cy="16" r="6.2"></circle>`,hamster:T`<circle cx="7.6" cy="8.8" r="2"></circle><ellipse cx="12" cy="14" rx="8.3" ry="6"></ellipse>`,bird:T`<circle cx="9.2" cy="8.8" r="4.6"></circle><ellipse cx="12.5" cy="14.8" rx="5.2" ry="5.4"></ellipse><path d="M5.2 7.6 L2 9.2 L5.4 10.6 Z"></path><path d="M15.5 16.5 L22 20.5 L17.6 13.8 Z"></path>`,reptile:T`<path d="M4.5 14.8 Q4.5 7.2 12 7.2 Q19.5 7.2 19.5 14.8 Z"></path><circle cx="20.6" cy="13.9" r="2.1"></circle><rect x="6.2" y="14.6" width="2.6" height="3" rx="1.2"></rect><rect x="13.4" y="14.6" width="2.6" height="3" rx="1.2"></rect>`,paw:T`<circle cx="6.8" cy="9.6" r="1.9"></circle><circle cx="10.4" cy="7.2" r="1.9"></circle><circle cx="14.6" cy="7.2" r="1.9"></circle><circle cx="18.2" cy="9.6" r="1.9"></circle><path d="M12.5 11.2c-2.9 0-5.3 2.1-5.3 4.4 0 1.7 1.3 2.9 3.1 2.9.9 0 1.5-.3 2.2-.3s1.3.3 2.2.3c1.8 0 3.1-1.2 3.1-2.9 0-2.3-2.4-4.4-5.3-4.4z"></path>`},An=[[`welpe`,`dog`],[`hund`,`dog`],[`kater`,`cat`],[`katze`,`cat`],[`kaninchen`,`rabbit`],[`hase`,`rabbit`],[`meerschweinchen`,`hamster`],[`hamster`,`hamster`],[`ratte`,`hamster`],[`maus`,`hamster`],[`wellensittich`,`bird`],[`sittich`,`bird`],[`papagei`,`bird`],[`vogel`,`bird`],[`schildkr`,`reptile`],[`echse`,`reptile`],[`schlange`,`reptile`],[`gecko`,`reptile`],[`reptil`,`reptile`]];function jn(e){let t=e.toLowerCase(),n=`paw`;for(let[e,r]of An)if(t.includes(e)){n=r;break}return w`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${kn[n]}</svg>`}var G=class extends j{constructor(...e){super(...e),this.chipVariant=`info`,this.heading=``,this.heading2=``,this.time=``,this.date=``,this.avatar=``,this.meta=``,this.text=``,this.chipText=``,this.headingField=``,this.heading2Field=``,this.timeField=``,this.dateField=``,this.avatarField=``,this.metaField=``,this.textField=``,this.chipTextField=``}static{this.blockType=`card`}static{this.tagName=`ff-card`}static{this.displayName=`Karte`}static{this.category=`anzeige`}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.showInPalette=!1}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={chipVariant:`info`,heading:``,heading2:``,time:``,date:``,avatar:``,meta:``,text:``,chipText:``,headingField:``,heading2Field:``,timeField:``,dateField:``,avatarField:``,metaField:``,textField:``,chipTextField:``}}static{this.bindableSpots=[{prop:`time`,label:`Zeit`},{prop:`date`,label:`Datum`},{prop:`avatar`,label:`Avatar`},{prop:`heading`,label:`Titel`},{prop:`heading2`,label:`Titel 2`},{prop:`meta`,label:`Unterzeile`},{prop:`text`,label:`Textzeile`},{prop:`chipText`,label:`Chip`}]}static{this.customProperties=[Dn(`chipVariant`,`Bedeutung des Chips auf der Karte — bestimmt die Chip-Farbe.`)]}static{this.styles=[j.styles,On,o`
       .card {
         box-sizing: border-box;
@@ -183,19 +202,18 @@
         overflow: hidden;
         gap: 5px;
         background: var(--se-card-bg);
-        border: 1px solid var(--se-card-line);
+        border: var(--se-border) solid var(--se-card-line);
         border-radius: var(--se-r-md);
         padding: 8px 10px 9px;
         font-family: var(--se-font);
-        box-shadow: var(--se-shadow-ruhe);
-        transition: box-shadow var(--se-move), transform var(--se-move);
+        transition: border-color var(--se-move);
       }
-      /* Die Karte hebt sich unter dem Zeiger. Ein Blatt, das man anfassen
-         kann — nicht ein Bild. Bewusst nur 1px: mehr wirkt verspielt und
-         laesst die Nachbarkarten wackeln. */
+      /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
+         Karte hebt nicht ab. Vorher hob sie sich per Schatten + 1px nach
+         oben — das liess die Nachbarkarten wackeln und war das einzige
+         Koerperhafte der Maske. */
       .card:hover {
-        box-shadow: var(--se-shadow-hover);
-        transform: translateY(-1px);
+        border-color: var(--se-faint);
       }
       /* Statusfarbe AM KOERPER (2026-07-30, Nutzer-Go).
          Die Karte kennt ihren Status laengst — die Eigenschaft „Farbe"
@@ -253,7 +271,7 @@
         width: 30px;
         height: 30px;
         flex: none;
-        border-radius: var(--se-r-pill);
+        border-radius: var(--se-r-sm);
         background: var(--se-accent-soft);
         color: var(--se-accent);
       }
@@ -321,7 +339,7 @@
       }
       :host([data-ff-editor]) .avatar:empty {
         background: transparent;
-        border: 1px dashed var(--se-faint);
+        border: var(--se-border) dashed var(--se-faint);
       }
     `]}stelle(e,t){return w`<span
       class=${t}
@@ -385,7 +403,7 @@
         min-width: 0;
         height: 100%;
         padding: 2px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
       }
@@ -432,7 +450,7 @@
         flex: none;
         height: 100%;
         padding: 0 9px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         color: var(--se-ink);
@@ -486,20 +504,20 @@
        (N1: keine Magic Numbers, die beim Padding-Ändern auseinanderlaufen.) */
     --feld-pad-y: 7px;
     --feld-pad-x: 10px;
-    --feld-rand: 1px;
+    --feld-rand: var(--se-border);
   }
   /* Anker für den im Feld sitzenden Platzhalter. */
   .huelle { position: relative; }
   /* .ctrl exakt nach Referenz-Optik: Rahmen, Panel-Flaeche, kantiger
-     Radius; Fokus = Hausfarbe als Rahmen + 1px-Ring (kein weicher
-     Schatten — Flaechen leben von Rahmen). */
+     Radius; Fokus = Hausfarbe als Rahmen + ein zweiter
+     Strich derselben Staerke (Fellnase ist flach: kein Leuchten). */
   .ctrl {
     box-sizing: border-box;
     width: 100%;
     padding: var(--feld-pad-y) var(--feld-pad-x);
     border: var(--feld-rand) solid var(--se-line);
     background: var(--se-panel);
-    border-radius: var(--se-r-sm);
+    border-radius: var(--se-r-md);
     font-family: var(--se-font);
     font-size: var(--se-fs);
     color: var(--se-ink);
@@ -507,7 +525,7 @@
   .ctrl:focus {
     outline: none;
     border-color: var(--se-accent);
-    box-shadow: 0 0 0 1px var(--se-accent);
+    box-shadow: 0 0 0 var(--se-border) var(--se-accent);
   }
   textarea.ctrl {
     display: block;
@@ -663,9 +681,8 @@
       max-height: calc(100% - ${24}px);
       overflow: hidden;
       background: var(--se-panel);
-      border: 1px solid var(--se-line);
+      border: var(--se-border) solid var(--se-line);
       border-radius: var(--se-r-lg);
-      box-shadow: var(--se-shadow-popup);
     }
     .kopf {
       flex: none;
@@ -674,14 +691,17 @@
       gap: 8px;
       padding: 6px 6px 6px 12px;
       background: var(--se-panel-2);
-      border-bottom: 1px solid var(--se-line-soft);
+      border-bottom: var(--se-border) solid var(--se-line-soft);
     }
     .titel {
       flex: 1;
       min-width: 0;
       overflow: hidden;
       color: var(--se-ink);
-      font-size: var(--se-fs);
+      /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
+         nie im Fliesstext — sonst verliert sie ihre Wirkung. */
+      font-family: var(--se-font-schmuck);
+      font-size: var(--se-fs-lg);
       font-weight: 600;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -710,7 +730,7 @@
       display: none;
       flex: none;
       padding: 7px 10px;
-      border-bottom: 1px solid var(--se-line-soft);
+      border-bottom: var(--se-border) solid var(--se-line-soft);
       background: var(--se-panel-2);
     }
     :host([mit-werkzeug]) .werkzeug { display: block; }
@@ -742,7 +762,7 @@
           <div class="inhalt"><slot></slot></div>
         </section>
       </div>
-    `}};A([k()],K.prototype,`titel`,void 0),A([k({type:Number})],K.prototype,`breite`,void 0),A([k({type:Number})],K.prototype,`hoehe`,void 0),A([k({type:Boolean,reflect:!0})],K.prototype,`viewport`,void 0),A([k({type:Boolean,reflect:!0,attribute:`mit-werkzeug`})],K.prototype,`mitWerkzeug`,void 0),A([k({type:Boolean,attribute:`escape-schliesst`})],K.prototype,`escapeSchliesst`,void 0),customElements.get(`ff-dialog-rahmen`)||customElements.define(ur,K);function pr(e){return e.trim().toLowerCase().split(/\s+/).filter(e=>e!==``)}function mr(e,t){let n=pr(t);if(n.length===0)return!0;let r=e.join(` `).toLowerCase();return n.every(e=>r.includes(e))}var hr=10;function gr(e,t,n){let r=[];for(let i of e){let e=P(i,t).trim(),a=P(i,n).trim();(e!==``||a!==``)&&r.push({anzeige:e,wert:a,satz:i})}return r}function _r(e,t){return e.filter(e=>mr([e.anzeige,e.wert],t))}function vr(e,t,n,r){return gr(St(e,t).rows,n,r)}function yr(e){if(e.quelleId===``||e.anzeigeFeld===``||e.speicherFeld===``)return{ok:!1,grund:`unvollstaendig`};let t=N(H().FF_DATA_SOURCES,e.quelleId);if(!t)return{ok:!1,grund:`quelleFehlt`};let n=I(H().SEDATA,t.name,t.tableId);return{ok:!0,eintraege:vr(e.el,n,e.anzeigeFeld,e.speicherFeld)}}function br(e,t){return t&&e.length===1?e[0]:null}function xr(e,t){let{rows:n,gefiltert:r}=St(e,[t]);return!r||n.length>0}var Sr=null;function Cr(){Sr?.remove(),Sr=null}function wr(e,t=!1){let n=document.createElement(t?`th`:`td`);return n.textContent=e,n.style.cssText=t?`position:sticky;top:0;z-index:1;padding:6px 10px;text-align:left;font-size:var(--se-fs-sm);font-weight:600;color:var(--se-muted);border-bottom:1px solid var(--se-line);background:var(--se-panel-2)`:`box-sizing:border-box;height:24px;padding:3px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--se-line-soft)`,n}function Tr(e,t){let n=document.createElement(`button`);return n.type=`button`,n.textContent=e,n.setAttribute(`aria-label`,t),n.style.cssText=`box-sizing:border-box;width:26px;height:24px;padding:0;border:1px solid var(--se-line);border-radius:var(--se-r-sm);background:var(--se-panel);color:var(--se-ink);font:inherit;cursor:pointer`,n}function Er(e){let t=yr(e);if(!t.ok){V(t.grund===`unvollstaendig`?`Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).`:`Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.`);return}let n=t.eintraege;Cr();let r=document.createElement(ur);r.setAttribute(`data-ff-nachschlagen`,``),r.viewport=!0,r.mitWerkzeug=!0,r.escapeSchliesst=!0,r.titel=e.titel===``?`Nachschlagen`:e.titel,r.breite=520,r.hoehe=380,r.addEventListener(dr,Cr),r.addEventListener(`click`,e=>e.stopPropagation());let i=document.createElement(`input`);i.slot=`werkzeug`,i.type=`search`,i.placeholder=`suchen ...`,i.setAttribute(`aria-label`,`Nachschlagen durchsuchen`),i.style.cssText=`box-sizing:border-box;width:100%;padding:5px 8px;font:inherit;color:inherit;background:var(--se-panel);border:1px solid var(--se-line);border-radius:var(--se-r-sm)`;let a=document.createElement(`table`);a.style.cssText=`width:100%;table-layout:fixed;border-collapse:collapse`;let o=document.createElement(`colgroup`),s=document.createElement(`col`);s.style.width=`65%`;let c=document.createElement(`col`);c.style.width=`35%`,o.append(s,c);let l=document.createElement(`thead`),u=document.createElement(`tr`);u.append(wr(e.anzeigeTitel===``?`Angezeigt`:e.anzeigeTitel,!0),wr(e.speicherTitel===``?`Wert`:e.speicherTitel,!0)),l.appendChild(u);let d=document.createElement(`tbody`);a.append(o,l,d);let f=document.createElement(`div`);f.style.cssText=`flex:1 1 auto;min-height:0;overflow:auto`,f.appendChild(a);let ee=document.createElement(`div`);ee.style.cssText=`box-sizing:border-box;flex:none;display:flex;align-items:center;min-height:33px;padding:4px 10px;border-top:1px solid var(--se-line);background:var(--se-panel-2);font-size:var(--se-fs-sm)`;let te=document.createElement(`span`);te.setAttribute(`aria-live`,`polite`),te.style.cssText=`flex:1;color:var(--se-muted)`;let p=document.createElement(`nav`);p.setAttribute(`aria-label`,`Trefferseiten`),p.style.cssText=`display:flex;align-items:center;gap:6px`;let m=Tr(`‹`,`Vorherige Seite`),ne=document.createElement(`span`);ne.style.cssText=`min-width:48px;text-align:center;color:var(--se-muted)`;let h=Tr(`›`,`Naechste Seite`);p.append(m,ne,h),ee.append(te,p);let g=document.createElement(`div`);g.style.cssText=`box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column`,g.append(f,ee);let _=1,v=1,y=()=>{d.replaceChildren();let t=_r(n,i.value);v=Math.max(1,Math.ceil(t.length/hr)),_=Math.min(_,v);let r=(_-1)*hr,a=t.slice(r,r+hr);if(te.textContent=t.length===0?`0 von 0`:`${r+1}-${Math.min(r+hr,t.length)} von ${t.length}`,ne.textContent=`${_} / ${v}`,m.disabled=_===1,h.disabled=_===v,m.style.opacity=m.disabled?`0.4`:`1`,h.style.opacity=h.disabled?`0.4`:`1`,m.style.cursor=m.disabled?`default`:`pointer`,h.style.cursor=h.disabled?`default`:`pointer`,f.scrollTop=0,a.length===0){let e=document.createElement(`tr`),t=wr(n.length===0?`Diese Quelle hat keine Saetze.`:`Kein Satz passt zur Suche.`);t.colSpan=2,t.style.color=`var(--se-faint)`,t.style.fontSize=`var(--se-fs-sm)`,t.style.padding=`16px 10px`,e.appendChild(t),d.appendChild(e);return}for(let t of a){let n=document.createElement(`tr`);n.tabIndex=0,n.style.cursor=`pointer`;let r=wr(t.anzeige),i=wr(t.wert);i.style.fontFamily=`var(--se-mono)`,i.style.color=`var(--se-muted)`,n.append(r,i);let a=()=>{Cr(),e.onUebernehmen(t.anzeige,t.wert,t.satz)};n.addEventListener(`click`,a),n.addEventListener(`keydown`,e=>{e.key===`Enter`&&(e.preventDefault(),a())}),n.addEventListener(`mouseenter`,()=>{n.style.background=`var(--se-accent-soft)`}),n.addEventListener(`mouseleave`,()=>{n.style.background=``}),d.appendChild(n)}};i.addEventListener(`input`,()=>{_=1,y()}),m.addEventListener(`click`,()=>{_!==1&&(--_,y())}),h.addEventListener(`click`,()=>{_!==v&&(_+=1,y())}),y(),r.append(i,g),document.body.appendChild(r),Sr=r,r.updateComplete.then(()=>{r.isConnected&&i.focus()})}var Dr=[`text`,`number`,`textarea`,`select`,`date`,`checkbox`,`nachschlagen`];function Or(e){return Dr.includes(e)?e:`text`}var kr=[`text`,`number`,`textarea`,`select`,`nachschlagen`],q=class extends j{constructor(...e){super(...e),this.fieldType=`text`,this.placeholder=`Feldname`,this.options=``,this.source=``,this.value=``,this.valueField=``,this.nachschlagQuelle=``,this.anzeigeFeld=``,this.anzeigeTitel=``,this.speicherFeld=``,this.speicherTitel=``,this.einzigerTreffer=`nein`,this.anzeige=``,this.satz=void 0,this.angehakt=!1}static{this.blockType=`formfeld`}static{this.tagName=`ff-formfeld`}static{this.displayName=`Formularfeld`}static{this.category=`eingabe`}static{this.acceptsDataSource={wenn:{attributeName:`fieldType`,notEquals:`nachschlagen`}}}static{this.kannAuswahlFolgen=!0}static{this.satzWahl={quelleProp:`nachschlagQuelle`,wenn:{attributeName:`fieldType`,equals:`nachschlagen`}}}static{this.bindableSpots=[{prop:`value`,label:`Wert`,wenn:{attributeName:`fieldType`,notEquals:`nachschlagen`},vorschauProp:`placeholder`}]}static{this.actionValueSpots=[{prop:`value`,label:`Wert`}]}static{this.blockEvents=[{key:`onChange`,name:`Wert geändert`}]}static{this.defaultProps={width:240,fieldType:`text`,placeholder:`Feldname`,options:``,source:``,value:``,valueField:``,nachschlagQuelle:``,anzeigeFeld:``,anzeigeTitel:``,speicherFeld:``,speicherTitel:``,einzigerTreffer:`nein`}}static{this.raster={startW:6,startH:2,minW:2,minH:2}}static{this.customProperties=Hn}static{this.styles=[j.styles,lr]}onInput(e){let t=e.target;this.value=Or(this.fieldType)===`date`?tr(t.value):t.value}onChange(){this.dispatchEvent(new Event(`change`))}textTpl(e,t=!1){return w`<span
+    `}};A([k()],K.prototype,`titel`,void 0),A([k({type:Number})],K.prototype,`breite`,void 0),A([k({type:Number})],K.prototype,`hoehe`,void 0),A([k({type:Boolean,reflect:!0})],K.prototype,`viewport`,void 0),A([k({type:Boolean,reflect:!0,attribute:`mit-werkzeug`})],K.prototype,`mitWerkzeug`,void 0),A([k({type:Boolean,attribute:`escape-schliesst`})],K.prototype,`escapeSchliesst`,void 0),customElements.get(`ff-dialog-rahmen`)||customElements.define(ur,K);function pr(e){return e.trim().toLowerCase().split(/\s+/).filter(e=>e!==``)}function mr(e,t){let n=pr(t);if(n.length===0)return!0;let r=e.join(` `).toLowerCase();return n.every(e=>r.includes(e))}var hr=10;function gr(e,t,n){let r=[];for(let i of e){let e=P(i,t).trim(),a=P(i,n).trim();(e!==``||a!==``)&&r.push({anzeige:e,wert:a,satz:i})}return r}function _r(e,t){return e.filter(e=>mr([e.anzeige,e.wert],t))}function vr(e,t,n,r){return gr(St(e,t).rows,n,r)}function yr(e){if(e.quelleId===``||e.anzeigeFeld===``||e.speicherFeld===``)return{ok:!1,grund:`unvollstaendig`};let t=N(H().FF_DATA_SOURCES,e.quelleId);if(!t)return{ok:!1,grund:`quelleFehlt`};let n=I(H().SEDATA,t.name,t.tableId);return{ok:!0,eintraege:vr(e.el,n,e.anzeigeFeld,e.speicherFeld)}}function br(e,t){return t&&e.length===1?e[0]:null}function xr(e,t){let{rows:n,gefiltert:r}=St(e,[t]);return!r||n.length>0}var Sr=null;function Cr(){Sr?.remove(),Sr=null}function wr(e,t=!1){let n=document.createElement(t?`th`:`td`);return n.textContent=e,n.style.cssText=t?`position:sticky;top:0;z-index:1;padding:6px 10px;text-align:left;font-size:var(--se-fs-sm);font-weight:600;color:var(--se-muted);border-bottom:var(--se-border) solid var(--se-line);background:var(--se-panel-2)`:`box-sizing:border-box;height:24px;padding:3px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:var(--se-border) solid var(--se-line-soft)`,n}function Tr(e,t){let n=document.createElement(`button`);return n.type=`button`,n.textContent=e,n.setAttribute(`aria-label`,t),n.style.cssText=`box-sizing:border-box;width:26px;height:24px;padding:0;border:var(--se-border) solid var(--se-line);border-radius:var(--se-r-sm);background:var(--se-panel);color:var(--se-ink);font:inherit;cursor:pointer`,n}function Er(e){let t=yr(e);if(!t.ok){V(t.grund===`unvollstaendig`?`Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).`:`Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.`);return}let n=t.eintraege;Cr();let r=document.createElement(ur);r.setAttribute(`data-ff-nachschlagen`,``),r.viewport=!0,r.mitWerkzeug=!0,r.escapeSchliesst=!0,r.titel=e.titel===``?`Nachschlagen`:e.titel,r.breite=520,r.hoehe=380,r.addEventListener(dr,Cr),r.addEventListener(`click`,e=>e.stopPropagation());let i=document.createElement(`input`);i.slot=`werkzeug`,i.type=`search`,i.placeholder=`suchen ...`,i.setAttribute(`aria-label`,`Nachschlagen durchsuchen`),i.style.cssText=`box-sizing:border-box;width:100%;padding:5px 8px;font:inherit;color:inherit;background:var(--se-panel);border:var(--se-border) solid var(--se-line);border-radius:var(--se-r-sm)`;let a=document.createElement(`table`);a.style.cssText=`width:100%;table-layout:fixed;border-collapse:collapse`;let o=document.createElement(`colgroup`),s=document.createElement(`col`);s.style.width=`65%`;let c=document.createElement(`col`);c.style.width=`35%`,o.append(s,c);let l=document.createElement(`thead`),u=document.createElement(`tr`);u.append(wr(e.anzeigeTitel===``?`Angezeigt`:e.anzeigeTitel,!0),wr(e.speicherTitel===``?`Wert`:e.speicherTitel,!0)),l.appendChild(u);let d=document.createElement(`tbody`);a.append(o,l,d);let f=document.createElement(`div`);f.style.cssText=`flex:1 1 auto;min-height:0;overflow:auto`,f.appendChild(a);let ee=document.createElement(`div`);ee.style.cssText=`box-sizing:border-box;flex:none;display:flex;align-items:center;min-height:33px;padding:4px 10px;border-top:var(--se-border) solid var(--se-line);background:var(--se-panel-2);font-size:var(--se-fs-sm)`;let te=document.createElement(`span`);te.setAttribute(`aria-live`,`polite`),te.style.cssText=`flex:1;color:var(--se-muted)`;let p=document.createElement(`nav`);p.setAttribute(`aria-label`,`Trefferseiten`),p.style.cssText=`display:flex;align-items:center;gap:6px`;let m=Tr(`‹`,`Vorherige Seite`),ne=document.createElement(`span`);ne.style.cssText=`min-width:48px;text-align:center;color:var(--se-muted)`;let h=Tr(`›`,`Naechste Seite`);p.append(m,ne,h),ee.append(te,p);let g=document.createElement(`div`);g.style.cssText=`box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column`,g.append(f,ee);let _=1,v=1,y=()=>{d.replaceChildren();let t=_r(n,i.value);v=Math.max(1,Math.ceil(t.length/hr)),_=Math.min(_,v);let r=(_-1)*hr,a=t.slice(r,r+hr);if(te.textContent=t.length===0?`0 von 0`:`${r+1}-${Math.min(r+hr,t.length)} von ${t.length}`,ne.textContent=`${_} / ${v}`,m.disabled=_===1,h.disabled=_===v,m.style.opacity=m.disabled?`0.4`:`1`,h.style.opacity=h.disabled?`0.4`:`1`,m.style.cursor=m.disabled?`default`:`pointer`,h.style.cursor=h.disabled?`default`:`pointer`,f.scrollTop=0,a.length===0){let e=document.createElement(`tr`),t=wr(n.length===0?`Diese Quelle hat keine Saetze.`:`Kein Satz passt zur Suche.`);t.colSpan=2,t.style.color=`var(--se-faint)`,t.style.fontSize=`var(--se-fs-sm)`,t.style.padding=`16px 10px`,e.appendChild(t),d.appendChild(e);return}for(let t of a){let n=document.createElement(`tr`);n.tabIndex=0,n.style.cursor=`pointer`;let r=wr(t.anzeige),i=wr(t.wert);i.style.fontFamily=`var(--se-mono)`,i.style.color=`var(--se-muted)`,n.append(r,i);let a=()=>{Cr(),e.onUebernehmen(t.anzeige,t.wert,t.satz)};n.addEventListener(`click`,a),n.addEventListener(`keydown`,e=>{e.key===`Enter`&&(e.preventDefault(),a())}),n.addEventListener(`mouseenter`,()=>{n.style.background=`var(--se-accent-soft)`}),n.addEventListener(`mouseleave`,()=>{n.style.background=``}),d.appendChild(n)}};i.addEventListener(`input`,()=>{_=1,y()}),m.addEventListener(`click`,()=>{_!==1&&(--_,y())}),h.addEventListener(`click`,()=>{_!==v&&(_+=1,y())}),y(),r.append(i,g),document.body.appendChild(r),Sr=r,r.updateComplete.then(()=>{r.isConnected&&i.focus()})}var Dr=[`text`,`number`,`textarea`,`select`,`date`,`checkbox`,`nachschlagen`];function Or(e){return Dr.includes(e)?e:`text`}var kr=[`text`,`number`,`textarea`,`select`,`nachschlagen`],q=class extends j{constructor(...e){super(...e),this.fieldType=`text`,this.placeholder=`Feldname`,this.options=``,this.source=``,this.value=``,this.valueField=``,this.nachschlagQuelle=``,this.anzeigeFeld=``,this.anzeigeTitel=``,this.speicherFeld=``,this.speicherTitel=``,this.einzigerTreffer=`nein`,this.anzeige=``,this.satz=void 0,this.angehakt=!1}static{this.blockType=`formfeld`}static{this.tagName=`ff-formfeld`}static{this.displayName=`Formularfeld`}static{this.category=`eingabe`}static{this.acceptsDataSource={wenn:{attributeName:`fieldType`,notEquals:`nachschlagen`}}}static{this.kannAuswahlFolgen=!0}static{this.satzWahl={quelleProp:`nachschlagQuelle`,wenn:{attributeName:`fieldType`,equals:`nachschlagen`}}}static{this.bindableSpots=[{prop:`value`,label:`Wert`,wenn:{attributeName:`fieldType`,notEquals:`nachschlagen`},vorschauProp:`placeholder`}]}static{this.actionValueSpots=[{prop:`value`,label:`Wert`}]}static{this.blockEvents=[{key:`onChange`,name:`Wert geändert`}]}static{this.defaultProps={width:240,fieldType:`text`,placeholder:`Feldname`,options:``,source:``,value:``,valueField:``,nachschlagQuelle:``,anzeigeFeld:``,anzeigeTitel:``,speicherFeld:``,speicherTitel:``,einzigerTreffer:`nein`}}static{this.raster={startW:6,startH:2,minW:2,minH:2}}static{this.customProperties=Hn}static{this.styles=[j.styles,lr]}onInput(e){let t=e.target;this.value=Or(this.fieldType)===`date`?tr(t.value):t.value}onChange(){this.dispatchEvent(new Event(`change`))}textTpl(e,t=!1){return w`<span
       class=${e}
       ?hidden=${t}
       data-ff-editable
@@ -824,13 +844,13 @@
         min-height: 0;
         overflow: hidden;
         background: var(--col-shell);
-        border: 1px solid var(--col-line);
+        border: var(--se-border) solid var(--col-line);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
-        /* Die Spalte ist die unterste Ebene der drei: sie TRAEGT die Karten,
-           also darf sie sich nur andeuten. Ohne jeden Schatten laege sie
-           auf derselben Hoehe wie ihre Karten (2026-07-30). */
-        box-shadow: var(--se-shadow-ruhe);
+        /* Flach (Fellnase Regel 4). Die Spalte TRAEGT die Karten und setzt
+           sich von ihnen durch die Flaeche ab: getoente Spaltenschale
+           (--col-shell) unter Karten in Papierweiss. Bis 2026-08-06 tat das
+           ein Schatten. */
       }
       .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
@@ -843,13 +863,14 @@
         gap: var(--se-gap-sm);
         padding: 10px 12px;
         background: var(--col-soft);
-        border-bottom: 1px solid var(--col-line);
+        border-bottom: var(--se-border) solid var(--col-line);
       }
+      /* Quadratisch, nicht rund: derselbe Punkt wie an der Status-Marke
+         (Fellnase Regel 5, 2026-08-06) — bis dahin war er eine Scheibe. */
       .dot {
         flex: none;
-        width: 9px;
-        height: 9px;
-        border-radius: var(--se-r-pill);
+        width: 8px;
+        height: 8px;
         background: var(--col-strong);
       }
       .title {
@@ -866,7 +887,7 @@
         padding: 1px 8px;
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
-        border: 1px solid var(--col-line);
+        border: var(--se-border) solid var(--col-line);
         text-align: center;
         font-family: var(--se-mono);
         font-size: var(--se-fs-sm);
@@ -981,19 +1002,18 @@
         flex-direction: column;
         height: 100%;
         background: var(--se-panel);
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-lg);
         overflow: hidden;
         font-family: var(--se-font);
         font-size: var(--se-fs);
         color: var(--se-ink);
-        box-shadow: var(--se-shadow-ruhe);
       }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
       .suchzeile {
         padding: 5px 8px;
-        border-bottom: 1px solid var(--se-line);
+        border-bottom: var(--se-border) solid var(--se-line);
         background: var(--se-panel-2);
       }
       .suchzeile input {
@@ -1012,7 +1032,7 @@
         font-size: var(--se-fs-sm);
         color: var(--se-ink);
         background: var(--se-panel);
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
       }
       .suchzeile input:focus {
@@ -1042,7 +1062,7 @@
         z-index: 1;
         flex: none;
         background: var(--se-panel-2);
-        border-bottom: 1px solid var(--se-line);
+        border-bottom: var(--se-border) solid var(--se-line);
         font-size: var(--se-fs-sm);
         font-weight: 600;
       }
@@ -1150,7 +1170,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 4px 10px;
-        border-top: 1px solid var(--se-line);
+        border-top: var(--se-border) solid var(--se-line);
         font-size: var(--se-fs-sm);
         color: var(--se-muted);
         background: var(--se-panel-2);
@@ -1165,7 +1185,7 @@
         font-family: var(--se-font);
         font-size: var(--se-fs-sm);
         padding: 2px 6px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         color: var(--se-ink);
@@ -1190,7 +1210,7 @@
         font-size: var(--se-fs-sm);
         line-height: 1;
         padding: 3px 7px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         color: var(--se-muted);

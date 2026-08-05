@@ -28,19 +28,18 @@ export const tabelleStil = css`
         flex-direction: column;
         height: 100%;
         background: var(--se-panel);
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-lg);
         overflow: hidden;
         font-family: var(--se-font);
         font-size: var(--se-fs);
         color: var(--se-ink);
-        box-shadow: var(--se-shadow-ruhe);
       }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
       .suchzeile {
         padding: 5px 8px;
-        border-bottom: 1px solid var(--se-line);
+        border-bottom: var(--se-border) solid var(--se-line);
         background: var(--se-panel-2);
       }
       .suchzeile input {
@@ -59,7 +58,7 @@ export const tabelleStil = css`
         font-size: var(--se-fs-sm);
         color: var(--se-ink);
         background: var(--se-panel);
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
       }
       .suchzeile input:focus {
@@ -89,7 +88,7 @@ export const tabelleStil = css`
         z-index: 1;
         flex: none;
         background: var(--se-panel-2);
-        border-bottom: 1px solid var(--se-line);
+        border-bottom: var(--se-border) solid var(--se-line);
         font-size: var(--se-fs-sm);
         font-weight: 600;
       }
@@ -197,7 +196,7 @@ export const tabelleStil = css`
         align-items: center;
         justify-content: space-between;
         padding: 4px 10px;
-        border-top: 1px solid var(--se-line);
+        border-top: var(--se-border) solid var(--se-line);
         font-size: var(--se-fs-sm);
         color: var(--se-muted);
         background: var(--se-panel-2);
@@ -212,7 +211,7 @@ export const tabelleStil = css`
         font-family: var(--se-font);
         font-size: var(--se-fs-sm);
         padding: 2px 6px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         color: var(--se-ink);
@@ -237,7 +236,7 @@ export const tabelleStil = css`
         font-size: var(--se-fs-sm);
         line-height: 1;
         padding: 3px 7px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         color: var(--se-muted);

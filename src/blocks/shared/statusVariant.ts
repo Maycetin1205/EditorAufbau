@@ -50,22 +50,50 @@ export function statusVariantProperty(
 }
 
 // Chip-Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*). Strukturelle
-// Groessen (padding, letter-spacing, font-weight) als Literale wie bei
-// Button/Infobox; Farben + Radius + font-size kommen aus Tokens.
-// Verbindliches Zielbild: die Referenzmaske (.zb-chip).
+// Groessen (padding, letter-spacing, font-weight, Schnitttiefe) als Literale
+// wie bei Button/Infobox; Farben + Radius + font-size kommen aus Tokens.
+//
+// Das ist die SIGNATUR der Designsprache (Fellnase Regel 5, uebernommen
+// 2026-08-06): oben rechts ein 45deg-Schnitt wie an einer abgelegten
+// Karteikarte, links ein QUADRATISCHER Punkt. Der Punkt traegt die
+// Statusfarbe, die Schrift bleibt Espresso — bei aehnlichen Toenen
+// (Sonne/Karamell) ist der Status sonst nur zu erraten. Bis 2026-08-06 war
+// der Chip eine Pille mit farbiger Schrift und ohne Punkt.
+//
+// Notfall ist der einzige Vollton: in dieser Sprache gehoert der laute Ton
+// dem Notfall allein (Regel 2), darum Flaeche in der Hausfarbe statt
+// getoentem Hauch.
 export const chipStyles = css`
   .chip {
-    display: inline-block;
-    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px 3px 7px;
     border-radius: var(--se-r-sm);
+    /* der 45deg-Schnitt oben rechts — 6px tief */
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
     font-family: var(--se-font);
     font-size: var(--se-fs-xs);
     font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--se-ink);
+    background: var(--se-panel-2);
+    white-space: nowrap;
   }
-  .chip.v-info { background: var(--se-blue-soft); color: var(--se-blue); }
-  .chip.v-success { background: var(--se-green-soft); color: var(--se-green); }
-  .chip.v-warning { background: var(--se-amber-soft); color: var(--se-amber); }
-  .chip.v-danger { background: var(--se-red-soft); color: var(--se-red); }
+  /* der quadratische Punkt: bewusst OHNE border-radius */
+  .chip::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    background: var(--chip-punkt, var(--se-faint));
+  }
+  .chip.v-info { background: var(--se-blue-soft); --chip-punkt: var(--se-blue); }
+  .chip.v-success { background: var(--se-green-soft); --chip-punkt: var(--se-green); }
+  .chip.v-warning { background: var(--se-amber-soft); --chip-punkt: var(--se-amber); }
+  .chip.v-danger {
+    background: var(--se-red);
+    color: var(--se-panel);
+    --chip-punkt: var(--se-panel);
+  }
 `

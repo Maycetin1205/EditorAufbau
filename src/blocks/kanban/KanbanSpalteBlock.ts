@@ -113,13 +113,13 @@ export class KanbanSpalteBlock extends BasicBlock {
         min-height: 0;
         overflow: hidden;
         background: var(--col-shell);
-        border: 1px solid var(--col-line);
+        border: var(--se-border) solid var(--col-line);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
-        /* Die Spalte ist die unterste Ebene der drei: sie TRAEGT die Karten,
-           also darf sie sich nur andeuten. Ohne jeden Schatten laege sie
-           auf derselben Hoehe wie ihre Karten (2026-07-30). */
-        box-shadow: var(--se-shadow-ruhe);
+        /* Flach (Fellnase Regel 4). Die Spalte TRAEGT die Karten und setzt
+           sich von ihnen durch die Flaeche ab: getoente Spaltenschale
+           (--col-shell) unter Karten in Papierweiss. Bis 2026-08-06 tat das
+           ein Schatten. */
       }
       .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
@@ -132,13 +132,14 @@ export class KanbanSpalteBlock extends BasicBlock {
         gap: var(--se-gap-sm);
         padding: 10px 12px;
         background: var(--col-soft);
-        border-bottom: 1px solid var(--col-line);
+        border-bottom: var(--se-border) solid var(--col-line);
       }
+      /* Quadratisch, nicht rund: derselbe Punkt wie an der Status-Marke
+         (Fellnase Regel 5, 2026-08-06) — bis dahin war er eine Scheibe. */
       .dot {
         flex: none;
-        width: 9px;
-        height: 9px;
-        border-radius: var(--se-r-pill);
+        width: 8px;
+        height: 8px;
         background: var(--col-strong);
       }
       .title {
@@ -155,7 +156,7 @@ export class KanbanSpalteBlock extends BasicBlock {
         padding: 1px 8px;
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
-        border: 1px solid var(--col-line);
+        border: var(--se-border) solid var(--col-line);
         text-align: center;
         font-family: var(--se-mono);
         font-size: var(--se-fs-sm);

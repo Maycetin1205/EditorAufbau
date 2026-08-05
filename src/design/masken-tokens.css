@@ -16,71 +16,100 @@
      - KEINE var()-Fallbacks in Bloecken: diese Datei ist Pflichtteil
        jedes Exports (Kap. 3 Mini-Export bindet sie ein). Fallbacks
        wuerden die Werte duplizieren (DRY-Bruch).
-     - Design-Entscheidung (2026-07-02, mit Nutzer): kantig + funktional
-       ("Werkhalle"-Dichte), Gruen als Hausfarbe. Referenzbild:
-     die SoftEngine-Referenzmaske. Statusfarben haben feste Bedeutung.
+
+   Design-Entscheidung (2026-08-06, Nutzer-Go): die Designsprache
+   "Fellnase" aus designsprache/musterbogen.html ist die Vorlage —
+   uebernommen wurden Palette, Rundungen, Kantenstaerke und Flachheit.
+   Ihre fuenf Regeln, soweit sie hier Werte sind:
+     1. EINE Rundung fuer alles (--se-r-md). Kantig, nicht weich.
+        Kleiner gerundet sind nur Kacheln und Marken (--se-r-sm).
+     2. EIN lauter Ton je Flaeche: Koralle (--se-accent). Rest bleibt leise.
+     3. Espresso statt Schwarz — nirgends #000, nirgends reines Weiss.
+     4. FLACH. Keine Schatten, keine Verlaeufe, nichts Koerperhaftes.
+        Tiefe entsteht ueber die 1,5px-Kante (--se-border) und Farbe.
+     5. Die Signatur (gekappte Ecke + quadratischer Punkt an der Marke)
+        ist FORM, kein Wert — sie lebt im Baustein, nicht hier.
+
+   Die Groessen bleiben bewusst dicht (Nutzer-Entscheidung 2026-08-06):
+   Fellnase atmet mit 15px/1.55, eine SoftEngine-Maske ist ein dichtes
+   Arbeitswerkzeug. Uebernommen sind die Schriftarten und die
+   Strichstaerken, nicht die Grundgroesse.
    ================================================================ */
 
 :root {
-  /* Flaechen */
-  --se-bg:        #eceff1;  /* Seitengrund der Maske */
-  --se-panel:     #ffffff;  /* Karten / Spalten / Dialoge */
-  --se-panel-2:   #f2f4f6;  /* abgesetzte Innenflaechen (Eingaben, Zimmer-Kaesten) */
+  /* Flaechen — warm statt klinisch (Fellnase: creme/papier/sand) */
+  --se-bg:        #fbf5ea;  /* Seitengrund der Maske */
+  --se-panel:     #fffdf8;  /* Karten / Felder / Dialoge */
+  --se-panel-2:   #f3eada;  /* ruhige Innenflaechen (Kopfzeilen, Spalten) */
 
-  /* Text */
-  --se-ink:       #101c26;  /* Haupttext */
-  --se-muted:     #51606d;  /* Nebentext (Besitzer, Untertitel) */
-  --se-faint:     #8494a1;  /* Hinweise, Platzhalter */
+  /* Text — Espresso, nie Schwarz (Regel 3) */
+  --se-ink:       #3d2b22;  /* Haupttext und Umriss */
+  --se-muted:     #7a6558;  /* Nebentext (Besitzer, Untertitel) */
+  --se-faint:     #a99a8d;  /* Hinweise, Platzhalter, Hover-Kante */
 
   /* Linien */
-  --se-line:      #c9d2d9;  /* sichtbare Rahmen */
-  --se-line-soft: #e0e6ea;  /* Zeilentrenner, Innenrahmen */
+  --se-line:      #e9dec9;  /* sichtbare Rahmen */
+  --se-line-soft: #f1e8d6;  /* Zeilentrenner, Innenrahmen */
 
-  /* Abdunklung hinter Popups (Ink bei 45%) */
-  --se-scrim:     rgba(16, 28, 38, 0.45);
+  /* Abdunklung hinter Popups (Ink bei 45%). Bleibt, obwohl die Sprache
+     flach ist: ohne Schatten ist der Scrim das EINZIGE, was ein Popup
+     von der Maske darunter abhebt. */
+  --se-scrim:     rgba(61, 43, 34, 0.45);
 
-  /* Akzent — EINE Hausfarbe (Gruen), sparsam einsetzen */
-  --se-accent:      #0e7a58;
-  --se-accent-dark: #0b6247; /* Hover/aktiv */
-  --se-accent-soft: #e4f2ec; /* getoente Flaechen (Aktions-Buttons, aktive Chips) */
+  /* Akzent — EINE Hausfarbe (Koralle), sparsam einsetzen (Regel 2) */
+  --se-accent:      #e85c3f;
+  --se-accent-dark: #c74628; /* Hover/aktiv, Notfall-Vollton */
+  --se-accent-soft: #fbe5dc; /* getoente Flaechen, Auswahl-Schein */
 
   /* Statusfarben — feste Bedeutung, nie frei waehlbar
-     (Bediener waehlt "Status: Notfall", nie eine Farbe) */
-  --se-red:         #c0201a; /* Notfall / Fehler */
-  --se-red-soft:    #fbe7e6;
-  --se-amber:       #9a6a00; /* geplant / wartet */
-  --se-amber-soft:  #f8f0dc;
-  --se-blue:        #20527e; /* in Arbeit / Info */
-  --se-blue-soft:   #e6eef5;
-  --se-violet:      #5b5e8f; /* Sonderzustand (z.B. OP) */
-  --se-violet-soft: #eaebf5;
-  --se-green:       #47761d; /* erledigt / Erfolg — eigenes Status-Gruen,
-                                NICHT die Hausfarbe (4K.1: Status und
-                                Marke muessen unterscheidbar bleiben) */
-  --se-green-soft:  #ecf3e1;
+     (Bediener waehlt "Status: Notfall", nie eine Farbe).
+     Fellnase-Nebentoene: je kraeftig (Titel/Punkt) und zart (Flaeche).
+     Notfall traegt die Hausfarbe — in dieser Sprache ist der laute Ton
+     dem Notfall vorbehalten, deshalb faellt Rot mit Koralle zusammen. */
+  --se-red:         #c74628; /* Notfall / Fehler */
+  --se-red-soft:    #fef2ee;
+  --se-amber:       #e2a233; /* geplant / wartet (Sonne) */
+  --se-amber-soft:  #faedd0;
+  --se-blue:        #5e93be; /* in Arbeit / Info (Himmel) */
+  --se-blue-soft:   #e2edf5;
+  --se-violet:      #9784c1; /* Sonderzustand, z.B. OP (Flieder) */
+  --se-violet-soft: #ece7f4;
+  --se-green:       #6e9b69; /* erledigt / Erfolg (Salbei) */
+  --se-green-soft:  #e5eede;
 
   /* Spalten-Farbwelten (P1.2, Empfang-Vorbild): eine Kanban-Spalte traegt
      die GANZE Farbwelt ihres Status — kraeftig (--se-X) fuer Titel + Punkt,
      Toenung (--se-X-soft) fuer den Spaltenkopf, dazu je Status eine
      fast-weisse Spaltenflaeche (-shell) und eine getoente Rahmenlinie
      (-line). Bedeutung bleibt fix, der Bediener waehlt nie eine Farbe. */
-  --se-red-shell:   #fdf5f4;  --se-red-line:   #eecfcd;
-  --se-amber-shell: #fcf9ef;  --se-amber-line: #e9dcbd;
-  --se-blue-shell:  #f6f9fc;  --se-blue-line:  #cfdde9;
-  --se-green-shell: #f7faf0;  --se-green-line: #d9e4c4;
+  --se-red-shell:   #fef7f4;  --se-red-line:   #f3d3c7;
+  --se-amber-shell: #fdf8ec;  --se-amber-line: #eeddb9;
+  --se-blue-shell:  #f5f9fc;  --se-blue-line:  #d2e2ee;
+  --se-green-shell: #f7faf3;  --se-green-line: #d8e5cf;
 
   /* Karten (Kanban/Listen) — Flaeche + Rahmen (4K.1) */
-  --se-card-bg:     #ffffff;
-  --se-card-line:   #c9d2d9;
+  --se-card-bg:     #fffdf8;
+  --se-card-line:   #e9dec9;
 
-  /* Rundungen — kantig (Nutzer-Entscheidung: keine weichen KI-Rundungen) */
-  --se-r-sm:   2px;  /* Buttons, Eingaben, Chips-Ecken */
-  --se-r-md:   3px;  /* Karten */
-  --se-r-lg:   4px;  /* Spalten / grosse Container */
-  --se-r-pill: 999px;/* Status-Pillen */
+  /* Kantenstaerke — EIN Wert fuer alle Rahmen (Fellnase: 1,5px macht die
+     Arbeit, die vorher der Schatten tat). Zeilentrenner in Tabellen sind
+     die Ausnahme und bleiben haarfein (dort 1px direkt im Baustein). */
+  --se-border: 1.5px;
 
-  /* Schrift */
-  --se-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* Rundungen — EINE Rundung fuer alles (Regel 1), kantig
+       sm = Kacheln, Marken, Zaehler
+       md = DIE Rundung: Felder, Knoepfe, Karten
+       lg = grosse Container: Spalten, Tabellenrahmen, Popups */
+  --se-r-sm:   3px;
+  --se-r-md:   5px;
+  --se-r-lg:   7px;
+
+  /* Schrift — Fellnase: Fraunces (Schmuck) + Figtree (Werk).
+     Beide reisen als eingebettete Daten in der Maske mit
+     (masken-schriften.css); die Namen danach sind der Notnagel, falls
+     das Einbetten je entfaellt. */
+  --se-font: "Figtree", "Segoe UI", Tahoma, sans-serif;
+  --se-font-schmuck: "Fraunces", Georgia, "Times New Roman", serif;
   --se-mono: "IBM Plex Mono", Consolas, monospace; /* Zeiten, Nummern, Codes */
   --se-fs:    13.5px; /* Grundgroesse (dicht, Werkzeug-Charakter) */
   --se-fs-sm: 12px;
@@ -92,29 +121,21 @@
   --se-gap:    10px;
   --se-gap-lg: 16px;
 
-  /* Tiefe — drei Stufen statt flach (2026-07-30, Nutzer-Go)
-     Hier stand `--se-shadow: none` mit dem Satz „Flaechen leben von Rahmen,
-     nicht von Schatten" — und KEIN Baustein hat den Wert je benutzt. Die
-     Flachheit war nie eingestellt, sie war nie gebaut: Karte, Spalte,
-     Tabelle und Popup lagen alle auf derselben Ebene, unterscheidbar nur an
-     der Rahmenfarbe. Das ist der Hauptgrund, warum die Maske „tot" wirkte.
-
-     Kurz und hart statt weicher Wolke — eine grosse, weiche Unschaerfe
-     passt nicht zu einem kantigen Werkzeug. Getoent in der Textfarbe
-     (--se-ink als rgba), weil neutralschwarze Schatten auf getoenten
-     Flaechen schmutzig statt tief wirken. */
-  --se-shadow-ruhe:  0 1px 2px rgba(16, 28, 38, 0.10);
-  --se-shadow-hover: 0 3px 8px rgba(16, 28, 38, 0.16);
-  --se-shadow-popup: 0 10px 28px rgba(16, 28, 38, 0.24);
-
   /* Bewegung — EINE Dauer fuer alle Bausteine (2026-07-30).
      Kurz genug, dass nichts hinterherhinkt, lang genug, dass man es als
-     Reaktion wahrnimmt statt als Sprung. */
+     Reaktion wahrnimmt statt als Sprung. Fellnase bewegt mit 0.13s ease,
+     also derselben Groessenordnung — der Wert bleibt.
+
+     Hier standen bis 2026-08-06 drei Schatten-Stufen (--se-shadow-ruhe/
+     -hover/-popup, eingefuehrt 2026-07-30, weil die Maske "tot" wirkte).
+     Fellnase loest dasselbe Problem ohne Schatten: klare 1,5px-Kanten und
+     warme Farbe. Kein Baustein hat mehr einen Schatten; wer Tiefe braucht,
+     nimmt die Kante (--se-border) oder eine Toenung, nie eine Wolke. */
   --se-move: 130ms ease-out;
 }
 
 /* Wer im Betriebssystem „Bewegung reduzieren" eingestellt hat, bekommt
-   keine: Farben und Schatten wechseln weiterhin, nur ohne Uebergang. Eine
+   keine: Farben und Kanten wechseln weiterhin, nur ohne Uebergang. Eine
    Stelle fuer alle Bausteine — sie erben die Dauer ueber diesen Wert. */
 @media (prefers-reduced-motion: reduce) {
   :root {

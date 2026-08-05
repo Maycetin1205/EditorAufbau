@@ -136,19 +136,18 @@ export class CardBlock extends BasicBlock {
         overflow: hidden;
         gap: 5px;
         background: var(--se-card-bg);
-        border: 1px solid var(--se-card-line);
+        border: var(--se-border) solid var(--se-card-line);
         border-radius: var(--se-r-md);
         padding: 8px 10px 9px;
         font-family: var(--se-font);
-        box-shadow: var(--se-shadow-ruhe);
-        transition: box-shadow var(--se-move), transform var(--se-move);
+        transition: border-color var(--se-move);
       }
-      /* Die Karte hebt sich unter dem Zeiger. Ein Blatt, das man anfassen
-         kann — nicht ein Bild. Bewusst nur 1px: mehr wirkt verspielt und
-         laesst die Nachbarkarten wackeln. */
+      /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
+         Karte hebt nicht ab. Vorher hob sie sich per Schatten + 1px nach
+         oben — das liess die Nachbarkarten wackeln und war das einzige
+         Koerperhafte der Maske. */
       .card:hover {
-        box-shadow: var(--se-shadow-hover);
-        transform: translateY(-1px);
+        border-color: var(--se-faint);
       }
       /* Statusfarbe AM KOERPER (2026-07-30, Nutzer-Go).
          Die Karte kennt ihren Status laengst — die Eigenschaft „Farbe"
@@ -206,7 +205,7 @@ export class CardBlock extends BasicBlock {
         width: 30px;
         height: 30px;
         flex: none;
-        border-radius: var(--se-r-pill);
+        border-radius: var(--se-r-sm);
         background: var(--se-accent-soft);
         color: var(--se-accent);
       }
@@ -274,7 +273,7 @@ export class CardBlock extends BasicBlock {
       }
       :host([data-ff-editor]) .avatar:empty {
         background: transparent;
-        border: 1px dashed var(--se-faint);
+        border: var(--se-border) dashed var(--se-faint);
       }
     `,
   ]

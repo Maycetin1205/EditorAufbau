@@ -18,20 +18,20 @@ export const feldStil = css`
        (N1: keine Magic Numbers, die beim Padding-Ändern auseinanderlaufen.) */
     --feld-pad-y: 7px;
     --feld-pad-x: 10px;
-    --feld-rand: 1px;
+    --feld-rand: var(--se-border);
   }
   /* Anker für den im Feld sitzenden Platzhalter. */
   .huelle { position: relative; }
   /* .ctrl exakt nach Referenz-Optik: Rahmen, Panel-Flaeche, kantiger
-     Radius; Fokus = Hausfarbe als Rahmen + 1px-Ring (kein weicher
-     Schatten — Flaechen leben von Rahmen). */
+     Radius; Fokus = Hausfarbe als Rahmen + ein zweiter
+     Strich derselben Staerke (Fellnase ist flach: kein Leuchten). */
   .ctrl {
     box-sizing: border-box;
     width: 100%;
     padding: var(--feld-pad-y) var(--feld-pad-x);
     border: var(--feld-rand) solid var(--se-line);
     background: var(--se-panel);
-    border-radius: var(--se-r-sm);
+    border-radius: var(--se-r-md);
     font-family: var(--se-font);
     font-size: var(--se-fs);
     color: var(--se-ink);
@@ -39,7 +39,7 @@ export const feldStil = css`
   .ctrl:focus {
     outline: none;
     border-color: var(--se-accent);
-    box-shadow: 0 0 0 1px var(--se-accent);
+    box-shadow: 0 0 0 var(--se-border) var(--se-accent);
   }
   textarea.ctrl {
     display: block;

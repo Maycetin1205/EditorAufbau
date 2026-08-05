@@ -181,9 +181,9 @@ function zelle(text: string, kopf = false): HTMLTableCellElement {
   element.style.cssText = kopf
     ? 'position:sticky;top:0;z-index:1;padding:6px 10px;text-align:left;'
       + 'font-size:var(--se-fs-sm);font-weight:600;color:var(--se-muted);'
-      + 'border-bottom:1px solid var(--se-line);background:var(--se-panel-2)'
+      + 'border-bottom:var(--se-border) solid var(--se-line);background:var(--se-panel-2)'
     : 'box-sizing:border-box;height:24px;padding:3px 10px;overflow:hidden;text-overflow:ellipsis;'
-      + 'white-space:nowrap;border-bottom:1px solid var(--se-line-soft)'
+      + 'white-space:nowrap;border-bottom:var(--se-border) solid var(--se-line-soft)'
   return element
 }
 
@@ -193,7 +193,7 @@ function seitenKnopf(text: string, label: string): HTMLButtonElement {
   knopf.textContent = text
   knopf.setAttribute('aria-label', label)
   knopf.style.cssText = 'box-sizing:border-box;width:26px;height:24px;padding:0;'
-    + 'border:1px solid var(--se-line);border-radius:var(--se-r-sm);'
+    + 'border:var(--se-border) solid var(--se-line);border-radius:var(--se-r-sm);'
     + 'background:var(--se-panel);color:var(--se-ink);font:inherit;cursor:pointer'
   return knopf
 }
@@ -239,7 +239,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   suche.setAttribute('aria-label', 'Nachschlagen durchsuchen')
   suche.style.cssText = 'box-sizing:border-box;width:100%;padding:5px 8px;'
     + 'font:inherit;color:inherit;background:var(--se-panel);'
-    + 'border:1px solid var(--se-line);border-radius:var(--se-r-sm)'
+    + 'border:var(--se-border) solid var(--se-line);border-radius:var(--se-r-sm)'
 
   const tabelle = document.createElement('table')
   tabelle.style.cssText = 'width:100%;table-layout:fixed;border-collapse:collapse'
@@ -269,7 +269,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
 
   const fuss = document.createElement('div')
   fuss.style.cssText = 'box-sizing:border-box;flex:none;display:flex;align-items:center;'
-    + 'min-height:33px;padding:4px 10px;border-top:1px solid var(--se-line);'
+    + 'min-height:33px;padding:4px 10px;border-top:var(--se-border) solid var(--se-line);'
     + 'background:var(--se-panel-2);font-size:var(--se-fs-sm)'
   const zaehler = document.createElement('span')
   zaehler.setAttribute('aria-live', 'polite')

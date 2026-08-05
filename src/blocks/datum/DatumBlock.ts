@@ -77,7 +77,7 @@ export class DatumBlock extends BasicBlock {
         min-width: 0;
         height: 100%;
         padding: 2px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
       }
@@ -124,7 +124,7 @@ export class DatumBlock extends BasicBlock {
         flex: none;
         height: 100%;
         padding: 0 9px;
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         color: var(--se-ink);

@@ -8,48 +8,50 @@
 <style>
 :root {
 
-  --se-bg:        #eceff1;
-  --se-panel:     #ffffff;
-  --se-panel-2:   #f2f4f6;
+  --se-bg:        #fbf5ea;
+  --se-panel:     #fffdf8;
+  --se-panel-2:   #f3eada;
 
-  --se-ink:       #101c26;
-  --se-muted:     #51606d;
-  --se-faint:     #8494a1;
+  --se-ink:       #3d2b22;
+  --se-muted:     #7a6558;
+  --se-faint:     #a99a8d;
 
-  --se-line:      #c9d2d9;
-  --se-line-soft: #e0e6ea;
+  --se-line:      #e9dec9;
+  --se-line-soft: #f1e8d6;
 
-  --se-scrim:     rgba(16, 28, 38, 0.45);
+  --se-scrim:     rgba(61, 43, 34, 0.45);
 
-  --se-accent:      #0e7a58;
-  --se-accent-dark: #0b6247;
-  --se-accent-soft: #e4f2ec;
+  --se-accent:      #e85c3f;
+  --se-accent-dark: #c74628;
+  --se-accent-soft: #fbe5dc;
 
-  --se-red:         #c0201a;
-  --se-red-soft:    #fbe7e6;
-  --se-amber:       #9a6a00;
-  --se-amber-soft:  #f8f0dc;
-  --se-blue:        #20527e;
-  --se-blue-soft:   #e6eef5;
-  --se-violet:      #5b5e8f;
-  --se-violet-soft: #eaebf5;
-  --se-green:       #47761d;
-  --se-green-soft:  #ecf3e1;
+  --se-red:         #c74628;
+  --se-red-soft:    #fef2ee;
+  --se-amber:       #e2a233;
+  --se-amber-soft:  #faedd0;
+  --se-blue:        #5e93be;
+  --se-blue-soft:   #e2edf5;
+  --se-violet:      #9784c1;
+  --se-violet-soft: #ece7f4;
+  --se-green:       #6e9b69;
+  --se-green-soft:  #e5eede;
 
-  --se-red-shell:   #fdf5f4;  --se-red-line:   #eecfcd;
-  --se-amber-shell: #fcf9ef;  --se-amber-line: #e9dcbd;
-  --se-blue-shell:  #f6f9fc;  --se-blue-line:  #cfdde9;
-  --se-green-shell: #f7faf0;  --se-green-line: #d9e4c4;
+  --se-red-shell:   #fef7f4;  --se-red-line:   #f3d3c7;
+  --se-amber-shell: #fdf8ec;  --se-amber-line: #eeddb9;
+  --se-blue-shell:  #f5f9fc;  --se-blue-line:  #d2e2ee;
+  --se-green-shell: #f7faf3;  --se-green-line: #d8e5cf;
 
-  --se-card-bg:     #ffffff;
-  --se-card-line:   #c9d2d9;
+  --se-card-bg:     #fffdf8;
+  --se-card-line:   #e9dec9;
 
-  --se-r-sm:   2px;
-  --se-r-md:   3px;
-  --se-r-lg:   4px;
-  --se-r-pill: 999px;
+  --se-border: 1.5px;
 
-  --se-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --se-r-sm:   3px;
+  --se-r-md:   5px;
+  --se-r-lg:   7px;
+
+  --se-font: "Figtree", "Segoe UI", Tahoma, sans-serif;
+  --se-font-schmuck: "Fraunces", Georgia, "Times New Roman", serif;
   --se-mono: "IBM Plex Mono", Consolas, monospace;
   --se-fs:    13.5px;
   --se-fs-sm: 12px;
@@ -59,10 +61,6 @@
   --se-gap-sm: 6px;
   --se-gap:    10px;
   --se-gap-lg: 16px;
-
-  --se-shadow-ruhe:  0 1px 2px rgba(16, 28, 38, 0.10);
-  --se-shadow-hover: 0 3px 8px rgba(16, 28, 38, 0.16);
-  --se-shadow-popup: 0 10px 28px rgba(16, 28, 38, 0.24);
 
   --se-move: 130ms ease-out;
 }

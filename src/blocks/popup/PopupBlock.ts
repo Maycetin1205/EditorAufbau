@@ -98,14 +98,13 @@ export class PopupBlock extends BasicBlock {
         max-width: calc(100% - ${POPUP_RAND}px);
         max-height: calc(100% - ${POPUP_RAND}px);
         background: var(--se-panel);
-        border: 1px solid var(--se-line);
+        border: var(--se-border) solid var(--se-line);
         border-radius: var(--se-r-lg);
         overflow: hidden;
-        /* Das Popup SCHWEBT (2026-07-30) — die staerkste der drei Stufen.
-           Die Abdunklung dahinter trennt es bereits inhaltlich; der Schatten
-           macht daraus auch raeumlich ein Fenster ueber der Maske statt
-           eines aufgeklebten Kastens. */
-        box-shadow: var(--se-shadow-popup);
+        /* Flach (Fellnase Regel 4): was das Popup abhebt, ist die
+           Abdunklung dahinter (--se-scrim) und die 1,5px-Kante — kein
+           Schatten. Bis 2026-08-06 lag hier die staerkste von drei
+           Schatten-Stufen. */
       }
       .kopf {
         flex: none;
@@ -114,11 +113,14 @@ export class PopupBlock extends BasicBlock {
         gap: 8px;
         padding: 6px 6px 6px 12px;
         background: var(--se-panel-2);
-        border-bottom: 1px solid var(--se-line-soft);
+        border-bottom: var(--se-border) solid var(--se-line-soft);
       }
       .titel {
         font-weight: 600;
-        font-size: var(--se-fs);
+        /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
+           nie im Fliesstext — sonst verliert sie ihre Wirkung. */
+        font-family: var(--se-font-schmuck);
+        font-size: var(--se-fs-lg);
         color: var(--se-ink);
         white-space: nowrap;
         overflow: hidden;
