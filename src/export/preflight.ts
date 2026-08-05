@@ -16,6 +16,7 @@ import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import {
   actionValueTargets,
   auswahlGeberImBaum,
+  darfAuswahlFolgen,
   istAuswahlGeber,
 } from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor } from '../core/data/aktionen'
@@ -219,7 +220,13 @@ export function preflightMask(
     // Datenquelle weggenommen, oder das Nachschlage-Feld steht wieder auf
     // Feldtyp Text. Beides sah man vorher nirgends — der Geber galt weiter,
     // gab aber nie einen Satz ab.
-    if (def?.kannAuswahlFolgen) {
+    //
+    // Gefragt wird darfAuswahlFolgen (nicht der rohe Registry-Eintrag): am
+    // Nachschlage-Feld ist eine liegen gebliebene Folge unsichtbar, der
+    // Export nimmt sie nicht mit — unsichtbar ist nicht halbfertig, also
+    // kein Blocker (dieselbe Linie wie die daheim gebliebene
+    // Nachschlage-Quelle beim zurueckgestellten Feldtyp).
+    if (darfAuswahlFolgen(node)) {
       for (const folge of auswahlFolgenAus(node.props[AUSWAHL_FOLGE_PROP])) {
         if (folge.geberId === '') continue // bewusst (noch) kein Geber gewaehlt
         const geber = tree[folge.geberId]
@@ -227,13 +234,13 @@ export function preflightMask(
           results.push({
             name: 'Auswahl-Geber fehlt',
             ok: false,
-            detail: `Baustein "${def.displayName ?? node.type}" folgt der Auswahl eines Bausteins, der geloescht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen laesst. Unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
+            detail: `Baustein "${def?.displayName ?? node.type}" folgt der Auswahl eines Bausteins, der geloescht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen laesst. Unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
           })
         } else if (!folgeBrauchbar(folge)) {
           results.push({
             name: 'Auswahl-Folge unvollstaendig',
             ok: false,
-            detail: `Baustein "${def.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
+            detail: `Baustein "${def?.displayName ?? node.type}" folgt "${getBlockDefinition(geber.type)?.displayName ?? geber.type}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
           })
         }
       }

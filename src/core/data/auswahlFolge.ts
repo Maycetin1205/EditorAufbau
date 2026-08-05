@@ -8,7 +8,8 @@
 // passiert automatisch, nichts verschwindet ohne Bedienerhandlung.
 //
 // Reine DATEN (kein Bildschirm, kein SoftEngine, kein Baustein): wer folgen
-// KANN, deklariert die Registry (kannAuswahlFolgen in BlockDefinition, Regel 2);
+// KANN, deklariert die Registry (kannAuswahlFolgen in BlockDefinition, Regel 2,
+// notfalls mit Zustands-Bedingung -> darfAuswahlFolgen in treeQuery);
 // wer Auswahl GIBT, wird hergeleitet (satzWahl + Datenquelle -> istAuswahlGeber
 // in treeQuery). Die Schluesselregel ist DIESELBE wie bei den weiteren
 // Datenquellen (SchluesselPaar aus sourceLinks) — eine Logik, zwei Nutzer.

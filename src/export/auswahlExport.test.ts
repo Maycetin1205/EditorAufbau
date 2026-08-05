@@ -126,6 +126,50 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
+  it('am NACHSCHLAGE-Feld bleibt die Folge daheim: kein Attribut, kein Blocker', () => {
+    // Beim Nachschlagen ENTSTEHT der Wert durch die Auswahl im Fenster —
+    // eine Folge obendrauf konkurrierte um denselben Wert. Der Inspector
+    // bietet sie dort nicht an (darfAuswahlFolgen), also nimmt der Export
+    // sie nicht mit und der Preflight verlangt nichts zu ihr: unsichtbar
+    // ist nicht halbfertig. Die Props BEHALTEN die Folge (unsichtbar ist
+    // nicht geloescht) — als Text-Feld gilt sie wieder (Gegenprobe unten).
+    const feldTree = (fieldType: string): BlockTree => ({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'feld'] },
+      geber: {
+        id: 'geber', type: 'tabelle',
+        props: { width: 'fill', source: 'q-saetze', spalten },
+        parentId: 'root', childIds: [],
+      },
+      feld: {
+        id: 'feld', type: 'formfeld',
+        props: {
+          fieldType, placeholder: 'Kunde', options: '', source: '', value: '',
+          valueField: '', width: 240,
+          nachschlagQuelle: 'q-saetze', anzeigeFeld: '2_8', anzeigeTitel: 'Kundennummer',
+          speicherFeld: '0_10', speicherTitel: 'Satz-Nr.',
+          // Absichtlich KAPUTT (Geber geloescht): saehe der Preflight die
+          // Folge, muesste er blocken — genau das darf er hier nicht.
+          folgtAuswahl: [{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }],
+        },
+        parentId: 'root', childIds: [],
+      },
+    })
+
+    const nachschlagen = feldTree('nachschlagen')
+    const { html } = exportMask(nachschlagen, 'Maske', QUELLEN)
+    // Am TAG geprueft: das eingebettete Laufzeit-Buendel enthaelt den
+    // Attributnamen als Code-Text.
+    expect(html).not.toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
+    expect(preflightMask(nachschlagen, QUELLEN, [])).toEqual([])
+
+    // Gegenprobe am SELBEN Baum als Text-Feld: die Folge reist wieder als
+    // Attribut, und der Preflight blockt den geloeschten Geber im Klartext.
+    const text = feldTree('text')
+    const { html: textHtml } = exportMask(text, 'Maske', QUELLEN)
+    expect(textHtml).toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
+    expect(preflightMask(text, QUELLEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
+  })
+
   it('Preflight blockt einen geloeschten Geber und ein halbes Feldpaar im Klartext', () => {
     const kaputt = preflightMask(paarTree([{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }]), QUELLEN, [])
     expect(kaputt.some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)

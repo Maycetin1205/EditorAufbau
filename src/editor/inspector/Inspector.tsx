@@ -18,6 +18,7 @@ import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { darfAuswahlFolgen } from '../../core/blocks/treeQuery'
 import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -290,9 +291,12 @@ export function Inspector() {
           </div>
         )}
         {/* Auswahl folgen (2026-08-05): nur fuer Bausteine, die es per
-            Registry koennen (kannAuswahlFolgen) — kein Typ-Check. Die
-            Sektion laesst sich selbst weg, wenn es keinen Geber gibt. */}
-        {def.kannAuswahlFolgen && (
+            Registry koennen UND in ihrem aktuellen Zustand duerfen
+            (darfAuswahlFolgen — am Nachschlage-Feld entsteht der Wert im
+            Fenster, eine Folge obendrauf konkurrierte um denselben Wert;
+            kein Typ-Check). Die Sektion laesst sich selbst weg, wenn es
+            keinen Geber gibt. */}
+        {darfAuswahlFolgen(block) && (
           <AuswahlFolgeSektion
             block={block}
             mitTrenner={generalProps.length > 0 || showDataSection}

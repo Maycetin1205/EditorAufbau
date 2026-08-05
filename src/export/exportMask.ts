@@ -21,8 +21,9 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
-import { firstDescendantOfType, istAuswahlGeber } from '../core/blocks/treeQuery'
+import { darfAuswahlFolgen, firstDescendantOfType, istAuswahlGeber } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
+import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import { quelleBrauchbar, WEITERE_QUELLEN_PROP, weitereQuellenAus } from '../core/data/sourceLinks'
@@ -163,6 +164,12 @@ function nodeToHtml(
   const attrs = Object.keys(def.defaultProps)
     .filter((key) => !LAYOUT_ATTR_AUSNAHME.has(key))
     .map((key) => {
+      // Die Auswahl-FOLGE reist nur mit, wenn der Baustein in seinem
+      // aktuellen Zustand folgen darf (darfAuswahlFolgen — dieselbe Antwort
+      // wie Inspector und Preflight): am Nachschlage-Feld bleibt eine
+      // liegen gebliebene Folge in den Props, aber die Laufzeit steigt dort
+      // aus — ein Attribut, das nie wirkt, saehe im Export eingestellt aus.
+      if (key === AUSWAHL_FOLGE_PROP && !darfAuswahlFolgen(node)) return ''
       const standard = def.defaultProps[key]
       const roh = attributWert(node.props[key] ?? standard)
       // STANDARDWERT reist NICHT mit (2026-08-06). Vorher trug jeder Baustein

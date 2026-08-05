@@ -42,6 +42,7 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
   ActionValueSpotsFor,
   BindableSpotsFor,
+  KannAuswahlFolgen,
   SatzWahl,
 } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
@@ -79,7 +80,13 @@ export class FormFeldBlock extends BasicBlock {
   // PASSENDEN Zeile seiner eigenen Quelle statt stur der ersten — und ohne
   // Auswahl gar nichts. Nur wo der Bauer die Folge einstellt: Felder ohne
   // sie zeigen weiter die erste Zeile, bestehende Masken bleiben gleich.
-  static readonly kannAuswahlFolgen = true
+  // NICHT als Nachschlage-Feld (wenn, 2026-08-06): dort ENTSTEHT der Wert
+  // durch die Auswahl im Fenster — eine Folge obendrauf konkurrierte um
+  // denselben Wert (dieselbe Begruendung wie beim dort versteckten
+  // valueField). Der Ausstieg in hydrateField bleibt als zweiter Boden.
+  static readonly kannAuswahlFolgen: KannAuswahlFolgen = {
+    wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
+  }
   // Und es GIBT selbst einen Satz ab — aber nur als NACHSCHLAGE-Feld: dort
   // greift der Bediener im Fenster einen Satz heraus (bei jedem anderen
   // Feldtyp tippt er bloss). Der Satz stammt aus der Nachschlage-Quelle, nicht

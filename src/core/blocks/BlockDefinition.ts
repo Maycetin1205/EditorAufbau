@@ -237,6 +237,18 @@ export interface SatzWahl {
   wenn?: PropertyVisibilityCondition
 }
 
+// KannAuswahlFolgen: der Baustein kann der Auswahl eines Gebers FOLGEN —
+// true = in jedem Zustand (Tabelle/Text), mit `wenn` nur in diesem Zustand.
+// Das Formularfeld folgt an jedem Feldtyp AUSSER „Nachschlagen": dort
+// ENTSTEHT der Wert durch die Auswahl im Fenster — eine Folge obendrauf
+// konkurrierte um denselben Wert (dieselbe Begruendung wie beim dort
+// versteckten valueField). DIESELBE Bedingungs-Form und -Auswertung wie
+// satzWahl.wenn (propertySichtbar): eine zweite Sprache fuer „wann gilt
+// das" waere eine zweite Fehlerquelle. Ob ein Baustein GERADE folgen darf,
+// beantwortet darfAuswahlFolgen (treeQuery) fuer Inspector, Export und
+// Preflight gemeinsam.
+export type KannAuswahlFolgen = boolean | { wenn: PropertyVisibilityCondition }
+
 export interface BlockDefinition {
   type: string
   tagName: string
@@ -295,11 +307,12 @@ export interface BlockDefinition {
   acceptsDataSource?: boolean
   // Der Bediener greift an diesem Baustein einen SATZ heraus — siehe SatzWahl.
   satzWahl?: SatzWahl
-  // true = der Block kann der Auswahl eines Gebers FOLGEN (Prop
-  // `folgtAuswahl`, core/data/auswahlFolge): mit Auswahl zeigt er nur die
-  // Zeilen, deren Schluesselfelder zur gewaehlten Zeile passen — ohne
-  // Auswahl alles. Inspector zeigt dann die Sektion „Auswahl folgen".
-  kannAuswahlFolgen?: boolean
+  // Der Block kann der Auswahl eines Gebers FOLGEN (Prop `folgtAuswahl`,
+  // core/data/auswahlFolge): mit Auswahl zeigt er nur die Zeilen, deren
+  // Schluesselfelder zur gewaehlten Zeile passen — ohne Auswahl alles.
+  // Inspector zeigt dann die Sektion „Auswahl folgen". Zustands-Bedingung:
+  // siehe KannAuswahlFolgen.
+  kannAuswahlFolgen?: KannAuswahlFolgen
   // Bindbare Stellen des Blocks — siehe BindableSpot.
   bindableSpots?: readonly BindableSpot[]
   // Aktuelle Bausteinwerte, die als Parameterquelle angeboten werden.

@@ -63,6 +63,23 @@ export function istAuswahlGeber(node: BlockNode | undefined): boolean {
   return satzQuelleIdVon(node) !== ''
 }
 
+// Darf dieser Baustein GERADE einer Auswahl folgen? Die Faehigkeit ist ein
+// Registry-Eintrag (kannAuswahlFolgen), notfalls mit Zustands-Bedingung: das
+// Formularfeld folgt an jedem Feldtyp AUSSER „Nachschlagen" — dort entsteht
+// der Wert durch die Auswahl im Fenster, eine Folge obendrauf konkurrierte
+// um denselben Wert. Inspector (Sektion), Export (Attribut) und Preflight
+// (Blocker) fragen alle DIESE Stelle: was der Inspector nicht anbietet,
+// darf der Export nicht mitnehmen und der Preflight nicht verlangen — sonst
+// blockte er wegen einer Einstellung, die der Bauer nirgends sieht. Eine
+// daheim gebliebene Folge in den Props bleibt liegen (unsichtbar ist nicht
+// geloescht): stellt der Bauer den Feldtyp zurueck, gilt sie wieder.
+export function darfAuswahlFolgen(node: BlockNode | undefined): boolean {
+  if (!node) return false
+  const kann = getBlockDefinition(node.type)?.kannAuswahlFolgen
+  if (!kann) return false
+  return kann === true || propertySichtbar(kann.wenn, node.props)
+}
+
 // Alle Auswahl-GEBER der Maske in Baum-Reihenfolge. DIESELBE Wahrheit fuer
 // Inspector, Steuerung (Parameterquelle „Feld der gewaehlten Zeile"), Export
 // (data-ff-id) und Preflight: bietet der Editor einen Geber an, den der
