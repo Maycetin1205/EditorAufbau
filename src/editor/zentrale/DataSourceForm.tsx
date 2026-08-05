@@ -1,19 +1,11 @@
 // DataSourceForm
 // Anlegen/Bearbeiten einer Datenquellen-Vorlage.
 //
-// NEU AUFGEBAUT 2026-07-30 (Nutzer-Auftrag „den Bereich Datenquelle komplett
-// neu aufbauen"). Vorher ein einziges Formular, das jeder Quellen-Art
-// dieselben Fragen stellte — inklusive der nach einer Tabellen-Kennung, die
-// bei Stammtabellen feststeht. Jetzt drei Fragen nacheinander:
+// Drei Fragen nacheinander, jede fragt nur, was die vorige offen laesst:
 //
 //   1. WAS fuer eine Quelle?  — Auswahlliste
 //   2. WOHER genau?           — nur was die Art wirklich braucht
 //   3. WELCHE Felder?         — FeldListe (Zeile fuer Zeile)
-//
-// Zwischenzeitlich stand bei Frage 1 ein Kachel-Raster mit Bild und
-// Erklaersatz je Art. Wieder entfernt am selben Tag (Nutzer: „wieso
-// kacheln?") — vier Werbekaesten zu lesen ist mehr Arbeit als eine Zeile
-// aufzuklappen, und die Art ist eine Nebenfrage, keine Weggabelung.
 //
 // WAS eine Art ausmacht, steht nicht hier, sondern in der Arten-Tabelle
 // (core/data/quellenArten): dieses Formular fragt generisch „hat die Art

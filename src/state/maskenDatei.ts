@@ -105,15 +105,11 @@ function keinVerlust(roh: unknown, rein: unknown): boolean {
 // Eine Bibliothek pruefen: bereinigen — und danach nachsehen, ob dabei etwas
 // verlorengegangen ist.
 //
-// Erste Fassung ZAEHLTE nur Eintraege und Unterlisten. Das reichte nicht
-// (Codex-Codereview 2026-07-28, Critical): `fields: "kaputt"` wird zu `[]`,
-// ohne dass sich eine Zahl aendert; ein numerisches `idbId` verschwindet
-// voellig lautlos. Gezaehlte Teile sagen eben nichts ueber die Teile selbst.
-//
-// Der Vergleich ist die schaerfere und zugleich einfachere Regel: eine Datei
-// haben WIR aus bereits bereinigten Daten geschrieben. Sie muss die
-// Bereinigung also ohne Verlust ueberstehen. Tut sie das nicht, wurde sie
-// beschaedigt oder von Hand verbogen — dann wird sie NICHT geladen, statt
+// VERGLICHEN wird, nicht gezaehlt: `fields: "kaputt"` wird zu `[]`, ohne dass
+// sich eine Zahl aendert, und ein numerisches `idbId` verschwindet voellig
+// lautlos. Eine Datei haben WIR aus bereits bereinigten Daten geschrieben —
+// sie muss die Bereinigung also ohne Verlust ueberstehen. Tut sie das nicht,
+// wurde sie beschaedigt oder von Hand verbogen und wird NICHT geladen, statt
 // still um ein paar Angaben erleichtert zu werden.
 function bibliothekPruefen<T>(
   roh: unknown,
@@ -140,7 +136,7 @@ function bibliothekPruefen<T>(
 // Aussenmantel: faengt ALLES ab. Nicht nur JSON.parse kann werfen — auch
 // Migrationen und `sanitizeTree` (rekursiv) koennen es, etwa bei einem
 // absurd tief verschachtelten Baum. Ohne diesen Mantel endete so eine Datei
-// mit einem rohen Absturz statt mit Klartext (Codex-Codereview 2026-07-28).
+// mit einem rohen Absturz statt mit Klartext.
 export function packeMaskeAus(text: string): AuspackErgebnis {
   try {
     return auspacken(text)
@@ -188,13 +184,11 @@ function auspacken(text: string): AuspackErgebnis {
     return { ok: false, grund: 'Die Datei ist beschädigt: die Formatangabe fehlt.' }
   }
 
-  // Pflichtangaben werden VERLANGT, nicht grosszuegig ergaenzt
-  // (Codex-Codereview 2026-07-28, Critical). Erste Fassung machte aus einer
-  // fehlenden `schemaVersion` eine 1, aus fehlenden Bibliotheken leere Listen
-  // und aus `tree: {}` einen leeren Baum — eine formal markierte, aber
-  // ausgehoehlte Datei haette damit „erfolgreich" geladen und den GESAMTEN
-  // offenen Stand geleert. Genau der Schaden, den diese Funktion verhindern
-  // soll.
+  // Pflichtangaben werden VERLANGT, nicht grosszuegig ergaenzt. Wer eine
+  // fehlende `schemaVersion` zu 1 macht, fehlende Bibliotheken zu leeren
+  // Listen und `tree: {}` zu einem leeren Baum, laedt eine formal markierte,
+  // aber ausgehoehlte Datei „erfolgreich" und leert dabei den GESAMTEN
+  // offenen Stand — genau der Schaden, den diese Funktion verhindern soll.
   if (typeof o.schemaVersion !== 'number') {
     return { ok: false, grund: 'Die Datei ist beschädigt: die Versionsangabe des Aufbaus fehlt.' }
   }
@@ -210,11 +204,9 @@ function auspacken(text: string): AuspackErgebnis {
   // erlaubt (die Wurzel steht dann ohne Kinder da) — ein fehlender oder
   // kaputter Baum nicht.
   //
-  // Zweite Verschaerfung (Codex-Codereview 2026-07-28, Runde 2): zu pruefen,
-  // ob der SCHLUESSEL `root` existiert, reichte nicht. `tree: { root: null }`
-  // kam damit durch und wurde anschliessend zu einer leeren Maske
-  // normalisiert — also erneut der Fall „Datei laedt erfolgreich und leert
-  // alles".
+  // Es reicht NICHT, den Schluessel `root` zu suchen: `tree: { root: null }`
+  // kaeme durch und wuerde anschliessend zu einer leeren Maske normalisiert
+  // — wieder der Fall „Datei laedt erfolgreich und leert alles".
   if (!o.tree || typeof o.tree !== 'object' || Array.isArray(o.tree)) {
     return { ok: false, grund: 'Die Datei enthält keinen lesbaren Masken-Aufbau.' }
   }
@@ -281,9 +273,8 @@ function auspacken(text: string): AuspackErgebnis {
     }
   }
 
-  // Und zuletzt INNERHALB der Bausteine (Codex-Codereview 2026-07-28,
-  // Runde 3): ein Baum kann gleich viele Knoten haben und trotzdem
-  // ausgeduennt sein. `normalizeProps` wirft Eigenschaften weg, die der Typ
+  // Und zuletzt INNERHALB der Bausteine: ein Baum kann gleich viele Knoten
+  // haben und trotzdem ausgeduennt sein. `normalizeProps` wirft Eigenschaften weg, die der Typ
   // nicht kennt; `sanitizeBlockEvents` verwirft eine GANZE Aktionskette,
   // wenn ein einziger Schritt kaputt ist. Beides lautlos — und beides waere
   // an einer Datei echter Arbeitsverlust.
@@ -297,8 +288,7 @@ function auspacken(text: string): AuspackErgebnis {
       const roh = rohKnoten as Record<string, unknown>
       // Die WURZEL wird mitgeprueft, aber nur ihre Kinderliste: Typ und
       // Eigenschaften baut der Editor selbst, sie stehen nie zur Debatte.
-      // Ausgelassen war sie bis Runde 5 ganz — damit haette sich ihre
-      // Kinderliste still ausduennen lassen (Codex-Codereview 2026-07-28).
+      // Ohne diese Pruefung liesse sich ihre Kinderliste still ausduennen.
       if (id === ROOT_ID) {
         if (keinVerlust(roh.childIds, rein?.childIds)) continue
         return {
@@ -311,7 +301,7 @@ function auspacken(text: string): AuspackErgebnis {
       // childIds mitpruefen: ein Baustein, der (durch Beschaedigung) unter
       // ZWEI Eltern haengt, wird beim Bereinigen nur einmal eingehaengt —
       // die zweite Beziehung faellt lautlos weg, ohne dass sich eine
-      // Knotenzahl aendert (Codex-Codereview 2026-07-28, Runde 4).
+      // Knotenzahl aendert.
       if (!rein || rein.type !== roh.type
         || !keinVerlust(roh.props, rein.props)
         || !keinVerlust(roh.events, rein.events)

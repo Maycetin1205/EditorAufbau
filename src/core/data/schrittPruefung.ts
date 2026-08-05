@@ -68,7 +68,7 @@ export function stepProblem(
   }
   if (step.type === 'START_TOOL') {
     if (step.toolNr.trim() === '') {
-      // Codex-Wortlaut 2026-07-15 (Erklärtexte raus): „Nummer", nicht „Werkzeug-Nummer".
+      // „Nummer", nicht „Werkzeug-Nummer" — keine Erklärtexte in der Steuerung.
       return `Schritt "${stepTypeName(step.type)}" hat keine Nummer.`
     }
     if (step.toolParams.some((param) => param.trim() === '')) {

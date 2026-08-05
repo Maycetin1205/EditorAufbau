@@ -185,12 +185,9 @@ export function zeilenNachAuswahl(
 // -> ebenfalls nichts. Eine Regel, kein Sonderfall — und nie ein falscher
 // Satz auf dem Schirm.
 //
-// Bis 2026-08-06 fiel dieser Fall auf die erste Zeile zurueck (Nutzer-Vorgabe
-// beim Bau). Der SE-Echttest desselben Tages hat den Denkfehler gezeigt: bei
-// der TABELLE heisst „keine Auswahl" = alle Zeilen zeigen, dafuer gibt es beim
-// Einzelwert kein Gegenstueck. „Die erste Zeile" ist dort kein neutraler
-// Grundzustand, sondern ein konkreter Datensatz — und der Bediener haelt ihn
-// fuer den ausgewaehlten (Nutzer-Befund: „sollte doch leer sein oder nicht?").
+// Nutzer-Entscheidung 2026-08-06 (aus dem SE-Echttest): „die erste Zeile" ist
+// beim Einzelwert kein neutraler Grundzustand, sondern ein konkreter Datensatz
+// — und der Bediener haelt ihn fuer den ausgewaehlten.
 //
 // Halbfertige Folgen zaehlen nicht (folgenAusAttribut ist streng): waehrend
 // der Bediener das Feldpaar noch einstellt, bleibt es beim Grundzustand,

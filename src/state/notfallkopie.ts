@@ -75,8 +75,7 @@ const gemeldet = new Set<string>()
 
 // Nach einem erfolgreichen Schreiben ist die Stoerung vorbei — die naechste
 // ist eine NEUE und darf sich wieder melden. Ohne dieses Zuruecksetzen
-// verschwiege der Editor jeden spaeteren Ausfall (Codex-Planreview
-// 2026-07-28).
+// verschwiege der Editor jeden spaeteren Ausfall.
 export function merkeSpeicherErfolg(storageKey: string): void {
   gemeldet.delete(storageKey)
 }

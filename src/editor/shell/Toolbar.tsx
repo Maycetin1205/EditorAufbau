@@ -88,8 +88,8 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     downloadFile(`aufbau-maske-${heute}.json`, text, 'application/json')
   }
 
-  // Feste Reihenfolge (Codex-Planreview 2026-07-28): lesen -> GANZ pruefen
-  // -> Rueckfrage -> vollstaendig ersetzen -> erst DANN warnen. Andernfalls
+  // Feste Reihenfolge: lesen -> GANZ pruefen -> Rueckfrage -> vollstaendig
+  // ersetzen -> erst DANN warnen. Andernfalls
   // saehe der Bediener „Beim Laden entfernt: …", obwohl er gleich darauf
   // abbricht und gar nichts geladen wurde.
   const handleDateiGewaehlt = async (datei: File) => {
