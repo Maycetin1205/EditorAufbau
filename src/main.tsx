@@ -5,8 +5,11 @@
 // das der Export NICHT braucht (Icon, Inspector-Hinweis).
 // index.css zieht Tailwind + shadcn-CSS-Variablen rein (Editor-UI).
 // masken-tokens.css ist die Werteliste fuer die Bloecke (Masken-Design, --se-*).
+// masken-schriften.css bringt die zwei Schriften mit, auf die die Tokens zeigen
+// — im Editor UND im Export dieselbe Datei, sonst waere die Vorschau eine Luege.
 
 import './index.css'
+import './design/masken-schriften.css'
 import './design/masken-tokens.css'
 import './blocks/registerEditorAngaben'
 

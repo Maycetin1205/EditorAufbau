@@ -45,6 +45,7 @@ import {
   type FlowDirection,
 } from '../core/blocks/flowLayout'
 import { rasterFlaecheStyle } from '../core/blocks/rasterLayout'
+import schriftenCssRaw from '../design/masken-schriften.css?raw'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
 import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
 import { styleAttr, styleToCss } from './knotenStil'
@@ -371,6 +372,11 @@ export function exportMask(
   const used = collectDataSources(tree, sources)
   const usedRelations = collectRelations(tree, relations)
 
+  // Die Schriften stehen VOR den Tokens: @font-face zuerst deklarieren,
+  // dann darauf zeigen. stripCssComments ist auf dem Base64 gefahrlos —
+  // das Base64-Alphabet kennt kein '*', eine Kommentar-Folge kann darin
+  // nicht entstehen.
+  const schriftenCss = stripCssComments(schriftenCssRaw)
   const tokensCss = stripCssComments(tokensCssRaw)
   const runtimeJs = guardScriptContent(escapeNonAsciiJs(runtimeJsRaw.trim()))
   // Die benutzten Quellen-Definitionen reisen als DATEN mit der Maske
@@ -420,6 +426,7 @@ export function exportMask(
     `<title>${escapeHtmlText(title)}</title>`,
     SE_INTERFACE_SCRIPT,
     '<style>',
+    schriftenCss,
     tokensCss,
     '',
     '/* Grundgeruest + Wurzel-Raster (identisch zum Editor-Canvas, rasterFlaecheStyle) */',
