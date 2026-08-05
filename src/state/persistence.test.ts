@@ -16,6 +16,7 @@ import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/button/ButtonBlock'
 import '../blocks/trenner/TrennerBlock'
 import { BACKUP_KEY, Editor } from './Editor'
+import { CURRENT_SCHEMA_VERSION } from './migrations'
 import {
   registerTestBlocks,
   TEST_BLOCK,
@@ -310,6 +311,33 @@ describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => 
     const echt = ed.getNode('echt')?.props
     expect(echt?.heading).toBe('Rückruf Hr. Meier')
     expect(echt?.text).toBe('Vom Nutzer getippt')
+  })
+
+  // Gegenstueck zum Datei-Weg (maskenDatei.test: „eine Karte mit dem echten
+  // Wert Heute ueberlebt Speichern und Laden"). Im BROWSER-Speicher lief der
+  // Putzer bis 2026-08-06 auch fuer aktuelle Staende: „Heute" im Chip und
+  // „09:15" im Zeitfeld waren nach jedem Reload still weg.
+  it('laesst einen AKTUELLEN Stand unberuehrt — „Heute" ist dort ein echter Wert', () => {
+    const ed = load({
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+        s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['getippt'] },
+        getippt: {
+          id: 'getippt',
+          type: 'card',
+          props: { chipText: 'Heute', time: '09:15', heading: 'Rückruf Fr. Wagner' },
+          parentId: 's1',
+          childIds: [],
+        },
+      },
+      selectedId: null,
+    })
+    const props = ed.getNode('getippt')?.props
+    expect(props?.chipText).toBe('Heute')
+    expect(props?.time).toBe('09:15')
+    expect(props?.heading).toBe('Rückruf Fr. Wagner')
   })
 })
 

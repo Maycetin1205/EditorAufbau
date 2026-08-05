@@ -227,7 +227,15 @@ export function loadFromStorage(): LoadedState | null {
       selectedId?: unknown
     }
 
-    const ergebnis = baumAusRohdaten(parsed)
+    // Der Karten-Demotext-Putzer laeuft nur fuer ALTE Staende — GENAU dieselbe
+    // Regel wie am Datei-Weg (maskenDatei.auspacken). Bis 2026-08-06 lief er
+    // hier fuer JEDEN Stand, weil der Default `putzeDemos = true` griff: tippte
+    // der Bediener „Heute" in den Chip oder „09:15" ins Zeitfeld einer Karte
+    // (beides echte Werte), war der Wert nach dem naechsten Laden still weg —
+    // und der Autosave schrieb den Verlust sofort fest. Der Fix vom 2026-07-28
+    // hatte nur den Datei-Weg erreicht.
+    const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
+    const ergebnis = baumAusRohdaten(parsed, schemaVersion < CURRENT_SCHEMA_VERSION)
     if (!ergebnis) {
       // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder
       // oder halb-kaputter Inhalt, in dem echte Arbeit stecken könnte): wie
