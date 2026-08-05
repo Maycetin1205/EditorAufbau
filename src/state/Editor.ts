@@ -7,7 +7,8 @@
 //   migrations    — Übernahme alter Speicherstände
 //   templateRules — Musterkarten-Markierung + Löschschutz
 //   pageOps       — Seiten der Maske (Hauptseite + Popups), Fluss-Kinder
-//   rasterOps     — Rasterfläche: Bewegen, Größe, Einfügen an der Zelle
+//   rasterOps     — wo ein Baustein liegt: Bewegen (Fluss wie Zelle), Größe,
+//                   Einfügen an der Zelle
 //   selectionOps  — Aufklapp-Auswahl (Board → Spalte → Karte)
 //   speicherPlaner— entprellt speichern + „sofort" beim Verlassen der Seite
 //
@@ -23,7 +24,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getAllBlockDefinitions, getBlockDefinition } from '../core/blocks/blockRegistry'
-import { parseRasterPos, rasterSpecOf } from '../core/blocks/rasterLayout'
+import { rasterSpecOf } from '../core/blocks/rasterLayout'
 import { type BlockEventsMap } from '../core/data/aktionen'
 import { type DataSource } from '../core/data/dataSources'
 import { type QuelleInReichweite } from '../core/data/sourceLinks'
@@ -53,6 +54,7 @@ import {
   istRasterFlaeche,
   neuerBlockAnZelle,
   startgroesseNachziehen,
+  verschiebeInContainer,
   zelleneinzug,
   zellenGroesse,
 } from './rasterOps'
@@ -387,48 +389,11 @@ export class Editor extends Subject<Editor> {
     return nodes[copyId]
   }
 
-  // Verschiebt einen Knoten in einen Container an eine Einfüge-Position.
-  // index bezieht sich auf die Kinderliste des Zielcontainers (inkl. des
-  // gezogenen Knotens, falls gleicher Container) — die Korrektur passiert hier.
+  // Knoten in einen Container an eine Einfüge-Position — Regeln siehe rasterOps.
   moveNode(id: string, newParentId: string, index: number): void {
-    const node = this._tree[id]
-    const newParent = this._tree[newParentId]
-    if (!node || !newParent || id === ROOT_ID) return
-    // Niemals in den eigenen Teilbaum einhängen (Zyklus).
-    if (collectSubtree(this._tree, id).includes(newParentId)) return
-    // Ziel muss den Typ aufnehmen (allowedChildTypes).
-    if (!canContain(newParent.type, node.type)) return
-    const oldParentId = node.parentId
-    if (!oldParentId) return
-    const oldParent = this._tree[oldParentId]
-
+    const next = verschiebeInContainer(this._tree, id, newParentId, index)
+    if (!next) return
     this.pushHistory()
-    const next: BlockTree = { ...this._tree }
-
-    if (oldParentId === newParentId) {
-      const arr = oldParent.childIds.filter((c) => c !== id)
-      const oldIndex = oldParent.childIds.indexOf(id)
-      let target = oldIndex < index ? index - 1 : index
-      target = Math.max(0, Math.min(target, arr.length))
-      arr.splice(target, 0, id)
-      next[oldParentId] = { ...oldParent, childIds: arr }
-    } else {
-      next[oldParentId] = { ...oldParent, childIds: oldParent.childIds.filter((c) => c !== id) }
-      const arr = [...newParent.childIds]
-      const target = Math.max(0, Math.min(index, arr.length))
-      arr.splice(target, 0, id)
-      next[newParentId] = { ...newParent, childIds: arr }
-      next[id] = { ...node, parentId: newParentId }
-      // Landet der Block neu auf einer Rasterfläche, bekommt er eine freie
-      // Zeile ganz unten (keine Überlappung mit den vorhandenen Blöcken); seine
-      // Breite/Höhe behält er. Freies Verschieben auf der Fläche selbst ist
-      // Sache der Bewegen-Etappe (E2) — hier nur der Überlappungs-Schutz.
-      if (istRasterFlaeche(newParent)) {
-        const pos = parseRasterPos(node.props)
-        const y = freieZeileAuf(this._tree, newParentId)
-        next[id] = { ...next[id], props: { ...node.props, rasterX: 0, rasterY: y, rasterW: pos.w, rasterH: pos.h } }
-      }
-    }
     this._tree = next
     this.notify(this)
   }

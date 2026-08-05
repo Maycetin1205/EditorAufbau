@@ -1,8 +1,12 @@
-// rasterOps — Regeln der Rasterfläche (Bewegen, Größe, Einfügen an der Zelle).
+// rasterOps — WO ein Baustein liegt: Bewegen (im Fluss wie an die Zelle),
+// Größe, Einfügen an der Zelle.
 // Verhaltensgleich herausgezogen aus Editor.ts:
 // kein Zustand, kein DOM — alle Funktionen bekommen alles hereingereicht und
 // geben den NEUEN Baum zurück (null = nichts zu tun). Wer den Baum übernimmt
 // und wer meldet, bleibt allein Sache des Stores.
+// Auch der Fluss-Umzug (verschiebeInContainer) wohnt hier: seine ganze
+// Verwicklung IST die Rasterfläche — landet der Baustein auf einer, braucht er
+// eine freie Zeile. `istRasterFlaeche` steht ohnehin nur hier.
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
@@ -52,6 +56,54 @@ export function startgroesseNachziehen(
 
 // Verschiebt einen Block auf eine feste Zelle (E2 „Bewegen", Nutzer-
 // Entscheidung B 2026-07-23 „Bausteine bleiben stehen"): NUR der gezogene
+// Umzug im FLUSS: Knoten in einen Container an eine Einfüge-Position. `index`
+// bezieht sich auf die Kinderliste des Zielcontainers (inkl. des gezogenen
+// Knotens, falls gleicher Container) — die Korrektur passiert hier.
+// Landet der Block neu auf einer Rasterfläche, bekommt er eine freie Zeile ganz
+// unten (keine Überlappung mit den vorhandenen Blöcken); seine Breite/Höhe
+// behält er. Freies Verschieben auf der Fläche selbst macht `zelleneinzug`.
+export function verschiebeInContainer(
+  tree: BlockTree,
+  id: string,
+  newParentId: string,
+  index: number,
+): BlockTree | null {
+  const node = tree[id]
+  const newParent = tree[newParentId]
+  if (!node || !newParent || id === ROOT_ID) return null
+  // Niemals in den eigenen Teilbaum einhängen (Zyklus).
+  if (collectSubtree(tree, id).includes(newParentId)) return null
+  // Ziel muss den Typ aufnehmen (allowedChildTypes).
+  if (!canContain(newParent.type, node.type)) return null
+  const oldParentId = node.parentId
+  if (!oldParentId) return null
+  const oldParent = tree[oldParentId]
+
+  const next: BlockTree = { ...tree }
+
+  if (oldParentId === newParentId) {
+    const arr = oldParent.childIds.filter((c) => c !== id)
+    const oldIndex = oldParent.childIds.indexOf(id)
+    let target = oldIndex < index ? index - 1 : index
+    target = Math.max(0, Math.min(target, arr.length))
+    arr.splice(target, 0, id)
+    next[oldParentId] = { ...oldParent, childIds: arr }
+  } else {
+    next[oldParentId] = { ...oldParent, childIds: oldParent.childIds.filter((c) => c !== id) }
+    const arr = [...newParent.childIds]
+    const target = Math.max(0, Math.min(index, arr.length))
+    arr.splice(target, 0, id)
+    next[newParentId] = { ...newParent, childIds: arr }
+    next[id] = { ...node, parentId: newParentId }
+    if (istRasterFlaeche(newParent)) {
+      const pos = parseRasterPos(node.props)
+      const y = freieZeileAuf(tree, newParentId)
+      next[id] = { ...next[id], props: { ...node.props, rasterX: 0, rasterY: y, rasterW: pos.w, rasterH: pos.h } }
+    }
+  }
+  return next
+}
+
 // Block wandert — KEIN Ausweichen, die Nachbarn bleiben EXAKT stehen. Legt man
 // zwei übereinander, überlappen sie bewusst. Kommt der Block von einer ANDEREN
 // Fläche / aus einem Container, bekommt er die Registry-Startgröße (nie
