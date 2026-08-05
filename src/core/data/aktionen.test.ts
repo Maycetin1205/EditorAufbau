@@ -75,15 +75,19 @@ describe('Aktionsmodell', () => {
     }, ['onClick'])).toBeUndefined()
   })
 
-  it('uebernimmt jede Syntaxposition mit ihrem festen oder dynamischen Startwert', () => {
+  // Nutzer-Entscheidung 2026-08-06: die Syntaxzeile listet die Parameter-NAMEN,
+  // nicht deren Inhalte. Sie als Startwert zu uebernehmen schickte in
+  // SoftEngine jeden Feldnamen als seinen eigenen Wert (belegter Fall, s.
+  // defaultRelationParams). Nur ein bekannter {KONTEXT}-Wert wird zugeordnet.
+  it('startet jede Syntaxposition leer, nur bekannte {KONTEXT}-Werte zugeordnet', () => {
     expect(defaultRelationParams(relation)).toEqual([
-      { source: 'fixed', value: 'fest' },
+      { source: 'fixed', value: '' },
       { source: 'context', value: 'PINDEX' },
       { source: 'fixed', value: '' },
     ])
     expect(defaultRelationParams({ params: ['', 'A'] })).toEqual([
       { source: 'fixed', value: '' },
-      { source: 'fixed', value: 'A' },
+      { source: 'fixed', value: '' },
     ])
   })
 

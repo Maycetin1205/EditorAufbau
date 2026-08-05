@@ -60,7 +60,14 @@ export const ACTION_PARAM_SOURCES = [
   'se_variable',
 ] as const
 
-export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number]
+// 'aus' = dieser Parameter bleibt FUER DIESE AKTION leer (Nutzer-Entscheidung
+// 2026-08-06). Bewusst NICHT in ACTION_PARAM_SOURCES: die Liste ist das
+// Quelle-Auswahlfeld, und „aus" waehlt man nicht dort, sondern mit dem x an
+// der Zeile — danach ist die Zeile weg, ein Auswahlfeld gaebe es nicht mehr.
+// Der Parameter verschwindet nur aus dem FORMULAR; in der Syntax behaelt er
+// seine Position und geht als leerer String raus. Er ersatzlos zu streichen
+// wuerde alle Parameter dahinter verschieben und den Aufruf zerlegen.
+export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number] | 'aus'
 
 export interface ActionParamBinding {
   source: ActionParamSource
@@ -173,10 +180,21 @@ export function createStep(typeKey: StepTypeKey): ActionStep {
 // In Werkzeug-Parametern erlaubte Platzhalter.
 export const AKTIONS_PLATZHALTER = ['PINDEX', 'VALUE', 'NOW_DATE'] as const
 
-// Syntaxpositionen werden wie im OG-Editor vollstaendig aufgeteilt: normale
-// Werte bleiben feste Vorbelegung, leere Positionen bleiben leer. Nur ein
-// vollstaendiger bekannter {KONTEXT}-Wert wird automatisch zugeordnet;
-// installationsspezifische Platzhalter bleiben bewusst offen.
+// Womit ein Schritt startet, wenn eine Relation gewaehlt wird.
+//
+// ALLES LEER, ausser einem bekannten {KONTEXT}-Wert (PINDEX/VALUE/NOW_DATE) —
+// den ordnet der Editor zu, weil er ihn selbst liefert.
+//
+// Bis 2026-08-06 wanderte hier jeder Syntaxwert, der nicht in geschweiften
+// Klammern stand, als FESTER WERT ins Feld. Die Syntaxzeile einer Vorlage
+// listet aber die Parameter-NAMEN (STSPALTE, TEXT, EPREIS, LANGTEXT …), nicht
+// deren Inhalte. Ergebnis in SoftEngine, vom Nutzer belegt: die Maske schickte
+// PUT_RELATION[82!0!L!…!STSPALTE!!TEXT!!EPREIS!PEH!EK!…] — jeder Feldname als
+// sein eigener Wert. Der Aufruf sah gefuellt aus und trug Unsinn.
+//
+// Die Syntaxwerte sind damit nicht weg: sie stehen im Formular GRAU als
+// Platzhalter an ihrer Zeile, damit der Bauer sieht, welcher Parameter an
+// welcher Stelle erwartet wird. Sie sind nur nicht mehr der Inhalt.
 export function defaultRelationParams(
   relation: Pick<RelationTemplate, 'params'>,
 ): ActionParamBinding[] {
@@ -184,7 +202,7 @@ export function defaultRelationParams(
     const placeholder = /^\{([A-Za-z0-9_]+)\}$/.exec(raw)?.[1]
     return placeholder && (AKTIONS_PLATZHALTER as readonly string[]).includes(placeholder)
       ? { source: 'context', value: placeholder }
-      : { source: 'fixed', value: placeholder ? '' : raw }
+      : { source: 'fixed', value: '' }
   })
 }
 

@@ -40,6 +40,10 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
+  // Nie im Auswahlfeld sichtbar (nicht in ACTION_PARAM_SOURCES) — die Zeile
+  // eines abgeschalteten Parameters wird gar nicht erst gezeichnet. Der Name
+  // steht hier, weil die Tabelle jede Quelle kennen muss.
+  aus: 'Weggelassen',
 }
 
 // Die Wert-Steuerung EINES Parameters — welche es ist, bestimmt die Quelle.

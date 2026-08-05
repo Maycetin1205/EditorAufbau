@@ -267,6 +267,10 @@ export function resolveActionParam(
   values: RuntimeActionValues,
   runtime: unknown = seGlobal(),
 ): string {
+  // Fuer diese Aktion abgeschaltet (x im Formular): leerer String an seiner
+  // Stelle. Die Position bleibt erhalten -- sie wegzulassen verschoebe alle
+  // Parameter dahinter.
+  if (binding.source === 'aus') return ''
   if (binding.source === 'fixed') return binding.value
   if (binding.source === 'context') return values.context[binding.value] ?? ''
   if (binding.source === 'previous_result') return values.previousResult

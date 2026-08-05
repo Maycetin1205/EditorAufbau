@@ -59,13 +59,16 @@ describe('Feld uebernehmen V2', () => {
 
     const result = feldUebernehmen(params, echteRelation, source, '253_30', 'feld')
 
+    // VART/PINDEX/IDBID/QUELLDATEN sind die NAMEN der Parameter, nicht ihre
+    // Werte -- sie bleiben leer (Nutzer-Entscheidung 2026-08-06). Genau diese
+    // Syntax schickte vorher jeden Namen als Inhalt nach SoftEngine.
     expect(result.params).toEqual([
       { source: 'fixed', value: '253' },
       { source: 'fixed', value: '30' },
-      { source: 'fixed', value: 'VART' },
-      { source: 'fixed', value: 'PINDEX' },
-      { source: 'fixed', value: 'IDBID' },
-      { source: 'fixed', value: 'QUELLDATEN' },
+      { source: 'fixed', value: '' },
+      { source: 'fixed', value: '' },
+      { source: 'fixed', value: '' },
+      { source: 'fixed', value: '' },
     ])
     expect(result.gesetzt).toEqual([
       { art: 'pos', wert: '253' },
@@ -86,7 +89,7 @@ describe('Feld uebernehmen V2', () => {
     expect(feldResult.params).toEqual([
       { source: 'fixed', value: '253' },
       { source: 'fixed', value: '30' },
-      { source: 'fixed', value: 'L' },
+      { source: 'fixed', value: '' },
       pinIndex,
       { source: 'fixed', value: '' },
       value,
@@ -100,7 +103,7 @@ describe('Feld uebernehmen V2', () => {
     expect(idbResult.params).toEqual([
       { source: 'fixed', value: '' },
       { source: 'fixed', value: '' },
-      { source: 'fixed', value: 'L' },
+      { source: 'fixed', value: '' },
       pinIndex,
       { source: 'fixed', value: 'ID0001' },
       value,

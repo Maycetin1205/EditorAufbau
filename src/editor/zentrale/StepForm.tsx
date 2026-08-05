@@ -129,38 +129,28 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
 
   // WAS IM FELD STEHT vs. WAS GESCHICKT WIRD (Nutzer-Ansage 2026-08-06).
   //
-  // Bis hierher stand der Wert aus der Relations-Syntax als echter Text in
-  // jedem Feld: zehn ausgefuellte Kaesten, und der Bauer musste raten, welchen
-  // davon er selbst gesetzt hatte. Jetzt bleibt ein Feld LEER, solange es beim
-  // Vorlagenwert steht — der Wert steht grau als Platzhalter daneben.
+  // Im Feld steht NUR, was der Bauer selbst gesetzt hat. Der Wert aus der
+  // Syntaxzeile steht grau als Platzhalter dahinter -- er sagt, WELCHER
+  // Parameter hier erwartet wird, und wird NICHT geschickt. Vorher wanderte
+  // er als echter Wert mit: SoftEngine bekam die Feldnamen als Inhalte
+  // (defaultRelationParams, dort steht der belegte Fall).
   //
-  // Am Gespeicherten aendert das nichts: leer heisst „nimm die Vorlage", und
-  // beim Speichern faellt die Zeile genau darauf zurueck (candidate). Ein
-  // Vorlagenwert kann NICHT weggeloescht werden — seine Position gehoert zur
-  // SoftEngine-Syntax, ein leerer String an Stelle 3 waere kein leeres Feld,
-  // sondern ein kaputter Aufruf (Regel 4: nichts scheitert still).
-  //
-  // Nur feste Werte: die anderen Quellen zeigen Auswahlfelder, die ihren
-  // Zustand selbst benennen („— waehlen —").
-  const stehtBeiVorlage = (index: number): boolean => {
-    const binding = bindingFor(index)
-    const standard = defaultParams[index]
-    return binding.source === 'fixed'
-      && standard?.source === 'fixed'
-      && binding.value === standard.value
-  }
-  const anzeigeBinding = (index: number): ActionParamBinding =>
-    stehtBeiVorlage(index) ? { source: 'fixed', value: '' } : bindingFor(index)
-  // Grau im Feld: der Vorlagenwert. Ist er leer, sagt das Feld das ausdruecklich
-  // statt gar nichts zu zeigen.
-  const platzhalterFor = (index: number): string | undefined => {
-    const standard = defaultParams[index]
-    if (!standard || standard.source !== 'fixed') return undefined
-    return standard.value === '' ? '(leer)' : standard.value
+  // Leer bleibt damit leer -- auch im Export. Kein Rueckfall auf die Vorlage.
+  const platzhalterFor = (raw: string): string => (raw === '' ? '(leer)' : raw)
+  // Nummern der weggelassenen Parameter (0-basiert) -- fuer die Zeile unter
+  // der Liste, die sie benennt und zurueckholt.
+  const ausgelassen = relation
+    ? relation.params.map((_, index) => index).filter((i) => bindingFor(i).source === 'aus')
+    : []
+  const holeAlleZurueck = () => {
+    setRelationParams((current) => current.map((binding, index) =>
+      binding.source === 'aus' ? defaultParams[index] ?? { source: 'fixed', value: '' } : binding))
   }
   const setBinding = (index: number, binding: ActionParamBinding) => {
     setUebernahmeBestaetigung('')
     setRelationParams((current) => {
+      // Die Liste muss so lang sein wie die Syntax der Vorlage — sonst blockt
+      // stepProblem mit „nicht alle Syntaxparameter uebernommen".
       const next = relation ? defaultRelationParams(relation) : [...current]
       current.forEach((value, at) => { if (at < next.length) next[at] = value })
       next[index] = binding
@@ -238,14 +228,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     const normalizedParams = relation
       ? relation.params.map((_, index) => {
           const binding = bindingFor(index)
-          const wert = binding.value.trim()
-          // Leer gelassener fester Wert = „nimm die Vorlage" (s. anzeigeBinding).
-          // Der Vorlagenwert kann selbst leer sein — dann bleibt es leer, aber
-          // aus der Vorlage heraus und nicht aus Versehen.
-          if (binding.source === 'fixed' && wert === '' && defaultParams[index]) {
-            return { ...defaultParams[index] }
-          }
-          return { ...binding, value: wert }
+          return { ...binding, value: binding.value.trim() }
         })
       : []
     return {
@@ -336,24 +319,29 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
             <>
               <div className="flex flex-col gap-2">
                 {relation.params.map((raw, index) => {
+                  // Mit dem x abgeschaltet: die Zeile ist WEG. Zurueckholen
+                  // geht ueber die Zeile unter der Liste -- ein Parameter, der
+                  // sich nicht wiederholen laesst, waere eine Falle.
+                  if (bindingFor(index).source === 'aus') return null
                   const parameterArt = feldUebernahmeArt(raw)
                   const ausloeser = parameterArt === 'relid'
                     ? 'idb'
                     : parameterArt === 'pos' && feldAusloeserAktiv
                       ? 'feld'
                       : undefined
-                  const row = (
+                  return (
                     <ParameterZeile
+                      key={index}
                       label={`${index + 1}. ${raw === '' ? '(leer)' : raw}`}
-                      binding={anzeigeBinding(index)}
+                      binding={bindingFor(index)}
                       dataSources={dataSources.list}
                       blockValues={blockValues}
                       geber={geber}
                       schritte={ergebnisSchritte}
-                      platzhalter={platzhalterFor(index)}
-                      entfernen={stehtBeiVorlage(index) ? undefined : {
-                        label: `Parameter ${index + 1} auf den Vorlagenwert zuruecksetzen`,
-                        onClick: () => setBinding(index, defaultParams[index]),
+                      platzhalter={platzhalterFor(raw)}
+                      entfernen={{
+                        label: `Parameter ${index + 1} fuer diese Aktion weglassen`,
+                        onClick: () => setBinding(index, { source: 'aus', value: '' }),
                       }}
                       ausloeser={ausloeser}
                       onChange={(binding) => setBinding(index, binding)}
@@ -362,10 +350,19 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                         : undefined}
                     />
                   )
-                  return <div key={index}>{row}</div>
                 })}
                 {relation.params.length === 0 && (
                   <p className="text-xs text-muted-foreground">Keine Parameter.</p>
+                )}
+                {ausgelassen.length > 0 && (
+                  <div className="flex items-center justify-between text-[0.6875rem] text-muted-foreground">
+                    <span>
+                      {`Weggelassen: ${ausgelassen.map((i) => i + 1).join(', ')} — gehen leer raus`}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={holeAlleZurueck}>
+                      Zurückholen
+                    </Button>
+                  </div>
                 )}
               </div>
               {uebernahmeBestaetigung && (

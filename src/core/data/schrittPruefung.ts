@@ -23,7 +23,9 @@ import {
 
 function bindingProblem(binding: ActionParamBinding | undefined): boolean {
   if (!binding) return true
+  // 'aus' = bewusst leer gelassen (x im Formular), kein unvollstaendiger Schritt.
   if (binding.source === 'fixed' || binding.source === 'previous_result') return false
+  if (binding.source === 'aus') return false
   if (binding.source === 'data_field') {
     return !binding.dataSourceId?.trim() || binding.value.trim() === ''
   }
