@@ -231,6 +231,13 @@ ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
 
 ### Woran gerade gearbeitet wird
 
+**ZUERST (Code-Review 2026-08-05, wegen Token-Knappheit abgebrochen):** 14
+belegte, aber UNGEPRÜFTE Funde (8× kaputt, 2× riskant) liegen in
+`docs/code-review-2026-08-05.md` — der Reihe nach abarbeiten (Stelle vor dem
+Fixen selbst nachlesen!), je Thema ein Commit, danach die Datei löschen.
+Nur 2 von 7 Bereichen wurden geprüft (Zustands-Kern + React-Oberfläche);
+Bausteine/Export/SoftEngine/Handwerk/Architektur stehen noch aus.
+
 **Datenquellen** — Arten als Tabelle statt Sondercode (2026-07-30 gebaut),
 Kennung frei eingebbar. Seither gebaut (2026-08-04/05): Auswahl geben/folgen
 (Tabelle/Kanban geben die angeklickte Zeile, Einzelwert-Bausteine folgen ihr),
