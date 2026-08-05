@@ -33,6 +33,33 @@ export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
 // Prop-Name der normalen Datenquelle eines Bausteins (acceptsDataSource).
 export const QUELLE_PROP = 'source'
 
+// Welche Relation-Vorlagen benutzt DIESER Baustein? Als ids, in
+// deterministischer Reihenfolge: erst die registry-getriebenen
+// Relation-Properties (Registry-Reihenfolge), dann die Aktionsketten
+// (Ereignis-Reihenfolge, darin Schritt-Reihenfolge).
+//
+// BEIDE Wege zaehlen — die Ketten sind sogar der Hauptweg (ein Button-Klick
+// fuehrt eine Relation aus). Der Export sammelte laengst beides, die
+// Verwendungs-Anzeige der Steuerung bis 2026-08-06 nur die Properties: eine nur
+// in einer Kette benutzte Relation stand dort als „von keinem Baustein
+// verwendet", und die Loesch-Rueckfrage liess ihre BENUTZT-Warnung weg. Jetzt
+// fragen beide dieselbe Stelle.
+export function relationIdsVon(node: BlockNode): string[] {
+  const def = getBlockDefinition(node.type)
+  const ids: string[] = []
+  for (const prop of def?.customProperties ?? []) {
+    if (prop.kind !== 'relation') continue
+    const wert = node.props[prop.attributeName]
+    if (typeof wert === 'string' && wert !== '') ids.push(wert)
+  }
+  for (const event of def?.blockEvents ?? []) {
+    for (const step of node.events?.[event.key] ?? []) {
+      if (step.type === 'RELATION' && step.relationId !== '') ids.push(step.relationId)
+    }
+  }
+  return ids
+}
+
 // Traegt dieser Baustein GERADE eine eigene Datenquelle? Registry-Faehigkeit
 // (acceptsDataSource), notfalls zustandsabhaengig: das Formularfeld traegt als
 // Nachschlage-Feld keine — dort kommt der Wert aus dem Fenster der

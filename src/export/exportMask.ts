@@ -28,6 +28,7 @@ import {
   firstDescendantOfType,
   istAuswahlGeber,
   QUELLE_PROP,
+  relationIdsVon,
   traegtEigeneQuelle,
 } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
@@ -304,32 +305,23 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
 
 // ---------- Relation-Vorlagen → FF_RELATIONS ----------
 
-// Sammelt benutzte Vorlagen aus registry-getriebenen Relation-Properties
-// UND aus Relationsschritten. Baum-, Ereignis- und Schritt-Reihenfolge sind
-// deterministisch; unbekannte IDs werden von der Preflight abgefangen.
+// Sammelt benutzte Vorlagen — WELCHE ein Baustein benutzt, sagt relationIdsVon
+// (dieselbe Stelle, die auch die Verwendungs-Anzeige der Steuerung fragt).
+// Baum-, Ereignis- und Schritt-Reihenfolge sind deterministisch; unbekannte IDs
+// werden von der Preflight abgefangen.
 function collectRelations(
   tree: BlockTree,
   relations: readonly RelationTemplate[],
 ): RelationTemplate[] {
   const seen = new Set<string>()
   const acc: RelationTemplate[] = []
-  const add = (id: unknown): void => {
-    const rel = typeof id === 'string' ? relations.find((r) => r.id === id) : undefined
-    if (!rel || seen.has(rel.id)) return
-    seen.add(rel.id)
-    acc.push(rel)
-  }
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
-    const def = getBlockDefinition(node.type)
-    for (const prop of def?.customProperties ?? []) {
-      if (prop.kind !== 'relation') continue
-      add(node.props[prop.attributeName])
-    }
-    for (const event of def?.blockEvents ?? []) {
-      for (const step of node.events?.[event.key] ?? []) {
-        if (step.type === 'RELATION') add(step.relationId)
-      }
+    for (const id of relationIdsVon(node)) {
+      const rel = relations.find((r) => r.id === id)
+      if (!rel || seen.has(rel.id)) continue
+      seen.add(rel.id)
+      acc.push(rel)
     }
     node.childIds.forEach((id) => visit(tree[id]))
   }

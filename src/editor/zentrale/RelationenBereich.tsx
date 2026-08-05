@@ -3,14 +3,14 @@
 // Vorlagen mit Verb+NR-Chip, rechts das Detail: die Parameter in genau
 // ihrer Reihenfolge MIT Klartext-Bedeutung, die SoftEngine-Syntaxzeile
 // und „Verwendung in dieser Maske". Bearbeiten inline (FormularKarte).
-// Löschen fragt nach, mit Warnung bei Benutzung (Registry-Scan über
-// kind-'relation'-Properties, kein `if type===`).
+// Löschen fragt nach, mit Warnung bei Benutzung (relationIdsVon: Properties
+// UND Aktionsketten, registry-getrieben, kein `if type===`).
 
 import { useState } from 'react'
 import { Plus, Search, Share2 } from 'lucide-react'
 import { Button } from '@/ui/atoms/button'
 import { TextInput } from '@/ui/atoms/text-input'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { relationIdsVon } from '../../core/blocks/treeQuery'
 import {
   formatRelationSyntax,
   relationGroup,
@@ -55,15 +55,15 @@ export function RelationenBereich() {
   }))
   const auswahl = sichtbareRelationen.find((r) => r.id === auswahlId) ?? sichtbareRelationen[0]
 
-  // Bausteine der Maske, die diese Vorlage benutzen (Klarnamen).
+  // Bausteine der Maske, die diese Vorlage benutzen (Klarnamen). WELCHE
+  // Relationen ein Baustein benutzt, sagt relationIdsVon — dieselbe Stelle, aus
+  // der der Export FF_RELATIONS sammelt. Bis 2026-08-06 sah es hier nur die
+  // Relation-Properties, nicht die Aktionsketten (den Hauptweg): eine von einem
+  // Button-Klick ausgefuehrte Relation galt als unbenutzt, und die
+  // Loesch-Rueckfrage kam ohne ihre BENUTZT-Warnung.
   const verwendungFor = (id: string): string[] =>
     Object.values(ed.tree)
-      .filter((n) => {
-        const def = getBlockDefinition(n.type)
-        return def?.customProperties.some(
-          (p) => p.kind === 'relation' && n.props[p.attributeName] === id,
-        )
-      })
+      .filter((n) => relationIdsVon(n).includes(id))
       .map((n) => bausteinName(n))
 
   function loeschen(r: RelationTemplate) {
