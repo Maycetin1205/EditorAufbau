@@ -19,6 +19,7 @@
 
 import { deepClone } from '../lib/deepClone'
 import { meldeSpeicherPanne, merkeSpeicherErfolg, sichereUnlesbaren } from './notfallkopie'
+import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
 
 const SPEICHER_VERZOEGERUNG_MS = 500
@@ -102,7 +103,7 @@ export class VorlagenStore<T extends VorlagenEintrag> extends Subject<VorlagenSt
   private readonly bauplan: VorlagenBauplan<T>
   private _eintraege: T[]
   private _version = 0
-  private _saveTimer: ReturnType<typeof setTimeout> | null = null
+  private _planer = new SpeicherPlaner(() => { this.schreibeJetzt() }, SPEICHER_VERZOEGERUNG_MS)
   // Riegel gegen Speichern, bevor der Startstand steht: erst wenn der
   // Konstruktor fertig geladen hat, darf eine Meldung einen Speicherlauf
   // anstossen.
@@ -174,19 +175,27 @@ export class VorlagenStore<T extends VorlagenEintrag> extends Subject<VorlagenSt
   }
 
   // Entprellt speichern: der Bediener tippt in der Bibliothek, jeder
-  // Tastendruck meldet — geschrieben wird erst, wenn er kurz innehaelt.
+  // Tastendruck meldet — geschrieben wird erst, wenn er kurz innehaelt. Der
+  // Planer haelt dazu den Weg „ausstehenden Stand JETZT schreiben" bereit
+  // (Verlassen der Seite, s. speicherPlaner).
   private planeSpeichern(): void {
-    if (this._saveTimer) clearTimeout(this._saveTimer)
-    this._saveTimer = setTimeout(() => {
-      try {
-        localStorage.setItem(
-          this.bauplan.schluessel,
-          JSON.stringify({ [this.bauplan.huelle]: this._eintraege }),
-        )
-        merkeSpeicherErfolg(this.bauplan.schluessel)
-      } catch (err) {
-        meldeSpeicherPanne(this.bauplan.schluessel, this.bauplan.klarnameSchreiben, err)
-      }
-    }, SPEICHER_VERZOEGERUNG_MS)
+    this._planer.plane()
+  }
+
+  // Einen ausstehenden Stand JETZT schreiben (providers.tsx bei pagehide).
+  speichereJetzt(): void {
+    this._planer.sofort()
+  }
+
+  private schreibeJetzt(): void {
+    try {
+      localStorage.setItem(
+        this.bauplan.schluessel,
+        JSON.stringify({ [this.bauplan.huelle]: this._eintraege }),
+      )
+      merkeSpeicherErfolg(this.bauplan.schluessel)
+    } catch (err) {
+      meldeSpeicherPanne(this.bauplan.schluessel, this.bauplan.klarnameSchreiben, err)
+    }
   }
 }

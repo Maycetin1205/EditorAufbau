@@ -35,6 +35,7 @@ import { dataSourceStore } from './DataSourceStore'
 import { ersteQuelleInReichweite, quellenInReichweite } from './quellenOps'
 import { Historie, type EditorSnapshot } from './history'
 import { loadFromStorage, persistState, SAVE_DEBOUNCE_MS } from './persistence'
+import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
 import {
   cloneSubtree,
@@ -74,7 +75,11 @@ export class Editor extends Subject<Editor> {
   private _activePageId: string = ROOT_ID
   private _version = 0
   private _historie = new Historie()
-  private _saveTimer: ReturnType<typeof setTimeout> | null = null
+  // Entprellt speichern + „sofort" beim Verlassen der Seite (s. speicherPlaner).
+  private _planer = new SpeicherPlaner(
+    () => persistState(this._tree, this._selectedId),
+    SAVE_DEBOUNCE_MS,
+  )
   private _hydrated = false
 
   constructor() {
@@ -83,7 +88,7 @@ export class Editor extends Subject<Editor> {
     this._tree = persisted ? persisted.tree : createEmptyTree()
     this._selectedId = this.auswahlAufAktiverSeite(persisted?.selectedId ?? null)
     this._hydrated = true
-    if (persisted?.migrated) this.scheduleSave()
+    if (persisted?.migrated) this._planer.plane()
   }
 
   get tree(): Readonly<BlockTree> { return this._tree }
@@ -100,14 +105,14 @@ export class Editor extends Subject<Editor> {
     return seitenDerMaske(this._tree)
   }
 
-  // Seite wechseln: reiner Arbeitszustand (kein History-Schritt); die
-  // Auswahl wird geleert, damit Inspector/Anfasser nicht auf einen Block
-  // einer unsichtbaren Seite zeigen.
   // Nur eine Auswahl auf der SICHTBAREN Seite gilt — Regel siehe selectionOps.
   private auswahlAufAktiverSeite(id: string | null): string | null {
     return auswahlAufSeite(this._tree, id, this.rootId)
   }
 
+  // Seite wechseln: reiner Arbeitszustand (kein History-Schritt); die
+  // Auswahl wird geleert, damit Inspector/Anfasser nicht auf einen Block
+  // einer unsichtbaren Seite zeigen.
   setActivePage(id: string): void {
     const next = id === ROOT_ID || this._tree[id] ? id : ROOT_ID
     if (next === this._activePageId) return
@@ -163,7 +168,7 @@ export class Editor extends Subject<Editor> {
   override notify(data: Editor): void {
     this._version++
     super.notify(data)
-    if (this._hydrated) this.scheduleSave()
+    if (this._hydrated) this._planer.plane()
   }
 
   private snapshot(): EditorSnapshot {
@@ -478,15 +483,14 @@ export class Editor extends Subject<Editor> {
     this._selectedId = null
     this._activePageId = ROOT_ID
     this._historie.leeren()
-    this.scheduleSave()
+    this._planer.plane()
     this.notify(this)
   }
 
-  private scheduleSave(): void {
-    if (this._saveTimer) clearTimeout(this._saveTimer)
-    this._saveTimer = setTimeout(() => {
-      persistState(this._tree, this._selectedId)
-    }, SAVE_DEBOUNCE_MS)
+  // Einen ausstehenden Stand JETZT schreiben — beim Verlassen der Seite die
+  // letzte Gelegenheit dazu (providers.tsx meldet sich dafuer an).
+  speichereJetzt(): void {
+    this._planer.sofort()
   }
 }
 
