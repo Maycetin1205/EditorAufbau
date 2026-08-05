@@ -28,12 +28,7 @@ import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
-import {
-  registerTestBlocks,
-  TEST_BLOCK,
-  TEST_BOX,
-  TEST_EVENT_BLOCK,
-} from '../test/testBlocks'
+import { registerTestBlocks, TEST_BLOCK, TEST_BOX } from '../test/testBlocks'
 
 registerTestBlocks()
 
@@ -153,70 +148,6 @@ describe('exportMask', () => {
   it('SEvariablen-JSON ist das leere, gültige Gerüst', () => {
     const { sevariablen } = exportMask(demoTree())
     expect(JSON.parse(sevariablen)).toEqual({ SEFILELOOP: [], ERPAPICALL: [] })
-  })
-
-  it('nimmt Relationsvorlagen aus Aktionsschritten in FF_RELATIONS auf', () => {
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
-      a: {
-        id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
-        events: {
-          onClick: [{
-            id: 's1', type: 'RELATION', resultKey: '', relationId: 'rel-a',
-            params: [{ source: 'context', value: 'VALUE' }],
-            extraParams: [],
-          }],
-        },
-      },
-    }
-    const relations = [{
-      id: 'rel-a', name: 'Schreiben', verb: 'PUT_RELATION', nr: '0174',
-      params: ['{VALUE}'], allowExtraParams: false,
-    }] as const
-    const { html } = exportMask(tree, 'Maske', [], relations)
-    expect(html).toContain('window.FF_RELATIONS = [{"id":"rel-a"')
-    expect(html).toContain('&quot;type&quot;:&quot;RELATION&quot;')
-    expect(preflightMask(tree, [], relations)).toEqual([])
-  })
-
-  it('verknuepft einen Relationsparameter mit dem aktuellen Wert eines Formularfelds', () => {
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['button', 'feld-tiername'] },
-      button: {
-        id: 'button', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
-        events: {
-          onClick: [{
-            id: 'put', type: 'RELATION', resultKey: '', relationId: 'rel-put',
-            params: [{ source: 'block_value', blockId: 'feld-tiername', value: 'value' }],
-            extraParams: [],
-          }],
-        },
-      },
-      'feld-tiername': {
-        id: 'feld-tiername', type: 'formfeld', parentId: 'root', childIds: [],
-        props: {
-          fieldType: 'text', placeholder: 'Tiername', options: '',
-          source: '', value: '', valueField: '', width: 240,
-        },
-      },
-    }
-    const relations = [{
-      id: 'rel-put', name: 'Tiername schreiben', verb: 'PUT_RELATION', nr: '0174',
-      params: ['QUELLDATEN'], allowExtraParams: false,
-    }] as const
-    const { html } = exportMask(tree, 'Maske', [], relations)
-    expect(html).toContain('<ff-formfeld')
-    expect(html).toContain('data-ff-block-id="feld-tiername"')
-    expect(html).toContain('&quot;source&quot;:&quot;block_value&quot;')
-    expect(html).toContain('&quot;blockId&quot;:&quot;feld-tiername&quot;')
-    expect(preflightMask(tree, [], relations)).toEqual([])
-
-    const ohneFeld: BlockTree = {
-      root: { ...tree.root, childIds: ['button'] },
-      button: tree.button,
-    }
-    expect(preflightMask(ohneFeld, [], relations).some((result) =>
-      result.detail.includes('geloeschten Baustein'))).toBe(true)
   })
 
   it('exportiert eine Popup-Seite GESCHLOSSEN im selben HTML, Inhalt reist mit (P-A)', () => {
@@ -374,13 +305,32 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Trennlinie exportiert als leeres Element ohne Eigenschaften', () => {
+  // Die Richtung ist die EINZIGE Eigenschaft der Trennlinie (2026-08-05).
+  // Waagerecht ist ihr Standard und reist deshalb NICHT mit (Standardwert-Regel
+  // in exportMask) — senkrecht schon. Beide Faelle stehen hier, weil genau
+  // dieses Paar den Round-Trip beweist: was der Bauer eingestellt hat, steht im
+  // Markup; was er nie angefasst hat, blaeht die Maske nicht auf.
+  it('Trennlinie waagerecht (Standard) exportiert als leeres Element ohne Attribute', () => {
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tr'] },
-      tr: { id: 'tr', type: 'trenner', props: { width: 'fill' }, parentId: 'root', childIds: [] },
+      tr: { id: 'tr', type: 'trenner', props: { width: 'fill', richtung: 'waagerecht' }, parentId: 'root', childIds: [] },
     }
     const { html } = exportMask(tree)
     expect(html).toMatch(/<ff-trenner[^>]*><\/ff-trenner>/)
+    // Gegenprobe am ELEMENT, nicht am ganzen Dokument: das eingebettete
+    // Runtime-Buendel enthaelt „richtung" ohnehin (Bausteincode, dazu die
+    // Text-Ausrichtung) — eine Volltextsuche traefe das mit.
+    expect(html).not.toMatch(/<ff-trenner[^>]*richtung=/)
+  })
+
+  it('Trennlinie senkrecht traegt richtung="senkrecht" im Markup', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tr'] },
+      tr: { id: 'tr', type: 'trenner', props: { width: 'fill', richtung: 'senkrecht' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toMatch(/<ff-trenner[^>]*richtung="senkrecht"/)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })
 

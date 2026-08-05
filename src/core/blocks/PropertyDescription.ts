@@ -46,6 +46,11 @@ export interface PropertyVisibilityCondition {
 // Export nicht mitnehmen (sonst laedt die Maske eine Tabelle, die kein
 // Baustein liest) und der Preflight nicht verlangen (sonst blockte er wegen
 // eines Feldes, das der Bauer nirgends sehen kann). Ohne Bedingung: immer.
+//
+// Seit den Raster-Varianten (2026-08-06) fragt auch rasterLayout hier: die
+// senkrechte Trennlinie ist schmal und hoch statt breit und flach. Jede
+// zustandsabhaengige Registry-Angabe benutzt DIESE Form und DIESE Stelle —
+// eine zweite Sprache fuer „wann gilt das" waere eine zweite Fehlerquelle.
 export function propertySichtbar(
   bedingung: PropertyVisibilityCondition | undefined,
   props: Record<string, unknown>,

@@ -1267,16 +1267,30 @@
       data-ff-spot="text"
       ?data-ff-bound=${this.textField!==``}
       @dblclick=${e=>this.inlineEdit(e,`text`)}
-    >${this.text}</div>`}connectedCallback(){super.connectedCallback(),Ki(this)}disconnectedCallback(){super.disconnectedCallback(),qi(this)}};A([k({type:Number})],$.prototype,`groesse`,void 0),A([k()],$.prototype,`gewicht`,void 0),A([k()],$.prototype,`ausrichtung`,void 0),A([k()],$.prototype,`farbe`,void 0),A([k()],$.prototype,`text`,void 0),A([k()],$.prototype,`source`,void 0),A([k()],$.prototype,`textField`,void 0),j.defineAndRegister($);var aa=class extends j{static{this.blockType=`trenner`}static{this.tagName=`ff-trenner`}static{this.displayName=`Trennlinie`}static{this.category=`layout`}static{this.defaultProps={width:`fill`}}static{this.resizableWidth=!1}static{this.raster={startW:24,startH:1,minW:1,minH:1}}static{this.customProperties=[]}static{this.styles=[j.styles,o`
-      /* Fester dezenter Aussenabstand (--se-gap-sm) ober-/unterhalb der Linie;
-         die Linie selbst ist ein 1px-Rand in der sichtbaren Linienfarbe. */
-      :host { padding: var(--se-gap-sm) 0; }
-      .linie { border-top: 1px solid var(--se-line); }
-      /* Rasterflaeche: bleibt eine Zeile hoch; wird die Zelle hoeher gezogen,
-         sitzt die Linie mittig statt oben. */
-      :host([fuellt]) { display: flex; flex-direction: column; justify-content: center; }
-      :host([fuellt]) .linie { width: 100%; }
-    `]}render(){return w`<div class="linie"></div>`}};j.defineAndRegister(aa);var oa=class extends j{static{this.blockType=`zeile`}static{this.tagName=`ff-zeile`}static{this.displayName=`Zeile`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.childDirection=`row`}static{this.defaultProps={width:`fill`}}static{this.raster={startW:24,startH:2,minW:2,minH:1}}static{this.customProperties=[]}static{this.styles=[j.styles,o`
+    >${this.text}</div>`}connectedCallback(){super.connectedCallback(),Ki(this)}disconnectedCallback(){super.disconnectedCallback(),qi(this)}};A([k({type:Number})],$.prototype,`groesse`,void 0),A([k()],$.prototype,`gewicht`,void 0),A([k()],$.prototype,`ausrichtung`,void 0),A([k()],$.prototype,`farbe`,void 0),A([k()],$.prototype,`text`,void 0),A([k()],$.prototype,`source`,void 0),A([k()],$.prototype,`textField`,void 0),j.defineAndRegister($);var aa=[`waagerecht`,`senkrecht`],oa=`waagerecht`;function sa(e){return aa.includes(e)?e:oa}var ca=class extends j{constructor(...e){super(...e),this.richtung=oa}static{this.blockType=`trenner`}static{this.tagName=`ff-trenner`}static{this.displayName=`Trennlinie`}static{this.category=`layout`}static{this.defaultProps={width:`fill`,richtung:oa}}static{this.resizableWidth=!1}static{this.raster={startW:24,startH:1,minW:1,minH:1,varianten:[{wenn:{attributeName:`richtung`,equals:`senkrecht`},startW:1,startH:6,breiteZiehbar:!1}]}}static{this.customProperties=[{attributeName:`richtung`,name:`Richtung`,description:`Waagerecht trennt oben von unten, senkrecht links von rechts.`,kind:`select`,options:[{value:`waagerecht`,label:`Waagerecht`},{value:`senkrecht`,label:`Senkrecht`}]}]}static{this.styles=[j.styles,o`
+      /* Die Flaeche traegt den dezenten Aussenabstand (--se-gap-sm) QUER zur
+         Linie und haelt den Strich mittig. Auf der Rasterflaeche fuellt sie
+         die Zelle (:host([fuellt]) setzt die Hoehe), im Fluss bleibt sie so
+         hoch wie ihr Inhalt. */
+      .flaeche {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
+      .waagerecht { padding: var(--se-gap-sm) 0; }
+      .senkrecht {
+        padding: 0 var(--se-gap-sm);
+        /* Im FLUSS gibt es keine Zellhoehe, aus der sich der Strich bedienen
+           koennte — ohne dieses Mindestmass waere er dort 0 hoch und damit
+           unsichtbar. Auf der Rasterflaeche gewinnt die Zellhoehe. */
+        min-height: 24px;
+      }
+      .linie { background: var(--se-line); }
+      .waagerecht .linie { width: 100%; height: 1px; }
+      .senkrecht .linie { width: 1px; height: 100%; }
+    `]}render(){return w`<div class="flaeche ${sa(this.richtung)}"><div class="linie"></div></div>`}};A([k()],ca.prototype,`richtung`,void 0),j.defineAndRegister(ca);var la=class extends j{static{this.blockType=`zeile`}static{this.tagName=`ff-zeile`}static{this.displayName=`Zeile`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.childDirection=`row`}static{this.defaultProps={width:`fill`}}static{this.raster={startW:24,startH:2,minW:2,minH:1}}static{this.customProperties=[]}static{this.styles=[j.styles,o`
       /* Wie die Maskenwurzel, nur waagerecht: Kinder beginnen oben
          (flex-start) und behalten ihre natuerliche Hoehe. min-width:0
          erlaubt der Zeile, in schmalen Umgebungen zu schrumpfen. */
@@ -1291,4 +1305,4 @@
       /* Rasterflaeche: die Zeile fuellt ihre Zelle in der Hoehe; die Kinder
          bleiben oben (flex-start) und behalten ihre Naturhoehe. */
       :host([fuellt]) .zeile { height: 100%; }
-    `]}render(){return w`<div class="zeile"><slot></slot></div>`}};j.defineAndRegister(oa),typeof window<`u`&&window.addEventListener(`unhandledrejection`,e=>{let t=e.reason;V(`Unerwarteter Fehler in der Maske: `+(t instanceof Error?t.message:String(t)))})})();
+    `]}render(){return w`<div class="zeile"><slot></slot></div>`}};j.defineAndRegister(la),typeof window<`u`&&window.addEventListener(`unhandledrejection`,e=>{let t=e.reason;V(`Unerwarteter Fehler in der Maske: `+(t instanceof Error?t.message:String(t)))})})();

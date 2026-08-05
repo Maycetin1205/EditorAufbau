@@ -52,6 +52,7 @@ import {
   freieZeileAuf,
   istRasterFlaeche,
   neuerBlockAnZelle,
+  startgroesseNachziehen,
   zelleneinzug,
   zellenGroesse,
 } from './rasterOps'
@@ -223,7 +224,7 @@ export class Editor extends Subject<Editor> {
     // sonst lägen alle neuen Blöcke aufeinander in Zeile 0. INNERHALB von
     // Containern (Spalte/Zeile/Karte) bleibt die Fluss-Reihenfolge.
     if (istRasterFlaeche(parent)) {
-      const spec = rasterSpecOf(getBlockDefinition(type))
+      const spec = rasterSpecOf(getBlockDefinition(type), node.props)
       const y = freieZeileAuf(this._tree, parent.id)
       node.props = { ...node.props, rasterX: 0, rasterY: y, rasterW: spec.startW, rasterH: spec.startH }
     }
@@ -329,8 +330,8 @@ export class Editor extends Subject<Editor> {
     // Geschwister gleichen Typs darf 'ja' tragen. Wer auf 'ja' setzt,
     // raeumt die anderen im SELBEN History-Eintrag ab; Ctrl+Z stellt
     // beides zurueck. Registry-getrieben, kein `if type===`.
-    const prop = getBlockDefinition(node.type)?.customProperties
-      .find((p) => p.attributeName === attr)
+    const def = getBlockDefinition(node.type)
+    const prop = def?.customProperties.find((p) => p.attributeName === attr)
     if (prop?.exclusiveAmongSiblings && value === 'ja' && node.parentId) {
       for (const sibId of this._tree[node.parentId]?.childIds ?? []) {
         const sib = next[sibId]
@@ -339,6 +340,10 @@ export class Editor extends Subject<Editor> {
         }
       }
     }
+    // Aendert die neue Einstellung laut Registry die Raster-STARTgroesse des
+    // Bausteins, springt er auf sie — im SELBEN History-Eintrag, damit Ctrl+Z
+    // Einstellung und Groesse zusammen zurueckstellt (startgroesseNachziehen).
+    next[id] = startgroesseNachziehen(def, node.props, next[id])
     this._tree = next
     this.notify(this)
   }

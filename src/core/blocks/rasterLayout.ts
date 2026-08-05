@@ -17,6 +17,8 @@
 //   rasterX, rasterY  ganze Zellen ab 0 (Position im Grid)
 //   rasterW, rasterH  ganze Zellen >= 1 (Breite/Höhe in Zellen)
 
+import { propertySichtbar, type PropertyVisibilityCondition } from './PropertyDescription'
+
 // Feinwerte (kalibrierbar nach Sichtprobe — im Bericht nennen):
 //   spalten  = Anzahl der Rasterspalten.
 //   spaltePx = NOMINALE Referenzbreite EINER Spalte in px — NICHT die Live-Breite.
@@ -39,18 +41,45 @@ export interface RasterPos {
 // Startgröße/Mindestgröße eines Bausteins auf dem Raster — Registry-Opt-in
 // (BlockDefinition.raster), analog resizableHeight/lockedWidth. Canvas,
 // Inspector und Export lesen generisch; kein `if type===` (Regel 2).
+//
+// breiteZiehbar: hat der Baustein auf der Rasterfläche den Breiten-Anfasser?
+// Standard true — das ist der Sinn des Rasters, und die Fluss-Angabe
+// resizableWidth gilt hier bewusst NICHT (s. BlockHost). Nur ein Baustein,
+// dessen Breite in einem bestimmten Zustand keine Bedeutung mehr hat, schaltet
+// ihn über eine Variante ab (senkrechte Trennlinie: sie ist ein Strich, kein
+// Kasten — Breite zu ziehen erzeugte nur leeren Raum um ihn herum).
 export interface RasterSpec {
   startW: number
   startH: number
   minW: number
   minH: number
+  breiteZiehbar: boolean
+  varianten: readonly RasterVariante[]
+}
+
+// Eine ZUSTANDS-Variante der Raster-Angaben: trifft ihre Bedingung auf die
+// Props des Bausteins zu, überschreiben ihre Werte die Grundangaben. Damit
+// richten sich Startgröße UND Ziehbarkeit nach dem Zustand, ohne dass Canvas,
+// Store oder Zieh-Mechanik den Bausteintyp kennen (Regel 2) — sie fragen alle
+// rasterSpecOf. Bedingung in DERSELBEN Form wie visibleWhen und mit DERSELBEN
+// Auswertung (propertySichtbar). Erste zutreffende Variante gewinnt.
+export interface RasterVariante extends Partial<Omit<RasterSpec, 'varianten'>> {
+  wenn: PropertyVisibilityCondition
 }
 
 // Generischer Default, falls ein Baustein keine `raster`-Deklaration trägt:
-// mittelschmal (6 Zellen), drei Zeilen hoch, frei bis auf eine Mindest-Zelle.
+// mittelschmal (6 Zellen), drei Zeilen hoch, frei bis auf eine Mindest-Zelle,
+// in beiden Achsen ziehbar, ohne Zustands-Varianten.
 // Bewusst NICHT volle Breite: ein Baustein ohne eigene Startbreite soll den
 // Auswahlrahmen nicht als Vollbreite-Kästchen aufblähen (E1-Nachtrag).
-export const RASTER_FALLBACK: RasterSpec = { startW: 6, startH: 3, minW: 1, minH: 1 }
+export const RASTER_FALLBACK: RasterSpec = {
+  startW: 6,
+  startH: 3,
+  minW: 1,
+  minH: 1,
+  breiteZiehbar: true,
+  varianten: [],
+}
 
 // Universelle Raster-Defaults: werden — wie FLOW_DEFAULTS — in
 // defineAndRegister unter die defaultProps JEDES Blocks gemischt, damit
@@ -85,9 +114,28 @@ export function parseRasterPos(props: Record<string, unknown>): RasterPos {
   }
 }
 
-// Registry-Startgröße eines Bausteins; fehlende Felder fallen auf den Default.
-export function rasterSpecOf(def: { raster?: Partial<RasterSpec> } | undefined): RasterSpec {
-  return { ...RASTER_FALLBACK, ...(def?.raster ?? {}) }
+// Registry-Raster-Angaben eines Bausteins; fehlende Felder fallen auf den
+// Default. `props` = der aktuelle Zustand des Bausteins: trifft eine Variante
+// zu, gilt sie statt der Grundangabe. Ohne Props (Aufrufer, die nur einen Typ
+// kennen) bleibt es bei den Grundangaben — eine Bedingung auf einen Wert, den
+// niemand kennt, trifft nicht zu.
+export function rasterSpecOf(
+  def: { raster?: Partial<RasterSpec> } | undefined,
+  props: Record<string, unknown> = {},
+): RasterSpec {
+  const basis: RasterSpec = { ...RASTER_FALLBACK, ...(def?.raster ?? {}) }
+  for (const v of basis.varianten) {
+    if (!propertySichtbar(v.wenn, props)) continue
+    return {
+      startW: v.startW ?? basis.startW,
+      startH: v.startH ?? basis.startH,
+      minW: v.minW ?? basis.minW,
+      minH: v.minH ?? basis.minH,
+      breiteZiehbar: v.breiteZiehbar ?? basis.breiteZiehbar,
+      varianten: basis.varianten,
+    }
+  }
+  return basis
 }
 
 // CSS des Grid-CONTAINERS (Rasterfläche) — DIESELBE Quelle für Editor-Canvas

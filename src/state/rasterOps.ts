@@ -28,6 +28,28 @@ export function freieZeileAuf(tree: BlockTree, parentId: string): number {
   return naechsteFreieZeile(kinderImFluss(tree, parentId).map((n) => parseRasterPos(n.props)))
 }
 
+// Zustandsabhängige Startgröße nachziehen (2026-08-06): manche Bausteine
+// haben je nach Einstellung eine ANDERE sinnvolle Rastergröße — die senkrecht
+// gestellte Trennlinie ist schmal und hoch, wo die waagerechte breit und flach
+// ist. Wechselt eine Einstellung die Variante (rasterSpecOf), bekommt der
+// Baustein deren Startgröße; sonst bleibt seine — auch eine gezogene — Größe
+// unangetastet. Ohne das bliebe die umgestellte Trennlinie 24 Zellen breit und
+// 1 hoch: ein senkrechter Strich in einem flachen Vollbreite-Kasten.
+// Registry-getrieben (raster.varianten), kein `if type===` (Regel 2).
+export function startgroesseNachziehen(
+  def: Parameters<typeof rasterSpecOf>[0],
+  vorherProps: Record<string, unknown>,
+  node: BlockNode,
+): BlockNode {
+  const vorher = rasterSpecOf(def, vorherProps)
+  const nachher = rasterSpecOf(def, node.props)
+  if (vorher.startW === nachher.startW && vorher.startH === nachher.startH) return node
+  return {
+    ...node,
+    props: { ...node.props, rasterW: nachher.startW, rasterH: nachher.startH },
+  }
+}
+
 // Verschiebt einen Block auf eine feste Zelle (E2 „Bewegen", Nutzer-
 // Entscheidung B 2026-07-23 „Bausteine bleiben stehen"): NUR der gezogene
 // Block wandert — KEIN Ausweichen, die Nachbarn bleiben EXAKT stehen. Legt man
@@ -50,7 +72,7 @@ export function zelleneinzug(
   if (collectSubtree(tree, id).includes(parentId)) return null
   const gleicheFlaeche = node.parentId === parentId
   const cur = parseRasterPos(node.props)
-  const spec = rasterSpecOf(getBlockDefinition(node.type))
+  const spec = rasterSpecOf(getBlockDefinition(node.type), node.props)
   const w = gleicheFlaeche ? cur.w : spec.startW
   const h = gleicheFlaeche ? cur.h : spec.startH
   const nx = Math.max(0, Math.min(x, RASTER.spalten - w))
@@ -113,7 +135,7 @@ export function neuerBlockAnZelle(
   const { nodes, rootId } = createBlockSubtree(type)
   const node = nodes[rootId]
   node.parentId = parent.id
-  const spec = rasterSpecOf(getBlockDefinition(type))
+  const spec = rasterSpecOf(getBlockDefinition(type), node.props)
   const nx = Math.max(0, Math.min(x, RASTER.spalten - spec.startW))
   const ny = Math.max(0, y)
   node.props = { ...node.props, rasterX: nx, rasterY: ny, rasterW: spec.startW, rasterH: spec.startH }

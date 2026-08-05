@@ -132,7 +132,7 @@ function migrationsBreite(node: BlockNode): number {
     return Math.min(RASTER.spalten, Math.max(1, Math.ceil(w / PX_PRO_ZELLE)))
   }
   if (w === 'fill') return RASTER.spalten
-  return rasterSpecOf(getBlockDefinition(node.type)).startW
+  return rasterSpecOf(getBlockDefinition(node.type), node.props).startW
 }
 
 // Die Rasterflächen einer Maske (V1): die oberste Ebene (Wurzel) und jeder
@@ -201,7 +201,7 @@ export function migrateRasterBreitenReparatur(tree: BlockTree): boolean {
     // Positionen bleiben, damit geheilte/frische Stände unberührt bleiben).
     const istKaputt = (node: BlockNode): boolean => {
       const p = parseRasterPos(node.props)
-      const startW = rasterSpecOf(getBlockDefinition(node.type)).startW
+      const startW = rasterSpecOf(getBlockDefinition(node.type), node.props).startW
       return p.x === 0 && p.w === RASTER.spalten && startW < RASTER.spalten
     }
     if (!kinder.some(istKaputt)) continue
@@ -209,7 +209,7 @@ export function migrateRasterBreitenReparatur(tree: BlockTree): boolean {
     // Breite; die Höhe bleibt in jedem Fall. Danach lückenlos neu stapeln.
     const groessen = kinder.map((node) => {
       const p = parseRasterPos(node.props)
-      const w = istKaputt(node) ? rasterSpecOf(getBlockDefinition(node.type)).startW : p.w
+      const w = istKaputt(node) ? rasterSpecOf(getBlockDefinition(node.type), node.props).startW : p.w
       return { w, h: p.h }
     })
     const positionen = stapeleUntereinander(groessen)

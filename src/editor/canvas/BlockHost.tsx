@@ -117,6 +117,10 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
 
   const resizable = def?.resizableWidth ?? true
   const heightResizable = def?.resizableHeight === true
+  // Raster-Angaben zum AKTUELLEN Zustand des Bausteins (Startgröße,
+  // Breiten-Anfasser). Zustandsabhängig deklariert der Baustein selbst
+  // (raster.varianten) — hier steht kein Wissen über einen Bausteintyp.
+  const rasterSpec = rasterSpecOf(def, block.props)
 
   // Musterkarte (templateChild in der Registry): KEIN sichtbares
   // Etikett (docs/decisions/2026-07-16-karte-empfang-anatomie.md). Die
@@ -230,56 +234,63 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
       )}
       {/* Raster-Anfasser (E1-Nachtrag Fix 2): auf der Rasterfläche ziehen
           rechts = Breite, unten = Höhe je in GANZEN Zellen (rasterW/rasterH),
-          Doppelklick setzt die Startgröße des Bausteins. Alle Blöcke sind hier
-          in Breite UND Höhe ziehbar — das ist der Sinn des Rasters; die
-          Fluss-Beschränkungen (resizableWidth/Height) gelten nur im Fluss. */}
+          Doppelklick setzt die Startgröße des Bausteins. Blöcke sind hier
+          grundsätzlich in Breite UND Höhe ziehbar — das ist der Sinn des
+          Rasters; die Fluss-Beschränkungen (resizableWidth/Height) gelten nur
+          im Fluss. Ein Baustein, dessen Breite in seinem AKTUELLEN Zustand
+          keine Bedeutung hat, schaltet den Breiten-Anfasser über seine
+          Raster-Angaben ab (rasterSpec.breiteZiehbar — die senkrechte
+          Trennlinie ist ein Strich, kein Kasten). Registry-Daten, kein
+          `if typ ===` (Regel 2). */}
+      {selected && raster && rasterSpec.breiteZiehbar && (
+        <div
+          draggable={false}
+          onPointerDown={(e) => startRasterResize(e, 'x')}
+          onDragStart={(e) => e.preventDefault()}
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            const node = blockRef.current
+            const spec = rasterSpecOf(getBlockDefinition(node.type), node.props)
+            editor.updateProperty(node.id, 'rasterW', spec.startW)
+          }}
+          title="Breite ziehen (rastet auf Zellen) · Doppelklick: Startgröße"
+          style={{
+            position: 'absolute',
+            right: -4,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 7,
+            height: 26,
+            borderRadius: 4,
+            background: 'hsl(var(--ring))',
+            cursor: 'ew-resize',
+          }}
+        />
+      )}
       {selected && raster && (
-        <>
-          <div
-            draggable={false}
-            onPointerDown={(e) => startRasterResize(e, 'x')}
-            onDragStart={(e) => e.preventDefault()}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              const spec = rasterSpecOf(getBlockDefinition(blockRef.current.type))
-              editor.updateProperty(blockRef.current.id, 'rasterW', spec.startW)
-            }}
-            title="Breite ziehen (rastet auf Zellen) · Doppelklick: Startgröße"
-            style={{
-              position: 'absolute',
-              right: -4,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 7,
-              height: 26,
-              borderRadius: 4,
-              background: 'hsl(var(--ring))',
-              cursor: 'ew-resize',
-            }}
-          />
-          <div
-            draggable={false}
-            onPointerDown={(e) => startRasterResize(e, 'y')}
-            onDragStart={(e) => e.preventDefault()}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              const spec = rasterSpecOf(getBlockDefinition(blockRef.current.type))
-              editor.updateProperty(blockRef.current.id, 'rasterH', spec.startH)
-            }}
-            title="Höhe ziehen (rastet auf Zellen) · Doppelklick: Startgröße"
-            style={{
-              position: 'absolute',
-              bottom: -4,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 26,
-              height: 7,
-              borderRadius: 4,
-              background: 'hsl(var(--ring))',
-              cursor: 'ns-resize',
-            }}
-          />
-        </>
+        <div
+          draggable={false}
+          onPointerDown={(e) => startRasterResize(e, 'y')}
+          onDragStart={(e) => e.preventDefault()}
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            const node = blockRef.current
+            const spec = rasterSpecOf(getBlockDefinition(node.type), node.props)
+            editor.updateProperty(node.id, 'rasterH', spec.startH)
+          }}
+          title="Höhe ziehen (rastet auf Zellen) · Doppelklick: Startgröße"
+          style={{
+            position: 'absolute',
+            bottom: -4,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 26,
+            height: 7,
+            borderRadius: 4,
+            background: 'hsl(var(--ring))',
+            cursor: 'ns-resize',
+          }}
+        />
       )}
       {selected && !raster && resizable && (
         <div
