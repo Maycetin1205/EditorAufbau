@@ -35,10 +35,14 @@ export function setzeGewaehltenTag(wert: unknown): void {
   horcher.forEach((cb) => cb())
 }
 
-// Auf Tageswechsel horchen (Muster onSeDaten: anmelden, nie abmelden —
-// die Zuhoerer leben so lange wie die Maske).
-export function aufTagHoeren(cb: () => void): void {
+// Auf Tageswechsel horchen. Gibt die Abmelde-Funktion zurueck (Muster
+// Subject.subscribe) — Zuhoerer, die so lange wie die Maske leben
+// (datenAnschluss), duerfen sie einfach ignorieren; Zuhoerer, die an einem
+// EINZELNEN Element haengen, melden sich damit beim Ausbau wieder ab und
+// halten es nicht am Leben.
+export function aufTagHoeren(cb: () => void): () => void {
   horcher.add(cb)
+  return () => { horcher.delete(cb) }
 }
 
 // Hier stand bis 2026-07-28 ein `heuteSetzen`, dessen Kommentar behauptete,

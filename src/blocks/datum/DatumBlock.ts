@@ -24,7 +24,7 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { BasicBlock } from '../base/BasicBlock'
 import { heuteSchluessel, tagPlus } from '../shared/datumSchluessel'
-import { gewaehlterTag, setzeGewaehltenTag } from '../shared/gewaehlterTag'
+import { aufTagHoeren, gewaehlterTag, setzeGewaehltenTag } from '../shared/gewaehlterTag'
 
 export class DatumBlock extends BasicBlock {
   static readonly blockType = 'datum'
@@ -165,6 +165,9 @@ export class DatumBlock extends BasicBlock {
   // dort — zwei Waehler in einer Maske zeigen dadurch immer denselben Tag.
   @state() private tag = ''
 
+  // Abmelder des Tag-Abos (nur in der Maske gesetzt, s. connectedCallback).
+  private tagAbmelden: (() => void) | null = null
+
   private setzeTag(neu: string): void {
     setzeGewaehltenTag(neu)
     this.tag = gewaehlterTag()
@@ -192,7 +195,20 @@ export class DatumBlock extends BasicBlock {
     // Ein schon gesetzter Tag gewinnt, damit zwei Waehler in derselben Maske
     // nicht gegeneinander arbeiten. Im EDITOR wird nur angezeigt, nie gesetzt.
     this.tag = gewaehlterTag() || heuteSchluessel(new Date())
-    if (!this.hasAttribute('data-ff-editor')) this.setzeTag(this.tag)
+    if (this.hasAttribute('data-ff-editor')) return
+    this.setzeTag(this.tag)
+    // Erst dieses Abo macht die Zusage oben wahr: setzt ein ANDERER Waehler
+    // den Tag, zog dieser hier bis 2026-08-05 nicht nach und zeigte fuer
+    // immer das alte Datum. Nur in der Maske — Editor-Bausteine zeigen an,
+    // sie bedienen nicht (Regel 7).
+    this.tagAbmelden?.()
+    this.tagAbmelden = aufTagHoeren(() => { this.tag = gewaehlterTag() })
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    this.tagAbmelden?.()
+    this.tagAbmelden = null
   }
 }
 
