@@ -88,6 +88,15 @@ function spotsForTag(tagName: string) {
 }
 
 function hydrate(board: HTMLElement): void {
+  // Ein Daten-Push mitten im Zug beendet den Zug. Grund: weiter unten fliegen
+  // ALLE Karten dieses Boards raus — auch die gerade gezogene. `dragged` zeigte
+  // danach auf ein entferntes Element, dessen Zeilendaten die starke Referenz
+  // am Leben hielte; ein Drop führte die Kette „Karte verschoben" mit dem
+  // PINDEX der ALTEN Karte aus und träfe bei Schreib-Ketten den falschen
+  // Datensatz. Jetzt findet der Drop `dragged === null` und tut nichts — der
+  // Bediener zieht neu (sichtbar folgenlos statt unsichtbar falsch, Regel 4).
+  if (dragged?.board === board) dragged = null
+
   const sourceId = board.getAttribute('source') ?? ''
   // „Einsortieren nach" ist optional (Nutzer-Entscheidung 2026-07-15):
   // ohne Feld gehen alle Zeilen in die Auffang- bzw. eine Auto-Spalte.
