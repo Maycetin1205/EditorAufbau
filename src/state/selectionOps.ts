@@ -5,7 +5,26 @@
 // des Stores.
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
-import { istSeitenBaustein } from './pageOps'
+import { istSeitenBaustein, seiteVon } from './pageOps'
+
+// Die Auswahl darf NIE auf einem Baustein einer unsichtbaren Seite stehen —
+// sonst zeigt und aendert der Inspector etwas, das nirgends zu sehen ist, und
+// die Entf-Taste loescht es. setActivePage haelt die Regel selbst ein (es leert
+// die Auswahl); die zwei Wege, die eine FREMDE Auswahl hereintragen, brauchen
+// diesen Filter:
+//   - Laden: selectedId wird persistiert, die offene Seite bewusst nicht (sie
+//     startet immer als Hauptseite). Wer aus einer Popup-Sitzung heraus neu
+//     laedt, hielt die Auswahl bis 2026-08-06 am unsichtbaren Baustein.
+//   - Undo/Redo: ein Snapshot kennt Baum und Auswahl, aber keine Seite —
+//     dieselbe Lage, wenn der Bediener zwischendurch die Seite wechselt.
+export function auswahlAufSeite(
+  tree: BlockTree,
+  id: string | null,
+  seitenWurzel: string,
+): string | null {
+  if (id === null || !tree[id]) return null
+  return seiteVon(tree, id) === seitenWurzel ? id : null
+}
 
 // Nutzer-Regel 2026-07-23 („Kanban-Problem"): ein Klick wählt IMMER zuerst den
 // obersten Baustein unter dem Zeiger (das Board — egal, wo hineingeklickt

@@ -463,6 +463,21 @@ describe('Popup-Seiten (P-A)', () => {
     expect(ed.pages.map((s) => s.name)).toEqual(['Hauptseite', 'Neue Behandlung'])
   })
 
+  // Die Auswahl wird persistiert, die offene SEITE bewusst nicht — sie startet
+  // immer als Hauptseite. Bis 2026-08-06 blieb die Auswahl am Popup-Inhalt
+  // haengen: der Inspector aenderte einen unsichtbaren Baustein, Entf loeschte
+  // ihn. Die Auswahl auf der Hauptseite bleibt unveraendert erhalten.
+  it('nur eine Auswahl auf der Hauptseite ueberlebt das Neuladen', () => {
+    const baum = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'p'] },
+      a: { id: 'a', type: TEST_BLOCK, props: {}, parentId: 'root', childIds: [] },
+      p: { id: 'p', type: 'popup', props: { name: 'Popup' }, parentId: 'root', childIds: ['b'] },
+      b: { id: 'b', type: TEST_BLOCK, props: {}, parentId: 'p', childIds: [] },
+    }
+    expect(load({ tree: baum, selectedId: 'b' }).selectedId).toBeNull()
+    expect(load({ tree: baum, selectedId: 'a' }).selectedId).toBe('a')
+  })
+
   it('addPopupPage: eindeutiger Name, Seite wird aktiv, Anlegen+Benennen = EIN Undo-Schritt', () => {
     const ed = new Editor()
     const p1 = ed.addPopupPage()

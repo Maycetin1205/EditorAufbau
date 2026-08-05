@@ -58,7 +58,7 @@ import {
   zelleneinzug,
   zellenGroesse,
 } from './rasterOps'
-import { drillDownZiel } from './selectionOps'
+import { auswahlAufSeite, drillDownZiel } from './selectionOps'
 import { deepClone } from '../lib/deepClone'
 
 // Der persistence-Wächter (und Rettungs-Anleitungen) importieren den
@@ -81,7 +81,7 @@ export class Editor extends Subject<Editor> {
     super()
     const persisted = loadFromStorage()
     this._tree = persisted ? persisted.tree : createEmptyTree()
-    this._selectedId = persisted?.selectedId ?? null
+    this._selectedId = this.auswahlAufAktiverSeite(persisted?.selectedId ?? null)
     this._hydrated = true
     if (persisted?.migrated) this.scheduleSave()
   }
@@ -103,6 +103,11 @@ export class Editor extends Subject<Editor> {
   // Seite wechseln: reiner Arbeitszustand (kein History-Schritt); die
   // Auswahl wird geleert, damit Inspector/Anfasser nicht auf einen Block
   // einer unsichtbaren Seite zeigen.
+  // Nur eine Auswahl auf der SICHTBAREN Seite gilt — Regel siehe selectionOps.
+  private auswahlAufAktiverSeite(id: string | null): string | null {
+    return auswahlAufSeite(this._tree, id, this.rootId)
+  }
+
   setActivePage(id: string): void {
     const next = id === ROOT_ID || this._tree[id] ? id : ROOT_ID
     if (next === this._activePageId) return
@@ -183,7 +188,7 @@ export class Editor extends Subject<Editor> {
     const prev = this._historie.undo(() => this.snapshot())
     if (!prev) return
     this._tree = prev.tree
-    this._selectedId = prev.selectedId
+    this._selectedId = this.auswahlAufAktiverSeite(prev.selectedId)
     this.notify(this)
   }
 
@@ -191,7 +196,7 @@ export class Editor extends Subject<Editor> {
     const next = this._historie.redo(() => this.snapshot())
     if (!next) return
     this._tree = next.tree
-    this._selectedId = next.selectedId
+    this._selectedId = this.auswahlAufAktiverSeite(next.selectedId)
     this.notify(this)
   }
 

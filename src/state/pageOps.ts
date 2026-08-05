@@ -24,6 +24,19 @@ export function aktiveSeitenWurzel(tree: BlockTree, activePageId: string): strin
   return tree[activePageId] ? activePageId : ROOT_ID
 }
 
+// Auf WELCHER Seite liegt dieser Baustein? Der naechste Seiten-Baustein
+// aufwaerts — er selbst zaehlt mit, denn ein Popup gehoert zu seiner EIGENEN
+// Seite (auf der Hauptseite ist es gar nicht zu sehen, kinderImFluss laesst
+// es dort aus). Kein Seiten-Baustein aufwaerts: die Hauptseite.
+export function seiteVon(tree: BlockTree, id: string): string {
+  let cur: BlockNode | undefined = tree[id]
+  while (cur) {
+    if (istSeitenBaustein(cur)) return cur.id
+    cur = cur.parentId ? tree[cur.parentId] : undefined
+  }
+  return ROOT_ID
+}
+
 // Seiten der Maske: Hauptseite + alle Seiten-Bausteine unter der Wurzel,
 // in Baum-Reihenfolge.
 export function seitenDerMaske(tree: BlockTree): SeitenEintrag[] {
