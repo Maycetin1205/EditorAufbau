@@ -254,8 +254,15 @@ export function ParameterZeile({
   return (
     <div className="flex items-center gap-1">
       <span className="w-14 shrink-0 truncate font-mono text-[0.6875rem]" title={label}>{label}</span>
+      {/* Teilt sich den Platz mit dem Wert, statt auf 96px festgenagelt zu
+          sein. Das Formular wohnt im Inspector (340px), die Zeile hatte damit
+          64px Textbreite fuer Namen wie „Ergebnis von Schritt" — sechs der
+          acht Eintraege standen abgeschnitten da, und ein <select> kuerzt
+          nicht mit Auslassungspunkten, es schneidet hart ab. min-w-0 flex-1
+          ist dieselbe Loesung wie bei den Schluesselregel-Zeilen der
+          QuellenListe, die im SELBEN Panel nebeneinanderstehen. */}
       <SchrittSelect
-        className="w-24 shrink-0"
+        className="min-w-0 flex-1"
         value={binding.source}
         onChange={(e) => setSource(e.target.value as ActionParamSource)}
       >

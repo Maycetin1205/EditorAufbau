@@ -129,7 +129,10 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                           : 'border-transparent hover:bg-secondary/50'
                       }`}
                     >
-                      <span className="w-4 shrink-0 text-right text-muted-foreground">{i + 1}.</span>
+                      {/* w-5, nicht w-4: ab dem zehnten Schritt braucht „10."
+                          zwei Ziffern und den Punkt — in 16px stand der Punkt
+                          halb ausserhalb. */}
+                      <span className="w-5 shrink-0 text-right text-muted-foreground">{i + 1}.</span>
                       {/* Nie die Syntax-Wurst als Zeilentext (Regel 3): Vorlagen
                           zeigen Klarname bzw. „VERB · Nr."; die volle Syntax
                           liegt im Tooltip (R3-Abschluss 2026-07-21). */}
