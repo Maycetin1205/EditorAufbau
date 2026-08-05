@@ -20,7 +20,6 @@ import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
-import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { Field } from '@/ui/molecules/field'
@@ -30,14 +29,8 @@ import { StepForm } from '../zentrale/StepForm'
 import { eigenerText } from '../zentrale/helfer'
 import { AktionenSektion } from './AktionenSektion'
 import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
+import { PropControl } from './PropControl'
 import { QuellenListe } from './QuellenListe'
-import { ColorTileControl } from './controls/ColorTileControl'
-import { NumberControl } from './controls/NumberControl'
-import { SegmentControl } from './controls/SegmentControl'
-import { SelectControl } from './controls/SelectControl'
-import { TextareaControl } from './controls/TextareaControl'
-import { TextControl } from './controls/TextControl'
-import { allOptionsHaveColor } from './optionColors'
 
 // Offene Unteraufgabe des Inspector-Panels (null = normale Property-Ansicht).
 // Seit dem Wegfall der Datenanschluss-Ansicht (2026-07-27) gibt es nur noch
@@ -46,10 +39,6 @@ interface Unteraufgabe {
   eventKey: string
   step?: ActionStep
 }
-
-// Radix-Select verbietet '' als Option-Wert — interner Platzhalter für
-// "kein Feld gewählt" (die Prop bleibt dabei der Leer-String).
-const KEIN_FELD = '__keins__'
 
 // Benachbarte Properties mit gleichem inspectorRow teilen sich EINE
 // Inspector-Zeile (ein Label, Controls nebeneinander) — Registry-Daten,
@@ -74,9 +63,8 @@ export function Inspector() {
   // Vorlagen-Änderungen müssen Feldlisten/Sichtbarkeit sofort
   // nachziehen — dataSourceFor liest aus dem DataSourceStore.
   useDataSources()
-  // Relation-Vorlagen: die Auswahl im kind-'relation'-Control muss
-  // neue/umbenannte Vorlagen sofort zeigen — liest aus dem RelationStore.
-  const relations = useRelations()
+  // (Die Relation-Vorlagen abonniert PropControl selbst — nur dort werden
+  // sie gelesen.)
   // Eine Tipp-Sitzung in einem Text-/Zahlenfeld = EIN Undo-Schritt. Dieselbe
   // Transaktions-Klammer wie beim Ziehen; die Controls entscheiden selbst,
   // wann sie sie oeffnen (siehe controls/eingabeSitzung.ts).
@@ -184,114 +172,20 @@ export function Inspector() {
   // requiresDataSource-Controls und liefert die Feldliste für kind 'field'.
   const sourceInReach = ed.dataSourceFor(block.id)
 
-  const renderPropControl = (property: PropertyDescription) => {
-    const value = block.props[property.attributeName]
-    const kind = property.kind
-    const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
-    // Ohne Quelle in Reichweite bleiben Daten-Controls unsichtbar — die
-    // gespeicherten Werte bleiben erhalten und leben mit der Quelle wieder auf.
-    if ((property.requiresDataSource || kind === 'field') && !sourceInReach) return null
-
-    switch (kind) {
-      case 'text':
-        return <TextControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
-      case 'textarea':
-        return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
-      case 'number':
-        return <NumberControl key={property.attributeName} label={property.name} property={property} value={value} onChange={set} {...sitzung} />
-      case 'segment':
-        return (
-          <SegmentControl
-            key={property.attributeName}
-            label={property.name}
-            name={property.name}
-            description={property.description}
-            options={property.options ?? []}
-            value={String(value ?? '')}
-            onChange={set}
-          />
-        )
-      case 'select': {
-        const opts = property.options ?? []
-        const gemeinsam = {
-          label: property.name,
-          description: property.description,
-          options: opts,
-          value: String(value ?? ''),
-          onChange: set,
-        }
-        // Sind ALLE Options-Werte in der Farb-Tabelle (optionColors)? Dann
-        // Farb-Kacheln statt Dropdown — rein Editor-seitig, Regel 2 (kein
-        // `if attr === 'variant'`). Sonst das normale Auswahl-Dropdown.
-        return allOptionsHaveColor(opts)
-          ? <ColorTileControl key={property.attributeName} {...gemeinsam} />
-          : <SelectControl key={property.attributeName} {...gemeinsam} />
-      }
-      // Feld der Datenquelle in Reichweite: Klarnamen sichtbar,
-      // Feldcode (Technikwert) wird gespeichert — Muster DataSection/FieldPicker.
-      case 'field':
-        return (
-          <SelectControl
-            key={property.attributeName}
-            label={property.name}
-            description={property.description}
-            options={[
-              { value: KEIN_FELD, label: '— keins —' },
-              ...(sourceInReach?.fields.map((f) => ({ value: f.code, label: f.label })) ?? []),
-            ]}
-            value={value === '' || value == null ? KEIN_FELD : String(value)}
-            onChange={(v) => set(v === KEIN_FELD ? '' : v)}
-          />
-        )
-      // Relation-Vorlage aus der Bibliothek: Anzeigenamen sichtbar,
-      // Vorlagen-id (Technikwert) wird gespeichert. '— keine —' schaltet den
-      // Schreibweg ab. Gelöschte/unbekannte ids fallen auf '— keine —' zurück.
-      case 'relation':
-        return (
-          <SelectControl
-            key={property.attributeName}
-            label={property.name}
-            description={property.description}
-            options={[
-              { value: KEIN_FELD, label: '— keine —' },
-              ...relations.list.map((r) => ({ value: r.id, label: r.name })),
-            ]}
-            value={
-              typeof value === 'string' && relations.get(value) ? value : KEIN_FELD
-            }
-            onChange={(v) => set(v === KEIN_FELD ? '' : v)}
-          />
-        )
-      default:
-        return null
-    }
-  }
-
-  // Kompakte Darstellung INNERHALB einer geteilten Zeile (inspectorRow):
-  // ohne eigenes Label — das Zeilen-Label steht schon, der Klarname bleibt
-  // als Tooltip/zugänglicher Name am Control.
-  const renderCompactControl = (property: PropertyDescription) => {
-    const value = block.props[property.attributeName]
-    const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
-    const kind = property.kind
-    if (kind === 'number') {
-      return <NumberControl key={property.attributeName} property={property} value={value} onChange={set} {...sitzung} />
-    }
-    if (kind === 'segment') {
-      return (
-        <SegmentControl
-          key={property.attributeName}
-          name={property.name}
-          description={property.description}
-          options={property.options ?? []}
-          value={String(value ?? '')}
-          onChange={set}
-        />
-      )
-    }
-    // Andere Arten haben keine Kompakt-Form — normale volle Zeile.
-    return renderPropControl(property)
-  }
+  // Ein Control je Property — gebaut wird es in PropControl (Regel 2: dort
+  // steht kein Bausteintyp, nur die Beschreibung). `kompakt` ist die Form
+  // INNERHALB einer geteilten Zeile (inspectorRow): ohne eigenes Label, weil
+  // das Zeilen-Label schon steht.
+  const propControl = (property: PropertyDescription, kompakt = false) => (
+    <PropControl
+      key={property.attributeName}
+      block={block}
+      property={property}
+      sourceInReach={sourceInReach}
+      sitzung={sitzung}
+      kompakt={kompakt}
+    />
+  )
 
   // Ein Wert, EIN Schalter (2026-07-27, Nutzer-Entscheidung): Stellen, die am
   // Baustein selbst anklickbar sind (bindableSpots), tragen ihre Bindung in der
@@ -362,12 +256,12 @@ export function Inspector() {
                 <Field key={`zeile:${zeile.row}`} label={zeile.row}>
                   {() => (
                     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                      {zeile.props.map(renderCompactControl)}
+                      {zeile.props.map((p) => propControl(p, true))}
                     </div>
                   )}
                 </Field>
               ) : (
-                renderPropControl(zeile.props[0])
+                propControl(zeile.props[0])
               ),
             )}
           </div>
@@ -383,7 +277,7 @@ export function Inspector() {
             )}
           >
             {def.acceptsDataSource && <QuellenListe block={block} />}
-            {dataProps.map(renderPropControl)}
+            {dataProps.map((p) => propControl(p))}
           </div>
         )}
         {/* Auswahl folgen (2026-08-05): nur fuer Bausteine, die es per
