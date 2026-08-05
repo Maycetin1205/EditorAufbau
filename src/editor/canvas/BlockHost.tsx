@@ -19,7 +19,7 @@
 // (useBlockResize) und die React↔Lit-Übergabestelle (useLitElement)
 // wohnen in eigenen Dateien daneben.
 
-import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
@@ -64,9 +64,16 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   // Die Stellen, die an DIESEM Baustein gerade bindbar sind
   // (bindbareStellenVon): am Nachschlage-Feld gehört seine Wert-Stelle nicht
   // dazu — dort entsteht der Wert im Fenster, ein Klick darauf dürfte keinen
-  // Bindungs-Picker öffnen. Gemerkt (useMemo), weil eine frische Liste je
-  // Render den Props-Effekt in useLitElement jedes Mal neu laufen ließe.
-  const bindableSpots = useMemo(() => bindbareStellenVon(block), [block])
+  // Bindungs-Picker öffnen.
+  //
+  // Hier stand ein useMemo mit der Begruendung, eine frische Liste je Render
+  // liesse den Props-Effekt in useLitElement jedes Mal neu laufen. Das war nie
+  // wahr: `quellen` steht in denselben Abhaengigkeiten und ist bei jedem Render
+  // ein neues Array (quellenFor mappt). Der Effekt lief also trotzdem — die
+  // Memoisierung sah nach Optimierung aus und war keine. Weggelassen, und das
+  // ist folgenlos: der Effekt schreibt nur DOM-Properties, und ein unveraenderter
+  // Wert loest in Lit gar keine Aktualisierung aus (Vergleich im Setter).
+  const bindableSpots = bindbareStellenVon(block)
   // ALLE Quellen in Reichweite (erste zuerst) — der Picker bietet die Felder
   // jeder davon an, die Vorschau löst gegen die genannte auf.
   const quellen = (bindableSpots.length > 0 || traegtEigeneQuelle(block))

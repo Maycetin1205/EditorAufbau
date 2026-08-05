@@ -2,7 +2,7 @@
 // Zeigt die registrierten MVP-Blocks und legt per Klick neue BlockData an.
 
 import { Component, Plus, Search } from 'lucide-react'
-import { createElement, useMemo, useState } from 'react'
+import { createElement, useState } from 'react'
 import { canContain, getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
@@ -29,25 +29,25 @@ export function BlockPalette() {
   // entstehen (Kanban-Spalte über "+ Spalte" am Board).
   const definitions = getAllBlockDefinitions().filter((d) => d.showInPalette !== false)
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return definitions.filter((d) => {
-      if (!q) return true
-      return d.displayName.toLowerCase().includes(q)
-        || d.type.toLowerCase().includes(q)
-        || d.tagName.toLowerCase().includes(q)
-    })
-  }, [definitions, query])
+  // Beides stand in einem useMemo — nur trug keines: `definitions` ist bei jedem
+  // Render ein neues Array und stand in den Abhaengigkeiten, also rechneten
+  // beide Memos ohnehin jedes Mal neu (und die Palette rendert ueber useEditor
+  // bei JEDER Store-Aenderung). Ballast, der Stabilitaet vortaeuschte: ein
+  // Filter ueber ein Dutzend Registry-Eintraege kostet nichts.
+  const q = query.trim().toLowerCase()
+  const filtered = definitions.filter((d) => {
+    if (!q) return true
+    return d.displayName.toLowerCase().includes(q)
+      || d.type.toLowerCase().includes(q)
+      || d.tagName.toLowerCase().includes(q)
+  })
 
-  const grouped = useMemo(() => {
-    const acc: Record<BlockCategory, BlockDefinition[]> = {
-      layout: [],
-      eingabe: [],
-      anzeige: [],
-    }
-    for (const def of filtered) acc[def.category]?.push(def)
-    return acc
-  }, [filtered])
+  const grouped: Record<BlockCategory, BlockDefinition[]> = {
+    layout: [],
+    eingabe: [],
+    anzeige: [],
+  }
+  for (const def of filtered) grouped[def.category]?.push(def)
 
   // Einfüge-Ziel beim Klick: vom ausgewählten Block aufwärts der NÄCHSTE
   // Container, der den Typ aufnimmt (canContain) — ist eine Karte
