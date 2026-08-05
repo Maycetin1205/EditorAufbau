@@ -18,7 +18,7 @@ import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
-import { darfAuswahlFolgen } from '../../core/blocks/treeQuery'
+import { darfAuswahlFolgen, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -220,11 +220,15 @@ export function Inspector() {
     (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'quelle' || p.kind === 'relation',
   )
   const generalProps = visibleProps.filter((p) => !dataProps.includes(p))
-  // Sektion zeigen, wenn der Block eine Quelle anhängen kann (Kanban) ODER
-  // seine Daten-Controls gerade sichtbar wären (z. B. Spalte unter einem
-  // Board mit Quelle). Kein Typ-Check, alles Registry-Daten.
-  const showDataSection = def.acceptsDataSource
-    || (dataProps.length > 0 && sourceInReach !== undefined)
+  // Sektion zeigen, wenn der Block GERADE eine eigene Quelle tragen kann
+  // (Kanban immer, das Formularfeld nur außerhalb des Feldtyps „Nachschlagen"
+  // — traegtEigeneQuelle) ODER wenn seine Daten-Controls jetzt etwas anzeigen
+  // könnten: entweder liegt eine Quelle in Reichweite (z. B. Spalte unter einem
+  // Board mit Quelle), oder das Control bringt seine eigene Quelle mit
+  // (quelleProp — die Nachschlage-Liste wählt aus der ganzen Bibliothek).
+  // Kein Typ-Check, alles Registry-Daten.
+  const showDataSection = traegtEigeneQuelle(block)
+    || dataProps.some((p) => p.quelleProp !== undefined || sourceInReach !== undefined)
 
   return (
     <SidePanel
@@ -286,7 +290,12 @@ export function Inspector() {
               generalProps.length > 0 && 'mt-4 border-t border-border pt-4',
             )}
           >
-            {def.acceptsDataSource && <QuellenListe block={block} />}
+            {/* Der Quellen-Wähler des Bausteins selbst — nur wo er GERADE eine
+                eigene Quelle trägt. Am Nachschlage-Feld bleibt dadurch genau
+                EIN Wähler übrig („Quelle", die Nachschlage-Liste): zwei
+                nebeneinander waren die Frage, welcher gilt, und die Antwort
+                war „nur einer, der andere tut still nichts". */}
+            {traegtEigeneQuelle(block) && <QuellenListe block={block} />}
             {dataProps.map((p) => propControl(p))}
           </div>
         )}

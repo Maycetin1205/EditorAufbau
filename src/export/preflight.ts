@@ -17,8 +17,10 @@ import {
   actionValueTargets,
   auswahlGeberImBaum,
   auswahlQuelleIdVon,
+  bindbareStellenVon,
   darfAuswahlFolgen,
   istAuswahlGeber,
+  traegtEigeneQuelle,
 } from '../core/blocks/treeQuery'
 import { ergebnisSchritteVor } from '../core/data/aktionen'
 import { stepProblem } from '../core/data/schrittPruefung'
@@ -60,13 +62,17 @@ export function preflightMask(
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
     const def = getBlockDefinition(node.type)
-    if (def?.acceptsDataSource) {
+    // Gefragt ist die Quelle, die der Baustein GERADE traegt
+    // (traegtEigeneQuelle): am Nachschlage-Feld ist die eigene Datenbindung
+    // unsichtbar und reist nicht mit — dann darf eine alte, ins Leere zeigende
+    // id auch nicht blockieren (unsichtbar ist nicht halbfertig).
+    if (traegtEigeneQuelle(node)) {
       const id = node.props.source
       if (typeof id === 'string' && id !== '' && !sources.some((s) => s.id === id)) {
         results.push({
           name: 'Datenquelle fehlt',
           ok: false,
-          detail: `Baustein "${def.displayName ?? def.type}" verweist auf eine geloeschte oder unbekannte Datenquelle.`,
+          detail: `Baustein "${def?.displayName ?? node.type}" verweist auf eine geloeschte oder unbekannte Datenquelle.`,
         })
       }
     }
@@ -133,7 +139,11 @@ export function preflightMask(
         })
       }
     }
-    for (const spot of def?.bindableSpots ?? []) {
+    // Nur die Stellen, die HIER gerade bindbar sind (bindbareStellenVon): die
+    // Wert-Stelle des Nachschlage-Feldes ist es nicht — der Editor bietet sie
+    // nicht an, der Export nimmt sie nicht mit, also blockt eine alte Bindung
+    // daran auch nicht.
+    for (const spot of bindbareStellenVon(node)) {
       pruefeBindung(node.props[bindingProp(spot.prop)], spot.label)
     }
     if (def?.listenBindung) {

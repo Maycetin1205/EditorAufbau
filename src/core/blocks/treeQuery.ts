@@ -6,7 +6,7 @@
 // Verpackung) und die Laufzeit (seRuntime klont das template-Element).
 
 import { ROOT_ID, type BlockNode, type BlockTree } from './BlockData'
-import type { ActionValueSpot } from './BlockDefinition'
+import type { ActionValueSpot, BindableSpot } from './BlockDefinition'
 import { getBlockDefinition } from './blockRegistry'
 import { propertySichtbar } from './PropertyDescription'
 
@@ -31,7 +31,35 @@ export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
 }
 
 // Prop-Name der normalen Datenquelle eines Bausteins (acceptsDataSource).
-const QUELLE_PROP = 'source'
+export const QUELLE_PROP = 'source'
+
+// Traegt dieser Baustein GERADE eine eigene Datenquelle? Registry-Faehigkeit
+// (acceptsDataSource), notfalls zustandsabhaengig: das Formularfeld traegt als
+// Nachschlage-Feld keine — dort kommt der Wert aus dem Fenster der
+// Nachschlage-Quelle, und ein zweiter Quellen-Waehler daneben taete nichts.
+//
+// Inspector (Sektion „Daten"), Export (SEFILELOOP + Attribute), Preflight
+// (Blocker) und quellenOps (Reichweite) fragen alle DIESE Stelle: was der
+// Inspector nicht anbietet, darf der Export nicht mitnehmen und der Preflight
+// nicht verlangen. Eine liegen gebliebene Quelle bleibt in den Props stehen —
+// unsichtbar ist nicht geloescht.
+export function traegtEigeneQuelle(node: BlockNode | undefined): boolean {
+  if (!node) return false
+  const kann = getBlockDefinition(node.type)?.acceptsDataSource
+  if (!kann) return false
+  return kann === true || propertySichtbar(kann.wenn, node.props)
+}
+
+// Die Stellen, die an DIESEM Baustein GERADE bindbar sind (BindableSpot.wenn).
+// Editor (Klick-Ziel, Bindungs-Picker, Klarname-Vorschau), Export (Attribut)
+// und Preflight (Blocker) fragen dieselbe Stelle — sonst liesse der Editor eine
+// Bindung anklicken, die der Export weglaesst, oder der Preflight blockte eine,
+// die nirgends zu sehen ist.
+export function bindbareStellenVon(node: BlockNode | undefined): readonly BindableSpot[] {
+  if (!node) return []
+  const stellen = getBlockDefinition(node.type)?.bindableSpots ?? []
+  return stellen.filter((s) => propertySichtbar(s.wenn, node.props))
+}
 
 // Die Quelle, um die es bei der AUSWAHL an diesem Baustein geht — als
 // Vorlagen-id ('' = keine). Sie beantwortet BEIDE Seiten derselben Frage:

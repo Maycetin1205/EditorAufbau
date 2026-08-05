@@ -42,6 +42,7 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
   ActionValueSpotsFor,
   BindableSpotsFor,
+  QuellenFaehigkeit,
   SatzWahl,
 } from '../../core/blocks/BlockDefinition'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
@@ -73,7 +74,15 @@ export class FormFeldBlock extends BasicBlock {
   static readonly tagName = 'ff-formfeld'
   static readonly displayName = 'Formularfeld'
   static readonly category: BlockCategory = 'eingabe'
-  static readonly acceptsDataSource = true
+  // Eine EIGENE Datenquelle traegt das Feld an jedem Feldtyp AUSSER
+  // „Nachschlagen": dort kommt sein Wert aus dem Fenster der Nachschlage-Quelle
+  // (siehe satzWahl unten), nicht aus einer Bindung. Zwei Quellen-Waehler
+  // nebeneinander — „Datenquelle" und „Quelle" — waren die Frage, welcher denn
+  // nun gilt; nur einer galt, der andere tat still nichts. Sichtbar bleibt
+  // genau der eine, der wirkt.
+  static readonly acceptsDataSource: QuellenFaehigkeit = {
+    wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
+  }
   // Folgt der Auswahl eines Gebers (Tabelle/Kanban/anderes Nachschlage-Feld).
   // Was dabei folgt, haengt am Feldtyp — und ist beides dieselbe Regel „zeig
   // nur, was zur gewaehlten Zeile passt":
@@ -98,7 +107,14 @@ export class FormFeldBlock extends BasicBlock {
     quelleProp: 'nachschlagQuelle',
     wenn: { attributeName: 'fieldType', equals: 'nachschlagen' },
   }
-  static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [{ prop: 'value', label: 'Wert' }]
+  // Bindbare Wert-Stelle — NICHT als Nachschlage-Feld (dieselbe Bedingung wie
+  // die eigene Datenquelle oben und das valueField-Control unten): dort
+  // ENTSTEHT der Wert durch die Auswahl im Fenster. Ein Klick auf das Feld
+  // duerfte dort keinen Bindungs-Picker oeffnen — die Bindung waere nur beim
+  // naechsten SoftEngine-Push zu sehen, und zwar als ueberschriebener Wert.
+  static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [
+    { prop: 'value', label: 'Wert', wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' } },
+  ]
   // Aktueller Eingabewert - ausdruecklich auch ohne Datenquellen-Bindung.
   static readonly actionValueSpots: ActionValueSpotsFor<typeof FormFeldBlock.defaultProps> = [
     { prop: 'value', label: 'Wert' },
@@ -395,11 +411,16 @@ export class FormFeldBlock extends BasicBlock {
         </div>
       </div>`
     }
+    // Klick-Ziel und Daten-Markierung der Wert-Stelle nur, wo sie wirklich
+    // bindbar ist (dieselbe Bedingung wie bindableSpots oben): am
+    // Nachschlage-Feld gibt es keine Bindung, also auch nichts anzuklicken und
+    // nichts zu markieren — eine Marke „hier stehen Daten" waere gelogen.
+    const wertBindbar = typ !== 'nachschlagen'
     return html`<div class="feld">
       <div
         class="huelle"
-        data-ff-spot="value"
-        ?data-ff-bound=${this.valueField !== ''}
+        data-ff-spot=${wertBindbar ? 'value' : nothing}
+        ?data-ff-bound=${wertBindbar && this.valueField !== ''}
       >
         ${this.controlTpl(typ)}
         ${MIT_PLATZHALTER.includes(typ)

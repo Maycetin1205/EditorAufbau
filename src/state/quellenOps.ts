@@ -7,11 +7,12 @@
 // Beim Ausbau auf MEHRERE Quellen je Baustein waeren daraus drei geworden.
 //
 // Pur: Baum + Bibliothek rein, Ergebnis raus. Kein Store, kein DOM, kein
-// Baustein (Regel 2) — nur der Registry-Eintrag `acceptsDataSource` entscheidet,
-// wer Traeger einer Quelle sein kann.
+// Baustein (Regel 2) — wer Traeger einer Quelle sein kann, entscheidet allein
+// die hergeleitete Antwort traegtEigeneQuelle (Registry-Faehigkeit
+// `acceptsDataSource`, notfalls zustandsabhaengig).
 
 import type { BlockNode, BlockTree } from '../core/blocks/BlockData'
-import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { traegtEigeneQuelle } from '../core/blocks/treeQuery'
 import type { DataSource } from '../core/data/dataSources'
 import {
   quellenAufloesen,
@@ -28,7 +29,7 @@ import {
 export function quellenTraeger(tree: BlockTree, id: string): BlockNode | undefined {
   let cur: BlockNode | undefined = tree[id]
   while (cur) {
-    if (getBlockDefinition(cur.type)?.acceptsDataSource) return cur
+    if (traegtEigeneQuelle(cur)) return cur
     cur = cur.parentId ? tree[cur.parentId] : undefined
   }
   return undefined
@@ -60,7 +61,10 @@ export function quellenInReichweite(
 export function bausteineMitQuelle(tree: BlockTree, quelleId: string): BlockNode[] {
   if (quelleId === '') return []
   return Object.values(tree).filter((n) => {
-    if (!getBlockDefinition(n.type)?.acceptsDataSource) return false
+    // Nur wer die Quelle GERADE traegt: die alte, unsichtbare Bindung eines
+    // Nachschlage-Feldes benutzt sie nicht mehr — sie in der Loesch-Rueckfrage
+    // aufzuzaehlen waere eine Warnung ueber etwas, das nichts mehr liest.
+    if (!traegtEigeneQuelle(n)) return false
     if (n.props.source === quelleId) return true
     return weitereQuellenAus(n.props[WEITERE_QUELLEN_PROP]).some((q) => q.quelleId === quelleId)
   })

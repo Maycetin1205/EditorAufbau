@@ -19,14 +19,14 @@
 // (useBlockResize) und die React↔Lit-Übergabestelle (useLitElement)
 // wohnen in eigenen Dateien daneben.
 
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import type { BindableSpot } from '../../core/blocks/BlockDefinition'
 import type { QuelleInReichweite } from '../../core/data/sourceLinks'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { rasterSpecOf } from '../../core/blocks/rasterLayout'
+import { bindbareStellenVon, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import { useEditorInstance } from '../../state/EditorContext'
 import { useDataSources } from '../../state/useDataSources'
 import { useFeldBindung } from './FeldBindung'
@@ -45,9 +45,6 @@ interface BlockHostProps {
   children?: ReactNode
 }
 
-// Stabile leere Liste, damit der Props-Effekt nicht bei jedem Render neu
-// läuft, nur weil `?? []` eine frische Referenz erzeugt hätte.
-const KEINE_SPOTS: readonly BindableSpot[] = []
 const KEINE_QUELLEN: readonly QuelleInReichweite[] = []
 
 export function BlockHost({ block, selected, onSelect, raster = false, children }: BlockHostProps) {
@@ -63,10 +60,15 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   // abonniert den Store) UND bei Vorlagen-Änderungen (die Bibliothek
   // ist editierbar — die Klarnamen-Vorschau muss sofort nachziehen).
   useDataSources()
-  const bindableSpots = def?.bindableSpots ?? KEINE_SPOTS
+  // Die Stellen, die an DIESEM Baustein gerade bindbar sind
+  // (bindbareStellenVon): am Nachschlage-Feld gehört seine Wert-Stelle nicht
+  // dazu — dort entsteht der Wert im Fenster, ein Klick darauf dürfte keinen
+  // Bindungs-Picker öffnen. Gemerkt (useMemo), weil eine frische Liste je
+  // Render den Props-Effekt in useLitElement jedes Mal neu laufen ließe.
+  const bindableSpots = useMemo(() => bindbareStellenVon(block), [block])
   // ALLE Quellen in Reichweite (erste zuerst) — der Picker bietet die Felder
   // jeder davon an, die Vorschau löst gegen die genannte auf.
-  const quellen = (bindableSpots.length > 0 || def?.acceptsDataSource)
+  const quellen = (bindableSpots.length > 0 || traegtEigeneQuelle(block))
     ? editor.quellenFor(block.id)
     : KEINE_QUELLEN
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte

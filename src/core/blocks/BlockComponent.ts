@@ -12,6 +12,7 @@ import type {
   BlockEventSpec,
   DefaultChildSpec,
   ListenBindung,
+  QuellenFaehigkeit,
   SatzWahl,
 } from './BlockDefinition'
 import type { FlowDirection, FlowWidth } from './flowLayout'
@@ -54,7 +55,7 @@ export interface BlockComponentStatic {
   readonly containerHint?: boolean
   readonly addChildButton?: { label: string; childType: string }
   // Datenquellen-Fähigkeit — Bedeutung siehe BlockDefinition.
-  readonly acceptsDataSource?: boolean
+  readonly acceptsDataSource?: QuellenFaehigkeit
   // Satz herausgreifen / einer Auswahl folgen — Bedeutung siehe BlockDefinition.
   readonly satzWahl?: SatzWahl
   readonly kannAuswahlFolgen?: boolean

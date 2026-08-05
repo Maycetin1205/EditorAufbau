@@ -19,9 +19,17 @@
 // DERSELBEN flowLayout-Logik, die der Canvas benutzt.
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
+import { bindingProp } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
-import { darfAuswahlFolgen, firstDescendantOfType, istAuswahlGeber } from '../core/blocks/treeQuery'
+import {
+  bindbareStellenVon,
+  darfAuswahlFolgen,
+  firstDescendantOfType,
+  istAuswahlGeber,
+  QUELLE_PROP,
+  traegtEigeneQuelle,
+} from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
@@ -65,6 +73,12 @@ const SE_INTERFACE_SCRIPT = '<script src="<!--SOFTENGINE-VAR!EditorPfad-->/JS/JS
 // = grid-column/row). Ohne diese Ausnahme landeten sie doppelt und unnütz als
 // rasterx="0" … im Markup.
 const LAYOUT_ATTR_AUSNAHME = new Set(['width', 'height', 'rasterX', 'rasterY', 'rasterW', 'rasterH'])
+
+// Die EIGENE Datenquelle eines Bausteins samt allem, was an ihr haengt. Die
+// zwei gehoeren zusammen: traegt der Baustein gerade keine eigene Quelle
+// (traegtEigeneQuelle), bleiben BEIDE daheim — eine weitere Quelle ohne erste
+// hat nichts, woran sie anknuepfen koennte.
+const EIGENE_QUELLE_PROPS = new Set([QUELLE_PROP, WEITERE_QUELLEN_PROP])
 
 export interface MaskExport {
   html: string
@@ -157,6 +171,18 @@ function nodeToHtml(
     return `${pad}<template data-ff-template>\n${inner}\n${pad}</template>`
   }
 
+  // Bindungen von Stellen, die an diesem Baustein GERADE nicht bindbar sind
+  // (bindbareStellenVon): am Nachschlage-Feld ist das seine Wert-Stelle. Der
+  // Editor bietet die Bindung dort nicht an, die Laufzeit liest sie nicht — ein
+  // Attribut dafuer saehe im Export eingestellt aus (dieselbe Linie wie die
+  // daheim gebliebene Auswahl-Folge unten).
+  const bindbar = new Set(bindbareStellenVon(node).map((spot) => spot.prop))
+  const stilleBindungen = new Set<string>(
+    (def.bindableSpots ?? [])
+      .filter((spot) => !bindbar.has(spot.prop))
+      .map((spot) => bindingProp(spot.prop)),
+  )
+
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
   // Layout-Props (width/height im Fluss, rasterX/Y/W/H auf dem Raster) werden
   // NICHT als Attribut exportiert — sie wirken als style aufs Item (styleAttr,
@@ -171,6 +197,15 @@ function nodeToHtml(
       // bliebe wirkungslos — ein Attribut, das nie wirkt, saehe im Export
       // eingestellt aus.
       if (key === AUSWAHL_FOLGE_PROP && !darfAuswahlFolgen(node)) return ''
+      // Und die EIGENE Datenquelle nur, wenn der Baustein sie in seinem
+      // aktuellen Zustand ueberhaupt traegt: das Nachschlage-Feld liest seinen
+      // Wert aus dem Fenster, nicht aus einer eigenen Quelle. Eine alte
+      // Bindung daran bleibt in den Props (unsichtbar ist nicht geloescht),
+      // reist aber nicht mit — sonst stuende im Export eine Quelle, die kein
+      // Baustein liest, und collectDataSources laedt dafuer eine ganze Tabelle
+      // in die Maske (Praezedenz: der zurueckgestellte Feldtyp).
+      if (EIGENE_QUELLE_PROPS.has(key) && !traegtEigeneQuelle(node)) return ''
+      if (stilleBindungen.has(key)) return ''
       const standard = def.defaultProps[key]
       const roh = attributWert(node.props[key] ?? standard)
       // STANDARDWERT reist NICHT mit (2026-08-06). Vorher trug jeder Baustein
@@ -263,7 +298,12 @@ function collectDataSources(tree: BlockTree, sources: readonly DataSource[]): Da
   }
   const visit = (node: BlockNode | undefined): void => {
     if (!node) return
-    if (getBlockDefinition(node.type)?.acceptsDataSource) {
+    // Nur die Quelle, die der Baustein in seinem aktuellen Zustand WIRKLICH
+    // traegt (traegtEigeneQuelle — dieselbe Antwort wie Inspector und
+    // Preflight): die alte eigene Bindung eines Nachschlage-Feldes luede sonst
+    // eine ganze Tabelle in die Maske, die kein Baustein liest. SoftEngine
+    // schoebe sie bei jedem Refresh umsonst.
+    if (traegtEigeneQuelle(node)) {
       add(node.props.source)
       // Auch die WEITEREN Quellen des Bausteins (2026-07-28). Ohne sie stünde
       // die zweite Tabelle in KEINER SEFILELOOP — SoftEngine schickte ihre

@@ -39,6 +39,16 @@ export interface DefaultChildSpec {
 export interface BindableSpot {
   prop: string
   label: string
+  // Nur in diesem Zustand ist die Stelle wirklich bindbar. Ohne Bedingung
+  // immer (Text, Karte, Formularfeld an den normalen Feldtypen). Das
+  // Nachschlage-Feld schliesst seine Wert-Stelle so aus: dort ENTSTEHT der
+  // Wert durch die Auswahl im Fenster, eine Bindung obendrauf ueberschriebe
+  // ihn bei jedem SoftEngine-Push. DIESELBE Bedingungs-Form und -Auswertung
+  // wie visibleWhen und satzWahl.wenn (propertySichtbar) — eine zweite
+  // Sprache fuer „wann gilt das" waere eine zweite Fehlerquelle.
+  // Wer die gerade bindbaren Stellen eines Knotens braucht, fragt
+  // bindbareStellenVon (treeQuery): Editor, Export und Preflight gemeinsam.
+  wenn?: PropertyVisibilityCondition
 }
 
 export interface ActionValueSpot {
@@ -199,6 +209,7 @@ export type BindableSpotProp<Props> = keyof Props extends infer K
 export type BindableSpotsFor<Props> = ReadonlyArray<{
   prop: BindableSpotProp<Props>
   label: string
+  wenn?: PropertyVisibilityCondition
 }>
 
 // Ereignis eines Blocks (Kommandozentrale Z1, Vorgriff): was bei
@@ -241,6 +252,24 @@ export interface SatzWahl {
   // zweite Sprache fuer „wann gilt das" waere eine zweite Fehlerquelle.
   wenn?: PropertyVisibilityCondition
 }
+
+// QuellenFaehigkeit: traegt der Baustein eine EIGENE Datenquelle (`source` +
+// die weiteren Quellen daran)? true = immer (Tabelle, Kanban, Text), mit `wenn`
+// nur in diesem Zustand.
+//
+// Das Formularfeld braucht die Bedingung: als Nachschlage-Feld liest es seinen
+// Wert NICHT aus einer eigenen Quelle, sondern aus dem Fenster der
+// Nachschlage-Quelle. Zwei Quellen-Waehler nebeneinander („Datenquelle" und
+// „Quelle") waren die Frage, welcher denn nun gilt — und die Antwort war: nur
+// einer, der andere tat still nichts (Regel 4).
+//
+// DIESELBE Bedingungs-Form und -Auswertung wie satzWahl.wenn und visibleWhen
+// (propertySichtbar). Ob ein Baustein GERADE eine eigene Quelle traegt,
+// beantwortet traegtEigeneQuelle (treeQuery) fuer Inspector, Export, Preflight
+// und quellenOps gemeinsam. Die Props selbst bekommt er in JEDEM Zustand
+// (BasicBlock) — eine liegen gebliebene Einstellung bleibt gespeichert und
+// lebt wieder auf, wenn der Bauer den Feldtyp zurueckstellt.
+export type QuellenFaehigkeit = boolean | { wenn: PropertyVisibilityCondition }
 
 export interface BlockDefinition {
   type: string
@@ -297,7 +326,8 @@ export interface BlockDefinition {
   // trägt dann eine `source`-Prop (Technikwert =
   // Vorlagen-id aus core/data/dataSources); der Inspector zeigt die Sektion
   // "Daten", der Export erzeugt daraus den SEFILELOOP. Kein `if type===`.
-  acceptsDataSource?: boolean
+  // Zustands-Bedingung: siehe QuellenFaehigkeit.
+  acceptsDataSource?: QuellenFaehigkeit
   // Der Bediener greift an diesem Baustein einen SATZ heraus — siehe SatzWahl.
   satzWahl?: SatzWahl
   // Der Block kann der Auswahl eines Gebers FOLGEN (Prop `folgtAuswahl`,

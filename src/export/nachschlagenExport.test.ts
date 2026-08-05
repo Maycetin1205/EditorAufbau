@@ -197,6 +197,44 @@ describe('Nachschlage-Feld im Export', () => {
     expect(falsch.some((r) => r.detail.includes('Kundenhaustiere'))).toBe(true)
   })
 
+  it('eine alte EIGENE Bindung bleibt daheim: ein Quellen-Waehler, ein SEFILELOOP', () => {
+    // Der Bauer hatte das Feld an eine Datenquelle gebunden und stellt es dann
+    // auf „Nachschlagen": seine eigene Bindung ist damit unsichtbar (der
+    // Inspector zeigt nur noch „Quelle"). Sie darf dann auch nicht mitreisen —
+    // sonst laedt die Maske eine ganze Tabelle, die kein Baustein liest, und
+    // SoftEngine schiebt sie bei jedem Refresh umsonst.
+    const tree = baumMit({ ...KUNDE_PROPS, source: 'q-tiere', valueField: '18_30' })
+    const { html, sevariablen } = exportMask(tree, 'Maske', BEIDE)
+    const tag = /<ff-formfeld[^>]*/.exec(html)?.[0] ?? ''
+    expect(tag).toContain('nachschlagquelle="q-adr"')
+    expect(tag).not.toContain('source=')
+    expect(tag).not.toContain('valuefield=')
+    // NUR die Nachschlage-Quelle steht in den SEvariablen.
+    expect(JSON.parse(sevariablen).SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS)).toEqual(['Adressen'])
+    // Und blockieren darf die unsichtbare Bindung auch nicht.
+    expect(preflightMask(tree, BEIDE, [])).toEqual([])
+  })
+
+  it('Gegenprobe Textfeld: dieselbe Bindung reist mit und laedt ihre Quelle', () => {
+    const tree = baumMit({ ...TEXT_PROPS, source: 'q-tiere', valueField: '18_30' })
+    const { html, sevariablen } = exportMask(tree, 'Maske', BEIDE)
+    const tag = /<ff-formfeld[^>]*/.exec(html)?.[0] ?? ''
+    expect(tag).toContain('source="q-tiere"')
+    expect(tag).toContain('valuefield="18_30"')
+    expect(JSON.parse(sevariablen).SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS)).toEqual(['Kundenhaustiere'])
+  })
+
+  it('eine ins Leere zeigende alte Bindung blockiert am Nachschlage-Feld NICHT', () => {
+    // Geloeschte Quelle bzw. geloeschtes Feld — beides waere am Textfeld ein
+    // Blocker (S1a/S1b). Unsichtbar ist nicht halbfertig: der Bauer sieht die
+    // Einstellung nirgends, also darf sie ihm den Export nicht verriegeln.
+    const tree = baumMit({ ...KUNDE_PROPS, source: 'gibt-es-nicht', valueField: '999_9' })
+    expect(preflightMask(tree, BEIDE, [])).toEqual([])
+    // Gegenprobe: am Textfeld blockt genau dieselbe Einstellung.
+    const text = baumMit({ ...TEXT_PROPS, source: 'gibt-es-nicht', valueField: '999_9' })
+    expect(preflightMask(text, BEIDE, []).some((r) => r.name === 'Datenquelle fehlt')).toBe(true)
+  })
+
   it('zurueckgestellter Feldtyp laesst die Nachschlage-Quelle daheim', () => {
     // Der Rest einer alten Einstellung darf keine ganze Tabelle in die Maske
     // laden, die kein Baustein liest — SoftEngine schoebe sie bei jedem
