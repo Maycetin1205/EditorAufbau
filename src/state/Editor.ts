@@ -299,6 +299,10 @@ export class Editor extends Subject<Editor> {
   updateProperty(id: string, attr: string, value: unknown): void {
     const node = this._tree[id]
     if (!node) return
+    // Gleicher Wert = kein Vorgang: weder Verlaufs-Schritt noch Neuzeichnen.
+    // Sonst verbraucht z. B. ein Control, das beim Verlassen des Felds seinen
+    // unveraenderten Wert nochmal meldet, einen der 50 Undo-Plaetze.
+    if (Object.is(node.props[attr], value)) return
     this.pushHistory()
     const next: BlockTree = {
       ...this._tree,

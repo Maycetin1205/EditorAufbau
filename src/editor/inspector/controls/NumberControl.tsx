@@ -10,6 +10,7 @@
 
 import { useState } from 'react'
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
+import { useEingabeSitzung } from './eingabeSitzung'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,9 @@ interface NumberControlProps {
   value: unknown
   label?: string
   onChange: (value: number) => void
+  // Eine Eingabe-Sitzung klammern (Undo): siehe eingabeSitzung.ts.
+  onBeginBearbeitung?: () => void
+  onEndeBearbeitung?: () => void
 }
 
 function eingrenzen(n: number, property: PropertyDescription): number {
@@ -27,7 +31,15 @@ function eingrenzen(n: number, property: PropertyDescription): number {
   return Math.min(max, Math.max(min, n))
 }
 
-function Zahlenfeld({ property, value, onChange, id }: NumberControlProps & { id?: string }) {
+function Zahlenfeld({
+  property,
+  value,
+  onChange,
+  onBeginBearbeitung,
+  onEndeBearbeitung,
+  id,
+}: NumberControlProps & { id?: string }) {
+  const sitzung = useEingabeSitzung(onBeginBearbeitung, onEndeBearbeitung)
   const aussen = typeof value === 'number' && Number.isFinite(value) ? String(value) : ''
   // Entwurf folgt dem Prop-Wert, solange nicht getippt wird (State-Anpassung
   // beim Rendern — Muster „adjusting state when props change").
@@ -41,7 +53,12 @@ function Zahlenfeld({ property, value, onChange, id }: NumberControlProps & { id
   const uebernehmen = (roh: string): void => {
     setEntwurf(roh)
     const n = Number.parseFloat(roh.replace(',', '.'))
-    if (Number.isFinite(n) && eingrenzen(n, property) === n) onChange(n)
+    // Die Sitzung erst oeffnen, wenn wirklich ein Wert rausgeht: ein
+    // Zwischenstand ohne gueltige Zahl soll keinen Leer-Schritt erzeugen.
+    if (Number.isFinite(n) && eingrenzen(n, property) === n) {
+      sitzung.beginnen()
+      onChange(n)
+    }
   }
 
   return (
@@ -61,10 +78,17 @@ function Zahlenfeld({ property, value, onChange, id }: NumberControlProps & { id
           // Ungültiges/leeres Feld springt auf den letzten gültigen Wert,
           // Werte ausserhalb der Grenzen werden eingegrenzt und gespeichert.
           const n = Number.parseFloat(entwurf.replace(',', '.'))
-          if (!Number.isFinite(n)) { setEntwurf(aussen); return }
-          const begrenzt = eingrenzen(n, property)
-          setEntwurf(String(begrenzt))
-          onChange(begrenzt)
+          if (Number.isFinite(n)) {
+            const begrenzt = eingrenzen(n, property)
+            setEntwurf(String(begrenzt))
+            // Noch INNERHALB der Sitzung: der eingegrenzte Endwert gehoert
+            // zum selben Undo-Schritt wie das Getippte davor.
+            sitzung.beginnen()
+            onChange(begrenzt)
+          } else {
+            setEntwurf(aussen)
+          }
+          sitzung.beenden()
         }}
         // Browser-Spinner ausblenden (sie säßen auf der Einheit; Pfeiltasten
         // funktionieren weiter), Einheit hat rechts ihren festen Platz.

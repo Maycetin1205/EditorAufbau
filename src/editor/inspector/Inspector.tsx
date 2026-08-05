@@ -12,7 +12,7 @@
 // + stopPropagation, exakt die Schichtung, die vorher FormularKarte/Modal
 // hatten. Ein Baustein-Wechsel schließt eine offene Unteraufgabe.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Copy, MousePointer2, Trash } from 'lucide-react'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
@@ -77,6 +77,13 @@ export function Inspector() {
   // Relation-Vorlagen: die Auswahl im kind-'relation'-Control muss
   // neue/umbenannte Vorlagen sofort zeigen — liest aus dem RelationStore.
   const relations = useRelations()
+  // Eine Tipp-Sitzung in einem Text-/Zahlenfeld = EIN Undo-Schritt. Dieselbe
+  // Transaktions-Klammer wie beim Ziehen; die Controls entscheiden selbst,
+  // wann sie sie oeffnen (siehe controls/eingabeSitzung.ts).
+  const sitzung = useMemo(() => ({
+    onBeginBearbeitung: () => ed.beginTransaction(),
+    onEndeBearbeitung: () => ed.endTransaction(),
+  }), [ed])
   const block = ed.selectedNode
 
   // Panel-Umblättern (R3-Feinschliff): welche Unteraufgabe ist offen?
@@ -187,11 +194,11 @@ export function Inspector() {
 
     switch (kind) {
       case 'text':
-        return <TextControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
+        return <TextControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
       case 'textarea':
-        return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} />
+        return <TextareaControl key={property.attributeName} property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
       case 'number':
-        return <NumberControl key={property.attributeName} label={property.name} property={property} value={value} onChange={set} />
+        return <NumberControl key={property.attributeName} label={property.name} property={property} value={value} onChange={set} {...sitzung} />
       case 'segment':
         return (
           <SegmentControl
@@ -268,7 +275,7 @@ export function Inspector() {
     const set = (v: unknown) => ed.updateProperty(block.id, property.attributeName, v)
     const kind = property.kind
     if (kind === 'number') {
-      return <NumberControl key={property.attributeName} property={property} value={value} onChange={set} />
+      return <NumberControl key={property.attributeName} property={property} value={value} onChange={set} {...sitzung} />
     }
     if (kind === 'segment') {
       return (
