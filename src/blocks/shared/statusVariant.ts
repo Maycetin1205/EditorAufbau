@@ -30,6 +30,17 @@ export function coerceStatusVariant(value: string): StatusVariant {
     : 'info'
 }
 
+// Technikwert -> Klarname. DIE eine Liste: der Inspector-Select unten und die
+// Status-Zuordnung der Tabellenspalte (blocks/tabelle/spaltenArten) lesen
+// beide von hier. Zwei Listen hiessen: an einer Stelle heisst es „Fehler", an
+// der anderen „Notfall", und niemand faende den Unterschied.
+export const STATUS_BEDEUTUNGEN: readonly { wert: StatusVariant; name: string }[] = [
+  { wert: 'info', name: 'Hinweis' },
+  { wert: 'success', name: 'Erfolg' },
+  { wert: 'warning', name: 'Warnung' },
+  { wert: 'danger', name: 'Fehler' },
+]
+
 // Die Status-Property fuer den Inspector. Der Bediener waehlt weiterhin die
 // Bedeutung per Klarname; die feste Farbe ergibt sich daraus.
 export function statusVariantProperty(
@@ -40,12 +51,8 @@ export function statusVariantProperty(
     attributeName,
     name: 'Farbe',
     description,    kind: 'select',
-    options: [
-      { value: 'info', label: 'Hinweis' },
-      { value: 'success', label: 'Erfolg' },
-      { value: 'warning', label: 'Warnung' },
-      { value: 'danger', label: 'Fehler' },
-    ],
+    // Aus DERSELBEN Liste wie die Status-Zuordnung der Tabellenspalte.
+    options: STATUS_BEDEUTUNGEN.map((b) => ({ value: b.wert, label: b.name })),
   }
 }
 

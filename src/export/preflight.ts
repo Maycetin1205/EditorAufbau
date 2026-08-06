@@ -19,7 +19,13 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { bausteinName } from '../core/blocks/bausteinName'
-import { bindingProp, listeLesen, zerlegeBindung } from '../core/blocks/BlockDefinition'
+import {
+  bindingProp,
+  eintragsWahlWert,
+  eintragsZuordnungLesen,
+  listeLesen,
+  zerlegeBindung,
+} from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import {
@@ -157,9 +163,31 @@ export function preflightMask(
     }
     if (def?.listenBindung) {
       const b = def.listenBindung
+      const wahl = b.eintragsWahl
+      const zuo = b.eintragsZuordnung
       listeLesen(node.props[b.prop], b).forEach((eintrag, i) => {
         const titel = String(eintrag[b.titelKey] ?? '') || `Nr. ${i + 1}`
         pruefeBindung(eintrag[b.feldKey], titel)
+        // S-Z (2026-08-06): ein Listen-Eintrag steht auf der Darstellung, die
+        // eine Zuordnung erklaeren WUERDE, hat aber keine. Das ist ausdruecklich
+        // erlaubt — die Zuordnung ist freiwillig, die Marke zeigt dann den
+        // Rohwert grau. Darum eine WARNUNG und keine Blockade: sie stoppt den
+        // Export nicht, sagt aber vorher, was in SoftEngine zu sehen sein wird.
+        // Anlass: der Rohwert ist ein Technikwert ('W', '3') — wer ihn in der
+        // fertigen Maske entdeckt, hat die Zuordnung meist schlicht vergessen.
+        // Registry-getrieben (eintragsWahl/eintragsZuordnung), kein `if
+        // type===` und kein Wissen ueber Tabellen.
+        if (!wahl || !zuo) return
+        if (eintragsWahlWert(wahl, eintrag) !== zuo.nurBeiWahl) return
+        if (eintragsZuordnungLesen(zuo, eintrag).length > 0) return
+        results.push({
+          name: `${zuo.label} fehlt`,
+          ok: false,
+          warnung: true,
+          detail: `Baustein "${bausteinName(node)}", "${titel}" steht auf "${
+            wahl.optionen.find((o) => o.wert === zuo.nurBeiWahl)?.name ?? zuo.nurBeiWahl
+          }", hat aber keine ${zuo.label} — die Marke zeigt in der Maske den unveraenderten Datenwert in Grau.`,
+        })
       })
     }
     // Quellen-Properties (kind 'quelle', z. B. die Nachschlage-Liste des

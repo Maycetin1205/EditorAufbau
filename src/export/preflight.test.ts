@@ -13,6 +13,7 @@ import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
+import { failedChecks, warnChecks } from './validator'
 import { registerTestBlocks, TEST_EVENT_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
@@ -176,6 +177,47 @@ describe('preflightMask', () => {
     // Verbindung steht, aber das Feld gibt es in der Fremdquelle nicht.
     expect(namen(tabelle([{ titel: 'X', feld: 'tiere::99_9' }], verbindung)))
       .toContain('Gebundenes Feld fehlt')
+  })
+
+  it('warnt bei einer Status-Spalte ohne Zuordnung — ohne den Export zu blocken', () => {
+    // Die Status-Zuordnung ist FREIWILLIG (Nutzer-Entscheidung 2026-08-06):
+    // ohne sie zeigt die Marke den Datenwert grau. Blocken waere falsch — das
+    // erklaerte eine erlaubte Maske fuer unbaubar. Schweigen aber auch
+    // (Regel 4): der Rohwert ist ein Technikwert, und wer ihn in der fertigen
+    // SoftEngine-Maske entdeckt, hat die Zuordnung meist nur vergessen.
+    const sources = [{
+      id: 'termine', name: 'Terminplaner', kind: 'idb' as const, idbId: 'IDBID0001',
+      indexField: '0_10', fields: [{ code: '78_30', label: 'Zustand' }],
+    }]
+    const tabelle = (spalten: unknown[]): BlockTree => ({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
+        props: { source: 'termine', spalten, tagField: '', suche: 'nein' },
+      },
+    })
+
+    // Status-Spalte OHNE Zuordnung: genau eine Meldung, und sie ist eine
+    // Warnung — failedChecks (das, woran der Export abbricht) bleibt leer.
+    const ohne = preflightMask(tabelle([{ titel: 'Zustand', feld: '78_30', art: 'status' }]), sources, [])
+    expect(ohne.map((r) => r.name)).toEqual(['Status-Zuordnung fehlt'])
+    expect(ohne[0].warnung).toBe(true)
+    expect(failedChecks(ohne)).toEqual([])
+    expect(warnChecks(ohne)).toHaveLength(1)
+    // Die Meldung nennt die Spalte beim Klarnamen und sagt, was passieren wird.
+    expect(ohne[0].detail).toContain('Zustand')
+    expect(ohne[0].detail).toContain('Grau')
+
+    // MIT Zuordnung: still.
+    expect(preflightMask(tabelle([{
+      titel: 'Zustand', feld: '78_30', art: 'status',
+      zuordnung: [{ wert: 'W', name: 'Wartet', bedeutung: 'warning' }],
+    }]), sources, [])).toEqual([])
+
+    // Und eine TEXT-Spalte ohne Zuordnung ist kein Thema — die Warnung haengt
+    // an der Darstellung, nicht an der Spalte an sich.
+    expect(preflightMask(tabelle([{ titel: 'Zustand', feld: '78_30', art: 'text' }]), sources, []))
+      .toEqual([])
   })
 
   it('meldet eine geloeschte Quelle EINMAL, nicht zusaetzlich je gebundener Stelle', () => {

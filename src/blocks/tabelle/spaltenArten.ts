@@ -19,6 +19,32 @@
 // wird AUSGERICHTET, nie umgerechnet (Nutzer 2026-08-06).
 
 import { html, type TemplateResult } from 'lit'
+import { coerceStatusVariant } from '../shared/statusVariant'
+
+// EINE Zeile der Status-Zuordnung: Datenwert -> Klarname -> Bedeutung.
+//
+// Der Datenwert ist, was SoftEngine liefert ('W', '3', 'wartet') — ein
+// Technikwert, den niemand lesen soll. Der Klarname ist, was in der Marke
+// steht. Die Bedeutung bestimmt die FARBE, und zwar fest: der Bauer waehlt
+// „Warnung", nie „gelb" (Regel 3 + die Farbregel der Designsprache — eine
+// Farbe ist nirgends frei waehlbar).
+export interface Zuordnung {
+  wert: string
+  name: string
+  bedeutung: string
+}
+
+// Die Zuordnung zu einem Datenwert finden. Verglichen wird GETRIMMT und ohne
+// Ruecksicht auf Gross-/Kleinschreibung — genau wie das Kanban seine Karten
+// einsortiert (kanban/seRuntime). Ein fuehrendes Leerzeichen aus einem
+// SoftEngine-Feld darf keine Marke grau werden lassen.
+export function findeZuordnung(
+  zuordnung: readonly Zuordnung[],
+  wert: string,
+): Zuordnung | undefined {
+  const gesucht = wert.trim().toLowerCase()
+  return zuordnung.find((z) => z.wert.trim().toLowerCase() === gesucht)
+}
 
 export interface SpaltenArt {
   // Technikwert — steht so in der Spalte und im Export (unsichtbar, Regel 3).
@@ -32,13 +58,19 @@ export interface SpaltenArt {
   klasse: string
   // Wie die Zelle ihren Wert zeigt. Bekommt IMMER schon Fertiges herein: den
   // Datenwert, oder im Editor den Platzhalter-Strich (Regel 7 — hier wird
-  // nichts erfunden, auch nicht formatiert).
-  zelle: (wert: string) => TemplateResult | string
+  // nichts erfunden, auch nicht formatiert). Dazu die Zuordnung DIESER Spalte
+  // — nur die Status-Art liest sie, die anderen ignorieren sie.
+  zelle: (wert: string, zuordnung: readonly Zuordnung[]) => TemplateResult | string
 }
 
 // Die Standard-Art. Eine Spalte ohne Angabe ist Text — so verhielten sich alle
 // Spalten bis 2026-08-06, alte Staende bleiben damit unveraendert.
 export const ART_TEXT = 'text'
+
+// Die Status-Art wird auch von aussen gebraucht: die Registry haengt die
+// Zuordnungstabelle daran (TabelleBlock), und die Preflight erkennt daran,
+// welche Spalten sie auf eine fehlende Zuordnung ansehen muss.
+export const ART_STATUS = 'status'
 
 export const SPALTEN_ARTEN: readonly SpaltenArt[] = [
   {
@@ -66,17 +98,28 @@ export const SPALTEN_ARTEN: readonly SpaltenArt[] = [
     zelle: (wert) => wert,
   },
   {
-    wert: 'status',
+    wert: ART_STATUS,
     name: 'Status',
     spur: '120px',
     klasse: 'status',
     // Die Marke der Designsprache (Fellnase Regel 5: gekappte Ecke +
     // quadratischer Punkt). Sie ist GETEILT, nicht abgeschrieben — dieselbe
-    // `chipStyles` tragen Karte und Kanban-Spalte (../shared/statusVariant).
-    // Ohne Zuordnung bleibt sie GRAU und zeigt den Rohwert: der Editor
-    // erfindet keine Bedeutung, die niemand vergeben hat (Regel 7). Die
-    // Zuordnung Datenwert -> Klarname -> Bedeutung kommt als eigenes Paket.
-    zelle: (wert) => html`<span class="chip">${wert}</span>`,
+    // chipStyles tragen Karte und Kanban-Spalte (../shared/statusVariant).
+    //
+    // MIT Zuordnung: Klarname statt Datenwert, Farbe aus der Bedeutung.
+    // OHNE Zuordnung (oder wenn der Datenwert nicht darin steht): GRAUE Marke
+    // mit dem Rohwert. Das ist kein Fehlerzustand — die Zuordnung ist
+    // freiwillig (Nutzer-Entscheidung 2026-08-06). Der Editor zeigt dann
+    // ehrlich, was da ist, statt eine Bedeutung zu erfinden, die niemand
+    // vergeben hat (Regel 7). Grau ist die Grundform von chipStyles: keine
+    // v-Klasse, Flaeche --se-panel-2, Punkt --se-faint.
+    zelle: (wert, zuordnung) => {
+      const treffer = findeZuordnung(zuordnung, wert)
+      if (!treffer) return html`<span class="chip">${wert}</span>`
+      return html`<span class="chip v-${coerceStatusVariant(treffer.bedeutung)}">${
+        treffer.name.trim() === '' ? wert : treffer.name
+      }</span>`
+    },
   },
 ]
 

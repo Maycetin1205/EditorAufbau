@@ -16,8 +16,14 @@
 
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { QUELLEN_TRENNER, bindungMitQuelle, zerlegeBindung } from '../../core/blocks/BlockDefinition'
+import {
+  QUELLEN_TRENNER,
+  bindungMitQuelle,
+  zerlegeBindung,
+  type ZuordnungZeile,
+} from '../../core/blocks/BlockDefinition'
 import type { DataSourceField } from '../../core/data/dataSources'
+import type { Eingabesitzung } from '../inspector/controls/eingabeSitzung'
 
 // Eine Quelle als Abschnitt im Picker.
 export interface PickerGruppe {
@@ -46,12 +52,35 @@ export interface PickerWahl {
   onWaehle: (wert: string) => void
 }
 
+// Eine ZUORDNUNGSTABELLE unter der Wahl (Registry: ListenBindung.
+// eintragsZuordnung — bei der Tabelle: welcher Status-Datenwert was bedeutet).
+// Auch sie zeichnet der Picker generisch: drei Beschriftungen, eine Liste
+// waehlbarer Bedeutungen, die Zeilen selbst und ein Rueckkanal.
+export interface PickerZuordnung {
+  label: string
+  wertLabel: string
+  nameLabel: string
+  bedeutungLabel: string
+  bedeutungen: readonly { wert: string; name: string }[]
+  zeilen: readonly ZuordnungZeile[]
+  // Die GANZE Liste zurueck — der Picker rechnet nicht mit Indizes im Store.
+  onAendern: (zeilen: ZuordnungZeile[]) => void
+  // Eine Tipp-Sitzung = EIN Undo-Schritt (s. controls/eingabeSitzung). Ohne
+  // sie waere jeder Buchstabe in „Datenwert" und „Klarname" ein eigener
+  // Verlaufs-Schritt und ein Klarname von 12 Zeichen spuelte den halben
+  // Verlauf weg (Deckel 50).
+  sitzung: Eingabesitzung
+}
+
 interface FieldPickerProps {
   // Klarname der Stelle (aus bindableSpots, z. B. 'Titel').
   spotLabel: string
   gruppen: readonly PickerGruppe[]
   // Optional, s. PickerWahl. Fehlt sie, sieht der Picker aus wie bisher.
   wahl?: PickerWahl
+  // Optional, s. PickerZuordnung. Der Aufrufer laesst sie weg, wenn die
+  // aktuelle Wahl gar keine Zuordnung kennt.
+  zuordnung?: PickerZuordnung
   // Aktuell gebundener Wert, ROH wie gespeichert ('' = ungebunden,
   // 'quelle::code' = Feld einer weiteren Quelle).
   current: string
@@ -69,6 +98,7 @@ export function FieldPicker({
   spotLabel,
   gruppen,
   wahl,
+  zuordnung,
   current,
   top,
   left,
@@ -141,7 +171,12 @@ export function FieldPicker({
         e.stopPropagation()
       }}
       style={{ position: 'fixed', top, left, zIndex: 50 }}
-      className="max-h-64 w-60 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+      /* Mit Zuordnungstabelle braucht das Fenster mehr Platz: drei Felder je
+         Zeile passen nicht in die schmale Feldliste. Ohne sie bleibt es exakt
+         so breit wie bisher. */
+      className={`overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md ${
+        zuordnung ? 'max-h-96 w-80' : 'max-h-64 w-60'
+      }`}
     >
       {/* Die zusätzliche Wahl steht OBEN und abgesetzt: sie gehört zur
           Stelle selbst, nicht zu einer der Quellen darunter. Ein Klick
@@ -172,6 +207,98 @@ export function FieldPicker({
               </button>
             ))}
           </div>
+        </div>
+      )}
+      {/* Die Zuordnungstabelle sitzt unter der Wahl und ueber den Feldern:
+          sie gehört zur gewählten Darstellung, nicht zur Datenquelle. Sie ist
+          FREIWILLIG — eine leere Tabelle ist kein Fehlerzustand, sondern
+          heißt „zeig den Rohwert". Deshalb steht hier auch kein Zwang, nur
+          ein Hinweis, was ohne Zuordnung passiert. */}
+      {zuordnung && (
+        <div className="mb-1 border-b border-border pb-1">
+          <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {zuordnung.label}
+          </p>
+          {zuordnung.zeilen.length === 0 && (
+            <p className="px-2 pb-1 text-xs text-muted-foreground">
+              Ohne Zuordnung zeigt die Marke den Datenwert grau.
+            </p>
+          )}
+          {zuordnung.zeilen.map((z, i) => {
+            // Immer die GANZE Liste zurueckgeben: der Picker haelt keinen
+            // eigenen Zustand, jede Aenderung geht sofort in den Store und
+            // kommt von dort als neue `zeilen` zurueck.
+            const ersetze = (teil: Partial<ZuordnungZeile>) => {
+              const next = zuordnung.zeilen.map((z2) => ({ ...z2 }))
+              next[i] = { ...next[i], ...teil }
+              zuordnung.onAendern(next)
+            }
+            return (
+              <div key={i} className="mb-1 flex items-center gap-1 px-1">
+                <input
+                  type="text"
+                  aria-label={zuordnung.wertLabel}
+                  placeholder={zuordnung.wertLabel}
+                  value={z.wert}
+                  onChange={(e) => {
+                    zuordnung.sitzung.beginnen()
+                    ersetze({ wert: e.target.value })
+                  }}
+                  onBlur={zuordnung.sitzung.beenden}
+                  className="w-16 rounded-sm border border-border bg-background px-1.5 py-1 text-xs"
+                />
+                <input
+                  type="text"
+                  aria-label={zuordnung.nameLabel}
+                  placeholder={zuordnung.nameLabel}
+                  value={z.name}
+                  onChange={(e) => {
+                    zuordnung.sitzung.beginnen()
+                    ersetze({ name: e.target.value })
+                  }}
+                  onBlur={zuordnung.sitzung.beenden}
+                  className="min-w-0 flex-1 rounded-sm border border-border bg-background px-1.5 py-1 text-xs"
+                />
+                <select
+                  aria-label={zuordnung.bedeutungLabel}
+                  value={z.bedeutung}
+                  onChange={(e) => ersetze({ bedeutung: e.target.value })}
+                  className="rounded-sm border border-border bg-background px-1 py-1 text-xs"
+                >
+                  {zuordnung.bedeutungen.map((b) => (
+                    <option key={b.wert} value={b.wert}>{b.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  aria-label={`${zuordnung.wertLabel} „${z.wert}" entfernen`}
+                  title="Zeile entfernen"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    zuordnung.onAendern(zuordnung.zeilen.filter((_, k) => k !== i).map((z2) => ({ ...z2 })))
+                  }}
+                  className="rounded-sm px-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  ×
+                </button>
+              </div>
+            )
+          })}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              // Die erste Bedeutung als Vorbelegung: ein leeres Select waere
+              // ein Wert, den die Liste gar nicht kennt.
+              zuordnung.onAendern([
+                ...zuordnung.zeilen.map((z2) => ({ ...z2 })),
+                { wert: '', name: '', bedeutung: zuordnung.bedeutungen[0]?.wert ?? '' },
+              ])
+            }}
+            className="mx-1 rounded-sm px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            + Zuordnung
+          </button>
         </div>
       )}
       {/* Eine Quelle: Kopfzeile wie bisher. Mehrere: neutrale Kopfzeile, und

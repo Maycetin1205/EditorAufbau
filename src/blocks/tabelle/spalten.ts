@@ -12,12 +12,18 @@
 // Datum oder Status. Auch das ein Technikwert; was er bedeutet und wie breit
 // die Spalte damit wird, steht in ./spaltenArten, nicht hier.
 
-import { ART_TEXT } from './spaltenArten'
+import { ART_TEXT, type Zuordnung } from './spaltenArten'
 
 export interface Spalte {
   titel: string
   feld: string
   art: string
+  // Nur die Status-Art liest sie: Datenwert -> Klarname -> Bedeutung.
+  // OPTIONAL, anders als die Art: die ist ein einzelner Wert mit sinnvollem
+  // Standard und steht darum immer da, die Zuordnung ist bei drei von vier
+  // Arten leer. Eine leere Liste in jeder Spalte mitzuschreiben blaehte jede
+  // exportierte Maske auf, ohne etwas zu sagen.
+  zuordnung?: Zuordnung[]
 }
 
 export const SPALTEN_MIN = 1
@@ -44,16 +50,38 @@ export function standardSpalten(): Spalte[] {
   return [0, 1, 2].map((i) => neueSpalte(i))
 }
 
+// Eine unbekannte Struktur defensiv auf eine Zuordnungsliste abbilden. Jede
+// Zeile braucht mindestens einen Datenwert — eine Zeile ohne ihn koennte nie
+// treffen und stuende nur im Weg. Fehlender Klarname/Bedeutung sind dagegen
+// erlaubt: die Zelle faellt dann auf den Rohwert bzw. auf 'info' zurueck
+// (coerceStatusVariant), statt die halbfertige Zeile zu verwerfen.
+function alsZuordnung(v: unknown): Zuordnung[] {
+  if (!Array.isArray(v)) return []
+  return v
+    .filter((z): z is Record<string, unknown> => Boolean(z) && typeof z === 'object')
+    .map((z) => ({
+      wert: typeof z.wert === 'string' ? z.wert : '',
+      name: typeof z.name === 'string' ? z.name : '',
+      bedeutung: typeof z.bedeutung === 'string' ? z.bedeutung : '',
+    }))
+    .filter((z) => z.wert.trim() !== '')
+}
+
 // Eine unbekannte Struktur defensiv auf eine Spalte abbilden (nie werfen).
 // Eine fehlende Art heisst Text — so verhielten sich ALLE Spalten bis
 // 2026-08-06, gespeicherte Staende von davor bleiben damit unveraendert.
 function alsSpalte(x: unknown, index: number): Spalte {
   if (x && typeof x === 'object') {
     const o = x as Record<string, unknown>
+    const zuordnung = alsZuordnung(o.zuordnung)
     return {
       titel: typeof o.titel === 'string' ? o.titel : standardTitelFuer(index),
       feld: typeof o.feld === 'string' ? o.feld : '',
       art: typeof o.art === 'string' ? o.art : ART_TEXT,
+      // Der Schluessel bleibt WEG, wenn nichts zugeordnet ist — nicht als
+      // leere Liste stehen. Sonst traegt jede Spalte jeder Maske ein
+      // `"zuordnung":[]` mit sich herum.
+      ...(zuordnung.length > 0 ? { zuordnung } : {}),
     }
   }
   // Alte Erstfassung: reine Titel-Strings.

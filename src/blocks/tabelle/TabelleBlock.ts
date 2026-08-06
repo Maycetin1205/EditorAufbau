@@ -60,7 +60,7 @@ import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
-import { chipStyles } from '../shared/statusVariant'
+import { STATUS_BEDEUTUNGEN, chipStyles } from '../shared/statusVariant'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
 import {
   OHNE_MESSUNG,
@@ -78,6 +78,7 @@ import {
   spaltenSteuerung,
 } from './spaltenBearbeiten'
 import {
+  ART_STATUS,
   ART_TEXT,
   SPALTEN_ART_OPTIONEN,
   spaltenArt,
@@ -138,6 +139,20 @@ export class TabelleBlock extends BasicBlock {
       label: 'Darstellung',
       optionen: SPALTEN_ART_OPTIONEN,
       standard: ART_TEXT,
+    },
+    // Die Status-Zuordnung (2026-08-06), am selben Ort wie Darstellung und
+    // Feld — und NUR an einer Status-Spalte (nurBeiWahl). Sie ist freiwillig:
+    // ohne sie zeigt die Marke den Datenwert grau. Waehlbar sind BEDEUTUNGEN,
+    // nie Farben; die Farbe haengt fest an der Bedeutung (../shared/
+    // statusVariant, dieselbe Liste wie im Inspector der Kanban-Spalte).
+    eintragsZuordnung: {
+      key: 'zuordnung',
+      label: 'Status-Zuordnung',
+      nurBeiWahl: ART_STATUS,
+      wertLabel: 'Datenwert',
+      nameLabel: 'Klarname',
+      bedeutungLabel: 'Bedeutung',
+      bedeutungen: STATUS_BEDEUTUNGEN,
     },
   }
   static readonly defaultProps = {

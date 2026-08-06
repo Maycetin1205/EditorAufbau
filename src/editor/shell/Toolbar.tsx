@@ -17,7 +17,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { exportMask } from '../../export/exportMask'
 import { preflightMask } from '../../export/preflight'
-import { failedChecks, validateMaskHtml } from '../../export/validator'
+import { failedChecks, validateMaskHtml, warnChecks } from '../../export/validator'
 import { dataSourceStore } from '../../state/DataSourceStore'
 import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
 import { meldeVerworfeneTypen } from '../../state/persistence'
@@ -65,8 +65,9 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations)
     // Semantische Preflight (kaputte Datenquellen-Referenz)
     // + Dateiform-Pruefung — beide muessen gruen sein, sonst kein Download.
+    const preflight = preflightMask(ed.tree, sources, relations)
     const failed = [
-      ...failedChecks(preflightMask(ed.tree, sources, relations)),
+      ...failedChecks(preflight),
       ...failedChecks(validateMaskHtml(html)),
     ]
     if (failed.length > 0) {
@@ -75,6 +76,18 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
         + failed.map((f) => `• ${f.name}: ${f.detail}`).join('\n'),
       )
       return
+    }
+    // WARNUNGEN (2026-08-06): Zustaende, die der Bauer waehlen darf, die aber
+    // in der Maske sichtbare Folgen haben — bisher die Status-Spalte ohne
+    // Zuordnung. Sie brechen den Export NICHT ab (das waere eine erlaubte
+    // Maske fuer unbaubar erklaert), verschwiegen werden sie aber auch nicht
+    // (Regel 4). Also: einmal zeigen, dann laeuft der Download.
+    const warnungen = warnChecks(preflight)
+    if (warnungen.length > 0) {
+      window.alert(
+        'Hinweis zum Export — er läuft trotzdem:\n\n'
+        + warnungen.map((w) => `• ${w.name}: ${w.detail}`).join('\n'),
+      )
     }
     // SE-Namenskonvention (2026-07-11): eine Maske = ein Ordner mit
     // index.basis.source.html + index.basis.SEvariablen.json — belegt durch

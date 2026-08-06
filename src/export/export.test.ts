@@ -25,7 +25,16 @@ import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
 const standardTestSpalten = [
   { titel: 'Kunde', feld: '2_8', art: 'text' },
   { titel: 'Betrag, netto', feld: '10_12', art: 'zahl' },
-  { titel: 'Größe', feld: '', art: 'status' },
+  // Die Status-Spalte traegt ihre ZUORDNUNG mit (2026-08-06): Datenwert ->
+  // Klarname -> Bedeutung. Sie ist verschachtelt und damit die haerteste
+  // Probe fuer den JSON-Round-Trip durchs Attribut.
+  {
+    titel: 'Größe', feld: '', art: 'status',
+    zuordnung: [
+      { wert: 'W', name: 'Wartet', bedeutung: 'warning' },
+      { wert: 'F', name: 'Fertig, geprüft', bedeutung: 'success' },
+    ],
+  },
 ]
 import type { BlockTree } from '../core/blocks/BlockData'
 import type { DataSource } from '../core/data/dataSources'

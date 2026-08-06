@@ -100,7 +100,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               const wert = rohIndex !== null
                 ? (lage.datenzeilen[rohIndex]?.[i] ?? '')
                 : PLATZHALTER
-              return html`<div class=${art.klasse}>${art.zelle(wert)}</div>`
+              return html`<div class=${art.klasse}>${art.zelle(wert, s.zuordnung ?? [])}</div>`
             })}
           </div>`,
         )}

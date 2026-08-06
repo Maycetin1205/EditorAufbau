@@ -11,6 +11,16 @@ export interface CheckResult {
   name: string
   ok: boolean
   detail: string
+  // WARNUNG statt Blockade (2026-08-06). Bis dahin hatte jeder Befund nur
+  // einen Zustand: nicht ok = kein Export. Das passt fuer alles, was KAPUTT
+  // ist (geloeschte Quelle, Bindung ins Leere) — aber nicht fuer einen
+  // Zustand, den der Bauer ausdruecklich waehlen DARF. Erster Fall: eine
+  // Status-Spalte ohne Zuordnung. Die ist freiwillig (Nutzer-Entscheidung
+  // 2026-08-06), die Marke zeigt dann den Rohwert grau; sie zu blocken hiesse,
+  // eine erlaubte Maske fuer unbaubar zu erklaeren. Sie zu VERSCHWEIGEN waere
+  // aber genauso falsch (Regel 4) — also: gemeldet, nicht gestoppt.
+  // Der Aufrufer trennt: blockend sind nur Befunde OHNE dieses Kennzeichen.
+  warnung?: boolean
 }
 
 export function validateMaskHtml(html: string): CheckResult[] {
@@ -68,6 +78,14 @@ export function validateMaskHtml(html: string): CheckResult[] {
   return results
 }
 
+// Die BLOCKIERENDEN Befunde: nicht ok und keine blosse Warnung. Der Name
+// bleibt, weil ihn viele Tests und beide Aufrufer benutzen — die Bedeutung ist
+// unveraendert „was den Export verhindert".
 export function failedChecks(results: CheckResult[]): CheckResult[] {
-  return results.filter((r) => !r.ok)
+  return results.filter((r) => !r.ok && r.warnung !== true)
+}
+
+// Die Warnungen: gemeldet, aber kein Grund abzubrechen (s. CheckResult).
+export function warnChecks(results: CheckResult[]): CheckResult[] {
+  return results.filter((r) => !r.ok && r.warnung === true)
 }

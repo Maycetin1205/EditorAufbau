@@ -29,6 +29,7 @@ import type { BlockNode } from '../../core/blocks/BlockData'
 import {
   bindingProp,
   eintragsWahlWert,
+  eintragsZuordnungLesen,
   listenStandardTitel,
   listeLesen,
   type BindableSpot,
@@ -40,6 +41,7 @@ import { paarKlartext, type QuelleInReichweite } from '../../core/data/sourceLin
 import type { Editor } from '../../state/Editor'
 import { quellenTraeger } from '../../state/quellenOps'
 import { useDataSources } from '../../state/useDataSources'
+import { useEingabeSitzung } from '../inspector/controls/eingabeSitzung'
 import { FieldPicker, type PickerGruppe } from './FieldPicker'
 import { bindingCode, useBindingPicker } from './useBindingPicker'
 
@@ -109,6 +111,12 @@ export function useFeldBindung({
   pickers: ReactNode
 } {
   const bibliothek = useDataSources().list
+  // Tipp-Sitzung fuer die Textfelder der Zuordnungstabelle: eine Eingabe =
+  // EIN Undo-Schritt, dieselbe Klammer wie in den Inspector-Feldern.
+  const tippSitzung = useEingabeSitzung(
+    () => editor.beginTransaction(),
+    () => editor.endTransaction(),
+  )
   const hatQuelle = quellen.length > 0
   // Bibliotheks-Angebot (s. Kopfkommentar): kein Ersatz für „Quelle in
   // Reichweite", sondern der Weg dorthin — nur wenn ein Träger existiert,
@@ -242,6 +250,23 @@ export function useFeldBindung({
         if (!eintrag) return null
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
         const wahl = listenBindung.eintragsWahl
+        const zuo = listenBindung.eintragsZuordnung
+        // EIN Schluessel im EINEN Eintrag; Titel, Feldbindung und alles andere
+        // an der Spalte bleiben unberuehrt. Frisch gelesen statt `liste`
+        // wiederzuverwenden — zwischen Aufmachen und Klick kann der Bauer den
+        // Titel umbenannt haben.
+        const schreibeInEintrag = (key: string, wert: unknown): void => {
+          const next = listeLesen(block.props[listenBindung.prop], listenBindung)
+          const ziel = next[listenPicker.index]
+          if (!ziel) return
+          ziel[key] = wert
+          editor.updateProperty(block.id, listenBindung.prop, next)
+        }
+        // Die Zuordnung gibt es nur zu DER Darstellung, die sie erklaert: an
+        // einer Textspalte waere sie ein Feld, das nichts tut.
+        const zeigeZuordnung = zuo !== undefined
+          && wahl !== undefined
+          && eintragsWahlWert(wahl, eintrag) === zuo.nurBeiWahl
         return (
           <FieldPicker
             spotLabel={titelJetzt}
@@ -250,18 +275,18 @@ export function useFeldBindung({
               label: wahl.label,
               optionen: wahl.optionen,
               aktuell: eintragsWahlWert(wahl, eintrag),
-              // Schreibt NUR diesen einen Schluessel im EINEN Eintrag; Titel
-              // und Feldbindung der Spalte bleiben unberuehrt. Frisch gelesen
-              // statt `liste` wiederzuverwenden — zwischen Aufmachen und Klick
-              // kann der Bauer den Titel umbenannt haben.
-              onWaehle: (wert) => {
-                const next = listeLesen(block.props[listenBindung.prop], listenBindung)
-                const ziel = next[listenPicker.index]
-                if (!ziel) return
-                ziel[wahl.key] = wert
-                editor.updateProperty(block.id, listenBindung.prop, next)
-              },
+              onWaehle: (wert) => schreibeInEintrag(wahl.key, wert),
             }}
+            zuordnung={zeigeZuordnung && zuo ? {
+              label: zuo.label,
+              wertLabel: zuo.wertLabel,
+              nameLabel: zuo.nameLabel,
+              bedeutungLabel: zuo.bedeutungLabel,
+              bedeutungen: zuo.bedeutungen,
+              zeilen: eintragsZuordnungLesen(zuo, eintrag),
+              onAendern: (zeilen) => schreibeInEintrag(zuo.key, zeilen),
+              sitzung: tippSitzung,
+            } : undefined}
             current={String(eintrag[listenBindung.feldKey] ?? '')}
             top={listenPicker.top}
             left={listenPicker.left}

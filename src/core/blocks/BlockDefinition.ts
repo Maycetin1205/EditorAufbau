@@ -96,6 +96,29 @@ export interface ListenBindung {
   // weiss nicht, worum es geht — er kennt weder „Tabelle" noch „Spalte"
   // (Regel 2). Fehlt der Eintrag, bietet der Picker wie bisher nur Felder an.
   eintragsWahl?: EintragsWahl
+  // Optional: eine ZUORDNUNGSTABELLE je Listen-Eintrag (Tabelle: was ein
+  // Status-Datenwert bedeutet). Wie eintragsWahl reine Registry-Daten — der
+  // Picker zeichnet Zeilen aus Datenwert, Klarname und einer Bedeutung und
+  // weiss nicht, wovon sie handeln.
+  eintragsZuordnung?: EintragsZuordnung
+}
+
+export interface EintragsZuordnung {
+  // Schluessel IM Eintrag, unter dem die Liste steht (Tabelle: 'zuordnung').
+  key: string
+  label: string
+  // Nur anbieten, wenn die eintragsWahl auf diesem Wert steht (Tabelle:
+  // 'status'). Eine Zuordnung an einer Textspalte waere sinnlos, und der
+  // Picker soll nicht mit Feldern zugestellt sein, die nichts tun.
+  nurBeiWahl: string
+  // Beschriftungen der drei Spalten einer Zeile.
+  wertLabel: string
+  nameLabel: string
+  bedeutungLabel: string
+  // Die waehlbaren Bedeutungen (Technikwert -> Klarname). Die FARBE haengt
+  // fest an der Bedeutung und ist nirgends waehlbar — darum stehen hier
+  // Bedeutungen und keine Farben.
+  bedeutungen: readonly { wert: string; name: string }[]
 }
 
 export interface EintragsWahl {
@@ -109,11 +132,40 @@ export interface EintragsWahl {
   standard: string
 }
 
+// Eine Zeile der Zuordnungstabelle, wie der Picker sie kennt. Der Baustein
+// bringt seine eigene, deckungsgleiche Form mit (Tabelle: Zuordnung) — der
+// generische Code braucht davon nur diese drei Felder.
+export interface ZuordnungZeile {
+  wert: string
+  name: string
+  bedeutung: string
+}
+
 // Der gerade gewaehlte Wert eines Listen-Eintrags — leer/unbekannt faellt auf
 // den Standard zurueck, damit im Picker immer genau eine Option markiert ist.
 export function eintragsWahlWert(w: EintragsWahl, eintrag: Record<string, unknown>): string {
   const roh = eintrag[w.key]
   return typeof roh === 'string' && w.optionen.some((o) => o.wert === roh) ? roh : w.standard
+}
+
+// Die Zuordnungszeilen eines Listen-Eintrags defensiv lesen (nie werfen):
+// fehlt der Schluessel oder steht Unsinn darin, ist die Liste leer. Fehlende
+// Einzelfelder werden zu '' ergaenzt, damit der Picker sie anzeigen und
+// nachtragen kann — eine halbfertige Zeile zu verwerfen naehme dem Bediener
+// wortlos seine Eingabe weg.
+export function eintragsZuordnungLesen(
+  z: EintragsZuordnung,
+  eintrag: Record<string, unknown>,
+): ZuordnungZeile[] {
+  const roh = eintrag[z.key]
+  if (!Array.isArray(roh)) return []
+  return roh
+    .filter((r): r is Record<string, unknown> => Boolean(r) && typeof r === 'object')
+    .map((r) => ({
+      wert: typeof r.wert === 'string' ? r.wert : '',
+      name: typeof r.name === 'string' ? r.name : '',
+      bedeutung: typeof r.bedeutung === 'string' ? r.bedeutung : '',
+    }))
 }
 
 // Titel eines noch unbenannten Listen-Eintrags aus der Vorlage ('Spalte {n}').
