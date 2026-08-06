@@ -21,8 +21,10 @@ export const tabelleStil = css`
          Vorgegeben (nicht aus Schrift + Innenabstand geschaetzt) bleibt er
          weiterhin: ein geschaetzter Wert lief hier schon 4,25px je Zeile aus
          dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
+      /* Der Tafel-Rahmen (Demo .tafel, Werte 1:1): Papierflaeche, EINE
+         1,5px-Kante, grosse Rundung, nichts Koerperhaftes. overflow:hidden
+         schneidet Kopf- und Fusszeile an den runden Ecken sauber ab. */
       .tabelle {
-        position: relative;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -35,6 +37,48 @@ export const tabelleStil = css`
         font-size: var(--se-fs);
         color: var(--se-ink);
       }
+      /* Kopfzeile der Tafel (Demo .tafel-kopf): Zaehler links, danach der
+         Platz fuer die Knoepfe. Die Demo traegt hier zusaetzlich einen Titel
+         — der entfaellt bewusst (Nutzer 2026-08-06: „ich brauch
+         ,Patientenliste' nicht in der Tabelle"): eine Ueberschrift ueber
+         einer Tabelle ist ein Text-Baustein, kein zweiter Titel im Rahmen.
+         Aufbau, Kante und Farben kommen unveraendert aus der Demo; NUR der
+         Innenabstand ist dichter als deren 14px/18px — die Maske bleibt ein
+         dichtes Werkzeug (Nutzer-Entscheidung 2026-08-06, masken-tokens.css).
+         Genommen sind dafuer vorhandene Abstands-Werte, keine neuen Zahlen. */
+      .tafel-kopf {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: var(--se-gap);
+        padding: var(--se-gap-sm) var(--se-gap);
+        border-bottom: var(--se-border) solid var(--se-line);
+      }
+      /* Demo: der Zaehler schiebt alles Weitere an die rechte Kante. */
+      .tafel-kopf .zaehler { margin-right: auto; }
+      /* Das Zaehler-Atom der Demo (.zaehler), Werte 1:1: Espresso-Flaeche,
+         cremefarbene Ziffern, kleine Rundung, gleichbreite Ziffern. 12px
+         trifft --se-fs-sm genau; 22px/7px sind strukturelle Masse. */
+      .zaehler {
+        display: inline-grid;
+        place-items: center;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        border-radius: var(--se-r-sm);
+        background: var(--se-ink);
+        color: var(--se-bg);
+        font-family: var(--se-font);
+        font-size: var(--se-fs-sm);
+        font-weight: 700;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      /* Die Knoepfe oben rechts sind ECHTE Baustein-Kinder (Registry:
+         allowedChildTypes), keine gemalten Knoepfe — sie liegen im Light-DOM
+         und kommen hier durch. display:contents macht sie zu Flex-Kindern der
+         Kopfzeile, damit sie denselben Abstand tragen wie in der Demo. */
+      .tafel-kopf slot { display: contents; }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
       .suchzeile {
@@ -152,9 +196,13 @@ export const tabelleStil = css`
       /* Die Zeile unter dem Zeiger hinterlegt sich (2026-07-30). In einer
          dichten Liste ist das kein Schmuck: es zeigt, WELCHE Zeile man
          gleich anklickt — bei 32px Zeilenhoehe verrutscht man sonst leicht
-         um eine. Der Kopf ist ausgenommen, er ist keine Datenzeile. */
+         um eine. Der Kopf ist ausgenommen, er ist keine Datenzeile.
+         Der Ton kommt aus der Demo (.tabelle tbody tr:hover -> --creme):
+         eine Spur heller als der Seitengrund der Maske, nicht die sandfarbene
+         Innenflaeche — bis 2026-08-06 stand hier --se-panel-2 und die Zeile
+         sprang beim Zeigen deutlich zu dunkel. */
       .koerper > .zeile:hover {
-        background: var(--se-panel-2);
+        background: var(--se-bg);
       }
       /* Waehlbare Zeile (nur Laufzeit mit echten Daten, Klasse setzt der
          Baustein): der Zeiger sagt „hier passiert etwas". */
@@ -164,10 +212,17 @@ export const tabelleStil = css`
          wie der Rest der Maske. inset-Schatten statt Rahmen, damit die
          Spaltenbreiten keinen Pixel verrutschen. Der Text wird voll lesbar
          (--se-ink statt --se-muted): die gewaehlte Zeile ist die, mit der
-         der Bediener gerade arbeitet. */
+         der Bediener gerade arbeitet.
+         Beide Werte stehen so in der Demo (.zeile--gewaehlt): Flaeche
+         --sonne-zart (= --se-amber-soft), Streifen --koralle. Bis 2026-08-06
+         war die Flaeche --se-accent-soft, also die getoente HAUSFARBE — damit
+         trug die gewaehlte Zeile zweimal denselben Ton und der Streifen
+         verlor seine Ansage. Der inset-Streifen ist kein Schatten (Regel 4):
+         er sitzt IN der Zeile, damit die Spaltenbreiten keinen Pixel
+         verrutschen. */
       .zeile.gewaehlt,
       .koerper > .zeile.gewaehlt:hover {
-        background: var(--se-accent-soft);
+        background: var(--se-amber-soft);
         box-shadow: inset 3px 0 0 var(--se-accent);
       }
       .zeile.gewaehlt > div { color: var(--se-ink); }
@@ -191,6 +246,11 @@ export const tabelleStil = css`
       .kopf > div { cursor: pointer; user-select: none; }
       .sort-pfeil { font-size: 9px; color: var(--se-muted); }
       .zeile > div { color: var(--se-muted); }
+      /* Fusszeile (Demo .tafel-fuss): OHNE eigene Flaeche — die Trennlinie
+         allein setzt sie ab, genau wie in der Demo („der Rahmen traegt schon
+         die Kante"). Bis 2026-08-06 lag hier --se-panel-2; der sandfarbene
+         Streifen machte aus der Fusszeile eine zweite Leiste unter der
+         Tabelle statt ihres unteren Randes. */
       .fusszeile {
         display: flex;
         align-items: center;
@@ -199,7 +259,6 @@ export const tabelleStil = css`
         border-top: var(--se-border) solid var(--se-line);
         font-size: var(--se-fs-sm);
         color: var(--se-muted);
-        background: var(--se-panel-2);
       }
       .seiten-nav {
         display: flex;
@@ -221,13 +280,16 @@ export const tabelleStil = css`
         opacity: 0.3;
         cursor: default;
       }
-      /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im Export. */
+      /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im
+         Export. Sie sitzt am rechten Ende der Kopfzeile, hinter den echten
+         Knoepfen. Bis 2026-08-06 klebte sie absolut in der oberen rechten
+         Ecke des Bausteins — genau dort, wo jetzt die Kopfzeile beginnt; sie
+         haette auf den Knoepfen gelegen. Als normales Flex-Kind kann sie
+         nichts mehr ueberdecken, und position:relative an .tabelle ist damit
+         ersatzlos entfallen (nichts positioniert sich mehr absolut). */
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
-        position: absolute;
-        top: 3px;
-        right: 3px;
-        z-index: 2;
+        flex: none;
         display: inline-flex;
         gap: 4px;
       }

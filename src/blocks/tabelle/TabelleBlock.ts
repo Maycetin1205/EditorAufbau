@@ -7,6 +7,15 @@
 // „+"/„−"), ./spalten (Modell), ./suche, ./sortierung, ./seitengroesse,
 // ./rumpfMessung, ./seRuntime, ./tabelleStil.
 //
+// Der Rahmen ist die TAFEL der Designsprache (designsprache/musterbogen.html,
+// .tafel): Kopfzeile mit Zaehler und Knoepfen, Spaltenkopf, Zeilen, Fusszeile.
+// Die Knoepfe oben rechts sind ECHTE Baustein-Kinder (acceptsChildren +
+// allowedChildTypes ['button'], Registry-Faehigkeit) und landen ueber einen
+// <slot> in der Kopfzeile — nichts davon ist gemalt, im Export steht dort ein
+// echtes <ff-button> mit seiner Aktionskette. Einen TITEL traegt die Kopfzeile
+// bewusst NICHT, obwohl die Demo einen zeigt (Nutzer-Entscheidung 2026-08-06):
+// eine Ueberschrift ueber einer Tabelle ist ein Text-Baustein.
+//
 // EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
 // (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel UND ein Feld:
 //   - Titel je Spalte per Doppelklick am Kopf umbenennen (./spaltenBearbeiten)
@@ -41,6 +50,8 @@ import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
+import type { FlowDirection } from '../../core/blocks/flowLayout'
+import { ButtonBlock } from '../button/ButtonBlock'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
 import {
@@ -85,6 +96,20 @@ export class TabelleBlock extends BasicBlock {
   // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
   // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
   static readonly acceptsDataSource = true
+  // Knoepfe-Platz oben rechts (2026-08-06): die Tafel nimmt Schaltflaechen auf
+  // — und AUSSCHLIESSLICH die. Alles daran sind Registry-Faehigkeiten, kein
+  // Sondercode: Store, Drag-Vorschau und Export lesen sie generisch (Regel 2).
+  // Der „+ Knopf"-Anstecker ist notwendig, nicht bequem: ein Baustein aus der
+  // Bibliothek laesst sich auf einen Baustein der RASTERFLAECHE gar nicht
+  // fallen (CanvasNode gibt Rasterkindern kein onDragOver) — ohne ihn waere
+  // der Platz unerreichbar. Denselben Weg geht das Kanban mit „+ Spalte".
+  // containerHint aus: die Tafel hat ihren eigenen sichtbaren Rahmen, die
+  // gestrichelte Container-Hilfe des BlockHost laege quer darueber.
+  static readonly acceptsChildren = true
+  static readonly allowedChildTypes = [ButtonBlock.blockType]
+  static readonly childDirection: FlowDirection = 'row'
+  static readonly containerHint = false
+  static readonly addChildButton = { label: 'Knopf', childType: ButtonBlock.blockType }
   // Auswahl (2026-08-05): der Bediener greift hier einen Satz heraus, indem er
   // eine ZEILE anklickt (zweiter Klick hebt auf) — immer und aus der eigenen
   // Datenquelle, darum eine SatzWahl ohne Bedingung und ohne eigene
@@ -370,7 +395,16 @@ export class TabelleBlock extends BasicBlock {
       // laufen koennen.
       '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
     })}>
-      ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
+      <div class="tafel-kopf">
+        <!-- Der Zaehler zeigt DIESELBE Zahl wie die Fusszeile (die Saetze, die
+             die Tabelle traegt) — ohne Quelle einen Strich statt einer
+             erfundenen Zahl (Regel 7). Der <slot> nimmt die echten
+             Knopf-Bausteine auf; die Spalten-Steuerung dahinter gibt es nur
+             im Editor (CSS: :host([data-ff-editor])). -->
+        <span class="zaehler">${hatQuelle ? this.datenzeilen.length : '—'}</span>
+        <slot></slot>
+        ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
+      </div>
       ${tabelleKoerper({
         spalten,
         cols,
