@@ -236,8 +236,9 @@ ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
 sind erledigt; ihr Inhalt steckt in main oder ist bewusst verworfen. Gerettet
 wurde daraus genau dreierlei: die senkrechte Trennlinie und die zwei
 Fellnase-Design-Commits (Palette/Kanten/Flachheit + die eingebetteten
-Schriften). Nicht übernommen und nicht wieder anzufangen: der Musterbogen in
-`designsprache/` samt den acht Tierzeichen. Der einmalige Force-Push auf main
+Schriften). Der Musterbogen in `designsprache/` blieb zunächst draußen — diese
+Entscheidung ist am 2026-08-06 aufgehoben (s. „Demo-Übernahme" unten): er liegt
+jetzt eingecheckt in main und ist das Vorbild. Der einmalige Force-Push auf main
 war ausdrücklich erlaubt und ist verbraucht — ab hier gilt wieder Regel 8:
 nie force-pushen, vor Arbeitsbeginn und vor jedem Push `git fetch`.
 Von der Designsprache trägt die Maske Figtree eingebettet (~28 KB); die
@@ -265,32 +266,36 @@ damit eine Nutzer-Entscheidung ist: dass ein Export-Klick ZWEI automatische
 Downloads auslöst (Chromium fragt dann nach Berechtigung; ein abgelehnter
 zweiter Download verschwindet still) — Abhilfe wäre eine ZIP.
 
-**Design-Übernahme („Fellnase") — NOCH NICHT zusammengeführt (Befund
-2026-08-05, gerettet aus der gelöschten Review-Datei):** Das neue
-Masken-Design liegt in drei Commits NUR auf `claude/opus-hat-fehler-c5f5ey`:
-`b724521` (Trenner senkrecht), `0e2bdff` (Palette/Kanten/Flachheit in den
-Bausteinen), `3cc13cf` (Schriften Fraunces+Figtree eingebettet). `main` ist eine
-alte, um ~50 Commits abgewichene Linie und NICHT der lebende Stand;
-`claude/kleintierpraxis-design-system-e4ye3x` enthält nur den Musterbogen
-(`designsprache/`), keinen Editor-Code. `0e2bdff` ändert ButtonBlock, CardBlock,
-KanbanSpalteBlock, tabelleStil, DialogRahmen, statusVariant, masken-tokens.css,
-das Runtime-Bündel und den Referenzabzug — **erst die Review-Fixes (sind jetzt
-drin), dann die drei Commits per Merge/Cherry-Pick holen** und den Referenzabzug
-mit `npx vitest run -u` erneuern; nie parallel. Mechanisch ist die Übernahme
-sauber (Farben nur über Tokens, Bündel + Abzug im selben Commit erneuert,
-Schriften als Daten-URI: 115 KB je Maske, an EINER Stelle wieder ausbaubar).
-Wie es AUSSIEHT, beurteilt allein der Nutzer.
+**Demo-Übernahme („Fellnase") — Vorbild ist ab jetzt die eingecheckte Demo
+(Nutzer-Entscheidung 2026-08-06).** Die drei Design-Commits (`b724521` Trenner
+senkrecht, `0e2bdff` Palette/Kanten/Flachheit, `3cc13cf` Schriften) sind seit der
+Konsolidierung IN MAIN; die Fellnase-Werte stehen in `masken-tokens.css`. Neu ist,
+dass auch der Musterbogen SELBST eingecheckt ist: `designsprache/`
+(musterbogen.html + atome.css + schriften.css, Herkunft `c3318f2`). Damit muss
+niemand mehr eine Vorlage aus dem Gedächtnis beschreiben — **abschreiben statt
+gestalten**; fehlt ein Wert in der Demo, wird gefragt statt geraten. Die Demo ist
+reines HTML+CSS, läuft ohne Server und wird nie exportiert.
 
-**Nutzer-Urteil zur Editor-Optik (2026-08-05, gilt als Auftrag, OFFEN):**
-1. Die kleinen „Avatare" an den Bausteinen in der linken Palette ergeben keinen
-   Sinn und sehen schlimm aus → durch nüchterne, erkennbare Symbole ersetzen
-   (das Icon deklariert der Baustein selbst, seit `3c65f5b`).
-2. Menüs teils zu eng, Felder passen nicht ganz (Inspector/Zentrale) →
-   Abstände/Breiten durchgehen; Editor-UI-Stile leben NUR in `src/index.css`
-   (nie mit Masken-Tokens mischen).
-3. Ob die Maske eine Schmuck-Serifenschrift (Fraunces) tragen soll, ist eine
-   offene Nutzer-Entscheidung — vor dem Übernehmen der drei Design-Commits
-   einmal in einem Satz nachfragen.
+Der Abgleich Demo ↔ Editor (2026-08-06): die Kanban-SPALTE passt schon (Punkt,
+Titel, Zähler) · der KARTE fehlen Reiter und Fußzeile · der TABELLE fehlt am
+meisten — Tafel-Rahmen, Spaltenbreiten, Marken, Bilder, Leerzustand. Die
+Entscheidungen des Plans dazu:
+- **Spaltenbreite nach ART, nie nach Inhalt** — sonst springt eine Spalte beim
+  Seitenwechsel, wenn die nächste Seite kürzere Werte trägt (Nutzer-Einwand).
+  Zahl 90 px, Datum 100 px, Status 120 px, Text teilt sich den Rest.
+- **Status-Zuordnung ist FREIWILLIG:** die Spalte auf „Status" stellen genügt;
+  ohne Zuordnung zeigt die Marke den Rohwert grau. Zugeordnet wird Datenwert →
+  Klarname → Bedeutung; die Farbe folgt fest der Bedeutung, nie frei wählbar.
+- **Geteilt statt kopiert:** die Marke gibt es schon (`shared/statusVariant.ts`,
+  Nutzer Karte + Kanban) · die Tierbilder wandern von `blocks/card/` nach
+  `blocks/shared/` · das Tafel-Aussehen entsteht als geteilter Stil, weil
+  Tabelle, Dialog und Popup dieselbe Form tragen (die Popup/Dialog-Zusammen-
+  legung bleibt ein eigenes Paket, s. Kopf von `DialogRahmen.ts`).
+- Die Spalten-Darstellung mit Bild heißt **„Bild + Name"** (Nutzer 2026-08-06).
+- Datum wird nur AUSGERICHTET, nie umgerechnet.
+
+Das Nutzer-Urteil zur Editor-Optik vom 2026-08-05 ist abgearbeitet: nüchterne
+Symbole in der Palette, Abstände in Inspector/Zentrale, Fraunces ist raus.
 
 **Datenquellen** — Arten als Tabelle statt Sondercode (2026-07-30 gebaut),
 Kennung frei eingebbar. Seither gebaut (2026-08-04/05): Auswahl geben/folgen

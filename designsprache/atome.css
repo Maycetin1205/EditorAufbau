@@ -1,0 +1,478 @@
+/*
+ * Designsprache "Fellnase" — Kleintierpraxis
+ *
+ * Reines CSS, keine Abhängigkeiten. Gehört NICHT zum Editor-Code:
+ * dieser Ordner ist Anschauung/Vorlage, nichts importiert ihn.
+ * Schriften kommen aus schriften.css (Fraunces + Figtree, eingebettet).
+ *
+ * ── Die fünf Regeln der Sprache ────────────────────────────────────
+ *  1. EINE Rundung für alles: --rundung. Kantig (5px), nicht weich.
+ *     Wer es noch kantiger will, ändert genau diese eine Zahl.
+ *     Eine Ausnahme: Kacheln und Marken sind kleiner gerundet (3px).
+ *  2. EIN lauter Ton je Fläche: Koralle. Alles andere bleibt leise.
+ *  3. Espresso statt Schwarz — nirgends #000, nirgends reines Weiß.
+ *  4. FLACH. Keine Schlagschatten, keine Verläufe, keine gedrückten
+ *     Kanten, nichts Körperhaftes. Tiefe entsteht durch klare 1.5px-
+ *     Kanten und Farbe, nie durch Schatten.
+ *  5. Die Signatur ist die GEKAPPTE ECKE plus der quadratische Punkt:
+ *     jede Status-Marke hat oben rechts einen 45°-Schnitt wie eine
+ *     abgelegte Karteikarte und links einen Farbpunkt. Flach, kantig,
+ *     unverwechselbar.
+ *
+ * ── Die Tierzeichen ───────────────────────────────────────────────
+ *  Ein Kopfmodul für alle: gleiche Kopfform, gleiche Augen, gleiche
+ *  Schnauze, gleiches Strichgewicht (1.8 — dünn genug, dass in 26px
+ *  nichts zuläuft). Pro Tierart wechseln NUR die Ohren (bzw. beim
+ *  Vogel der Schnabel). Damit lesen die Zeichen als Kategorie, nicht
+ *  als Porträt einer Rasse. Drei begründete Ausnahmen: Schildkröte,
+ *  Fisch und das Meerschweinchen (das war mit runder Modulform vom
+ *  Hamster nicht zu unterscheiden — Lesbarkeit schlägt Regel).
+ *  Farben kommen von aussen über drei Variablen: --fell (Hauptton),
+ *  --bauch (helle Schnauze), --strich (Umriss). Die Zeichen selbst
+ *  tragen keine festen Farben.
+ *  WICHTIG: die Formen im <symbol> setzen ihre Farben per style-
+ *  Attribut, nicht über CSS-Klassen. CSS-Selektoren greifen NICHT
+ *  zuverlässig in den Inhalt eines <use> hinein — geerbte
+ *  Eigenschaften und Variablen dagegen schon.
+ * ───────────────────────────────────────────────────────────────────
+ */
+
+:root {
+  /* Grundtöne — warm statt klinisch */
+  --creme: #fbf5ea;          /* Seitengrund, warmes Elfenbein */
+  --papier: #fffdf8;         /* Karten, Felder, helle Schnauzen */
+  --sand: #f3eada;           /* ruhige Flächen, Spalten */
+  --linie: #e9dec9;          /* Ränder und Trennlinien */
+  --linie-zart: #f1e8d6;     /* Zeilentrenner in Tabellen */
+  --espresso: #3d2b22;       /* Text und Umriss — nie reines Schwarz */
+  --espresso-mild: #7a6558;  /* Zweittext */
+  --espresso-zart: #a99a8d;  /* Platzhalter, Nebensächliches */
+
+  /* Der eine kräftige Akzent */
+  --koralle: #e85c3f;
+  --koralle-tief: #c74628;   /* Notfall-Vollton */
+  --koralle-zart: #fbe5dc;   /* Auswahl-Schein */
+  --koralle-hauch: #fef2ee;  /* Notfall-Kartengrund, nur ein Anflug */
+
+  /* Nebentöne — je kräftig und zart. Kräftig = Tierfell und Marken-
+     punkt, zart = Tierschnauze und Marken-Fläche. Nie grosse Flächen. */
+  --sonne: #e2a233;    --sonne-zart: #faedd0;
+  --salbei: #6e9b69;   --salbei-zart: #e5eede;
+  --himmel: #5e93be;   --himmel-zart: #e2edf5;
+  --rose: #d9899b;     --rose-zart: #f8e6ea;
+  --flieder: #9784c1;  --flieder-zart: #ece7f4;
+  --karamell: #c97f46; --karamell-zart: #f6e3ce;
+  /* achter Ton, kam mit dem Hamster dazu — sandfarbenes Fell */
+  --sandfell: #b8946a;
+
+  /* Form: EINE Rundung für alle Kästen (Regel 1) */
+  --rundung: 5px;
+  --rundung-klein: 3px;      /* Kacheln und Marken */
+  --schnitt: 7px;            /* Tiefe der gekappten Ecke (Regel 5) */
+
+  --schrift-schmuck: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --schrift-werk: 'Figtree', 'Segoe UI', Tahoma, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--creme);
+  color: var(--espresso);
+  font: 400 15px/1.55 var(--schrift-werk);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--schrift-schmuck);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0;
+}
+
+::selection { background: var(--koralle-zart); }
+
+:focus-visible {
+  outline: 2px solid var(--koralle);
+  outline-offset: 2px;
+  border-radius: var(--rundung-klein);
+}
+
+/* ---------------------------------------------------------------- *
+ * Atom: Etikett — kleine Zwischenüberschrift in Großbuchstaben
+ * ---------------------------------------------------------------- */
+
+.etikett {
+  font: 700 12px/1.3 var(--schrift-werk);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--espresso-mild);
+}
+
+/* ---------------------------------------------------------------- *
+ * Atom: Knopf — flach, die Kante macht die Arbeit
+ * ---------------------------------------------------------------- */
+
+.knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: 1.5px solid transparent;
+  border-radius: var(--rundung);
+  font: 600 14.5px/1.2 var(--schrift-werk);
+  color: var(--espresso);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.13s ease, border-color 0.13s ease, color 0.13s ease;
+}
+
+.knopf--primaer {
+  background: var(--koralle);
+  border-color: var(--koralle);
+  color: #fff7f0;
+}
+.knopf--primaer:hover { background: var(--koralle-tief); border-color: var(--koralle-tief); }
+
+.knopf--zweit {
+  background: var(--papier);
+  border-color: var(--espresso);
+}
+.knopf--zweit:hover { background: var(--sand); }
+
+.knopf--leise { color: var(--espresso-mild); }
+.knopf--leise:hover { background: var(--sand); color: var(--espresso); }
+
+.knopf--klein { padding: 6px 13px; font-size: 13px; border-radius: var(--rundung-klein); }
+
+.knopf[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------------------------------------------------------------- *
+ * Atom: Status-Marke — flaches Etikett mit gekappter Ecke
+ * Regel 5. Kein Rand, keine Pille, kein gestanztes Loch: die Fläche
+ * trägt den Status, der quadratische Punkt links macht ihn auch bei
+ * ähnlichen Tönen eindeutig.
+ * ---------------------------------------------------------------- */
+
+.marke {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 9px;
+  border-radius: var(--rundung-klein);
+  clip-path: polygon(0 0, calc(100% - var(--schnitt)) 0, 100% var(--schnitt), 100% 100%, 0 100%);
+  font: 700 12px/1.3 var(--schrift-werk);
+  letter-spacing: 0.02em;
+  color: var(--marke-schrift, var(--espresso));
+  background: var(--marke-flaeche, var(--sand));
+  white-space: nowrap;
+}
+
+.marke::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: none;
+  background: var(--marke-punkt, var(--espresso-zart));
+}
+
+.marke--angemeldet { --marke-flaeche: var(--sand); --marke-punkt: var(--espresso-zart); }
+.marke--wartet { --marke-flaeche: var(--sonne-zart); --marke-punkt: var(--sonne); }
+.marke--behandlung { --marke-flaeche: var(--himmel-zart); --marke-punkt: var(--himmel); }
+.marke--fertig { --marke-flaeche: var(--salbei-zart); --marke-punkt: var(--salbei); }
+.marke--hinweis { --marke-flaeche: var(--karamell-zart); --marke-punkt: var(--karamell); }
+.marke--notfall {
+  --marke-flaeche: var(--koralle-tief);
+  --marke-schrift: #fff7f0;
+  --marke-punkt: #fff7f0;
+}
+
+/* ---------------------------------------------------------------- *
+ * Atom: Tier-Avatar — freistehendes Zeichen, KEIN Hintergrund
+ * Die Kachel ist bewusst weg (Nutzer-Entscheidung): sie wirkte als
+ * Rahmen, in dem das Zeichen eingequetscht aussah. Ohne sie atmet es.
+ * Die drei Farbvariablen reisen per Vererbung in den <use>-Inhalt.
+ * Die helle Schnauze (--bauch) hat jede Tierart, nur im eigenen Ton —
+ * sie ist Teil des Kopfmoduls, kein Rassemerkmal.
+ * ---------------------------------------------------------------- */
+
+.tier {
+  --fell: var(--espresso-mild);
+  --bauch: var(--linie-zart);
+  --strich: var(--espresso);
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+.tier svg { width: 100%; height: 100%; display: block; }
+
+.tier--hund { --fell: var(--karamell); --bauch: var(--karamell-zart); }
+.tier--katze { --fell: var(--sonne); --bauch: var(--sonne-zart); }
+.tier--kaninchen { --fell: var(--espresso-mild); --bauch: var(--linie-zart); }
+.tier--meerschwein { --fell: var(--rose); --bauch: var(--rose-zart); }
+.tier--hamster { --fell: var(--sandfell); --bauch: var(--sand); }
+.tier--vogel { --fell: var(--himmel); --bauch: var(--himmel-zart); }
+.tier--schildkroete { --fell: var(--salbei); --bauch: var(--salbei-zart); }
+.tier--fisch { --fell: var(--flieder); --bauch: var(--flieder-zart); }
+
+.tier--klein { width: 26px; height: 26px; }
+.tier--gross { width: 48px; height: 48px; }
+
+/* ---------------------------------------------------------------- *
+ * Atom: Zähler — kleine Anzahl als Kachel
+ * ---------------------------------------------------------------- */
+
+.zaehler {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--rundung-klein);
+  background: var(--espresso);
+  color: var(--creme);
+  font: 700 12px/1 var(--schrift-werk);
+  font-variant-numeric: tabular-nums;
+}
+
+.zaehler--leise { background: var(--linie); color: var(--espresso); }
+
+/* ---------------------------------------------------------------- *
+ * Atom: Eingabefeld
+ * ---------------------------------------------------------------- */
+
+.feld { display: grid; gap: 6px; max-width: 320px; }
+
+.feld-eingabe {
+  padding: 9px 13px;
+  border: 1.5px solid var(--linie);
+  border-radius: var(--rundung);
+  background: var(--papier);
+  color: var(--espresso);
+  font: 400 15px/1.4 var(--schrift-werk);
+  transition: border-color 0.13s ease;
+}
+
+.feld-eingabe::placeholder { color: var(--espresso-zart); }
+
+.feld-eingabe:focus {
+  outline: none;
+  border-color: var(--koralle);
+  /* flach: ein zweiter Strich, kein Leuchten */
+  box-shadow: 0 0 0 1.5px var(--koralle);
+}
+
+.feld-hinweis { font-size: 12.5px; color: var(--espresso-mild); }
+
+/* ---------------------------------------------------------------- *
+ * Atom: Leerzustand — was steht da, wenn nichts da ist
+ * ---------------------------------------------------------------- */
+
+.leer {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 22px 14px 24px;
+  border: 1.5px dashed var(--linie);
+  border-radius: var(--rundung);
+  color: var(--espresso-mild);
+  font-size: 13.5px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.leer svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--espresso-zart);
+  transform: rotate(-12deg);
+}
+
+/* in der Tafel trägt der Rahmen schon die Kante — kein zweiter Strich */
+.leer--tafel { border: none; padding: 44px 20px 48px; }
+
+/* ---------------------------------------------------------------- *
+ * Muster: Kanban-Brett
+ * Karten sind Karteikarten: der Reiter oben links gehört zur Karte
+ * und überdeckt deren Oberkante um 3px — großzügig genug, dass bei
+ * krummen Zoomstufen keine Haarlinie durchscheint.
+ * ---------------------------------------------------------------- */
+
+.brett-rollen { overflow-x: auto; padding-bottom: 6px; }
+
+.brett {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(236px, 1fr));
+  gap: 14px;
+  align-items: start;
+  min-width: 1000px;
+}
+
+.spalte {
+  background: var(--sand);
+  border-radius: calc(var(--rundung) + 2px);
+  padding: 10px 10px 12px;
+}
+
+.spalte-kopf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 10px;
+}
+
+.spalte-titel { font: 700 14px/1.3 var(--schrift-werk); }
+
+.spalte-kopf .zaehler { margin-left: auto; }
+
+.karte {
+  position: relative;
+  margin-top: 24px;
+  padding: 11px 13px 12px;
+  background: var(--papier);
+  border: 1.5px solid var(--linie);
+  border-radius: 0 var(--rundung) var(--rundung) var(--rundung);
+  transition: border-color 0.13s ease;
+}
+
+/* flach: beim Zeigen wird die Kante dunkler, die Karte hebt nicht ab */
+.karte:hover { border-color: var(--espresso-zart); }
+
+.karte-reiter {
+  position: absolute;
+  left: -1.5px;
+  bottom: calc(100% - 3px);
+  padding: 3px 11px 6px;
+  background: var(--papier);
+  border: 1.5px solid var(--linie);
+  border-bottom: none;
+  border-radius: var(--rundung-klein) var(--rundung-klein) 0 0;
+  font: 700 11.5px/1.2 var(--schrift-werk);
+  letter-spacing: 0.04em;
+  color: var(--espresso-mild);
+  font-variant-numeric: tabular-nums;
+}
+
+.karte:hover .karte-reiter { border-color: var(--espresso-zart); }
+
+.karte-kopf { display: flex; align-items: center; gap: 10px; }
+
+.karte-name { font: 700 15.5px/1.25 var(--schrift-werk); }
+
+.karte-zusatz { font-size: 12.5px; color: var(--espresso-mild); }
+
+.karte-grund { margin: 9px 0 0; font-size: 13.5px; line-height: 1.45; }
+
+.karte-fuss {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.karte-halter { font-size: 12.5px; color: var(--espresso-mild); }
+
+/* Notfall: gleiche Karte, klare Kante — Koralle an Rand, Reiter und
+   als Hauch im Grund. Ein Anflug, keine Fläche (Regel 2). */
+.karte--notfall {
+  border-color: var(--koralle);
+  background: var(--koralle-hauch);
+}
+.karte--notfall:hover { border-color: var(--koralle-tief); }
+.karte--notfall .karte-reiter,
+.karte--notfall:hover .karte-reiter {
+  background: var(--koralle-tief);
+  border-color: var(--koralle-tief);
+  color: #fff7f0;
+}
+
+/* ---------------------------------------------------------------- *
+ * Muster: Patiententafel
+ * ---------------------------------------------------------------- */
+
+.tafel {
+  background: var(--papier);
+  border: 1.5px solid var(--linie);
+  border-radius: calc(var(--rundung) + 2px);
+  overflow: hidden;
+}
+
+.tafel-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1.5px solid var(--linie);
+}
+
+.tafel-titel { font-size: 21px; }
+
+.tafel-kopf .zaehler { margin-right: auto; }
+
+.tafel-rollen { overflow-x: auto; }
+
+.tabelle {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+
+.tabelle th {
+  padding: 10px 16px;
+  text-align: left;
+  font: 700 11.5px/1.3 var(--schrift-werk);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--espresso-mild);
+  background: var(--creme);
+  border-bottom: 1.5px solid var(--linie);
+  white-space: nowrap;
+}
+
+.tabelle th.sortiert { color: var(--espresso); }
+.tabelle th.sortiert::after { content: ' \25BE'; color: var(--koralle); }
+
+.tabelle td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--linie-zart);
+  vertical-align: middle;
+}
+
+.tabelle tr:last-child td { border-bottom: none; }
+
+.tabelle tbody tr { transition: background 0.1s ease; }
+.tabelle tbody tr:hover { background: var(--creme); }
+
+.zeile--gewaehlt,
+.tabelle tbody tr.zeile--gewaehlt:hover {
+  background: var(--sonne-zart);
+  box-shadow: inset 3px 0 0 var(--koralle);
+}
+
+.zelle-patient { display: flex; align-items: center; gap: 10px; }
+
+.zelle-name { font: 600 15px/1.25 var(--schrift-werk); }
+
+.zelle-zusatz { font-size: 12.5px; color: var(--espresso-mild); }
+
+.zelle-zahl {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tabelle .zahl-kopf { text-align: right; }
+
+.tafel-fuss {
+  padding: 10px 18px;
+  border-top: 1.5px solid var(--linie);
+  font-size: 12.5px;
+  color: var(--espresso-mild);
+}

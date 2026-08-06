@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fellnase — Designsprache der Kleintierpraxis</title>
+<link rel="stylesheet" href="schriften.css">
+<link rel="stylesheet" href="atome.css">
+<style>
+  /* Nur Schaukasten-Rahmen: Abschnitte, Farbfelder, Schriftproben.
+     Die eigentliche Designsprache liegt in atome.css. */
+  .bogen { max-width: 1140px; margin: 0 auto; padding: 52px 28px 80px; }
+
+  .bogen-kopf { max-width: 720px; }
+  .bogen-titel { font-size: 54px; letter-spacing: -0.01em; margin: 10px 0 14px; }
+  .titel-pfote { width: 32px; height: 32px; fill: var(--koralle); transform: rotate(14deg); margin-left: 6px; }
+  .bogen-satz { font-size: 16.5px; color: var(--espresso-mild); margin: 0; }
+
+  .trenner { display: flex; align-items: center; gap: 16px; margin: 48px 0 42px; }
+  .trenner::before, .trenner::after { content: ''; height: 1.5px; flex: 1; background: var(--linie); }
+  .trenner svg { width: 21px; height: 21px; fill: var(--espresso-zart); flex: none; }
+
+  .abschnitt-kopf { display: flex; gap: 16px; align-items: baseline; margin-bottom: 26px; }
+  .abschnitt-nr { font: 600 17px var(--schrift-schmuck); color: var(--koralle); }
+  .abschnitt-kopf h2 { font-size: 27px; }
+  .abschnitt-kopf p { margin: 5px 0 0; color: var(--espresso-mild); font-size: 14px; max-width: 560px; }
+
+  .gruppe { margin-bottom: 30px; }
+  .gruppe:last-child { margin-bottom: 0; }
+  .gruppe-titel { margin: 0 0 12px; }
+  .reihe { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .gruppe-notiz { margin: 10px 0 0; font-size: 13px; color: var(--espresso-mild); }
+
+  .farb-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 14px; }
+  .farbe { margin: 0; }
+  .farbe-flaeche { height: 62px; border-radius: var(--rundung); border: 1.5px solid rgba(61, 43, 34, 0.09); }
+  .farbe-flaeche--geteilt { display: grid; grid-template-rows: 1fr 1fr; overflow: hidden; padding: 0; }
+  .farbe-flaeche--geteilt span { display: block; }
+  .farbe figcaption { padding: 7px 2px 0; font-size: 13.5px; }
+  .farbe figcaption strong { display: block; font-weight: 700; }
+  .farbe figcaption span { color: var(--espresso-mild); font-size: 12px; }
+
+  .schrift-probe { display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: baseline;
+    padding: 16px 0; border-bottom: 1px solid var(--linie-zart); }
+  .schrift-probe:last-child { border-bottom: none; }
+  .schrift-meta strong { display: block; font-size: 14px; }
+  .schrift-meta span { font-size: 12px; color: var(--espresso-mild); }
+
+  .avatar-galerie { display: flex; flex-wrap: wrap; gap: 20px; }
+  .avatar-galerie figure { margin: 0; display: grid; justify-items: center; gap: 7px; }
+  .avatar-galerie figcaption { font-size: 12.5px; color: var(--espresso-mild); }
+
+  .bogen-fuss { margin-top: 56px; font-size: 12.5px; color: var(--espresso-zart); text-align: center; }
+
+  code { padding: 1px 5px; border-radius: var(--rundung-klein); background: var(--sand);
+    font: 600 12.5px/1.4 ui-monospace, 'SFMono-Regular', Consolas, monospace; }
+
+  @media (max-width: 720px) {
+    .bogen { padding: 32px 16px 56px; }
+    .bogen-titel { font-size: 40px; }
+    .schrift-probe { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!--
+      Ein Kopfmodul für alle Tierarten. Gleich in JEDEM Zeichen:
+        Kopf     M24 12C31.7 12 38 18.3 38 26 …
+        Schnauze M24 25C30 25 34.6 27.5 … (ohne eigenen Umriss)
+        Augen    (18.4|22.8) und (29.6|22.8), r 2.2
+        Nase     (24|29.4), Lächeln M20.2 33.4 …
+        Strich   1.8 — dezent dünn, damit in 26px nichts zuläuft
+      Unterschiedlich ist NUR das Ohrenpaar. Der Vogel tauscht die
+      Schnauze gegen den Schnabel. Drei begründete Ausnahmen: Schildkröte
+      und Fisch (kein Kopf-Tier, sondern Panzer bzw. Profil) und das
+      Meerschweinchen (siehe dort).
+      Farben kommen von aussen: --fell, --bauch, --strich.
+      Kein Hintergrund: die Zeichen stehen frei, ohne Kachel.
+    -->
+    <!-- Hund: kurze, bewusst neutrale Hängeohren an den Seiten -->
+    <symbol id="tier-hund" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
+        <path style="fill:var(--bauch);stroke:none" d="M24 25C30 25 34.6 27.5 34.6 31C34.6 35.8 29.8 39.6 24 39.6C18.2 39.6 13.4 35.8 13.4 31C13.4 27.5 18 25 24 25Z"/>
+        <path d="M14 15.8C9.2 14.2 5 17 5 22.2C5 27.4 8.4 32 12.4 33C14 29.4 14.4 21.6 14 15.8Z"/>
+        <path d="M34 15.8C38.8 14.2 43 17 43 22.2C43 27.4 39.6 32 35.6 33C34 29.4 33.6 21.6 34 15.8Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
+        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
+        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="29.4" rx="2" ry="1.5"/>
+        <path style="fill:none" d="M20.2 33.4C21.5 35.5 26.5 35.5 27.8 33.4"/>
+      </g>
+    </symbol>
+    <!-- Katze: zwei geradseitige Dreiecke oben -->
+    <symbol id="tier-katze" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <path d="M13.2 17.8L12.3 7.4L21.8 13.2Z"/>
+        <path d="M34.8 17.8L35.7 7.4L26.2 13.2Z"/>
+        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
+        <path style="fill:var(--bauch);stroke:none" d="M24 25C30 25 34.6 27.5 34.6 31C34.6 35.8 29.8 39.6 24 39.6C18.2 39.6 13.4 35.8 13.4 31C13.4 27.5 18 25 24 25Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
+        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
+        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="29.4" rx="2" ry="1.5"/>
+        <path style="fill:none" d="M20.2 33.4C21.5 35.5 26.5 35.5 27.8 33.4"/>
+      </g>
+    </symbol>
+    <!-- Kaninchen: zwei lange, stehende Löffel -->
+    <symbol id="tier-kaninchen" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <path d="M19.4 19C17.2 14.8 16.5 9.6 17.5 6.6C18.3 4.2 21 4.4 21.8 7.2C22.8 10.4 23 15.2 22.6 19.2Z"/>
+        <path d="M28.6 19C30.8 14.8 31.5 9.6 30.5 6.6C29.7 4.2 27 4.4 26.2 7.2C25.2 10.4 25 15.2 25.4 19.2Z"/>
+        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
+        <path style="fill:var(--bauch);stroke:none" d="M24 25C30 25 34.6 27.5 34.6 31C34.6 35.8 29.8 39.6 24 39.6C18.2 39.6 13.4 35.8 13.4 31C13.4 27.5 18 25 24 25Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
+        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
+        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="29.4" rx="2" ry="1.5"/>
+        <path style="fill:none" d="M20.2 33.4C21.5 35.5 26.5 35.5 27.8 33.4"/>
+      </g>
+    </symbol>
+    <!--
+      Meerschweinchen: die EINE begründete Abweichung vom Kopfmodul.
+      Mit runder Modulform war es vom Hamster nicht zu unterscheiden
+      (Nutzer-Befund) — deshalb breiter, flacher Kopf und schmale
+      hängende Ohrläppchen statt runder Ohren. Lesbarkeit schlägt Regel.
+    -->
+    <symbol id="tier-meerschwein" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <path d="M14.4 19.2C11.2 16.6 7.4 17 6 19.8C4.7 22.4 6.8 25.4 10.4 25.6Z"/>
+        <path d="M33.6 19.2C36.8 16.6 40.6 17 42 19.8C43.3 22.4 41.2 25.4 37.6 25.6Z"/>
+        <path d="M24 15C33.9 15 42 20.4 42 27C42 33.6 33.9 39 24 39C14.1 39 6 33.6 6 27C6 20.4 14.1 15 24 15Z"/>
+        <path style="fill:var(--bauch);stroke:none" d="M24 26.5C29.4 26.5 33.6 28.6 33.6 31.6C33.6 35.4 29.3 38.4 24 38.4C18.7 38.4 14.4 35.4 14.4 31.6C14.4 28.6 18.6 26.5 24 26.5Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="17.2" cy="24.4" r="2.2"/>
+        <circle style="fill:var(--strich);stroke:none" cx="30.8" cy="24.4" r="2.2"/>
+        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="30.4" rx="2" ry="1.5"/>
+        <path style="fill:none" d="M20.4 34C21.7 35.9 26.3 35.9 27.6 34"/>
+      </g>
+    </symbol>
+    <!-- Hamster: dasselbe Modul, aber grosse runde Ohren oben -->
+    <symbol id="tier-hamster" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <circle cx="13.4" cy="14.6" r="6"/>
+        <circle cx="34.6" cy="14.6" r="6"/>
+        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
+        <path style="fill:var(--bauch);stroke:none" d="M24 25C30 25 34.6 27.5 34.6 31C34.6 35.8 29.8 39.6 24 39.6C18.2 39.6 13.4 35.8 13.4 31C13.4 27.5 18 25 24 25Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
+        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
+        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="29.4" rx="2" ry="1.5"/>
+        <path style="fill:none" d="M20.2 33.4C21.5 35.5 26.5 35.5 27.8 33.4"/>
+      </g>
+    </symbol>
+    <!-- Vogel: derselbe Kopf, keine Ohren — der Schnabel ersetzt die Schnauze -->
+    <symbol id="tier-vogel" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
+        <path style="fill:var(--bauch);stroke:none" d="M18.6 27.4L29.4 27.4L24 36.4Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
+        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
+      </g>
+    </symbol>
+    <!-- Schildkröte: Panzerkuppel, Kopf tritt seitlich heraus -->
+    <symbol id="tier-schildkroete" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <rect x="10" y="32.5" width="6.4" height="6" rx="2.4"/>
+        <rect x="21" y="32.5" width="6.4" height="6" rx="2.4"/>
+        <path d="M39.4 24.6C43 24.6 45.4 27.2 45.4 30.4C45.4 33.6 43 36.2 39.4 36.2C35.8 36.2 33.4 33.6 33.4 30.4C33.4 27.2 35.8 24.6 39.4 24.6Z"/>
+        <rect x="4.4" y="31.4" width="31.4" height="5.6" rx="2.4"/>
+        <path d="M5 33.6C5 21.2 11.8 13.6 20 13.6C28.2 13.6 35 21.2 35 33.6Z"/>
+        <path style="fill:none;stroke:var(--bauch);stroke-width:1.6" d="M20 15.4V31M11.8 18.8C10.4 22.6 9.8 26.8 9.8 31M28.2 18.8C29.6 22.6 30.2 26.8 30.2 31"/>
+        <circle style="fill:var(--strich);stroke:none" cx="41.4" cy="28.8" r="1.9"/>
+        <path style="fill:none" d="M37.6 32.6C38.6 34.2 41.4 34.2 42.4 32.6"/>
+      </g>
+    </symbol>
+    <!-- Fisch: Profil, heller Kopfteil, dreieckige Schwanzflosse -->
+    <symbol id="tier-fisch" viewBox="0 0 48 48">
+      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
+        <path d="M38.4 26L45.8 19.8C44.4 23.6 44.4 28.4 45.8 32.2Z"/>
+        <path d="M7.6 26C11.6 18.6 19.6 15.2 26.6 15.8C32.6 16.4 37.4 20.4 39 26C37.4 31.6 32.6 35.6 26.6 36.2C19.6 36.8 11.6 33.4 7.6 26Z"/>
+        <path style="fill:var(--bauch)" d="M7.6 26C10.6 20.4 15 17 20 15.9C17.6 20.4 17.2 31.6 20 36.1C15 35 10.6 31.6 7.6 26Z"/>
+        <circle style="fill:var(--strich);stroke:none" cx="13.4" cy="23.8" r="2"/>
+        <path style="fill:none" d="M10.6 29.4C11.9 31.3 14.7 31.3 15.7 29.3"/>
+      </g>
+    </symbol>
+    <symbol id="pfote" viewBox="0 0 48 48">
+      <path d="M24 23.5 C29.5 23.5 33.5 26.8 33.5 31 C33.5 35.2 29.3 37.5 24 37.5 C18.7 37.5 14.5 35.2 14.5 31 C14.5 26.8 18.5 23.5 24 23.5 Z"/>
+      <ellipse cx="12.6" cy="20" rx="3.3" ry="4.3" transform="rotate(-20 12.6 20)"/>
+      <ellipse cx="20" cy="14.8" rx="3.3" ry="4.5" transform="rotate(-6 20 14.8)"/>
+      <ellipse cx="28" cy="14.8" rx="3.3" ry="4.5" transform="rotate(6 28 14.8)"/>
+      <ellipse cx="35.4" cy="20" rx="3.3" ry="4.3" transform="rotate(20 35.4 20)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="bogen">
+
+  <header class="bogen-kopf">
+    <p class="etikett">Designsprache · Entwurf für den Masken-Baukasten</p>
+    <h1 class="bogen-titel">Fellnase<svg class="titel-pfote" aria-hidden="true"><use href="#pfote"/></svg></h1>
+    <p class="bogen-satz">Eine warme, helle Formensprache für die Kleintierpraxis:
+    Creme statt Klinikweiß, Espresso statt Schwarz, Koralle als einziger lauter Ton.
+    Kantig in der Form, freundlich im Ton — und für jede Tierart ein eigenes,
+    leises Zeichen.</p>
+  </header>
+
+  <div class="trenner" role="presentation"><svg><use href="#pfote"/></svg></div>
+
+  <section>
+    <header class="abschnitt-kopf">
+      <span class="abschnitt-nr">01</span>
+      <div>
+        <h2>Farben</h2>
+        <p>Alles Warme trägt die Fläche, Espresso schreibt, Koralle zeigt. Die Nebentöne
+        gehören den Tierarten und den Status-Marken — nie großen Flächen.</p>
+      </div>
+    </header>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Grundtöne</h3>
+      <div class="farb-raster">
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--creme)"></div><figcaption><strong>Creme</strong><span>#FBF5EA · Seitengrund</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--papier)"></div><figcaption><strong>Papier</strong><span>#FFFDF8 · Karten, Felder</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--sand)"></div><figcaption><strong>Sand</strong><span>#F3EADA · ruhige Flächen</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--linie)"></div><figcaption><strong>Linie</strong><span>#E9DEC9 · Ränder</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--espresso)"></div><figcaption><strong>Espresso</strong><span>#3D2B22 · Text, Zeichnung</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--espresso-mild)"></div><figcaption><strong>Espresso mild</strong><span>#7A6558 · Zweittext</span></figcaption></figure>
+      </div>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Der Akzent</h3>
+      <div class="farb-raster">
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--koralle)"></div><figcaption><strong>Koralle</strong><span>#E85C3F · Knöpfe, Aktives</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--koralle-tief)"></div><figcaption><strong>Koralle tief</strong><span>#C74628 · gedrückt, Notfall</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--koralle-zart)"></div><figcaption><strong>Koralle zart</strong><span>#FBE5DC · Auswahl-Schein</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche" style="background:var(--koralle-hauch)"></div><figcaption><strong>Koralle Hauch</strong><span>#FEF2EE · Notfall-Grund</span></figcaption></figure>
+      </div>
+      <p class="gruppe-notiz">Koralle ist der einzige laute Ton der Sprache — pro Fläche höchstens ein lauter Auftritt.</p>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Nebentöne — je kräftig und zart</h3>
+      <div class="farb-raster">
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--sonne)"></span><span style="background:var(--sonne-zart)"></span></div><figcaption><strong>Sonne</strong><span>Hund · Status „Wartet“</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--rose)"></span><span style="background:var(--rose-zart)"></span></div><figcaption><strong>Rosé</strong><span>Katze</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--flieder)"></span><span style="background:var(--flieder-zart)"></span></div><figcaption><strong>Flieder</strong><span>Kaninchen</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--karamell)"></span><span style="background:var(--karamell-zart)"></span></div><figcaption><strong>Karamell</strong><span>Meerschweinchen · Hinweise</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--himmel)"></span><span style="background:var(--himmel-zart)"></span></div><figcaption><strong>Himmel</strong><span>Vogel · „In Behandlung“</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--salbei)"></span><span style="background:var(--salbei-zart)"></span></div><figcaption><strong>Salbei</strong><span>Schildkröte · „Fertig“</span></figcaption></figure>
+        <figure class="farbe"><div class="farbe-flaeche farbe-flaeche--geteilt"><span style="background:var(--sandfell)"></span><span style="background:var(--sand)"></span></div><figcaption><strong>Sandfell</strong><span>Hamster</span></figcaption></figure>
+      </div>
+      <p class="gruppe-notiz">Der kräftige Ton ist das Tierfell und der Punkt in der Status-Marke,
+      der zarte die helle Schnauze und die Markenfläche. Sandfell kam als achter Ton mit dem
+      Hamster dazu.</p>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Form — eine Rundung für alles</h3>
+      <div class="reihe" style="align-items:flex-end">
+        <div style="text-align:center">
+          <div style="width:78px;height:52px;background:var(--papier);border:1.5px solid var(--linie);border-radius:var(--rundung)"></div>
+          <div class="gruppe-notiz" style="margin-top:6px">Kästen · 5&nbsp;px</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:52px;height:52px;background:var(--sonne-zart);border-radius:var(--rundung-klein)"></div>
+          <div class="gruppe-notiz" style="margin-top:6px">Kacheln · 3&nbsp;px</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:78px;height:30px;background:var(--sonne-zart);border-radius:var(--rundung-klein);clip-path:polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%)"></div>
+          <div class="gruppe-notiz" style="margin-top:6px">gekappte Ecke</div>
+        </div>
+      </div>
+      <p class="gruppe-notiz">Kantig, nicht weich: alle Kästen teilen eine einzige Stellschraube
+      (<code>--rundung</code>). Wer es noch härter will, ändert genau diese Zahl — Karten, Knöpfe,
+      Spalten und Felder ziehen mit. Und alles ist flach: nirgends ein Schlagschatten, nirgends eine
+      gedrückte Kante. Tiefe macht die 1,5-px-Linie, nicht der Schatten.</p>
+    </div>
+  </section>
+
+  <div class="trenner" role="presentation"><svg><use href="#pfote"/></svg></div>
+
+  <section>
+    <header class="abschnitt-kopf">
+      <span class="abschnitt-nr">02</span>
+      <div>
+        <h2>Schrift</h2>
+        <p>Fraunces schmückt (Titel, Zahlen mit Auftritt), Figtree arbeitet (alles
+        Lesbare, auch klein in Tabellen). Beide frei lizenziert und hier eingebettet.</p>
+      </div>
+    </header>
+
+    <div class="schrift-probe">
+      <div class="schrift-meta"><strong>Seitentitel</strong><span>Fraunces 600 · 34 px</span></div>
+      <div style="font:600 34px/1.15 var(--schrift-schmuck)">Kleintierpraxis Sonnenseite</div>
+    </div>
+    <div class="schrift-probe">
+      <div class="schrift-meta"><strong>Abschnittstitel</strong><span>Fraunces 600 · 24 px</span></div>
+      <div style="font:600 24px/1.2 var(--schrift-schmuck)">Heute im Wartezimmer</div>
+    </div>
+    <div class="schrift-probe">
+      <div class="schrift-meta"><strong>Fließtext</strong><span>Figtree 400 · 15 px</span></div>
+      <div>Hoppel frisst wieder, die Zähne sind in Ordnung. Nachkontrolle in vier Wochen empfohlen — bitte weiter Heu anbieten.</div>
+    </div>
+    <div class="schrift-probe">
+      <div class="schrift-meta"><strong>Etikett</strong><span>Figtree 700 · 12 px · versal</span></div>
+      <div class="etikett">Letzter Besuch</div>
+    </div>
+    <div class="schrift-probe">
+      <div class="schrift-meta"><strong>Zahlen</strong><span>Figtree 600 · gleichbreite Ziffern</span></div>
+      <div style="font-weight:600;font-variant-numeric:tabular-nums">12.07.2026 · 31,4 kg · 09:15 Uhr</div>
+    </div>
+  </section>
+
+  <div class="trenner" role="presentation"><svg><use href="#pfote"/></svg></div>
+
+  <section>
+    <header class="abschnitt-kopf">
+      <span class="abschnitt-nr">03</span>
+      <div>
+        <h2>Atome</h2>
+        <p>Die kleinsten Teile — aus ihnen sind Kanban und Tabelle weiter unten
+        zusammengesetzt, ohne einen einzigen Sonderfall.</p>
+      </div>
+    </header>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Knöpfe</h3>
+      <div class="reihe">
+        <button class="knopf knopf--primaer" type="button">Termin anlegen</button>
+        <button class="knopf knopf--zweit" type="button">Karteikarte öffnen</button>
+        <button class="knopf knopf--leise" type="button">Abbrechen</button>
+        <button class="knopf knopf--primaer knopf--klein" type="button">Speichern</button>
+        <button class="knopf knopf--zweit knopf--klein" type="button" disabled>Nicht verfügbar</button>
+      </div>
+      <p class="gruppe-notiz">Ein lauter Knopf je Fläche, alles Weitere bleibt leise. Flach: keine
+      gedrückte Unterkante, kein Schatten — Farbe und Kante reichen.</p>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Status-Marken — gekappte Ecke und quadratischer Punkt</h3>
+      <div class="reihe">
+        <span class="marke marke--angemeldet">Angemeldet</span>
+        <span class="marke marke--wartet">Wartet</span>
+        <span class="marke marke--behandlung">In Behandlung</span>
+        <span class="marke marke--fertig">Fertig</span>
+        <span class="marke marke--hinweis">Nachkontrolle</span>
+        <span class="marke marke--notfall">Notfall</span>
+      </div>
+      <p class="gruppe-notiz">Die Signatur der Sprache: oben rechts ein 45°-Schnitt wie bei einer
+      abgelegten Karteikarte, links ein quadratischer Farbpunkt im kräftigen Ton. Flach und kantig —
+      kein Rand, keine Pille, kein gestanztes Loch. Das Loch machte die Marke zu einem Gegenstand,
+      und genau daraus entstand der 3D-Eindruck.</p>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Tier-Avatare</h3>
+      <div class="avatar-galerie">
+        <figure><span class="tier tier--gross tier--hund"><svg><use href="#tier-hund"/></svg></span><figcaption>Hund</figcaption></figure>
+        <figure><span class="tier tier--gross tier--katze"><svg><use href="#tier-katze"/></svg></span><figcaption>Katze</figcaption></figure>
+        <figure><span class="tier tier--gross tier--kaninchen"><svg><use href="#tier-kaninchen"/></svg></span><figcaption>Kaninchen</figcaption></figure>
+        <figure><span class="tier tier--gross tier--meerschwein"><svg><use href="#tier-meerschwein"/></svg></span><figcaption>Meerschweinchen</figcaption></figure>
+        <figure><span class="tier tier--gross tier--hamster"><svg><use href="#tier-hamster"/></svg></span><figcaption>Hamster</figcaption></figure>
+        <figure><span class="tier tier--gross tier--vogel"><svg><use href="#tier-vogel"/></svg></span><figcaption>Vogel</figcaption></figure>
+        <figure><span class="tier tier--gross tier--schildkroete"><svg><use href="#tier-schildkroete"/></svg></span><figcaption>Schildkröte</figcaption></figure>
+        <figure><span class="tier tier--gross tier--fisch"><svg><use href="#tier-fisch"/></svg></span><figcaption>Fisch</figcaption></figure>
+      </div>
+
+      <p class="gruppe-notiz" style="margin-top:18px">Der Test: Finger über die Ohren von zwei Zeichen
+      — darunter bleibt derselbe Kopf übrig. Nur die Ohren unterscheiden, deshalb lesen sie als
+      Tierart und nicht als Rasse.</p>
+
+      <h4 class="etikett" style="margin:20px 0 10px">Dieselben Zeichen in 26&nbsp;px — Tabellengröße</h4>
+      <div class="reihe">
+        <span class="tier tier--klein tier--hund"><svg><use href="#tier-hund"/></svg></span>
+        <span class="tier tier--klein tier--katze"><svg><use href="#tier-katze"/></svg></span>
+        <span class="tier tier--klein tier--kaninchen"><svg><use href="#tier-kaninchen"/></svg></span>
+        <span class="tier tier--klein tier--meerschwein"><svg><use href="#tier-meerschwein"/></svg></span>
+        <span class="tier tier--klein tier--hamster"><svg><use href="#tier-hamster"/></svg></span>
+        <span class="tier tier--klein tier--vogel"><svg><use href="#tier-vogel"/></svg></span>
+        <span class="tier tier--klein tier--schildkroete"><svg><use href="#tier-schildkroete"/></svg></span>
+        <span class="tier tier--klein tier--fisch"><svg><use href="#tier-fisch"/></svg></span>
+      </div>
+
+      <h4 class="etikett" style="margin:20px 0 10px">Drei Größen</h4>
+      <div class="reihe">
+        <span class="tier tier--klein tier--hund"><svg><use href="#tier-hund"/></svg></span>
+        <span class="tier tier--hund"><svg><use href="#tier-hund"/></svg></span>
+        <span class="tier tier--gross tier--hund"><svg><use href="#tier-hund"/></svg></span>
+      </div>
+
+      <p class="gruppe-notiz">Ein Kopfmodul für alle: gleiche Kopfform, gleiche Augen, gleiche helle
+      Schnauze, gleiches Strichgewicht. Getauscht wird nur das Ohrenpaar — beim Vogel der Schnabel
+      statt der Schnauze. Der Strich liegt bei 1,8, die Schnauze hat keinen eigenen Umriss mehr, und
+      die Zeichen stehen frei ohne Kachel: zusammen macht das die Luft, die vorher fehlte.
+      Drei begründete Ausnahmen: Schildkröte und Fisch (kein Kopf-Tier, sondern Panzer bzw. Profil)
+      und das Meerschweinchen — das war mit der runden Modulform vom Hamster nicht zu unterscheiden,
+      also breiter flacher Kopf und hängende Ohrläppchen. Farbe kommt von außen
+      (<code>--fell</code>, <code>--bauch</code>, <code>--strich</code>), die Zeichen selbst tragen
+      keine feste Farbe.</p>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Zähler</h3>
+      <div class="reihe">
+        <span class="zaehler">12</span>
+        <span class="zaehler zaehler--leise">3</span>
+      </div>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Eingabefeld</h3>
+      <label class="feld">
+        <span class="etikett">Tiername</span>
+        <input class="feld-eingabe" type="text" placeholder="z. B. Hoppel">
+        <span class="feld-hinweis">So, wie er im Impfpass steht.</span>
+      </label>
+    </div>
+
+    <div class="gruppe">
+      <h3 class="gruppe-titel etikett">Leerzustände</h3>
+      <div class="reihe" style="align-items:stretch">
+        <div style="width:236px">
+          <div class="leer">
+            <svg aria-hidden="true"><use href="#pfote"/></svg>
+            <span>Niemand wartet gerade.</span>
+          </div>
+          <p class="gruppe-notiz">leere Kanban-Spalte</p>
+        </div>
+        <div style="flex:1;min-width:280px">
+          <div class="tafel">
+            <div class="leer leer--tafel">
+              <svg aria-hidden="true"><use href="#pfote"/></svg>
+              <span>Keine Patienten in dieser Auswahl.<br>Filter zurücksetzen oder neuen Patienten anlegen.</span>
+            </div>
+          </div>
+          <p class="gruppe-notiz">leere Tafel — der Rahmen trägt schon die Kante, darum kein zweiter Strich</p>
+        </div>
+      </div>
+      <p class="gruppe-notiz">Gehört zur Sprache, damit nicht jede Fläche ihren eigenen erfindet: ein Satz,
+      eine Pfote, kein Ausrufezeichen. Leer ist kein Fehler.</p>
+    </div>
+  </section>
+
+  <div class="trenner" role="presentation"><svg><use href="#pfote"/></svg></div>
+
+  <section>
+    <header class="abschnitt-kopf">
+      <span class="abschnitt-nr">04</span>
+      <div>
+        <h2>Kanban — der Tag in der Praxis</h2>
+        <p>Jede Karte ist eine Karteikarte: der Reiter trägt die Zeit, die Marke den
+        Status. Ein Notfall bekommt Kante und Reiter in Koralle und einen Hauch davon
+        im Grund — mehr braucht es nicht.</p>
+      </div>
+    </header>
+
+    <div class="brett-rollen">
+    <div class="brett">
+
+      <div class="spalte">
+        <div class="spalte-kopf"><span class="spalte-titel">Angemeldet</span><span class="zaehler zaehler--leise">2</span></div>
+        <article class="karte">
+          <span class="karte-reiter">09:15</span>
+          <div class="karte-kopf">
+            <span class="tier tier--vogel"><svg><use href="#tier-vogel"/></svg></span>
+            <div><div class="karte-name">Coco</div><div class="karte-zusatz">Wellensittich · 2 J.</div></div>
+          </div>
+          <p class="karte-grund">Krallen kürzen, Flügelkontrolle</p>
+          <div class="karte-fuss"><span class="karte-halter">R. Steinbach</span><span class="marke marke--hinweis">Neupatient</span></div>
+        </article>
+        <article class="karte">
+          <span class="karte-reiter">09:45</span>
+          <div class="karte-kopf">
+            <span class="tier tier--katze"><svg><use href="#tier-katze"/></svg></span>
+            <div><div class="karte-name">Luna</div><div class="karte-zusatz">Maine Coon · 3 J.</div></div>
+          </div>
+          <p class="karte-grund">Impfung Katzenschnupfen auffrischen</p>
+          <div class="karte-fuss"><span class="karte-halter">D. Petersen</span><span class="marke marke--angemeldet">Angemeldet</span></div>
+        </article>
+      </div>
+
+      <div class="spalte">
+        <div class="spalte-kopf"><span class="spalte-titel">Wartezimmer</span><span class="zaehler zaehler--leise">2</span></div>
+        <article class="karte">
+          <span class="karte-reiter">08:50</span>
+          <div class="karte-kopf">
+            <span class="tier tier--hund"><svg><use href="#tier-hund"/></svg></span>
+            <div><div class="karte-name">Bello</div><div class="karte-zusatz">Labrador · 4 J.</div></div>
+          </div>
+          <p class="karte-grund">Jährliche Impfung, Gewichtskontrolle</p>
+          <div class="karte-fuss"><span class="karte-halter">M. Schröder</span><span class="marke marke--wartet">Wartet</span></div>
+        </article>
+        <article class="karte">
+          <span class="karte-reiter">09:00</span>
+          <div class="karte-kopf">
+            <span class="tier tier--kaninchen"><svg><use href="#tier-kaninchen"/></svg></span>
+            <div><div class="karte-name">Hoppel</div><div class="karte-zusatz">Zwergkaninchen · 2 J.</div></div>
+          </div>
+          <p class="karte-grund">Zahnkontrolle nach Behandlung</p>
+          <div class="karte-fuss"><span class="karte-halter">L. Bergmann</span><span class="marke marke--hinweis">Nachkontrolle</span></div>
+        </article>
+      </div>
+
+      <div class="spalte">
+        <div class="spalte-kopf"><span class="spalte-titel">In Behandlung</span><span class="zaehler zaehler--leise">2</span></div>
+        <article class="karte">
+          <span class="karte-reiter">08:30</span>
+          <div class="karte-kopf">
+            <span class="tier tier--hund"><svg><use href="#tier-hund"/></svg></span>
+            <div><div class="karte-name">Rocky</div><div class="karte-zusatz">Golden Retriever · 7 J.</div></div>
+          </div>
+          <p class="karte-grund">Lahmt vorne links, Röntgen</p>
+          <div class="karte-fuss"><span class="karte-halter">S. Albrecht</span><span class="marke marke--behandlung">In Behandlung</span></div>
+        </article>
+        <article class="karte karte--notfall">
+          <span class="karte-reiter">Notfall</span>
+          <div class="karte-kopf">
+            <span class="tier tier--meerschwein"><svg><use href="#tier-meerschwein"/></svg></span>
+            <div><div class="karte-name">Lilli</div><div class="karte-zusatz">Rosetten-Meerschweinchen · 1 J.</div></div>
+          </div>
+          <p class="karte-grund">Frisst seit gestern Abend nicht</p>
+          <div class="karte-fuss"><span class="karte-halter">T. Krause</span><span class="marke marke--notfall">Notfall</span></div>
+        </article>
+      </div>
+
+      <div class="spalte">
+        <div class="spalte-kopf"><span class="spalte-titel">Bereit zur Abholung</span><span class="zaehler zaehler--leise">2</span></div>
+        <article class="karte">
+          <span class="karte-reiter">08:15</span>
+          <div class="karte-kopf">
+            <span class="tier tier--katze"><svg><use href="#tier-katze"/></svg></span>
+            <div><div class="karte-name">Minka</div><div class="karte-zusatz">Europäisch Kurzhaar · 5 J.</div></div>
+          </div>
+          <p class="karte-grund">Zahnstein entfernt, gut verlaufen</p>
+          <div class="karte-fuss"><span class="karte-halter">F. Yilmaz</span><span class="marke marke--fertig">Fertig</span></div>
+        </article>
+        <article class="karte">
+          <span class="karte-reiter">08:00</span>
+          <div class="karte-kopf">
+            <span class="tier tier--schildkroete"><svg><use href="#tier-schildkroete"/></svg></span>
+            <div><div class="karte-name">Emil</div><div class="karte-zusatz">Griech. Landschildkröte · 12 J.</div></div>
+          </div>
+          <p class="karte-grund">Panzerkontrolle abgeschlossen</p>
+          <div class="karte-fuss"><span class="karte-halter">H. Winter</span><span class="marke marke--fertig">Fertig</span></div>
+        </article>
+      </div>
+
+    </div>
+    </div>
+  </section>
+
+  <div class="trenner" role="presentation"><svg><use href="#pfote"/></svg></div>
+
+  <section>
+    <header class="abschnitt-kopf">
+      <span class="abschnitt-nr">05</span>
+      <div>
+        <h2>Tabelle — die Patientenliste</h2>
+        <p>Dieselben Atome, engste Größe: Avatar 26 px, Marke, gleichbreite Ziffern.
+        Die gewählte Zeile trägt den Koralle-Streifen, Zeigen hebt sanft hervor.</p>
+      </div>
+    </header>
+
+    <div class="tafel">
+      <div class="tafel-kopf">
+        <h3 class="tafel-titel">Patientenliste</h3>
+        <span class="zaehler">8</span>
+        <button class="knopf knopf--leise knopf--klein" type="button">Filtern</button>
+        <button class="knopf knopf--primaer knopf--klein" type="button">Neuer Patient</button>
+      </div>
+      <div class="tafel-rollen">
+      <table class="tabelle">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Tierart</th>
+            <th>Besitzer:in</th>
+            <th class="sortiert">Letzter Besuch</th>
+            <th class="zahl-kopf">Gewicht</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="zeile--gewaehlt">
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--hund"><svg><use href="#tier-hund"/></svg></span><div><div class="zelle-name">Bello</div><div class="zelle-zusatz">Labrador Retriever</div></div></div></td>
+            <td>Hund</td><td>M. Schröder</td><td class="zelle-zahl">12.07.2026</td><td class="zelle-zahl">31,4 kg</td>
+            <td><span class="marke marke--wartet">Wartet</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--katze"><svg><use href="#tier-katze"/></svg></span><div><div class="zelle-name">Minka</div><div class="zelle-zusatz">Europäisch Kurzhaar</div></div></div></td>
+            <td>Katze</td><td>F. Yilmaz</td><td class="zelle-zahl">28.07.2026</td><td class="zelle-zahl">4,2 kg</td>
+            <td><span class="marke marke--behandlung">In Behandlung</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--kaninchen"><svg><use href="#tier-kaninchen"/></svg></span><div><div class="zelle-name">Hoppel</div><div class="zelle-zusatz">Zwergkaninchen</div></div></div></td>
+            <td>Kaninchen</td><td>L. Bergmann</td><td class="zelle-zahl">01.08.2026</td><td class="zelle-zahl">1,8 kg</td>
+            <td><span class="marke marke--fertig">Fertig</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--meerschwein"><svg><use href="#tier-meerschwein"/></svg></span><div><div class="zelle-name">Lilli</div><div class="zelle-zusatz">Rosetten-Meerschweinchen</div></div></div></td>
+            <td>Meerschweinchen</td><td>T. Krause</td><td class="zelle-zahl">05.08.2026</td><td class="zelle-zahl">0,9 kg</td>
+            <td><span class="marke marke--notfall">Notfall</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--vogel"><svg><use href="#tier-vogel"/></svg></span><div><div class="zelle-name">Coco</div><div class="zelle-zusatz">Wellensittich</div></div></div></td>
+            <td>Vogel</td><td>R. Steinbach</td><td class="zelle-zahl">22.06.2026</td><td class="zelle-zahl">38 g</td>
+            <td><span class="marke marke--angemeldet">Angemeldet</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--schildkroete"><svg><use href="#tier-schildkroete"/></svg></span><div><div class="zelle-name">Emil</div><div class="zelle-zusatz">Griechische Landschildkröte</div></div></div></td>
+            <td>Schildkröte</td><td>H. Winter</td><td class="zelle-zahl">15.05.2026</td><td class="zelle-zahl">1,2 kg</td>
+            <td><span class="marke marke--fertig">Fertig</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--hund"><svg><use href="#tier-hund"/></svg></span><div><div class="zelle-name">Rocky</div><div class="zelle-zusatz">Golden Retriever</div></div></div></td>
+            <td>Hund</td><td>S. Albrecht</td><td class="zelle-zahl">03.08.2026</td><td class="zelle-zahl">28,7 kg</td>
+            <td><span class="marke marke--behandlung">In Behandlung</span></td>
+          </tr>
+          <tr>
+            <td><div class="zelle-patient"><span class="tier tier--klein tier--katze"><svg><use href="#tier-katze"/></svg></span><div><div class="zelle-name">Luna</div><div class="zelle-zusatz">Maine Coon</div></div></div></td>
+            <td>Katze</td><td>D. Petersen</td><td class="zelle-zahl">30.07.2026</td><td class="zelle-zahl">5,6 kg</td>
+            <td><span class="marke marke--wartet">Wartet</span></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="tafel-fuss">Beispieldaten — 8 Patienten, sortiert nach letztem Besuch</div>
+    </div>
+  </section>
+
+  <footer class="bogen-fuss">
+    Musterbogen der Designsprache „Fellnase“ · reines HTML + CSS, keine Skripte ·
+    Schriften: Fraunces &amp; Figtree (SIL Open Font License), eingebettet
+  </footer>
+
+</div>
+
+</body>
+</html>
