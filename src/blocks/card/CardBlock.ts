@@ -1,6 +1,6 @@
 // CardBlock
 // Molekuel (4K.3; Empfang-Anatomie): Karte mit ACHT Stellen nach dem
-// Empfang-Vorbild — oben Avatar (rund, Tier-Silhouette aus dem Datenwert)
+// Empfang-Vorbild — oben Avatar (freistehendes Tierzeichen aus dem Datenwert)
 // neben dem Titelblock (Titel + Titel 2 fliessen in einer Zeile zusammen,
 // darunter die Unterzeile), Zeit + Datum sitzen OBEN RECHTS in derselben
 // Zeile, dann Textzeile, unten der Status-Chip. Karten sind NORMALE
@@ -16,8 +16,9 @@
 //
 // Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
 // (Inline-Edit, WYSIWYG) und sind bindbare Stellen; der Avatar
-// ist eine reine Daten-Stelle (kein Text, nur Bindung — Wert -> Icon ueber
-// tierIcon, Zuordnung aus der Empfang-Referenz). Einziges Inspector-Feld
+// ist eine reine Daten-Stelle (kein Text, nur Bindung — Wert -> Zeichen ueber
+// shared/tierIcon, seit 2026-08-06 die zehn Bilder des Nutzers statt der
+// sechs Silhouetten aus der Empfang-Referenz). Einziges Inspector-Feld
 // ist die Chip-Art (Bedeutung -> Farbe, Regel "Technikwert != Anzeigename").
 // Status-Vokabular + Chip-Aussehen kommen aus dem geteilten Modul
 // shared/statusVariant. Der Chip ist bewusst KEIN eigenes Element im
@@ -43,7 +44,7 @@ import {
   statusVariantProperty,
   type StatusVariant,
 } from '../shared/statusVariant'
-import { tierIcon } from './tierIcon'
+import { tierIcon } from '../shared/tierIcon'
 
 // Text-Stellen der Karte (der Avatar ist gesondert: kein Inline-Edit).
 type TextSpotProp = 'heading' | 'heading2' | 'time' | 'date' | 'meta' | 'text'
@@ -196,8 +197,17 @@ export class CardBlock extends BasicBlock {
         font-family: var(--se-mono);
         font-size: var(--se-fs-sm);
       }
-      /* Avatar wie das Empfang-Original: 30px runde getönte Fläche,
-         17px-Silhouette in der Hausfarbe. */
+      /* Avatar: das Tierzeichen steht FREI, ohne Kachel darunter.
+         Bis 2026-08-06 sass es auf einer koralle-getoenten 30px-Flaeche und
+         war selbst nur 17px gross. Zwei Gruende, beide zwingend: die
+         Designsprache hat die Kachel ausdruecklich abgeschafft („sie wirkte
+         als Rahmen, in dem das Zeichen eingequetscht aussah. Ohne sie atmet
+         es" — designsprache/atome.css, Nutzer-Entscheidung), und die neuen
+         Zeichen bringen ihre eigenen Farben mit: ein buntes Bild auf
+         getoentem Grund in der Hausfarbe schlaegt sich mit ihr.
+         Die Flaeche bleibt 30px (der dichte Editor-Takt, nicht die 36px der
+         Demo), das Bild fuellt sie jetzt aber ganz. Die Farbe (color) bleibt
+         gesetzt — davon lebt die Pfote, der einzige einfarbige Rueckfall. */
       .avatar {
         box-sizing: border-box;
         display: grid;
@@ -205,14 +215,16 @@ export class CardBlock extends BasicBlock {
         width: 30px;
         height: 30px;
         flex: none;
-        border-radius: var(--se-r-sm);
-        background: var(--se-accent-soft);
         color: var(--se-accent);
       }
+      .avatar img,
       .avatar svg {
-        width: 17px;
-        height: 17px;
+        width: 100%;
+        height: 100%;
         display: block;
+        /* Die Zeichen sind quadratisch aufgefuellt; contain haelt sie auch
+           dann unverzerrt, wenn die Flaeche einmal nicht quadratisch ist. */
+        object-fit: contain;
       }
       .titles {
         display: flex;
