@@ -1025,8 +1025,11 @@
          dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
       /* Der Tafel-Rahmen (Demo .tafel, Werte 1:1): Papierflaeche, EINE
          1,5px-Kante, grosse Rundung, nichts Koerperhaftes. overflow:hidden
-         schneidet Kopf- und Fusszeile an den runden Ecken sauber ab. */
+         schneidet Kopf- und Fusszeile an den runden Ecken sauber ab.
+         position:relative ist der Anker der frei schwebenden Editor-Hilfe
+         unten (.steuerung), sonst nichts. */
       .tabelle {
+        position: relative;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -1039,47 +1042,36 @@
         font-size: var(--se-fs);
         color: var(--se-ink);
       }
-      /* Kopfzeile der Tafel (Demo .tafel-kopf): Zaehler links, danach der
-         Platz fuer die Knoepfe. Die Demo traegt hier zusaetzlich einen Titel
-         — der entfaellt bewusst (Nutzer 2026-08-06: „ich brauch
-         ,Patientenliste' nicht in der Tabelle"): eine Ueberschrift ueber
-         einer Tabelle ist ein Text-Baustein, kein zweiter Titel im Rahmen.
-         Aufbau, Kante und Farben kommen unveraendert aus der Demo; NUR der
-         Innenabstand ist dichter als deren 14px/18px — die Maske bleibt ein
-         dichtes Werkzeug (Nutzer-Entscheidung 2026-08-06, masken-tokens.css).
-         Genommen sind dafuer vorhandene Abstands-Werte, keine neuen Zahlen. */
-      .tafel-kopf {
+      /* Kopfzeile der Tafel (Demo .tafel-kopf): der Platz fuer die Knoepfe,
+         rechtsbuendig. Die Demo zeigt dort zusaetzlich Titel und Zaehler —
+         beides ist auf Nutzer-Ansage 2026-08-06 raus (Begruendung im Kopf von
+         TabelleBlock). Aufbau, Kante und Farben kommen unveraendert aus der
+         Demo; NUR der Innenabstand ist dichter als deren 14px/18px — die
+         Maske bleibt ein dichtes Werkzeug (Nutzer-Entscheidung 2026-08-06,
+         masken-tokens.css). Genommen sind dafuer vorhandene Abstands-Werte,
+         keine neuen Zahlen.
+
+         OHNE Knoepfe gibt es die Kopfzeile gar nicht: sonst saesse oben ein
+         leerer Streifen mit Trennlinie, und zwar in jeder exportierten Maske,
+         deren Tabelle einfach nur eine Liste ist. Der Baustein setzt
+         hat-knoepfe, sobald wirklich etwas eingezogen ist (slotchange). Der
+         <slot> bleibt trotzdem immer im Bau — ohne ihn koennte nichts
+         einziehen und slotchange nie melden; display:none verhindert nur die
+         Darstellung, nicht die Zuweisung. */
+      .tafel-kopf { display: none; }
+      .tafel-kopf.hat-knoepfe {
         flex: none;
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: var(--se-gap);
         padding: var(--se-gap-sm) var(--se-gap);
         border-bottom: var(--se-border) solid var(--se-line);
       }
-      /* Demo: der Zaehler schiebt alles Weitere an die rechte Kante. */
-      .tafel-kopf .zaehler { margin-right: auto; }
-      /* Das Zaehler-Atom der Demo (.zaehler), Werte 1:1: Espresso-Flaeche,
-         cremefarbene Ziffern, kleine Rundung, gleichbreite Ziffern. 12px
-         trifft --se-fs-sm genau; 22px/7px sind strukturelle Masse. */
-      .zaehler {
-        display: inline-grid;
-        place-items: center;
-        min-width: 22px;
-        height: 22px;
-        padding: 0 7px;
-        border-radius: var(--se-r-sm);
-        background: var(--se-ink);
-        color: var(--se-bg);
-        font-family: var(--se-font);
-        font-size: var(--se-fs-sm);
-        font-weight: 700;
-        line-height: 1;
-        font-variant-numeric: tabular-nums;
-      }
-      /* Die Knoepfe oben rechts sind ECHTE Baustein-Kinder (Registry:
-         allowedChildTypes), keine gemalten Knoepfe — sie liegen im Light-DOM
-         und kommen hier durch. display:contents macht sie zu Flex-Kindern der
-         Kopfzeile, damit sie denselben Abstand tragen wie in der Demo. */
+      /* Die Knoepfe sind ECHTE Baustein-Kinder (Registry: allowedChildTypes),
+         keine gemalten Knoepfe — sie liegen im Light-DOM und kommen hier
+         durch. display:contents macht sie zu Flex-Kindern der Kopfzeile,
+         damit sie denselben Abstand tragen wie in der Demo. */
       .tafel-kopf slot { display: contents; }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
@@ -1283,17 +1275,29 @@
         cursor: default;
       }
       /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im
-         Export. Sie sitzt am rechten Ende der Kopfzeile, hinter den echten
-         Knoepfen. Bis 2026-08-06 klebte sie absolut in der oberen rechten
-         Ecke des Bausteins — genau dort, wo jetzt die Kopfzeile beginnt; sie
-         haette auf den Knoepfen gelegen. Als normales Flex-Kind kann sie
-         nichts mehr ueberdecken, und position:relative an .tabelle ist damit
-         ersatzlos entfallen (nichts positioniert sich mehr absolut). */
+         Export. Sie haengt an EINER von zwei Stellen, und der Baustein
+         entscheidet an derselben Bedingung wie die Kopfzeile:
+           - ohne Knoepfe: frei schwebend in der oberen rechten Ecke, wie seit
+             jeher. Sie darf dem Baustein keinen Platz stehlen — eine
+             Editor-Hilfe, die Raum belegt, verschiebt den Inhalt gegenueber
+             dem Export (WYSIWYG-Bruch, s. BlockHost).
+           - mit Knoepfen: als letztes Flex-Kind IN der Kopfzeile. Schwebend
+             laege sie sonst auf dem rechten Knopf. Weil sie hinter den
+             Knoepfen laeuft, stehen die trotzdem an derselben Stelle wie im
+             Export — der Platz kommt aus dem ohnehin vorhandenen
+             Innenabstand. */
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
-        flex: none;
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        z-index: 2;
         display: inline-flex;
         gap: 4px;
+      }
+      :host([data-ff-editor]) .tafel-kopf .steuerung {
+        position: static;
+        flex: none;
       }
       .steuerung button {
         font-family: var(--se-font);
@@ -1310,20 +1314,20 @@
         border-color: var(--se-accent);
         color: var(--se-accent);
       }
-`,Gi=4,Q=class e extends M{constructor(...e){super(...e),this.spalten=di(),this.source=``,this.suche=`ja`,this.proSeite=ni,this.zeilenWaehler=`nein`,this._suchtext=``,this.datenzeilen=[],this.rohzeilen=[],this.auswahlIndex=-1,this.durchAuswahlGefiltert=!1,this._sortSpalte=-1,this._sortAuf=!0,this._seite=0,this._proSeiteWahl=null,this._proSeiteGemessen=null,this._beobachter=null}static{this.blockType=`tabelle`}static{this.tagName=`ff-tabelle`}static{this.displayName=`Tabelle`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[Cn.blockType]}static{this.childDirection=`row`}static{this.containerHint=!1}static{this.addChildButton={label:`Knopf`,childType:Cn.blockType}}static{this.satzWahl={}}static{this.kannAuswahlFolgen=!0}static{this.listenBindung={prop:`spalten`,titelKey:`titel`,feldKey:`feld`,standardTitel:li}}static{this.defaultProps={width:`fill`,source:``,spalten:di(),suche:`ja`,tagField:``,proSeite:ni,zeilenWaehler:`nein`}}static{this.customProperties=Vi}static{this.raster={startW:14,startH:8,minW:6,minH:4}}get einstellung(){return this._proSeiteWahl??this.proSeite}get proSeiteAktuell(){return ii(this.einstellung)??this._proSeiteGemessen??ri}waehleProSeite(e){this.hasAttribute(`data-ff-editor`)?this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:`proSeite`,value:e},bubbles:!0,composed:!0})):this._proSeiteWahl=e,this._seite=0,this.requestUpdate()}messeRumpf(){let e=si(this);e!==this._proSeiteGemessen&&(this._proSeiteGemessen=e,this.requestUpdate())}spaltenListe(){return pi(this.spalten)}sichtbareIndizes(){let e=Li(this.datenzeilen,this._suchtext);return this._sortSpalte<0?e:ki(e.map(e=>this.datenzeilen[e]),this._sortSpalte,this._sortAuf).map(t=>e[t])}klickZeile(e){if(e===null||this.hasAttribute(`data-ff-editor`))return;let t=z(this),n=this.rohzeilen[e];t===``||n===void 0||gt(t,n)}setzeSuchtext(e){this._suchtext=e,this._seite=0,this.requestUpdate()}klickSortiere(e){this.editable||(this._sortSpalte===e?this._sortAuf=!this._sortAuf:(this._sortSpalte=e,this._sortAuf=!0),this._seite=0,this.requestUpdate())}aendere(e){this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:`spalten`,value:e},bubbles:!0,composed:!0}))}beobachte(){this._beobachter||(this._beobachter=ci(this,()=>this.messeRumpf()),this._beobachter&&this.messeRumpf())}connectedCallback(){super.connectedCallback(),vi(this),this.beobachte()}firstUpdated(){this.beobachte()}disconnectedCallback(){super.disconnectedCallback(),Fi(this),this._beobachter?.disconnect(),this._beobachter=null,yi(this)}static{this.styles=[M.styles,Wi]}render(){let t=this.spaltenListe(),n={gridTemplateColumns:`repeat(${t.length}, minmax(0, 1fr))`},r=e=>e.stopPropagation(),i=this.sichtbareIndizes(),a=Ri(this.hasAttribute(`data-ff-editor`),this.source),o=i.length,s=this.proSeiteAktuell,{seiten:c,seite:l,zeilen:u}=oi({sichtbar:i,hatQuelle:a,proSeite:s,wunschSeite:this._seite,platzhalterZeilen:Gi});return C`<div class="tabelle" style=${ei({"--spalten-zahl":String(t.length),"--zeilen-hoehe":`32px`})}>
-      <div class="tafel-kopf">
-        <!-- Der Zaehler zeigt DIESELBE Zahl wie die Fusszeile (die Saetze, die
-             die Tabelle traegt) — ohne Quelle einen Strich statt einer
-             erfundenen Zahl (Regel 7). Der <slot> nimmt die echten
-             Knopf-Bausteine auf; die Spalten-Steuerung dahinter gibt es nur
-             im Editor (CSS: :host([data-ff-editor])). -->
-        <span class="zaehler">${a?this.datenzeilen.length:`—`}</span>
-        <slot></slot>
-        ${Ai(()=>this.spaltenListe(),e=>this.aendere(e),r)}
+`,Gi=4,Q=class e extends M{constructor(...e){super(...e),this.spalten=di(),this.source=``,this.suche=`ja`,this.proSeite=ni,this.zeilenWaehler=`nein`,this._suchtext=``,this.datenzeilen=[],this.rohzeilen=[],this.auswahlIndex=-1,this.durchAuswahlGefiltert=!1,this._hatKnoepfe=!1,this._sortSpalte=-1,this._sortAuf=!0,this._seite=0,this._proSeiteWahl=null,this._proSeiteGemessen=null,this._beobachter=null}static{this.blockType=`tabelle`}static{this.tagName=`ff-tabelle`}static{this.displayName=`Tabelle`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[Cn.blockType]}static{this.childDirection=`row`}static{this.containerHint=!1}static{this.addChildButton={label:`Knopf`,childType:Cn.blockType}}static{this.satzWahl={}}static{this.kannAuswahlFolgen=!0}static{this.listenBindung={prop:`spalten`,titelKey:`titel`,feldKey:`feld`,standardTitel:li}}static{this.defaultProps={width:`fill`,source:``,spalten:di(),suche:`ja`,tagField:``,proSeite:ni,zeilenWaehler:`nein`}}static{this.customProperties=Vi}static{this.raster={startW:14,startH:8,minW:6,minH:4}}zaehleKnoepfe(e){let t=e.target;this._hatKnoepfe=t.assignedElements().some(e=>!e.hasAttribute(`data-ff-editor-helper`)&&e.tagName.toLowerCase()!==`template`)}get einstellung(){return this._proSeiteWahl??this.proSeite}get proSeiteAktuell(){return ii(this.einstellung)??this._proSeiteGemessen??ri}waehleProSeite(e){this.hasAttribute(`data-ff-editor`)?this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:`proSeite`,value:e},bubbles:!0,composed:!0})):this._proSeiteWahl=e,this._seite=0,this.requestUpdate()}messeRumpf(){let e=si(this);e!==this._proSeiteGemessen&&(this._proSeiteGemessen=e,this.requestUpdate())}spaltenListe(){return pi(this.spalten)}sichtbareIndizes(){let e=Li(this.datenzeilen,this._suchtext);return this._sortSpalte<0?e:ki(e.map(e=>this.datenzeilen[e]),this._sortSpalte,this._sortAuf).map(t=>e[t])}klickZeile(e){if(e===null||this.hasAttribute(`data-ff-editor`))return;let t=z(this),n=this.rohzeilen[e];t===``||n===void 0||gt(t,n)}setzeSuchtext(e){this._suchtext=e,this._seite=0,this.requestUpdate()}klickSortiere(e){this.editable||(this._sortSpalte===e?this._sortAuf=!this._sortAuf:(this._sortSpalte=e,this._sortAuf=!0),this._seite=0,this.requestUpdate())}aendere(e){this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:`spalten`,value:e},bubbles:!0,composed:!0}))}beobachte(){this._beobachter||(this._beobachter=ci(this,()=>this.messeRumpf()),this._beobachter&&this.messeRumpf())}connectedCallback(){super.connectedCallback(),vi(this),this.beobachte()}firstUpdated(){this.beobachte()}disconnectedCallback(){super.disconnectedCallback(),Fi(this),this._beobachter?.disconnect(),this._beobachter=null,yi(this)}static{this.styles=[M.styles,Wi]}render(){let t=this.spaltenListe(),n={gridTemplateColumns:`repeat(${t.length}, minmax(0, 1fr))`},r=e=>e.stopPropagation(),i=this.sichtbareIndizes(),a=Ri(this.hasAttribute(`data-ff-editor`),this.source),o=i.length,s=Ai(()=>this.spaltenListe(),e=>this.aendere(e),r),c=this.proSeiteAktuell,{seiten:l,seite:u,zeilen:d}=oi({sichtbar:i,hatQuelle:a,proSeite:c,wunschSeite:this._seite,platzhalterZeilen:Gi});return C`<div class="tabelle" style=${ei({"--spalten-zahl":String(t.length),"--zeilen-hoehe":`32px`})}>
+      <!-- Die Kopfzeile traegt NUR die Knoepfe. Sie entsteht auch nur mit
+           ihnen (Klasse hat-knoepfe) — ohne Knoepfe waere sie ein leerer
+           Streifen mit Trennlinie, im Editor wie in der Maske. Der <slot>
+           steht trotzdem immer im Bau: ohne ihn koennte gar nichts
+           einziehen und slotchange nie melden. -->
+      <div class="tafel-kopf${this._hatKnoepfe?` hat-knoepfe`:``}">
+        <slot @slotchange=${this.zaehleKnoepfe}></slot>
+        ${this._hatKnoepfe?s:E}
       </div>
-      ${Ui({spalten:t,cols:n,editable:this.editable,zeigeSuche:this.suche===`ja`,suchtext:this._suchtext,sortSpalte:this._sortSpalte,sortAuf:this._sortAuf,zeilen:u,datenzeilen:this.datenzeilen,hatQuelle:a,auswahlIndex:this.auswahlIndex},{setzeSuchtext:e=>this.setzeSuchtext(e),dblklickKopf:(e,t)=>{this.editable&&(Fi(this),Mi(e,t,()=>this.spaltenListe(),e=>this.aendere(e)))},klickKopf:(t,n)=>{this.editable&&Ii(this,t,e.listenBindung.prop,n),this.klickSortiere(n)},klickZeile:e=>this.klickZeile(e),stop:r})}
-      ${Hi({hatQuelle:a,sichtbar:o,gesamt:this.datenzeilen.length,suchtAktiv:this._suchtext.trim()!==``,auswahlAktiv:this.durchAuswahlGefiltert,zeigeWaehler:this.hasAttribute(`data-ff-editor`)||this.zeilenWaehler===`ja`,einstellung:this.einstellung,seite:l,seiten:c},{waehleProSeite:e=>this.waehleProSeite(e),blaettere:e=>{this._seite=e,this.requestUpdate()},stop:r})}
-    </div>`}};j([A({converter:{fromAttribute:e=>e?mi(e):di(),toAttribute:e=>JSON.stringify(e)}})],Q.prototype,`spalten`,void 0),j([A()],Q.prototype,`source`,void 0),j([A()],Q.prototype,`suche`,void 0),j([A()],Q.prototype,`proSeite`,void 0),j([A()],Q.prototype,`zeilenWaehler`,void 0),j([A({attribute:!1})],Q.prototype,`datenzeilen`,void 0),j([A({attribute:!1})],Q.prototype,`rohzeilen`,void 0),j([A({attribute:!1})],Q.prototype,`auswahlIndex`,void 0),j([A({attribute:!1})],Q.prototype,`durchAuswahlGefiltert`,void 0),M.defineAndRegister(Q);var Ki=Hn(`text`);function qi(e){let t=e.getAttribute(`source`)??``,n=e.getAttribute(Ki)??``;return t===``||n===``?void 0:{sourceId:t,code:n}}function Ji(e){let t=Xn(e,Ki);t.art!==`ungebunden`&&(e.text=t.art===`wert`?t.wert:``)}function Yi(e){qi(e)&&(e.text=``)}var Xi=Wn({hydriere:Ji,verdrahte:Yi}),Zi=Xi.connect,Qi=Xi.disconnect,$i=6,ea=96,ta=14,na={duenn:`300`,normal:`400`,fett:`700`},ra={links:`left`,mitte:`center`,rechts:`right`},ia={standard:`var(--se-ink)`,gedaempft:`var(--se-muted)`,akzent:`var(--se-accent)`,erfolg:`var(--se-green)`,warnung:`var(--se-amber)`,fehler:`var(--se-red)`},aa=`standard`;function oa(e){if(e===`ueberschrift`)return 15;if(e===`klein`)return 12;let t=typeof e==`number`?e:Number.parseFloat(String(e??``));return Number.isFinite(t)?Math.min(ea,Math.max($i,t)):ta}function sa(e){return typeof e==`string`&&e in na?e:`normal`}function ca(e){return typeof e==`string`&&e in ra?e:`links`}function la(e){return typeof e==`string`&&e in ia?e:aa}var $=class extends M{constructor(...e){super(...e),this.groesse=ta,this.gewicht=`normal`,this.ausrichtung=`links`,this.farbe=aa,this.text=`Text`,this.source=``,this.textField=``}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Text`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.kannAuswahlFolgen=!0}static{this.bindableSpots=[{prop:`text`,label:`Text`}]}static{this.defaultProps={width:`fill`,groesse:ta,gewicht:`normal`,ausrichtung:`links`,farbe:aa,text:`Text`,source:``,textField:``}}static{this.raster={startW:6,startH:2,minW:1,minH:1}}static{this.customProperties=[{attributeName:`groesse`,name:`Größe`,description:`Schriftgröße in Pixeln.`,kind:`number`,unit:`px`,min:$i,max:ea,inspectorRow:`Text-Stil`},{attributeName:`gewicht`,name:`Gewicht`,description:`Strichstärke der Schrift.`,kind:`segment`,options:[{value:`duenn`,label:`Dünn`},{value:`normal`,label:`Normal`},{value:`fett`,label:`Fett`}],inspectorRow:`Text-Stil`},{attributeName:`ausrichtung`,name:`Ausrichtung`,description:`Wo der Text in seiner Breite sitzt.`,kind:`segment`,options:[{value:`links`,label:`Links`},{value:`mitte`,label:`Mitte`},{value:`rechts`,label:`Rechts`}],inspectorRow:`Text-Stil`},{attributeName:`farbe`,name:`Farbe`,description:`Textfarbe aus den Farben der Maske.`,kind:`select`,options:[{value:`standard`,label:`Standard`},{value:`gedaempft`,label:`Gedämpft`},{value:`akzent`,label:`Akzent`},{value:`erfolg`,label:`Erfolg`},{value:`warnung`,label:`Warnung`},{value:`fehler`,label:`Fehler`}]}]}static{this.styles=[M.styles,o`
+      ${this._hatKnoepfe?E:s}
+      ${Ui({spalten:t,cols:n,editable:this.editable,zeigeSuche:this.suche===`ja`,suchtext:this._suchtext,sortSpalte:this._sortSpalte,sortAuf:this._sortAuf,zeilen:d,datenzeilen:this.datenzeilen,hatQuelle:a,auswahlIndex:this.auswahlIndex},{setzeSuchtext:e=>this.setzeSuchtext(e),dblklickKopf:(e,t)=>{this.editable&&(Fi(this),Mi(e,t,()=>this.spaltenListe(),e=>this.aendere(e)))},klickKopf:(t,n)=>{this.editable&&Ii(this,t,e.listenBindung.prop,n),this.klickSortiere(n)},klickZeile:e=>this.klickZeile(e),stop:r})}
+      ${Hi({hatQuelle:a,sichtbar:o,gesamt:this.datenzeilen.length,suchtAktiv:this._suchtext.trim()!==``,auswahlAktiv:this.durchAuswahlGefiltert,zeigeWaehler:this.hasAttribute(`data-ff-editor`)||this.zeilenWaehler===`ja`,einstellung:this.einstellung,seite:u,seiten:l},{waehleProSeite:e=>this.waehleProSeite(e),blaettere:e=>{this._seite=e,this.requestUpdate()},stop:r})}
+    </div>`}};j([A({converter:{fromAttribute:e=>e?mi(e):di(),toAttribute:e=>JSON.stringify(e)}})],Q.prototype,`spalten`,void 0),j([A()],Q.prototype,`source`,void 0),j([A()],Q.prototype,`suche`,void 0),j([A()],Q.prototype,`proSeite`,void 0),j([A()],Q.prototype,`zeilenWaehler`,void 0),j([A({attribute:!1})],Q.prototype,`datenzeilen`,void 0),j([A({attribute:!1})],Q.prototype,`rohzeilen`,void 0),j([A({attribute:!1})],Q.prototype,`auswahlIndex`,void 0),j([A({attribute:!1})],Q.prototype,`durchAuswahlGefiltert`,void 0),j([Be()],Q.prototype,`_hatKnoepfe`,void 0),M.defineAndRegister(Q);var Ki=Hn(`text`);function qi(e){let t=e.getAttribute(`source`)??``,n=e.getAttribute(Ki)??``;return t===``||n===``?void 0:{sourceId:t,code:n}}function Ji(e){let t=Xn(e,Ki);t.art!==`ungebunden`&&(e.text=t.art===`wert`?t.wert:``)}function Yi(e){qi(e)&&(e.text=``)}var Xi=Wn({hydriere:Ji,verdrahte:Yi}),Zi=Xi.connect,Qi=Xi.disconnect,$i=6,ea=96,ta=14,na={duenn:`300`,normal:`400`,fett:`700`},ra={links:`left`,mitte:`center`,rechts:`right`},ia={standard:`var(--se-ink)`,gedaempft:`var(--se-muted)`,akzent:`var(--se-accent)`,erfolg:`var(--se-green)`,warnung:`var(--se-amber)`,fehler:`var(--se-red)`},aa=`standard`;function oa(e){if(e===`ueberschrift`)return 15;if(e===`klein`)return 12;let t=typeof e==`number`?e:Number.parseFloat(String(e??``));return Number.isFinite(t)?Math.min(ea,Math.max($i,t)):ta}function sa(e){return typeof e==`string`&&e in na?e:`normal`}function ca(e){return typeof e==`string`&&e in ra?e:`links`}function la(e){return typeof e==`string`&&e in ia?e:aa}var $=class extends M{constructor(...e){super(...e),this.groesse=ta,this.gewicht=`normal`,this.ausrichtung=`links`,this.farbe=aa,this.text=`Text`,this.source=``,this.textField=``}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Text`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.kannAuswahlFolgen=!0}static{this.bindableSpots=[{prop:`text`,label:`Text`}]}static{this.defaultProps={width:`fill`,groesse:ta,gewicht:`normal`,ausrichtung:`links`,farbe:aa,text:`Text`,source:``,textField:``}}static{this.raster={startW:6,startH:2,minW:1,minH:1}}static{this.customProperties=[{attributeName:`groesse`,name:`Größe`,description:`Schriftgröße in Pixeln.`,kind:`number`,unit:`px`,min:$i,max:ea,inspectorRow:`Text-Stil`},{attributeName:`gewicht`,name:`Gewicht`,description:`Strichstärke der Schrift.`,kind:`segment`,options:[{value:`duenn`,label:`Dünn`},{value:`normal`,label:`Normal`},{value:`fett`,label:`Fett`}],inspectorRow:`Text-Stil`},{attributeName:`ausrichtung`,name:`Ausrichtung`,description:`Wo der Text in seiner Breite sitzt.`,kind:`segment`,options:[{value:`links`,label:`Links`},{value:`mitte`,label:`Mitte`},{value:`rechts`,label:`Rechts`}],inspectorRow:`Text-Stil`},{attributeName:`farbe`,name:`Farbe`,description:`Textfarbe aus den Farben der Maske.`,kind:`select`,options:[{value:`standard`,label:`Standard`},{value:`gedaempft`,label:`Gedämpft`},{value:`akzent`,label:`Akzent`},{value:`erfolg`,label:`Erfolg`},{value:`warnung`,label:`Warnung`},{value:`fehler`,label:`Fehler`}]}]}static{this.styles=[M.styles,o`
       .text {
         font-family: var(--se-font);
         /* Farbe kommt als Inline-Stil aus FARBEN (styleMap) — hier steht nur

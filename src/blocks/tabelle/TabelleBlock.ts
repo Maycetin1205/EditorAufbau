@@ -8,13 +8,17 @@
 // ./rumpfMessung, ./seRuntime, ./tabelleStil.
 //
 // Der Rahmen ist die TAFEL der Designsprache (designsprache/musterbogen.html,
-// .tafel): Kopfzeile mit Zaehler und Knoepfen, Spaltenkopf, Zeilen, Fusszeile.
+// .tafel): Kopfzeile, Spaltenkopf, Zeilen, Fusszeile.
 // Die Knoepfe oben rechts sind ECHTE Baustein-Kinder (acceptsChildren +
 // allowedChildTypes ['button'], Registry-Faehigkeit) und landen ueber einen
 // <slot> in der Kopfzeile — nichts davon ist gemalt, im Export steht dort ein
-// echtes <ff-button> mit seiner Aktionskette. Einen TITEL traegt die Kopfzeile
-// bewusst NICHT, obwohl die Demo einen zeigt (Nutzer-Entscheidung 2026-08-06):
-// eine Ueberschrift ueber einer Tabelle ist ein Text-Baustein.
+// echtes <ff-button> mit seiner Aktionskette.
+// Die Kopfzeile traegt NUR diese Knoepfe und entsteht auch nur mit ihnen.
+// Was die Demo dort sonst noch zeigt, ist auf Nutzer-Ansage 2026-08-06 raus:
+// der TITEL (eine Ueberschrift ueber einer Tabelle ist ein Text-Baustein) und
+// der ZAEHLER (die Fusszeile sagt die Zahl bereits im Klartext; als dunkle
+// Kachel war er ein schwarzer Klotz im hellen Rahmen). Keins von beidem kommt
+// ohne neue Entscheidung zurueck.
 //
 // EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
 // (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel UND ein Feld:
@@ -44,8 +48,8 @@
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*).
 
-import { html, type TemplateResult } from 'lit'
-import { property } from 'lit/decorators.js'
+import { html, nothing, type TemplateResult } from 'lit'
+import { property, state } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
@@ -192,6 +196,19 @@ export class TabelleBlock extends BasicBlock {
   // Zeigt die Tabelle gerade WENIGER, weil sie der Auswahl eines anderen
   // Bausteins folgt? Nur fuer die ehrliche Fusszeile (Regel 4).
   @property({ attribute: false }) durchAuswahlGefiltert = false
+
+  // Stehen echte Knopf-Bausteine im Kopf? Aus den geslotteten Kindern
+  // abgeleitet, nie gepflegt — dieselbe Mechanik wie der Kartenzaehler der
+  // Kanban-Spalte, und sie laeuft im Editor UND in der Maske gleich (Regel 1).
+  // Editor-Hilfen und das inerte <template> zaehlen nicht mit.
+  @state() private _hatKnoepfe = false
+
+  private zaehleKnoepfe(e: Event): void {
+    const slot = e.target as HTMLSlotElement
+    this._hatKnoepfe = slot
+      .assignedElements()
+      .some((el) => !el.hasAttribute('data-ff-editor-helper') && el.tagName.toLowerCase() !== 'template')
+  }
 
   // Sortier-Zustand (nur Laufzeit/Export, nicht persistiert).
   private _sortSpalte = -1
@@ -380,6 +397,9 @@ export class TabelleBlock extends BasicBlock {
     // leeren Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen
     // Platzhalter-Zeilen mit „—" (Regel 7: hier kommt spaeter ein Wert hin).
     const gesamt = alleSichtbar.length
+    // Die Spalten-Steuerung wird an GENAU EINER Stelle gebaut und an einer von
+    // zwei Stellen eingehaengt (s. u.) — nie zweimal gezeichnet.
+    const steuerung = spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)
     const proSeite = this.proSeiteAktuell
     const { seiten, seite, zeilen } = seitenAufteilung({
       sichtbar: alleSichtbar,
@@ -395,16 +415,16 @@ export class TabelleBlock extends BasicBlock {
       // laufen koennen.
       '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
     })}>
-      <div class="tafel-kopf">
-        <!-- Der Zaehler zeigt DIESELBE Zahl wie die Fusszeile (die Saetze, die
-             die Tabelle traegt) — ohne Quelle einen Strich statt einer
-             erfundenen Zahl (Regel 7). Der <slot> nimmt die echten
-             Knopf-Bausteine auf; die Spalten-Steuerung dahinter gibt es nur
-             im Editor (CSS: :host([data-ff-editor])). -->
-        <span class="zaehler">${hatQuelle ? this.datenzeilen.length : '—'}</span>
-        <slot></slot>
-        ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
+      <!-- Die Kopfzeile traegt NUR die Knoepfe. Sie entsteht auch nur mit
+           ihnen (Klasse hat-knoepfe) — ohne Knoepfe waere sie ein leerer
+           Streifen mit Trennlinie, im Editor wie in der Maske. Der <slot>
+           steht trotzdem immer im Bau: ohne ihn koennte gar nichts
+           einziehen und slotchange nie melden. -->
+      <div class="tafel-kopf${this._hatKnoepfe ? ' hat-knoepfe' : ''}">
+        <slot @slotchange=${this.zaehleKnoepfe}></slot>
+        ${this._hatKnoepfe ? steuerung : nothing}
       </div>
+      ${this._hatKnoepfe ? nothing : steuerung}
       ${tabelleKoerper({
         spalten,
         cols,

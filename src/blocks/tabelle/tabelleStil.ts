@@ -23,8 +23,11 @@ export const tabelleStil = css`
          dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
       /* Der Tafel-Rahmen (Demo .tafel, Werte 1:1): Papierflaeche, EINE
          1,5px-Kante, grosse Rundung, nichts Koerperhaftes. overflow:hidden
-         schneidet Kopf- und Fusszeile an den runden Ecken sauber ab. */
+         schneidet Kopf- und Fusszeile an den runden Ecken sauber ab.
+         position:relative ist der Anker der frei schwebenden Editor-Hilfe
+         unten (.steuerung), sonst nichts. */
       .tabelle {
+        position: relative;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -37,47 +40,36 @@ export const tabelleStil = css`
         font-size: var(--se-fs);
         color: var(--se-ink);
       }
-      /* Kopfzeile der Tafel (Demo .tafel-kopf): Zaehler links, danach der
-         Platz fuer die Knoepfe. Die Demo traegt hier zusaetzlich einen Titel
-         — der entfaellt bewusst (Nutzer 2026-08-06: „ich brauch
-         ,Patientenliste' nicht in der Tabelle"): eine Ueberschrift ueber
-         einer Tabelle ist ein Text-Baustein, kein zweiter Titel im Rahmen.
-         Aufbau, Kante und Farben kommen unveraendert aus der Demo; NUR der
-         Innenabstand ist dichter als deren 14px/18px — die Maske bleibt ein
-         dichtes Werkzeug (Nutzer-Entscheidung 2026-08-06, masken-tokens.css).
-         Genommen sind dafuer vorhandene Abstands-Werte, keine neuen Zahlen. */
-      .tafel-kopf {
+      /* Kopfzeile der Tafel (Demo .tafel-kopf): der Platz fuer die Knoepfe,
+         rechtsbuendig. Die Demo zeigt dort zusaetzlich Titel und Zaehler —
+         beides ist auf Nutzer-Ansage 2026-08-06 raus (Begruendung im Kopf von
+         TabelleBlock). Aufbau, Kante und Farben kommen unveraendert aus der
+         Demo; NUR der Innenabstand ist dichter als deren 14px/18px — die
+         Maske bleibt ein dichtes Werkzeug (Nutzer-Entscheidung 2026-08-06,
+         masken-tokens.css). Genommen sind dafuer vorhandene Abstands-Werte,
+         keine neuen Zahlen.
+
+         OHNE Knoepfe gibt es die Kopfzeile gar nicht: sonst saesse oben ein
+         leerer Streifen mit Trennlinie, und zwar in jeder exportierten Maske,
+         deren Tabelle einfach nur eine Liste ist. Der Baustein setzt
+         hat-knoepfe, sobald wirklich etwas eingezogen ist (slotchange). Der
+         <slot> bleibt trotzdem immer im Bau — ohne ihn koennte nichts
+         einziehen und slotchange nie melden; display:none verhindert nur die
+         Darstellung, nicht die Zuweisung. */
+      .tafel-kopf { display: none; }
+      .tafel-kopf.hat-knoepfe {
         flex: none;
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: var(--se-gap);
         padding: var(--se-gap-sm) var(--se-gap);
         border-bottom: var(--se-border) solid var(--se-line);
       }
-      /* Demo: der Zaehler schiebt alles Weitere an die rechte Kante. */
-      .tafel-kopf .zaehler { margin-right: auto; }
-      /* Das Zaehler-Atom der Demo (.zaehler), Werte 1:1: Espresso-Flaeche,
-         cremefarbene Ziffern, kleine Rundung, gleichbreite Ziffern. 12px
-         trifft --se-fs-sm genau; 22px/7px sind strukturelle Masse. */
-      .zaehler {
-        display: inline-grid;
-        place-items: center;
-        min-width: 22px;
-        height: 22px;
-        padding: 0 7px;
-        border-radius: var(--se-r-sm);
-        background: var(--se-ink);
-        color: var(--se-bg);
-        font-family: var(--se-font);
-        font-size: var(--se-fs-sm);
-        font-weight: 700;
-        line-height: 1;
-        font-variant-numeric: tabular-nums;
-      }
-      /* Die Knoepfe oben rechts sind ECHTE Baustein-Kinder (Registry:
-         allowedChildTypes), keine gemalten Knoepfe — sie liegen im Light-DOM
-         und kommen hier durch. display:contents macht sie zu Flex-Kindern der
-         Kopfzeile, damit sie denselben Abstand tragen wie in der Demo. */
+      /* Die Knoepfe sind ECHTE Baustein-Kinder (Registry: allowedChildTypes),
+         keine gemalten Knoepfe — sie liegen im Light-DOM und kommen hier
+         durch. display:contents macht sie zu Flex-Kindern der Kopfzeile,
+         damit sie denselben Abstand tragen wie in der Demo. */
       .tafel-kopf slot { display: contents; }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
@@ -281,17 +273,29 @@ export const tabelleStil = css`
         cursor: default;
       }
       /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im
-         Export. Sie sitzt am rechten Ende der Kopfzeile, hinter den echten
-         Knoepfen. Bis 2026-08-06 klebte sie absolut in der oberen rechten
-         Ecke des Bausteins — genau dort, wo jetzt die Kopfzeile beginnt; sie
-         haette auf den Knoepfen gelegen. Als normales Flex-Kind kann sie
-         nichts mehr ueberdecken, und position:relative an .tabelle ist damit
-         ersatzlos entfallen (nichts positioniert sich mehr absolut). */
+         Export. Sie haengt an EINER von zwei Stellen, und der Baustein
+         entscheidet an derselben Bedingung wie die Kopfzeile:
+           - ohne Knoepfe: frei schwebend in der oberen rechten Ecke, wie seit
+             jeher. Sie darf dem Baustein keinen Platz stehlen — eine
+             Editor-Hilfe, die Raum belegt, verschiebt den Inhalt gegenueber
+             dem Export (WYSIWYG-Bruch, s. BlockHost).
+           - mit Knoepfen: als letztes Flex-Kind IN der Kopfzeile. Schwebend
+             laege sie sonst auf dem rechten Knopf. Weil sie hinter den
+             Knoepfen laeuft, stehen die trotzdem an derselben Stelle wie im
+             Export — der Platz kommt aus dem ohnehin vorhandenen
+             Innenabstand. */
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
-        flex: none;
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        z-index: 2;
         display: inline-flex;
         gap: 4px;
+      }
+      :host([data-ff-editor]) .tafel-kopf .steuerung {
+        position: static;
+        flex: none;
       }
       .steuerung button {
         font-family: var(--se-font);
