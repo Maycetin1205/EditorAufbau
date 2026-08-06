@@ -1,5 +1,13 @@
 // TabelleBlock
-// Tabellen-Baustein. EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
+// Tabellen-Baustein. Diese Datei haelt, was den BAUSTEIN ausmacht:
+// Eigenschaften, Laufzeit-Zustand (Suche/Sortierung/Seite/Auswahl), Messung
+// und Lebenszyklus. Alles, was gezeichnet oder gerechnet wird, wohnt in den
+// Faechern daneben — ./tabelleKoerper (Suchzeile, Kopf, Zeilen),
+// ./tabelleFuss (Bedienleiste), ./spaltenBearbeiten (Umbenennen, Feld-Picker,
+// „+"/„−"), ./spalten (Modell), ./suche, ./sortierung, ./seitengroesse,
+// ./rumpfMessung, ./seRuntime, ./tabelleStil.
+//
+// EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
 // (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel UND ein Feld:
 //   - Titel je Spalte per Doppelklick am Kopf umbenennen (./spaltenBearbeiten)
 //   - „+" / „−" oben rechts: Spalte hinzufügen / letzte entfernen
@@ -44,10 +52,16 @@ import {
 } from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereIndizes } from './sortierung'
-import { spaltenSteuerung, starteTitelEdit } from './spaltenBearbeiten'
+import {
+  benenneSpalteUm,
+  feldPickerAbbestellen,
+  oeffneFeldPicker,
+  spaltenSteuerung,
+} from './spaltenBearbeiten'
 import { passendeIndizes, zeigtEchteDaten } from './suche'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
+import { tabelleKoerper } from './tabelleKoerper'
 import { tabelleStil } from './tabelleStil'
 import {
   STANDARD_TITEL,
@@ -61,11 +75,6 @@ import {
 export { coerceSpalten, type Spalte } from './spalten'
 
 const PLATZHALTER_ZEILEN = 4
-
-// Wartezeit, bis ein Einzelklick auf den Spaltenkopf als Einzelklick gilt.
-// Darunter waere ein Doppelklick (Umbenennen) nicht mehr sauber abzugrenzen,
-// darueber fuehlt sich der Feld-Picker traege an.
-const DOPPELKLICK_FENSTER = 220
 
 export class TabelleBlock extends BasicBlock {
   static readonly blockType = 'tabelle'
@@ -286,60 +295,6 @@ export class TabelleBlock extends BasicBlock {
     )
   }
 
-  // Editor-only: Klick auf einen Spaltenkopf fordert den BlockHost auf, den
-  // Feld-Picker fuer diesen Listen-Eintrag zu oeffnen. Das Event ist GENERISCH
-  // (`ff-listen-bind` + Prop-Name) — der BlockHost bedient damit jeden
-  // Baustein mit `listenBindung`, ohne die Tabelle zu kennen (Regel 2).
-  //
-  // Einzel- und Doppelklick liegen hier auf DEMSELBEN Element (Picker vs.
-  // Umbenennen). Ein Doppelklick loest immer auch zwei Einzelklicks aus —
-  // darum wartet der Picker kurz ab und wird vom dblclick abbestellt.
-  private _klickTimer: ReturnType<typeof setTimeout> | null = null
-
-  private klickSpaltenkopf(e: MouseEvent, index: number): void {
-    if (!this.editable) return
-    e.stopPropagation()
-    const el = e.currentTarget as HTMLElement
-    const rect = el.getBoundingClientRect()
-    this.klickTimerAus()
-    this._klickTimer = setTimeout(() => {
-      this._klickTimer = null
-      this.dispatchEvent(
-        new CustomEvent('ff-listen-bind', {
-          detail: {
-            prop: TabelleBlock.listenBindung.prop,
-            index,
-            top: rect.bottom + 4,
-            left: rect.left,
-          },
-          bubbles: true,
-          composed: true,
-        }),
-      )
-    }, DOPPELKLICK_FENSTER)
-  }
-
-  private klickTimerAus(): void {
-    if (this._klickTimer !== null) {
-      clearTimeout(this._klickTimer)
-      this._klickTimer = null
-    }
-  }
-
-  // Inline-Umbenennen des TITELS einer Spalte am Kopf. Die Mechanik wohnt in
-  // ./spaltenBearbeiten, hier bleibt nur, was die Tabelle daran fachlich ausmacht:
-  // der Titel landet an SEINER Stelle in der Liste, das Feld der Spalte
-  // bleibt erhalten.
-  private bearbeiteTitel(e: MouseEvent, index: number): void {
-    if (!this.editable) return
-    starteTitelEdit(e, (neu) => {
-      const liste = this.spaltenListe()
-      if (index >= liste.length) return
-      liste[index] = { ...liste[index], titel: neu }
-      this.aendere(liste)
-    })
-  }
-
   // Anmelden. Aus BEIDEN Einstiegen aufgerufen: beim ersten Mal gibt es noch
   // kein gezeichnetes Innenleben (firstUpdated holt es nach), beim
   // Wieder-Einhaengen ins DOM steht es schon (connectedCallback) — und dort
@@ -365,7 +320,7 @@ export class TabelleBlock extends BasicBlock {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback()
-    this.klickTimerAus()
+    feldPickerAbbestellen(this)
     this._beobachter?.disconnect()
     this._beobachter = null
     disconnectTable(this)
@@ -416,51 +371,35 @@ export class TabelleBlock extends BasicBlock {
       '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
     })}>
       ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
-      ${this.suche === 'ja' ? html`<div class="suchzeile">
-        <input
-          type="search"
-          placeholder="Tabelle durchsuchen…"
-          aria-label="Tabelle durchsuchen"
-          .value=${this._suchtext}
-          @pointerdown=${stop}
-          @input=${(e: Event) => this.setzeSuchtext((e.target as HTMLInputElement).value)}
-        />
-      </div>` : ''}
-      <div class="koerper">
-      <div class="kopf" style=${styleMap(cols)}>
-        ${spalten.map(
-          (s, i) => html`<div
-            data-ff-editable
-            @dblclick=${(e: MouseEvent) => {
-              // Umbenennen gewinnt: den wartenden Feld-Picker abbestellen.
-              this.klickTimerAus()
-              this.bearbeiteTitel(e, i)
-            }}
-            @click=${(e: MouseEvent) => {
-              // Editor: Feld-Picker (verzoegert, s. klickSpaltenkopf).
-              // Laufzeit: sortieren. Nie beides — editable trennt die Welten.
-              this.klickSpaltenkopf(e, i)
-              this.klickSortiere(i)
-            }}
-          >${s.titel}${!this.editable && this._sortSpalte === i
-            ? html`<span class="sort-pfeil">${this._sortAuf ? ' ▲' : ' ▼'}</span>`
-            : ''}</div>`,
-        )}
-      </div>
-        ${zeilen.map(
-          (rohIndex) => html`<div
-            class="zeile${rohIndex !== null && hatQuelle ? ' waehlbar' : ''}${
-              rohIndex !== null && rohIndex === this.auswahlIndex ? ' gewaehlt' : ''}"
-            style=${styleMap(cols)}
-            @click=${() => this.klickZeile(rohIndex)}
-          >
-            ${rohIndex !== null
-              ? (this.datenzeilen[rohIndex] ?? []).map((wert) => html`<div>${wert}</div>`)
-              : spalten.map(() => html`<div>—</div>`)}
-          </div>`,
-        )}
-        <div class="lineal"></div>
-      </div>
+      ${tabelleKoerper({
+        spalten,
+        cols,
+        editable: this.editable,
+        zeigeSuche: this.suche === 'ja',
+        suchtext: this._suchtext,
+        sortSpalte: this._sortSpalte,
+        sortAuf: this._sortAuf,
+        zeilen,
+        datenzeilen: this.datenzeilen,
+        hatQuelle,
+        auswahlIndex: this.auswahlIndex,
+      }, {
+        setzeSuchtext: (text) => this.setzeSuchtext(text),
+        dblklickKopf: (e, i) => {
+          if (!this.editable) return
+          // Umbenennen gewinnt: den wartenden Feld-Picker abbestellen.
+          feldPickerAbbestellen(this)
+          benenneSpalteUm(e, i, () => this.spaltenListe(), (l) => this.aendere(l))
+        },
+        klickKopf: (e, i) => {
+          // Editor: Feld-Picker (verzoegert, s. spaltenBearbeiten).
+          // Laufzeit: sortieren. Nie beides — editable trennt die Welten.
+          if (this.editable) oeffneFeldPicker(this, e, TabelleBlock.listenBindung.prop, i)
+          this.klickSortiere(i)
+        },
+        klickZeile: (rohIndex) => this.klickZeile(rohIndex),
+        stop,
+      })}
       ${tabelleFuss({
         hatQuelle,
         sichtbar: gesamt,

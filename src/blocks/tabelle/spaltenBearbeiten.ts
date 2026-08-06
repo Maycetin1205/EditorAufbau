@@ -1,8 +1,9 @@
 // spaltenBearbeiten — die Spalten am Kopf bearbeiten (nur im Editor).
 //
-// Zwei Handgriffe, ein Thema: den Titel einer Spalte umbenennen, und Spalten
-// hinzufuegen bzw. die letzte entfernen. Beides passiert oben am Kopf, beides
-// gibt es NUR auf der Maskenflaeche — im Export nie (WYSIWYG, Regel 1).
+// Drei Handgriffe, ein Thema: den Titel einer Spalte umbenennen, ihr Feld
+// waehlen, und Spalten hinzufuegen bzw. die letzte entfernen. Alles passiert
+// oben am Kopf, alles gibt es NUR auf der Maskenflaeche — im Export nie
+// (WYSIWYG, Regel 1).
 //
 // Aus TabelleBlock herausgeloest (2026-08-06), weil die Datei mit der
 // gemessenen Seitengroesse ueber den 500-Zeilen-Deckel wuchs (check:regeln).
@@ -111,4 +112,67 @@ export function starteTitelEdit(
   }
   ziel.addEventListener('blur', onBlur)
   ziel.addEventListener('keydown', onKey)
+}
+
+// Titel EINER Spalte umbenennen. Die Eingabe-Mechanik ist starteTitelEdit;
+// hier steht nur, was die Tabelle daran fachlich ausmacht: der neue Titel
+// landet an SEINER Stelle in der Liste, das Feld der Spalte bleibt erhalten.
+export function benenneSpalteUm(
+  e: MouseEvent,
+  index: number,
+  liste: () => Spalte[],
+  aendere: (spalten: Spalte[]) => void,
+): void {
+  starteTitelEdit(e, (neu) => {
+    const l = liste()
+    if (index >= l.length) return
+    l[index] = { ...l[index], titel: neu }
+    aendere(l)
+  })
+}
+
+// Wartezeit, bis ein Einzelklick auf den Spaltenkopf als Einzelklick gilt.
+// Darunter waere ein Doppelklick (Umbenennen) nicht mehr sauber abzugrenzen,
+// darueber fuehlt sich der Feld-Picker traege an.
+const DOPPELKLICK_FENSTER = 220
+
+// Der wartende Feld-Picker je Baustein. Einzel- und Doppelklick liegen auf
+// DEMSELBEN Element, und ein Doppelklick loest immer auch zwei Einzelklicks
+// aus — darum wartet der Picker kurz ab und wird vom dblclick abbestellt.
+// WeakMap statt Feld am Element: der Timer gehoert zu DIESER Bedienung, nicht
+// zum Zustand der Tabelle.
+const wartenderPicker = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>()
+
+// Beim Umbenennen und beim Abmelden aufzurufen — sonst oeffnet sich der
+// Picker noch, nachdem der Baustein aus dem DOM ist.
+export function feldPickerAbbestellen(baustein: HTMLElement): void {
+  const t = wartenderPicker.get(baustein)
+  if (t === undefined) return
+  clearTimeout(t)
+  wartenderPicker.delete(baustein)
+}
+
+// Fordert den BlockHost auf, den Feld-Picker fuer diesen Listen-Eintrag zu
+// oeffnen. Das Event ist GENERISCH (`ff-listen-bind` + Prop-Name) — der
+// BlockHost bedient damit jeden Baustein mit `listenBindung`, ohne die Tabelle
+// zu kennen (Regel 2). Den editable-Check macht der Aufrufer.
+export function oeffneFeldPicker(
+  baustein: HTMLElement,
+  e: MouseEvent,
+  prop: string,
+  index: number,
+): void {
+  e.stopPropagation()
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  feldPickerAbbestellen(baustein)
+  wartenderPicker.set(baustein, setTimeout(() => {
+    wartenderPicker.delete(baustein)
+    baustein.dispatchEvent(
+      new CustomEvent('ff-listen-bind', {
+        detail: { prop, index, top: rect.bottom + 4, left: rect.left },
+        bubbles: true,
+        composed: true,
+      }),
+    )
+  }, DOPPELKLICK_FENSTER))
 }
