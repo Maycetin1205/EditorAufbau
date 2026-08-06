@@ -19,7 +19,7 @@
 // DERSELBEN flowLayout-Logik, die der Canvas benutzt.
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
-import { bindingProp } from '../core/blocks/BlockDefinition'
+import { bindingProp, listeFuerExport } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import {
@@ -177,9 +177,16 @@ function nodeToHtml(
       if (EIGENE_QUELLE_PROPS.has(key) && !traegtEigeneQuelle(node)) return ''
       if (stilleBindungen.has(key)) return ''
       const standard = def.defaultProps[key]
+      // Die bindbare LISTE geht geputzt hinaus: Einstellungen, die zur
+      // aktuellen Darstellung eines Eintrags nicht gehoeren, liest in der Maske
+      // niemand (listeFuerExport — Nutzer-Meldung 2026-08-06 an einer Spalte,
+      // die auf „Text" stand und noch ihre Bild-Bindungen mittrug).
+      const wert = key === def.listenBindung?.prop
+        ? listeFuerExport(node.props[key] ?? standard, def.listenBindung)
+        : (node.props[key] ?? standard)
       const roh = vorschauStellen.has(key)
         ? vorschauRoh(node, vorschauStellen.get(key)!, sources, standard)
-        : attributWert(node.props[key] ?? standard)
+        : attributWert(wert)
       // STANDARDWERT reist NICHT mit (2026-08-06). Vorher trug jeder Baustein
       // jede Nicht-Layout-Eigenschaft im Markup — auch die nie angefasste:
       // an JEDEM Text hing farbe="standard" source="" textfield="", an JEDER

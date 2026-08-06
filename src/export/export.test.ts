@@ -15,19 +15,24 @@ import '../blocks/formfeld/FormFeldBlock'
 // Registriert den Tabellen-Baustein (Fahrplan 4) + liefert die Spalten-Coercion.
 import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
 
-// Spalten fuer die Tabellen-Faelle: Umlaut + Komma + gebundene/ungebundene
-// Spalte in einem — deckt Escaping UND Feldcodes ab.
-// Vier Spalten mit den Fallen, die den Export brechen koennen: ein Komma im
-// Titel (String(array) zerbraeche daran), ein Umlaut (roher Text zerbraeche
-// daran) und ein leeres Feld. Die ART (2026-08-06) reist im selben JSON mit —
-// sie ist bewusst NICHT ueberall 'text', sonst pruefte der Round-Trip nur den
-// Standardfall.
+// Das spalten-Attribut zurueck in JSON: Entities aufloesen, wie Lit es im
+// Browser auch tut. Steht hier EINMAL fuer alle Spalten-Faelle.
+const spaltenAusHtml = (html: string): unknown =>
+  JSON.parse(
+    (/<ff-tabelle[^>]*\sspalten="([^"]*)"/.exec(html)?.[1] ?? '').replace(
+      /&#x([0-9A-Fa-f]+);|&quot;|&amp;/g,
+      (m, h?: string) => (h ? String.fromCodePoint(parseInt(h, 16)) : m === '&quot;' ? '"' : '&'),
+    ),
+  )
+
+// Die Spalten fuer die Tabellen-Faelle, jede mit einer Falle, die den Export
+// brechen kann: Komma im Titel (String(array) zerbraeche daran), Umlaut (roher
+// Text zerbraeche daran), leeres Feld, verschachtelte Zuordnung, Zusatzfelder.
+// Die ART ist bewusst NICHT ueberall 'text', sonst pruefte der Round-Trip nur
+// den Standardfall.
 const standardTestSpalten = [
   { titel: 'Kunde', feld: '2_8', art: 'text' },
   { titel: 'Betrag, netto', feld: '10_12', art: 'zahl' },
-  // Die Status-Spalte traegt ihre ZUORDNUNG mit (2026-08-06): Datenwert ->
-  // Klarname -> Bedeutung. Sie ist verschachtelt und damit die haerteste
-  // Probe fuer den JSON-Round-Trip durchs Attribut.
   {
     titel: 'Größe', feld: '', art: 'status',
     zuordnung: [
@@ -35,12 +40,10 @@ const standardTestSpalten = [
       { wert: 'F', name: 'Fertig, geprüft', bedeutung: 'success' },
     ],
   },
-  // „Bild + Name" (2026-08-06) traegt ZWEI weitere Feldbindungen: das Feld der
-  // Spalte ist der Name, dazu kommen Bild und Unterzeile. Faellt der
-  // felder-Schluessel im Export weg, zeigt SoftEngine eine nackte Textspalte,
-  // wo der Editor Bild und Unterzeile gezeigt hat — derselbe stille Bruch wie
-  // beim Tabellen-Bug 2026-07-24. Eine der beiden Bindungen ist QUALIFIZIERT
-  // (weitere Quelle, Trenner '::'): sie muss unversehrt durchs Attribut.
+  // „Bild + Name" (2026-08-06): faellt der felder-Schluessel im Export weg,
+  // zeigt SoftEngine eine nackte Textspalte, wo der Editor Bild und Unterzeile
+  // gezeigt hat — derselbe stille Bruch wie beim Tabellen-Bug 2026-07-24. Eine
+  // Bindung ist QUALIFIZIERT (weitere Quelle, '::') und muss unversehrt durch.
   {
     titel: 'Patient', feld: '30_20', art: 'bild',
     felder: { bild: '50_10', unter: 'q-rasse::12_18' },
@@ -375,15 +378,37 @@ describe('Tabelle (Fahrplan 4)', () => {
     }
     const { html } = exportMask(tree)
     expect(html).toContain('<ff-tabelle ')
-    // Attributwert ziehen, HTML-Entities zurueckwandeln, als JSON lesen — es
-    // muessen EXAKT die drei Spalten herauskommen (so liest es auch Lit im Browser).
-    const attr = /<ff-tabelle[^>]*\sspalten="([^"]*)"/.exec(html)?.[1] ?? ''
-    const decode = (s: string): string =>
-      s.replace(/&#x([0-9A-Fa-f]+);|&quot;|&amp;/g, (m, h?: string) =>
-        h ? String.fromCodePoint(parseInt(h, 16)) : m === '&quot;' ? '"' : '&')
-    expect(JSON.parse(decode(attr))).toEqual(spalten)
+    expect(spaltenAusHtml(html)).toEqual(spalten)
     // Und der Export bleibt SE-konform (ASCII/LF/Marker/Interface/Runtime).
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Tabelle: Einstellungen einer NICHT gewaehlten Darstellung reisen nicht mit', () => {
+    // Nutzer-Meldung 2026-08-06 am eigenen Export: eine Spalte stand auf
+    // „Text" und trug trotzdem noch ihre Bild-Bindungen aus einem frueheren
+    // Versuch. Im EDITOR ist das Absicht (zurueckstellen und wieder vor: die
+    // Bindung ist noch da), in der Maske liest sie niemand. Beide bedingten
+    // Schluessel in einem Fall: Zusatzfelder an einer Textspalte UND die
+    // Status-Zuordnung an einer Zahlenspalte.
+    const spalten = [
+      { titel: 'Kunde', feld: '2_8', art: 'text', felder: { bild: '18_30', unter: '99_20' } },
+      {
+        titel: 'Menge', feld: '10_12', art: 'zahl',
+        zuordnung: [{ wert: 'W', name: 'Wartet', bedeutung: 'warning' }],
+      },
+    ]
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: { id: 'tab', type: 'tabelle', props: { width: 'fill', spalten }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    expect(spaltenAusHtml(html)).toEqual([
+      { titel: 'Kunde', feld: '2_8', art: 'text' },
+      { titel: 'Menge', feld: '10_12', art: 'zahl' },
+    ])
+    // Und der EDITOR-Stand bleibt unangetastet: geputzt wird nur der Export.
+    expect(tree.tab.props.spalten).toBe(spalten)
+    expect(spalten[0].felder).toEqual({ bild: '18_30', unter: '99_20' })
   })
 
   it('Tabelle: die Suchzeile-Einstellung ueberlebt den Export', () => {

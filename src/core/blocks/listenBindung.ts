@@ -178,3 +178,46 @@ export function listeLesen(roh: unknown, b: ListenBindung): Record<string, unkno
   })
 }
 
+// Dieselbe Liste, aber fuer den EXPORT: alles, was zur aktuell gewaehlten
+// Darstellung nicht gehoert, faellt weg.
+//
+// Der Editor hebt Liegengebliebenes bewusst auf — wer von „Bild + Name" auf
+// „Text" stellt und zurueck, findet seine Bild-Bindung wieder, und eine
+// Status-Zuordnung ueberlebt einen Ausflug in eine andere Darstellung. In der
+// AUSGELIEFERTEN Maske hat davon nichts zu suchen: dort liest es niemand, es
+// blaeht nur das Markup und verdeckt im Export-Diff das Wenige, was der Bauer
+// wirklich eingestellt hat (dieselbe Linie wie „Standardwerte reisen nicht
+// mit", exportMask). Gemeldet vom Nutzer am 2026-08-06 am eigenen Export.
+//
+// Angefasst wird NUR, was wegfaellt: Eintraege ohne Zusatzschluessel kommen
+// unveraendert zurueck, ein alter Titel-String bleibt ein String. Sonst
+// aenderte diese Funktion das Markup jeder bestehenden Maske.
+export function listeFuerExport(roh: unknown, b: ListenBindung): unknown {
+  const wahl = b.eintragsWahl
+  if (!Array.isArray(roh) || !wahl) return roh
+  // Alle Schluessel, die ueberhaupt an einer Darstellung haengen koennen —
+  // die Zuordnung und die Zusatzfelder JEDER Option.
+  const bedingt = new Set<string>()
+  if (b.eintragsZuordnung) bedingt.add(b.eintragsZuordnung.key)
+  if (wahl.felderKey) bedingt.add(wahl.felderKey)
+  if (bedingt.size === 0) return roh
+  return roh.map((x) => {
+    if (!x || typeof x !== 'object') return x
+    const eintrag = x as Record<string, unknown>
+    // Was DIESE Darstellung wirklich liest.
+    const erlaubt = new Set<string>()
+    const gewaehlt = eintragsWahlWert(wahl, eintrag)
+    if (b.eintragsZuordnung && gewaehlt === b.eintragsZuordnung.nurBeiWahl) {
+      erlaubt.add(b.eintragsZuordnung.key)
+    }
+    if (wahl.felderKey && eintragsFelderVon(wahl, eintrag).length > 0) {
+      erlaubt.add(wahl.felderKey)
+    }
+    const weg = [...bedingt].filter((k) => !erlaubt.has(k) && k in eintrag)
+    if (weg.length === 0) return x
+    const kopie = { ...eintrag }
+    for (const k of weg) delete kopie[k]
+    return kopie
+  })
+}
+

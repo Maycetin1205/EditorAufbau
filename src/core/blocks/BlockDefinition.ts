@@ -79,6 +79,7 @@ export {
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listenStandardTitel,
+  listeFuerExport,
   listeLesen,
   type EintragsWahl,
   type EintragsWahlOption,
