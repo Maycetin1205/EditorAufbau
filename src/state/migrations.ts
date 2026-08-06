@@ -41,6 +41,45 @@ export function migrateKanbanVorlage(
   }
 }
 
+// Aufraeum-Migration 2026-08-06: KNOEPFE IN TABELLEN wieder heraus.
+//
+// Der Tabellen-Baustein nahm rund 40 Minuten lang Schaltflaechen als Kinder
+// auf (Knoepfe-Platz in einer Tafel-Kopfzeile, Commits 99b30ce + 9a5f954).
+// Die Faehigkeit ist zurueckgenommen, weil sie WYSIWYG brach — die
+// Begruendung steht im Kopf von TabelleBlock. Ohne diesen Griff bliebe ein in
+// dieser Zeit gesetzter Knopf als UNSICHTBARER Waise im Speicher liegen: der
+// Editor zeichnet ihn nicht mehr (die Tabelle ist kein Container), der Export
+// laesst ihn weg, und niemand kaeme mehr an ihn heran, um ihn zu loeschen.
+// Nutzer-Ansage 2026-08-06: „restlos aus dem code raus, also kein Rest von
+// ,button in tabelle' umbau."
+//
+// Bewusst OHNE Schema-Stufe, anders als die nummerierten Migrationen weiter
+// unten: die betroffenen Staende tragen bereits die aktuelle Schemaversion
+// (die Faehigkeit kam NACH Schema 5), eine Stufe wuerde sie also gar nicht
+// erwischen. Und CURRENT_SCHEMA_VERSION hochzusetzen haette eine boese
+// Nebenwirkung — loadFromStorage leitet daraus `putzeDemos` ab und wuerde den
+// Karten-Demotext-Putzer ueber jeden Stand laufen lassen, der heute auf 5
+// steht (genau der Datenverlust, der am 2026-08-06 abgestellt wurde).
+//
+// ACHTUNG beim Zurueckholen des Knoepfe-Platzes: diese Migration muss dann
+// MIT WEG, sonst frisst sie die neuen Knoepfe bei jedem Laden. Sie greift
+// eng — nur Kinder vom Typ 'button' unter einem Knoten vom Typ 'tabelle'.
+// Laeuft auf den ROHDATEN vor sanitizeTree (wie migrateKanbanVorlage): die
+// gestrichenen ids sind danach von der Wurzel aus unerreichbar und kommen
+// gar nicht erst in den Baum.
+export function migrateKnopfAusTabelle(
+  src: Record<string, { type?: unknown; childIds?: unknown }>,
+): void {
+  for (const node of Object.values(src)) {
+    if (!node || typeof node !== 'object' || node.type !== 'tabelle') continue
+    if (!Array.isArray(node.childIds)) continue
+    node.childIds = node.childIds.filter((cid) => {
+      const kind = typeof cid === 'string' ? src[cid] : undefined
+      return !(kind && typeof kind === 'object' && kind.type === 'button')
+    })
+  }
+}
+
 // Migration 2026-07-16 (Nutzer-Beschwerde): Karten trugen bis zum Paket
 // „Stellen starten leer" erfundene Demo-Werte ab Werk — in alten
 // Speicherständen stehen sie noch und sehen aus wie Eingaben („Befund

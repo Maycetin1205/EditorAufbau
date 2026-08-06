@@ -11,6 +11,7 @@ import {
   migrateFlatBlocks,
   migrateFlowToRaster,
   migrateKanbanVorlage,
+  migrateKnopfAusTabelle,
   migrateRasterBreitenReparatur,
   migrateRasterHoehenReset,
   migrateRootKanbanToViewportFill,
@@ -63,6 +64,10 @@ export interface LoadedState {
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
 // Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
 // Props, repariert parentId und verwirft Waisen/Zyklen.
+// Davor laufen die zwei Reparaturen, die auf den ROHDATEN arbeiten müssen,
+// weil sie die Eltern-Kind-Kette selbst umhängen (migrations.ts):
+// migrateKanbanVorlage (Vorlagen-Kasten) und migrateKnopfAusTabelle (der
+// zurückgenommene Knöpfe-Platz in der Tabelle).
 // onDropType: meldet jeden verworfenen UNBEKANNTEN Typ (z. B. die 2026-07-14
 // abgeschafften Bausteine Text/Bereich/Infobox/Chip/Eingabefeld in alten
 // Speicherständen) — Nutzer-Regel: Verluste beim Laden passieren NIE still.
@@ -79,6 +84,7 @@ export function sanitizeTree(
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   migrateKanbanVorlage(src)
+  migrateKnopfAusTabelle(src)
 
   const addChild = (parentId: string, childId: unknown): void => {
     if (typeof childId !== 'string' || tree[childId]) return
