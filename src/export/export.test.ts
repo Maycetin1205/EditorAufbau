@@ -17,10 +17,15 @@ import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
 
 // Spalten fuer die Tabellen-Faelle: Umlaut + Komma + gebundene/ungebundene
 // Spalte in einem — deckt Escaping UND Feldcodes ab.
+// Drei Spalten mit den Fallen, die den Export brechen koennen: ein Komma im
+// Titel (String(array) zerbraeche daran), ein Umlaut (roher Text zerbraeche
+// daran) und ein leeres Feld. Die ART (2026-08-06) reist im selben JSON mit —
+// sie ist bewusst NICHT ueberall 'text', sonst pruefte der Round-Trip nur den
+// Standardfall.
 const standardTestSpalten = [
-  { titel: 'Kunde', feld: '2_8' },
-  { titel: 'Betrag, netto', feld: '10_12' },
-  { titel: 'Größe', feld: '' },
+  { titel: 'Kunde', feld: '2_8', art: 'text' },
+  { titel: 'Betrag, netto', feld: '10_12', art: 'zahl' },
+  { titel: 'Größe', feld: '', art: 'status' },
 ]
 import type { BlockTree } from '../core/blocks/BlockData'
 import type { DataSource } from '../core/data/dataSources'
@@ -335,11 +340,15 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
 })
 
 describe('Tabelle (Fahrplan 4)', () => {
-  it('Spalten (Titel + Feld) ueberleben den Export als JSON — Komma und Umlaut sind die Fallen', () => {
-    // Regel 1 (WYSIWYG): die im Editor vergebenen Spalten (Titel UND Feldcode)
-    // muessen EXAKT so in der exportierten Maske ankommen. String(array)
-    // zerbraeche am Komma, roher Text am Umlaut — beide Fallen stecken bewusst
-    // im Titel. Der Feldcode ist der Technikwert, den die Laufzeit ausliest.
+  it('Spalten (Titel + Feld + Art) ueberleben den Export als JSON — Komma und Umlaut sind die Fallen', () => {
+    // Regel 1 (WYSIWYG): die im Editor vergebenen Spalten (Titel, Feldcode UND
+    // Darstellung) muessen EXAKT so in der exportierten Maske ankommen.
+    // String(array) zerbraeche am Komma, roher Text am Umlaut — beide Fallen
+    // stecken bewusst im Titel. Der Feldcode ist der Technikwert, den die
+    // Laufzeit ausliest; die Art sagt ihr, WIE die Spalte aussieht. Faellt die
+    // Art weg, zeigt SoftEngine linksbuendigen Text, wo der Editor eine Zahl
+    // rechtsbuendig oder eine Status-Marke gezeigt hat — still, und genau das
+    // ist der Bruch (Lehre aus dem Tabellen-Bug 2026-07-24).
     const spalten = standardTestSpalten
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
@@ -412,23 +421,34 @@ describe('Tabelle (Fahrplan 4)', () => {
   })
 
   it('coerceSpalten faengt alte Staende defensiv ab (Titel-Strings, Zahl, kaputt)', () => {
-    // Neues Modell {titel,feld} bleibt unveraendert.
-    expect(coerceSpalten([{ titel: 'A', feld: '2_8' }])).toEqual([{ titel: 'A', feld: '2_8' }])
-    // Erstfassung: reine Titel-Strings -> Feld leer.
+    // Vollstaendiges Modell {titel,feld,art} bleibt unveraendert.
+    expect(coerceSpalten([{ titel: 'A', feld: '2_8', art: 'zahl' }]))
+      .toEqual([{ titel: 'A', feld: '2_8', art: 'zahl' }])
+    // DIE Zusage der Art (2026-08-06): eine Spalte OHNE Art ist Text — genau
+    // so verhielten sich alle Spalten vorher. Jeder gespeicherte Stand von vor
+    // diesem Tag sieht damit unveraendert aus.
+    expect(coerceSpalten([{ titel: 'A', feld: '2_8' }]))
+      .toEqual([{ titel: 'A', feld: '2_8', art: 'text' }])
+    // Eine UNBEKANNTE Art (Tippfehler im Attribut, spaeter entfernte Art)
+    // bleibt stehen — gezeichnet wird sie als Text (spaltenArt faengt sie ab).
+    // Hier nicht stillschweigend umschreiben: der Wert des Bauers gehoert ihm.
+    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'gibt-es-nicht' }]))
+      .toEqual([{ titel: 'A', feld: '', art: 'gibt-es-nicht' }])
+    // Erstfassung: reine Titel-Strings -> Feld leer, Art Text.
     expect(coerceSpalten(['A', 'B'])).toEqual([
-      { titel: 'A', feld: '' },
-      { titel: 'B', feld: '' },
+      { titel: 'A', feld: '', art: 'text' },
+      { titel: 'B', feld: '', art: 'text' },
     ])
     // Aeltester Stand: eine Spalten-ZAHL -> generierte Titel.
     expect(coerceSpalten(2)).toEqual([
-      { titel: 'Spalte 1', feld: '' },
-      { titel: 'Spalte 2', feld: '' },
+      { titel: 'Spalte 1', feld: '', art: 'text' },
+      { titel: 'Spalte 2', feld: '', art: 'text' },
     ])
     // Kaputt/leer -> Standard (drei Spalten), nie ein Wurf.
     expect(coerceSpalten(null)).toHaveLength(3)
     expect(coerceSpalten('quatsch')).toHaveLength(3)
     // Fehlende Felder in einem Objekt werden ergaenzt (nie undefined).
-    expect(coerceSpalten([{ titel: 'X' }])).toEqual([{ titel: 'X', feld: '' }])
+    expect(coerceSpalten([{ titel: 'X' }])).toEqual([{ titel: 'X', feld: '', art: 'text' }])
   })
 })
 

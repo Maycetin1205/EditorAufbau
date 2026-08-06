@@ -17,6 +17,13 @@
 import { html, type TemplateResult } from 'lit'
 import { styleMap } from 'lit/directives/style-map.js'
 import type { Spalte } from './spalten'
+import { spaltenArt } from './spaltenArten'
+
+// Was im Editor in einer Zelle steht, solange keine Daten kommen: ein Strich.
+// Er laeuft durch DIESELBE Darstellung wie ein echter Wert — in einer
+// Status-Spalte also als graue Marke mit einem Strich darin. So sieht der
+// Bauer die FORM seiner Spalte, ohne dass ein Wert erfunden wird (Regel 7).
+const PLATZHALTER = '—'
 
 export interface KoerperLage {
   spalten: readonly Spalte[]
@@ -67,6 +74,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       <div class="kopf" style=${styleMap(lage.cols)}>
         ${lage.spalten.map(
           (s, i) => html`<div
+            class=${spaltenArt(s.art).klasse}
             data-ff-editable
             @dblclick=${(e: MouseEvent) => tun.dblklickKopf(e, i)}
             @click=${(e: MouseEvent) => tun.klickKopf(e, i)}
@@ -82,12 +90,29 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             style=${styleMap(lage.cols)}
             @click=${() => tun.klickZeile(rohIndex)}
           >
-            ${rohIndex !== null
-              ? (lage.datenzeilen[rohIndex] ?? []).map((wert) => html`<div>${wert}</div>`)
-              : lage.spalten.map(() => html`<div>—</div>`)}
+            ${/* Ueber die SPALTEN laufen, nicht ueber die Werte: die Art sagt,
+                  wie die Zelle aussieht, und eine Datenzeile mit zu wenig
+                  Werten (kurze Zeile aus SoftEngine) darf keine Spalte
+                  verschlucken — sonst rutschte der Rest nach links unter die
+                  falsche Ueberschrift. */ ''}
+            ${lage.spalten.map((s, i) => {
+              const art = spaltenArt(s.art)
+              const wert = rohIndex !== null
+                ? (lage.datenzeilen[rohIndex]?.[i] ?? '')
+                : PLATZHALTER
+              return html`<div class=${art.klasse}>${art.zelle(wert)}</div>`
+            })}
           </div>`,
         )}
-        <div class="lineal"></div>
+        ${/* Das Lineal traegt DASSELBE Raster wie Kopf und Zeilen und zieht
+              seine senkrechten Striche mit echten Zellen. Bis 2026-08-06 malte
+              es sie als Verlauf im Takt `100% / Spaltenzahl` — das stimmte nur,
+              solange alle Spalten gleich breit waren. Mit den festen Massen
+              (Zahl 90, Datum 100, Status 120) waeren die Striche aus der Flucht
+              gelaufen; so kann sich das Lineal gar nicht mehr verrechnen. */ ''}
+        <div class="lineal" style=${styleMap(lage.cols)}>
+          ${lage.spalten.map(() => html`<div></div>`)}
+        </div>
       </div>
     `
 }

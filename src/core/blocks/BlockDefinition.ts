@@ -90,6 +90,30 @@ export interface ListenBindung {
   // durch den Feld-Klarnamen ersetzt werden. Alles andere hat der Bediener
   // selbst getippt und wird NIE ueberschrieben.
   standardTitel: string
+  // Optional: eine WAHL je Listen-Eintrag, die der Picker zusaetzlich zur
+  // Feldliste anbietet (Tabelle: die Darstellung einer Spalte — Text, Zahl,
+  // Datum, Status). Registry-Daten: der Picker zeichnet sie generisch und
+  // weiss nicht, worum es geht — er kennt weder „Tabelle" noch „Spalte"
+  // (Regel 2). Fehlt der Eintrag, bietet der Picker wie bisher nur Felder an.
+  eintragsWahl?: EintragsWahl
+}
+
+export interface EintragsWahl {
+  // Schluessel IM Eintrag, unter dem der Technikwert steht (Tabelle: 'art').
+  key: string
+  // Beschriftung des Abschnitts im Picker (Tabelle: 'Darstellung').
+  label: string
+  // Technikwert -> Klarname. Sichtbar ist NUR der Klarname (Regel 3).
+  optionen: readonly { wert: string; name: string }[]
+  // Was gilt, wenn im Eintrag nichts (oder Unbekanntes) steht.
+  standard: string
+}
+
+// Der gerade gewaehlte Wert eines Listen-Eintrags — leer/unbekannt faellt auf
+// den Standard zurueck, damit im Picker immer genau eine Option markiert ist.
+export function eintragsWahlWert(w: EintragsWahl, eintrag: Record<string, unknown>): string {
+  const roh = eintrag[w.key]
+  return typeof roh === 'string' && w.optionen.some((o) => o.wert === roh) ? roh : w.standard
 }
 
 // Titel eines noch unbenannten Listen-Eintrags aus der Vorlage ('Spalte {n}').

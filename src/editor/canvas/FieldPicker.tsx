@@ -35,10 +35,23 @@ export interface PickerGruppe {
   fields: readonly DataSourceField[]
 }
 
+// Eine zusätzliche WAHL über der Feldliste (Registry: ListenBindung.
+// eintragsWahl — bei der Tabelle die Darstellung einer Spalte). Der Picker
+// zeichnet sie generisch: er kennt nur Beschriftung, Optionen und den
+// aktuellen Wert, nie deren Bedeutung.
+export interface PickerWahl {
+  label: string
+  optionen: readonly { wert: string; name: string }[]
+  aktuell: string
+  onWaehle: (wert: string) => void
+}
+
 interface FieldPickerProps {
   // Klarname der Stelle (aus bindableSpots, z. B. 'Titel').
   spotLabel: string
   gruppen: readonly PickerGruppe[]
+  // Optional, s. PickerWahl. Fehlt sie, sieht der Picker aus wie bisher.
+  wahl?: PickerWahl
   // Aktuell gebundener Wert, ROH wie gespeichert ('' = ungebunden,
   // 'quelle::code' = Feld einer weiteren Quelle).
   current: string
@@ -55,6 +68,7 @@ interface FieldPickerProps {
 export function FieldPicker({
   spotLabel,
   gruppen,
+  wahl,
   current,
   top,
   left,
@@ -129,6 +143,37 @@ export function FieldPicker({
       style={{ position: 'fixed', top, left, zIndex: 50 }}
       className="max-h-64 w-60 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
     >
+      {/* Die zusätzliche Wahl steht OBEN und abgesetzt: sie gehört zur
+          Stelle selbst, nicht zu einer der Quellen darunter. Ein Klick
+          darauf schließt den Picker NICHT — Darstellung und Feld sind zwei
+          Handgriffe an derselben Spalte, und wer beides ändern will, soll
+          nicht zweimal aufmachen müssen. */}
+      {wahl && (
+        <div className="mb-1 border-b border-border pb-1">
+          <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {wahl.label}
+          </p>
+          <div className="flex flex-wrap gap-1 px-1">
+            {wahl.optionen.map((o) => (
+              <button
+                key={o.wert}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  wahl.onWaehle(o.wert)
+                }}
+                className={`rounded-sm border px-2 py-1 text-xs ${
+                  o.wert === wahl.aktuell
+                    ? 'border-primary bg-primary/10 font-semibold text-foreground'
+                    : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                {o.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Eine Quelle: Kopfzeile wie bisher. Mehrere: neutrale Kopfzeile, und
           jede Quelle bekommt ihre eigene Zwischenüberschrift. Die SE-Kennung
           steht dezent daneben (Mono, gedämpft — Nutzer 2026-08-06). */}

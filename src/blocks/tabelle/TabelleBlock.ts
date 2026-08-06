@@ -60,6 +60,7 @@ import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
+import { chipStyles } from '../shared/statusVariant'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
 import {
   OHNE_MESSUNG,
@@ -76,6 +77,11 @@ import {
   oeffneFeldPicker,
   spaltenSteuerung,
 } from './spaltenBearbeiten'
+import {
+  ART_TEXT,
+  SPALTEN_ART_OPTIONEN,
+  spaltenArt,
+} from './spaltenArten'
 import { passendeIndizes, zeigtEchteDaten } from './suche'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
@@ -120,6 +126,19 @@ export class TabelleBlock extends BasicBlock {
     titelKey: 'titel',
     feldKey: 'feld',
     standardTitel: STANDARD_TITEL,
+    // Die DARSTELLUNG einer Spalte (2026-08-06) wird am selben Ort eingestellt
+    // wie ihr Feld: ein Klick auf den Spaltenkopf, ein Fenster, zwei
+    // Handgriffe (Regel 7 — Bedienung am Ding, kein Inspector-Feld). Was hier
+    // steht, sind reine Registry-Daten; der Picker zeichnet sie, ohne die
+    // Tabelle zu kennen. Die Optionen kommen aus derselben Liste, aus der
+    // ./tabelleKoerper zeichnet — angebotene und gezeichnete Arten koennen
+    // damit nicht auseinanderlaufen.
+    eintragsWahl: {
+      key: 'art',
+      label: 'Darstellung',
+      optionen: SPALTEN_ART_OPTIONEN,
+      standard: ART_TEXT,
+    },
   }
   static readonly defaultProps = {
     width: 'fill',
@@ -344,11 +363,21 @@ export class TabelleBlock extends BasicBlock {
     disconnectTable(this)
   }
 
-  static override styles = [BasicBlock.styles, tabelleStil]
+  // chipStyles ist die GETEILTE Marke (../shared/statusVariant) — dieselbe,
+  // die Karte und Kanban-Spalte tragen. Eine Status-Spalte zeichnet sie, statt
+  // sie abzuschreiben: sonst haette die Designsprache drei Marken, die
+  // auseinanderlaufen koennen.
+  static override styles = [BasicBlock.styles, chipStyles, tabelleStil]
 
   override render(): TemplateResult {
     const spalten = this.spaltenListe()
-    const cols = { gridTemplateColumns: `repeat(${spalten.length}, minmax(0, 1fr))` }
+    // Die Rasterspuren kommen JE SPALTE aus ihrer Art (./spaltenArten): Zahl,
+    // Datum und Status tragen ein festes Mass, Text teilt sich den Rest.
+    // Breite nach ART, nie nach Inhalt — sonst springt eine Spalte beim
+    // Blaettern, weil die naechste Seite kuerzere Werte traegt.
+    const cols = {
+      gridTemplateColumns: spalten.map((s) => spaltenArt(s.art).spur).join(' '),
+    }
     const stop = (e: Event): void => e.stopPropagation()
     // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle) —
     // als Rohindizes, damit die Auswahl-Markierung an ihrer Zeile klebt.
@@ -382,10 +411,12 @@ export class TabelleBlock extends BasicBlock {
       platzhalterZeilen: PLATZHALTER_ZEILEN,
     })
     return html`<div class="tabelle" style=${styleMap({
-      '--spalten-zahl': String(spalten.length),
       // EINE Zahl, EINE Stelle: der Takt kommt aus ./seitengroesse, damit die
       // Optik (Linien) und die Rechnung (wie viele passen) nicht auseinander
       // laufen koennen.
+      // (--spalten-zahl stand hier bis 2026-08-06 daneben; das Lineal brauchte
+      // sie fuer seine senkrechten Striche im Verlauf. Es zeichnet sie jetzt
+      // mit echten Zellen im Spaltenraster, und die Zahl ist ersatzlos weg.)
       '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
     })}>
       ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}

@@ -129,8 +129,8 @@ export const tabelleStil = css`
         min-height: 0;
         /* ZWEI Lagen, sonst sieht der leere Rest kaputt aus: nur Querstriche
            ohne Spaltentrenner wirkt wie eine abgebrochene Tabelle.
-           1. waagerecht im Zeilentakt, 2. senkrecht im Spaltentakt
-           (--spalten-zahl setzt der Baustein beim Zeichnen). */
+           Waagerecht im Zeilentakt als Verlauf — das ist reine Wiederholung
+           und kann sich nicht verrechnen. */
         background-image:
           repeating-linear-gradient(
             to bottom,
@@ -138,16 +138,19 @@ export const tabelleStil = css`
             transparent calc(var(--zeilen-hoehe) - 1px),
             var(--se-line-soft) calc(var(--zeilen-hoehe) - 1px),
             var(--se-line-soft) var(--zeilen-hoehe)
-          ),
-          repeating-linear-gradient(
-            to right,
-            transparent 0,
-            transparent calc(100% / var(--spalten-zahl) - 1px),
-            var(--se-line-soft) calc(100% / var(--spalten-zahl) - 1px),
-            var(--se-line-soft) calc(100% / var(--spalten-zahl))
           );
         background-position: 0 0;
+        /* Senkrecht dagegen mit echten Zellen im GLEICHEN Raster wie Kopf und
+           Zeilen (der Baustein setzt es als style). Bis 2026-08-06 war auch das
+           ein Verlauf im Takt 100% geteilt durch Spaltenzahl — das stimmte nur, solange
+           alle Spalten gleich breit waren. Seit die Art die Breite bestimmt
+           (Zahl 90, Datum 100, Status 120), waeren die Striche aus der Flucht
+           gelaufen, wachsend nach rechts — genau der Fehler, den dieses
+           Element 2026-07-27 schon einmal beseitigt hat. */
+        display: grid;
       }
+      .lineal > div { border-right: 1px solid var(--se-line-soft); }
+      .lineal > div:last-child { border-right: none; }
       /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
@@ -206,7 +209,35 @@ export const tabelleStil = css`
       .zeile > div:last-child { border-right: none; }
       .kopf > div { cursor: pointer; user-select: none; }
       .sort-pfeil { font-size: 9px; color: var(--se-muted); }
-      .zeile > div { color: var(--se-muted); }
+      /* Zellentext in vollem Espresso, wie in der Demo (.tabelle td erbt den
+         Grundton und daempft nichts). Bis 2026-08-06 stand hier --se-muted:
+         die Werte waren blasser als ihre eigenen Ueberschriften, und die
+         Tabelle las sich wie ausgegraut. Gedaempft bleibt allein, was WIRKLICH
+         Nebensache ist — Sortierpfeil und Fusszeile. */
+      .zeile > div { color: var(--se-ink); }
+
+      /* ---- Spalten-Arten (./spaltenArten) ------------------------------
+         Zahl und Datum teilen sich eine Klasse, weil die Demo es genauso
+         macht: ihre Datumsspalten tragen die Klasse zelle-zahl. Rechtsbuendig mit
+         gleichbreiten Ziffern (font-variant-numeric: tabular-nums) — damit
+         stehen Tausender und Punkte untereinander. Der KOPF bekommt dieselbe
+         Klasse und dieselbe Ausrichtung (Demo: .zahl-kopf), sonst stuende
+         eine linksbuendige Ueberschrift ueber rechtsbuendigen Werten.
+         Ein Datum wird nur AUSGERICHTET, nie umgerechnet (Nutzer 2026-08-06):
+         was SoftEngine liefert, steht da. */
+      .kopf > div.zahl,
+      .zeile > div.zahl {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      /* Die Status-Zelle traegt eine Marke, keinen Text: als Flex-Kasten sitzt
+         sie senkrecht mittig in der Zeile. Die Textkuerzung mit „…" faellt
+         hier weg (die braeuchte einen Block) — noetig ist sie nicht, die Marke
+         bricht ohnehin nicht um und der Zellrand schneidet sie ab. */
+      .zeile > div.status {
+        display: flex;
+        align-items: center;
+      }
       /* Fusszeile (Demo .tafel-fuss): OHNE eigene Flaeche — die Trennlinie
          allein setzt sie ab, genau wie in der Demo („der Rahmen traegt schon
          die Kante"). Bis 2026-08-06 lag hier --se-panel-2; der sandfarbene

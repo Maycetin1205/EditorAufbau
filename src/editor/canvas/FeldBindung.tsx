@@ -28,6 +28,7 @@ import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import {
   bindingProp,
+  eintragsWahlWert,
   listenStandardTitel,
   listeLesen,
   type BindableSpot,
@@ -235,15 +236,32 @@ export function useFeldBindung({
           onClose={closePicker}
         />
       )}
-      {selected && listenPicker && hatAngebot && listenBindung && (() => {
+      {selected && listenPicker && listenBindung && (hatAngebot || listenBindung.eintragsWahl) && (() => {
         const liste = listeLesen(block.props[listenBindung.prop], listenBindung)
         const eintrag = liste[listenPicker.index]
         if (!eintrag) return null
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
+        const wahl = listenBindung.eintragsWahl
         return (
           <FieldPicker
             spotLabel={titelJetzt}
             gruppen={gruppen}
+            wahl={wahl && {
+              label: wahl.label,
+              optionen: wahl.optionen,
+              aktuell: eintragsWahlWert(wahl, eintrag),
+              // Schreibt NUR diesen einen Schluessel im EINEN Eintrag; Titel
+              // und Feldbindung der Spalte bleiben unberuehrt. Frisch gelesen
+              // statt `liste` wiederzuverwenden — zwischen Aufmachen und Klick
+              // kann der Bauer den Titel umbenannt haben.
+              onWaehle: (wert) => {
+                const next = listeLesen(block.props[listenBindung.prop], listenBindung)
+                const ziel = next[listenPicker.index]
+                if (!ziel) return
+                ziel[wahl.key] = wert
+                editor.updateProperty(block.id, listenBindung.prop, next)
+              },
+            }}
             current={String(eintrag[listenBindung.feldKey] ?? '')}
             top={listenPicker.top}
             left={listenPicker.left}

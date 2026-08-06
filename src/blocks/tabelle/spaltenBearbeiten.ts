@@ -20,7 +20,7 @@
 // Tabelle braucht (Regel 10 — erst wenn ein zweiter Fall es erzwingt).
 
 import { html, type TemplateResult } from 'lit'
-import { SPALTEN_MAX, SPALTEN_MIN, standardTitelFuer, type Spalte } from './spalten'
+import { SPALTEN_MAX, SPALTEN_MIN, neueSpalte, type Spalte } from './spalten'
 
 // Die „+" / „−"-Knoepfe oben rechts. Sichtbar macht sie das CSS
 // (:host([data-ff-editor]) .steuerung) — hier steht nur, WAS sie tun.
@@ -49,10 +49,10 @@ export function spaltenSteuerung(
         stop(e)
         const l = liste()
         if (l.length < SPALTEN_MAX) {
-          // Titel aus ./spalten, nicht von Hand getippt: an DIESER Vorlage
-          // erkennt der Editor, dass der Bediener den Titel nicht selbst
-          // gesetzt hat und ihn beim Feld-Binden ersetzen darf.
-          l.push({ titel: standardTitelFuer(l.length), feld: '' })
+          // Die frische Spalte kommt aus ./spalten (neueSpalte) — auch ihr
+          // Titel: an DIESER Vorlage erkennt der Editor, dass der Bediener
+          // ihn nicht selbst gesetzt hat und ihn beim Feld-Binden ersetzen darf.
+          l.push(neueSpalte(l.length))
           aendere(l)
         }
       }}
