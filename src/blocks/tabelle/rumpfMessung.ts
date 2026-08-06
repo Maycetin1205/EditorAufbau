@@ -31,12 +31,15 @@ export interface MessZiel {
 // Der Kopf sitzt IM scrollenden Rumpf (siehe tabelleStil) und geht darum ab.
 // Er wird GEMESSEN, nicht gerechnet: aendert jemand die Kopfhoehe im CSS,
 // zieht die Zeilenzahl von selbst mit.
-export function gemesseneZeilen(ziel: MessZiel): number | null {
+//
+// Der Zeilentakt kommt vom Aufrufer: er haengt seit 2026-08-06 an den Arten der
+// Spalten (./spaltenArten, zeilenHoeheFuer), und nur der Baustein kennt sie.
+export function gemesseneZeilen(ziel: MessZiel, zeilenHoehe: number): number | null {
   if (!ziel.hasAttribute('fuellt')) return null
   const rumpf = ziel.renderRoot.querySelector('.koerper')
   const kopf = ziel.renderRoot.querySelector('.kopf')
   if (!(rumpf instanceof HTMLElement) || !(kopf instanceof HTMLElement)) return null
-  return passendeZeilen(rumpf.clientHeight, kopf.offsetHeight)
+  return passendeZeilen(rumpf.clientHeight, kopf.offsetHeight, zeilenHoehe)
 }
 
 // Den Rumpf beobachten. Gibt den Beobachter zurueck (zum Abmelden) oder null,

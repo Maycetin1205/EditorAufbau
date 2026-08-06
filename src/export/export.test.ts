@@ -17,7 +17,7 @@ import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
 
 // Spalten fuer die Tabellen-Faelle: Umlaut + Komma + gebundene/ungebundene
 // Spalte in einem — deckt Escaping UND Feldcodes ab.
-// Drei Spalten mit den Fallen, die den Export brechen koennen: ein Komma im
+// Vier Spalten mit den Fallen, die den Export brechen koennen: ein Komma im
 // Titel (String(array) zerbraeche daran), ein Umlaut (roher Text zerbraeche
 // daran) und ein leeres Feld. Die ART (2026-08-06) reist im selben JSON mit —
 // sie ist bewusst NICHT ueberall 'text', sonst pruefte der Round-Trip nur den
@@ -34,6 +34,16 @@ const standardTestSpalten = [
       { wert: 'W', name: 'Wartet', bedeutung: 'warning' },
       { wert: 'F', name: 'Fertig, geprüft', bedeutung: 'success' },
     ],
+  },
+  // „Bild + Name" (2026-08-06) traegt ZWEI weitere Feldbindungen: das Feld der
+  // Spalte ist der Name, dazu kommen Bild und Unterzeile. Faellt der
+  // felder-Schluessel im Export weg, zeigt SoftEngine eine nackte Textspalte,
+  // wo der Editor Bild und Unterzeile gezeigt hat — derselbe stille Bruch wie
+  // beim Tabellen-Bug 2026-07-24. Eine der beiden Bindungen ist QUALIFIZIERT
+  // (weitere Quelle, Trenner '::'): sie muss unversehrt durchs Attribut.
+  {
+    titel: 'Patient', feld: '30_20', art: 'bild',
+    felder: { bild: '50_10', unter: 'q-rasse::12_18' },
   },
 ]
 import type { BlockTree } from '../core/blocks/BlockData'

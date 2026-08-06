@@ -238,6 +238,61 @@ export const tabelleStil = css`
         display: flex;
         align-items: center;
       }
+      /* „Bild + Name" (Demo .zelle-patient): Bild links, daneben Name ueber
+         der kleineren Unterzeile. Wie die Status-Zelle ein Flex-Kasten und
+         damit ohne die Zeilen-line-height — die gilt fuer EINE Textzeile und
+         wuerde hier beide auseinandertreiben. */
+      .zeile > div.bild {
+        display: flex;
+        align-items: center;
+      }
+      .bild-name {
+        display: flex;
+        align-items: center;
+        /* 10px wie in der Demo (.zelle-patient gap). */
+        gap: var(--se-gap);
+        min-width: 0;
+      }
+      /* 26px — das Tabellenmass der Demo (.tier--klein). Das Zeichen steht
+         FREI: keine Kachel, kein Kreis, kein Rahmen (Fellnase-Entscheidung
+         „ohne sie atmet es", vom Nutzer am 2026-08-06 fuer die Tabelle
+         bestaetigt). Auch keine leere Flaeche, wenn nichts gebunden ist — die
+         Zelle zeichnet das Zeichen dann gar nicht erst (./spaltenArten). */
+      .bild-zeichen {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        flex: none;
+      }
+      .bild-zeichen img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        /* Die Zeichen sind quadratisch aufgefuellt; contain haelt sie auch
+           dann unverzerrt, wenn die Flaeche einmal nicht quadratisch ist. */
+        object-fit: contain;
+      }
+      .bild-text { min-width: 0; }
+      /* Name (Demo .zelle-name: 600 15px/1.25) und Unterzeile (.zelle-zusatz:
+         12,5px, gedaempft — hier --se-fs-sm = 12px, die dichte Stufe).
+         Beide einzeilig mit „…": eine umbrechende Zeile spraenge aus dem Takt. */
+      .bild-titel,
+      .bild-unter {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bild-titel {
+        font-size: var(--se-fs-lg);
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      .bild-unter {
+        color: var(--se-muted);
+        font-size: var(--se-fs-sm);
+        line-height: 1.35;
+      }
       /* Fusszeile (Demo .tafel-fuss): OHNE eigene Flaeche — die Trennlinie
          allein setzt sie ab, genau wie in der Demo („der Rahmen traegt schon
          die Kante"). Bis 2026-08-06 lag hier --se-panel-2; der sandfarbene

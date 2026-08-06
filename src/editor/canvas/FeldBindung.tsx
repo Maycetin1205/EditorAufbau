@@ -28,6 +28,8 @@ import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import {
   bindingProp,
+  eintragsFelderLesen,
+  eintragsFelderVon,
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listenStandardTitel,
@@ -267,6 +269,24 @@ export function useFeldBindung({
         const zeigeZuordnung = zuo !== undefined
           && wahl !== undefined
           && eintragsWahlWert(wahl, eintrag) === zuo.nurBeiWahl
+        // Dieselbe Linie fuer die zusaetzlichen Felder: sie gehoeren der
+        // gewaehlten Darstellung, nicht der Spalte. Wechselt der Bauer von
+        // „Bild + Name" auf „Text", verschwinden sie aus dem Fenster — die
+        // gespeicherten Bindungen bleiben aber im Eintrag stehen und leben
+        // wieder auf, wenn er zurueckstellt (dieselbe Haltung wie bei den
+        // liegen gebliebenen Props eines Bausteins).
+        const zusatzFelder = wahl ? eintragsFelderVon(wahl, eintrag) : []
+        const gebundeneFelder = wahl ? eintragsFelderLesen(wahl, eintrag) : {}
+        // Ein Zusatzfeld binden: EIN Schluessel im `felder`-Record, alles andere
+        // bleibt stehen. Ungebunden loescht den Schluessel, statt '' abzulegen —
+        // sonst traegt jede Spalte leere Bindungen durch den Export.
+        const schreibeFeld = (key: string, wert: string): void => {
+          if (!wahl?.felderKey) return
+          const next = { ...gebundeneFelder }
+          if (wert === '') delete next[key]
+          else next[key] = wert
+          schreibeInEintrag(wahl.felderKey, next)
+        }
         return (
           <FieldPicker
             spotLabel={titelJetzt}
@@ -277,6 +297,12 @@ export function useFeldBindung({
               aktuell: eintragsWahlWert(wahl, eintrag),
               onWaehle: (wert) => schreibeInEintrag(wahl.key, wert),
             }}
+            felder={zusatzFelder.map((zf) => ({
+              key: zf.key,
+              label: zf.label,
+              aktuell: gebundeneFelder[zf.key] ?? '',
+              onWaehle: (wert) => schreibeFeld(zf.key, wert),
+            }))}
             zuordnung={zeigeZuordnung && zuo ? {
               label: zuo.label,
               wertLabel: zuo.wertLabel,

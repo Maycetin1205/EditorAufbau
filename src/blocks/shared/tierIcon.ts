@@ -65,13 +65,28 @@ export function tierBildName(wert: string): string {
   return ''
 }
 
-export function tierIcon(wert: string): TemplateResult {
+// Nur das BILD — ohne jeden Rueckfall: kennt die Liste den Wert nicht, kommt
+// undefined zurueck und der Aufrufer zeichnet gar nichts.
+//
+// Zwei Aufrufer, zwei Haltungen (2026-08-06): die KARTE hat eine Avatar-Stelle,
+// die ausdruecklich fuer Tierarten da ist — dort ist die Pfote der ehrliche
+// Rueckfall („ein Tier, das ich nicht kenne"). Die Tabellen-Spalte „Bild + Name"
+// ist dagegen allgemein: der Bauer kann JEDES Feld daran binden. Stuende dort
+// eine Pfote, behauptete die Spalte, ein Sachbearbeiter oder eine Zimmernummer
+// sei ein Tier (Nutzer-Ansage 2026-08-06: „das soll ja nicht nur Tierarten
+// anzeigen ... auch keinen Platzhalter oder so").
+export function tierBild(wert: string): TemplateResult | undefined {
   const bild = tierBildName(wert)
   const quelle = bild === '' ? undefined : TIER_BILDER[bild]
-  if (quelle === undefined) {
-    return html`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${PFOTE}</svg>`
-  }
+  if (quelle === undefined) return undefined
   // alt bleibt leer: der Klarname der Tierart steht als Text daneben auf der
   // Karte — eine zweite Ansage waere fuer den Vorleser nur Laerm.
   return html`<img src=${quelle} alt="" aria-hidden="true" />`
+}
+
+export function tierIcon(wert: string): TemplateResult {
+  return (
+    tierBild(wert)
+    ?? html`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${PFOTE}</svg>`
+  )
 }

@@ -23,11 +23,16 @@
 // es EINE Zahl an EINER Stelle: der Baustein setzt sie beim Zeichnen als
 // CSS-Variable, das Stylesheet liest nur noch var(--zeilen-hoehe).
 
-// Der Takt der Tabelle in Pixeln. Kopf UND Zeilen bekommen ihn als FESTE
+// Der GRUNDTAKT der Tabelle in Pixeln. Kopf UND Zeilen bekommen ihn als FESTE
 // Hoehe (nicht aus Schrift + Innenabstand geschaetzt) — nur so laufen die
 // weitergezeichneten Linien des Lineals im selben Takt wie echte Zeilen.
 // Ein geschaetzter Wert lief hier schon einmal 4,25px je Zeile aus dem Takt
 // und sah nach vier Zeilen sichtbar krumm aus (Nutzer 2026-07-25).
+//
+// Seit 2026-08-06 ist es der Grund-, nicht mehr der einzige Takt: eine Spalten-
+// Art darf mehr verlangen (./spaltenArten, zeilenHoeheFuer — „Bild + Name"
+// braucht zwei Textzeilen). Der jeweils geltende Takt wandert von dort durch
+// den Baustein bis hierher; geraten wird er nirgends.
 export const ZEILEN_HOEHE = 32
 
 // Die festen Zahlen zur Wahl. „Passend zur Hoehe" steht NICHT hier: das ist
@@ -60,8 +65,16 @@ export function proSeiteAusEinstellung(wert: string): number | null {
 // scrollenden Rumpf (siehe tabelleStil) und geht darum ab.
 // Abgerundet — eine halb sichtbare Zeile ist keine Zeile. Mindestens 1:
 // eine Seite ohne Zeilen zeigte gar nichts und liesse sich nicht durchblaettern.
-export function passendeZeilen(rumpfHoehe: number, kopfHoehe: number): number {
-  return Math.max(1, Math.floor((rumpfHoehe - kopfHoehe) / ZEILEN_HOEHE))
+//
+// Der Takt kommt HEREIN und wird nicht mehr aus ZEILEN_HOEHE genommen: seit
+// eine Bild-Spalte den Takt erhoeht, rechnete die feste Zahl sonst still zu
+// viele Zeilen aus — und die letzten davon staenden unter dem Rand.
+export function passendeZeilen(
+  rumpfHoehe: number,
+  kopfHoehe: number,
+  zeilenHoehe: number,
+): number {
+  return Math.max(1, Math.floor((rumpfHoehe - kopfHoehe) / zeilenHoehe))
 }
 
 export interface Aufteilung {

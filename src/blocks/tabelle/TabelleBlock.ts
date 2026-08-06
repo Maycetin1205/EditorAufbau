@@ -60,14 +60,13 @@ import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
-import { STATUS_BEDEUTUNGEN, chipStyles } from '../shared/statusVariant'
+import { chipStyles } from '../shared/statusVariant'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
 import {
   OHNE_MESSUNG,
   PASSEND,
   proSeiteAusEinstellung,
   seitenAufteilung,
-  ZEILEN_HOEHE,
 } from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
 import { sortiereIndizes } from './sortierung'
@@ -77,19 +76,14 @@ import {
   oeffneFeldPicker,
   spaltenSteuerung,
 } from './spaltenBearbeiten'
-import {
-  ART_STATUS,
-  ART_TEXT,
-  SPALTEN_ART_OPTIONEN,
-  spaltenArt,
-} from './spaltenArten'
+import { spaltenArt, zeilenHoeheFuer } from './spaltenArten'
+import { SPALTEN_BINDUNG } from './spaltenBindung'
 import { passendeIndizes, zeigtEchteDaten } from './suche'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
 import { tabelleKoerper } from './tabelleKoerper'
 import { tabelleStil } from './tabelleStil'
 import {
-  STANDARD_TITEL,
   coerceSpalten,
   standardSpalten,
   tryCoerceSpalten,
@@ -120,41 +114,8 @@ export class TabelleBlock extends BasicBlock {
   // — Export, Inspector und Laufzeit lesen sie generisch.
   static readonly satzWahl: SatzWahl = {}
   static readonly kannAuswahlFolgen = true
-  // Jede SPALTE ist eine bindbare Stelle (Regel 2): der Editor oeffnet den
-  // Feld-Picker generisch ueber diesen Eintrag — er kennt die Tabelle nicht.
-  static readonly listenBindung: ListenBindung = {
-    prop: 'spalten',
-    titelKey: 'titel',
-    feldKey: 'feld',
-    standardTitel: STANDARD_TITEL,
-    // Die DARSTELLUNG einer Spalte (2026-08-06) wird am selben Ort eingestellt
-    // wie ihr Feld: ein Klick auf den Spaltenkopf, ein Fenster, zwei
-    // Handgriffe (Regel 7 — Bedienung am Ding, kein Inspector-Feld). Was hier
-    // steht, sind reine Registry-Daten; der Picker zeichnet sie, ohne die
-    // Tabelle zu kennen. Die Optionen kommen aus derselben Liste, aus der
-    // ./tabelleKoerper zeichnet — angebotene und gezeichnete Arten koennen
-    // damit nicht auseinanderlaufen.
-    eintragsWahl: {
-      key: 'art',
-      label: 'Darstellung',
-      optionen: SPALTEN_ART_OPTIONEN,
-      standard: ART_TEXT,
-    },
-    // Die Status-Zuordnung (2026-08-06), am selben Ort wie Darstellung und
-    // Feld — und NUR an einer Status-Spalte (nurBeiWahl). Sie ist freiwillig:
-    // ohne sie zeigt die Marke den Datenwert grau. Waehlbar sind BEDEUTUNGEN,
-    // nie Farben; die Farbe haengt fest an der Bedeutung (../shared/
-    // statusVariant, dieselbe Liste wie im Inspector der Kanban-Spalte).
-    eintragsZuordnung: {
-      key: 'zuordnung',
-      label: 'Status-Zuordnung',
-      nurBeiWahl: ART_STATUS,
-      wertLabel: 'Datenwert',
-      nameLabel: 'Klarname',
-      bedeutungLabel: 'Bedeutung',
-      bedeutungen: STATUS_BEDEUTUNGEN,
-    },
-  }
+  // Wie eine SPALTE gebunden und eingestellt wird: ./spaltenBindung.
+  static readonly listenBindung: ListenBindung = SPALTEN_BINDUNG
   static readonly defaultProps = {
     width: 'fill',
     source: '',
@@ -206,6 +167,12 @@ export class TabelleBlock extends BasicBlock {
   // Im Editor bleibt es [] -> Platzhalter-Striche (Regel 7).
   @property({ attribute: false }) datenzeilen: string[][] = []
 
+  // Die WERTE der Zusatzfelder, an datenzeilen ausgerichtet (Zeile, Spalte,
+  // dann Schluessel -> Wert). Getrennt von datenzeilen, weil dort GENAU EIN
+  // Wert je Spalte steht — daran haengen Suche und Sortierung, und die sollen
+  // weiter den Wert der Spalte meinen, nicht ihr Beiwerk.
+  @property({ attribute: false }) zusatzzeilen: Record<string, string>[][] = []
+
   // Die ROHEN Zeilenobjekte, an datenzeilen ausgerichtet (gleicher Index).
   // Braucht die Auswahl: die Folger vergleichen Schluesselfelder der
   // gewaehlten Zeile, und die stehen nicht unbedingt in einer Spalte.
@@ -235,6 +202,13 @@ export class TabelleBlock extends BasicBlock {
   // (siehe messeRumpf). null = noch nicht bzw. nicht messbar.
   private _proSeiteGemessen: number | null = null
   private _beobachter: ResizeObserver | null = null
+
+  // Mit welchem Zeilentakt zuletzt gemessen wurde (0 = noch nie). Der Takt
+  // haengt an den Spalten-Arten und kann sich ohne jede Groessenaenderung
+  // aendern — bindet der Bauer das Bild-Feld, wird die Zeile hoeher, waehrend
+  // der Rumpf gleich gross bleibt. Der ResizeObserver merkt davon nichts, also
+  // merkt es sich der Baustein und misst danach nach.
+  private _taktGemessen = 0
 
   // Die gerade wirksame Einstellung: die Uebersteuerung des Bedieners, sonst
   // der Bauplan. Das ist auch, was der Waehler als gewaehlt anzeigt.
@@ -278,7 +252,9 @@ export class TabelleBlock extends BasicBlock {
   // anstossen. null (nicht messbar, z. B. im Fluss ohne vorgegebene Hoehe)
   // ist ein gueltiges Ergebnis — dann greift der Rueckfall.
   private messeRumpf(): void {
-    const zahl = gemesseneZeilen(this)
+    const takt = this.zeilenHoehe
+    this._taktGemessen = takt
+    const zahl = gemesseneZeilen(this, takt)
     if (zahl === this._proSeiteGemessen) return
     this._proSeiteGemessen = zahl
     this.requestUpdate()
@@ -286,6 +262,13 @@ export class TabelleBlock extends BasicBlock {
 
   private spaltenListe(): Spalte[] {
     return coerceSpalten(this.spalten)
+  }
+
+  // Der Zeilentakt dieser Tabelle: die anspruchsvollste Spalten-Art bestimmt
+  // ihn (./spaltenArten). EINE Zahl, drei Leser — das Aussehen (als
+  // CSS-Variable), die Messung und die Seitenrechnung.
+  private get zeilenHoehe(): number {
+    return zeilenHoeheFuer(this.spaltenListe())
   }
 
   // Die Zeilen, die der Bediener gerade sehen soll — als ROHINDIZES in
@@ -370,6 +353,13 @@ export class TabelleBlock extends BasicBlock {
     this.beobachte()
   }
 
+  // Nachmessen, wenn sich der TAKT geaendert hat (s. _taktGemessen). Terminiert
+  // von selbst: messeRumpf zeichnet nur neu, wenn sich die Zeilenzahl wirklich
+  // aendert, und beim zweiten Durchlauf stimmt der gemerkte Takt schon.
+  protected override updated(): void {
+    if (this._taktGemessen !== this.zeilenHoehe) this.messeRumpf()
+  }
+
   override disconnectedCallback(): void {
     super.disconnectedCallback()
     feldPickerAbbestellen(this)
@@ -426,13 +416,13 @@ export class TabelleBlock extends BasicBlock {
       platzhalterZeilen: PLATZHALTER_ZEILEN,
     })
     return html`<div class="tabelle" style=${styleMap({
-      // EINE Zahl, EINE Stelle: der Takt kommt aus ./seitengroesse, damit die
-      // Optik (Linien) und die Rechnung (wie viele passen) nicht auseinander
-      // laufen koennen.
+      // EINE Zahl, EINE Stelle: der Takt kommt aus den Spalten-Arten
+      // (./spaltenArten, zeilenHoeheFuer), damit die Optik (Linien) und die
+      // Rechnung (wie viele passen) nicht auseinander laufen koennen.
       // (--spalten-zahl stand hier bis 2026-08-06 daneben; das Lineal brauchte
       // sie fuer seine senkrechten Striche im Verlauf. Es zeichnet sie jetzt
       // mit echten Zellen im Spaltenraster, und die Zahl ist ersatzlos weg.)
-      '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
+      '--zeilen-hoehe': `${this.zeilenHoehe}px`,
     })}>
       ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
       ${tabelleKoerper({
@@ -445,6 +435,7 @@ export class TabelleBlock extends BasicBlock {
         sortAuf: this._sortAuf,
         zeilen,
         datenzeilen: this.datenzeilen,
+        zusatzzeilen: this.zusatzzeilen,
         hatQuelle,
         auswahlIndex: this.auswahlIndex,
       }, {

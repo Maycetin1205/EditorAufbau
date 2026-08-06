@@ -21,16 +21,18 @@ import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
 import { zeilenAmTag } from '../shared/tagFilter'
-import { tryCoerceSpalten } from './spalten'
+import { spaltenArt } from './spaltenArten'
+import { tryCoerceSpalten, type Spalte } from './spalten'
 
 export interface RuntimeTableElement extends HTMLElement {
   datenzeilen: string[][]
+  zusatzzeilen: Record<string, string>[][]
   rohzeilen: unknown[]
   auswahlIndex: number
   durchAuswahlGefiltert: boolean
 }
 
-// Feldcodes der Spalten aus dem `spalten`-Attribut (JSON {titel,feld}[]).
+// Die Spalten aus dem `spalten`-Attribut (JSON).
 // Gelesen wird ueber GENAU DIESELBE Wandlung wie im Attribut-Wandler des
 // Bausteins (tryCoerceSpalten, s. TabelleBlock) — sonst laufen Kopfzeile und
 // Zellen auseinander: fehlendes/kaputtes Attribut ergab hier bisher NULL
@@ -39,24 +41,51 @@ export interface RuntimeTableElement extends HTMLElement {
 // eine nie angefasste Tabelle traegt kein spalten-Attribut mehr.
 // Kaputtes JSON / fremde Struktur -> Standardspalten mit leeren Codes (die
 // Zelle bleibt leer, nie raten).
-function spaltenFelder(el: HTMLElement): string[] {
-  return tryCoerceSpalten(el.getAttribute('spalten') ?? '').map((s) => s.feld)
+function spaltenVon(el: HTMLElement): Spalte[] {
+  return tryCoerceSpalten(el.getAttribute('spalten') ?? '')
+}
+
+// Die WERTE der Zusatzfelder einer Spalte in EINER Zeile.
+//
+// Generisch ueber die Arten-Liste (./spaltenArten, zusatzFelder): hier steht
+// kein „wenn Bild-Spalte, dann lies Bild und Unterzeile" — die Art sagt, welche
+// Schluessel sie kennt, die Spalte sagt, an welches Feld jeder gebunden ist.
+// Ungebunden = Schluessel fehlt, und die Zelle zeichnet die Stelle gar nicht
+// (Nutzer-Ansage 2026-08-06: kein Bild ohne verknuepftes Feld).
+function zusatzWerte(
+  spalte: Spalte,
+  row: unknown,
+  lies: (row: unknown, code: string) => string,
+): Record<string, string> {
+  const werte: Record<string, string> = {}
+  for (const zf of spaltenArt(spalte.art).zusatzFelder ?? []) {
+    const code = spalte.felder?.[zf.key] ?? ''
+    if (code !== '') werte[zf.key] = lies(row, code)
+  }
+  return werte
 }
 
 // Baut je Datenzeile ein Wert-Array, an die Spaltenreihenfolge ausgerichtet
 // (leeres Feld -> leere Zelle).
 function hydrateTable(el: RuntimeTableElement): void {
+  // Leeren heisst BEIDE leeren: blieben die Zusatzwerte einer frueheren
+  // Hydrierung stehen, zeigte eine Bild-Spalte weiter Bilder zu Namen, die
+  // laengst weg sind.
+  const leeren = (): void => {
+    el.datenzeilen = []
+    el.zusatzzeilen = []
+  }
   const sourceId = el.getAttribute('source') ?? ''
   if (sourceId === '') {
-    el.datenzeilen = []
+    leeren()
     return
   }
   const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, sourceId)
   if (!source) {
-    el.datenzeilen = []
+    leeren()
     return
   }
-  const felder = spaltenFelder(el)
+  const spalten = spaltenVon(el)
   // Tagesfilter (shared/tagFilter): ohne eingestelltes Datumsfeld bzw. ohne
   // gewaehlten Tag bleibt die Liste unveraendert — Tabellen ohne
   // Tageswaehler verhalten sich exakt wie vorher.
@@ -79,7 +108,12 @@ function hydrateTable(el: RuntimeTableElement): void {
   el.rohzeilen = rows
   el.auswahlIndex = auswahlIndex
   el.durchAuswahlGefiltert = gefiltert
-  el.datenzeilen = rows.map((row) => felder.map((wert) => (wert === '' ? '' : lies(row, wert))))
+  el.datenzeilen = rows.map((row) => spalten.map((s) => (s.feld === '' ? '' : lies(row, s.feld))))
+  // Die Zusatzwerte reisen GETRENNT, an denselben Indizes: in datenzeilen steht
+  // genau ein Wert je Spalte, und daran haengen Suche und Sortierung. Wanderte
+  // das Beiwerk dort mit hinein, faende die Suche Zeilen ueber Werte, die als
+  // Spaltenwert gar nicht dastehen.
+  el.zusatzzeilen = rows.map((row) => spalten.map((s) => zusatzWerte(s, row, lies)))
 }
 
 // Anmeldung/Abo/Bruecke: die geteilte Mechanik (shared/datenAnschluss).

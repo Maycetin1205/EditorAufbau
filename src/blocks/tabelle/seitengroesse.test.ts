@@ -36,22 +36,29 @@ describe('proSeiteAusEinstellung', () => {
 describe('passendeZeilen', () => {
   it('rechnet den freien Rumpf in ganze Zeilen um', () => {
     // 300px Rumpf minus 32px Kopf = 268px frei -> 8 ganze Zeilen (8,375).
-    expect(passendeZeilen(300, ZEILEN_HOEHE)).toBe(8)
+    expect(passendeZeilen(300, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(8)
     // Genau aufgehend: 10 Zeilen plus Kopf.
-    expect(passendeZeilen(ZEILEN_HOEHE * 11, ZEILEN_HOEHE)).toBe(10)
+    expect(passendeZeilen(ZEILEN_HOEHE * 11, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(10)
+  })
+
+  it('rechnet mit dem UEBERGEBENEN Takt, nicht mit dem Grundtakt', () => {
+    // Seit eine Bild-Spalte den Takt erhoeht (spaltenArten): derselbe Rumpf
+    // fasst dann weniger Zeilen. Rechnete die Funktion weiter mit 32, stuenden
+    // die letzten Zeilen unter dem Rand.
+    expect(passendeZeilen(300, ZEILEN_HOEHE, 44)).toBe(6)
   })
 
   it('rundet ab — eine halb sichtbare Zeile ist keine Zeile', () => {
-    expect(passendeZeilen(ZEILEN_HOEHE * 5 + ZEILEN_HOEHE - 1, ZEILEN_HOEHE)).toBe(4)
+    expect(passendeZeilen(ZEILEN_HOEHE * 5 + ZEILEN_HOEHE - 1, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(4)
   })
 
   it('liefert nie weniger als eine Zeile', () => {
     // Flacher als der Kopf (im Aufbau, waehrend das Raster noch zieht):
     // eine Seite mit null Zeilen zeigte gar nichts und liesse sich nicht
     // durchblaettern.
-    expect(passendeZeilen(40, ZEILEN_HOEHE)).toBe(1)
-    expect(passendeZeilen(0, ZEILEN_HOEHE)).toBe(1)
-    expect(passendeZeilen(-100, ZEILEN_HOEHE)).toBe(1)
+    expect(passendeZeilen(40, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(1)
+    expect(passendeZeilen(0, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(1)
+    expect(passendeZeilen(-100, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(1)
   })
 })
 

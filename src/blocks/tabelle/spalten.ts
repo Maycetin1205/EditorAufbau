@@ -24,6 +24,11 @@ export interface Spalte {
   // Arten leer. Eine leere Liste in jeder Spalte mitzuschreiben blaehte jede
   // exportierte Maske auf, ohne etwas zu sagen.
   zuordnung?: Zuordnung[]
+  // Weitere Feldbindungen dieser Spalte (2026-08-06): Schluessel -> Feldcode.
+  // WELCHE Schluessel es gibt, sagt die ART (./spaltenArten, zusatzFelder) —
+  // „Bild + Name" nennt hier ihr Bild- und ihr Unterzeilenfeld. Optional aus
+  // demselben Grund wie die Zuordnung: bei vier von fuenf Arten leer.
+  felder?: Record<string, string>
 }
 
 export const SPALTEN_MIN = 1
@@ -67,6 +72,19 @@ function alsZuordnung(v: unknown): Zuordnung[] {
     .filter((z) => z.wert.trim() !== '')
 }
 
+// Die Zusatz-Feldbindungen defensiv lesen: nur Zeichenketten zaehlen, alles
+// andere faellt weg. WELCHE Schluessel sinnvoll sind, weiss hier niemand — das
+// sagt die Art (./spaltenArten); ein Schluessel einer spaeter entfernten Art
+// stoert nicht, er wird schlicht von niemandem gelesen.
+function alsFelder(v: unknown): Record<string, string> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
+  const raus: Record<string, string> = {}
+  for (const [k, wert] of Object.entries(v as Record<string, unknown>)) {
+    if (typeof wert === 'string' && wert !== '') raus[k] = wert
+  }
+  return raus
+}
+
 // Eine unbekannte Struktur defensiv auf eine Spalte abbilden (nie werfen).
 // Eine fehlende Art heisst Text — so verhielten sich ALLE Spalten bis
 // 2026-08-06, gespeicherte Staende von davor bleiben damit unveraendert.
@@ -74,6 +92,7 @@ function alsSpalte(x: unknown, index: number): Spalte {
   if (x && typeof x === 'object') {
     const o = x as Record<string, unknown>
     const zuordnung = alsZuordnung(o.zuordnung)
+    const felder = alsFelder(o.felder)
     return {
       titel: typeof o.titel === 'string' ? o.titel : standardTitelFuer(index),
       feld: typeof o.feld === 'string' ? o.feld : '',
@@ -82,6 +101,8 @@ function alsSpalte(x: unknown, index: number): Spalte {
       // leere Liste stehen. Sonst traegt jede Spalte jeder Maske ein
       // `"zuordnung":[]` mit sich herum.
       ...(zuordnung.length > 0 ? { zuordnung } : {}),
+      // Dasselbe fuer die Zusatzfelder: ungebunden heisst „Schluessel nicht da".
+      ...(Object.keys(felder).length > 0 ? { felder } : {}),
     }
   }
   // Alte Erstfassung: reine Titel-Strings.

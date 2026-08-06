@@ -21,6 +21,8 @@ import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockDat
 import { bausteinName } from '../core/blocks/bausteinName'
 import {
   bindingProp,
+  eintragsFelderLesen,
+  eintragsFelderVon,
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listeLesen,
@@ -168,6 +170,19 @@ export function preflightMask(
       listeLesen(node.props[b.prop], b).forEach((eintrag, i) => {
         const titel = String(eintrag[b.titelKey] ?? '') || `Nr. ${i + 1}`
         pruefeBindung(eintrag[b.feldKey], titel)
+        // Die ZUSATZFELDER der gewaehlten Darstellung (2026-08-06, „Bild +
+        // Name": Bild und Unterzeile). Sie sind echte Bindungen und muessen
+        // durch dieselbe Pruefung — eine Bild-Bindung auf ein geloeschtes Feld
+        // liesse die Stelle in der Maske sonst still leer, genau wie es die
+        // Spalten-Bindung bis 2026-07-28 tat. Geprueft werden nur die Felder
+        // der GERADE gewaehlten Wahl: eine liegen gebliebene Bindung einer
+        // anderen Darstellung wird nicht gelesen und blockt darum auch nicht.
+        if (wahl) {
+          const gebunden = eintragsFelderLesen(wahl, eintrag)
+          for (const zf of eintragsFelderVon(wahl, eintrag)) {
+            pruefeBindung(gebunden[zf.key], `${titel} · ${zf.label}`)
+          }
+        }
         // S-Z (2026-08-06): ein Listen-Eintrag steht auf der Darstellung, die
         // eine Zuordnung erklaeren WUERDE, hat aber keine. Das ist ausdruecklich
         // erlaubt — die Zuordnung ist freiwillig, die Marke zeigt dann den

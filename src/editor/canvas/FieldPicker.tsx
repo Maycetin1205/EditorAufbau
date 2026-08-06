@@ -52,6 +52,18 @@ export interface PickerWahl {
   onWaehle: (wert: string) => void
 }
 
+// Ein ZUSAETZLICHES Feld der gewaehlten Wahl (Registry: EintragsWahlOption.
+// felder — bei der Tabelle Bild und Unterzeile der Art „Bild + Name"). Auch das
+// zeichnet der Picker generisch: er kennt Beschriftung, aktuelle Bindung und
+// einen Rueckkanal, nie deren Bedeutung.
+export interface PickerFeld {
+  key: string
+  label: string
+  // Aktuell gebunden, ROH wie gespeichert ('' = nicht gebunden).
+  aktuell: string
+  onWaehle: (wert: string) => void
+}
+
 // Eine ZUORDNUNGSTABELLE unter der Wahl (Registry: ListenBindung.
 // eintragsZuordnung — bei der Tabelle: welcher Status-Datenwert was bedeutet).
 // Auch sie zeichnet der Picker generisch: drei Beschriftungen, eine Liste
@@ -78,6 +90,8 @@ interface FieldPickerProps {
   gruppen: readonly PickerGruppe[]
   // Optional, s. PickerWahl. Fehlt sie, sieht der Picker aus wie bisher.
   wahl?: PickerWahl
+  // Optional, s. PickerFeld. Leer, wenn die gewaehlte Wahl keine hat.
+  felder?: readonly PickerFeld[]
   // Optional, s. PickerZuordnung. Der Aufrufer laesst sie weg, wenn die
   // aktuelle Wahl gar keine Zuordnung kennt.
   zuordnung?: PickerZuordnung
@@ -98,6 +112,7 @@ export function FieldPicker({
   spotLabel,
   gruppen,
   wahl,
+  felder,
   zuordnung,
   current,
   top,
@@ -171,11 +186,12 @@ export function FieldPicker({
         e.stopPropagation()
       }}
       style={{ position: 'fixed', top, left, zIndex: 50 }}
-      /* Mit Zuordnungstabelle braucht das Fenster mehr Platz: drei Felder je
-         Zeile passen nicht in die schmale Feldliste. Ohne sie bleibt es exakt
-         so breit wie bisher. */
+      /* Mit Zuordnungstabelle oder zusaetzlichen Feldern braucht das Fenster
+         mehr Platz: drei Felder je Zeile bzw. Beschriftung samt Auswahlliste
+         passen nicht in die schmale Feldliste. Ohne beides bleibt es exakt so
+         breit wie bisher. */
       className={`overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md ${
-        zuordnung ? 'max-h-96 w-80' : 'max-h-64 w-60'
+        zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-64 w-60'
       }`}
     >
       {/* Die zusätzliche Wahl steht OBEN und abgesetzt: sie gehört zur
@@ -207,6 +223,55 @@ export function FieldPicker({
               </button>
             ))}
           </div>
+        </div>
+      )}
+      {/* Die zusaetzlichen Felder der gewaehlten Wahl. Als Auswahlliste statt
+          als Knopfliste wie unten: es sind ZWEI Stellen nebeneinander, und je
+          eine volle Feldliste haette das Fenster unbedienbar lang gemacht.
+          Steht die Stelle auf einer Wahl ohne Zusatzfelder, fehlt der Block
+          ganz — ein leerer Kasten „Bild" an einer Textspalte waere ein Feld,
+          das nichts tut. */}
+      {felder && felder.length > 0 && (
+        <div className="mb-1 border-b border-border pb-1">
+          {felder.map((f) => (
+            <label key={f.key} className="mb-1 flex items-center gap-2 px-2">
+              <span className="w-20 shrink-0 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                {f.label}
+              </span>
+              <select
+                value={f.aktuell}
+                onChange={(e) => f.onWaehle(e.target.value)}
+                className="min-w-0 flex-1 rounded-sm border border-border bg-background px-1 py-1 text-xs"
+              >
+                <option value="">— nicht gebunden —</option>
+                {/* Gebunden an etwas, das die Listen unten nicht enthalten
+                    (Quelle abgehaengt, Feld geloescht): eine eigene Option
+                    dafuer. Ohne sie faellt das Auswahlfeld stumm auf „nicht
+                    gebunden" zurueck und BEHAUPTET damit, hier sei nichts
+                    eingestellt — waehrend die Bindung in Wahrheit steht und
+                    die Preflight sie zu Recht blockiert (Regel 4). */}
+                {f.aktuell !== ''
+                  && !gruppen.some((g) =>
+                    g.fields.some((feld) => bindungMitQuelle(g.quelleId, feld.code) === f.aktuell))
+                  && <option value={f.aktuell}>— unbekanntes Feld —</option>}
+                {gruppen.map((g) => (
+                  <optgroup
+                    key={g.quelleId === '' ? '__erste__' : g.quelleId}
+                    label={g.name}
+                  >
+                    {g.fields.map((feld) => (
+                      <option
+                        key={`${g.quelleId}${QUELLEN_TRENNER}${feld.code}`}
+                        value={bindungMitQuelle(g.quelleId, feld.code)}
+                      >
+                        {feld.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+          ))}
         </div>
       )}
       {/* Die Zuordnungstabelle sitzt unter der Wahl und ueber den Feldern:

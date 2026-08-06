@@ -42,6 +42,10 @@ export interface KoerperLage {
   // Platzhalter-Zeile im Editor (Regel 7: hier kommt spaeter ein Wert hin).
   zeilen: readonly (number | null)[]
   datenzeilen: readonly string[][]
+  // Die WERTE der Zusatzfelder, an datenzeilen ausgerichtet: je Zeile, je
+  // Spalte ein Record Schluessel -> Wert (leer, wo eine Art keine hat oder
+  // nichts gebunden ist). Nur „Bild + Name" liest daraus (./spaltenArten).
+  zusatzzeilen: readonly Record<string, string>[][]
   // Kommen echte Daten? Entscheidet, ob eine Zeile anklickbar ist.
   hatQuelle: boolean
   auswahlIndex: number
@@ -100,7 +104,15 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               const wert = rohIndex !== null
                 ? (lage.datenzeilen[rohIndex]?.[i] ?? '')
                 : PLATZHALTER
-              return html`<div class=${art.klasse}>${art.zelle(wert, s.zuordnung ?? [])}</div>`
+              // Im Editor (Platzhalter-Zeile) gibt es keine Zusatzwerte: die
+              // Bild-Stelle bleibt dort leer statt eine Flaeche zu zeigen, die
+              // nichts enthaelt (Nutzer-Ansage 2026-08-06).
+              const zusatz = rohIndex !== null
+                ? (lage.zusatzzeilen[rohIndex]?.[i] ?? {})
+                : {}
+              return html`<div class=${art.klasse}>${
+                art.zelle(wert, s.zuordnung ?? [], zusatz)
+              }</div>`
             })}
           </div>`,
         )}
