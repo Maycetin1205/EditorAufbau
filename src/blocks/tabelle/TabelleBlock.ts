@@ -8,17 +8,22 @@
 // ./rumpfMessung, ./seRuntime, ./tabelleStil.
 //
 // Der Rahmen ist die TAFEL der Designsprache (designsprache/musterbogen.html,
-// .tafel): Kopfzeile, Spaltenkopf, Zeilen, Fusszeile.
-// Die Knoepfe oben rechts sind ECHTE Baustein-Kinder (acceptsChildren +
-// allowedChildTypes ['button'], Registry-Faehigkeit) und landen ueber einen
-// <slot> in der Kopfzeile — nichts davon ist gemalt, im Export steht dort ein
-// echtes <ff-button> mit seiner Aktionskette.
-// Die Kopfzeile traegt NUR diese Knoepfe und entsteht auch nur mit ihnen.
-// Was die Demo dort sonst noch zeigt, ist auf Nutzer-Ansage 2026-08-06 raus:
-// der TITEL (eine Ueberschrift ueber einer Tabelle ist ein Text-Baustein) und
-// der ZAEHLER (die Fusszeile sagt die Zahl bereits im Klartext; als dunkle
-// Kachel war er ein schwarzer Klotz im hellen Rahmen). Keins von beidem kommt
-// ohne neue Entscheidung zurueck.
+// .tafel): Papierflaeche, EINE 1,5px-Kante, grosse Rundung, flach.
+//
+// Die Tafel hat KEINE Kopfzeile — dreimal versucht, dreimal verworfen
+// (Nutzer-Ansagen 2026-08-06, alle am selben Tag). Was die Demo dort zeigt:
+//   - TITEL: nicht noetig, eine Ueberschrift ueber einer Tabelle ist ein
+//     Text-Baustein.
+//   - ZAEHLER: die Fusszeile sagt die Zahl schon im Klartext; als dunkle
+//     Kachel war er ein schwarzer Klotz im hellen Rahmen.
+//   - KNOEPFE als echte Baustein-Kinder (acceptsChildren + allowedChildTypes):
+//     gebaut und wieder entfernt. Der Grund ist kein Geschmack, sondern
+//     Regel 1: die Editor-Steuerung „+"/„−" sitzt in derselben Ecke. Standen
+//     beide in einer Reihe, schoben die „+"/„−" den Knopf im EDITOR nach
+//     links, waehrend er im EXPORT (wo es sie nicht gibt) an der Kante klebte
+//     — derselbe Bauplan, zwei Bilder. Wer die Knoepfe zurueckholt, muss also
+//     zuerst die Steuerung woandershin bringen, sonst kommt der Bruch mit.
+// Nichts davon kommt ohne neue Nutzer-Entscheidung zurueck.
 //
 // EIN Baustein, EIN Rahmen: die Spalten stecken INNEN
 // (kein Kind-Baustein je Spalte). Jede Spalte hat einen Titel UND ein Feld:
@@ -48,14 +53,12 @@
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*).
 
-import { html, nothing, type TemplateResult } from 'lit'
-import { property, state } from 'lit/decorators.js'
+import { html, type TemplateResult } from 'lit'
+import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
-import type { FlowDirection } from '../../core/blocks/flowLayout'
-import { ButtonBlock } from '../button/ButtonBlock'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
 import {
@@ -100,20 +103,6 @@ export class TabelleBlock extends BasicBlock {
   // erzeugt daraus den SEFILELOOP. `source` = Technikwert (Vorlagen-id), leer =
   // keine Quelle (Tabelle bleibt statisch mit Platzhaltern).
   static readonly acceptsDataSource = true
-  // Knoepfe-Platz oben rechts (2026-08-06): die Tafel nimmt Schaltflaechen auf
-  // — und AUSSCHLIESSLICH die. Alles daran sind Registry-Faehigkeiten, kein
-  // Sondercode: Store, Drag-Vorschau und Export lesen sie generisch (Regel 2).
-  // Der „+ Knopf"-Anstecker ist notwendig, nicht bequem: ein Baustein aus der
-  // Bibliothek laesst sich auf einen Baustein der RASTERFLAECHE gar nicht
-  // fallen (CanvasNode gibt Rasterkindern kein onDragOver) — ohne ihn waere
-  // der Platz unerreichbar. Denselben Weg geht das Kanban mit „+ Spalte".
-  // containerHint aus: die Tafel hat ihren eigenen sichtbaren Rahmen, die
-  // gestrichelte Container-Hilfe des BlockHost laege quer darueber.
-  static readonly acceptsChildren = true
-  static readonly allowedChildTypes = [ButtonBlock.blockType]
-  static readonly childDirection: FlowDirection = 'row'
-  static readonly containerHint = false
-  static readonly addChildButton = { label: 'Knopf', childType: ButtonBlock.blockType }
   // Auswahl (2026-08-05): der Bediener greift hier einen Satz heraus, indem er
   // eine ZEILE anklickt (zweiter Klick hebt auf) — immer und aus der eigenen
   // Datenquelle, darum eine SatzWahl ohne Bedingung und ohne eigene
@@ -196,19 +185,6 @@ export class TabelleBlock extends BasicBlock {
   // Zeigt die Tabelle gerade WENIGER, weil sie der Auswahl eines anderen
   // Bausteins folgt? Nur fuer die ehrliche Fusszeile (Regel 4).
   @property({ attribute: false }) durchAuswahlGefiltert = false
-
-  // Stehen echte Knopf-Bausteine im Kopf? Aus den geslotteten Kindern
-  // abgeleitet, nie gepflegt — dieselbe Mechanik wie der Kartenzaehler der
-  // Kanban-Spalte, und sie laeuft im Editor UND in der Maske gleich (Regel 1).
-  // Editor-Hilfen und das inerte <template> zaehlen nicht mit.
-  @state() private _hatKnoepfe = false
-
-  private zaehleKnoepfe(e: Event): void {
-    const slot = e.target as HTMLSlotElement
-    this._hatKnoepfe = slot
-      .assignedElements()
-      .some((el) => !el.hasAttribute('data-ff-editor-helper') && el.tagName.toLowerCase() !== 'template')
-  }
 
   // Sortier-Zustand (nur Laufzeit/Export, nicht persistiert).
   private _sortSpalte = -1
@@ -397,9 +373,6 @@ export class TabelleBlock extends BasicBlock {
     // leeren Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen
     // Platzhalter-Zeilen mit „—" (Regel 7: hier kommt spaeter ein Wert hin).
     const gesamt = alleSichtbar.length
-    // Die Spalten-Steuerung wird an GENAU EINER Stelle gebaut und an einer von
-    // zwei Stellen eingehaengt (s. u.) — nie zweimal gezeichnet.
-    const steuerung = spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)
     const proSeite = this.proSeiteAktuell
     const { seiten, seite, zeilen } = seitenAufteilung({
       sichtbar: alleSichtbar,
@@ -415,16 +388,7 @@ export class TabelleBlock extends BasicBlock {
       // laufen koennen.
       '--zeilen-hoehe': `${ZEILEN_HOEHE}px`,
     })}>
-      <!-- Die Kopfzeile traegt NUR die Knoepfe. Sie entsteht auch nur mit
-           ihnen (Klasse hat-knoepfe) — ohne Knoepfe waere sie ein leerer
-           Streifen mit Trennlinie, im Editor wie in der Maske. Der <slot>
-           steht trotzdem immer im Bau: ohne ihn koennte gar nichts
-           einziehen und slotchange nie melden. -->
-      <div class="tafel-kopf${this._hatKnoepfe ? ' hat-knoepfe' : ''}">
-        <slot @slotchange=${this.zaehleKnoepfe}></slot>
-        ${this._hatKnoepfe ? steuerung : nothing}
-      </div>
-      ${this._hatKnoepfe ? nothing : steuerung}
+      ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
       ${tabelleKoerper({
         spalten,
         cols,

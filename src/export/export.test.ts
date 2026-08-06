@@ -411,31 +411,6 @@ describe('Tabelle (Fahrplan 4)', () => {
     expect(standard).not.toMatch(/zeilenWaehler=/i)
   })
 
-  it('Tabelle: die Knoepfe der Kopfzeile reisen als echte Bausteine MIT', () => {
-    // Der Knoepfe-Platz oben rechts (2026-08-06) ist kein gemalter Knopf,
-    // sondern ein <slot>: was der Bauer dort hineinstellt, ist ein echtes
-    // ff-button mit eigener Beschriftung und eigener Aktionskette. Faellt es
-    // im Export weg, zeigt SoftEngine eine Tafel ohne Bedienung — und zwar
-    // still (WYSIWYG-Bruch, Regel 1). Bis zu diesem Paket nahm die Tabelle gar
-    // keine Kinder auf, der Export haette sie also kommentarlos verschluckt.
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
-      tab: {
-        id: 'tab', type: 'tabelle', parentId: 'root', childIds: ['knopf'],
-        props: { width: 'fill', spalten: standardTestSpalten },
-      },
-      knopf: {
-        id: 'knopf', type: 'button', parentId: 'tab', childIds: [],
-        props: { label: 'Neuer Patient' },
-      },
-    }
-    const { html } = exportMask(tree)
-    // Der Knopf steht INNERHALB des Tabellen-Tags, nicht daneben — nur dort
-    // findet ihn der <slot> der Kopfzeile.
-    expect(html).toMatch(/<ff-tabelle[^>]*>[\s\S]*?<ff-button[^>]*label="Neuer Patient"[\s\S]*?<\/ff-tabelle>/i)
-    expect(failedChecks(validateMaskHtml(html))).toEqual([])
-  })
-
   it('coerceSpalten faengt alte Staende defensiv ab (Titel-Strings, Zahl, kaputt)', () => {
     // Neues Modell {titel,feld} bleibt unveraendert.
     expect(coerceSpalten([{ titel: 'A', feld: '2_8' }])).toEqual([{ titel: 'A', feld: '2_8' }])

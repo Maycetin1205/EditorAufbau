@@ -23,7 +23,7 @@ export const tabelleStil = css`
          dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
       /* Der Tafel-Rahmen (Demo .tafel, Werte 1:1): Papierflaeche, EINE
          1,5px-Kante, grosse Rundung, nichts Koerperhaftes. overflow:hidden
-         schneidet Kopf- und Fusszeile an den runden Ecken sauber ab.
+         schneidet Suchzeile und Fusszeile an den runden Ecken sauber ab.
          position:relative ist der Anker der frei schwebenden Editor-Hilfe
          unten (.steuerung), sonst nichts. */
       .tabelle {
@@ -40,37 +40,6 @@ export const tabelleStil = css`
         font-size: var(--se-fs);
         color: var(--se-ink);
       }
-      /* Kopfzeile der Tafel (Demo .tafel-kopf): der Platz fuer die Knoepfe,
-         rechtsbuendig. Die Demo zeigt dort zusaetzlich Titel und Zaehler —
-         beides ist auf Nutzer-Ansage 2026-08-06 raus (Begruendung im Kopf von
-         TabelleBlock). Aufbau, Kante und Farben kommen unveraendert aus der
-         Demo; NUR der Innenabstand ist dichter als deren 14px/18px — die
-         Maske bleibt ein dichtes Werkzeug (Nutzer-Entscheidung 2026-08-06,
-         masken-tokens.css). Genommen sind dafuer vorhandene Abstands-Werte,
-         keine neuen Zahlen.
-
-         OHNE Knoepfe gibt es die Kopfzeile gar nicht: sonst saesse oben ein
-         leerer Streifen mit Trennlinie, und zwar in jeder exportierten Maske,
-         deren Tabelle einfach nur eine Liste ist. Der Baustein setzt
-         hat-knoepfe, sobald wirklich etwas eingezogen ist (slotchange). Der
-         <slot> bleibt trotzdem immer im Bau — ohne ihn koennte nichts
-         einziehen und slotchange nie melden; display:none verhindert nur die
-         Darstellung, nicht die Zuweisung. */
-      .tafel-kopf { display: none; }
-      .tafel-kopf.hat-knoepfe {
-        flex: none;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: var(--se-gap);
-        padding: var(--se-gap-sm) var(--se-gap);
-        border-bottom: var(--se-border) solid var(--se-line);
-      }
-      /* Die Knoepfe sind ECHTE Baustein-Kinder (Registry: allowedChildTypes),
-         keine gemalten Knoepfe — sie liegen im Light-DOM und kommen hier
-         durch. display:contents macht sie zu Flex-Kindern der Kopfzeile,
-         damit sie denselben Abstand tragen wie in der Demo. */
-      .tafel-kopf slot { display: contents; }
       /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
          drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
       .suchzeile {
@@ -273,17 +242,13 @@ export const tabelleStil = css`
         cursor: default;
       }
       /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im
-         Export. Sie haengt an EINER von zwei Stellen, und der Baustein
-         entscheidet an derselben Bedingung wie die Kopfzeile:
-           - ohne Knoepfe: frei schwebend in der oberen rechten Ecke, wie seit
-             jeher. Sie darf dem Baustein keinen Platz stehlen — eine
-             Editor-Hilfe, die Raum belegt, verschiebt den Inhalt gegenueber
-             dem Export (WYSIWYG-Bruch, s. BlockHost).
-           - mit Knoepfen: als letztes Flex-Kind IN der Kopfzeile. Schwebend
-             laege sie sonst auf dem rechten Knopf. Weil sie hinter den
-             Knoepfen laeuft, stehen die trotzdem an derselben Stelle wie im
-             Export — der Platz kommt aus dem ohnehin vorhandenen
-             Innenabstand. */
+         Export. Sie SCHWEBT bewusst in der oberen rechten Ecke, statt in einer
+         Reihe mitzulaufen: eine Editor-Hilfe darf dem Baustein keinen Platz
+         stehlen, sonst sitzt der Inhalt im Editor anders als im Export
+         (WYSIWYG-Bruch, s. BlockHost). Genau daran ist am 2026-08-06 der
+         Knoepfe-Platz in einer Kopfzeile gescheitert — die „+"/„−" schoben
+         den Knopf im Editor nach links, im Export klebte er an der Kante.
+         Wer diese Ecke belegen will, muss die Steuerung zuerst umziehen. */
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
         position: absolute;
@@ -292,10 +257,6 @@ export const tabelleStil = css`
         z-index: 2;
         display: inline-flex;
         gap: 4px;
-      }
-      :host([data-ff-editor]) .tafel-kopf .steuerung {
-        position: static;
-        flex: none;
       }
       .steuerung button {
         font-family: var(--se-font);
