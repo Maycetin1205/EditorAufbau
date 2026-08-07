@@ -1,18 +1,30 @@
 // CardBlock
-// Molekuel (4K.3; Empfang-Anatomie): Karte mit ACHT Stellen nach dem
-// Empfang-Vorbild — oben Avatar (freistehendes Tierzeichen aus dem Datenwert)
-// neben dem Titelblock (Titel + Titel 2 fliessen in einer Zeile zusammen,
-// darunter die Unterzeile), Zeit + Datum sitzen OBEN RECHTS in derselben
-// Zeile, dann Textzeile, unten der Status-Chip. Karten sind NORMALE
-// Bloecke im Baum — keine eigene Drag-Sonderlogik, die Canvas-Drag-Logik
-// aus 2.3 zieht sie wie jeden anderen Block. (Entscheidungs-Historie:
-// docs/decisions/2026-07-16-karte-empfang-anatomie.md)
+// Molekuel: Karte mit ACHT Stellen — seit 2026-08-06 gebaut wie die KARTE DER
+// DEMO (designsprache/musterbogen.html, .karte), Wert fuer Wert abgeschrieben
+// auf Nutzer-Auftrag („der Nutzer will exakt die Demo-Karte"). Aufbau von oben
+// nach unten:
 //
-// Leer-Regel: In der MASKE verschwinden Stellen ohne Inhalt restlos —
-// samt ihrer Zeile, wenn alles darin leer ist; die Karte ist deshalb
-// auto-hoch mit 112px MINDESThoehe. Im Editor bleibt jede Stelle als
-// Klick-Ziel stehen (Strich bzw. gestrichelter Avatar-Kreis, Regel 7:
-// nie erfundene Daten).
+//   Lasche oben links   Datum + Zeit (die Karteikarten-Signatur der Sprache)
+//   Kopf                Bild links, daneben Titel ueber der Unterzeile
+//   Fliesstext          die Textzeile, hoechstens zwei Zeilen
+//   Fusszeile           links Titel 2, rechts die Status-Marke
+//
+// Vorher (bis 2026-08-06, Empfang-Vorbild): Zeit und Datum sassen oben RECHTS,
+// Titel und Titel 2 flossen in EINER Zeile zusammen, und die Marke stand allein
+// unten links. Keine Stelle ist bei dem Umbau weggefallen oder dazugekommen —
+// sie sitzen nur woanders, gespeicherte Karten verlieren also nichts. Die
+// Zuordnung der zwei uebrigen Stellen (Datum, Titel 2) ist eine
+// Nutzer-Entscheidung: Datum teilt sich die Lasche mit der Zeit, Titel 2 wird
+// der linke Fussplatz — in der Demo steht dort der Tierhalter, also ein Name.
+//
+// Karten sind NORMALE Bloecke im Baum — keine eigene Drag-Sonderlogik.
+//
+// Leer-Regel: In der MASKE verschwinden Stellen ohne Inhalt restlos — samt
+// ihrer Zeile, wenn alles darin leer ist. Im EDITOR bleibt jede Stelle ein
+// Klick-Ziel (Strich bzw. gestrichelte Bildflaeche), aber NUR an der
+// ausgewaehlten Karte (Nutzer-Ansage 2026-08-06 „keine haesslichen
+// Platzhalter"): ganz weglassen geht nicht, eine leere Stelle waere 0px hoch
+// und liesse sich nie anklicken. Das WIE steht in ./kartenStil.
 //
 // Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
 // (Inline-Edit, WYSIWYG) und sind bindbare Stellen; der Avatar
@@ -27,11 +39,9 @@
 // Knoepfe.
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Literale,
-// keine Fallbacks. Zielbild: die Empfang-Referenzmaske (vkarte) — Avatar
-// und Zeilenaufbau folgen ihr, Chip unten bleibt unsere Abweichung
-// (Nutzer-Entscheidung 2026-07-15).
+// keine Fallbacks — das WIE wohnt in ./kartenStil.
 
-import { css, html, nothing, type TemplateResult } from 'lit'
+import { html, nothing, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
@@ -45,6 +55,7 @@ import {
   type StatusVariant,
 } from '../shared/statusVariant'
 import { tierIcon } from '../shared/tierIcon'
+import { kartenStil } from './kartenStil'
 
 // Text-Stellen der Karte (der Avatar ist gesondert: kein Inline-Edit).
 type TextSpotProp = 'heading' | 'heading2' | 'time' | 'date' | 'meta' | 'text'
@@ -120,175 +131,10 @@ export class CardBlock extends BasicBlock {
     ),
   ]
 
-  // Strukturelle Groessen (padding, margins, line-height, font-weight) als
-  // Literale wie bei Button; Farben + Radius + Schriftgroessen aus
-  // Tokens. .heading setzt --se-ink explizit (Shadow DOM erbt sonst je nach
-  // Umgebung unterschiedlich — WYSIWYG). Titelzeile + Unterzeile bleiben
-  // einzeilig (ellipsis).
-  static override styles = [
-    BasicBlock.styles,
-    chipStyles,
-    css`
-      .card {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        min-height: 112px;
-        overflow: hidden;
-        gap: 5px;
-        background: var(--se-card-bg);
-        border: var(--se-border) solid var(--se-card-line);
-        border-radius: var(--se-r-md);
-        padding: 8px 10px 9px;
-        font-family: var(--se-font);
-        transition: border-color var(--se-move);
-      }
-      /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
-         Karte hebt nicht ab. Vorher hob sie sich per Schatten + 1px nach
-         oben — das liess die Nachbarkarten wackeln und war das einzige
-         Koerperhafte der Maske. */
-      .card:hover {
-        border-color: var(--se-faint);
-      }
-      /* Statusfarbe AM KOERPER (2026-07-30, Nutzer-Go).
-         Die Karte kennt ihren Status laengst — die Eigenschaft „Farbe"
-         faerbt seit jeher den Chip. Gezeigt hat der Koerper ihn nie: weisse
-         Flaeche, grauer Rahmen, egal ob Notfall oder erledigt. Ein schmaler
-         Streifen links macht ihn auf einen Blick lesbar. Kostet KEINE neue
-         Eigenschaft und KEINE neue Farbe — dieselben Statusfarben wie Chip
-         und Kanban-Spalte, dieselbe Klassen-Bauart (v-variante). */
-      .card { border-left-width: 3px; }
-      .card.v-info { border-left-color: var(--se-blue); }
-      .card.v-success { border-left-color: var(--se-green); }
-      .card.v-warning { border-left-color: var(--se-amber); }
-      .card.v-danger { border-left-color: var(--se-red); }
-      /* Die GEWAEHLTE Karte (Auswahl-Geber Kanban, 2026-08-05): getoente
-         Akzentflaeche + Akzentrahmen — dieselbe Handschrift wie die
-         gewaehlte Tabellenzeile. Das Attribut setzt NUR die Laufzeit
-         (kanban/seRuntime), der Editor erfindet keine Auswahl (Regel 7).
-         Der linke STATUS-Streifen bleibt sichtbar: er traegt Bedeutung
-         (Notfall!), darum nur die drei anderen Kanten in Akzent. */
-      :host([data-ff-auswahl]) .card {
-        border-top-color: var(--se-accent);
-        border-right-color: var(--se-accent);
-        border-bottom-color: var(--se-accent);
-        background: var(--se-accent-soft);
-      }
-      .main {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        min-width: 0;
-      }
-      /* Zeit + Datum oben rechts (Nutzer-Entscheidung 2026-07-16) —
-         align-self:flex-start hält die Gruppe an der Oberkante, auch wenn
-         der Titelblock zweizeilig ist. */
-      .when {
-        display: flex;
-        align-items: baseline;
-        gap: 7px;
-        flex: none;
-        margin-left: auto;
-        align-self: flex-start;
-      }
-      .time,
-      .date {
-        color: var(--se-muted);
-        font-family: var(--se-mono);
-        font-size: var(--se-fs-sm);
-      }
-      /* Avatar: das Tierzeichen steht FREI, ohne Kachel darunter.
-         Bis 2026-08-06 sass es auf einer koralle-getoenten 30px-Flaeche und
-         war selbst nur 17px gross. Zwei Gruende, beide zwingend: die
-         Designsprache hat die Kachel ausdruecklich abgeschafft („sie wirkte
-         als Rahmen, in dem das Zeichen eingequetscht aussah. Ohne sie atmet
-         es" — designsprache/atome.css, Nutzer-Entscheidung), und die neuen
-         Zeichen bringen ihre eigenen Farben mit: ein buntes Bild auf
-         getoentem Grund in der Hausfarbe schlaegt sich mit ihr.
-         Die Flaeche bleibt 30px (der dichte Editor-Takt, nicht die 36px der
-         Demo), das Bild fuellt sie jetzt aber ganz. Die Farbe (color) bleibt
-         gesetzt — davon lebt die Pfote, der einzige einfarbige Rueckfall. */
-      .avatar {
-        box-sizing: border-box;
-        display: grid;
-        place-items: center;
-        width: 30px;
-        height: 30px;
-        flex: none;
-        color: var(--se-accent);
-      }
-      .avatar img,
-      .avatar svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-        /* Die Zeichen sind quadratisch aufgefuellt; contain haelt sie auch
-           dann unverzerrt, wenn die Flaeche einmal nicht quadratisch ist. */
-        object-fit: contain;
-      }
-      .titles {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        line-height: 1.25;
-      }
-      .trow {
-        display: flex;
-        align-items: baseline;
-        gap: 5px;
-        min-width: 0;
-      }
-      .heading,
-      .heading2 {
-        color: var(--se-ink);
-        font-size: var(--se-fs-lg);
-        font-weight: 600;
-        line-height: 1.25;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .meta {
-        display: block;
-        color: var(--se-faint);
-        font-size: var(--se-fs-sm);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .text {
-        display: block;
-        color: var(--se-muted);
-        font-size: var(--se-fs);
-        line-height: 1.35;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        overflow: hidden;
-      }
-      .card .chip {
-        align-self: flex-start;
-        margin-top: auto;
-      }
-      /* Leere Stellen existieren nur im Editor (die Maske rendert sie gar
-         nicht, siehe render): ein Strich markiert das Klick-Ziel, der leere
-         Avatar wird zum gestrichelten Kreis (Regel 7: Striche statt
-         Demo-Werte). Lit-Marker-Kommentare zählen für :empty nicht. Die
-         Daten-Markierung (gepunktete Linie, BasicBlock) ist am Avatar
-         unsichtbar — er bekommt stattdessen eine gepunktete Umrandung. */
-      :host([data-ff-editor]) [data-ff-spot]:empty::before {
-        content: '—';
-        color: var(--se-faint);
-      }
-      :host([data-ff-editor]) .avatar:empty::before {
-        content: none;
-      }
-      :host([data-ff-editor]) .avatar:empty {
-        background: transparent;
-        border: var(--se-border) dashed var(--se-faint);
-      }
-    `,
-  ]
+  // chipStyles ist die GETEILTE Marke (../shared/statusVariant) — dieselbe,
+  // die Tabelle und Kanban-Spalte tragen. Das Aussehen der Karte selbst
+  // wohnt in ./kartenStil (Werte aus der Demo, s. Kopfkommentar).
+  static override styles = [BasicBlock.styles, chipStyles, kartenStil]
 
   @property() chipVariant: StatusVariant = 'info'
   @property() heading = ''
@@ -330,12 +176,20 @@ export class CardBlock extends BasicBlock {
     // zur Render-Zeit ist das Attribut stabil.
     const editor = this.hasAttribute('data-ff-editor')
     const zeigt = (wert: string) => editor || wert.trim() !== ''
-    const titel = zeigt(this.heading) || zeigt(this.heading2)
-    const wann = zeigt(this.time) || zeigt(this.date)
-    const mitte = zeigt(this.avatar) || titel || zeigt(this.meta) || wann
-    return html`<div class="card v-${v}">
-      ${mitte
-        ? html`<div class="main">
+    // Die vier Baugruppen der Demo-Karte. Jede faellt weg, wenn NICHTS darin
+    // steht — in der Maske; im Editor steht immer alles (Klick-Ziele).
+    const reiter = zeigt(this.date) || zeigt(this.time)
+    const kopf = zeigt(this.avatar) || zeigt(this.heading) || zeigt(this.meta)
+    const fuss = zeigt(this.heading2) || zeigt(this.chipText)
+    return html`<div class="card v-${v} ${reiter ? 'mit-reiter' : 'ohne-reiter'}">
+      ${reiter
+        ? html`<span class="reiter">
+            ${zeigt(this.date) ? this.stelle('date', 'datum') : nothing}
+            ${zeigt(this.time) ? this.stelle('time', 'zeit') : nothing}
+          </span>`
+        : nothing}
+      ${kopf
+        ? html`<div class="kopf">
             ${zeigt(this.avatar)
               ? html`<span
                   class="avatar"
@@ -343,32 +197,26 @@ export class CardBlock extends BasicBlock {
                   ?data-ff-bound=${this.avatarField !== ''}
                 >${this.avatar.trim() === '' ? nothing : tierIcon(this.avatar)}</span>`
               : nothing}
-            <div class="titles">
-              ${titel
-                ? html`<div class="trow">
-                    ${zeigt(this.heading) ? this.stelle('heading', 'heading') : nothing}
-                    ${zeigt(this.heading2) ? this.stelle('heading2', 'heading2') : nothing}
-                  </div>`
-                : nothing}
-              ${zeigt(this.meta) ? this.stelle('meta', 'meta') : nothing}
+            <div class="namen">
+              ${zeigt(this.heading) ? this.stelle('heading', 'name') : nothing}
+              ${zeigt(this.meta) ? this.stelle('meta', 'zusatz') : nothing}
             </div>
-            ${wann
-              ? html`<div class="when">
-                  ${zeigt(this.date) ? this.stelle('date', 'date') : nothing}
-                  ${zeigt(this.time) ? this.stelle('time', 'time') : nothing}
-                </div>`
-              : nothing}
           </div>`
         : nothing}
-      ${zeigt(this.text) ? this.stelle('text', 'text') : nothing}
-      ${zeigt(this.chipText)
-        ? html`<span
-            class="chip v-${v}"
-            data-ff-editable
-            data-ff-spot="chipText"
-            ?data-ff-bound=${this.chipTextField !== ''}
-            @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'chipText')}
-          >${this.chipText}</span>`
+      ${zeigt(this.text) ? this.stelle('text', 'grund') : nothing}
+      ${fuss
+        ? html`<div class="fuss">
+            ${zeigt(this.heading2) ? this.stelle('heading2', 'fussl') : nothing}
+            ${zeigt(this.chipText)
+              ? html`<span
+                  class="chip v-${v}"
+                  data-ff-editable
+                  data-ff-spot="chipText"
+                  ?data-ff-bound=${this.chipTextField !== ''}
+                  @dblclick=${(e: MouseEvent) => this.inlineEdit(e, 'chipText')}
+                >${this.chipText}</span>`
+              : nothing}
+          </div>`
         : nothing}
     </div>`
   }

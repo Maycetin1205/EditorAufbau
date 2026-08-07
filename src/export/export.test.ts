@@ -240,10 +240,10 @@ describe('Runtime-Bündel', () => {
     // Bausteine waehlen ihre Quelle im Inspector. Ein Buendel, das die
     // Wegbeschreibung noch traegt, ist veraltet.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — bindingRoute ist abgeschafft').not.toContain('bindingRoute')
-    // Karten bleiben auch mit leeren Bindungen gleich hoch; die Diagnose
-    // muss schon ohne empfangenes Datenpaket im Export vorhanden sein.
-    expect(runtimeJsRaw, 'npm run build:runtime ausführen — feste Kartenhöhe fehlt')
-      .toContain('height: 112px')
+    // Hier stand bis 2026-08-06 `height: 112px`, die Mindesthoehe der Karte.
+    // Sie ist mit dem Wert selbst gefallen: die Karte ist jetzt die Demo-Karte
+    // und waechst mit ihrem Inhalt. Der Marker war ohnehin genau die Sorte,
+    // die der Absatz unten verbietet.
     // KEINE Marker auf Baustein-CSS (Nutzer-Entscheidung 2026-08-04). Hier
     // standen zwei wortwörtliche CSS-Suchen (Platzhalter des gebundenen Felds,
     // Zeilenhöhe des leeren Textes). Sie sind wieder weg: ein Leerzeichen
