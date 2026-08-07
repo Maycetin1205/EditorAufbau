@@ -184,7 +184,13 @@ export const kartenStil = css`
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .fuss .chip { flex: none; }
+      /* margin-left:auto haelt die Marke RECHTS, auch wenn der linke Platz
+         leer ist. space-between allein reicht nicht: mit nur einem Kind
+         schiebt es dieses an den Anfang — in der Maske waere die Marke also
+         nach links gerutscht, sobald Titel 2 ungebunden bleibt (der
+         Normalfall). In der Demo stehen immer beide Plaetze, dort faellt es
+         nicht auf. */
+      .fuss .chip { flex: none; margin-left: auto; }
 
       /* Leere Stellen: NUR an der ausgewaehlten Karte (Nutzer-Ansage
          2026-08-06 „keine haesslichen Platzhalter"). In der Maske rendert die
