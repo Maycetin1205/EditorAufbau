@@ -47,6 +47,12 @@ export class ButtonBlock extends BasicBlock {
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
+        /* Zeilenhoehe wie in der Demo (.knopf 1.2) und AUSDRUECKLICH: bei
+           Knoepfen und Eingabefeldern bringt der Browser eine eigene mit, die
+           einen geerbten Wert schlaegt. Ohne diese Zeile haengt die Knopfhoehe
+           also am Browser statt am Vorbild — sichtbar wird das erst, wenn ein
+           anderer Browser anders rechnet. */
+        line-height: 1.2;
         /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
            eine eigene 120ms-Angabe — zwei Bausteine mit knapp
            unterschiedlichem Takt wirken unruhig. */

@@ -34,6 +34,16 @@ export const feldStil = css`
     border-radius: var(--se-r-md);
     font-family: var(--se-font);
     font-size: var(--se-fs);
+    /* Zeilenhoehe wie in der Demo (.feld 1.4) und AUSDRUECKLICH hier, nicht
+       geerbt: bei Eingabefeldern bringt der Browser eine eigene mit, die einen
+       geerbten Wert schlaegt. Am 2026-08-07 wurde an dieser Stelle eine
+       Zeilenhoehe von 1.5 entfernt mit der Begruendung, der lange Text nehme
+       nun die Zeilenhoehe der Maske — das tat er nicht, er fiel auf den
+       Browserwert zurueck. Der Platzhalter darunter (.ph) ist dagegen ein
+       normaler Kasten und ERBTE die 1.55 der Maske: dadurch sass der
+       Platzhaltertext rund 2px tiefer als der getippte Text im selben Feld.
+       Ein Wert an beiden Stellen beendet das. */
+    line-height: 1.4;
     color: var(--se-ink);
   }
   .ctrl:focus {
@@ -41,11 +51,6 @@ export const feldStil = css`
     border-color: var(--se-accent);
     box-shadow: 0 0 0 var(--se-border) var(--se-accent);
   }
-  /* Hier stand bis 2026-08-07 eine eigene Zeilenhoehe von 1.5. Die war
-     erfunden — die Demo kennt keinen mehrzeiligen Kasten, und ein zweiter
-     Wert dicht neben der Maskenzeilenhoehe (--se-lh) waere genau das
-     Danebenstellen, das die Demo-Uebernahme vermeiden soll. Der lange Text
-     nimmt jetzt die Zeilenhoehe der Maske. */
   textarea.ctrl {
     display: block;
     resize: vertical;
@@ -54,7 +59,10 @@ export const feldStil = css`
   select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
   /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
      1px Rahmen + 7px/10px Innenabstand), faengt keine Klicks der
-     Maske ab und verschwindet, sobald das Feld Inhalt hat. */
+     Maske ab und verschwindet, sobald das Feld Inhalt hat.
+     Zeilenhoehe = die des Feldes (.ctrl 1.4): Innenabstand allein reicht
+     nicht, um zwei Texte zur Deckung zu bringen — die Zeilenhoehe bestimmt
+     mit, wo die Schrift in ihrer Zeile liegt. */
   .ph {
     position: absolute;
     top: calc(var(--feld-pad-y) + var(--feld-rand));
@@ -62,6 +70,7 @@ export const feldStil = css`
     right: calc(var(--feld-pad-x) + var(--feld-rand));
     color: var(--se-faint);
     font-size: var(--se-fs);
+    line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

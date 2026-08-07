@@ -150,10 +150,17 @@ export class KanbanSpalteBlock extends BasicBlock {
         height: 8px;
         background: var(--col-strong);
       }
+      /* Eigene Zeilenhoehen wie in der Demo (.spalte-titel 1.3, .zaehler 1).
+         Ohne sie erben beide die Zeilenhoehe der Maske (--se-lh, 1.55) und
+         werden dadurch hoeher als im Vorbild: der Titel schiebt den Kopf
+         auseinander, der Zaehler wird zum Kaestchen mit Luft ueber und unter
+         der Zahl. Die Demo setzt die Werte am Element, nicht am Grundtext —
+         deshalb stehen sie auch hier am Element. */
       .title {
         color: var(--col-strong);
         font-size: var(--se-fs);
         font-weight: 600;
+        line-height: 1.3;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -162,6 +169,7 @@ export class KanbanSpalteBlock extends BasicBlock {
         margin-left: auto;
         min-width: 22px;
         padding: 1px 8px;
+        line-height: 1;
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         border: var(--se-border) solid var(--col-line);

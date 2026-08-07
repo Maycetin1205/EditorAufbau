@@ -141,6 +141,12 @@
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
+        /* Zeilenhoehe wie in der Demo (.knopf 1.2) und AUSDRUECKLICH: bei
+           Knoepfen und Eingabefeldern bringt der Browser eine eigene mit, die
+           einen geerbten Wert schlaegt. Ohne diese Zeile haengt die Knopfhoehe
+           also am Browser statt am Vorbild — sichtbar wird das erst, wenn ein
+           anderer Browser anders rechnet. */
+        line-height: 1.2;
         /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
            eine eigene 120ms-Angabe — zwei Bausteine mit knapp
            unterschiedlichem Takt wirken unruhig. */
@@ -583,6 +589,16 @@
     border-radius: var(--se-r-md);
     font-family: var(--se-font);
     font-size: var(--se-fs);
+    /* Zeilenhoehe wie in der Demo (.feld 1.4) und AUSDRUECKLICH hier, nicht
+       geerbt: bei Eingabefeldern bringt der Browser eine eigene mit, die einen
+       geerbten Wert schlaegt. Am 2026-08-07 wurde an dieser Stelle eine
+       Zeilenhoehe von 1.5 entfernt mit der Begruendung, der lange Text nehme
+       nun die Zeilenhoehe der Maske — das tat er nicht, er fiel auf den
+       Browserwert zurueck. Der Platzhalter darunter (.ph) ist dagegen ein
+       normaler Kasten und ERBTE die 1.55 der Maske: dadurch sass der
+       Platzhaltertext rund 2px tiefer als der getippte Text im selben Feld.
+       Ein Wert an beiden Stellen beendet das. */
+    line-height: 1.4;
     color: var(--se-ink);
   }
   .ctrl:focus {
@@ -590,11 +606,6 @@
     border-color: var(--se-accent);
     box-shadow: 0 0 0 var(--se-border) var(--se-accent);
   }
-  /* Hier stand bis 2026-08-07 eine eigene Zeilenhoehe von 1.5. Die war
-     erfunden — die Demo kennt keinen mehrzeiligen Kasten, und ein zweiter
-     Wert dicht neben der Maskenzeilenhoehe (--se-lh) waere genau das
-     Danebenstellen, das die Demo-Uebernahme vermeiden soll. Der lange Text
-     nimmt jetzt die Zeilenhoehe der Maske. */
   textarea.ctrl {
     display: block;
     resize: vertical;
@@ -603,7 +614,10 @@
   select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
   /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
      1px Rahmen + 7px/10px Innenabstand), faengt keine Klicks der
-     Maske ab und verschwindet, sobald das Feld Inhalt hat. */
+     Maske ab und verschwindet, sobald das Feld Inhalt hat.
+     Zeilenhoehe = die des Feldes (.ctrl 1.4): Innenabstand allein reicht
+     nicht, um zwei Texte zur Deckung zu bringen — die Zeilenhoehe bestimmt
+     mit, wo die Schrift in ihrer Zeile liegt. */
   .ph {
     position: absolute;
     top: calc(var(--feld-pad-y) + var(--feld-rand));
@@ -611,6 +625,7 @@
     right: calc(var(--feld-pad-x) + var(--feld-rand));
     color: var(--se-faint);
     font-size: var(--se-fs);
+    line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -961,10 +976,17 @@
         height: 8px;
         background: var(--col-strong);
       }
+      /* Eigene Zeilenhoehen wie in der Demo (.spalte-titel 1.3, .zaehler 1).
+         Ohne sie erben beide die Zeilenhoehe der Maske (--se-lh, 1.55) und
+         werden dadurch hoeher als im Vorbild: der Titel schiebt den Kopf
+         auseinander, der Zaehler wird zum Kaestchen mit Luft ueber und unter
+         der Zahl. Die Demo setzt die Werte am Element, nicht am Grundtext —
+         deshalb stehen sie auch hier am Element. */
       .title {
         color: var(--col-strong);
         font-size: var(--se-fs);
         font-weight: 600;
+        line-height: 1.3;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -973,6 +995,7 @@
         margin-left: auto;
         min-width: 22px;
         padding: 1px 8px;
+        line-height: 1;
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
         border: var(--se-border) solid var(--col-line);
