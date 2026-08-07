@@ -211,7 +211,7 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     const kaputt = preflightMask(paarTree([{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }]), QUELLEN, [])
     expect(kaputt.some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
     const halb = preflightMask(paarTree([{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '' }] }]), QUELLEN, [])
-    expect(halb.some((r) => r.name === 'Auswahl-Folge unvollstaendig')).toBe(true)
+    expect(halb.some((r) => r.name === 'Auswahl-Folge unvollständig')).toBe(true)
     const sauber = preflightMask(paarTree(folge), QUELLEN, [])
     expect(sauber.filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
   })
@@ -285,7 +285,7 @@ describe('Parameterquelle „Feld der gewaehlten Zeile" (2026-08-06)', () => {
 
   it('Preflight blockt einen geloeschten Geber im Klartext', () => {
     const meldungen = preflightMask(knopfTree('gibt-es-nicht'), QUELLEN, relations)
-    expect(meldungen.some((r) => r.detail.includes('gewaehlte Zeile eines Bausteins'))).toBe(true)
+    expect(meldungen.some((r) => r.detail.includes('gewählte Zeile eines Bausteins'))).toBe(true)
   })
 
   it('Preflight blockt einen Parameter ohne gewaehltes Feld', () => {
@@ -293,6 +293,6 @@ describe('Parameterquelle „Feld der gewaehlten Zeile" (2026-08-06)', () => {
     const step = tree.knopf.events!.onClick[0]
     if (step.type === 'RELATION') step.params = [{ source: 'gewaehlte_zeile', blockId: 'geber', value: '' }]
     expect(preflightMask(tree, QUELLEN, relations).some((r) =>
-      r.detail.includes('Parameter 1 ist unvollstaendig'))).toBe(true)
+      r.detail.includes('Parameter 1 ist unvollständig'))).toBe(true)
   })
 })

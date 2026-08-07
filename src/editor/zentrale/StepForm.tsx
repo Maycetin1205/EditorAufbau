@@ -340,7 +340,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                       schritte={ergebnisSchritte}
                       platzhalter={platzhalterFor(raw)}
                       entfernen={{
-                        label: `Parameter ${index + 1} fuer diese Aktion weglassen`,
+                        label: `Parameter ${index + 1} für diese Aktion weglassen`,
                         onClick: () => setBinding(index, { source: 'aus', value: '' }),
                       }}
                       ausloeser={ausloeser}

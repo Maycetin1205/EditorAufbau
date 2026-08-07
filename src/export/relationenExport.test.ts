@@ -82,6 +82,6 @@ describe('exportMask: Relationen', () => {
       button: tree.button,
     }
     expect(preflightMask(ohneFeld, [], relations).some((result) =>
-      result.detail.includes('geloeschten Baustein'))).toBe(true)
+      result.detail.includes('gelöschten Baustein'))).toBe(true)
   })
 })

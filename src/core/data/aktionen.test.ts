@@ -104,7 +104,7 @@ describe('Aktionsmodell', () => {
     expect(stepProblem(step, [relation])).toBeNull()
     step.params[2] = { source: 'se_variable', value: '' }
     expect(stepProblem(step, [relation])).toContain('Parameter 3')
-    expect(stepProblem({ ...step, relationId: 'weg' }, [relation])).toContain('geloeschte')
+    expect(stepProblem({ ...step, relationId: 'weg' }, [relation])).toContain('gelöschte')
   })
 
   it('prueft Bausteinwerte auf vollstaendige und noch vorhandene Ziele', () => {
@@ -121,7 +121,7 @@ describe('Aktionsmodell', () => {
       { blockId: 'feld-tiername', prop: 'value' },
     ])).toBeNull()
     expect(stepProblem(step, [relation], [], [], [], []))
-      .toContain('geloeschten Baustein')
+      .toContain('gelöschten Baustein')
     step.params[2] = { source: 'block_value', value: '', blockId: '' }
     expect(stepProblem(step, [relation])).toContain('Parameter 3')
   })

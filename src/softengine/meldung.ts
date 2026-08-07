@@ -33,7 +33,7 @@ function baueBalken(): HTMLElement {
     'font:500 12px/1.4 system-ui,sans-serif',
     'cursor:pointer',
   ].join(';')
-  el.title = 'Klicken zum Schliessen'
+  el.title = 'Klicken zum Schließen'
   el.addEventListener('click', schliesse)
   return el
 }

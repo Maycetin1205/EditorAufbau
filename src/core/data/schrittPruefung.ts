@@ -94,12 +94,12 @@ export function stepProblem(
   if (step.relationId === '') return 'Schritt "Relation" hat keine Vorlage.'
   if (!relations) return null
   const relation = relations.find((entry) => entry.id === step.relationId)
-  if (!relation) return 'Schritt "Relation" verweist auf eine geloeschte Vorlage.'
+  if (!relation) return 'Schritt "Relation" verweist auf eine gelöschte Vorlage.'
   if (step.params.length !== relation.params.length) {
-    return 'Schritt "Relation" hat nicht alle Syntaxparameter uebernommen.'
+    return 'Schritt "Relation" hat nicht alle Syntaxparameter übernommen.'
   }
   const missing = step.params.findIndex(bindingProblem)
-  if (missing >= 0) return `Schritt "Relation": Parameter ${missing + 1} ist unvollstaendig.`
+  if (missing >= 0) return `Schritt "Relation": Parameter ${missing + 1} ist unvollständig.`
   if (!relation.allowExtraParams && step.extraParams.length > 0) {
     return 'Schritt "Relation" hat nicht erlaubte Zusatzparameter.'
   }
@@ -115,21 +115,21 @@ export function stepProblem(
     && dataSources
     && !dataSources.some((source) => source.id === binding.dataSourceId),
   )
-  if (missingSource) return 'Schritt "Relation" verweist auf eine geloeschte Datenquelle.'
+  if (missingSource) return 'Schritt "Relation" verweist auf eine gelöschte Datenquelle.'
   const missingBlock = allBindings.find((binding) =>
     binding?.source === 'block_value'
     && actionValues
     && !actionValues.some((target) =>
       target.blockId === binding.blockId && target.prop === binding.value),
   )
-  if (missingBlock) return 'Schritt "Relation" verweist auf einen geloeschten Baustein.'
+  if (missingBlock) return 'Schritt "Relation" verweist auf einen gelöschten Baustein.'
   const missingGeber = allBindings.find((binding) =>
     binding?.source === 'gewaehlte_zeile'
     && auswahlGeberIds
     && !auswahlGeberIds.includes(binding.blockId ?? ''),
   )
   if (missingGeber) {
-    return 'Schritt "Relation" liest die gewaehlte Zeile eines Bausteins, den es nicht mehr gibt (oder der keine Auswahl mehr gibt).'
+    return 'Schritt "Relation" liest die gewählte Zeile eines Bausteins, den es nicht mehr gibt (oder der keine Auswahl mehr gibt).'
   }
   if (allBindings.some(ergebnisKaputt)) {
     return 'Schritt "Relation": ein Parameter zeigt auf keinen GET-Schritt davor.'

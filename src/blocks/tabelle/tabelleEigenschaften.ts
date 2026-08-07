@@ -19,7 +19,7 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
   {
     attributeName: 'suche',
     name: 'Suchzeile',
-    description: 'Zeigt ueber der Tabelle ein Feld, mit dem der Bediener den Inhalt durchsucht.',
+    description: 'Zeigt über der Tabelle ein Feld, mit dem der Bediener den Inhalt durchsucht.',
     kind: 'segment',
     options: JA_NEIN,
     requiresDataSource: true,
@@ -47,7 +47,7 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
   {
     attributeName: 'tagField',
     name: 'Tag filtern nach',
-    description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt die Tabelle nur Saetze des Tages, den der Tageswaehler zeigt. Leer = alle Saetze.',
+    description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt die Tabelle nur Sätze des Tages, den der Tageswähler zeigt. Leer = alle Sätze.',
     kind: 'field',
   },
   // Der Leerzustand-Satz (shared/leerZustand — dieselbe Eigenschaft am Kanban).

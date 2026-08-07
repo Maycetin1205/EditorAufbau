@@ -320,7 +320,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   const zurueck = seitenKnopf('‹', 'Vorherige Seite')
   const seitenstand = document.createElement('span')
   seitenstand.style.cssText = 'min-width:48px;text-align:center;color:var(--se-muted)'
-  const weiter = seitenKnopf('›', 'Naechste Seite')
+  const weiter = seitenKnopf('›', 'Nächste Seite')
   navigation.append(zurueck, seitenstand, weiter)
   fuss.append(zaehler, navigation)
 
@@ -357,7 +357,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
       // muss wissen, welches er hat.
       const zeile = document.createElement('tr')
       const leer = zelle(
-        eintraege.length === 0 ? 'Diese Quelle hat keine Saetze.' : 'Kein Satz passt zur Suche.',
+        eintraege.length === 0 ? 'Diese Quelle hat keine Sätze.' : 'Kein Satz passt zur Suche.',
       )
       leer.colSpan = 2
       leer.style.color = 'var(--se-faint)'

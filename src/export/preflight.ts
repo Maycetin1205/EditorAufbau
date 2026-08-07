@@ -89,7 +89,7 @@ export function preflightMask(
         results.push({
           name: 'Datenquelle fehlt',
           ok: false,
-          detail: `Baustein "${bausteinName(node)}" verweist auf eine geloeschte oder unbekannte Datenquelle.`,
+          detail: `Baustein "${bausteinName(node)}" verweist auf eine gelöschte oder unbekannte Datenquelle.`,
         })
       }
     }
@@ -122,7 +122,7 @@ export function preflightMask(
         results.push({
           name: 'Bindung ohne Datenquelle',
           ok: false,
-          detail: `Baustein "${name}", Stelle "${stelle}" ist an ein Feld gebunden, aber weder der Baustein noch ein Baustein darueber hat eine Datenquelle gewaehlt — die Stelle bliebe in der Maske leer.`,
+          detail: `Baustein "${name}", Stelle "${stelle}" ist an ein Feld gebunden, aber weder der Baustein noch ein Baustein darüber hat eine Datenquelle gewählt — die Stelle bliebe in der Maske leer.`,
         })
         return
       }
@@ -139,12 +139,12 @@ export function preflightMask(
           ? {
               name: 'Verbindung fehlt',
               ok: false,
-              detail: `Baustein "${name}", Stelle "${stelle}" holt ihren Wert aus "${inBibliothek.name}" — diese Datenquelle haengt aber nicht (mehr) vollstaendig an dem Baustein. Unter Daten die Datenquelle wieder hinzufuegen und die Felder angeben, an denen die zusammengehoerige Zeile erkannt wird.`,
+              detail: `Baustein "${name}", Stelle "${stelle}" holt ihren Wert aus "${inBibliothek.name}" — diese Datenquelle hängt aber nicht (mehr) vollständig an dem Baustein. Unter Daten die Datenquelle wieder hinzufügen und die Felder angeben, an denen die zusammengehörige Zeile erkannt wird.`,
             }
           : {
               name: 'Datenquelle unbekannt',
               ok: false,
-              detail: `Baustein "${name}", Stelle "${stelle}" holt ihren Wert aus einer geloeschten oder unbekannten Datenquelle — die Stelle bliebe in der Maske leer.`,
+              detail: `Baustein "${name}", Stelle "${stelle}" holt ihren Wert aus einer gelöschten oder unbekannten Datenquelle — die Stelle bliebe in der Maske leer.`,
             })
         return
       }
@@ -152,7 +152,7 @@ export function preflightMask(
         results.push({
           name: 'Gebundenes Feld fehlt',
           ok: false,
-          detail: `Baustein "${name}", Stelle "${stelle}": das gebundene Feld gibt es in der Datenquelle "${ziel.source.name}" nicht (mehr) — die Stelle bliebe in der Maske leer. Feld neu waehlen oder das Feld in der Datenquelle wieder anlegen. (Feldcode ${code})`,
+          detail: `Baustein "${name}", Stelle "${stelle}": das gebundene Feld gibt es in der Datenquelle "${ziel.source.name}" nicht (mehr) — die Stelle bliebe in der Maske leer. Feld neu wählen oder das Feld in der Datenquelle wieder anlegen. (Feldcode ${code})`,
         })
       }
     }
@@ -201,7 +201,7 @@ export function preflightMask(
           warnung: true,
           detail: `Baustein "${bausteinName(node)}", "${titel}" steht auf "${
             wahl.optionen.find((o) => o.wert === zuo.nurBeiWahl)?.name ?? zuo.nurBeiWahl
-          }", hat aber keine ${zuo.label} — die Marke zeigt in der Maske den unveraenderten Datenwert in Grau.`,
+          }", hat aber keine ${zuo.label} — die Marke zeigt in der Maske den unveränderten Datenwert in Grau.`,
         })
       })
     }
@@ -223,7 +223,7 @@ export function preflightMask(
         results.push({
           name: 'Datenquelle unbekannt',
           ok: false,
-          detail: `Baustein "${bausteinName(node)}", "${prop.name}" nennt eine geloeschte oder unbekannte Datenquelle — die Stelle bliebe in der Maske leer.`,
+          detail: `Baustein "${bausteinName(node)}", "${prop.name}" nennt eine gelöschte oder unbekannte Datenquelle — die Stelle bliebe in der Maske leer.`,
         })
         continue
       }
@@ -236,13 +236,13 @@ export function preflightMask(
           results.push({
             name: 'Feld fehlt',
             ok: false,
-            detail: `Baustein "${bausteinName(node)}": "${prop.name}" ist auf "${quelle.name}" gestellt, aber "${feldProp.name}" ist leer — in der Maske liesse sich hier nichts waehlen.`,
+            detail: `Baustein "${bausteinName(node)}": "${prop.name}" ist auf "${quelle.name}" gestellt, aber "${feldProp.name}" ist leer — in der Maske ließe sich hier nichts wählen.`,
           })
         } else if (!quelle.fields.some((f) => f.code === code)) {
           results.push({
             name: 'Gebundenes Feld fehlt',
             ok: false,
-            detail: `Baustein "${bausteinName(node)}": "${feldProp.name}" gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — Feld neu waehlen oder in der Datenquelle wieder anlegen. (Feldcode ${code})`,
+            detail: `Baustein "${bausteinName(node)}": "${feldProp.name}" gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — Feld neu wählen oder in der Datenquelle wieder anlegen. (Feldcode ${code})`,
           })
         }
       }
@@ -269,7 +269,7 @@ export function preflightMask(
             ok: false,
             // Der Traeger wird mit Klarnamen genannt, die Kinder mit ihrem TYP:
             // gemeint sind hier mehrere Geschwister auf einmal, nicht eines.
-            detail: `Im Baustein "${bausteinName(node)}" tragen ${count} Bausteine "${childDef?.displayName ?? childType}" das Kennzeichen "${prop.name}" — hoechstens einer darf es tragen.`,
+            detail: `Im Baustein "${bausteinName(node)}" tragen ${count} Bausteine "${childDef?.displayName ?? childType}" das Kennzeichen "${prop.name}" — höchstens einer darf es tragen.`,
           })
         }
       }
@@ -301,13 +301,13 @@ export function preflightMask(
           results.push({
             name: 'Auswahl-Geber fehlt',
             ok: false,
-            detail: `Baustein "${bausteinName(node)}" folgt der Auswahl eines Bausteins, der geloescht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen laesst. Unter "Auswahl folgen" neu waehlen oder die Verbindung entfernen.`,
+            detail: `Baustein "${bausteinName(node)}" folgt der Auswahl eines Bausteins, der gelöscht wurde oder keine Auswahl (mehr) gibt — ein Baustein gibt sie nur, wenn er eine Datenquelle hat UND den Bediener einen Satz herausgreifen lässt. Unter "Auswahl folgen" neu wählen oder die Verbindung entfernen.`,
           })
         } else if (!folgeBrauchbar(folge)) {
           results.push({
-            name: 'Auswahl-Folge unvollstaendig',
+            name: 'Auswahl-Folge unvollständig',
             ok: false,
-            detail: `Baustein "${bausteinName(node)}" folgt "${bausteinName(geber)}", aber es fehlt ein vollstaendiges Feldpaar (beide Seiten gefuellt) — die Maske wuerde nie filtern.`,
+            detail: `Baustein "${bausteinName(node)}" folgt "${bausteinName(geber)}", aber es fehlt ein vollständiges Feldpaar (beide Seiten gefüllt) — die Maske würde nie filtern.`,
           })
         } else {
           // Das Feld RECHTS im Feldpaar (toField) gehoert der Quelle, deren
@@ -327,7 +327,7 @@ export function preflightMask(
             results.push({
               name: 'Auswahl-Folge Feld fehlt',
               ok: false,
-              detail: `Baustein "${bausteinName(node)}" folgt "${bausteinName(geber)}": das Feld, an dem die zusammengehoerige Zeile erkannt wird, gibt es in der Datenquelle "${zeilenQuelle.name}" nicht (mehr) — es wuerde nie eine Zeile passen. Unter "Auswahl folgen" das rechte Feld neu waehlen. (Feldcode ${paar.toField})`,
+              detail: `Baustein "${bausteinName(node)}" folgt "${bausteinName(geber)}": das Feld, an dem die zusammengehörige Zeile erkannt wird, gibt es in der Datenquelle "${zeilenQuelle.name}" nicht (mehr) — es würde nie eine Zeile passen. Unter "Auswahl folgen" das rechte Feld neu wählen. (Feldcode ${paar.toField})`,
             })
           }
         }
@@ -345,7 +345,7 @@ export function preflightMask(
           auswahlGeberIds)
         if (problem) {
           results.push({
-            name: 'Aktion unvollstaendig',
+            name: 'Aktion unvollständig',
             ok: false,
             detail: `Baustein "${bausteinName(node)}", Ereignis "${eventName}": ${problem}`,
           })

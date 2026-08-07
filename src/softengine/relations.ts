@@ -235,7 +235,7 @@ function runNextGet(): void {
   }, GET_TIMEOUT_MS)
 
   if (typeof g.basisHTML_SND_MSG !== 'function') {
-    meldeFehler('Daten laden nicht moeglich: keine Verbindung zu SoftEngine.')
+    meldeFehler('Daten laden nicht möglich: keine Verbindung zu SoftEngine.')
     finish('', undefined)
     return
   }
@@ -265,7 +265,7 @@ export function executeRelation(
     // SoftEngine bestaetigt einen PUT nicht (kein Kontrakt dafuer belegt),
     // also koennen wir nur den ABSENDEWEG pruefen; genau das tun wir hier.
     if (typeof g.basisHTML_SND_MSG !== 'function') {
-      meldeFehler('Speichern nicht moeglich: keine Verbindung zu SoftEngine. Die Eingabe wurde NICHT uebernommen.')
+      meldeFehler('Speichern nicht möglich: keine Verbindung zu SoftEngine. Die Eingabe wurde NICHT übernommen.')
       return Promise.resolve({ wert: '', roh: undefined })
     }
     try {
