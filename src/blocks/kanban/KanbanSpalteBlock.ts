@@ -177,7 +177,7 @@ export class KanbanSpalteBlock extends BasicBlock {
       /* Innenabstand nach Demo (.spalte: 10px seitlich, 12px unten). Oben
          KEINER: dort steht der Kopf, dessen eigene Unterkante den Abstand zur
          ersten Karte schon setzt — genau wie .spalte-kopf in der Demo.
-         KEIN gap: den Kartenabstand macht allein der 24px-Vorschub der Karte
+         KEIN gap: den Kartenabstand macht der 24px-Vorschub der Karte
          (kartenStil). Bis 2026-08-07 lagen hier 6px obendrauf, also 30px statt
          24px zwischen zwei Karten. */
       .body {
@@ -189,6 +189,15 @@ export class KanbanSpalteBlock extends BasicBlock {
         min-height: 0;
         overflow-y: auto;
       }
+      /* Eine Karte bringt ihren 24px-Vorschub nur mit, wenn sie eine LASCHE hat
+         (kartenStil: der Platz gehoert der Lasche). Karten ohne Lasche — in der
+         MASKE also solche ohne Datum und Zeit — muessen in der Spalte trotzdem
+         auseinanderstehen wie in der Demo, und den Abstand gibt hier die Spalte.
+         Bewusst kein gap am Rumpf: das kaeme bei Karten MIT Lasche zu deren
+         eigenem Vorschub dazu, also 48px statt 24px. Im EDITOR zeigt jede Karte
+         ihre Lasche (Klick-Ziel), dort greift diese Regel nie — beide Welten
+         stehen deshalb gleich weit auseinander. */
+      ::slotted(:not([hat-reiter])) { margin-top: 24px; }
       slot { display: contents; }
     `,
   ]

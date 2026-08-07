@@ -36,18 +36,24 @@ export const kartenStil = css`
         transition: border-color var(--se-move);
       }
       .card.ohne-reiter { border-radius: var(--se-r-md); }
-      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist zugleich der Platz
-         fuer die Lasche UND der EINZIGE Abstand zwischen zwei Karten — die
-         Spalte setzt keinen eigenen (KanbanSpalteBlock, 2026-08-07). Darum
-         gilt er wie in der Demo fuer JEDE Karte: bis 2026-08-07 hing er an
-         der Lasche, damit eine Karte ohne Datum und Zeit keinen Leerraum ueber
-         sich schiebt — ohne Spalten-Abstand stiessen solche Karten aber
-         aneinander.
-         flow-root am Host, damit dieser Abstand nicht mit dem Aussenabstand
-         der Spalte verschmilzt (margin collapsing): sonst kaeme die Lasche der
-         Karte darueber ins Gehege. */
+      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist der Platz, den die
+         LASCHE braucht: sie sitzt auf der Oberkante und ragt nach oben aus der
+         Karte heraus. Deshalb haengt er an der Lasche und steht am HOST, nicht
+         an der Karte:
+           - an der Lasche, weil eine Karte OHNE Datum und Zeit keine Lasche hat
+             und dann auch keinen Platz dafuer braucht. Vom 2026-08-07 bis heute
+             galt er fuer jede Karte — eine frei auf dem Blatt liegende Karte
+             ohne Lasche bekam dadurch eine 24px-Delle ueber sich.
+           - am Host, weil ein Abstand INNEN von der Kartenhoehe abgeht: in einem
+             Platz mit fester Hoehe rutschte die Karte 24px nach unten und lief
+             unten heraus. Aussen schiebt er die Karte als Ganzes.
+         Den Abstand zwischen zwei Karten OHNE Lasche gibt die Spalte
+         (KanbanSpalteBlock, ::slotted) — sonst kaeme er bei Karten MIT Lasche
+         doppelt.
+         flow-root bleibt: ein eigenes Element ist von sich aus 'inline', erst
+         das macht die Kartenhuelle zu einem Block mit eigener Flaeche. */
       :host { display: flow-root; }
-      .card { margin-top: 24px; }
+      :host([hat-reiter]) { margin-top: 24px; }
       /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
          Karte hebt nicht ab. */
       .card:hover { border-color: var(--se-faint); }

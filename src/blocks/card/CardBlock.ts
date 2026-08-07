@@ -41,7 +41,7 @@
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Literale,
 // keine Fallbacks — das WIE wohnt in ./kartenStil.
 
-import { html, nothing, type TemplateResult } from 'lit'
+import { html, nothing, type PropertyValues, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
@@ -168,6 +168,22 @@ export class CardBlock extends BasicBlock {
     >${this[prop]}</span>`
   }
 
+  // Hat diese Karte eine Lasche? Die Antwort brauchen ZWEI Stellen: das
+  // Template hier und der Platz ueber der Karte (kartenStil: die Lasche ragt
+  // nach oben heraus). Darum steht sie an einer Stelle — und wird als Attribut
+  // `hat-reiter` nach aussen getragen, weil ihre Bedingung im Inneren der Karte
+  // entsteht und von aussen sonst nicht sichtbar waere. Das Attribut ist ein
+  // Laufzeitwert: der Export schreibt Attribute aus dem Baustein-Modell, nicht
+  // aus dem lebenden Baum — es landet nie in einer Datei.
+  private hatReiter(): boolean {
+    return this.hasAttribute('data-ff-editor') || this.date.trim() !== '' || this.time.trim() !== ''
+  }
+
+  override updated(changed: PropertyValues): void {
+    super.updated(changed)
+    this.toggleAttribute('hat-reiter', this.hatReiter())
+  }
+
   override render(): TemplateResult {
     const v = coerceStatusVariant(this.chipVariant)
     // Leer-Regel: die Maske rendert leere Stellen (und komplett leere
@@ -178,7 +194,7 @@ export class CardBlock extends BasicBlock {
     const zeigt = (wert: string) => editor || wert.trim() !== ''
     // Die vier Baugruppen der Demo-Karte. Jede faellt weg, wenn NICHTS darin
     // steht — in der Maske; im Editor steht immer alles (Klick-Ziele).
-    const reiter = zeigt(this.date) || zeigt(this.time)
+    const reiter = this.hatReiter()
     const kopf = zeigt(this.avatar) || zeigt(this.heading) || zeigt(this.meta)
     const fuss = zeigt(this.heading2) || zeigt(this.chipText)
     return html`<div class="card v-${v}${reiter ? '' : ' ohne-reiter'}">

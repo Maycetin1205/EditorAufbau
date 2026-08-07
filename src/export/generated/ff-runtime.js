@@ -218,18 +218,24 @@
         transition: border-color var(--se-move);
       }
       .card.ohne-reiter { border-radius: var(--se-r-md); }
-      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist zugleich der Platz
-         fuer die Lasche UND der EINZIGE Abstand zwischen zwei Karten — die
-         Spalte setzt keinen eigenen (KanbanSpalteBlock, 2026-08-07). Darum
-         gilt er wie in der Demo fuer JEDE Karte: bis 2026-08-07 hing er an
-         der Lasche, damit eine Karte ohne Datum und Zeit keinen Leerraum ueber
-         sich schiebt — ohne Spalten-Abstand stiessen solche Karten aber
-         aneinander.
-         flow-root am Host, damit dieser Abstand nicht mit dem Aussenabstand
-         der Spalte verschmilzt (margin collapsing): sonst kaeme die Lasche der
-         Karte darueber ins Gehege. */
+      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist der Platz, den die
+         LASCHE braucht: sie sitzt auf der Oberkante und ragt nach oben aus der
+         Karte heraus. Deshalb haengt er an der Lasche und steht am HOST, nicht
+         an der Karte:
+           - an der Lasche, weil eine Karte OHNE Datum und Zeit keine Lasche hat
+             und dann auch keinen Platz dafuer braucht. Vom 2026-08-07 bis heute
+             galt er fuer jede Karte — eine frei auf dem Blatt liegende Karte
+             ohne Lasche bekam dadurch eine 24px-Delle ueber sich.
+           - am Host, weil ein Abstand INNEN von der Kartenhoehe abgeht: in einem
+             Platz mit fester Hoehe rutschte die Karte 24px nach unten und lief
+             unten heraus. Aussen schiebt er die Karte als Ganzes.
+         Den Abstand zwischen zwei Karten OHNE Lasche gibt die Spalte
+         (KanbanSpalteBlock, ::slotted) — sonst kaeme er bei Karten MIT Lasche
+         doppelt.
+         flow-root bleibt: ein eigenes Element ist von sich aus 'inline', erst
+         das macht die Kartenhuelle zu einem Block mit eigener Flaeche. */
       :host { display: flow-root; }
-      .card { margin-top: 24px; }
+      :host([hat-reiter]) { margin-top: 24px; }
       /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
          Karte hebt nicht ab. */
       .card:hover { border-color: var(--se-faint); }
@@ -404,7 +410,7 @@
       data-ff-spot=${e}
       ?data-ff-bound=${this[`${e}Field`]!==``}
       @dblclick=${t=>this.inlineEdit(t,e)}
-    >${this[e]}</span>`}render(){let e=Dn(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.date)||n(this.time),i=n(this.avatar)||n(this.heading)||n(this.meta),a=n(this.heading2)||n(this.chipText);return w`<div class="card v-${e}${r?``:` ohne-reiter`}">
+    >${this[e]}</span>`}hatReiter(){return this.hasAttribute(`data-ff-editor`)||this.date.trim()!==``||this.time.trim()!==``}updated(e){super.updated(e),this.toggleAttribute(`hat-reiter`,this.hatReiter())}render(){let e=Dn(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=this.hatReiter(),i=n(this.avatar)||n(this.heading)||n(this.meta),a=n(this.heading2)||n(this.chipText);return w`<div class="card v-${e}${r?``:` ohne-reiter`}">
       ${r?w`<span class="reiter">
             ${n(this.date)?this.stelle(`date`,`datum`):E}
             ${n(this.time)?this.stelle(`time`,`zeit`):E}
@@ -982,7 +988,7 @@
       /* Innenabstand nach Demo (.spalte: 10px seitlich, 12px unten). Oben
          KEINER: dort steht der Kopf, dessen eigene Unterkante den Abstand zur
          ersten Karte schon setzt — genau wie .spalte-kopf in der Demo.
-         KEIN gap: den Kartenabstand macht allein der 24px-Vorschub der Karte
+         KEIN gap: den Kartenabstand macht der 24px-Vorschub der Karte
          (kartenStil). Bis 2026-08-07 lagen hier 6px obendrauf, also 30px statt
          24px zwischen zwei Karten. */
       .body {
@@ -994,6 +1000,15 @@
         min-height: 0;
         overflow-y: auto;
       }
+      /* Eine Karte bringt ihren 24px-Vorschub nur mit, wenn sie eine LASCHE hat
+         (kartenStil: der Platz gehoert der Lasche). Karten ohne Lasche — in der
+         MASKE also solche ohne Datum und Zeit — muessen in der Spalte trotzdem
+         auseinanderstehen wie in der Demo, und den Abstand gibt hier die Spalte.
+         Bewusst kein gap am Rumpf: das kaeme bei Karten MIT Lasche zu deren
+         eigenem Vorschub dazu, also 48px statt 24px. Im EDITOR zeigt jede Karte
+         ihre Lasche (Klick-Ziel), dort greift diese Regel nie — beide Welten
+         stehen deshalb gleich weit auseinander. */
+      ::slotted(:not([hat-reiter])) { margin-top: 24px; }
       slot { display: contents; }
     `]}onSlotChange(e){let t=e.target;this._count=t.assignedElements().filter(e=>!e.hasAttribute(`data-ff-editor-helper`)&&e.tagName.toLowerCase()!==`template`).length}render(){return w`<div class="col v-${Dn(this.variant)}">
       <div class="head">
