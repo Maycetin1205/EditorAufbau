@@ -438,7 +438,7 @@ export function exportMask(
     '',
     '/* Grundgeruest + Wurzel-Raster (identisch zum Editor-Canvas, rasterFlaecheStyle) */',
     'html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }',
-    'body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); color: var(--se-ink); }',
+    'body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); line-height: var(--se-lh); color: var(--se-ink); }',
     `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; ${styleToCss(rasterFlaecheStyle())}; padding: ${ROOT_FLOW.padding}px; }`,
     '</style>',
     '</head>',

@@ -65,6 +65,8 @@
   --se-fs-xs: 10.5px;
   --se-fs-lg: 15px;
 
+  --se-lh: 1.55;
+
   --se-gap-sm: 6px;
   --se-gap:    10px;
   --se-gap-lg: 16px;
@@ -80,7 +82,7 @@
 
 /* Grundgeruest + Wurzel-Raster (identisch zum Editor-Canvas, rasterFlaecheStyle) */
 html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); color: var(--se-ink); }
+body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); line-height: var(--se-lh); color: var(--se-ink); }
 .ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; display:grid;grid-template-columns:repeat(24, 1fr);grid-auto-rows:12px;gap:8px;align-content:start; padding: 16px; }
 </style>
 </head>

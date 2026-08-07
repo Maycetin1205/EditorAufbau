@@ -584,11 +584,15 @@
     border-color: var(--se-accent);
     box-shadow: 0 0 0 var(--se-border) var(--se-accent);
   }
+  /* Hier stand bis 2026-08-07 eine eigene Zeilenhoehe von 1.5. Die war
+     erfunden — die Demo kennt keinen mehrzeiligen Kasten, und ein zweiter
+     Wert dicht neben der Maskenzeilenhoehe (--se-lh) waere genau das
+     Danebenstellen, das die Demo-Uebernahme vermeiden soll. Der lange Text
+     nimmt jetzt die Zeilenhoehe der Maske. */
   textarea.ctrl {
     display: block;
     resize: vertical;
     min-height: 64px;
-    line-height: 1.5;
   }
   select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
   /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
@@ -1481,8 +1485,13 @@
         color: var(--se-ink);
         /* EINE Zeilenhoehe fuer beides: die Zeile des gesetzten Textes UND die
            Hoehe, die ein leerer Text freihaelt (s. unten). Zwei getrennte
-           Zahlen liefen beim naechsten Nachstellen auseinander. */
-        --text-zeilenhoehe: 1.35;
+           Zahlen liefen beim naechsten Nachstellen auseinander.
+           Die ZAHL steht nicht mehr hier, sondern als --se-lh in den
+           Masken-Tokens (2026-08-07): ein Textbaustein ist Fliesstext der
+           Maske und atmet genau wie sie. Bis dahin standen hier 1.35 —
+           enger als die Demo, ohne Grund. Die eigene Variable bleibt, weil
+           die Leerzeilen-Hoehe unten mit ihr rechnet. */
+        --text-zeilenhoehe: var(--se-lh);
         line-height: var(--text-zeilenhoehe);
         white-space: pre-wrap;
         overflow-wrap: anywhere;

@@ -194,8 +194,13 @@ export class TextBlock extends BasicBlock {
         color: var(--se-ink);
         /* EINE Zeilenhoehe fuer beides: die Zeile des gesetzten Textes UND die
            Hoehe, die ein leerer Text freihaelt (s. unten). Zwei getrennte
-           Zahlen liefen beim naechsten Nachstellen auseinander. */
-        --text-zeilenhoehe: 1.35;
+           Zahlen liefen beim naechsten Nachstellen auseinander.
+           Die ZAHL steht nicht mehr hier, sondern als --se-lh in den
+           Masken-Tokens (2026-08-07): ein Textbaustein ist Fliesstext der
+           Maske und atmet genau wie sie. Bis dahin standen hier 1.35 —
+           enger als die Demo, ohne Grund. Die eigene Variable bleibt, weil
+           die Leerzeilen-Hoehe unten mit ihr rechnet. */
+        --text-zeilenhoehe: var(--se-lh);
         line-height: var(--text-zeilenhoehe);
         white-space: pre-wrap;
         overflow-wrap: anywhere;

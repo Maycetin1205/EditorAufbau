@@ -30,10 +30,14 @@
      5. Die Signatur (gekappte Ecke + quadratischer Punkt an der Marke)
         ist FORM, kein Wert — sie lebt im Baustein, nicht hier.
 
-   Die Groessen bleiben bewusst dicht (Nutzer-Entscheidung 2026-08-06):
-   Fellnase atmet mit 15px/1.55, eine SoftEngine-Maske ist ein dichtes
-   Arbeitswerkzeug. Uebernommen sind die Schriftarten und die
-   Strichstaerken, nicht die Grundgroesse.
+   Die SCHRIFTGROESSE bleibt bewusst dicht (Nutzer-Entscheidung 2026-08-06):
+   Fellnase setzt 15px, eine SoftEngine-Maske ist ein dichtes
+   Arbeitswerkzeug — 13.5px. Die ZEILENHOEHE dagegen ist seit 2026-08-07
+   die der Demo (--se-lh). Bis dahin stand hier, das Fehlen einer
+   Zeilenhoehe sei Absicht; das war es nicht — es galt einfach der
+   Browser-Standard (ungefaehr 1.2), und darum sass in der Maske alles
+   enger zusammen als im Vorbild. Uebernommen sind also Schriftarten,
+   Strichstaerken und Zeilenhoehe, nicht die Grundgroesse.
    ================================================================ */
 
 :root {
@@ -115,8 +119,20 @@
   --se-mono: "IBM Plex Mono", Consolas, monospace; /* Zeiten, Nummern, Codes */
   --se-fs:    13.5px; /* Grundgroesse (dicht, Werkzeug-Charakter) */
   --se-fs-sm: 12px;
-  --se-fs-xs: 10.5px; /* Chips/Etiketten (kleinste Stufe, 4K.1) */
+  --se-fs-xs: 10.5px; /* kleinste Stufe (4K.1) — derzeit von keinem Baustein
+                         benutzt, seit die Status-Marke auf das Demo-Mass
+                         gewachsen ist (2026-08-07) */
   --se-fs-lg: 15px;
+
+  /* Zeilenhoehe der Maske — der Demo-Wert (atome.css body: 400 15px/1.55).
+     Gesetzt wird sie an genau den zwei Stellen, die auch Schriftart und
+     -groesse der Maske bestimmen: der Editor-Maskenflaeche (Canvas.tsx) und
+     der Export-Huelle (exportMask.ts). Beide MUESSEN diesen Token nehmen,
+     sonst sieht der Editor anders aus als die Maske (Regel 1).
+     Bausteine setzen keine eigene Zeilenhoehe — ausser den paar Atomen, denen
+     die Demo selbst eine gibt (Marke 1.3, Kartenname 1.25, Lasche 1.2,
+     Leerzustand 1.4) und den quadratischen Symbolknoepfen (1). */
+  --se-lh: 1.55;
 
   /* Abstaende */
   --se-gap-sm: 6px;

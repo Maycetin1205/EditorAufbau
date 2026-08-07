@@ -69,12 +69,14 @@ export function Canvas() {
           // (nicht neutralschwarz), sonst wirkt er schmutzig auf dem
           // papierfarbenen Tisch.
           className="relative min-h-0 w-full flex-1 overflow-hidden rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(40,30,20,0.10),0_6px_14px_-6px_rgba(40,30,20,0.16),0_26px_50px_-24px_rgba(40,30,20,0.38)]"
-          // Blatt = Masken-Welt: Schrift/Größe/Farbe wie der Export-body
-          // (WYSIWYG) — die Editor-Schrift (Inter) bleibt draußen.
+          // Blatt = Masken-Welt: Schrift/Größe/Zeilenhöhe/Farbe wie der
+          // Export-body (WYSIWYG) — die Editor-Schrift (Inter) bleibt draußen.
+          // Dieselben Tokens wie dort, Wert für Wert: exportMask.ts.
           style={{
             minHeight: 400,
             fontFamily: 'var(--se-font)',
             fontSize: 'var(--se-fs)',
+            lineHeight: 'var(--se-lh)',
             color: 'var(--se-ink)',
           }}
         >
