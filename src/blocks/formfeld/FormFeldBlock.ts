@@ -59,6 +59,7 @@ import {
 import { feldStil } from './feldStil'
 import {
   einzigenTrefferFinden,
+  folgeBeimVerlassen,
   holeEintraege,
   oeffneNachschlagen,
   satzPasstZurAuswahl,
@@ -185,6 +186,11 @@ export class FormFeldBlock extends BasicBlock {
   // Maske eine Zeile uebernimmt — `value` traegt derweil den Technikwert.
   @state() private anzeige = ''
 
+  // Was gerade in das Nachschlage-Feld GETIPPT ist — null = niemand tippt,
+  // dann zeigt das Feld `anzeige`. Getrennt davon, weil das Zurueckspringen
+  // beim Verlassen genau diesen Unterschied braucht: drin gegen bestaetigt.
+  @state() private getippt: string | null = null
+
   // Die ROHZEILE des uebernommenen Satzes. Sie zeichnet nichts (darum weder
   // @property noch @state) und reist nie in den Export — sie ist nur da, um
   // nachpruefen zu koennen, ob der uebernommene Satz noch zur Auswahl des
@@ -266,27 +272,19 @@ export class FormFeldBlock extends BasicBlock {
         </select>`
       }
       case 'nachschlagen': {
-        // Anzeige-Text nur lesbar (gesucht wird im Fenster, nicht im Feld —
-        // der Wert ENTSTEHT durch Auswahl, Regel 3: angezeigt wird der
-        // Klarwert, gespeichert der Technikwert in `value`). Die Lupe oeffnet
-        // das Fenster; im Editor ist sie reine Optik (pointer-events aus).
-        //
-        // Das × steht nur da, wenn wirklich etwas zu loeschen ist: ein leeres
-        // Feld mit Loesch-Knopf fragt den Bediener, was er wegnehmen soll.
-        // Im Editor ist es darum nie zu sehen — dort gibt es keinen Wert.
-        const hatWert = this.anzeige !== '' || this.value !== ''
-        return html`<div class="nachschlag${hatWert ? ' mit-loeschen' : ''}">
-          <input class="ctrl" type="text" readonly .value=${this.anzeige} />
-          ${hatWert ? html`<button
-            class="loeschen"
-            type="button"
-            aria-label="Wert löschen"
-            title="Wert löschen"
-            @click=${this.onLoeschen}
-          ><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-            <line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
-            <line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
-          </svg></button>` : nothing}
+        // Angezeigt wird der KLARWERT, gemerkt der Technikwert in `value`
+        // (Regel 3); GESUCHT wird im Fenster. Tippen geht hier trotzdem, aus
+        // genau einem Grund: LOESCHEN — Text raus, Feld verlassen, weg ist er,
+        // wie in jedem anderen Feld (bis 2026-08-07 tat das ein ×-Knopf,
+        // Nutzer-Ansage: raus). Halb Getipptes entscheidet ./nachschlagen.
+        return html`<div class="nachschlag">
+          <input
+            class="ctrl"
+            type="text"
+            .value=${this.getippt ?? this.anzeige}
+            @input=${(e: Event) => { this.getippt = (e.target as HTMLInputElement).value }}
+            @blur=${this.onNachschlagVerlassen}
+          />
           <button
             class="lupe"
             type="button"
@@ -336,18 +334,19 @@ export class FormFeldBlock extends BasicBlock {
     })
   }
 
-  // DER eine Weg zum leeren Nachschlage-Feld. Zwei Anlaesse teilen ihn (das ×
-  // des Bedieners und das automatische Leeren beim Geber-Wechsel), damit sie
-  // nicht auseinanderlaufen koennen: es waere sonst genau die Art Doppelung,
-  // bei der einer der beiden Wege ein Stueck vergisst — etwa die abgegebene
-  // Auswahl (klareAuswahl), und SEINE Folger filterten weiter nach einem Satz,
-  // den es nirgends mehr gibt.
+  // DER eine Weg zum leeren Nachschlage-Feld. Zwei Anlaesse teilen ihn (der
+  // Bediener leert das Feld und verlaesst es — bis 2026-08-07 war das × der
+  // Ausloeser, der Weg hierher ist derselbe — und das automatische Leeren beim
+  // Geber-Wechsel), damit sie nicht auseinanderlaufen koennen: es waere sonst
+  // genau die Art Doppelung, bei der einer der beiden Wege ein Stueck vergisst
+  // — etwa die abgegebene Auswahl (klareAuswahl), und SEINE Folger filterten
+  // weiter nach einem Satz, den es nirgends mehr gibt.
   //
   // Alles vier gehoert zusammen: der gemerkte Satz, die Anzeige, der
   // Technikwert und die abgegebene Auswahl. Ein leeres Feld gibt keinen Satz ab.
   //
   // Das change-Ereignis feuert hier bewusst NICHT — es haengt am Anlass, nicht
-  // am Leeren (siehe onLoeschen bzw. pruefeEigenenWert).
+  // am Leeren (siehe onNachschlagVerlassen bzw. pruefeEigenenWert).
   private leereNachschlagen(): void {
     this.satz = undefined
     this.anzeige = ''
@@ -376,14 +375,21 @@ export class FormFeldBlock extends BasicBlock {
     setzeAuswahl(geberIdVon(this), satz)
   }
 
-  // Das × gedrueckt (nur in der MASKE erreichbar, dieselbe Bedingung wie die
-  // Lupe): das ist eine BEDIENERHANDLUNG, darum feuert 'change' und die Kette
-  // „Wert geändert" laeuft mit LEEREM Wert. Genau so muss es sein: hat der
-  // Bediener vorher einen Kunden in einen Satz geschrieben, muss das
-  // Wegnehmen auch dort ankommen — sonst stuende in SoftEngine weiter der alte
-  // Wert, waehrend die Maske leer aussieht.
-  private onLoeschen(): void {
+  // Der Bediener verlaesst das Nachschlage-Feld (nur in der MASKE erreichbar,
+  // dieselbe Bedingung wie die Lupe). WAS das heisst, entscheidet pruefbar
+  // ./nachschlagen (folgeBeimVerlassen) — dort steht auch, warum.
+  //
+  // Hier steht nur, was daraus folgt: 'leeren' ist eine BEDIENERHANDLUNG,
+  // darum feuert 'change' und die Kette „Wert geändert" laeuft mit LEEREM
+  // Wert — sonst stuende in SoftEngine weiter der alte, waehrend die Maske
+  // leer aussieht. Die beiden anderen Ausgaenge aendern nichts, also auch
+  // kein 'change'. Und in JEDEM Fall faellt der getippte Zwischenstand weg;
+  // die Anzeige setzt Lit von selbst zurueck (`getippt` ist Teil der Bindung).
+  private onNachschlagVerlassen(): void {
     if (this.hasAttribute('data-ff-editor')) return
+    const folge = folgeBeimVerlassen(this.getippt ?? this.anzeige, this.anzeige, this.value)
+    this.getippt = null
+    if (folge !== 'leeren') return
     this.leereNachschlagen()
     this.dispatchEvent(new Event('change'))
   }
@@ -461,6 +467,10 @@ export class FormFeldBlock extends BasicBlock {
     // Nachschlage-Feld gibt es keine Bindung, also auch nichts anzuklicken und
     // nichts zu markieren — eine Marke „hier stehen Daten" waere gelogen.
     const wertBindbar = typ !== 'nachschlagen'
+    // Was SICHTBAR im Feld steht — daran haengt der Platzhalter, er darf nie
+    // ueber geschriebenem Text liegen. Beim Nachschlagen taugt `value` dafuer
+    // nicht: das ist der unsichtbare Technikwert.
+    const imFeld = wertBindbar ? this.value : (this.getippt ?? this.anzeige)
     return html`<div class="feld">
       <div
         class="huelle"
@@ -469,7 +479,7 @@ export class FormFeldBlock extends BasicBlock {
       >
         ${this.controlTpl(typ)}
         ${MIT_PLATZHALTER.includes(typ)
-          ? this.textTpl(typ === 'select' ? 'ph ph-select' : 'ph', this.value !== '')
+          ? this.textTpl(typ === 'select' ? 'ph ph-select' : 'ph', imFeld !== '')
           : nothing}
       </div>
     </div>`

@@ -166,6 +166,45 @@ export function satzPasstZurAuswahl(el: HTMLElement, satz: unknown): boolean {
   return !gefiltert || rows.length > 0
 }
 
+// Was passiert, wenn der Bediener das Nachschlage-Feld VERLAESST?
+//
+// Vorgeschichte (2026-08-07): im Feld sass ein ×-Knopf zum Loeschen. Er ist
+// raus — geloescht wird wie in jedem anderen Feld, mit der Tastatur. Damit
+// wird das Feld tippbar, und ein tippbares Feld kann etwas HALBES enthalten:
+// „Berg" statt „Berger, Anna". Stehen liesse das einen frei getippten Text
+// ueber einem alten Technikwert — die Maske zeigte „Berg", geschrieben wuerde
+// weiter 10024. Genau die Luege, gegen die Regel 3 gebaut ist.
+//
+// Drei Ausgaenge, und nur diese drei:
+//   'leeren'  Das Feld ist leer. Anzeige, Technikwert, gemerkter Satz und die
+//             abgegebene Auswahl gehen mit — und weil es eine BEDIENER-
+//             handlung ist, feuert 'change' und die Kette „Wert geaendert"
+//             laeuft mit leerem Wert.
+//   'zurueck' Etwas Halbes steht drin: zurueck auf den zuletzt bestaetigten
+//             Text. Kein 'change' — es hat sich nichts geaendert.
+//   'nichts'  Durchgeklickt, nichts angefasst.
+//
+// Verglichen wird ZEICHENGENAU (kein trim), aus zwei Gruenden: ein
+// bestaetigter Anzeigewert darf selbst aus Leerzeichen bestehen, und ein
+// versehentlich stehen gebliebenes Leerzeichen ist „halb getippt", nicht
+// „geleert" — den Wert wegzunehmen soll man wollen muessen.
+export type VerlassenFolge = 'nichts' | 'leeren' | 'zurueck'
+
+export function folgeBeimVerlassen(
+  // Was gerade IM Feld steht.
+  getippt: string,
+  // Was zuletzt bestaetigt wurde: der angezeigte Klarwert und der Technikwert.
+  bestaetigteAnzeige: string,
+  bestaetigterWert: string,
+): VerlassenFolge {
+  if (getippt === '') {
+    // War schon leer? Dann ist Durchklicken keine Bedienerhandlung — sonst
+    // fiele bei jedem Tabben durch ein leeres Feld eine Kette an.
+    return bestaetigteAnzeige === '' && bestaetigterWert === '' ? 'nichts' : 'leeren'
+  }
+  return getippt === bestaetigteAnzeige ? 'nichts' : 'zurueck'
+}
+
 // Es ist immer hoechstens EIN Fenster offen: ein zweites ueber dem ersten
 // waere nicht mehr zuzuordnen (welches Feld fuellt es?).
 let offen: DialogRahmen | null = null

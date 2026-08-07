@@ -8,6 +8,7 @@ import { setzeAuswahlZurueck, waehleAuswahl } from '../shared/auswahl'
 import {
   einzigenTrefferFinden,
   fensterEintraege,
+  folgeBeimVerlassen,
   nachschlagEintraege,
   nachschlagTreffer,
   satzPasstZurAuswahl,
@@ -169,5 +170,40 @@ describe('satzPasstZurAuswahl (Geber-Wechsel leert das Feld)', () => {
   it('ohne Folge-Einstellung wird nie geleert', () => {
     waehleAuswahl('kunde', { '110_10': '99999' })
     expect(satzPasstZurAuswahl(elementMit({}), HAUSTIERE[0])).toBe(true)
+  })
+})
+
+describe('folgeBeimVerlassen (2026-08-07, das × ist raus)', () => {
+  it('leer getippt = loeschen — die Bedienerhandlung, die vorher das × war', () => {
+    expect(folgeBeimVerlassen('', 'Berger, Anna', '10024')).toBe('leeren')
+    // Auch wenn nur der Technikwert dasteht (Satz ohne Anzeigefeld).
+    expect(folgeBeimVerlassen('', '10024', '10024')).toBe('leeren')
+  })
+
+  it('war schon leer = nichts — sonst faellt beim Durchtabben eine Kette an', () => {
+    // Der Fall ist haeufig: der Bediener klickt durch die Maske, ohne etwas
+    // anzufassen. Loeste das eine Kette „Wert geaendert" aus, schriebe die
+    // Maske ungefragt einen leeren Wert nach SoftEngine.
+    expect(folgeBeimVerlassen('', '', '')).toBe('nichts')
+  })
+
+  it('halb getippt = zurueck auf den bestaetigten Text', () => {
+    // „Berg" ueber dem Technikwert 10024 waere eine Luege: die Maske zeigte
+    // etwas anderes, als sie schreibt (Regel 3).
+    expect(folgeBeimVerlassen('Berg', 'Berger, Anna', '10024')).toBe('zurueck')
+    // Auch etwas Getipptes in ein LEERES Feld ist halb — das Feld nimmt seinen
+    // Wert nur aus dem Fenster.
+    expect(folgeBeimVerlassen('Berger', '', '')).toBe('zurueck')
+  })
+
+  it('unveraendert = nichts', () => {
+    expect(folgeBeimVerlassen('Berger, Anna', 'Berger, Anna', '10024')).toBe('nichts')
+  })
+
+  it('vergleicht zeichengenau — ein Leerzeichen loescht nicht', () => {
+    // Zwei Gruende (s. Kopf der Funktion): ein bestaetigter Anzeigewert darf
+    // aus Leerzeichen bestehen, und Wegnehmen soll man wollen muessen.
+    expect(folgeBeimVerlassen(' ', 'Berger, Anna', '10024')).toBe('zurueck')
+    expect(folgeBeimVerlassen('   ', '   ', '10024')).toBe('nichts')
   })
 })
