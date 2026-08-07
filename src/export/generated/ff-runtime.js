@@ -161,17 +161,24 @@
       data-ff-editable
       @dblclick=${e=>this.inlineEdit(e,`label`)}
     >${this.label}</button>`}connectedCallback(){super.connectedCallback(),wn(this,`onClick`)}};A([k()],Tn.prototype,`label`,void 0),j.defineAndRegister(Tn);var En=[`info`,`success`,`warning`,`danger`];function Dn(e){return En.includes(e)?e:`info`}var On=[{wert:`info`,name:`Hinweis`},{wert:`success`,name:`Erfolg`},{wert:`warning`,name:`Warnung`},{wert:`danger`,name:`Fehler`}];function kn(e,t){return{attributeName:e,name:`Farbe`,description:t,kind:`select`,options:On.map(e=>({value:e.wert,label:e.name}))}}var An=o`
+  /* Masse Wert fuer Wert aus der Demo (atome.css .marke, --schnitt 7px), seit
+     2026-08-07: bis dahin war die Marke rundum kleiner (10,5px, kein
+     Zeilenmass, 3/9/3/7 Innenabstand, 5px Abstand, 6px Schnitt) und wirkte
+     neben der Demo wie zusammengeschoben. Die 1,3 ist ihr eigenes Zeilenmass
+     aus der Demo, nicht das der Maske — eine Marke ist eine Zeile Text in
+     einer Flaeche, sie atmet nicht mit dem Fliesstext. */
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 9px 3px 7px;
+    gap: 6px;
+    padding: 5px 11px 5px 9px;
     border-radius: var(--se-r-sm);
-    /* der 45deg-Schnitt oben rechts — 6px tief */
-    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+    /* der 45deg-Schnitt oben rechts — 7px tief */
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
     font-family: var(--se-font);
-    font-size: var(--se-fs-xs);
+    font-size: var(--se-fs-sm);
     font-weight: 700;
+    line-height: 1.3;
     letter-spacing: 0.02em;
     color: var(--se-ink);
     background: var(--se-panel-2);

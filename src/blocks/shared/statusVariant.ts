@@ -2,12 +2,15 @@
 // Geteiltes Status-Vokabular (Regel "Technikwert != Anzeigename": der
 // Bediener waehlt den Klarnamen Hinweis/Erfolg/Warnung/Fehler, NIE die
 // Farbe — die Farbe ergibt sich fest aus der Bedeutung ueber die
-// Statusfarben-Tokens). Nutzer: die Karte (ff-card) und die Kanban-Spalte
-// (Herkunft: docs/decisions/2026-07-14-kahlschlag-bausteine.md).
+// Statusfarben-Tokens).
 //  - StatusVariant/coerceStatusVariant: der unsichtbare Technikwert.
 //  - statusVariantProperty: die "Art"-Select-Beschreibung fuer den Inspector.
-//  - chipStyles: das Chip-Aussehen (.zb-chip im Zielbild
-//    der Referenzmaske) fuer den Chip innerhalb von ff-card.
+//    Nutzer: die Karte (ff-card) und die Kanban-Spalte.
+//  - chipStyles: das Aussehen der Status-Marke. Nutzer: die Karte (ff-card)
+//    und die Tabelle (ff-tabelle, Spaltenart "Status"); im Kanban tragen sie
+//    die Karten IN den Spalten. DIE EINE Stelle: wer hier ein Mass aendert,
+//    aendert die Marke in allen drei Bausteinen gleichzeitig — genau so ist
+//    es gewollt, nachgebessert wird nie im einzelnen Baustein.
 
 import { css } from 'lit'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
@@ -71,17 +74,24 @@ export function statusVariantProperty(
 // dem Notfall allein (Regel 2), darum Flaeche in der Hausfarbe statt
 // getoentem Hauch.
 export const chipStyles = css`
+  /* Masse Wert fuer Wert aus der Demo (atome.css .marke, --schnitt 7px), seit
+     2026-08-07: bis dahin war die Marke rundum kleiner (10,5px, kein
+     Zeilenmass, 3/9/3/7 Innenabstand, 5px Abstand, 6px Schnitt) und wirkte
+     neben der Demo wie zusammengeschoben. Die 1,3 ist ihr eigenes Zeilenmass
+     aus der Demo, nicht das der Maske — eine Marke ist eine Zeile Text in
+     einer Flaeche, sie atmet nicht mit dem Fliesstext. */
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 9px 3px 7px;
+    gap: 6px;
+    padding: 5px 11px 5px 9px;
     border-radius: var(--se-r-sm);
-    /* der 45deg-Schnitt oben rechts — 6px tief */
-    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+    /* der 45deg-Schnitt oben rechts — 7px tief */
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
     font-family: var(--se-font);
-    font-size: var(--se-fs-xs);
+    font-size: var(--se-fs-sm);
     font-weight: 700;
+    line-height: 1.3;
     letter-spacing: 0.02em;
     color: var(--se-ink);
     background: var(--se-panel-2);
