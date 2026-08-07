@@ -48,6 +48,30 @@ export const PASSEND = 'passend'
 // WinUI, oder kein Raster mit vorgegebener Hoehe).
 export const OHNE_MESSUNG = ZEILEN_PRO_SEITE[0]
 
+// Derselbe Fall im EDITOR, wo Platzhalter-Striche stehen statt Saetzen.
+const PLATZHALTER_OHNE_MESSUNG = 4
+
+// Wie viele PLATZHALTER-Zeilen der Editor zeichnet.
+//
+// Bis 2026-08-07 waren es stur vier — egal, wie hoch die Tabelle im Raster
+// stand. Zwei Fehler in einem (Nutzer-Meldung 2026-08-07 „in der Tabelle ist
+// IMMER eine leere Zeile"):
+//   1. Unter den vier Strichen blieb Platz uebrig, den das Lineal fuellte. Mit
+//      seinen Spaltentrennern liest sich dieser Streifen wie eine leere Zeile —
+//      und zwar bei JEDER Tabelle, die hoeher als vier Zeilen ist.
+//   2. WYSIWYG-Bruch: die MASKE zeigt so viele Zeilen, wie hineinpassen
+//      (gemessen), der Editor zeigte vier. Der Bauer sah also nie, wie voll
+//      seine Tabelle in SoftEngine wirklich wird.
+// Beides faellt weg, sobald hier dieselbe Zahl gilt wie fuer echte Daten.
+//
+// Dieselbe Reihenfolge wie fuer Daten (feste Zahl gewinnt, sonst die Messung),
+// nur der Rueckfall ist ein anderer: OHNE_MESSUNG waere 10, und zehn Striche in
+// einer Tabelle, die im Fluss steht und mit ihrem Inhalt WAECHST, blasen sie
+// auf. Dort bleiben es vier.
+export function platzhalterZeilen(einstellung: string, gemessen: number | null): number {
+  return proSeiteAusEinstellung(einstellung) ?? gemessen ?? PLATZHALTER_OHNE_MESSUNG
+}
+
 // Die Einstellung („passend" oder eine Zahl als Text, wie sie im Attribut
 // steht) in eine Zeilenzahl uebersetzen. null heisst „gemessen" — dann
 // entscheidet passendeZeilen bzw. der Rueckfall.

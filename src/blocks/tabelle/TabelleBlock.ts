@@ -2,10 +2,12 @@
 // Tabellen-Baustein. Diese Datei haelt, was den BAUSTEIN ausmacht:
 // Eigenschaften, Laufzeit-Zustand (Suche/Sortierung/Seite/Auswahl), Messung
 // und Lebenszyklus. Alles, was gezeichnet oder gerechnet wird, wohnt in den
-// Faechern daneben — ./tabelleKoerper (Suchzeile, Kopf, Zeilen),
-// ./tabelleFuss (Bedienleiste), ./spaltenBearbeiten (Umbenennen, Feld-Picker,
-// „+"/„−"), ./spalten (Modell), ./suche, ./sortierung, ./seitengroesse,
-// ./rumpfMessung, ./seRuntime, ./tabelleStil.
+// Faechern daneben — ./tabelleAnsicht (was gerade zu sehen ist: Spaltenbreiten,
+// Zeilentakt, echte Daten oder Platzhalter, Leerzustand, welche Seite),
+// ./tabelleKoerper (Suchzeile, Kopf, Zeilen), ./tabelleFuss (Bedienleiste),
+// ./spaltenBearbeiten (Umbenennen, Feld-Picker, „+"/„−"), ./spalten (Modell),
+// ./suche, ./sortierung, ./seitengroesse, ./rumpfMessung, ./seRuntime,
+// ./tabelleStil.
 //
 // Der Rahmen ist die TAFEL der Designsprache (designsprache/musterbogen.html,
 // .tafel): Papierflaeche, EINE 1,5px-Kante, grosse Rundung, flach.
@@ -63,23 +65,17 @@ import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
 import { chipStyles } from '../shared/statusVariant'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
-import {
-  OHNE_MESSUNG,
-  PASSEND,
-  proSeiteAusEinstellung,
-  seitenAufteilung,
-} from './seitengroesse'
+import { PASSEND } from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
-import { sortiereIndizes } from './sortierung'
 import {
   benenneSpalteUm,
   feldPickerAbbestellen,
   oeffneFeldPicker,
   spaltenSteuerung,
 } from './spaltenBearbeiten'
-import { spaltenArt, zeilenHoeheFuer } from './spaltenArten'
+import { zeilenHoeheFuer } from './spaltenArten'
 import { SPALTEN_BINDUNG } from './spaltenBindung'
-import { passendeIndizes, zeigtEchteDaten, zeigtLeerzustand } from './suche'
+import { tabelleAnsicht } from './tabelleAnsicht'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
 import { tabelleKoerper } from './tabelleKoerper'
@@ -93,8 +89,6 @@ import {
 
 // Das Spalten-Modell wohnt in ./spalten — hier nur die Darstellung.
 export { coerceSpalten, type Spalte } from './spalten'
-
-const PLATZHALTER_ZEILEN = 4
 
 export class TabelleBlock extends BasicBlock {
   static readonly blockType = 'tabelle'
@@ -227,13 +221,6 @@ export class TabelleBlock extends BasicBlock {
     return this._proSeiteWahl ?? this.proSeite
   }
 
-  private get proSeiteAktuell(): number {
-    // Reihenfolge: eine feste Zahl gewinnt, sonst die Messung, sonst der
-    // Rueckfall. Ohne Messung (kein ResizeObserver, oder kein Raster mit
-    // vorgegebener Hoehe) laeuft die Tabelle wie bis 2026-08-06.
-    return proSeiteAusEinstellung(this.einstellung) ?? this._proSeiteGemessen ?? OHNE_MESSUNG
-  }
-
   // Der Waehler ist bedient worden. Der EINE Unterschied zwischen den Welten:
   // im Editor schreibt er den BAUPLAN (persistent, mit Undo, im Export als
   // Attribut), in der Maske gilt er nur fuer diese Sitzung. Am Attribut
@@ -280,17 +267,6 @@ export class TabelleBlock extends BasicBlock {
   // CSS-Variable), die Messung und die Seitenrechnung.
   private get zeilenHoehe(): number {
     return zeilenHoeheFuer(this.spaltenListe())
-  }
-
-  // Die Zeilen, die der Bediener gerade sehen soll — als ROHINDIZES in
-  // datenzeilen: ERST suchen, DANN sortieren. Indizes statt Werte, weil die
-  // Auswahl-Markierung an der ZEILE kleben muss, egal wie gefiltert oder
-  // sortiert wird. Beides sind eigene, getestete Stellen (./suche, ./sortierung).
-  private sichtbareIndizes(): number[] {
-    const gefiltert = passendeIndizes(this.datenzeilen, this._suchtext)
-    if (this._sortSpalte < 0) return gefiltert
-    const rows = gefiltert.map((i) => this.datenzeilen[i])
-    return sortiereIndizes(rows, this._sortSpalte, this._sortAuf).map((k) => gefiltert[k])
   }
 
   // Klick auf eine Datenzeile in der LAUFZEIT: Auswahl setzen bzw. mit dem
@@ -387,46 +363,22 @@ export class TabelleBlock extends BasicBlock {
 
   override render(): TemplateResult {
     const spalten = this.spaltenListe()
-    // Die Rasterspuren kommen JE SPALTE aus ihrer Art (./spaltenArten): Zahl,
-    // Datum und Status tragen ein festes Mass, Text teilt sich den Rest.
-    // Breite nach ART, nie nach Inhalt — sonst springt eine Spalte beim
-    // Blaettern, weil die naechste Seite kuerzere Werte traegt.
-    const cols = {
-      gridTemplateColumns: spalten.map((s) => spaltenArt(s.art).spur).join(' '),
-    }
     const stop = (e: Event): void => e.stopPropagation()
-    // Laufzeit-Daten (Export/SoftEngine) oder Platzhalter (Editor/ohne Quelle) —
-    // als Rohindizes, damit die Auswahl-Markierung an ihrer Zeile klebt.
-    const alleSichtbar = this.sichtbareIndizes()
-    // „Hat Quelle" heisst: es KOMMEN Daten — nicht, dass gerade welche da
-    // sind. Bis 2026-07-28 stand hier `datenzeilen.length > 0`, und damit
-    // fiel die LAUFENDE Maske auf die Editor-Platzhalter zurueck, sobald der
-    // Tagesfilter einen Tag ohne Saetze traf: vier Striche „—" und
-    // „— Datensaetze", als warte man noch auf Daten. Ein leerer Tag ist aber
-    // der Normalfall, und erfundene Striche in der echten Maske brechen
-    // Regel 7 (der Editor erfindet nie Daten — die Maske erst recht nicht).
-    //
-    // Unterschieden wird ueber `data-ff-editor`: der BlockHost setzt es an
-    // JEDEM Editor-Element, der Export nie — dieselbe Marke, an der auch
-    // datenAnschluss Editor-Elemente von der Daten-Mechanik fernhaelt.
-    // `editable` taugt dafuer NICHT: das ist im Editor nur am AUSGEWAEHLTEN
-    // Baustein true, ein nicht ausgewaehlter saehe sonst aus wie Laufzeit.
-    // Die Entscheidung selbst wohnt pruefbar in ./suche (zeigtEchteDaten).
-    const hatQuelle = zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
-    // Leerzustand? Die Bedingungen wohnen pruefbar in ./suche.
-    const leer = zeigtLeerzustand(hatQuelle, this.datenGeliefert, this.datenzeilen.length)
-    // Paginierung: die Rechnung wohnt in ./seitengroesse (rein + getestet).
-    // In der Maske wird NICHT aufgefuellt — ein Satz ist eine Zeile; den
-    // leeren Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen
-    // Platzhalter-Zeilen mit „—" (Regel 7: hier kommt spaeter ein Wert hin).
-    const gesamt = alleSichtbar.length
-    const proSeite = this.proSeiteAktuell
-    const { seiten, seite, zeilen } = seitenAufteilung({
-      sichtbar: alleSichtbar,
-      hatQuelle,
-      proSeite,
+    // WAS zu sehen ist — Spaltenbreiten, Zeilentakt, echte Daten oder
+    // Platzhalter, Leerzustand, Seite — rechnet ./tabelleAnsicht an EINER Stelle
+    // aus. Der Baustein reicht nur seine Werte hinein.
+    const ansicht = tabelleAnsicht({
+      spalten,
+      imEditor: this.hasAttribute('data-ff-editor'),
+      source: this.source,
+      datenGeliefert: this.datenGeliefert,
+      datenzeilen: this.datenzeilen,
+      suchtext: this._suchtext,
+      sortSpalte: this._sortSpalte,
+      sortAuf: this._sortAuf,
       wunschSeite: this._seite,
-      platzhalterZeilen: PLATZHALTER_ZEILEN,
+      einstellung: this.einstellung,
+      gemessen: this._proSeiteGemessen,
     })
     return html`<div class="tabelle" style=${styleMap({
       // EINE Zahl, EINE Stelle: der Takt kommt aus den Spalten-Arten
@@ -435,23 +387,23 @@ export class TabelleBlock extends BasicBlock {
       // (--spalten-zahl stand hier bis 2026-08-06 daneben; das Lineal brauchte
       // sie fuer seine senkrechten Striche im Verlauf. Es zeichnet sie jetzt
       // mit echten Zellen im Spaltenraster, und die Zahl ist ersatzlos weg.)
-      '--zeilen-hoehe': `${this.zeilenHoehe}px`,
+      '--zeilen-hoehe': `${ansicht.zeilenHoehe}px`,
     })}>
       ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
       ${tabelleKoerper({
         spalten,
-        cols,
+        cols: ansicht.cols,
         editable: this.editable,
         zeigeSuche: this.suche === 'ja',
         suchtext: this._suchtext,
         sortSpalte: this._sortSpalte,
         sortAuf: this._sortAuf,
-        zeilen,
+        zeilen: ansicht.zeilen,
         datenzeilen: this.datenzeilen,
         zusatzzeilen: this.zusatzzeilen,
-        hatQuelle,
+        hatQuelle: ansicht.hatQuelle,
         auswahlIndex: this.auswahlIndex,
-        leer,
+        leer: ansicht.leer,
         leerText: this.leerText,
       }, {
         setzeSuchtext: (text) => this.setzeSuchtext(text),
@@ -472,9 +424,9 @@ export class TabelleBlock extends BasicBlock {
       })}
       ${/* Im Leerzustand faellt die Fusszeile weg: „Seite 1 von 1" und ein
             Waehler „Zeilen pro Seite" sind Bedienelemente ohne Gegenstand. */ ''}
-      ${leer ? nothing : tabelleFuss({
-        hatQuelle,
-        sichtbar: gesamt,
+      ${ansicht.leer ? nothing : tabelleFuss({
+        hatQuelle: ansicht.hatQuelle,
+        sichtbar: ansicht.gesamt,
         gesamt: this.datenzeilen.length,
         suchtAktiv: this._suchtext.trim() !== '',
         auswahlAktiv: this.durchAuswahlGefiltert,
@@ -482,8 +434,8 @@ export class TabelleBlock extends BasicBlock {
         // In der Maske nur, wenn er es erlaubt hat.
         zeigeWaehler: this.hasAttribute('data-ff-editor') || this.zeilenWaehler === 'ja',
         einstellung: this.einstellung,
-        seite,
-        seiten,
+        seite: ansicht.seite,
+        seiten: ansicht.seiten,
       }, {
         waehleProSeite: (wert) => this.waehleProSeite(wert),
         blaettere: (zu) => {
