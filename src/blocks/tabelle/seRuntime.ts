@@ -30,6 +30,7 @@ export interface RuntimeTableElement extends HTMLElement {
   rohzeilen: unknown[]
   auswahlIndex: number
   durchAuswahlGefiltert: boolean
+  datenGeliefert: boolean
 }
 
 // Die Spalten aus dem `spalten`-Attribut (JSON).
@@ -105,6 +106,12 @@ function hydrateTable(el: RuntimeTableElement): void {
   // ueber die Partnerzeile auf (shared/fremdeQuellen). Fuer Spalten der
   // ersten Quelle ist er schlicht getField.
   const lies = macheFeldLeser(el)
+  // Ab hier hat die Quelle WIRKLICH geliefert — erst jetzt darf ein leeres
+  // Ergebnis „keine Eintraege" heissen (./suche, zeigtLeerzustand). Bewusst
+  // NICHT in leeren(): eine Quelle, deren Definition in der Maske fehlt, hat
+  // nicht geliefert, sondern ist kaputt — sie soll nicht so aussehen, als
+  // waere sie einfach leer.
+  el.datenGeliefert = true
   el.rohzeilen = rows
   el.auswahlIndex = auswahlIndex
   el.durchAuswahlGefiltert = gefiltert

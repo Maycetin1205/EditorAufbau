@@ -79,7 +79,7 @@ import {
 } from './spaltenBearbeiten'
 import { spaltenArt, zeilenHoeheFuer } from './spaltenArten'
 import { SPALTEN_BINDUNG } from './spaltenBindung'
-import { passendeIndizes, zeigtEchteDaten } from './suche'
+import { passendeIndizes, zeigtEchteDaten, zeigtLeerzustand } from './suche'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
 import { tabelleKoerper } from './tabelleKoerper'
@@ -193,6 +193,10 @@ export class TabelleBlock extends BasicBlock {
   // Zeigt die Tabelle gerade WENIGER, weil sie der Auswahl eines anderen
   // Bausteins folgt? Nur fuer die ehrliche Fusszeile (Regel 4).
   @property({ attribute: false }) durchAuswahlGefiltert = false
+
+  // Hat SoftEngine schon EINMAL geliefert? Setzt ./seRuntime beim Hydrieren.
+  // Bedingung des Leerzustands (s. ./suche, zeigtLeerzustand).
+  @property({ attribute: false }) datenGeliefert = false
 
   // Sortier-Zustand (nur Laufzeit/Export, nicht persistiert).
   private _sortSpalte = -1
@@ -409,12 +413,8 @@ export class TabelleBlock extends BasicBlock {
     // Baustein true, ein nicht ausgewaehlter saehe sonst aus wie Laufzeit.
     // Die Entscheidung selbst wohnt pruefbar in ./suche (zeigtEchteDaten).
     const hatQuelle = zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
-    // LEERZUSTAND (2026-08-07): die gebundene Quelle liefert keine Zeile —
-    // leerer Tag, leere Tabelle. Bewusst an `datenzeilen` und nicht an den
-    // SICHTBAREN Zeilen: sucht der Bediener und findet nichts, gibt es sehr
-    // wohl Daten, und die Fusszeile („0 von 24, gefiltert") ist dort die
-    // ehrlichere Auskunft. Im Editor nie (hatQuelle false -> Platzhalter).
-    const leer = hatQuelle && this.datenzeilen.length === 0
+    // Leerzustand? Die Bedingungen wohnen pruefbar in ./suche.
+    const leer = zeigtLeerzustand(hatQuelle, this.datenGeliefert, this.datenzeilen.length)
     // Paginierung: die Rechnung wohnt in ./seitengroesse (rein + getestet).
     // In der Maske wird NICHT aufgefuellt — ein Satz ist eine Zeile; den
     // leeren Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen

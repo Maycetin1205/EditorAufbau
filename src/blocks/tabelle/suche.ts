@@ -58,6 +58,30 @@ export function zeigtEchteDaten(imEditor: boolean, source: string): boolean {
   return !imEditor && source.trim() !== ''
 }
 
+// Steht statt der Zeilen der Leerzustand da (../shared/leerZustand)?
+//
+// DREI Bedingungen, und jede einzelne ist ein eigener Fehler, wenn sie fehlt:
+//
+//  1. `hatQuelle` — im Editor gibt es keinen Leerzustand. Dort stehen die
+//     Platzhalter-Striche, sonst naehme der Leerzustand dem Bauer die Sicht
+//     auf sein eigenes Layout.
+//  2. `datenGeliefert` — SoftEngine muss WIRKLICH schon geliefert haben
+//     (tabelle/seRuntime setzt es beim Hydrieren). Ohne diese Bedingung sagte
+//     die Maske „keine Eintraege", waehrend die Anmeldung noch laeuft — und
+//     die darf bis zu 10 Sekunden dauern (Retry 25 ms x 400). Ein Satz, der
+//     „nichts da" behauptet, weil noch niemand gefragt hat, ist genau das
+//     stille Fehlverhalten aus Regel 4.
+//  3. `zeilen === 0` — die GELIEFERTEN Zeilen, nicht die sichtbaren. Sucht
+//     der Bediener und findet nichts, gibt es sehr wohl Daten; dort ist die
+//     Fusszeile („Kein Treffer von 24 Datensaetzen") die ehrlichere Auskunft.
+export function zeigtLeerzustand(
+  hatQuelle: boolean,
+  datenGeliefert: boolean,
+  zeilen: number,
+): boolean {
+  return hatQuelle && datenGeliefert && zeilen === 0
+}
+
 // Beschriftung der Fusszeile: wie viele Datensaetze sieht der Bediener?
 //
 // Drei Faelle, drei Saetze — der haeufigste Fehler waere, sie zu einem zu

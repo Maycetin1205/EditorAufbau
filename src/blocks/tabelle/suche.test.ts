@@ -3,7 +3,14 @@
 // mehrere Woerter sind ein UND, leere Eingabe blendet nie etwas aus.
 
 import { describe, expect, it } from 'vitest'
-import { datensatzText, filtereZeilen, passendeIndizes, zeigtEchteDaten, zeilePasst } from './suche'
+import {
+  datensatzText,
+  filtereZeilen,
+  passendeIndizes,
+  zeigtEchteDaten,
+  zeigtLeerzustand,
+  zeilePasst,
+} from './suche'
 
 const zeilen = [
   ['Meier', 'Hund', '24.07.2026'],
@@ -118,6 +125,25 @@ describe('datensatzText (Fusszeile)', () => {
       .toBe('3 von 12 Datensätzen · durch Auswahl gefiltert')
     // Ohne Quelle bleibt der Strich ein Strich — nichts wird angehaengt.
     expect(t({ hatQuelle: false, auswahlAktiv: true })).toBe('— Datensätze')
+  })
+})
+
+describe('zeigtLeerzustand (2026-08-07)', () => {
+  it('erst wenn die Quelle wirklich geliefert hat — und dann nichts', () => {
+    expect(zeigtLeerzustand(true, true, 0)).toBe(true)
+    expect(zeigtLeerzustand(true, true, 3)).toBe(false)
+  })
+
+  it('vor dem ersten SoftEngine-Push NICHT — sonst luegt die Maske beim Laden', () => {
+    // Die Anmeldung darf bis zu 10 Sekunden dauern (Retry 25 ms x 400). Stuende
+    // in dieser Zeit „Keine Eintraege" da, behauptete die Maske etwas ueber
+    // Daten, nach denen noch niemand gefragt hat (Regel 4).
+    expect(zeigtLeerzustand(true, false, 0)).toBe(false)
+  })
+
+  it('im Editor nie — dort stehen die Platzhalter-Striche', () => {
+    // Sonst naehme der Leerzustand dem Bauer die Sicht auf sein Layout.
+    expect(zeigtLeerzustand(false, true, 0)).toBe(false)
   })
 })
 
