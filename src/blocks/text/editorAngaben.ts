@@ -2,10 +2,13 @@
 // Diese Datei laedt NUR der Editor, nie das Runtime-Buendel (Begruendung:
 // editorAngaben in core/blocks).
 
-import { Text } from 'lucide-react'
+// Ein Buchstabe heisst „Text". Das Symbol `Text` (bis 2026-08-07) zeichnete
+// mehrere Absatzzeilen — das ist ein Textblock im Sinne von Fliesstext, waehrend
+// dieser Baustein meistens eine einzelne Zeile oder Ueberschrift traegt.
+import { Type } from 'lucide-react'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { TextBlock } from './TextBlock'
 
 ergaenzeEditorAngaben(TextBlock.blockType, {
-  symbol: Text,
+  symbol: Type,
 })

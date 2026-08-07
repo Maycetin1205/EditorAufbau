@@ -7,7 +7,12 @@
 // entsteht nur ueber das Board); ihr Icon steht trotzdem hier, damit sie
 // ueberall dort ein Gesicht hat, wo der Editor Bausteine auflistet.
 
-import { LayoutList, SquareKanban } from 'lucide-react'
+// SquareKanban BLEIBT: ein Rahmen mit Saeulen verschiedener Hoehe ist schon das
+// Miniaturbild eines Boards — daran gibt es nichts zu verbessern.
+// Die Spalte traegt seit 2026-08-07 gestapelte Kaesten (Rows3) statt LayoutList:
+// eine Spalte stapelt KARTEN, LayoutList zeichnete dagegen Listenzeilen mit
+// Punkten davor, also eher eine Aufzaehlung.
+import { Rows3, SquareKanban } from 'lucide-react'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { KanbanBlock } from './KanbanBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -17,5 +22,5 @@ ergaenzeEditorAngaben(KanbanBlock.blockType, {
 })
 
 ergaenzeEditorAngaben(KanbanSpalteBlock.blockType, {
-  symbol: LayoutList,
+  symbol: Rows3,
 })

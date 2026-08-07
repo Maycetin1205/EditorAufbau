@@ -2,9 +2,12 @@
 // Diese Datei laedt NUR der Editor, nie das Runtime-Buendel (Begruendung:
 // editorAngaben in core/blocks).
 //
-// SeparatorHorizontal statt Minus: `Minus` ist das Rechenzeichen — ein Strich
-// ohne Umgebung, der neben `Text` und `StretchHorizontal` nach nichts aussah.
-// SeparatorHorizontal zeigt die Linie MIT dem, was sie trennt.
+// Rows2 zeigt die Linie MIT dem, was sie trennt — der gueltige Teil der alten
+// Begruendung (ein blankes `Minus` ist das Rechenzeichen und sieht neben den
+// anderen Symbolen nach nichts aus). Bis 2026-08-07 stand hier
+// SeparatorHorizontal: dasselbe Bild, aber mit Chevrons ueber und unter der
+// Linie — das ist das uebliche Zeichen fuer „hier ziehen, um zu verschieben".
+// Die Trennlinie kann man nicht ziehen, also versprach das Symbol etwas.
 //
 // Die Hinweiszeile ist weg. Sie sagte „Keine Einstellungen — die Linie fuellt
 // die Breite von selbst", und beides stimmt seit der senkrechten Trennlinie
@@ -12,10 +15,10 @@
 // fuellt er die Hoehe. Ein Hinweis ist laut editorAngaben ohnehin nur fuer
 // Panels gedacht, die sonst LEER aussehen — dieses hat nun einen Umschalter.
 
-import { SeparatorHorizontal } from 'lucide-react'
+import { Rows2 } from 'lucide-react'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { TrennerBlock } from './TrennerBlock'
 
 ergaenzeEditorAngaben(TrennerBlock.blockType, {
-  symbol: SeparatorHorizontal,
+  symbol: Rows2,
 })
