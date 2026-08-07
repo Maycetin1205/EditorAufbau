@@ -357,7 +357,7 @@ describe('Kanban', () => {
     // Der unangetastete Standardsatz bleibt daheim (Standardwert-Regel) —
     // sonst waere jede bestehende Maske im Export anders und der Byte-Waechter
     // (referenzabzug) haette bei diesem Paket angeschlagen.
-    expect(boardTag(exportMask(board({ leerText: 'Keine Einträge.' })).html))
+    expect(boardTag(exportMask(board({ leerText: 'Keine Datensätze.' })).html))
       .not.toMatch(/leerText=/i)
     // Die SPALTE traegt ihn nie: der Leerzustand ist ein Laufzeitwert
     // (leerHinweis, attribute:false), kein Bauplan der einzelnen Spalte.

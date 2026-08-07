@@ -30,16 +30,21 @@ import { pfoteIcon } from './pfote'
 // Der Satz, wenn der Bauer keinen eigenen einstellt. Auch der Registry-
 // Standard beider Bausteine — damit reist er NICHT als Attribut in den Export
 // (Standardwert-Regel in exportMask).
-export const LEER_TEXT_STANDARD = 'Keine Einträge.'
+export const LEER_TEXT_STANDARD = 'Keine Datensätze.'
 
-// Die Eigenschaft „Text wenn leer" fuer den Inspector. EINE Beschreibung fuer
-// beide Bausteine: zwei Formulierungen fuer dieselbe Sache lesen sich wie zwei
-// verschiedene Einstellungen.
+// Die Eigenschaft fuer den Inspector. EINE Beschreibung fuer beide Bausteine:
+// zwei Formulierungen fuer dieselbe Sache lesen sich wie zwei verschiedene
+// Einstellungen.
+//
+// Die Beschriftung hiess bis 2026-08-07 „Text wenn leer" (Nutzer-Rueckfrage:
+// „WAS ist das?"). Sie klang wie „Text, falls das FELD leer ist" — gemeint ist
+// aber „falls die QUELLE keine Zeile liefert". Der Standardsatz traegt jetzt
+// dasselbe Wort wie die Beschriftung, damit beides zusammen gelesen wird.
 export function leerTextProperty(): PropertyDescription {
   return {
     attributeName: 'leerText',
-    name: 'Text wenn leer',
-    description: 'Der Satz, den die Maske zeigt, wenn die Datenquelle keine Zeile liefert. Leer lassen: dann steht dort gar nichts.',
+    name: 'Text ohne Datensätze',
+    description: 'Steht in der Maske dort, wo sonst die Zeilen stehen — wenn die Datenquelle keine liefert. Leer lassen: dann steht dort gar nichts.',
     kind: 'text',
     requiresDataSource: true,
   }

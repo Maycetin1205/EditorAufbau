@@ -154,7 +154,7 @@ describe('Tabelle (Fahrplan 4)', () => {
     // der Standard und muss deshalb sehr wohl mitreisen.
     expect(tabelleTag(exportMask(tabelleBaum({ leerText: '' })).html)).toMatch(/\sleerText=""/i)
     // Der unangetastete Standardsatz dagegen bleibt daheim.
-    const standard = tabelleTag(exportMask(tabelleBaum({ leerText: 'Keine Einträge.' })).html)
+    const standard = tabelleTag(exportMask(tabelleBaum({ leerText: 'Keine Datensätze.' })).html)
     expect(standard).not.toMatch(/leerText=/i)
   })
 
