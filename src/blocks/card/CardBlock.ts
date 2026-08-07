@@ -181,7 +181,7 @@ export class CardBlock extends BasicBlock {
     const reiter = zeigt(this.date) || zeigt(this.time)
     const kopf = zeigt(this.avatar) || zeigt(this.heading) || zeigt(this.meta)
     const fuss = zeigt(this.heading2) || zeigt(this.chipText)
-    return html`<div class="card v-${v} ${reiter ? 'mit-reiter' : 'ohne-reiter'}">
+    return html`<div class="card v-${v}${reiter ? '' : ' ohne-reiter'}">
       ${reiter
         ? html`<span class="reiter">
             ${zeigt(this.date) ? this.stelle('date', 'datum') : nothing}

@@ -211,14 +211,18 @@
         transition: border-color var(--se-move);
       }
       .card.ohne-reiter { border-radius: var(--se-r-md); }
-      /* Platz fuer die Lasche, die ueber die Oberkante hinausragt (Demo:
-         .karte margin-top 24px). NUR wenn es sie gibt — eine Karte ohne Datum
-         und Zeit soll keinen Leerraum ueber sich schieben.
+      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist zugleich der Platz
+         fuer die Lasche UND der EINZIGE Abstand zwischen zwei Karten — die
+         Spalte setzt keinen eigenen (KanbanSpalteBlock, 2026-08-07). Darum
+         gilt er wie in der Demo fuer JEDE Karte: bis 2026-08-07 hing er an
+         der Lasche, damit eine Karte ohne Datum und Zeit keinen Leerraum ueber
+         sich schiebt — ohne Spalten-Abstand stiessen solche Karten aber
+         aneinander.
          flow-root am Host, damit dieser Abstand nicht mit dem Aussenabstand
          der Spalte verschmilzt (margin collapsing): sonst kaeme die Lasche der
          Karte darueber ins Gehege. */
       :host { display: flow-root; }
-      .card.mit-reiter { margin-top: 24px; }
+      .card { margin-top: 24px; }
       /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
          Karte hebt nicht ab. */
       .card:hover { border-color: var(--se-faint); }
@@ -393,7 +397,7 @@
       data-ff-spot=${e}
       ?data-ff-bound=${this[`${e}Field`]!==``}
       @dblclick=${t=>this.inlineEdit(t,e)}
-    >${this[e]}</span>`}render(){let e=Dn(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.date)||n(this.time),i=n(this.avatar)||n(this.heading)||n(this.meta),a=n(this.heading2)||n(this.chipText);return w`<div class="card v-${e} ${r?`mit-reiter`:`ohne-reiter`}">
+    >${this[e]}</span>`}render(){let e=Dn(this.chipVariant),t=this.hasAttribute(`data-ff-editor`),n=e=>t||e.trim()!==``,r=n(this.date)||n(this.time),i=n(this.avatar)||n(this.heading)||n(this.meta),a=n(this.heading2)||n(this.chipText);return w`<div class="card v-${e}${r?``:` ohne-reiter`}">
       ${r?w`<span class="reiter">
             ${n(this.date)?this.stelle(`date`,`datum`):E}
             ${n(this.time)?this.stelle(`time`,`zeit`):E}
@@ -898,6 +902,14 @@
       }
       /* P1.2: overflow:hidden schneidet die getoente Kopfzeile an den
          runden Spaltenecken sauber ab (Empfang-Vorbild). */
+      /* Flaeche = SAND (Demo .spalte: background var(--sand), das ist unser
+         --se-panel-2), und KEIN Rahmen: die Demo zieht um eine Spalte keine
+         Kante, der Farbwechsel Creme -> Sand setzt sie ab. Bis 2026-08-07 lag
+         hier eine fast weisse, statusgetoente Schale MIT getoenter Kante
+         (--col-shell/--col-line) — zwei Absetzungen fuer denselben Zweck, und
+         keine davon stand in der Demo (Nutzer-Entscheidung 2026-08-07).
+         Die Rundung stimmt bereits: --se-r-lg ist 7px, die Demo rechnet
+         calc(--rundung + 2px) = 5 + 2. */
       .col {
         box-sizing: border-box;
         display: flex;
@@ -905,19 +917,16 @@
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
-        background: var(--col-shell);
-        border: var(--se-border) solid var(--col-line);
+        background: var(--se-panel-2);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
-        /* Flach (Fellnase Regel 4). Die Spalte TRAEGT die Karten und setzt
-           sich von ihnen durch die Flaeche ab: getoente Spaltenschale
-           (--col-shell) unter Karten in Papierweiss. Bis 2026-08-06 tat das
-           ein Schatten. */
       }
-      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
-      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
-      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-shell: var(--se-amber-shell); --col-line: var(--se-amber-line); }
-      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-shell: var(--se-red-shell); --col-line: var(--se-red-line); }
+      /* --col-line traegt jetzt nur noch der KOPF (Trennlinie + Zaehlerrahmen);
+         die Spaltenschale --col-shell ist mit dem Rahmen entfallen. */
+      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-line: var(--se-blue-line); }
+      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-line: var(--se-green-line); }
+      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-line: var(--se-amber-line); }
+      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-line: var(--se-red-line); }
       .head {
         flex: none;
         display: flex;
@@ -959,12 +968,17 @@
       /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
          min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
          als sein Inhalt — der Leer-Hinweis hält leere Spalten offen. */
+      /* Innenabstand nach Demo (.spalte: 10px seitlich, 12px unten). Oben
+         KEINER: dort steht der Kopf, dessen eigene Unterkante den Abstand zur
+         ersten Karte schon setzt — genau wie .spalte-kopf in der Demo.
+         KEIN gap: den Kartenabstand macht allein der 24px-Vorschub der Karte
+         (kartenStil). Bis 2026-08-07 lagen hier 6px obendrauf, also 30px statt
+         24px zwischen zwei Karten. */
       .body {
-        padding: 10px;
+        padding: 0 10px 12px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: var(--se-gap-sm);
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;

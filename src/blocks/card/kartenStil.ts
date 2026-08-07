@@ -36,14 +36,18 @@ export const kartenStil = css`
         transition: border-color var(--se-move);
       }
       .card.ohne-reiter { border-radius: var(--se-r-md); }
-      /* Platz fuer die Lasche, die ueber die Oberkante hinausragt (Demo:
-         .karte margin-top 24px). NUR wenn es sie gibt — eine Karte ohne Datum
-         und Zeit soll keinen Leerraum ueber sich schieben.
+      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist zugleich der Platz
+         fuer die Lasche UND der EINZIGE Abstand zwischen zwei Karten — die
+         Spalte setzt keinen eigenen (KanbanSpalteBlock, 2026-08-07). Darum
+         gilt er wie in der Demo fuer JEDE Karte: bis 2026-08-07 hing er an
+         der Lasche, damit eine Karte ohne Datum und Zeit keinen Leerraum ueber
+         sich schiebt — ohne Spalten-Abstand stiessen solche Karten aber
+         aneinander.
          flow-root am Host, damit dieser Abstand nicht mit dem Aussenabstand
          der Spalte verschmilzt (margin collapsing): sonst kaeme die Lasche der
          Karte darueber ins Gehege. */
       :host { display: flow-root; }
-      .card.mit-reiter { margin-top: 24px; }
+      .card { margin-top: 24px; }
       /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
          Karte hebt nicht ab. */
       .card:hover { border-color: var(--se-faint); }

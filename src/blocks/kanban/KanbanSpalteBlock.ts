@@ -9,14 +9,15 @@
 // Editor-Hilfselemente (data-ff-editor-helper wie den "+ Karte"-Knopf) —
 // dieselbe Logik läuft im Editor UND im Export (WYSIWYG, 1 Render-Quelle).
 // Die Bedeutung der Spalte kommt aus dem geteilten Status-Vokabular
-// (Technikwert != Anzeigename) und tönt seit P1.2 die GANZE Spalte
-// (Empfang-Vorbild .vspalte): Kopf = --se-X-soft, Fläche = --se-X-shell,
-// Rahmen = --se-X-line, Titel + Punkt + Zähler kräftig (--se-X). Die
-// v-Klassen setzen dafür lokale --col-* Variablen, jede löst auf ein
-// --se-Token auf (dasselbe Muster wie --zw-* im Zielbild-Mockup).
+// (Technikwert != Anzeigename) und tönt seit 2026-08-07 nur noch den KOPF:
+// Fläche = --se-X-soft, Trennlinie + Zählerrahmen = --se-X-line, Titel +
+// Punkt + Zähler kräftig (--se-X). Die Spaltenfläche selbst ist einfach
+// Sand, wie in der Demo. Die v-Klassen setzen dafür lokale --col-*
+// Variablen, jede löst auf ein --se-Token auf.
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Farb-Literale,
-// keine Fallbacks. Verbindliches Zielbild: die Referenzmaske (.zb-col).
+// keine Fallbacks. Verbindliches Vorbild ist die eingecheckte Demo
+// (designsprache/atome.css, .spalte + .spalte-kopf).
 
 import { css, html, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'
@@ -107,6 +108,14 @@ export class KanbanSpalteBlock extends BasicBlock {
       }
       /* P1.2: overflow:hidden schneidet die getoente Kopfzeile an den
          runden Spaltenecken sauber ab (Empfang-Vorbild). */
+      /* Flaeche = SAND (Demo .spalte: background var(--sand), das ist unser
+         --se-panel-2), und KEIN Rahmen: die Demo zieht um eine Spalte keine
+         Kante, der Farbwechsel Creme -> Sand setzt sie ab. Bis 2026-08-07 lag
+         hier eine fast weisse, statusgetoente Schale MIT getoenter Kante
+         (--col-shell/--col-line) — zwei Absetzungen fuer denselben Zweck, und
+         keine davon stand in der Demo (Nutzer-Entscheidung 2026-08-07).
+         Die Rundung stimmt bereits: --se-r-lg ist 7px, die Demo rechnet
+         calc(--rundung + 2px) = 5 + 2. */
       .col {
         box-sizing: border-box;
         display: flex;
@@ -114,19 +123,16 @@ export class KanbanSpalteBlock extends BasicBlock {
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
-        background: var(--col-shell);
-        border: var(--se-border) solid var(--col-line);
+        background: var(--se-panel-2);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
-        /* Flach (Fellnase Regel 4). Die Spalte TRAEGT die Karten und setzt
-           sich von ihnen durch die Flaeche ab: getoente Spaltenschale
-           (--col-shell) unter Karten in Papierweiss. Bis 2026-08-06 tat das
-           ein Schatten. */
       }
-      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-shell: var(--se-blue-shell); --col-line: var(--se-blue-line); }
-      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-shell: var(--se-green-shell); --col-line: var(--se-green-line); }
-      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-shell: var(--se-amber-shell); --col-line: var(--se-amber-line); }
-      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-shell: var(--se-red-shell); --col-line: var(--se-red-line); }
+      /* --col-line traegt jetzt nur noch der KOPF (Trennlinie + Zaehlerrahmen);
+         die Spaltenschale --col-shell ist mit dem Rahmen entfallen. */
+      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-line: var(--se-blue-line); }
+      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-line: var(--se-green-line); }
+      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-line: var(--se-amber-line); }
+      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-line: var(--se-red-line); }
       .head {
         flex: none;
         display: flex;
@@ -168,12 +174,17 @@ export class KanbanSpalteBlock extends BasicBlock {
       /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
          min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
          als sein Inhalt — der Leer-Hinweis hält leere Spalten offen. */
+      /* Innenabstand nach Demo (.spalte: 10px seitlich, 12px unten). Oben
+         KEINER: dort steht der Kopf, dessen eigene Unterkante den Abstand zur
+         ersten Karte schon setzt — genau wie .spalte-kopf in der Demo.
+         KEIN gap: den Kartenabstand macht allein der 24px-Vorschub der Karte
+         (kartenStil). Bis 2026-08-07 lagen hier 6px obendrauf, also 30px statt
+         24px zwischen zwei Karten. */
       .body {
-        padding: 10px;
+        padding: 0 10px 12px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: var(--se-gap-sm);
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
