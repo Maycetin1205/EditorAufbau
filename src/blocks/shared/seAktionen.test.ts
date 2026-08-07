@@ -67,6 +67,31 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
     expect(resolveActionParam(b('x'), values, {})).toBe('')
   })
 
+  it('step_result mit gewaehltem Feld liest DIESES Feld aus der Rohantwort (2026-08-07)', () => {
+    // Der Ergebnis-Skalar traegt nur EINEN Wert (RESULT/PINDEX/…). Wer ein
+    // anderes Feld der Antwort braucht, waere ohne die Rohantwort verloren —
+    // sie reist deshalb an denselben Indizes mit.
+    const antwort = { MSG: { DATA: { RESULT: '271', 'IDBID0001_78_30': 'Rex', '2_8': '10001' } } }
+    const values = {
+      context: {},
+      previousResult: '',
+      stepResults: ['271'],
+      stepRohErgebnisse: [antwort],
+    }
+    const b = (ergebnisFeld?: string): ActionParamBinding =>
+      ({ source: 'step_result', value: '0', ...(ergebnisFeld ? { ergebnisFeld } : {}) })
+    // OHNE Feld unveraendert das ganze Ergebnis — bestehende Masken aendern
+    // sich nicht.
+    expect(resolveActionParam(b(), values, {})).toBe('271')
+    // MIT Feld: die Aufloesung ist DIESELBE wie ueberall sonst (getField),
+    // also auch durch den Tabellen-Praefix hindurch.
+    expect(resolveActionParam(b('78_30'), values, {})).toBe('Rex')
+    expect(resolveActionParam(b('2_8'), values, {})).toBe('10001')
+    // Feld gibt es nicht / keine Rohantwort (PUT-Schritt) -> leer, nie geraten.
+    expect(resolveActionParam(b('99_4'), values, {})).toBe('')
+    expect(resolveActionParam(b('78_30'), { ...values, stepRohErgebnisse: [undefined] }, {})).toBe('')
+  })
+
   it('data_field ohne Ereignis-Index liest die ERSTE Zeile (Knopf-Fall)', () => {
     const runtime = {
       FF_DATA_SOURCES: [{ id: 'q1', name: 'Terminplaner', tableId: 'IDBID0001', indexField: '0_10' }],

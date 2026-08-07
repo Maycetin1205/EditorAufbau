@@ -7,6 +7,8 @@ import {
   parseBlockEvents,
   sanitizeBlockEvents,
   serializeBlockEvents,
+  type ActionParamBinding,
+  type ActionStep,
   type BlockEventsMap,
   type RelationStep,
   type StartToolStep,
@@ -167,6 +169,43 @@ describe('Schritt-Ergebnis (Zwischenspeicher, 2026-07-17)', () => {
         { source: 'fixed', value: 'A' },
       ],
     })
+  })
+
+  it('Ergebnis-Feld reist mit — und nur an der Quelle, die es liest (2026-08-07)', () => {
+    // F4: ein Parameter darf ein bestimmtes FELD des Schritt-Ergebnisses
+    // meinen statt des ganzen Ergebnisses. Faellt der Feldcode im Export weg,
+    // schickt die Maske still den Ergebnis-Skalar — ein anderer Wert als der,
+    // den der Bauer gewaehlt hat (WYSIWYG-Bruch, Regel 1).
+    const put = kettenPut('pB', 'gA')
+    put.params[1] = { source: 'step_result', value: 'gA', ergebnisFeld: '78_30' }
+    // Ein liegen gebliebenes Feld an einer ANDEREN Quelle liest niemand — es
+    // saehe im Export nur eingestellt aus (Muster: geputzte Spaltenliste).
+    put.params[2] = { source: 'fixed', value: 'A', ergebnisFeld: '2_8' }
+    const gelesen = (kette: ActionStep[]): readonly ActionParamBinding[] => {
+      const schritt = parseBlockEvents(serializeBlockEvents({ onClick: kette }, ['onClick'])).onClick[1]
+      return schritt.type === 'RELATION' ? schritt.params : []
+    }
+    expect(gelesen([kettenGet('gA'), put])).toEqual([
+      { source: 'fixed', value: 'fest' },
+      // Die Editor-id ist zur Ketten-Position geworden, das Feld steht.
+      { source: 'step_result', value: '0', ergebnisFeld: '78_30' },
+      // Und das Feld an der festen Quelle ist unterwegs weggefallen.
+      { source: 'fixed', value: 'A' },
+    ])
+    // OHNE Feld bleibt alles wie vorher: kein Schluessel, kein Byte mehr.
+    expect(gelesen([kettenGet('gA'), kettenPut('pB', 'gA')])[1])
+      .toEqual({ source: 'step_result', value: '0' })
+  })
+
+  it('stepProblem: ein leer getipptes Ergebnis-Feld ist ein unvollstaendiger Parameter', () => {
+    // Kennt die Steuerung die Quelle des Ziel-Schritts nicht, wird der
+    // Feldcode frei getippt. Nur Leerzeichen darin liesse den Parameter still
+    // leer hinausgehen (Regel 4) — deshalb blockt die Pruefung.
+    const put = kettenPut('pB', 'gA')
+    put.params[1] = { source: 'step_result', value: 'gA', ergebnisFeld: '  ' }
+    expect(stepProblem(put, [relation], undefined, undefined, ['gA'])).toContain('Parameter 2')
+    put.params[1] = { source: 'step_result', value: 'gA', ergebnisFeld: '78_30' }
+    expect(stepProblem(put, [relation], undefined, undefined, ['gA'])).toBeNull()
   })
 
   it('stepProblem: Verweis muss auf einen GET-Schritt davor zeigen', () => {

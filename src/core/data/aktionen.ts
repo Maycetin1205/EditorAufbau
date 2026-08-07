@@ -88,6 +88,15 @@ export interface ActionParamBinding {
   // gelesen wird (`value` = Feldcode). Beide Male dieselbe Sache — „welcher
   // Baustein in dieser Maske" —, darum dasselbe Feld statt eines zweiten.
   blockId?: string
+  // NUR step_result (2026-08-07): WELCHES Feld des Schritt-Ergebnisses gemeint
+  // ist (Feldcode, Technikwert). Fehlt es, gilt das GANZE Ergebnis — also
+  // exakt das Verhalten von vorher, damit keine bestehende Maske sich aendert.
+  //
+  // Warum das ueberhaupt geht: die Laufzeit hebt seit demselben Tag die ROHE
+  // GET-Antwort je Schritt auf (seAktionen/softengine relations). Der
+  // Ergebnis-Skalar allein traegt nur EINEN Wert; ein Feld daraus zu lesen
+  // waere ohne die Rohantwort nicht moeglich.
+  ergebnisFeld?: string
 }
 
 // GET-Schritte VOR einer Position — die Auswahl „Ergebnis von Schritt N"
@@ -98,6 +107,15 @@ export interface ErgebnisSchritt {
   id: string
   nr: number // 1-basierte Anzeige-Position in der Kette
   name: string
+  // Die Datenquelle, auf die sich DIESER Schritt beruft — die erste seiner
+  // Parameter-Bindungen mit der Quelle „Datenfeld". Daraus stellt die
+  // Steuerung die Felder des Ergebnisses zur Wahl.
+  //
+  // Fehlt sie, ist das kein Fehler, sondern der haeufige Fall: ein GET-Schritt
+  // braucht keine Datenquelle (seine Parameter sind meist feste Werte aus der
+  // Feld-Uebernahme). Dann bleibt der Feldcode frei eingebbar — geraten wird
+  // nichts (Regel 7).
+  quelleId?: string
 }
 
 export function ergebnisSchritteVor(
@@ -113,7 +131,13 @@ export function ergebnisSchritteVor(
     if (s.type !== 'RELATION') continue
     const rel = relations?.find((r) => r.id === s.relationId)
     if (!rel || rel.verb !== 'GET_RELATION') continue
-    out.push({ id: s.id, nr: i + 1, name: rel.name })
+    const quelleId = [...s.params, ...s.extraParams]
+      .find((b) => b.source === 'data_field' && (b.dataSourceId ?? '') !== '')
+      ?.dataSourceId
+    out.push({
+      id: s.id, nr: i + 1, name: rel.name,
+      ...(quelleId === undefined ? {} : { quelleId }),
+    })
   }
   return out
 }
@@ -240,11 +264,19 @@ function bindingFields(raw: unknown): ActionParamBinding | null {
   ) return null
   if (raw.dataSourceId !== undefined && typeof raw.dataSourceId !== 'string') return null
   if (raw.blockId !== undefined && typeof raw.blockId !== 'string') return null
+  if (raw.ergebnisFeld !== undefined && typeof raw.ergebnisFeld !== 'string') return null
   return {
     source: raw.source as ActionParamSource,
     value: raw.value,
     ...(typeof raw.dataSourceId === 'string' ? { dataSourceId: raw.dataSourceId } : {}),
     ...(typeof raw.blockId === 'string' ? { blockId: raw.blockId } : {}),
+    // Das Ergebnis-Feld gehoert ALLEIN zu step_result: an jeder anderen
+    // Quelle liest es niemand, und ein liegen gebliebener Wert saehe im
+    // Export eingestellt aus (dieselbe Linie wie die geputzte Spaltenliste
+    // der Tabelle, listeFuerExport).
+    ...(raw.source === 'step_result' && typeof raw.ergebnisFeld === 'string'
+      ? { ergebnisFeld: raw.ergebnisFeld }
+      : {}),
   }
 }
 

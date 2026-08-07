@@ -72,20 +72,65 @@ function BindingValue({
     )
   }
   if (binding.source === 'step_result') {
-    // GET-Schritte davor, per Position angeboten — kein Namen-Vergeben,
-    // nur anklicken (Nutzer-Entscheidung 2026-07-17).
+    // Links: die GET-Schritte davor, per Position angeboten — kein
+    // Namen-Vergeben, nur anklicken (Nutzer-Entscheidung 2026-07-17).
+    //
+    // Rechts: WELCHES Feld des Ergebnisses (2026-08-07). Ohne Wahl gilt das
+    // ganze Ergebnis — genau wie vorher. Die Felder kommen aus der Quelle des
+    // Ziel-Schritts; kennt er keine (der haeufige Fall — ein GET-Schritt
+    // braucht keine Datenquelle), wird der Feldcode getippt statt geraten.
+    const ziel = schritte.find((s) => s.id === binding.value)
+    const felder = dataSources.find((q) => q.id === ziel?.quelleId)?.fields ?? []
+    const feld = binding.ergebnisFeld ?? ''
+    const setzeFeld = (wert: string) => {
+      const naechste: ActionParamBinding = { ...binding }
+      if (wert === '') delete naechste.ergebnisFeld
+      else naechste.ergebnisFeld = wert
+      onChange(naechste)
+    }
     return (
-      <SchrittSelect
-        value={binding.value}
-        onChange={(e) => onChange({ ...binding, value: e.target.value })}
-      >
-        <option value="">
-          {schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
-        </option>
-        {schritte.map((s) => (
-          <option key={s.id} value={s.id}>{`Schritt ${s.nr} — ${s.name}`}</option>
-        ))}
-      </SchrittSelect>
+      <div className="grid grid-cols-2 gap-1">
+        <SchrittSelect
+          className="min-w-0"
+          aria-label="Ergebnis von Schritt"
+          value={binding.value}
+          onChange={(e) => {
+            // Anderer Schritt = andere Antwort: ein Feldcode der alten laese
+            // in der neuen still nichts (dieselbe Linie wie der Quellwechsel
+            // bei „Datenfeld").
+            const naechste: ActionParamBinding = { ...binding, value: e.target.value }
+            delete naechste.ergebnisFeld
+            onChange(naechste)
+          }}
+        >
+          <option value="">
+            {schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
+          </option>
+          {schritte.map((s) => (
+            <option key={s.id} value={s.id}>{`Schritt ${s.nr} — ${s.name}`}</option>
+          ))}
+        </SchrittSelect>
+        {felder.length > 0 ? (
+          <SchrittSelect
+            className="min-w-0"
+            aria-label="Feld des Ergebnisses"
+            value={feld}
+            onChange={(e) => setzeFeld(e.target.value)}
+          >
+            <option value="">— ganzes Ergebnis —</option>
+            {felder.map((f) => (
+              <option key={f.code} value={f.code}>{f.label}</option>
+            ))}
+          </SchrittSelect>
+        ) : (
+          <TextInput
+            aria-label="Feld des Ergebnisses"
+            value={feld}
+            placeholder="ganzes Ergebnis"
+            onChange={(e) => setzeFeld(e.target.value)}
+          />
+        )}
+      </div>
     )
   }
   if (binding.source === 'context') {

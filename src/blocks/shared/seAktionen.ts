@@ -143,20 +143,30 @@ export async function runEvent(
     // der Export in step_result-Bindungen schreibt (serializeBlockEvents).
     // Jeder Schritt bekommt GENAU einen Eintrag, auch ergebnislose ('').
     const stepResults: string[] = []
+    // Die ROHEN Antworten derselben Schritte, an denselben Indizes
+    // (2026-08-07): ein Parameter darf ein bestimmtes FELD des Ergebnisses
+    // meinen, und das steht nur in der Antwort selbst. Beide Listen wachsen
+    // deshalb IMMER im Gleichschritt — sonst zeigte ein Index auf den
+    // falschen Schritt.
+    const rohErgebnisse: unknown[] = []
+    const ohneErgebnis = (): void => {
+      stepResults.push('')
+      rohErgebnisse.push(undefined)
+    }
     for (const step of steps) {
       if (step.type === 'START_TOOL') {
         seStartTool(step.toolNr, resolveParams({ params: step.toolParams }, values))
-        stepResults.push('')
+        ohneErgebnis()
         continue
       }
       if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
         applyPopupStep(el.ownerDocument ?? document, step.popup ?? '', step.type === 'POPUP_OPEN')
-        stepResults.push('')
+        ohneErgebnis()
         continue
       }
       const relation = findRuntimeRelation(seGlobal().FF_RELATIONS, step.relationId)
       if (!relation) {
-        stepResults.push('')
+        ohneErgebnis()
         continue
       }
       // Die Auswahl reicht die Baustein-Schicht herein (auswahlFuer); die
@@ -166,12 +176,15 @@ export async function runEvent(
         context: values,
         previousResult,
         stepResults,
+        stepRohErgebnisse: rohErgebnisse,
         gewaehlteZeile: auswahlFuer,
       }
       const params = [...step.params, ...step.extraParams]
         .map((binding) => resolveActionParam(binding, runtimeValues))
-      const result = await executeRelation(relation, params)
+      const antwort = await executeRelation(relation, params)
+      const result = antwort.wert
       stepResults.push(result)
+      rohErgebnisse.push(antwort.roh)
       // NUR GET liefert ein Ergebnis — PUT/PUTADD überschreiben den
       // Zwischenspeicher NICHT mehr (Nutzer-Befund 2026-07-17: in der Kette
       // GET → PUT → PUT bekam nur der erste PUT den Index, danach war der

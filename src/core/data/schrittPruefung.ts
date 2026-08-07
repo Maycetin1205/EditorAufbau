@@ -33,6 +33,15 @@ function bindingProblem(binding: ActionParamBinding | undefined): boolean {
   if (binding.source === 'block_value' || binding.source === 'gewaehlte_zeile') {
     return !binding.blockId?.trim() || binding.value.trim() === ''
   }
+  if (binding.source === 'step_result') {
+    // OHNE Feld (der Normalfall) gilt das ganze Ergebnis — dann zaehlt nur,
+    // dass ein Schritt gewaehlt ist. MIT Feld muss es auch eins sein: kennt
+    // die Steuerung die Quelle des Ziel-Schritts nicht, wird der Feldcode
+    // frei getippt, und ein Code aus lauter Leerzeichen liesse den Parameter
+    // still leer hinausgehen (Regel 4 — nichts scheitert stumm).
+    if (binding.ergebnisFeld !== undefined && binding.ergebnisFeld.trim() === '') return true
+    return binding.value.trim() === ''
+  }
   return binding.value.trim() === ''
 }
 

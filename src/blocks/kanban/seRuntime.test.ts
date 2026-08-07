@@ -99,7 +99,10 @@ describe('Relations-Antworten (BWMSG/WWMSG-Callback und SEDATA-Fallback)', () =>
       Daten: {},
     }
     expect(seMessageKeys(seData)).toEqual(['Message1', 'Message3'])
-    expect(newSeMessageResult(seData, new Set(['Message1']))).toBe('neu')
+    // Seit 2026-08-07 kommt die ROHE Antwort mit zurueck: nur aus ihr kann ein
+    // Ketten-Parameter ein einzelnes FELD des Ergebnisses lesen.
+    expect(newSeMessageResult(seData, new Set(['Message1'])))
+      .toEqual({ wert: 'neu', roh: seData.Message3 })
     expect(newSeMessageResult(seData, new Set(['Message1', 'Message3']))).toBeUndefined()
   })
 })

@@ -23,6 +23,22 @@ import {
 } from './data'
 import { meldeFehler } from './meldung'
 
+// Was eine ausgefuehrte Relation zurueckgibt (2026-08-07).
+//
+// Bis dahin war es nur der String `wert`. Er reicht nicht mehr: ein
+// Ketten-Parameter darf jetzt ein bestimmtes FELD des Ergebnisses meinen
+// (ActionParamBinding.ergebnisFeld), und der Ergebnis-Skalar traegt genau
+// EINEN Wert — welchen, entscheidet die Schluesselliste RESULT_KEYS. Alles
+// andere aus der Antwort waere unwiederbringlich weg. Darum reist die ROHE
+// Antwort daneben mit; angefasst wird sie nur, wenn ein Feld gefragt ist.
+export interface RelationAntwort {
+  // Der Ergebniswert wie bisher (extractRelationResult): das ist, was
+  // „Ergebnis von Schritt N" OHNE Feldwahl liefert.
+  wert: string
+  // Die Antwort, unveraendert. undefined = es gab keine (PUT, Fehlerweg).
+  roh: unknown
+}
+
 // Fehlergrund als lesbarer Satzteil — der Bediener sieht ihn im Balken.
 function fehlertext(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -115,22 +131,54 @@ export function extractRelationResult(raw: unknown): string | undefined {
   return undefined
 }
 
+// Ein FELD aus einer GET-Antwort (Parameterquelle „Ergebnis von Schritt N"
+// mit gewaehltem Feld, 2026-08-07).
+//
+// Dieselbe Grabung wie extractRelationResult — SoftEngine verpackt Antworten
+// je nach Weg unterschiedlich tief ({ MSG: { DATA } }, SEDATA.MessageN, roher
+// JSON-String) —, nur mit einer anderen Treffer-Regel: statt der
+// Ergebnis-Schluessel entscheidet getField, also GENAU die Feld-Aufloesung,
+// die auch Tabelle, Karte und Kanban benutzen (Praefix-Scan, SATZ-Ausschnitt).
+// Nichts gefunden -> '' (nie raten, Regel 7).
+export function extractRelationFeld(raw: unknown, code: string, tiefe = 0): string {
+  if (code.trim() === '' || tiefe > 12) return ''
+  const value = typeof raw === 'string' ? parsed(raw) : raw
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const found = extractRelationFeld(entry, code, tiefe + 1)
+      if (found !== '') return found
+    }
+    return ''
+  }
+  if (!isRecord(value)) return ''
+  const direkt = getField(value, code)
+  if (direkt !== '') return direkt
+  for (const entry of Object.values(value)) {
+    const found = extractRelationFeld(entry, code, tiefe + 1)
+    if (found !== '') return found
+  }
+  return ''
+}
+
 export function seMessageKeys(seData: unknown): string[] {
   if (!isRecord(seData)) return []
   return Object.keys(seData).filter((key) => /^Message\d+$/.test(key))
 }
 
+// Seit 2026-08-07 kommt der Rohschlitz mit zurueck (RelationAntwort): ein
+// Ketten-Parameter darf ein FELD des Ergebnisses meinen, und das steht nur in
+// der Antwort selbst.
 export function newSeMessageResult(
   seData: unknown,
   before: ReadonlySet<string>,
-): string | undefined {
+): RelationAntwort | undefined {
   if (!isRecord(seData)) return undefined
   const keys = seMessageKeys(seData)
     .filter((key) => !before.has(key))
     .sort((a, b) => Number(b.slice(7)) - Number(a.slice(7)))
   for (const key of keys) {
     const found = extractRelationResult(seData[key])
-    if (found !== undefined) return found
+    if (found !== undefined) return { wert: found, roh: seData[key] }
   }
   return undefined
 }
@@ -138,7 +186,7 @@ export function newSeMessageResult(
 interface GetJob {
   template: RuntimeRelation
   params: string[]
-  resolve: (value: string) => void
+  resolve: (antwort: RelationAntwort) => void
 }
 
 const getQueue: GetJob[] = []
@@ -154,14 +202,14 @@ function runNextGet(): void {
   const before = new Set(seMessageKeys(g.SEDATA))
   let settled = false
 
-  const finish = (value: string): void => {
+  const finish = (wert: string, roh: unknown): void => {
     if (settled) return
     settled = true
     unsubscribe()
     clearInterval(poll)
     clearTimeout(timeout)
     getBusy = false
-    job.resolve(value)
+    job.resolve({ wert, roh })
     runNextGet()
   }
 
@@ -169,12 +217,12 @@ function runNextGet(): void {
   // synchron. Der Callback ist für BWMSG und WWMSG derselbe Hauptweg.
   const unsubscribe = onSeAntwort((raw) => {
     const result = extractRelationResult(raw)
-    if (result !== undefined) finish(result)
+    if (result !== undefined) finish(result, raw)
   })
 
   const poll = setInterval(() => {
-    const result = newSeMessageResult(seGlobal().SEDATA, before)
-    if (result !== undefined) finish(result)
+    const antwort = newSeMessageResult(seGlobal().SEDATA, before)
+    if (antwort !== undefined) finish(antwort.wert, antwort.roh)
   }, GET_POLL_MS)
   // Die drei Fehlerwege eines GET lieferten bis 2026-07-27 still einen
   // leeren String: die Kette lief mit einem Nichts weiter, der Bediener sah
@@ -183,12 +231,12 @@ function runNextGet(): void {
   // sich unveraendert verhaelt (kein neuer Abbruch-Weg, kein SE-Kontrakt).
   const timeout = setTimeout(() => {
     meldeFehler(`Daten laden: SoftEngine hat nicht geantwortet (Relation Nr. ${job.template.nr}).`)
-    finish('')
+    finish('', undefined)
   }, GET_TIMEOUT_MS)
 
   if (typeof g.basisHTML_SND_MSG !== 'function') {
     meldeFehler('Daten laden nicht moeglich: keine Verbindung zu SoftEngine.')
-    finish('')
+    finish('', undefined)
     return
   }
   try {
@@ -198,7 +246,7 @@ function runNextGet(): void {
     })
   } catch (error) {
     meldeFehler(`Daten laden fehlgeschlagen (Relation Nr. ${job.template.nr}): ${fehlertext(error)}`)
-    finish('')
+    finish('', undefined)
   }
 }
 
@@ -207,7 +255,7 @@ function runNextGet(): void {
 export function executeRelation(
   template: RuntimeRelation,
   params: readonly string[],
-): Promise<string> {
+): Promise<RelationAntwort> {
   bootSe()
   const g = seGlobal()
   if (template.verb !== 'GET_RELATION') {
@@ -218,14 +266,16 @@ export function executeRelation(
     // also koennen wir nur den ABSENDEWEG pruefen; genau das tun wir hier.
     if (typeof g.basisHTML_SND_MSG !== 'function') {
       meldeFehler('Speichern nicht moeglich: keine Verbindung zu SoftEngine. Die Eingabe wurde NICHT uebernommen.')
-      return Promise.resolve('')
+      return Promise.resolve({ wert: '', roh: undefined })
     }
     try {
       g.basisHTML_SND_MSG(template.verb, { NR: template.nr, PARAMS: [...params] })
     } catch (error) {
       meldeFehler(`Speichern fehlgeschlagen (Relation Nr. ${template.nr}): ${fehlertext(error)}`)
     }
-    return Promise.resolve('')
+    // Ein PUT hat kein Ergebnis: SoftEngine bestaetigt ihn nicht (kein
+    // Kontrakt dafuer belegt), also gibt es auch keine Rohantwort.
+    return Promise.resolve({ wert: '', roh: undefined })
   }
   return new Promise((resolve) => {
     getQueue.push({ template, params: [...params], resolve })
@@ -242,6 +292,10 @@ export interface RuntimeActionValues {
   // die Liste; nur GET-Schritte liefern etwas, alle anderen ''). Der
   // Zwischenspeicher des Nutzers: „Ergebnis von Schritt N" (2026-07-17).
   stepResults?: readonly string[]
+  // Die ROHEN Antworten derselben Schritte, an denselben Indizes. Nur aus
+  // ihnen laesst sich ein einzelnes FELD des Ergebnisses lesen (2026-08-07);
+  // der Ergebnis-Skalar daneben traegt nur den einen Wert.
+  stepRohErgebnisse?: readonly unknown[]
   // Die aktuell angeklickte Zeile eines Auswahl-Gebers (Parameterquelle
   // „Feld der gewählten Zeile", 2026-08-06). Wird als FUNKTION hereingereicht,
   // nicht importiert: der Auswahl-Zustand wohnt in der Baustein-Schicht
@@ -278,7 +332,12 @@ export function resolveActionParam(
     // In der Maske traegt die Bindung die 0-basierte Ketten-Position
     // (Export uebersetzt die Editor-Schritt-id); Unsinn loest zu '' auf.
     const idx = Number(binding.value)
-    return Number.isInteger(idx) && idx >= 0 ? values.stepResults?.[idx] ?? '' : ''
+    if (!Number.isInteger(idx) || idx < 0) return ''
+    // OHNE gewaehltes Feld: das ganze Ergebnis — das Verhalten von vor
+    // 2026-08-07, und der Grund, warum bestehende Masken sich nicht aendern.
+    const feld = binding.ergebnisFeld ?? ''
+    if (feld === '') return values.stepResults?.[idx] ?? ''
+    return extractRelationFeld(values.stepRohErgebnisse?.[idx], feld)
   }
   if (binding.source === 'block_value') return resolveBlockValue(binding, runtime)
   if (binding.source === 'gewaehlte_zeile') {
