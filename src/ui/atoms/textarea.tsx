@@ -12,7 +12,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       ref={ref}
       rows={rows}
       className={cn(
-        'w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs shadow-sm transition-colors',
+        // Kein shadow-sm mehr: das einzeilige Feld daneben (TextInput) hat
+        // keinen, und zwei Eingabefelder mit unterschiedlicher Tiefe im selben
+        // Formular sehen nach Versehen aus. Keine Hoehe — das mehrzeilige Feld
+        // waechst mit `rows`.
+        'w-full rounded-md border border-input bg-background px-2 py-1.5 text-ui transition-colors',
         'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive',

@@ -7,7 +7,7 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-ui font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -21,11 +21,19 @@ const buttonVariants = cva(
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
+      // Alle Groessen tragen dieselbe HOEHE (h-steuer) und denselben Text —
+      // sie unterscheiden sich nur im seitlichen Platz. Vorher war es
+      // umgekehrt: `default` war 28,8 px hoch mit 12,6 px Text, `sm` 25,2 px
+      // mit 10,8 px, und welche ein Knopf bekam, entschied die Aufrufstelle.
+      // Ergebnis waren zwei Knopf-Aussehen im selben Editor (8-mal das eine,
+      // 23-mal das andere) und Knoepfe, die neben ihrem Eingabefeld
+      // ueberstanden.
+      //
+      // `lg` ist raus: die Groesse hat nie eine Aufrufstelle benutzt.
       size: {
-        default: 'h-8 px-3',
-        sm: 'h-7 rounded-md px-2.5 text-xs',
-        lg: 'h-9 rounded-md px-5',
-        icon: 'h-7 w-7',
+        default: 'h-steuer px-3',
+        sm: 'h-steuer px-2.5',
+        icon: 'h-steuer w-steuer',
       },
     },
     defaultVariants: {

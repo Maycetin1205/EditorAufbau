@@ -13,7 +13,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
       ref={ref}
       type={type}
       className={cn(
-        'h-7 min-w-0 w-full rounded border border-input bg-background px-2 py-1 text-xs transition-colors',
+        'h-steuer min-w-0 w-full rounded-md border border-input bg-background px-2 py-1 text-ui transition-colors',
         'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive',

@@ -26,7 +26,7 @@ export function SchrittSelect({
     <div className={cn('relative', className)}>
       <select
         {...props}
-        className="h-7 w-full appearance-none rounded border border-input bg-background pl-2 pr-6 text-xs"
+        className="h-steuer w-full appearance-none rounded-md border border-input bg-background pl-2 pr-6 text-ui"
       >
         {children}
       </select>
