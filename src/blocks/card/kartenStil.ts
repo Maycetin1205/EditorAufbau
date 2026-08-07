@@ -47,41 +47,42 @@ export const kartenStil = css`
       /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
          Karte hebt nicht ab. */
       .card:hover { border-color: var(--se-faint); }
-      /* Statusfarbe AM KOERPER (Nutzer-Go 2026-07-30, bleibt): ein schmaler
-         Streifen links macht den Status auf einen Blick lesbar, ohne eine
-         neue Farbe oder Eigenschaft zu kosten. Die Demo kennt ihn nicht — sie
-         zeigt Status nur an der Marke und behandelt allein den Notfall
-         besonders (s. unten). Beides zusammen ist kein Widerspruch: der
-         Streifen ist die Ampel, der Notfall-Zustand der Alarm. */
-      .card { border-left-width: 3px; }
-      .card.v-info { border-left-color: var(--se-blue); }
-      .card.v-success { border-left-color: var(--se-green); }
-      .card.v-warning { border-left-color: var(--se-amber); }
-      .card.v-danger { border-left-color: var(--se-red); }
+      /* Hier lag von 2026-07-30 bis 2026-08-07 ein 3px breiter Farbstreifen
+         auf der LINKEN Kante, der den Status noch einmal am Kartenkoerper
+         zeigte. Die Entscheidung dafuer ist aufgehoben (Nutzer 2026-08-07):
+         die Demo kennt ihn nicht — sie gibt der Karte rundum EINE Kante
+         gleicher Staerke (atome.css .karte) und zeigt den Status allein an
+         der Marke. Genau dort steht er weiterhin; verloren geht nichts.
+         Besonders behandelt wird nur der Notfall (s. unten). */
       /* Notfall (Demo .karte--notfall): dieselbe Karte, klare Kante — Akzent
          an Rand und Lasche, ein HAUCH davon im Grund. Ein Anflug, keine
-         Flaeche (Regel 2: ein lauter Ton je Flaeche). */
+         Flaeche (Regel 2: ein lauter Ton je Flaeche). ALLE VIER Kanten im
+         selben Ton und derselben Staerke: die Demo setzt border-color, nicht
+         eine einzelne Kante, und kennt keinen zweiten Rotton. */
       .card.v-danger {
         border-color: var(--se-accent);
-        border-left-color: var(--se-accent-dark);
         background: var(--se-red-soft);
       }
       .card.v-danger:hover { border-color: var(--se-accent-dark); }
       /* Die GEWAEHLTE Karte (Auswahl-Geber Kanban, 2026-08-05): getoente
          Akzentflaeche + Akzentrahmen — dieselbe Handschrift wie die gewaehlte
          Tabellenzeile. Das Attribut setzt NUR die Laufzeit (kanban/seRuntime),
-         der Editor erfindet keine Auswahl (Regel 7). Der linke STATUS-Streifen
-         bleibt sichtbar: er traegt Bedeutung (Notfall!). */
+         der Editor erfindet keine Auswahl (Regel 7). Rundum EIN Rahmen: bis
+         2026-08-07 standen hier drei einzelne Kanten, damit der linke
+         Status-Streifen durchschien — den gibt es nicht mehr. */
       :host([data-ff-auswahl]) .card {
-        border-top-color: var(--se-accent);
-        border-right-color: var(--se-accent);
-        border-bottom-color: var(--se-accent);
+        border-color: var(--se-accent);
         background: var(--se-accent-soft);
       }
 
       /* Die Lasche (Demo .karte-reiter): sitzt AUF der Oberkante, ohne
          Unterkante — sie geht in die Karte ueber. left:-1.5px richtet sie an
-         der Aussenkante aus, nicht am Innenrand. */
+         der Aussenkante aus, nicht am Innenrand.
+         Nachgerechnet (2026-08-07): left zaehlt ab dem INNENrand der Karte,
+         also hinter deren Kante. Minus eine Kantenstaerke landet die Lasche
+         damit genau auf der Aussenkante — aber nur, solange links dieselbe
+         1,5px-Kante liegt wie rundum. Mit dem frueheren 3px-Streifen stand sie
+         1,5px zu weit innen; seit er weg ist, stimmt es wieder. */
       .reiter {
         position: absolute;
         left: calc(-1 * var(--se-border));
