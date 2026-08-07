@@ -16,6 +16,7 @@
 
 import { html, type TemplateResult } from 'lit'
 import { styleMap } from 'lit/directives/style-map.js'
+import { leerZustand } from '../shared/leerZustand'
 import type { Spalte } from './spalten'
 import { spaltenArt } from './spaltenArten'
 
@@ -49,6 +50,11 @@ export interface KoerperLage {
   // Kommen echte Daten? Entscheidet, ob eine Zeile anklickbar ist.
   hatQuelle: boolean
   auswahlIndex: number
+  // Liefert die gebundene Quelle KEINE Zeile? Dann traegt der Rumpf den
+  // Leerzustand (shared/leerZustand) statt Zeilen und Lineal. Der Baustein
+  // entscheidet das, nicht diese Datei.
+  leer: boolean
+  leerText: string
 }
 
 export interface KoerperHandeln {
@@ -87,6 +93,13 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             : ''}</div>`,
         )}
       </div>
+        ${/* Der KOPF bleibt im Leerzustand stehen (oben, ausserhalb dieser
+              Weiche): die Spaltentitel sind Aufbau, keine Daten — eine Tabelle
+              ohne Ueberschriften waere nicht mehr als Tabelle zu erkennen.
+              Weg sind nur Zeilen UND Lineal: das Lineal zeichnet leere
+              Zeilenlinien weiter, und unter einer Meldung „keine Eintraege"
+              saehe genau das nach Daten aus, die noch laden. */ ''}
+        ${lage.leer ? leerZustand(lage.leerText, true) : html`
         ${lage.zeilen.map(
           (rohIndex) => html`<div
             class="zeile${rohIndex !== null && lage.hatQuelle ? ' waehlbar' : ''}${
@@ -124,7 +137,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               gelaufen; so kann sich das Lineal gar nicht mehr verrechnen. */ ''}
         <div class="lineal" style=${styleMap(lage.cols)}>
           ${lage.spalten.map(() => html`<div></div>`)}
-        </div>
+        </div>`}
       </div>
     `
 }

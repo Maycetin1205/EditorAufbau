@@ -149,6 +149,15 @@ export const tabelleStil = css`
            Element 2026-07-27 schon einmal beseitigt hat. */
         display: grid;
       }
+      /* Der Leerzustand (shared/leerZustand) fuellt den Rumpf und sitzt darin
+         mittig. Die Demo braucht das nicht — ihre Tafel ist nur so hoch wie
+         ihr Inhalt. Unsere steht im Raster mit vorgegebener Hoehe: ohne diese
+         zwei Angaben klebte die Meldung oben und darunter bliebe eine weisse
+         Flaeche — genau das Bild, gegen das schon das Lineal gebaut wurde. */
+      .koerper > .leer--tafel {
+        flex: 1 1 auto;
+        align-content: center;
+      }
       .lineal > div { border-right: 1px solid var(--se-line-soft); }
       .lineal > div:last-child { border-right: none; }
       /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */

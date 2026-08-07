@@ -18,6 +18,7 @@ import type { DefaultChildSpec, SatzWahl } from '../../core/blocks/BlockDefiniti
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
+import { LEER_TEXT_STANDARD, leerTextProperty } from '../shared/leerZustand'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
 import { connectBoard, disconnectBoard } from './seRuntime'
 
@@ -73,9 +74,16 @@ export class KanbanBlock extends BasicBlock {
   // (docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md).
   // tagField: Feldcode des Datumsfelds, nach dem der Tageswaehler filtert
   // (Technikwert, unsichtbar). Leer = kein Tagesfilter, alle Saetze.
+  // leerText: der Satz, den eine Spalte OHNE Karte in der Maske zeigt. Er
+  // haengt am BOARD und nicht an jeder Spalte: es ist eine Sprachregelung der
+  // Maske, keine Eigenschaft einer einzelnen Spalte — dreimal denselben Satz
+  // eintippen waere dieselbe Sorte Unsinn wie das frueher doppelte
+  // statusValue. Die Laufzeit reicht ihn an die leeren Spalten weiter
+  // (./seRuntime).
   static readonly defaultProps = {
     width: 'fill', height: 'fill' as const,
     source: '', statusField: '', tagField: '',
+    leerText: LEER_TEXT_STANDARD,
   }
   // Raster-Startgröße auf der Maskenfläche (kalibrierbar): das Board ist die
   // grosse Hauptfläche seiner Maske (breit + hoch).
@@ -92,6 +100,8 @@ export class KanbanBlock extends BasicBlock {
       description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt das Board nur Einträge des Tages, den der Tageswähler zeigt. Leer = alle Einträge.',
       kind: 'field',
     },
+    // Dieselbe Eigenschaft wie an der Tabelle (shared/leerZustand).
+    leerTextProperty(),
   ]
 
   // P1.1: Ein frisches Board = 3 Spalten, die erste trägt DIE EINE

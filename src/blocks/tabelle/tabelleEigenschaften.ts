@@ -9,6 +9,7 @@
 // gehoert an das Ding und nicht in den Inspector (Regel 7).
 
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { leerTextProperty } from '../shared/leerZustand'
 
 // Ja/Nein-Umschalter — dieselben zwei Optionen an jeder Stelle, damit nicht
 // eine Sektion „Ja/Nein" und die naechste „An/Aus" sagt.
@@ -49,4 +50,9 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
     description: 'Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt die Tabelle nur Saetze des Tages, den der Tageswaehler zeigt. Leer = alle Saetze.',
     kind: 'field',
   },
+  // Der Leerzustand-Satz (shared/leerZustand — dieselbe Eigenschaft am Kanban).
+  // Er gehoert in den Inspector und nicht ans Ding: im Editor ist die Tabelle
+  // nie leer (dort stehen die Platzhalter-Striche), der Satz waere also am
+  // Ding gar nicht zu sehen.
+  leerTextProperty(),
 ]

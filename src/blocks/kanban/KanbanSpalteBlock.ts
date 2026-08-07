@@ -26,6 +26,7 @@ import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
 import { jaNeinProperty } from '../shared/jaNeinProperty'
+import { leerStil, leerZustand } from '../shared/leerZustand'
 import {
   coerceStatusVariant,
   statusVariantProperty,
@@ -88,6 +89,7 @@ export class KanbanSpalteBlock extends BasicBlock {
   // Literale exakt nach Zielbild; Farben + Radius + Schriftgrößen aus Tokens.
   static override styles = [
     BasicBlock.styles,
+    leerStil,
     css`
       /* Die Spalte fuellt die Board-Hoehe in BEIDEN Welten (P1.2-Fix eines
          P1.3-Fehlers): die Host-HOEHE bleibt auto — nur so greift im Export
@@ -183,6 +185,18 @@ export class KanbanSpalteBlock extends BasicBlock {
   @property() variant: StatusVariant = 'info'
   @property() heading = 'Neue Spalte'
 
+  // Der Leerzustand-Satz DIESER Spalte — gesetzt von der Board-Laufzeit
+  // (./seRuntime), sobald sie die Zeilen verteilt hat und diese Spalte leer
+  // ausgegangen ist. Leer = kein Leerzustand.
+  //
+  // Warum die Laufzeit das setzt und nicht die Spalte selbst entscheidet: nur
+  // das Board weiss, ob ueberhaupt eine Datenquelle haengt. Ohne Quelle ist
+  // eine leere Spalte kein Leerzustand, sondern ein Bauplan, in dem noch
+  // nichts steht — und im EDITOR ist genau das der Normalfall (zwei der drei
+  // Standardspalten sind leer). Der Editor bleibt deshalb unveraendert.
+  // attribute:false: ein Laufzeitwert, der nie in den Export gehoert.
+  @property({ attribute: false }) leerHinweis = ''
+
   // Kartenzähler: aus den geslotteten Kindern abgeleitet, nie gepflegt.
   @state() private _count = 0
 
@@ -211,6 +225,7 @@ export class KanbanSpalteBlock extends BasicBlock {
       </div>
       <div class="body">
         <slot @slotchange=${this.onSlotChange}></slot>
+        ${leerZustand(this.leerHinweis)}
       </div>
     </div>`
   }

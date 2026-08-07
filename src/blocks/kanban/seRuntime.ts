@@ -24,6 +24,7 @@ import { auswahlWiederfinden, geberIdVon, waehleAuswahl } from '../shared/auswah
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
 import { gewaehlterTag } from '../shared/gewaehlterTag'
+import { LEER_TEXT_STANDARD } from '../shared/leerZustand'
 import { zeilenAmTag } from '../shared/tagFilter'
 import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
@@ -78,6 +79,20 @@ function cardsOf(column: HTMLElement): HTMLElement[] {
   return Array.from(column.children).filter(
     (el): el is HTMLElement => el.tagName.toLowerCase() === CARD_TAG,
   )
+}
+
+// Den Leerzustand-Satz an die Spalten reichen: leer ausgegangene Spalten
+// bekommen ihn, befuellte bekommen ''. Nur die Laufzeit darf das setzen —
+// eine leere Spalte im Editor ist ein Bauplan, kein Leerzustand.
+// Fehlendes Attribut = STANDARDSATZ, nicht leer: seit der Export
+// Standardwerte weglaesst (2026-08-06), traegt ein nie angefasstes Board kein
+// leertext-Attribut, soll aber den Satz zeigen, den der Editor ansagt.
+function setzeLeerHinweise(board: HTMLElement, columns: readonly HTMLElement[]): void {
+  const satz = board.getAttribute('leertext') ?? LEER_TEXT_STANDARD
+  for (const col of columns) {
+    (col as unknown as { leerHinweis: string }).leerHinweis =
+      cardsOf(col).length === 0 ? satz : ''
+  }
 }
 
 // Bindbare Stellen des Karten-Typs aus der Registry (über den Tag-Namen,
@@ -177,6 +192,9 @@ function hydrate(board: HTMLElement): void {
     cardData.set(card, { row, pindex })
     card.draggable = true
   }
+
+  // Was in einer Spalte steht, die leer ausgegangen ist (2026-08-07).
+  setzeLeerHinweise(board, columns)
 
   // Auswahl-Markierung (2026-08-05): das Board ist ein Auswahl-GEBER. Die
   // Karten sind nach jeder Hydrierung NEUE Elemente — die gemerkte Auswahl

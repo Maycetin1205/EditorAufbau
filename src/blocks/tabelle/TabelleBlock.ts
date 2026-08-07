@@ -53,13 +53,14 @@
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*).
 
-import { html, type TemplateResult } from 'lit'
+import { html, nothing, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
+import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
 import { chipStyles } from '../shared/statusVariant'
 import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
 import {
@@ -130,6 +131,9 @@ export class TabelleBlock extends BasicBlock {
     // Darf der BEDIENER das in der Maske umstellen? Standard nein: ein Waehler
     // in jeder Maske war eine Einstellung, die niemand bestellt hatte.
     zeilenWaehler: 'nein',
+    // Was in der MASKE steht, wenn die Quelle keine Zeile liefert
+    // (shared/leerZustand). Der Standard reist nicht als Attribut mit.
+    leerText: LEER_TEXT_STANDARD,
   }
   static override readonly customProperties = TABELLE_EIGENSCHAFTEN
   // Raster-Startgröße (Erstwert — im Browser nachzukalibrieren).
@@ -158,6 +162,9 @@ export class TabelleBlock extends BasicBlock {
 
   // Bauplan: darf der Bediener das in der Maske umstellen ('ja' | 'nein')?
   @property() zeilenWaehler = 'nein'
+
+  // Bauplan: der Satz fuer den Leerzustand (leer = gar keine Meldung).
+  @property() leerText = LEER_TEXT_STANDARD
 
   // Was der Bediener zur Laufzeit in die Suchzeile getippt hat.
   private _suchtext = ''
@@ -372,7 +379,7 @@ export class TabelleBlock extends BasicBlock {
   // die Karte und Kanban-Spalte tragen. Eine Status-Spalte zeichnet sie, statt
   // sie abzuschreiben: sonst haette die Designsprache drei Marken, die
   // auseinanderlaufen koennen.
-  static override styles = [BasicBlock.styles, chipStyles, tabelleStil]
+  static override styles = [BasicBlock.styles, chipStyles, leerStil, tabelleStil]
 
   override render(): TemplateResult {
     const spalten = this.spaltenListe()
@@ -402,6 +409,12 @@ export class TabelleBlock extends BasicBlock {
     // Baustein true, ein nicht ausgewaehlter saehe sonst aus wie Laufzeit.
     // Die Entscheidung selbst wohnt pruefbar in ./suche (zeigtEchteDaten).
     const hatQuelle = zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
+    // LEERZUSTAND (2026-08-07): die gebundene Quelle liefert keine Zeile —
+    // leerer Tag, leere Tabelle. Bewusst an `datenzeilen` und nicht an den
+    // SICHTBAREN Zeilen: sucht der Bediener und findet nichts, gibt es sehr
+    // wohl Daten, und die Fusszeile („0 von 24, gefiltert") ist dort die
+    // ehrlichere Auskunft. Im Editor nie (hatQuelle false -> Platzhalter).
+    const leer = hatQuelle && this.datenzeilen.length === 0
     // Paginierung: die Rechnung wohnt in ./seitengroesse (rein + getestet).
     // In der Maske wird NICHT aufgefuellt — ein Satz ist eine Zeile; den
     // leeren Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen
@@ -438,6 +451,8 @@ export class TabelleBlock extends BasicBlock {
         zusatzzeilen: this.zusatzzeilen,
         hatQuelle,
         auswahlIndex: this.auswahlIndex,
+        leer,
+        leerText: this.leerText,
       }, {
         setzeSuchtext: (text) => this.setzeSuchtext(text),
         dblklickKopf: (e, i) => {
@@ -455,7 +470,9 @@ export class TabelleBlock extends BasicBlock {
         klickZeile: (rohIndex) => this.klickZeile(rohIndex),
         stop,
       })}
-      ${tabelleFuss({
+      ${/* Im Leerzustand faellt die Fusszeile weg: „Seite 1 von 1" und ein
+            Waehler „Zeilen pro Seite" sind Bedienelemente ohne Gegenstand. */ ''}
+      ${leer ? nothing : tabelleFuss({
         hatQuelle,
         sichtbar: gesamt,
         gesamt: this.datenzeilen.length,
