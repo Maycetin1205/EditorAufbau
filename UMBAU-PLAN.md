@@ -1,165 +1,370 @@
 # Umbau-Plan — Architektur-Konsolidierung
 
 > **Diese Datei ist KI-generiert.** Analyse und Plan stammen von Claude
-> (Modell claude-opus-5), erstellt am 2026-08-08 auf Grundlage des Codes im
-> Stand `8c03dc5`. Nichts darin ist vom Nutzer geschrieben; nichts darin ist
-> in SoftEngine oder im Browser erprobt. Es ist ein Vorschlag, kein Befund
-> aus dem Betrieb.
+> (Modell claude-opus-5), erstellt am 2026-08-08 auf dem Code-Stand `8c03dc5`.
+> Nichts darin ist vom Nutzer geschrieben; nichts darin ist in SoftEngine oder
+> im Browser erprobt.
 >
-> **Diese Datei ist temporär.** Sie wird gelöscht, wenn die Pakete gebaut
-> sind — die Chronik steht dann in der git-Historie (CLAUDE.md, Doku-Schnitt
-> 2026-07-30: keine `docs/`-Ablage neu erfinden). Bis dahin liegt sie hier,
-> damit sie zitierbar ist und an Codex gegeben werden kann.
-
-Anlass: Nutzer-Frage 2026-08-08 — „wo würdest Du sagen, das macht gerade gar
-keinen Sinn, und was hätte man anders machen können?" Die Antwort war eine
-Analyse des Ist-Zustands; dies ist der daraus abgeleitete Plan.
+> **Fassung 2 (2026-08-08)** — überarbeitet nach einer unabhängigen
+> Gegenprüfung durch eine zweite KI (Codex). Die Gegenprüfung hat in mehreren
+> Punkten recht behalten; ein Kernpunkt der ersten Fassung war **falsch** (A1
+> ist nicht exportneutral). Alle Änderungen sind im Abschnitt „Gegenprüfung"
+> mit Zustimmung/Widerspruch und Begründung festgehalten.
+>
+> **Auch diese Fassung ist nicht blind zu übernehmen.** Der Nutzer kann nicht
+> programmieren; die Regeln in CLAUDE.md und die Wächter sind sein Ersatz
+> dafür, Code zu lesen.
+>
+> **Temporär.** Wird gelöscht, wenn die Pakete gebaut sind — die Chronik steht
+> dann in der git-Historie (Doku-Schnitt 2026-07-30: keine `docs/`-Ablage neu
+> erfinden).
 
 ---
 
-## Der Kern der Analyse in drei Sätzen
+## Der Kern der Analyse
 
 Die Architektur ist nicht in ihren **Regeln** überkompliziert — die zehn
 Regeln sind gut und ungewöhnlich konsequent durchgehalten. Sie ist in ihrem
 **Vokabular** überkompliziert: sie beantwortet „Was ist eine Fläche?" viermal
-und „Was ist eine Fähigkeit?" dreimal. Beides sind Zusammenlegungen, keine
-Neubauten.
-
-Gezählt am Code (Stand `8c03dc5`, ~24.000 Zeilen Produktion, 11 Bausteine):
+und „Was ist eine Fähigkeit?" dreimal.
 
 | Was | Wie oft beantwortet |
 |---|---|
 | Laufzeit | 2 — React (Editor-Chrom) und Lit (Bausteine) |
-| UI-Dialekt | 3 — JSX · Lit-Template · `document.createElement` + `style.cssText` |
-| Layout-Modell | 2 — Raster (Hauptseite) und Fluss (Popup-Rumpf, Container) |
+| UI-Dialekt | 3 — JSX · Lit-Template · `createElement` + `style.cssText` |
+| Layout-Modell | 2 — Raster (Hauptseite sichtbar) und Fluss (Popup-Rumpf sichtbar) |
 | Fenster-Rahmen | 2 — `PopupBlock` und `DialogRahmen` |
 | Tabelle | 2 — `blocks/tabelle/` (2.477 Zeilen) und `nachschlagen.ts` (424 Zeilen) |
 
-Jedes Paar ist für sich sauber begründet, teils im Kommentar. In Summe sind
-sie die Überkompliziertheit, die dem Nutzer aufgefallen ist.
-
 **Ausdrücklich NICHT geändert wird**, was gut ist: zwei Laufzeiten für eine
-Render-Quelle (teuer, aber der einzige Weg, auf dem Regel 1 wörtlich wahr
-ist) · Fähigkeiten als Registry-Einträge statt Typweichen · die SE-Schicht,
-die nie einen Baustein kennt · kein State-Management-Framework.
+Render-Quelle · Fähigkeiten als Registry-Einträge statt Typweichen · die
+SE-Schicht, die nie einen Baustein kennt · kein State-Management-Framework ·
+die getrennten Designwelten Editor (shadcn/Indigo) und Maske (Fellnase/`--se-*`).
 
 ---
 
 ## Genehmigungs-Regeln (Nutzer-Ansage 2026-08-08)
 
-Der Nutzer kann nicht programmieren. Deshalb gilt:
+1. **Alles, was Bedienung, Ansicht oder Aussehen ändert, braucht vorher die
+   ausdrückliche Genehmigung des Nutzers.** Auch „nur" Verbesserungen.
+2. **Alles, was Export- oder Runtime-Bytes ändert, braucht zusätzlich einen
+   SE-Echttest durch den Nutzer** (Regel 9).
+3. Reine Umbauten ohne sichtbare Wirkung UND ohne Runtime-Änderung sind
+   freigegeben.
+4. Zu jeder Änderung: **Klickanleitung** plus ausdrückliche Nennung dessen,
+   was der Agent nicht prüfen konnte.
 
-1. **Alles, was die Bedienung, die Ansicht oder das Aussehen ändert, braucht
-   vorher seine ausdrückliche Genehmigung.** Auch wenn es „nur" eine
-   Verbesserung ist.
-2. **Alles, was Export-Bytes ändert, braucht zusätzlich einen SE-Echttest
-   durch den Nutzer** (Regel 9 — Browser- und SoftEngine-Prüfung macht er).
-3. Reine Umbauten ohne sichtbare Wirkung (Referenzabzug bleibt Byte für Byte
-   gleich) sind freigegeben.
-4. Zu jeder Änderung liefert der bauende Agent eine **Klickanleitung** und
-   nennt ausdrücklich, was er nicht prüfen konnte.
+### Stand der Freigaben (Fassung 2 — deutlich strenger als Fassung 1)
 
-### Stand der Freigaben
-
-| Paket | Ändert Bedienung/Optik? | Ändert Export-Bytes? | Status |
+| Paket | Bedienung/Optik | Export-/Runtime-Bytes | Status |
 |---|---|---|---|
-| A0 Unwahre Kommentare | nein | nein | **freigegeben** |
-| A1 Eine Fähigkeitsliste | nein | nein | **freigegeben** |
-| A2 Naht dichtmachen | nein | nein | **freigegeben** |
-| A3 Ein Fenster-Rahmen | nein (Optik gleich) | **ja** | Genehmigung + SE-Echttest |
-| A4 Popup-Rumpf = Raster | **ja** | **ja** | Entscheidung offen |
-| A5a Fenster aus Bauteilen | **ja** | **ja** | Genehmigung + SE-Echttest |
-| A5b Fenster als Seite | **ja** | **ja** | Entscheidung offen |
-| A6 Dialekt-Reste | nein (Optik gleich) | **ja** | Genehmigung + SE-Echttest |
-| A7 Relationen/Parameter | **ja** | nein | noch nicht analysiert |
-| P1–P5 Prozess | — | — | Entscheidungen offen |
+| A0 Unwahre Kommentare (erweitert) | nein | nein | **freigegeben** |
+| A2 Naht dichtmachen (verkleinert) | nein | nein | **freigegeben** |
+| P1 SE-Nachweistabelle | nein | nein | **freigegeben** |
+| P2 CLAUDE.md dreiteilen | nein | nein | Entscheidung offen |
+| P3 Echte Maske end-to-end | — | — | Entscheidung offen |
+| A1 Eine Fähigkeitsliste | nein | **ja (Runtime!)** | Genehmigung + SE-Echttest |
+| A3 Ein Fenster-Rahmen | **ja (Innenabstände)** | **ja** | Genehmigung + SE-Echttest |
+| A4 Popup-Raster | **ja** | **ja** | Bedienungsentscheidung ZUERST |
+| A5a Fenster aus Bauteilen | **ja** | **ja** | Vorarbeit nötig, dann Genehmigung |
+| A5b Fenster als Systemseite | **ja** | **ja** | **vertagt** |
+| A6 Dialekt-Reste | — | — | **gestrichen** |
+| A7 Relationen/Parameter | **ja** | nein | eigene Bedienungsaufgabe |
+| A8 Zwei Downloads beim Export | **ja** | nein | Bedienungsentscheidung |
+| D1 Designsprache-Abweichungen | **ja** | **ja** | klären, nicht bauen |
+| P4 500-Zeilen-Deckel | — | — | Empfehlung: unverändert lassen |
+| P5 Test-Sperre | — | — | nichts zu tun |
 
 ---
 
-## Alle Befunde und ihr Paket
+# Gegenprüfung 2026-08-08 — Zustimmung und Widerspruch
 
-| # | Befund | Paket |
-|---|---|---|
-| 1 | Kommentar `BlockDefinition.ts:356` behauptet Raster im Popup-Rumpf — falsch | A0 |
-| 2 | Fähigkeit dreimal deklariert (`BlockComponentStatic` / `BlockDefinition` / Kopierzeile) | A1 |
-| 3 | Stilles Loch: vergessene Kopierzeile compiliert, Fähigkeit ist tot | A1 |
-| 4 | Vererbung trägt fast nichts — `BasicBlock`, nur `inlineEdit` ist echtes Verhalten | A1 |
-| 5 | Toter Instanz-Vertrag `BlockComponent` / `customProperties`-Getter | A1 |
-| 6 | Wächter erkennt Bausteine per Regex auf `static readonly blockType` | A1.4 |
-| 7 | Typ-Löschung `defaultProps: Record<string, unknown>` | A2 |
-| 8 | `elAny[key] = value` — ungeprüfte Schreibnaht React↔Lit | A2 |
-| 9 | Wächter zählt `any`, das echte Loch ist `as unknown as` | A2.3 |
-| 10 | Zwei Fenster-Rahmen, zwei Konstanten `24` | A3 |
-| 11 | Hierarchie fehlt, wo sie gebraucht würde (`DialogRahmen` vs. `PopupBlock`) | A3 |
-| 12 | Wächter-Ausnahme für `POPUP_RAND`-Import wird gegenstandslos | A3.3 |
-| 13 | Zwei Layout-Modelle: Raster (Hauptseite) vs. Fluss (Popup-Rumpf) | A4 |
-| 14 | Zwei Tabellen (2.477 vs. 424 Zeilen), geteilt ist nur `zeilePasst` | A5a |
-| 15 | Dritter UI-Dialekt: 19 × `createElement`, 10 × `cssText` im Nachschlagen | A5a |
-| 16 | Hartkodiert im Fenster: `SEITENGROESSE = 10`, Spalten 65/35 | A5a |
-| 17 | Fehlendes Primitiv „Fläche + Rahmen" — Fenster als echte Seite | A5b |
-| 18 | Letzte `cssText`-Reste in `bridge.ts` / `meldung.ts` | A6 |
-| 19 | Relationen/Parameter im Editor wirken historisch gewachsen | A7 |
-| 20 | Wächter zeigen nach innen, Referenzabzug ist selbstgebaut | P1 |
-| 21 | CLAUDE.md mischt drei Haltbarkeiten | P2 |
-| 22 | Breite vor Tiefe: keine echte Maske end-to-end im Betrieb | P3 |
-| 23 | 500-Zeilen-Deckel erzeugt Verschieben ohne Naht | P4 |
-| 24 | Test-Sperre = bewusster Tausch | P5 |
+Alle folgenden Punkte wurden von Claude **am Code nachgeprüft**, nicht
+übernommen. Die Fundstellen sind genannt, damit ein Dritter sie nachschlagen
+kann.
 
-**Reihenfolge nach Risiko, nicht nach Wichtigkeit:** erst alles, was den
-Export nicht verändert (der Referenzabzug beweist dann kostenlos, dass nichts
-kaputtging), danach die Pakete, die einen SE-Echttest kosten.
+## STIMME ZU — mit Beleg
+
+**1. A1 ist NICHT exportneutral. Der schwerste Fehler der ersten Fassung.**
+Belegt: `referenzabzug.test.ts:40-45` schneidet über `ohneBuendel()` das
+Runtime-Bündel absichtlich aus dem Byte-Vergleich heraus (entrauscht
+2026-07-30, weil das Minifikat jeden Diff überdeckte). A1 verändert
+`BasicBlock` und alle elf Bausteinklassen — die stecken über
+`runtime-entry.ts` → `blocks/register` im ausgelieferten
+`generated/ff-runtime.js`. **Der Referenzabzug kann also grün bleiben, während
+sich der ausgelieferte Runtime-Code geändert hat.** Meine Formulierung „der
+Referenzabzug ist der eigentliche Beweis" war falsch. Richtig ist: er beweist,
+dass das **Markup** unverändert ist — nicht, dass die **Laufzeit** unverändert
+ist. Für die Laufzeit wacht `check:runtime` (baut das Bündel neu und
+vergleicht), aber ein neu gebautes Bündel heißt: geänderte Bytes in der Maske,
+also Regel 9, also SE-Echttest.
+→ A1 rutscht aus „freigegeben" in „Genehmigung + SE-Echttest".
+
+**2. Befund 13 (A4): Popups sind im Zustand BEREITS Rasterflächen.**
+Belegt: `rasterOps.ts:25-27` — `istRasterFlaeche` liefert `true` für jeden
+Seiten-Baustein. `migrations.ts:177-211` — `rasterFlaechenIds` schließt
+ausdrücklich „jeder Popup-Rumpf" ein und vergibt `rasterX/Y/W/H` an
+Popup-Kinder. Sichtbar ist der Rumpf trotzdem Fluss (`PopupSeite.tsx:110`).
+**Es können also unsichtbare, veraltete Rasterkoordinaten existieren.** Meine
+A4-Anleitung („fehlende Koordinaten ergänzen") hätte alte unsichtbare
+Koordinaten schlagartig sichtbar gemacht und Layouts springen lassen.
+
+**3. A5a beseitigt die feste 10er-Seitengröße NICHT automatisch.**
+Belegt: `seitengroesse.ts:49` — `OHNE_MESSUNG = ZEILEN_PRO_SEITE[0]`, also
+**10**. Ohne gemessene Höhe fällt auch die normale Tabelle auf 10 Zeilen
+zurück. `<ff-tabelle>` in einen Dialog zu legen genügt nicht; die Messung muss
+im Dialog funktionieren. Mein Satz „feste Zahlen weg" war zu glatt.
+
+**4. A5a: die Tabelle hat keine Tastaturbedienung für Zeilen.**
+Belegt: In `blocks/tabelle/` gibt es `keydown` nur in `spaltenBearbeiten.ts`
+(Titel umbenennen). Das Nachschlage-Fenster dagegen setzt `zeile.tabIndex = 0`
+und behandelt Enter (`nachschlagen.ts:372-390`). Ein naiver Umbau wäre ein
+**Bedienungs-Rückschritt**.
+
+**5. Befund 14: nicht nur `zeilePasst` wird geteilt.**
+Belegt: `nachschlagen.ts:111` benutzt `zeilenNachAuswahl` aus
+`shared/auswahl.ts` — dieselbe Folge-Mechanik wie die Tabelle. Meine Aussage
+„geteilt ist genau eine Funktion" war falsch.
+
+**6. Befund 3: aktuell ist KEINE Fähigkeit vergessen.**
+Nachgezählt: die statischen Felder aller elf Bausteinklassen und die
+Kopierliste in `defineAndRegister` stimmen exakt überein (einziger Unterschied:
+`blockType` → `type`). Es ist ein **Risiko**, kein gegenwärtiger Defekt.
+*Teilweiser Widerspruch dazu unten.*
+
+**7. Befund 9: der Wächter zählt auch Testdateien mit.**
+Belegt: Die `any`/`@ts-ignore`-Schleife in `check-regeln.mjs` läuft über
+`quellen` **ohne** `.test.`-Ausschluss (anders als die Prüfungen 1, 5 und 6).
+Meine A2.3-Formulierung „Tests ausgenommen wie bisher" war schlicht falsch.
+Und der Einwand, ein pauschaler `as unknown as`-Wächter würde vor allem Lärm
+erzeugen, überzeugt mich: **A2.3 entfällt ersatzlos.**
+
+**8. Befund 8 ist deutlich weniger schwer als behauptet.**
+Belegt: `treeOps.ts:25-35` (`normalizeProps`) beginnt bei `def.defaultProps`
+und übernimmt **nur dort bekannte Schlüssel** — im Kommentar wörtlich:
+„Unbekannte Keys werden weiterhin verworfen." `persistence.sanitizeTree:111`
+ruft das bei jedem Laden. Ein falscher Prop-Name kann also **nicht** unbemerkt
+in den Export gelangen; er lebt höchstens bis zum nächsten Laden. A2 bleibt
+sinnvoll (der Editor soll nicht raten), aber die Begründung „landet unbemerkt
+im Export" war falsch.
+
+**9. A3: der Rahmentausch verschiebt sichtbar Inhalte.**
+Belegt: `PopupBlock` `.rumpf` hat `padding: 12px`, `display:flex`,
+`align-items:flex-start`, `gap:10px`; `DialogRahmen` `.inhalt` hat nur
+`flex:1 1 auto; min-height:0; overflow:auto`. Ohne Übernahme dieser
+Innenabstände rutschen die Popup-Inhalte. A3 ist damit **nicht** optisch
+neutral.
+
+**10. Befund 12 war in der Tabelle falsch formuliert.**
+Ein Import von `DIALOG_RAND` aus `blocks/shared/` durch `PopupSeite.tsx`
+bleibt ein Editor→Baustein-Import und braucht die Ausnahme weiterhin. (Der
+Paket-Text der ersten Fassung sagte das bereits richtig, die Befund-Tabelle
+widersprach ihm.) Der Vorschlag, die gemeinsame Geometrie in eine **neutrale
+Schicht** zu legen, ist besser als beides — dann verschwindet die Ausnahme
+wirklich.
+
+**11. A6 wird gestrichen.**
+Belegt und überzeugend: `meldung.ts:31-33` setzt die Farben als
+`var(--se-red-soft,#fbe7e6)` — **mit Hex-Rückfall**. Der Fehlerbalken ist
+absichtlich so gebaut, dass er auch dann noch sichtbar ist, wenn die
+Token-Schicht gar nicht geladen hat. Ihn zu einem Lit-Element zu machen würde
+die Notfallanzeige an genau die Infrastruktur koppeln, die im Fehlerfall
+kaputt sein kann. „Architektonische Reinheit" wäre hier ein Rückschritt für
+den Bediener.
+*Kleiner Zusatz unten unter „Teilweise".*
+
+**12. Befund 17 ist eine Idee, kein bewiesener Fehler.**
+Bewiesen ist die **Doppelung** (zwei Rahmen, zwei Tabellen). Die
+Schlussfolgerung „also braucht es Systemseiten" ist ein Entwurfsvorschlag.
+Wird entsprechend umetikettiert.
+
+**13. Befund 22 war nicht belegbar.**
+Aus dem Repo lässt sich nicht behaupten, es sei nie eine echte Maske
+produktiv gelaufen. Belegbar ist nur: **es ist nicht dokumentiert.** Genau
+darum P1.
+
+**14. A5b: die Lebenszyklusfragen sind echt.**
+Feld kopieren, Feld löschen, Feldtyp wechseln, mehrere Nachschlagefelder, wer
+ist Quelle der Wahrheit, Verschachtelung — das ist mehr neue Komplexität, als
+meine erste Fassung zugegeben hat. **Vertagt.**
+
+**15. A7: die Kette bleibt beim Baustein.**
+Der Einwand ist besser begründet als meine Fassung: Regel 7 („Bedienung am
+Ding") sagt, die Interaktion gehört zu dem Ding, das sie auslöst. Die
+Kommandozentrale bleibt für maskenweite Pflege. Das eigentliche Problem ist
+**der Platz**, nicht der Ort.
+
+**16. Reihenfolge: P3 vor die großen Runtime-Umbauten.**
+Mit A1 als runtime-verändernd bekommt das ein zweites, stärkeres Argument als
+meines: Ohne einen **belegten, aktuellen Ausgangszustand** („diese Maske lief
+in SoftEngine ohne Handkorrektur, Commit X") ist nach A1 nicht unterscheidbar,
+ob ein neuer Fehler vom Umbau kommt oder schon vorher da war.
+
+**17. Designsprache: Editor und Maske sind getrennte Welten.**
+CLAUDE.md sagt es ausdrücklich („nie mischen"). Der Indigo-Look des Editors
+ist kein Fellnase-Verstoß. Übernommen als Rahmenbedingung für D1 und A7.
+
+**18. Der Export löst zwei Downloads aus — gehört in den Plan.**
+Steht bereits in CLAUDE.md als bekannter offener Punkt. Für einen Bediener,
+der nicht programmieren kann, ist ein still verschluckter zweiter Download
+gefährlicher als jede interne Architekturfrage: die Maske wäre unvollständig,
+ohne dass es jemand merkt. → **neues Paket A8.**
+
+**19. Kanban-Spaltenkopf: Doku und Code widersprechen sich.**
+Nachgeprüft: `designsprache/musterbogen.html:461` zeigt
+`<div class="spalte-kopf"><span class="spalte-titel">…</span><span class="zaehler zaehler--leise">…</span></div>`
+— **Titel und Zähler, kein Punkt.** `KanbanSpalteBlock.ts` hat zusätzlich
+Statusfarbe, farbige Unterkante und einen quadratischen Punkt (Kommentar
+Zeile 145: „derselbe Punkt wie an der Status-Marke"). CLAUDE.md behauptet, die
+Spalte passe schon („Punkt, Titel, Zähler"). Eines von beiden ist veraltet.
+**Nicht zurückbauen** — klären, welche Entscheidung gilt, dann Code oder Doku
+eindeutig machen. → D1.
+
+## STIMME TEILWEISE ZU
+
+**20. Befund 3 — Risiko statt Defekt: ja. Geringere Dringlichkeit: nein.**
+Ich stimme der Tatsache zu (oben Punkt 6) und widerspreche der Folgerung. Die
+Projektgeschichte hat genau diesen Fall schon einmal gehabt: der Tabellen-Bug
+2026-07-24 entstand, weil die Regel „neuer Baustein = Zeile im Export-Test"
+**nur im Kopf** existierte. Regel 4 ist eine Vorsorge-Regel; sie wird nicht
+dadurch weniger wichtig, dass sie noch nicht ausgelöst hat. A1 behält seinen
+Rang — nur eben mit SE-Echttest.
+
+**21. Befund 4 — BasicBlock: meine Wortwahl war zu scharf, mein Plan war es nicht.**
+„Trägt fast nichts" überzeichnet: geteilte `:host`-Styles, `editable` und
+`inlineEdit` sind echtes gemeinsames Verhalten. Der **Plan** hat BasicBlock
+allerdings von Anfang an behalten (~70 Zeilen) und nur die Metadaten
+herausgelöst. Ich korrigiere den Analysetext, nicht die Maßnahme.
+
+**22. A6 — streichen ja, aber ein Satz bleibt.**
+Der Umbau entfällt. Was bleibt: die Unabhängigkeit des Fehlerbalkens ist heute
+ein *Zufall der Umsetzung*, kein festgehaltener Beschluss. Ein
+Kommentar-Zweizeiler in `meldung.ts` („bewusst ohne Lit und mit Hex-Rückfall,
+damit die Notfallanzeige auch bei kaputter Token-/Render-Schicht sichtbar
+bleibt — nicht 'aufräumen'") verhindert, dass ein künftiger Agent genau das
+'aufräumt', was die zweite KI hier zu Recht verteidigt. Das ist reine
+Dokumentation → wandert nach A0.
+
+**23. Befund 23 / P4 — Deckel: Ergebnis gut, Begründung war schwach.**
+`listenBindung` und `knotenStil` haben je einen erkennbaren eigenen Zweck; als
+Beweis für „unsinnige Modulgrenzen" taugen sie nicht. Was bleibt: der im
+Kommentar **festgehaltene Grund** ist eine Zeilenzahl, nicht eine Naht. Das
+ist eine Beobachtung, kein Missstand. Meine Empfehlung war ohnehin „Deckel
+behalten" — daran ändert sich nichts, der Befund wird abgestuft.
+
+**24. Befund 20 — „die Wächter zeigen nach innen": zu absolut.**
+Der Export-Referenzabzug, `check:runtime` und die Validator-/Preflight-Prüfung
+zielen sehr wohl auf das Ausliefer-Ergebnis. Richtig bleibt der Kern: es fehlt
+der **systematische Nachweis echter SoftEngine-Läufe**. Formulierung
+entschärft, P1 bleibt unverändert wichtig.
+
+**25. A7-Bedienungsvorschläge — gute Richtung, aber ungeprüft.**
+Die konkreten Vorschläge (Kette links sichtbar, Schritt rechts bearbeiten,
+Parameter als kleine Karte statt Einzeiler, Symbolknöpfe reduzieren,
+Relationszeile eingeklappt, konkretere Verwendungsanzeige, präzisere
+Löschwarnung) klingen durchweg plausibel. **Ich habe sie NICHT am Code
+verifiziert** — insbesondere die Behauptung, das `X` habe heute zwei
+verschiedene Bedeutungen („leer senden" vs. „Parameter löschen"). Sie stehen
+unten als *zu prüfende Vorschläge*, nicht als Befunde.
+
+## WIDERSPRECHE
+
+**26. Befund 11 — „hier hätte Vererbung gefehlt" sei die falsche Schlussfolgerung.**
+Hier liegt ein Missverständnis vor, dem ich in der Sache zustimme und in der
+Zuschreibung widerspreche. Meine Aussage war eine **Ironie über die
+Hierarchie**, kein Vorschlag: die Vererbung existiert dort, wo sie nichts
+trägt (Metadaten), und fehlt dort, wo etwas Gemeinsames ist (der Rahmen). Der
+**Plan** hat nie eine neue Vererbungshierarchie vorgeschlagen — A3 war von
+Anfang an Komposition („PopupBlock *benutzt* DialogRahmen"). Insofern: in der
+Sache einig, der Einwand trifft eine Formulierung, keine Maßnahme. Ich
+schärfe den Text.
+
+**27. Kein Widerspruch in der Sache — aber eine Ergänzung zur Reihenfolge.**
+Die vorgeschlagene Reihenfolge setzt A2 vor P3. Ich ziehe **A0 und P1 ganz
+nach vorn** und A2 hinter P3: A2 ist zwar harmlos, aber es ist eine
+Code-Änderung ohne Dringlichkeit, und der wertvollste frühe Schritt ist der
+belegte Ausgangszustand. Reihenfolge unten entsprechend.
+
+---
+
+## Alle Befunde — Fassung 2
+
+| # | Befund | Stand nach Gegenprüfung | Paket |
+|---|---|---|---|
+| 1 | Kommentar `BlockDefinition.ts:356` falsch | bestätigt | A0 |
+| 2 | Fähigkeit dreifach beschrieben | bestätigt | A1 |
+| 3 | Stilles Loch bei vergessener Kopierzeile | **Risiko, kein aktueller Defekt** | A1 |
+| 4 | Vererbung trägt wenig | **abgeschwächt**: für Fähigkeiten falscher Mechanismus | A1 |
+| 5 | Toter Instanz-Vertrag `customProperties` | bestätigt | A1 |
+| 6 | Wächter erkennt Bausteine per `blockType`-Regex | bestätigt | A1.4 |
+| 7 | `Record<string, unknown>` verliert Prop-Typen | bestätigt, aber unvermeidlich an einer Grenze | A2 |
+| 8 | Ungeprüfte Schreibnaht `useLitElement` | **abgeschwächt**: erreicht den Export nicht | A2 |
+| 9 | Wächter zählt `any` statt `as unknown as` | **verworfen** (Lärm; Aussage war zudem falsch) | — |
+| 10 | Zwei Fenster-Rahmen, zwei 24er | bestätigt | A3 |
+| 11 | Hierarchie an der falschen Stelle | Formulierung, keine Maßnahme | A3 |
+| 12 | Import-Ausnahme wird gegenstandslos | **falsch** — bleibt, außer neutrale Schicht | A3 |
+| 13 | Zwei Layout-Modelle | bestätigt **+ verdeckter Rasterzustand** | A4 |
+| 14 | Zwei Tabellen | bestätigt, „nur `zeilePasst`" war falsch | A5a |
+| 15 | 19 × `createElement`, 10 × `cssText` | bestätigt | A5a |
+| 16 | Feste 10 / 65-35 im Fenster | bestätigt — **Tabelle fällt aber auch auf 10 zurück** | A5a |
+| 17 | Fehlendes Primitiv „Fläche + Rahmen" | **Entwurfsidee, kein Befund** | A5b (vertagt) |
+| 18 | `cssText` in `bridge.ts`/`meldung.ts` | **verworfen** — bewusst unabhängig | A0 (Kommentar) |
+| 19 | Relationen/Parameter historisch gewachsen | bestätigt | A7 |
+| 20 | Wächter zeigen nach innen | **abgeschwächt** — es fehlt der SE-Nachweis | P1 |
+| 21 | CLAUDE.md mischt drei Haltbarkeiten | bestätigt | P2 |
+| 22 | Keine echte Maske end-to-end | **nicht belegbar** — nicht dokumentiert | P3 |
+| 23 | 500-Zeilen-Deckel | **abgestuft** zur Beobachtung | P4 |
+| 24 | Test-Sperre = bewusster Tausch | bestätigt | P5 |
+| 25 | **NEU:** Export löst zwei Downloads aus | Bedienungsrisiko | A8 |
+| 26 | **NEU:** Kanban-Kopf: Doku ≠ Musterbogen ≠ Code | Widerspruch klären | D1 |
 
 ---
 
 # Teil 1 — Code
 
-## A0 · Unwahre Kommentare
-**klein · keine Export-Bytes · freigegeben**
+## A0 · Unwahre und fehlende Kommentare (erweitert)
+**klein · keine Bytes · freigegeben**
 
-**Befund:** `BlockDefinition.ts:356-357` sagt, `raster` wirke auf „oberste
-Ebene + Popup-Rumpf". Tatsächlich rendert `PopupSeite.tsx:110` den Rumpf als
-Fluss (`<NodeList …>` ohne `raster`), und `exportMask.ts:127` gibt das zu
-(„folgt in einer späteren Etappe"). Ein Agent, der die Registry liest, baut
-auf einer Falschaussage auf — der Nutzer kann das nicht prüfen.
+1. `BlockDefinition.ts:356-357` — behauptet Raster im Popup-Rumpf. Richtig
+   ist: der Zustand behandelt Popups bereits als Rasterflächen
+   (`rasterOps.ts:25`), die **Ansicht** zeigt aber Fluss
+   (`PopupSeite.tsx:110`). Beides benennen, mit Verweis auf die offene
+   Entscheidung A4.
+2. **Weitere veraltete Raster-Kommentare** systematisch suchen (die
+   Gegenprüfung meldet mehrere; die erste Fassung hatte nur einen). Jeden
+   entweder korrigieren oder mit Paketnamen versehen.
+3. `DialogRahmen.ts:11-14` — Zusammenlegung mit Paketnamen A3 versehen.
+4. **Neu:** `meldung.ts` — die bewusste Unabhängigkeit festhalten: kein Lit,
+   Hex-Rückfall neben den Tokens, damit die Notfallanzeige auch bei kaputter
+   Render-/Token-Schicht sichtbar bleibt. Ausdrücklich als „nicht aufräumen"
+   markieren.
+5. `exportMask.ts:127` („Popup-Innenfläche folgt in einer späteren Etappe")
+   mit A4 verknüpfen.
 
-**Anleitung:**
-1. `src/core/blocks/BlockDefinition.ts:356-357` — Satz ändern: wirkt heute nur
-   auf der obersten Ebene; der Popup-Rumpf ist Fluss, geplant in A4.
-2. `src/blocks/shared/DialogRahmen.ts:11-14` — „Zusammenlegung ist
-   vorgesehen" bleibt wahr bis A3; Paketnamen ergänzen, damit erkennbar ist,
-   dass es einen Beschluss gibt und keine Absichtserklärung.
-3. Repo nach weiteren „folgt später"/„vorgesehen"-Stellen durchsehen; jede
-   entweder mit Paketnamen versehen oder streichen.
-
-**Prüfung:** Bündel. Keine Klickanleitung nötig — reine Kommentare.
+**Prüfung:** Bündel. Keine Klickanleitung — reine Kommentare.
 
 ---
 
 ## A1 · Eine Fähigkeitsliste statt drei
-**groß · keine Export-Bytes · freigegeben**
+**groß · ÄNDERT RUNTIME-BYTES · Genehmigung + SE-Echttest**
 
-**Befund:** Jede Baustein-Fähigkeit steht dreimal: in `BlockComponent.ts`
-(`BlockComponentStatic`, 21 optionale Felder), nochmal in `BlockDefinition.ts`
-(dieselben 21) und als Kopierzeile in `BasicBlock.defineAndRegister`
-(`BasicBlock.ts:170-191`). Weil in `BlockDefinition` alle diese Felder
-optional sind, **compiliert eine vergessene Kopierzeile anstandslos** — die
-Fähigkeit ist dann still tot. Das ist der schwerste Verstoß gegen Regel 4
-(„nichts scheitert still") im Repo.
+**Befund:** Jede Fähigkeit steht dreimal — `BlockComponent.ts` (21 optionale
+Felder), `BlockDefinition.ts` (dieselben 21), Kopierzeile in
+`BasicBlock.defineAndRegister` (`BasicBlock.ts:170-191`). Weil alle Felder
+optional sind, compiliert eine vergessene Kopierzeile anstandslos; die
+Fähigkeit wäre still tot. **Aktuell ist keine vergessen** (nachgezählt) — es
+ist Vorsorge gegen genau den Fehlertyp, der 2026-07-24 schon einmal aufgetreten
+ist.
 
-**Belege, dass die Zielform trägt:**
-- `src/test/testBlocks.ts` baut Definitionen bereits als schlichte Objekte.
-- **Niemand** liest `customProperties` von einer Element-Instanz. Alle Leser
-  (Inspector, PropControl, preflight, exportMask) gehen über
-  `getBlockDefinition(...)`. Der Instanz-Vertrag ist tote Last.
-- Jedes Mal, wenn in diesem Projekt wirklich etwas geteilt werden musste, ist
-  es **nicht** in die Basisklasse gewandert, sondern als Funktion nach
-  `blocks/shared/` (20 Dateien). Die tragende Struktur ist die Registry, nicht
-  die Vererbung.
+**Warum es trotzdem den SE-Echttest braucht:** A1 fasst `BasicBlock` und alle
+elf Bausteinklassen an. Die stecken im ausgelieferten Runtime-Bündel. Der
+Referenzabzug schneidet das Bündel aus dem Byte-Vergleich heraus
+(`referenzabzug.test.ts:40-45`) und kann grün bleiben, obwohl sich der
+ausgelieferte Code geändert hat.
 
 **Zielform:**
 
 ```ts
-// blocks/text/TextBlock.ts
 export class TextBlock extends BasicBlock { /* nur noch Rendern */ }
 
 export const textDefinition = definiereBaustein({
@@ -170,496 +375,455 @@ export const textDefinition = definiereBaustein({
 
 **Anleitung:**
 
-**A1.1 — Die eine Liste bauen**
-1. Neue Datei `src/core/blocks/definiereBaustein.ts` mit
-   `definiereBaustein(def, Klasse)`: mischt die universellen Defaults
-   (`FLOW_DEFAULTS`, `RASTER_DEFAULTS`, bedingt `QUELLEN_DEFAULTS`,
-   `AUSWAHL_FOLGE_DEFAULTS`) unter `defaultProps`, ruft `customElements.define`
-   HMR-geschützt, ruft `registerBlockType`. Das ist wörtlich der Rumpf von
-   `defineAndRegister` — nur nimmt er die Fähigkeiten als **Objekt** entgegen,
-   statt sie von einer Klasse abzuschreiben. Die Kopierschicht entfällt.
-2. Liegt in `core/blocks/` — Wächter-Regel 6 erlaubt generischem Code genau
-   diesen Ordner.
-3. Die typgeprüften Helfer (`BindableSpotsFor`, `ActionValueSpotsFor`) bleiben
-   und greifen am Deklarationsort, wo der Prop-Typ bekannt ist:
-   `definiereBaustein` wird generisch über `defaultProps`.
+**A1.0 — Inventar VOR dem Umbau** *(neu, aus der Gegenprüfung)*
+1. Alle direkten Zugriffe auf statische Bausteinfelder außerhalb der Klasse
+   auflisten: `PopupBlock.tagName`, `XBlock.blockType`, `XBlock.defaultProps`,
+   `TabelleBlock.listenBindung.prop`, `CardBlock`/`KanbanSpalteBlock` in
+   `kanban/seRuntime.ts`, `PopupBlock` in `seAktionen.ts` usw. Jeder davon
+   muss ein Ziel in der neuen Form haben, bevor irgendetwas umgestellt wird.
+2. Auf **Import-Zyklen** achten: `definiereBaustein` in `core/blocks/` darf
+   keinen Baustein importieren, und die Bausteine importieren die Registry.
 
-**A1.2 — Bausteine umstellen** (11 Stück, mechanisch, einer nach dem anderen)
-4. Metadaten-Statics raus aus der Klasse, rein ins Definitionsobjekt. Die
-   Klasse behält `styles`, `@property`-Felder, `render`, Lebenszyklus.
-5. `BlockCategory` künftig aus `BlockDefinition.ts` importieren (dort steht
-   `export type { BlockCategory }` bereits in Zeile 14) — die 11 Importe aus
-   `BlockComponent.ts` ziehen um.
-6. `BasicBlock.defineAndRegister(XBlock)` am Dateiende wird zu
-   `export const xDefinition = definiereBaustein({…}, XBlock)`.
+**A1.1 — Die eine Liste bauen**
+3. `src/core/blocks/definiereBaustein.ts` mit `definiereBaustein(def, Klasse)`:
+   mischt die universellen Defaults (`FLOW_DEFAULTS`, `RASTER_DEFAULTS`,
+   bedingt `QUELLEN_DEFAULTS`, `AUSWAHL_FOLGE_DEFAULTS`) unter `defaultProps`,
+   registriert das Custom Element HMR-geschützt, ruft `registerBlockType`.
+   Wörtlich der Rumpf von `defineAndRegister`, nur nimmt er ein **Objekt**
+   entgegen. Die Kopierschicht entfällt.
+4. Liegt in `core/blocks/` — Wächter-Regel 6 erlaubt generischem Code genau
+   diesen Ordner.
+5. `BindableSpotsFor`/`ActionValueSpotsFor` bleiben und greifen am
+   Deklarationsort; `definiereBaustein` wird generisch über `defaultProps`.
+   **Der gespeicherte, gemischte Baum braucht an einer Stelle weiterhin einen
+   allgemeinen Property-Typ** — das ist keine Schwäche, sondern die Grenze
+   zwischen statischer Deklaration und dynamischem Speicherstand.
+
+**A1.2 — Bausteine umstellen** (11 Stück, einzeln)
+6. Metadaten-Statics ins Definitionsobjekt; die Klasse behält `styles`,
+   `@property`, `render`, Lebenszyklus, und erbt weiter von `BasicBlock`.
+7. `BlockCategory` wird heute in `BlockComponent.ts` **definiert** und von
+   `BlockDefinition.ts:14` nur weitergereicht. Beim Löschen von
+   `BlockComponent.ts` muss die Definition nach `BlockDefinition.ts` umziehen,
+   nicht bloß der Re-Export.
 
 **A1.3 — Toten Code löschen**
-7. `src/core/blocks/BlockComponent.ts` ganz löschen.
-8. In `BasicBlock`: `implements BlockComponent`, den `customProperties`-Getter
-   und `defineAndRegister` entfernen. Übrig bleiben ~70 Zeilen: geteilte
-   `:host`-Styles, `editable`, `inlineEdit`. Die Basisklasse behält damit
-   genau das, was echtes geerbtes Verhalten ist.
+8. `BlockComponent.ts` löschen (`BlockComponentStatic` wird gegenstandslos,
+   `BlockComponent`/`customProperties`-Getter liest niemand — alle Leser gehen
+   über `getBlockDefinition`).
+9. In `BasicBlock`: `implements BlockComponent`, den Getter und
+   `defineAndRegister` entfernen. **BasicBlock bleibt** mit geteilten
+   `:host`-Styles, `editable` und `inlineEdit` — das ist echtes gemeinsames
+   Verhalten.
 
-**A1.4 — Die Wächter mitziehen** (sonst wird das Bündel rot)
-9. `scripts/check-regeln.mjs` erkennt Bausteine per Regex auf
-   `static readonly blockType = '…'` / `tagName = '…'` (Zeilen ~46-53). Nach
-   dem Umbau findet er **null** Bausteine und schlägt über seine eigene
-   Selbstprüfung Alarm. Regex auf die Objektform umstellen (`type: '…'` /
-   `tagName: '…'` innerhalb von `definiereBaustein(`). Die Selbstprüfung
-   bleibt — sie hat hier genau ihren Zweck erfüllt.
-10. Prüfungen 2, 2b und 5 hängen an derselben Liste und laufen danach
-    unverändert weiter.
+**A1.4 — Wächter mitziehen**
+10. `check-regeln.mjs` erkennt Bausteine per Regex auf
+    `static readonly blockType` / `tagName` (Zeilen ~46-53). Danach fände er
+    **null** Bausteine und schlüge über seine Selbstprüfung Alarm. Regex auf
+    die Objektform umstellen. Prüfungen 2, 2b und 5 hängen an derselben Liste.
 
-**Was das schließt:** drei Listen werden eine · das stille Loch ist zu (fehlt
-ein Feld, gibt es keine zweite Liste mehr, mit der es auseinanderlaufen
-könnte) · ~90 Zeilen tote Last weg · `BlockDefinition.ts` schrumpft.
+**A1.5 — Bündel neu bauen**
+11. `npm run build:runtime`, danach `check:runtime`. Das neue
+    `ff-runtime.js` gehört in denselben Commit.
 
-**Prüfung:** Bündel. **Der Referenzabzug ist der eigentliche Beweis:** ändert
-sich ein Byte, war der Umbau nicht verhaltensgleich. Er MUSS grün bleiben,
-`vitest run -u` ist in diesem Paket verboten.
-
-**Klickanleitung:** Editor öffnen → jeden der 11 Bausteine aus der Bibliothek
-auf die Fläche ziehen → der Inspector muss je Baustein dieselben Felder zeigen
-wie vorher → Kanban „+ Spalte"/„+ Karte" prüfen (das sind
-`addChildButton`/`allowedChildTypes`, also genau die kopierten Fähigkeiten).
+**Prüfung:** Bündel. Der Referenzabzug muss grün bleiben — er beweist, dass
+das **Markup** unverändert ist. Er beweist **nicht**, dass die Laufzeit
+unverändert ist.
+**Klickanleitung:** Alle elf Bausteine einfügen; Inspector-Felder je Baustein
+gegen vorher vergleichen; Kanban „+ Spalte"/„+ Karte"; Popup-Reiter;
+Nachschlage-Feld; alten Speicherstand laden.
+**SE-Echttest (Nutzer):** die in P3 belegte Maske erneut exportieren und in
+SoftEngine gegen den dort festgehaltenen Ausgangszustand vergleichen.
 
 ---
 
-## A2 · Die Naht zwischen React und Lit dichtmachen
-**klein · keine Export-Bytes · freigegeben**
+## A2 · Die Naht zwischen React und Lit (verkleinert)
+**klein · keine Bytes · freigegeben**
 
-**Befund:** `useLitElement.ts:112-115` schreibt alle Props blind aufs Element:
+**Befund, korrigiert:** `useLitElement.ts:112-115` schreibt Props blind aufs
+Element. Ein falscher Name **erreicht den Export nicht** —
+`normalizeProps` (`treeOps.ts:25-35`) verwirft unbekannte Schlüssel beim
+Laden, der Export arbeitet auf dem normalisierten Baum. Was bleibt: innerhalb
+einer Sitzung setzt der Editor stillschweigend etwas, das nichts tut.
 
-```ts
-const elAny = el as unknown as Record<string, unknown>
-for (const [key, value] of Object.entries(block.props)) elAny[key] = value
-```
-
-Ein falscher Prop-Name landet stumm am Element und tut nichts. Das ist die
-einzige Übergabestelle zwischen den beiden Laufzeiten — und die einzige ohne
-Prüfung.
-
-**Ehrliche Einordnung:** Vollständige Typsicherheit ist hier **unmöglich**.
-Der Baum ist heterogen und kommt aus dem Browser-Speicher; `block.props` ist
-zur Laufzeit ein `Record<string, unknown>` und kann nichts anderes sein.
-Machbar ist die *geprüfte* Schreibnaht.
-
-**Anleitung:**
-1. **A2.1** — Nur bekannte Props schreiben. Die Definition kennt über
-   `defaultProps` alle gültigen Namen; dagegen prüfen. Unbekannte nicht
-   schreiben, sondern sammeln und **einmal** als `console.warn` mit
-   Bausteintyp und Prop-Name melden (Regel 4).
-2. **A2.2** — Den Doppel-Cast auflösen: statt
-   `as unknown as Record<string, unknown>` ein benannter Typ
+**Anleitung (nur noch zwei Schritte):**
+1. Nur Props schreiben, die die Definition über `defaultProps` kennt;
+   unbekannte einmalig als `console.warn` melden statt still zu schreiben.
+2. Den Doppel-Cast auflösen: benannter Typ
    `type BausteinElement = HTMLElement & Record<string, unknown>`, einmal bei
    `document.createElement` gesetzt.
-3. **A2.3** — Den Wächter ehrlich machen: `check-regeln.mjs` Prüfung 4 zählt
-   `any` und `@ts-ignore` (erlaubt 2 / 1; die zwei `any` sitzen beide in
-   `bridge.ts:28-29`, `seGlobal()` — legitim, das ist die Grenze zur fremden
-   Laufzeit). Sie zählt **nicht** `as unknown as` — also ausgerechnet die
-   Form, in der das schwerste Typloch steckte. Mit aufnehmen, Stand einfrieren
-   (Produktionscode: `useLitElement`, `relations.ts`, `BasicBlock`, 2 ×
-   `kanban/seRuntime`; Tests ausgenommen wie bisher).
+
+**Gestrichen:** der ursprüngliche Punkt A2.3 (Wächter um `as unknown as`
+erweitern). Begründung: nicht jeder Doppel-Cast ist gefährlich, ein pauschaler
+Zähler erzeugt vor allem Lärm — und die Begründung der ersten Fassung („Tests
+ausgenommen wie bisher") war zudem sachlich falsch: die `any`-Schleife des
+Wächters zählt Testdateien mit.
 
 **Prüfung:** Bündel, Referenzabzug grün.
-
-**Klickanleitung:** Editor öffnen, Browser-Konsole auf → Baustein einfügen,
-Eigenschaften im Inspector ändern, Text per Doppelklick inline ändern →
-**keine** neue Warnung darf erscheinen. Erscheint eine, ist sie ein echter
-Fund und wird gemeldet, nicht weggedrückt.
+**Klickanleitung:** Konsole offen, Bausteine einfügen, Eigenschaften ändern,
+Inline-Edit — es darf **keine** neue Warnung erscheinen. Erscheint eine, ist
+sie ein echter Fund und wird gemeldet, nicht weggedrückt.
 
 ---
 
 ## A3 · Ein Fenster-Rahmen
-**mittel · ÄNDERT EXPORT-BYTES · Genehmigung + SE-Echttest**
+**mittel · ÄNDERT BYTES + INNENABSTÄNDE · Genehmigung + SE-Echttest**
 
-**Befund:** `PopupBlock` und `DialogRahmen` bauen dasselbe Fenster zweimal —
-Abdunklung, Bühne, Fenster, Kopf, Titel, X, dieselben Tokens, dieselben Maße,
-und zwei Konstanten `POPUP_RAND = 24` / `DIALOG_RAND = 24` für dieselbe Regel.
-Der `DialogRahmen`-Kommentar benennt sich selbst als Ziel der Zusammenlegung.
-Nebenbei die Ironie: `DialogRahmen` erbt von `LitElement`, `PopupBlock` von
-`BasicBlock` — die Hierarchie existiert, wo sie nicht gebraucht wird, und
-fehlt, wo sie gebraucht würde.
-
-**Richtung:** `DialogRahmen` ist das Ziel (so steht es im Kommentar, und es
-stimmt: er ist der allgemeinere — Werkzeugzeile und Escape kann nur er).
+**Befund:** `PopupBlock` und `DialogRahmen` bauen dasselbe Fenster zweimal,
+mit zwei Konstanten `24`. Der `DialogRahmen`-Kommentar benennt sich selbst als
+Ziel. **Der Umbau ist Komposition, keine neue Vererbung:** `PopupBlock`
+*benutzt* `DialogRahmen`.
 
 **Anleitung:**
-1. `PopupBlock.render()` gibt künftig `<ff-dialog-rahmen>` mit `titel`,
-   `breite`, `hoehe` aus und legt seinen `<slot>` in dessen Inhalt.
-2. Zwei Unterschiede müssen erhalten bleiben, sonst ändert sich Verhalten
-   statt nur Struktur:
-   - Der Popup-Titel ist per Doppelklick umbenennbar (`inlineEdit`, Bedienung
-     am Ding). `DialogRahmen` hat dafür `<slot name="titel">` — der Popup
-     schiebt sein `<span data-ff-editable>` dorthin.
-   - Das X schließt im Editor **nicht** (`data-ff-editor`-Prüfung in
-     `PopupBlock.onClose`). `DialogRahmen` feuert nur ein Ereignis; der Popup
-     hört darauf und behält seine Editor-Prüfung.
-3. `POPUP_RAND` löschen, `DIALOG_RAND` bleibt die eine Konstante. `POPUP_RAND`
-   wird von `PopupSeite.tsx` importiert (Editor-Anfasser) — Import umstellen.
-4. **A3.3** — `check-regeln.mjs`, `BAUSTEIN_IMPORT_AUSNAHMEN`: die Ausnahme
-   für `PopupSeite.tsx` begründet sich mit `POPUP_RAND`. Begründung auf
-   `DIALOG_RAND` umschreiben (die Ausnahme selbst bleibt nötig und richtig).
-5. Der Popup bleibt `pageBlock`, bleibt im Baum, bleibt exportiert. **Am
-   Datenmodell ändert sich nichts** — nur am erzeugten Markup.
+1. `PopupBlock.render()` gibt `<ff-dialog-rahmen>` mit `titel`, `breite`,
+   `hoehe` aus und legt seinen `<slot>` hinein.
+2. **Innenabstände übernehmen** *(neu)*: `PopupBlock` `.rumpf` hat heute
+   `padding:12px`, `display:flex`, `align-items:flex-start`, `gap:10px`;
+   `DialogRahmen` `.inhalt` hat nichts davon. Ohne Übernahme rutschen die
+   Inhalte sichtbar. Entweder als Variante am Dialog (`mit-innenabstand`) oder
+   im Popup-eigenen Wrapper — **bewusst entscheiden, nicht nebenbei ändern.**
+3. Inline-Umbenennen des Titels über `<slot name="titel">` erhalten.
+4. X schließt im Editor weiterhin **nicht** (`data-ff-editor`-Prüfung bleibt
+   beim Popup; der Dialog feuert nur sein Ereignis).
+5. **Escape bewusst entscheiden** *(neu)*: `DialogRahmen` kann
+   `escapeSchliesst`; das Popup hat das heute nicht. Übernehmen oder
+   ausdrücklich auslassen — nicht durch den Umbau zufällig einführen.
+6. **Geometrie in eine neutrale Schicht** *(neu, statt „Ausnahme entfällt")*:
+   `POPUP_RAND`/`DIALOG_RAND` als **eine** Konstante nach `core/` legen. Nur
+   so verschwindet die Wächter-Ausnahme für `PopupSeite.tsx` wirklich; ein
+   Import aus `blocks/shared/` bliebe ein Editor→Baustein-Import.
 
-**Prüfung:** Bündel. Der Referenzabzug **wird sich ändern** (die
-Referenzmaske enthält ein Popup) → danach `npx vitest run -u`; der Datei-Diff
-im Commit zeigt die Maskenänderung Zeile für Zeile. Genau dafür ist er da.
-
-**Klickanleitung:** Editor → Popup-Reiter anlegen → das Fenster muss identisch
-aussehen wie vorher → Titel doppelklicken und umbenennen → Breite/Höhe an den
-Anfassern ziehen, Doppelklick setzt zurück → X darf im Editor nichts tun.
-
-**SE-Echttest (Nutzer):** Maske mit Popup exportieren, in SoftEngine laden,
-Popup über eine Kette öffnen und mit X schließen.
+**Prüfung:** Bündel; Referenzabzug wird sich ändern → `npx vitest run -u`, der
+Datei-Diff zeigt die Maskenänderung im Commit. Bündel neu bauen.
+**Klickanleitung:** Popup-Reiter → Fenster **und Innenabstände** gegen vorher
+vergleichen (Screenshot vorher/nachher hilft) → Titel doppelklicken → Anfasser
+ziehen, Doppelklick setzt zurück → X im Editor darf nichts tun → Escape prüfen.
+**SE-Echttest (Nutzer):** Maske mit Popup, öffnen über Kette, schließen mit X.
 
 ---
 
-## A4 · Popup-Rumpf wird Rasterfläche
-**mittel · ÄNDERT EXPORT-BYTES · ENTSCHEIDUNG OFFEN**
+## A4 · Popup-Rumpf: Raster oder Fluss
+**BEDIENUNGSENTSCHEIDUNG ZUERST — kein Bauauftrag**
 
-**Befund:** Hauptseite = CSS-Grid, Popup-Rumpf = Flex-Spalte. Derselbe
-Baustein gehorcht anderen Gesetzen, je nachdem wo er liegt.
+**Befund, korrigiert:** Sichtbar ist die Hauptseite Raster und der Popup-Rumpf
+Fluss. **Der Zustand behandelt Popups aber bereits als Rasterflächen**
+(`rasterOps.ts:25-27`), und die Migration vergibt Popup-Kindern bereits
+Rasterkoordinaten (`migrations.ts:177-211`). Es können also **unsichtbare,
+veraltete Koordinaten** existieren.
 
-**Zwei ehrliche Auflösungen — der Nutzer entscheidet vorher:**
+**Die erste Frage ist keine Codefrage:**
 
-- **(a) Raster überall.** Der Popup-Rumpf wird Rasterfläche wie die
-  Hauptseite. Sauber, entspricht „ein Baustein, ein Gesetz", macht die
-  Registry-Aussage wieder wahr. **Kosten:** bestehende Popup-Inhalte liegen im
-  Fluss und brauchen Zellkoordinaten → **Migration** in `state/migrations.ts`.
-  Bestehende Masken sehen danach anders aus. Einzige Stelle im Plan, an der
-  sich etwas an bereits gebauter Arbeit verschiebt.
-- **(b) Fluss bleibt die Regel im Fenster.** Kostet fast nichts (A0 hat den
-  Kommentar bereits geradegezogen), aber die Inkonsistenz bleibt — dann ist
-  der Befund nicht behoben, sondern bewusst als Regel festgeschrieben:
-  „Hauptseite = Raster, Fenster = Fluss."
+> Soll ein Popup vom Bauer genauso frei im Raster gestaltet werden können wie
+> die Hauptseite — oder ist „Fenster = einfacher Fluss" das gewollte Verhalten?
 
-**Empfehlung: (a)** — (b) ist die halbe Sache. Aber (a) fasst gespeicherte
-Stände an, deshalb wird gefragt.
+- **Antwort JA** → Raster vereinheitlichen. Die Migration darf dann **nicht**
+  nur fehlende Koordinaten ergänzen, sondern muss die Popup-Kinder nach ihrer
+  **heute sichtbaren Reihenfolge neu stapeln** — sonst werden alte unsichtbare
+  Koordinaten schlagartig sichtbar und Layouts springen.
+- **Antwort NEIN** → Fluss wird zum ausdrücklich gewollten Verhalten erklärt,
+  `istRasterFlaeche` und die Migration werden entsprechend korrigiert (heute
+  sagen sie etwas anderes als die Ansicht), A0 hält es fest. Auch das ist
+  Arbeit — nur weniger und ohne Layout-Sprünge.
 
-**Anleitung für (a):**
-1. `PopupSeite.tsx:110` — `raster` an die `NodeList` durchreichen; Drop-Ziel
-   von `kind: 'flow'` auf `rasterZiel(...)` umstellen (die Mechanik existiert
-   in `rasterDnd.ts`, sie wird nur nicht aufgerufen).
-2. `rasterOps.istRasterFlaeche` meldet den Popup-Rumpf als Rasterfläche —
-   registry-getrieben über `pageBlock`, nie per Typvergleich.
-3. `exportMask.nodeToHtml` — `rasterEbene` in Seiten-Bausteine hineinreichen
-   statt `false`; die Fläche bekommt `rasterFlaecheStyle()` wie die Wurzel.
-4. `PopupBlock` `.rumpf`-CSS: Flex-Spalte → Grid, exakt dieselben Werte wie
-   die Wurzelfläche.
-5. Migration: bestehende Popup-Kinder ohne Rasterkoordinaten bekommen sie in
-   Baumreihenfolge (je Kind eine Zeile, volle Breite) — das kommt dem
-   heutigen Fluss am nächsten.
-6. `BlockDefinition.ts:356` — Kommentar aus A0 wird wieder auf „oberste Ebene
-   + Popup-Rumpf" gesetzt, jetzt wahrheitsgemäß.
-
-**Prüfung:** Bündel + Referenzabzug erneuern. `migrationen.test.ts` bekommt
-einen Fall für den alten Popup-Stand (kein neuer Testtyp, sondern eine Zeile
-in einem bestehenden Test — Regel 9 erlaubt Mitwachsen).
-
-**Klickanleitung:** Alten Speicherstand mit gefülltem Popup öffnen → alle
-Inhalte müssen noch da sein, untereinander → dann Bausteine im Popup frei auf
-Zellen ziehen wie auf der Hauptseite.
+**Empfehlung:** Diese Frage nach P3 beantworten. Wer die eine echte Maske
+gebaut hat, weiß dann aus der Praxis, ob er im Fenster frei anordnen will.
 
 ---
 
-## A5a · Das Nachschlage-Fenster bekommt Rahmen und Tabelle aus dem Baukasten
-**groß · ÄNDERT EXPORT-BYTES · Genehmigung + SE-Echttest**
+## A5a · Nachschlage-Fenster aus vorhandenen Bauteilen
+**groß · ÄNDERT BYTES · VORARBEIT NÖTIG · Genehmigung + SE-Echttest**
 
 **Befund:** `nachschlagen.ts` baut mit 19 × `createElement` und 10 ×
-`cssText` eine zweite Tabelle: Kopf, Spaltenbreiten 65/35 fest, Blättern mit
-fester `SEITENGROESSE = 10`, Suche, zwei Leerzustände, Zähler, Hover. Daneben
-liegen 2.477 Zeilen `blocks/tabelle/`, die all das besser können — gemessene
-Zeilenzahl statt fester 10, Spaltenarten, Sortierung, Bild + Name,
-Status-Marken, Fußzeile mit korrekter Grammatik. Geteilt ist genau eine
-Funktion (`zeilePasst`).
+`cssText` eine zweite Tabelle neben 2.477 Zeilen `blocks/tabelle/`. Geteilt
+sind `zeilePasst` **und** `zeilenNachAuswahl` — mehr als in Fassung 1
+behauptet, aber weit weniger als möglich.
 
-**Begründung im Code für die Trennung** (`nachschlagen.ts:11-13`): „Kein
-Baustein: das Fenster entsteht erst beim Klick." Der Satz vermengt **wann**
-etwas entsteht mit **woraus** es gebaut ist. Ein Popup ist auch erst beim
-Klick sichtbar und liegt trotzdem im Baum.
+**Richtung bestätigt, Weg korrigiert.** Der naive Weg („`<ff-tabelle>` in den
+Dialog legen") funktioniert nicht. Diese Unterschiede müssen **vorher** gelöst
+sein:
 
-**Lösung:** Das Fenster wird aus vorhandenen Bauteilen zusammengesetzt statt
-nachgebaut: `<ff-dialog-rahmen>` + `<ff-tabelle>`.
+1. **Kein allgemeines „Zeile aktiviert"-Ereignis.** Die Tabelle gibt eine
+   Auswahl ab; das Fenster braucht „dieser Satz, jetzt, und schließen".
+2. **Keine Tastaturbedienung an Tabellenzeilen.** Das Fenster hat heute
+   `tabIndex` + Enter (`nachschlagen.ts:372-390`). Ein Umbau ohne das wäre ein
+   Bedienungs-Rückschritt.
+3. **Toggle vs. Setzen.** `waehleAuswahl` schaltet dieselbe Zeile beim zweiten
+   Klick ab (`auswahl.ts:115-123`); für die Übernahme existiert bereits
+   `setzeAuswahl` ohne Toggle (Zeile 130). Der richtige Weg ist also da — er
+   muss nur bewusst gewählt werden.
+4. **Momentaufnahme vs. Live.** Das Fenster friert die Einträge beim Öffnen
+   ein, damit ein Daten-Push dem Bediener nicht die Zeilen unter dem Finger
+   verschiebt (`nachschlagen.ts:241-245`). Die Tabelle arbeitet live. **Diese
+   Entscheidung nicht nebenbei ändern.**
+5. **Die 10 verschwindet nicht von selbst.** `OHNE_MESSUNG = 10`
+   (`seitengroesse.ts:49`): ohne gemessene Höhe fällt auch die Tabelle auf 10
+   zurück. Im Dialog muss die Messung funktionieren.
+6. **Spaltenarten entstehen nicht automatisch.** Die Felder einer Datenquelle
+   liefern Code + Bezeichnung, keine Art (Zahl/Datum/Status).
+7. **Doppelter Rahmen.** Tabellenrahmen im Dialograhmen kann optisch doppeln.
+8. **Autofokus auf der Suche** muss erhalten bleiben.
+9. **Spaltenbreiten** bewusst festlegen (heute fest 65/35).
 
-**Warum das geht — alles vorhanden, nichts Neues nötig:**
-- `<ff-tabelle>` liest ihre Einstellungen aus Attributen (`source`, `spalten`
-  als JSON) und hydriert sich über `macheDatenAnschluss` selbst. Sie prüft
-  `data-ff-editor`; in der Maske fehlt das, also meldet sie sich normal an.
-- Suche, Blättern, Leerzustände, Fußzeile: eingebaut.
-- Zeilenauswahl: die Tabelle ist bereits Auswahl-**Geber** (`satzWahl`), gibt
-  also die angeklickte Zeile ab — genau was „Satz übernehmen" braucht.
-- Die Folge-Filterung liest `zeilenNachAuswahl(el, rows)` aus den Attributen
-  **des Elements**; die Folge-Attribute des Feldes werden beim Öffnen auf das
-  Tabellen-Element übertragen.
+**Neue Reihenfolge innerhalb A5a:**
+- **A5a-1 (Vorarbeit):** einen kleinen, allgemeinen Tabellen-Vertrag schaffen
+  — „Zeile aktiviert" mit Rückgabe der **Rohzeile**, Tastaturbedienung,
+  eindeutige Auswahl. Das nützt der Tabelle unabhängig vom Nachschlagen und
+  ist der einzige Teil, der neue Fähigkeit statt Umbau ist.
+- **A5a-2:** das Fenster auf `<ff-dialog-rahmen>` + `<ff-tabelle>` umstellen,
+  Punkte 4–9 einzeln entscheiden.
 
-**Anleitung:**
-1. In `oeffneNachschlagen` den handgebauten Inhalt ersetzen durch ein
-   `<ff-tabelle>`-Element, dessen Attribute aus den Feld-Einstellungen
-   entstehen: `source` = Nachschlage-Quelle, `spalten` = JSON mit den zwei
-   gewählten Feldern und ihren Klarnamen als Titel.
-2. Auswahl-Folge-Attribute vom Feld aufs Tabellen-Element kopieren (dieselben
-   Attributnamen, kein zweiter Weg).
-3. Zeilenklick: auf das Auswahl-Ereignis der Tabelle hören und daraus
-   `onUebernehmen(anzeige, wert, satz)` bedienen. Der Rohsatz kommt aus der
-   Auswahl — die Tabelle gibt ihn ohnehin ab.
-4. Die Such-Zeile im `slot="werkzeug"` entfällt — die Tabelle bringt ihre
-   eigene mit. Damit fällt auch `nachschlagTreffer` weg.
-5. Feste Zahlen weg: `SEITENGROESSE = 10` → gemessene Zeilenzahl (`PASSEND`);
-   Spaltenbreiten 65/35 → Spaltenarten.
-6. **Bleibt und muss bleiben:** die reinen Datenwege `nachschlagEintraege`,
-   `holeEintraege`, `einzigenTrefferFinden`, `satzPasstZurAuswahl`,
-   `folgeBeimVerlassen` — getestet, richtig, haben mit dem Fenster nichts zu
-   tun.
-7. Erwartete Größe danach: von 424 auf grob 150 Zeilen, ohne ein einziges
-   `cssText`.
+**Bleibt unangetastet:** die reinen Datenwege `nachschlagEintraege`,
+`holeEintraege`, `einzigenTrefferFinden`, `satzPasstZurAuswahl`,
+`folgeBeimVerlassen`.
 
-**Nebengewinn:** Das Fenster erbt ab dann jede künftige Tabellen-Verbesserung,
-und die Designsprache hat eine handgepflegte Ecke weniger.
-
-**Prüfung:** Bündel. `nachschlagen.test.ts` läuft weiter (er prüft die reinen
-Datenwege, nicht das DOM); die Fälle zur entfallenen Suche werden gestrichen.
-Referenzabzug erneuern (das Runtime-Bündel ändert sich).
-
-**Klickanleitung:** Maske mit Nachschlage-Feld exportieren und lokal öffnen →
-Lupe klicken → das Fenster muss Suche, Blättern und Fußzeile der normalen
-Tabelle zeigen → Zeile klicken übernimmt den Klarwert ins Feld → Feld leeren
-und verlassen, halb tippen und verlassen (die drei Ausgänge aus
-`folgeBeimVerlassen`) → mit Kunde/Haustier-Paar die Folge prüfen.
-
-**SE-Echttest (Nutzer):** dieselbe Maske in SoftEngine mit echten Beständen —
-vor allem die Folge-Filterung und ein Bestand > 100 Sätze.
+**SE-Echttest (Nutzer):** echte Bestände, Folge-Filterung, > 100 Sätze,
+Tastaturbedienung.
 
 ---
 
-## A5b · Das Fenster wird eine echte, bearbeitbare Seite
-**groß · ÄNDERT EXPORT-BYTES · ENTSCHEIDUNG OFFEN**
+## A5b · Fenster als Systemseite
+**VERTAGT**
 
-Die volle Fassung des Primitivs „Fläche + Rahmen": Das Nachschlage-Fenster ist
-dann kein Systemteil mehr, sondern eine **Popup-Seite wie jede andere** — mit
-einer Tabelle darin, die der Bauer sehen, umbauen und um Spalten erweitern
-kann. Der Editor legt sie auf einen Klick fertig verdrahtet an; danach ist sie
-normaler Baukasten.
+Die Idee bleibt richtig gedacht, aber sie führt mehr Lebenszyklus-Komplexität
+ein, als die erste Fassung zugegeben hat: Was passiert beim Kopieren eines
+Feldes? Beim Löschen? Beim Feldtyp-Wechsel? Bei mehreren Nachschlagefeldern?
+Wer ist Quelle der Wahrheit — Feld oder Seite? Wie werden ids verwaltet? Was
+bei verschachtelten Dialogen (heute gilt „kein Popup im Popup")?
 
-**Warum das die konsequente Lösung ist:** Es entsteht **kein einziger neuer
-Begriff.** Popup-Seite, Tabelle, Auswahl-Geber, Auswahl-Folge, `POPUP_OPEN` /
-`POPUP_CLOSE` — alles existiert und läuft. Das Fenster wäre buchstäblich das,
-was der eigene Grundsatz verlangt: sichtbar verdrahtet statt eingebaut.
-
-**Warum es ein eigenes Paket bleibt:** Es gibt eine echte offene Frage, die
-nur der Nutzer beantworten kann — **darf mehr als eine Seite gleichzeitig
-offen sein?** Heute gilt „kein Popup im Popup" (`allowedParentTypes =
-[ROOT_TYPE]`), und `DialogRahmen` löst das mit `position: fixed` und
-maximalem z-index. Steht das Nachschlage-Feld aber *in* einem Popup, wären
-zwei Seiten gleichzeitig offen. Das braucht eine Regel („Fenster stapeln sich,
-Escape schließt das oberste") — und Regeln über Bedienverhalten sind eine
-Nutzer-Entscheidung.
-
-**Empfehlung:** A5b erst nach dem SE-Echttest von A5a entscheiden. A5a bringt
-rund 90 % des Gewinns bei einem Bruchteil des Risikos; A5b ist danach ein
-sauberer, kleiner Aufsatz — oder er entfällt.
+**Erst A5a sauber lösen. Danach nur bauen, wenn ein echter Bedienungsnutzen
+übrig bleibt.**
 
 ---
 
-## A6 · Die letzten Dialekt-Reste
-**klein · ÄNDERT EXPORT-BYTES (Runtime-Bündel) · Genehmigung + SE-Echttest**
+## A6 · GESTRICHEN
 
-**Befund:** Nach A5a bleiben `cssText`-Stellen in `softengine/bridge.ts` und
-`softengine/meldung.ts` (der Fehlerbalken der Maske) — der Rest des dritten
-UI-Dialekts.
+Die verbliebenen imperativen DOM-Stellen sind **keine Architektur-Schuld**.
+`meldung.ts:31-33` setzt seine Farben als `var(--se-red-soft,#fbe7e6)` — mit
+Hex-Rückfall, damit die Notfallanzeige auch dann sichtbar ist, wenn die
+Token-Schicht nicht geladen hat. Eine Fehleranzeige an genau die
+Render-Infrastruktur zu koppeln, die im Fehlerfall kaputt sein kann, wäre ein
+Rückschritt.
 
-**Anleitung:**
-1. `meldung.ts` — der Fehlerbalken wird ein kleines Lit-Element (`ff-meldung`)
-   mit `styles` aus Masken-Tokens, wie jeder Baustein. Bleibt in
-   `softengine/`, ist aber kein Baustein und steht nicht in der Registry.
-2. `bridge.ts` — die eine `cssText`-Stelle ansehen; gehört sie zur Meldung,
-   wandert sie mit.
-3. Danach gilt ausnahmslos: **JSX im Editor-Chrom, Lit für alles, was der
-   Bediener sieht.** Diese Regel kann dann in CLAUDE.md, weil sie dann stimmt.
-
-**Prüfung:** Bündel, Referenzabzug erneuern.
-
-**Klickanleitung:** Maske mit absichtlich kaputter Kette exportieren und
-öffnen → der Fehlerbalken muss erscheinen, mehrere Fehler bündeln und
-aussehen wie vorher.
+Was bleibt, ist ein Kommentar in A0, damit diese Unabhängigkeit als
+**Entscheidung** dasteht und nicht von einem künftigen Agenten „aufgeräumt"
+wird.
 
 ---
 
-## A7 · Relationen und Parameter im Editor
-**noch nicht analysiert · ÄNDERT BEDIENUNG · ENTSCHEIDUNG OFFEN**
+## A7 · Relationen und Parameter — eigene Bedienungsaufgabe
+**ÄNDERT BEDIENUNG · kein Bauauftrag · Genehmigung nötig**
 
-**Anlass:** Nutzer-Ansage 2026-08-08 — „im Editor mit den Relationen und
-Parametern sieht das im Detail schon sehr komisch aus, man sieht, dass das
-historisch wächst und dadurch nicht schön ist."
+**Bestätigter Befund:** Dasselbe Thema wird an zwei Orten in zwei Formen
+gezeigt — Relations-**Vorlagen** breit in der Kommandozentrale, die
+**Schritte** in der ~340 px schmalen Inspector-Spalte, wo „Name | Quelle |
+Wert" einzeilig mit gekürzten Werten und Tooltip untergebracht werden muss
+(`ParameterZeile.tsx`). Die Zeile hat die Form ihres Behälters, nicht die
+ihrer Aufgabe.
 
-**Ehrlicher Stand:** Dieser Bereich war **nicht** Teil der Analyse. Was hier
-steht, ist ein erster Eindruck aus einem kurzen Blick in die Dateien, kein
-geprüfter Befund. Er ist bewusst als offene Frage formuliert und **nicht** als
-Bauauftrag.
+**Was NICHT geändert wird:** Die konkrete Aktionskette bleibt **beim
+ausgewählten Baustein** (Regel 7 — die Interaktion gehört zu dem Ding, das sie
+auslöst). Die Kommandozentrale bleibt für maskenweite Pflege. Das Problem ist
+der **Platz**, nicht der Ort.
 
-**Erster Eindruck, strukturell:**
+**Zu prüfende Vorschläge** — plausibel, aber von Claude **nicht am Code
+verifiziert**; vor jeder Umsetzung gegen Designsprache und echten Arbeitsablauf
+halten:
 
-Dasselbe Thema — eine Relation mit ihren Parametern — wird an **zwei Orten in
-zwei völlig verschiedenen Formen** gezeigt:
+- Im Inspector: Ereignis + **kompakte Liste** der Schritte. Klick auf einen
+  Schritt öffnet einen **breiteren Bereich**, in dem die ganze Kette links
+  sichtbar bleibt und der gewählte Schritt rechts bearbeitet wird. Heute
+  ersetzt `StepForm` den gesamten Inspector — der Zusammenhang zur Kette geht
+  beim Bearbeiten verloren.
+- Schrittzeile: fünf dauerhaft sichtbare Symbolknöpfe reduzieren. Klick auf
+  die Zeile = bearbeiten; Verschieben über einen Griff; Kopieren/Löschen in
+  ein Drei-Punkte-Menü.
+- Parameter nicht in eine waagerechte Zeile pressen, sondern als kleine
+  Karte: Feld-Position (darunter klein die technische Schreibweise), dann
+  Quelle, dann Wert über die volle Breite.
+- **Zu prüfen:** ob das `X` heute zwei Bedeutungen trägt — „vorhandenen
+  Relationsparameter leer senden" und „frei hinzugefügten Parameter löschen".
+  Wenn ja, ist das für einen Bediener mehrdeutig und gehört getrennt.
+- Verständliche Bedeutungen aus `helfer.ts` anzeigen statt vorrangig roher
+  Syntax; seltene Quellen unter „Weitere Quellen" gruppieren.
+- Ist eine Relation gewählt, muss die Suchliste nicht offen bleiben:
+  `Relation: Kunde laden · GET Nr. 4   [Ändern]`.
+- Verwendungsanzeige konkreter und anklickbar:
+  `Schaltfläche "Termin anlegen" → Klick → Schritt 3`.
+- Löschwarnung präzisieren: statt pauschal „Schreibweg ruht" eher
+  „Diese Relation wird in 3 Aktionsschritten verwendet. Nach dem Löschen sind
+  diese Schritte unvollständig und müssen korrigiert werden." (GET und PUT
+  verhalten sich nicht gleich.)
+- SoftEngine-Syntax unter „Technische Details" einklappen.
+- Einzelne `rounded-full`-Chips im Editor gegen die 4px-Radius-Regel prüfen
+  (niedrige Priorität).
 
-- Die Relations-**Vorlagen** leben in der Kommandozentrale
-  (`Kommandozentrale.tsx`): Modal über der ganzen Fläche, Master-Detail,
-  breit, mit Syntaxzeile und „Verwendung in dieser Maske".
-- Die **Schritte**, die diese Vorlagen benutzen, leben im Inspector
-  (`StepForm.tsx`, 430 Zeilen): schmale Spalte, rund 340 px. Deshalb steht
-  jeder Parameter **einzeilig** — „Name | Quelle | Wert" gequetscht in eine
-  Zeile, lange Technikwerte gekürzt, der Rest im Tooltip
-  (`ParameterZeile.tsx`, 361 Zeilen).
+**Nächster Schritt:** eigener Analyse-Auftrag für diesen Bereich. Nichts davon
+wird ohne Genehmigung gebaut.
 
-Die Parameterzeile hat also die Form, die ihr **Behälter** vorgibt, nicht die,
-die ihre **Aufgabe** verlangt. Genau das ist der Eindruck „historisch
-gewachsen": nicht schlechte Einzelentscheidungen, sondern eine Ansicht, die
-sich der Breite eines Panels gefügt hat, das für Eigenschaften gedacht war.
+---
 
-Dazu kommt, dass acht Parameter-Quellenarten (`Fest`, `Ereigniswert`,
-`Datenfeld`, `Baustein`, `Gewählte Zeile`, `Vorheriger Schritt`, `Ergebnis von
-Schritt`, `SE VAR-Array`) alle in dieselbe schmale Zelle passen müssen,
-obwohl sie ganz verschieden viel Platz brauchen.
+## A8 · Der Export löst zwei Downloads aus  *(NEU)*
+**ÄNDERT BEDIENUNG · Bedienungsentscheidung ZUERST**
 
-**Die Frage, nicht die Antwort:** Gehört das Bearbeiten einer Aktionskette
-überhaupt in die 340-px-Spalte? Eine Kette ist eine Abfolge mit Parametern —
-das ist eher eine Tabelle als ein Formular. Ob die Kette dorthin gehört, wo
-heute die Vorlagen sind (breite Fläche), ob sie eine eigene Ansicht bekommt,
-oder ob die Zeile selbst anders geschnitten wird, ist eine
-**Gestaltungsfrage** und keine Architekturfrage — sie gehört dem Nutzer, nicht
-dem bauenden Agenten.
+**Befund:** Ein Export-Klick löst zwei Downloads unmittelbar nacheinander aus
+(`index.basis.source.html` + `index.basis.SEvariablen.json`). Chromium fragt
+dann nach Berechtigung; ein abgelehnter zweiter Download **verschwindet
+still**. Das steht bereits in CLAUDE.md als bekannter offener Punkt.
 
-**Nächster Schritt:** eigener Analyse-Auftrag für diesen Bereich, bevor
-irgendetwas gebaut wird. Vorschläge zur Bedienung sind ausdrücklich erwünscht
-(auch von Codex), aber nichts davon wird ohne Genehmigung umgesetzt.
+**Warum das hoch gehört, nicht tief:** Für einen Bediener, der nicht
+programmieren kann, ist das gefährlicher als jede interne Architekturfrage —
+er kann glauben, der Export sei vollständig, während eine Datei fehlt. Alles
+andere in diesem Plan ist Wartbarkeit; das hier ist ein möglicher stiller
+Datenverlust am Ende der Werkbank.
+
+**Nicht ungefragt eine ZIP bauen.** Zuerst die Benutzerführung festlegen —
+eine ZIP könnte den gewohnten SoftEngine-Ablauf (zwei Dateien an zwei Orte)
+verändern. Zu klärende Varianten, in der Reihenfolge der Eingriffstiefe:
+
+1. **Nur Rückmeldung:** nach dem Export sichtbar anzeigen, welche zwei Dateien
+   erzeugt wurden, mit je einem eigenen Knopf zum erneuten Laden. Ändert den
+   Ablauf nicht, beseitigt aber das stille Verschwinden.
+2. **Zwei bewusste Klicks** statt eines automatischen Doppel-Downloads.
+3. **ZIP** — nur, wenn der Nutzer sagt, dass ihn das im SE-Ablauf nicht stört.
+
+**Empfehlung:** Variante 1, weil sie nichts kaputt macht und das eigentliche
+Problem (stiller Verlust) löst. Entscheidung liegt beim Nutzer.
+
+---
+
+## D1 · Designsprache — Abweichungen klären, nicht bauen  *(NEU)*
+**klären · dann ggf. Genehmigung**
+
+**Rahmenbedingung:** Editor-Oberfläche (shadcn, hell, Indigo) und Maskenwelt
+(Fellnase, `--se-*`) sind laut CLAUDE.md **getrennte Designwelten** — „nie
+mischen". Der Indigo-Look des Editors ist **kein** Fellnase-Verstoß.
+
+**Bewusst und richtig (kein Handlungsbedarf):**
+- Schriftgröße 13,5 statt 15 — laut Projektentscheidung absichtlich kompakter.
+- Statusdarstellung und wesentliche Kartenstruktur treffen das Vorbild gut.
+
+**Zu klären:**
+1. **Kanban-Spaltenkopf.** Der eingecheckte Musterbogen zeigt
+   `spalte-titel` + `zaehler` — **keinen Punkt**
+   (`designsprache/musterbogen.html:461`). Der Code fügt Statusfarbe, farbige
+   Unterkante und einen quadratischen Punkt hinzu (`KanbanSpalteBlock.ts:143`
+   ff.). CLAUDE.md behauptet, die Spalte passe schon („Punkt, Titel, Zähler").
+   Eines ist veraltet. **Nicht zurückbauen** — klären, welche Entscheidung
+   gilt, dann Code **oder** Doku eindeutig machen.
+2. Buttons und Formfelder haben teils kleinere Innenabstände als der
+   Musterbogen — bewusst oder Drift?
+3. Die Tabelle ist deutlich dichter als der Musterbogen — wenn gewollt, als
+   bewusste Ausnahme festhalten.
 
 ---
 
 # Teil 2 — Prozess
 
-## P1 · Die Wächter nach außen drehen
+## P1 · SE-Nachweistabelle
+**freigegeben · keine Code-Änderung**
 
-**Befund:** Fünf Wächter und 6.000 Testzeilen schützen das Innere. Der
-Referenzabzug ist eine 121-zeilige **selbstgebaute** Maske, keine
-Reproduktion einer echten. Die Frage, die über alles entscheidet — läuft der
-Export unverändert in SoftEngine — hängt an der Erinnerung des Nutzers.
+`docs/softengine-wiki/` ist der Ordner, der den Doku-Schnitt überlebt hat,
+weil er beweist statt zu erzählen. Er bekommt **eine** Datei: `echttests.md`.
 
-**Lösung ohne Verletzung des Doku-Schnitts:** `docs/softengine-wiki/` ist der
-einzige Ordner, der überlebt hat, weil er beweist statt zu erzählen. Er
-bekommt **eine** Datei dazu: `echttests.md`, eine Tabelle.
+| Datum | Commit | Maske | Plattform | Was geprüft | Ergebnis | ohne Handkorrektur? |
+|---|---|---|---|---|---|---|
 
-| Datum | Maske | Plattform | Was geprüft | Ergebnis |
-|---|---|---|---|---|
-
-Eine Zeile je Echttest. Bei Fehlschlag: was SoftEngine gemeldet hat, wörtlich.
-Mehr nicht.
-
-**Was das ändert:** „SE-Kontrakt belegt" wird prüfbar statt erinnert. Der
-offene Punkt aus Regel 5 (ist das Interface-Skript nötig?) bekommt einen Ort,
-an dem er beantwortet werden kann, sobald jemand einen Lauf ohne den Tag
-macht.
+Die Spalte **Commit** ist der Kern (Ergänzung aus der Gegenprüfung): erst
+damit ist „lief in SoftEngine" einer konkreten Codeversion zugeordnet — und
+genau das braucht A1, um hinterher unterscheidbar zu machen, ob ein Fehler vom
+Umbau kommt oder vorher schon da war.
 
 ---
 
 ## P2 · CLAUDE.md nach Haltbarkeit trennen
-**ENTSCHEIDUNG OFFEN**
+**Entscheidung offen**
 
-**Befund:** Eine Datei macht drei Jobs mit drei Haltbarkeiten: Verfassung
-(dauerhaft), Entscheidungs-Protokoll (historisch), Statusbrett (nach einer
-Woche schal) — inklusive Widerrufen im Fließtext. Jede Sitzung zahlt den
-vollen Preis.
+Eine Datei, drei Haltbarkeiten: Verfassung (dauerhaft), Protokoll
+(historisch), Statusbrett (schnell schal) — inklusive Widerrufen im
+Fließtext. Vorschlag: Trennung **innerhalb** der Datei, keine neuen Dateien.
 
-**Empfehlung — Trennung INNERHALB der Datei, keine neuen Dateien** (der
-Doku-Schnitt war eine Nutzer-Entscheidung und wird nicht angefasst):
+1. **Verfassung** — 10 Regeln, feste Zusagen, SE-Kontrakte. Ziel ~80 Zeilen.
+2. **Entschieden und erledigt** — was wann warum rausflog.
+3. **Woran gerade gearbeitet wird** — kurz, überschrieben statt ergänzt.
 
-1. **Teil 1 · Verfassung** — die 10 Regeln, die festen Zusagen, die
-   SE-Kontrakte. Muss vor jeder Änderung gelesen werden. Ziel: ~80 Zeilen.
-2. **Teil 2 · Entschieden und erledigt** — was wann warum rausflog,
-   gestrichene Rubriken, überholte Gegenrichtungen. Wird gelesen, wenn jemand
-   fragt „warum ist das so?".
-3. **Teil 3 · Woran gerade gearbeitet wird** — kurz, beim nächsten Paket
-   überschrieben statt ergänzt.
+Dabei mit erledigen: die veralteten Aussagen, die die Gegenprüfung gefunden
+hat (Kanban-Spaltenkopf, Popup-Raster).
 
-**Die Regel dahinter:** Eine Aussage, die widerrufen wurde, gehört nicht mehr
-in den Teil, der befolgt wird. Sie gehört ins Protokoll.
-
-Der bauende Agent legt nur einen Vorschlag vor; die Verfassung schreibt der
-Nutzer.
+Der Agent legt nur einen Vorschlag vor; die Verfassung schreibt der Nutzer.
 
 ---
 
-## P3 · Eine echte Maske end-to-end
-**ENTSCHEIDUNG OFFEN · vermutlich der wertvollste Punkt im Plan**
+## P3 · Eine echte Maske end-to-end — und der belegte Ausgangszustand
+**Entscheidung offen · nach der Gegenprüfung AUFGEWERTET**
 
-**Befund:** Regel 10 („nichts auf Verdacht") wird beim Code streng eingehalten
-und bei der Feature-Front nicht. Kanban, Tabelle, Popup, Nachschlagen, Ketten,
-Relationen, Designsprache — und gleichzeitig sind ERPAPICALL, MEMTAB und der
-Wertevertrag des Ankreuzfelds vertagt, „bis an einer echten Maske belegt".
+Belegbar ist nicht, dass nie eine echte Maske produktiv lief — belegbar ist,
+dass **kein aktueller End-to-End-Nachweis dokumentiert** ist.
 
-**Vorschlag:** Eine Maske, die wirklich gebraucht wird — langweilig, klein,
-vollständig — mit dem Editor bauen und **produktiv einsetzen**. Nicht als
-Test, sondern im Betrieb.
+Das war in Fassung 1 „nice to have". Jetzt ist es **Voraussetzung für A1**:
+Sobald der Runtime-Umbau läuft, ist ohne festgehaltenen Ausgangszustand nicht
+mehr unterscheidbar, ob ein Fehler in SoftEngine vom Umbau kommt oder vorher
+schon da war.
 
-**Was das liefert, was kein Wächter liefern kann:**
-- Den Beweis, dass der Nordstern hält („läuft ohne Nachbesserung von Hand") —
-  heute ist das eine Annahme.
-- Die offenen SE-Verträge beantworten sich von selbst, weil die Maske sie
-  braucht.
-- Jede Lücke, die auffällt, ist garantiert eine echte.
-
-**Empfehlung zur Einordnung:** P3 **vor** A5b. Zeigt die echte Maske, dass das
-Nachschlagen anders gebraucht wird als gedacht, wäre A5b sonst am Bedarf
-vorbeigebaut.
+**Vorschlag:** eine Maske, die wirklich gebraucht wird — langweilig, klein,
+vollständig — bauen, exportieren, in SoftEngine laufen lassen, Ergebnis in P1
+eintragen (mit Commit). Dann erst die großen Umbauten.
 
 ---
 
-## P4 · Der 500-Zeilen-Deckel
-**ENTSCHEIDUNG OFFEN · klein**
+## P4 · 500-Zeilen-Deckel
+**Empfehlung: unverändert lassen**
 
-**Befund:** Der Deckel erzeugt inzwischen Teilungen, die eine Zeilenzahl
-protokollieren statt einer Naht — `BlockDefinition.ts` lagert `listenBindung`
-aus und re-exportiert es sofort wieder, mit genau dieser Begründung im
-Kommentar. Dasselbe bei `knotenStil` aus `exportMask`.
+Abgestuft zur Beobachtung: `listenBindung` und `knotenStil` haben je einen
+erkennbaren eigenen Zweck; als Beweis für „unsinnige Modulgrenzen" taugen sie
+nicht. Bemerkenswert bleibt nur, dass der **festgehaltene Grund** eine
+Zeilenzahl ist. A1 verkleinert `BlockDefinition.ts` ohnehin.
 
-**Empfehlung: Deckel behalten, nichts am Wächter ändern.** A1 schrumpft
-`BlockDefinition.ts` ohnehin deutlich, und ein Deckel, den man aufweicht,
-sobald er drückt, ist keiner.
-
-**Stattdessen ein Satz in der Verfassung (P2):** „Eine Datei wird an einer
-Naht geteilt. Wer nur teilt und alles zurück-exportiert, hat den Rauchmelder
-abgeklebt — dann lieber den Inhalt kürzen." Der Wächter kann das nicht
-prüfen; es ist eine Denkregel, keine Maschine.
+Kein Wächter-Eingriff. Höchstens ein Satz in der Verfassung: „Eine Datei wird
+an einer Naht geteilt, nicht am Zähler."
 
 ---
 
-## P5 · Die Test-Sperre
+## P5 · Test-Sperre
 **nichts zu tun**
 
-Der Punkt steht hier, damit klar ist, **welcher Tausch gekauft wurde**: keine
-Anzeige-Regressionen zu bemerken, dafür keine Token- und Zeitfresser und keine
-Agenten, die sich auf grüne Ampeln verlassen statt zu denken. Der Tausch ist
-in sich stimmig, Befund B1 stützt ihn, die Klickanleitung ist der vereinbarte
-Preis.
+Bewusster Tausch: keine Anzeige-Regressionen zu bemerken, dafür keine Token-
+und Zeitfresser und keine Agenten, die sich auf grüne Ampeln verlassen statt
+zu denken. Die Klickanleitung ist der vereinbarte Preis. Hier wird nichts
+vorgeschlagen — die Regel ist ausdrücklich auch gegen Vorschläge gerichtet.
 
-**Hier wird nichts vorgeschlagen** — die Regel ist hart und ausdrücklich, auch
-gegen Vorschläge. Der Punkt ist mit diesem Absatz abgeschlossen.
+---
+
+# Reihenfolge — Fassung 2
+
+| Schritt | Paket | Warum hier |
+|---|---|---|
+| 1 | **A0** | Widersprüchliche Angaben zuerst weg — alles Weitere baut darauf auf |
+| 2 | **P1** | Der Nachweisplatz muss existieren, bevor der erste Lauf stattfindet |
+| 3 | **P3** | Belegter Ausgangszustand VOR jedem Runtime-Umbau |
+| 4 | **P2** | Verfassung entrümpeln, veraltete Aussagen mit erledigen |
+| 5 | **A2** | Klein, harmlos, keine Bytes |
+| 6 | **A8** | Bedienungsentscheidung; das gefährlichste Alltagsproblem |
+| 7 | **D1** | Klären (nicht bauen), damit A7 auf gesicherter Grundlage steht |
+| 8 | **A1** | Der große Strukturgewinn — danach SE-Echttest |
+| 9 | **A3** | Danach SE-Echttest |
+| 10 | **A4** | Erst nach der Bedienungsentscheidung, mit korrigierter Migration |
+| 11 | **A5a-1** | Tabellen-Vertrag als eigenständiger Gewinn |
+| 12 | **A5a-2** | Fenster umstellen — danach SE-Echttest |
+| 13 | **A7** | Eigene Bedienungsüberarbeitung, eigener Auftrag |
+| — | A5b | vertagt |
+| — | A6 | gestrichen |
 
 ---
 
 # Offene Entscheidungen (Nutzer)
 
-1. **A4** — Raster im Popup-Rumpf (mit Migration bestehender Stände) oder
-   Fluss als Regel festschreiben? *Empfehlung: Raster.*
-2. **A5b** — volle Fassung bauen? Und wenn ja: wie verhalten sich zwei offene
-   Fenster? *Empfehlung: nach A5a und P3 entscheiden.*
-3. **A7** — eigener Analyse-Auftrag für Relationen/Parameter, bevor dort
-   irgendetwas gebaut wird.
-4. **P2** — CLAUDE.md dreiteilen: ja/nein?
-5. **P3** — welche echte Maske zuerst?
-6. **P4** — Deckel bei 500 lassen? *Empfehlung: ja.*
-
-**Abweichende Reihenfolge-Empfehlung, damit sie bewusst überstimmt werden
-kann:** P3 (eine echte Maske im Betrieb) vor A5b einzuschieben kostet Zeit
-statt Code, verhindert aber, dass das größte Paket am tatsächlichen Bedarf
-vorbeigebaut wird.
+1. **A4** — Soll ein Popup frei im Raster gestaltbar sein wie die Hauptseite,
+   oder ist „Fenster = einfacher Fluss" gewollt? *Empfehlung: nach P3
+   entscheiden.*
+2. **A8** — Welche der drei Varianten beim Export? *Empfehlung: Variante 1
+   (sichtbare Rückmeldung), weil sie nichts am SE-Ablauf ändert.*
+3. **D1** — Gilt beim Kanban-Spaltenkopf der Musterbogen oder der Code?
+4. **A7** — eigener Analyse-Auftrag: ja/nein?
+5. **P2** — CLAUDE.md dreiteilen: ja/nein?
+6. **P3** — welche echte Maske zuerst?
+7. **A5b** — bleibt vertagt, bis A5a läuft. Einverstanden?
