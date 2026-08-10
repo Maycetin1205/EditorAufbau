@@ -30,21 +30,21 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** A2 (2026-08-10) — davor A1, A0, A8.1, A8.2
-- **Naechste Etappe:** A2.1 (das `migrated`-Boolean aufteilen). Beim Bau von A2
-  ist aufgefallen, dass A2.1 nicht nur Vorbereitung fuer Schema 6 ist, sondern
-  einen HEUTE wirksamen Fehler behebt — s. naechster Punkt. A9 setzt A2.1 bis
-  A7 voraus.
+- **Letzte fertige Etappe:** A2.1 (2026-08-10) — davor A2, A1, A0, A8.1, A8.2
+- **Naechste Etappe:** A3 (neuere Browserstaende nicht mit alter App
+  zerstoeren). A9 setzt A3 bis A7 voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
-- **Belegter Fehler, noch offen (gefunden 2026-08-10 beim Bau von A2):** eine
-  MASKENDATEI aus Schema <= 4, die einen der fuenf alten Karten-Werkstexte
-  enthaelt (`Heute`, `09:15`, `Katze - EKH`, `Rueckruf Fr. Wagner`,
-  `Befund Minka besprechen`), laesst sich GAR NICHT laden. Der Demotext-Putzer
-  setzt `migrated` nicht; damit laeuft die Detail-Verlustpruefung in
-  `maskenDatei.ts`, sieht die absichtlich geleerten Props als Verlust und
-  lehnt die Datei ab („am Baustein ... stimmen Angaben nicht"). Der
-  Browser-Weg ist nicht betroffen (er hat diese Pruefung nicht). Der Fall
-  steht als `it.todo` in `maskenDatei.test.ts`; A2.1 loest ihn.
+- **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
+  `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
+  und `absichtlichGeleert` (die namentlich gemeldeten Stellen des
+  Demotext-Putzers). NICHT gebaut ist `problems` — dafuer gibt es heute
+  keinen Aufrufer, und Regel 10 verbietet Bauen auf Verdacht. Ebenfalls offen,
+  weil es Schema 6 voraussetzt: die Ausnahmeliste fuer die erlaubten
+  Popup-Raster-/Breiten-Diffs und die Zusage „auch ein leeres Schema-5-Popup
+  setzt schemaAdvanced". Beides gehoert in C2, wenn Schema 6 wirklich kommt.
+  Ausserdem melden die vier `migrate*`-Funktionen weiterhin nur ein Boolean,
+  keine Pfade — solange eine Schemastufe lief, bleibt die
+  Detail-Verlustpruefung der Maskendatei also weiter ganz aus.
 - **Offene Baustelle, bewusst stillgelegt:** der VAR-Abschnitt des Exports
   (offener Satz) ist NICHT gebaut. `lieferung`/`istOffenerSatz` in
   `core/data/dataSources.ts` ruft niemand auf, `exportMask` schreibt keinen

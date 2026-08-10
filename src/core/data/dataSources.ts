@@ -124,6 +124,43 @@ export function kopfsatzFor(source: DataSource): string {
   return (source.kopfsatzIndex ?? '').trim()
 }
 
+// Der VAR-Abschnitt der SEvariablen, abgeleitet aus den Kopfsätzen.
+//
+// WARUM abgeleitet und nicht eingestellt: ein KOPFSATZ_INDEX 'BEL_0_11' zeigt
+// auf eine Variable namens BEL. Gibt es die nicht, löst SoftEngine den Kopfsatz
+// nicht auf und verwirft die ganze SEFILELOOP-Zeile STILLSCHWEIGEND — die
+// Tabelle bleibt leer, ohne Fehler. Gemessen an der Maske des Nutzers
+// (2026-08-07, drei Echttests: ohne VAR jedes Mal leer; von Hand ergänztes VAR
+// mit expliziter Feldliste ließ die Positionen kommen). Es gibt hier also
+// nichts zu wählen: wer einen Kopfsatz schreibt, BRAUCHT den Eintrag. Ein
+// Häkchen im Formular wäre nur eine Gelegenheit, die Maske kaputt zu machen.
+//
+// Form nach dem ausgelieferten Rahmen00001 der Belegerfassung:
+//   VAR: [{ ID: 'BEL', FELDER: '0_11, 0_1, 2_1, …' }]
+// Bestellt wird nur das Feld, auf das der Kopfsatz zeigt — mehr ist für die
+// Auflösung nicht belegt, und Bestellen auf Verdacht ist Raten (Regel 5/10).
+//
+// Reihenfolge = Reihenfolge der Quellen, Felder in Reihenfolge des Auftretens;
+// zwei Quellen am selben Kopfsatz ergeben EINEN Eintrag. Keine Kopfsätze =
+// leere Liste (der Export lässt den Schlüssel dann ganz weg).
+export function varAusKopfsaetzen(
+  sources: readonly DataSource[],
+): { ID: string; FELDER: string }[] {
+  const proId = new Map<string, string[]>()
+  for (const s of sources) {
+    const kopfsatz = kopfsatzFor(s)
+    if (kopfsatz === '') continue
+    // 'BEL_0_11' -> ID 'BEL', Feld '0_11'. Die Form ist beim Eintippen geprüft
+    // (kopfsatzFromInput), ein Wert ohne sie kommt hier nicht an.
+    const teile = /^([A-Za-z][A-Za-z0-9]*)_(\d+_\d+)$/.exec(kopfsatz)
+    if (!teile) continue
+    const felder = proId.get(teile[1]) ?? []
+    if (!felder.includes(teile[2])) felder.push(teile[2])
+    proId.set(teile[1], felder)
+  }
+  return [...proId].map(([ID, felder]) => ({ ID, FELDER: felder.join(',') }))
+}
+
 // KEIN mitgelieferter Startbestand mehr (Nutzer-Entscheidung 2026-07-30:
 // „Raus, leer starten").
 //

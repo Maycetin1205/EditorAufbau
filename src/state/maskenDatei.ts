@@ -102,6 +102,26 @@ function keinVerlust(roh: unknown, rein: unknown): boolean {
     .every((k) => Object.prototype.hasOwnProperty.call(b, k) && keinVerlust(a[k], b[k]))
 }
 
+// Die Props eines Bausteins OHNE die Stellen, die eine Migration absichtlich
+// geleert hat (A2.1). Sie aus dem SOLL zu nehmen ist die engste moegliche
+// Ausnahme: geprueft wird weiterhin jede andere Eigenschaft desselben
+// Bausteins, und eine Stelle wird nur dann uebersprungen, wenn der Putzer sie
+// namentlich gemeldet hat. Nichts wird pauschal durchgewunken.
+function ohneGeleerte(
+  props: unknown,
+  bausteinId: string,
+  geleert: ReadonlySet<string>,
+): unknown {
+  if (geleert.size === 0 || !props || typeof props !== 'object' || Array.isArray(props)) {
+    return props
+  }
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(props as Record<string, unknown>)) {
+    if (!geleert.has(`${bausteinId}.${k}`)) out[k] = v
+  }
+  return out
+}
+
 // Eine Bibliothek pruefen: bereinigen — und danach nachsehen, ob dabei etwas
 // verlorengegangen ist.
 //
@@ -282,9 +302,19 @@ function auspacken(text: string): AuspackErgebnis {
   // an einer Datei echter Arbeitsverlust.
   //
   // Diese Pruefung gilt nur, wenn der Baum unveraendert durchlaufen SOLLTE:
-  // liefen Migrationen oder fielen abgeschaffte Bausteintypen weg, dann
+  // lief eine Schemastufe oder fielen abgeschaffte Bausteintypen weg, dann
   // AENDERT sich der Baum von Berufs wegen, und ein Vergleich waere Unsinn.
-  if (!baum.migrated && bekanntVerworfen === 0) {
+  //
+  // Der Demotext-Putzer zaehlt AUSDRUECKLICH NICHT dazu (A2.1, 2026-08-10).
+  // Er hat nie eine Schemastufe gesetzt, also lief diese Pruefung auch dann,
+  // wenn nur er zugeschlagen hatte — und sah seine absichtlich geleerten
+  // Props als Verlust: eine Datei aus Schema <= 4 mit einem der fuenf
+  // Werkstexte liess sich GAR NICHT laden. Ihn pauschal wie eine Migration zu
+  // behandeln waere die falsche Abhilfe: dann bliebe die ganze Datei
+  // ungeprueft, nur weil irgendwo „Heute" stand. Stattdessen nennt er die
+  // Stellen beim Namen, und genau die werden hier geduldet — alles andere
+  // wird weiter vollstaendig verglichen.
+  if (!baum.schemaAdvanced && bekanntVerworfen === 0) {
     for (const [id, rohKnoten] of Object.entries(rohBaum)) {
       const rein = baum.tree[id]
       const roh = rohKnoten as Record<string, unknown>
@@ -305,7 +335,7 @@ function auspacken(text: string): AuspackErgebnis {
       // die zweite Beziehung faellt lautlos weg, ohne dass sich eine
       // Knotenzahl aendert.
       if (!rein || rein.type !== roh.type
-        || !keinVerlust(roh.props, rein.props)
+        || !keinVerlust(ohneGeleerte(roh.props, id, baum.absichtlichGeleert), rein.props)
         || !keinVerlust(roh.events, rein.events)
         || !keinVerlust(roh.childIds, rein.childIds)) {
         return {

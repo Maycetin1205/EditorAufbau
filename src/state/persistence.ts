@@ -59,7 +59,12 @@ interface PersistedState {
 export interface LoadedState {
   tree: BlockTree
   selectedId: string | null
-  migrated: boolean
+  // Der geladene Stand muss unter der aktuellen Version neu gespeichert
+  // werden. Hiess bis A2.1 `migrated` — ein Name, der beschrieb, was PASSIERT
+  // war, statt was zu TUN ist; genau diese Unschaerfe hat der Datei-Weg
+  // geerbt. Gespeist wird er heute allein aus `schemaAdvanced`; ein zweiter
+  // Grund zum Neuspeichern existiert noch nicht (Regel 10).
+  resaveNeeded: boolean
 }
 
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
@@ -72,15 +77,14 @@ export interface LoadedState {
 // onDropType: meldet jeden verworfenen UNBEKANNTEN Typ (z. B. die 2026-07-14
 // abgeschafften Bausteine Text/Bereich/Infobox/Chip/Eingabefeld in alten
 // Speicherständen) — Nutzer-Regel: Verluste beim Laden passieren NIE still.
-// `putzeDemos` = Altbestands-Putzer fuer die frueheren Karten-Demotexte.
-// Standard true (Verhalten des Browser-Speichers unveraendert). Eine
-// AKTUELLE Maskendatei laesst ihn aus: dort waere „Heute" im Chip ein echter
-// Nutzerwert, und ihn wegzuputzen hiesse, eine eben gespeicherte Datei beim
-// Laden abzulehnen (Codex-Codereview 2026-07-28).
+// Der Altbestands-Putzer fuer die frueheren Karten-Demotexte lief bis A2.1
+// hier drin. Er sitzt jetzt in `baumAusRohdaten` — dort, wo auch die uebrigen
+// Migrationen laufen und wo sein Ergebnis (die geleerten Stellen) an den
+// Aufrufer weitergereicht werden kann. Verhaltensgleich: derselbe Zeitpunkt,
+// dieselbe Bedingung, nur eine Ebene hoeher.
 export function sanitizeTree(
   raw: Record<string, unknown>,
   onDropType?: (type: string) => void,
-  putzeDemos = true,
 ): BlockTree {
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
@@ -122,7 +126,6 @@ export function sanitizeTree(
   const rootSrc = src[ROOT_ID]
   const rootChildren = rootSrc && Array.isArray(rootSrc.childIds) ? rootSrc.childIds : []
   for (const cid of rootChildren) addChild(ROOT_ID, cid)
-  if (putzeDemos) putzeAlteKartenDemos(tree)
   return tree
 }
 
@@ -151,7 +154,15 @@ function backupUnreadableState(raw: string): void {
 export interface BaumErgebnis {
   tree: BlockTree
   selectedId: string | null
-  migrated: boolean
+  // Eine Schemastufe wurde durchlaufen — heisst zugleich: der Stand muss unter
+  // der neuen Version neu gespeichert werden. Hiess bis A2.1 `migrated`; der
+  // alte Name klang nach „irgendetwas hat sich geaendert" und wurde vom
+  // Datei-Weg auch so gelesen (s. `absichtlichGeleert`).
+  schemaAdvanced: boolean
+  // Stellen, die eine Migration ABSICHTLICH geleert hat, als
+  // `bausteinId.prop`. Nur so kann der Datei-Weg gewollte Aenderung von
+  // Beschaedigung unterscheiden, statt beides gleich zu behandeln.
+  absichtlichGeleert: ReadonlySet<string>
   // Verworfene unbekannte Bausteintypen: Typname -> Anzahl.
   verworfen: Map<string, number>
 }
@@ -166,10 +177,14 @@ export function baumAusRohdaten(parsed: {
   // Verworfene unbekannte Typen sammeln (nie still): trifft v. a. die
   // 2026-07-14 abgeschafften Bausteine in alten Staenden.
   const verworfen = new Map<string, number>()
+  const absichtlichGeleert = new Set<string>()
   if (parsed.tree && typeof parsed.tree === 'object') {
     tree = sanitizeTree(parsed.tree as Record<string, unknown>, (type) => {
       verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
-    }, putzeDemos)
+    })
+    // Nur am Baum-Weg, genau wie vorher: der alte `blocks`-Weg unten hat den
+    // Putzer nie gesehen, und das bleibt so.
+    if (putzeDemos) for (const p of putzeAlteKartenDemos(tree)) absichtlichGeleert.add(p)
   } else if (Array.isArray(parsed.blocks)) {
     tree = migrateFlatBlocks(parsed.blocks)
   }
@@ -181,22 +196,22 @@ export function baumAusRohdaten(parsed: {
   // umgeschrieben wird (z. B. bewusst gesetzte Kanban-Pixelhoehen aus Schema 2
   // ruehrt die 1→2-Migration nicht mehr an).
   const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-  let migrated = false
-  if (schemaVersion < 2) migrated = migrateRootKanbanToViewportFill(tree) || migrated
-  if (schemaVersion < 3) migrated = migrateFlowToRaster(tree) || migrated
+  let schemaAdvanced = false
+  if (schemaVersion < 2) schemaAdvanced = migrateRootKanbanToViewportFill(tree) || schemaAdvanced
+  if (schemaVersion < 3) schemaAdvanced = migrateFlowToRaster(tree) || schemaAdvanced
   // Schema 4: heilt die Riesen-Rahmen aus der ersten (kaputten) Raster-
   // Migration bei Nutzern, deren Speicher schon auf Schema 3 stand.
-  if (schemaVersion < 4) migrated = migrateRasterBreitenReparatur(tree) || migrated
+  if (schemaVersion < 4) schemaAdvanced = migrateRasterBreitenReparatur(tree) || schemaAdvanced
   // Schema 5: setzt zu grosse Alt-Starthoehen (aus der ersten Raster-
   // Migration) auf die neuen, engen Registry-Starthoehen zurueck — jetzt, wo
   // der Baustein seine Zelle fuellt, liegt der Rahmen damit eng am Inhalt.
-  if (schemaVersion < 5) migrated = migrateRasterHoehenReset(tree) || migrated
+  if (schemaVersion < 5) schemaAdvanced = migrateRasterHoehenReset(tree) || schemaAdvanced
 
   const selectedId =
     typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID
       ? parsed.selectedId
       : null
-  return { tree, selectedId, migrated, verworfen }
+  return { tree, selectedId, schemaAdvanced, absichtlichGeleert, verworfen }
 }
 
 // Meldung ueber verworfene Bausteintypen — dieselbe fuer beide Leser.
@@ -254,7 +269,11 @@ export function loadFromStorage(): LoadedState | null {
       return null
     }
     meldeVerworfeneTypen(ergebnis.verworfen)
-    return { tree: ergebnis.tree, selectedId: ergebnis.selectedId, migrated: ergebnis.migrated }
+    return {
+      tree: ergebnis.tree,
+      selectedId: ergebnis.selectedId,
+      resaveNeeded: ergebnis.schemaAdvanced,
+    }
   } catch (error) {
     // Unlesbarer Stand (kaputtes JSON, unerwarteter Fehler beim Aufbau):
     // NIE still leer starten und NIE vom Autosave überschreiben lassen —

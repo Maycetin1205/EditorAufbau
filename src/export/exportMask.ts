@@ -38,6 +38,7 @@ import {
   felderFor,
   kopfsatzFor,
   tableIdFor,
+  varAusKopfsaetzen,
   type DataSource,
 } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
@@ -480,8 +481,14 @@ export function exportMask(
       FELDER: felderFor(s),
     }
   })
+  // VAR steht VOR der SEFILELOOP — wie in den ausgelieferten Rahmen; die
+  // Kopfsätze der SEFILELOOP zeigen dorthin. Ohne Kopfsätze fehlt der
+  // Schlüssel ganz (Masken ohne Belegpositionen bleiben Byte für Byte, wie
+  // sie waren).
+  const varAbschnitt = varAusKopfsaetzen(used)
   const sevariablen = escapeNonAsciiJs(
     JSON.stringify({
+      ...(varAbschnitt.length > 0 ? { VAR: varAbschnitt } : {}),
       SEFILELOOP: sefileloop,
       ERPAPICALL: [],
     }, null, 2),

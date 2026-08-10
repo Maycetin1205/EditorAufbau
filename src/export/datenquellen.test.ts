@@ -98,6 +98,64 @@ describe('exportMask: Datenquellen', () => {
     ])
   })
 
+  // --- Der Kopfsatz braucht seine Variable (2026-08-10) ------------------
+  //
+  // Gemessen an der Maske des Nutzers, drei Echttests in SoftEngine: POS ohne
+  // Kopfsatz leer, POS mit Kopfsatz und BEL als SEFILELOOP-Eintrag leer, POS
+  // mit Kopfsatz und handgeschriebenem VAR voll. 'BEL_0_11' loest gegen eine
+  // VARIABLE namens BEL auf, nicht gegen eine SEFILELOOP-Zeile — fehlt sie,
+  // verwirft SoftEngine den Eintrag ohne Fehlermeldung.
+  //
+  // Darum ist der VAR-Eintrag hier keine Einstellung, sondern eine FOLGE des
+  // Kopfsatzes: wer einen schreibt, bekommt ihn.
+  it('bestellt zu jedem Kopfsatz seine Variable im VAR-Abschnitt', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['pos', 'ser'] },
+      pos: {
+        id: 'pos', type: TEST_DATA_BOX, props: { source: 'positionen' },
+        parentId: 'root', childIds: [],
+      },
+      ser: {
+        id: 'ser', type: TEST_DATA_BOX, props: { source: 'serien' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [
+      {
+        id: 'positionen', name: 'Belegpositionen', kind: 'belegposition' as const,
+        kopfsatzIndex: 'BEL_0_11',
+        fields: [{ code: '18_25', label: 'Artikelnummer' }],
+      },
+      {
+        // Zweite Quelle am SELBEN Kopfsatz: EIN VAR-Eintrag, nicht zwei.
+        id: 'serien', name: 'Seriennummern', kind: 'datei' as const, idbId: 'SERPOS',
+        kopfsatzIndex: 'BEL_0_11',
+        fields: [{ code: '43_1', label: 'Nummer' }],
+      },
+    ]
+
+    const { sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(JSON.parse(sevariablen).VAR).toEqual([{ ID: 'BEL', FELDER: '0_11' }])
+  })
+
+  // Und die Gegenprobe: ohne Kopfsatz gibt es den Schluessel gar nicht. Sonst
+  // truege jede bestehende Maske ploetzlich ein leeres VAR im Export.
+  it('laesst VAR ganz weg, wo keine Quelle einen Kopfsatz hat', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['termine'] },
+      termine: {
+        id: 'termine', type: TEST_DATA_BOX, props: { source: 'termine' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [
+      { id: 'termine', name: 'Termine', kind: 'idb' as const, idbId: 'IDBID0001', fields: [] },
+    ]
+
+    const { sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(Object.keys(JSON.parse(sevariablen))).toEqual(['SEFILELOOP', 'ERPAPICALL'])
+  })
+
   // --- Der offene Satz: VAR statt SEFILELOOP (2026-08-07) ----------------
   //
   // Belegt an den ausgelieferten Belegerfassungs-Rahmen: der Satz, an dem die
@@ -106,10 +164,15 @@ describe('exportMask: Datenquellen', () => {
   // Ohne VAR verwirft SoftEngine den POS-Eintrag stillschweigend.
   //
   // STILLGELEGT (2026-08-10, Nutzer-Entscheidung): Dieser Test beschreibt eine
-  // Erwartung, die NICHT gebaut ist. Es gibt keinen VAR-Abschnitt im Export --
-  // `exportMask` schreibt SEFILELOOP + ERPAPICALL, und `istOffenerSatz` in
-  // core/data/dataSources.ts ruft niemand auf. Die POS-Haelfte (KOPFSATZ_INDEX)
-  // steht, die VAR-Haelfte fehlt.
+  // Erwartung, die NICHT gebaut ist.
+  // NACHGEZOGEN am selben Tag: einen VAR-Abschnitt gibt es inzwischen — er
+  // entsteht aber aus den KOPFSAETZEN (Test oben), bestellt nur das
+  // Kopfsatz-Feld und traegt keine Laufzeit-Marke. Was hier fehlt, ist der
+  // offene Satz als eigene LESE-Quelle: `lieferung: 'offenerSatz'` waehlbar
+  // machen, die Quelle dann aus der SEFILELOOP heraus- und mit ihren eigenen
+  // Feldern ins VAR hineinnehmen, und die Laufzeit aus SEDATA.Daten.Var lesen
+  // lassen. `istOffenerSatz` in core/data/dataSources.ts ruft weiterhin
+  // niemand auf.
   //
   // Er wurde nicht geloescht und nicht passend gemacht: er IST die Bauanleitung
   // fuer die fehlende Haelfte, samt der Laufzeit-Marke, die dazugehoert. Wer

@@ -415,18 +415,12 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
   // Faelle am Browser-Speicher). Eine Datei aus Schema 4 traegt die Werkswerte
   // noch ab Werk — dort ist Putzen richtig.
   //
-  // ALS it.todo STILLGELEGT, weil er einen ANDEREN, aelteren Fehler aufdeckt
-  // als den, den A2 schliesst — nachgemessen 2026-08-10:
-  // Der Putzer setzt `migrated` NICHT (persistence.ts: nur die
-  // migrate*-Aufrufe tun das). Bei einer Schema-4-Datei, an der sonst keine
-  // Migration greift, bleibt `migrated` also false, die Detail-Verlustpruefung
-  // oben laeuft — und sieht die geleerten Props als Verlust. Die Datei wird
-  // abgelehnt: „am Baustein ‚k' stimmen Angaben nicht."
-  // Folge im Produkt: eine Maskendatei aus Schema <= 4, die einen der fuenf
-  // Werkstexte enthaelt, laesst sich GAR NICHT laden.
-  // Das ist genau der Fall, den A2.1 loest (`intentionalChanges` statt einem
-  // Sammel-Boolean). Nicht in A2 mitgebaut — eigenes `go`.
-  it.todo('in einer Datei aus Schema 4 werden die Werkswerte weiterhin geleert', () => {
+  // War von A2 bis A2.1 ein it.todo: der Putzer setzte keine Schemastufe, also
+  // lief die Detail-Verlustpruefung und sah seine absichtlich geleerten Props
+  // als Verlust — die Datei wurde abgelehnt („am Baustein ‚k' stimmen Angaben
+  // nicht"). Seit A2.1 meldet der Putzer die Stellen namentlich, und nur die
+  // werden geduldet.
+  it('in einer Datei aus Schema 4 werden die Werkswerte weiterhin geleert', () => {
     const inhalt: MaskenInhalt = {
       tree: {
         root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
@@ -441,6 +435,28 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
     if (!e.ok) return
     expect(e.inhalt.tree.k?.props.chipText).toBe('')
     expect(e.inhalt.tree.k?.props.heading).toBe('')
+  })
+
+  // Die Ausnahme aus A2.1 muss ENG sein. Sonst waere der Fix schlimmer als der
+  // Fehler: eine Datei mit einem Werkstext irgendwo haette den ganzen Baustein
+  // ungeprueft passieren lassen. Hier traegt DERSELBE Baustein einen echten
+  // Schaden daneben — eine Eigenschaft, die der Typ nicht kennt und die beim
+  // Bereinigen wegfaellt. Die Datei muss trotzdem abgelehnt werden.
+  it('duldet nur die geleerten Stellen — echter Schaden am selben Baustein faellt weiter auf', () => {
+    const inhalt: MaskenInhalt = {
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
+        k: { id: 'k', type: 'card', props: { chipText: 'Heute' }, parentId: 'root', childIds: [] },
+      },
+      datenquellen: [], relationen: [],
+    }
+    const roh = JSON.parse(packeMaske(inhalt)) as Record<string, unknown>
+    roh.schemaVersion = 4
+    const baum = roh.tree as Record<string, { props: Record<string, unknown> }>
+    baum.k.props.gibtEsNicht = 'faellt beim Bereinigen weg'
+    const e = packeMaskeAus(JSON.stringify(roh))
+    expect(e.ok).toBe(false)
+    if (!e.ok) expect(e.grund).toContain('stimmen Angaben nicht')
   })
 })
 

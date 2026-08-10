@@ -104,13 +104,24 @@ const ALTE_KARTEN_DEMOS: ReadonlyArray<readonly [string, string]> = [
   ['text', 'Befund Minka besprechen'],
   ['chipText', 'Heute'],
 ]
-export function putzeAlteKartenDemos(tree: BlockTree): void {
+// Liefert die Stellen, die WIRKLICH geleert wurden, als `bausteinId.prop`
+// (A2.1, 2026-08-10). Vorher gab die Funktion nichts zurueck — und der
+// Datei-Weg konnte das Leeren daher nicht von Beschaedigung unterscheiden:
+// seine Verlust-Kontrolle sah nur fehlende Werte und lehnte die GANZE Datei
+// ab („am Baustein ... stimmen Angaben nicht"). Eine Maskendatei aus Schema
+// <= 4 mit einem dieser fuenf Texte liess sich dadurch gar nicht mehr laden.
+// Absicht muss also benannt sein, sonst ist sie von Schaden nicht zu trennen.
+export function putzeAlteKartenDemos(tree: BlockTree): string[] {
+  const geleert: string[] = []
   for (const node of Object.values(tree)) {
     if (node.type !== 'card') continue
     for (const [prop, demo] of ALTE_KARTEN_DEMOS) {
-      if (node.props[prop] === demo) node.props[prop] = ''
+      if (node.props[prop] !== demo) continue
+      node.props[prop] = ''
+      geleert.push(`${node.id}.${prop}`)
     }
   }
+  return geleert
 }
 
 // Altes Format (Liste mit absolutem layout) -> Baum: alle Blöcke als Kinder der

@@ -87,7 +87,7 @@ export class Editor extends Subject<Editor> {
     this._tree = persisted ? persisted.tree : createEmptyTree()
     this._selectedId = this.auswahlAufAktiverSeite(persisted?.selectedId ?? null)
     this._hydrated = true
-    if (persisted?.migrated) this._planer.plane()
+    if (persisted?.resaveNeeded) this._planer.plane()
   }
 
   get tree(): Readonly<BlockTree> { return this._tree }
