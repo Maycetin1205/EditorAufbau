@@ -23,7 +23,7 @@ import '../blocks/button/ButtonBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/tabelle/TabelleBlock'
 import { Editor } from './Editor'
-import { CURRENT_SCHEMA_VERSION } from './migrations'
+import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
@@ -159,27 +159,52 @@ describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => 
   // Wert Heute ueberlebt Speichern und Laden"). Im BROWSER-Speicher lief der
   // Putzer bis 2026-08-06 auch fuer aktuelle Staende: „Heute" im Chip und
   // „09:15" im Zeitfeld waren nach jedem Reload still weg.
-  it('laesst einen AKTUELLEN Stand unberuehrt — „Heute" ist dort ein echter Wert', () => {
-    const ed = load({
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      tree: {
-        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
-        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
-        s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['getippt'] },
-        getippt: {
-          id: 'getippt',
-          type: 'card',
-          props: { chipText: 'Heute', time: '09:15', heading: 'Rückruf Fr. Wagner' },
-          parentId: 's1',
-          childIds: [],
-        },
+  //
+  // A2 (2026-08-10): die Versionen stehen hier als ZAHLEN, nicht als
+  // CURRENT_SCHEMA_VERSION. Mit der Konstante haette der Fall „genau an der
+  // Grenze" beim naechsten Versionssprung stillschweigend auf 6 gezeigt — der
+  // Test waere gruen geblieben und haette dabei aufgehoert, die Grenze zu
+  // pruefen. Genau die Sorte gruener Test, die nichts mehr haelt.
+  const mitKarte = (schemaVersion: number) => load({
+    schemaVersion,
+    tree: {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+      board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+      s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['getippt'] },
+      getippt: {
+        id: 'getippt',
+        type: 'card',
+        props: { chipText: 'Heute', time: '09:15', heading: 'Rückruf Fr. Wagner' },
+        parentId: 's1',
+        childIds: [],
       },
-      selectedId: null,
-    })
-    const props = ed.getNode('getippt')?.props
+    },
+    selectedId: null,
+  })
+
+  it('Schema 4 ist Altbestand: die Werkswerte werden geleert', () => {
+    const props = mitKarte(4).getNode('getippt')?.props
+    expect(props?.chipText).toBe('')
+    expect(props?.time).toBe('')
+    expect(props?.heading).toBe('')
+  })
+
+  // 5 und 6: „Heute" ist ein echter Wert des Bedieners und bleibt. Der Fall 6
+  // ist der eigentliche Grund fuer A2 — er wird heute noch von keinem Stand
+  // erreicht, aber der Umbau auf das Popup-Raster braucht ihn.
+  it.each([5, 6])('Schema %i bleibt unberuehrt — „Heute" ist dort echt', (v) => {
+    const props = mitKarte(v).getNode('getippt')?.props
     expect(props?.chipText).toBe('Heute')
     expect(props?.time).toBe('09:15')
     expect(props?.heading).toBe('Rückruf Fr. Wagner')
+  })
+
+  // Stolperdraht fuer den Tag, an dem jemand CURRENT_SCHEMA_VERSION hochsetzt:
+  // die Putzer-Grenze ist eine historische Zahl und darf NICHT mitwandern.
+  // Wandert sie mit, laeuft der Putzer wieder ueber echte Eingaben.
+  it('die Putzer-Grenze wandert nicht mit der Schemaversion mit', () => {
+    expect(DEMO_CLEANUP_BEFORE_SCHEMA).toBe(5)
+    expect(CURRENT_SCHEMA_VERSION).toBeGreaterThanOrEqual(DEMO_CLEANUP_BEFORE_SCHEMA)
   })
 })
 

@@ -86,6 +86,17 @@ export function migrateKnopfAusTabelle(
 // Minka besprechen", „Heute", …). Sie werden beim Laden geleert: EXAKTER
 // Textvergleich gegen die fünf früheren Werkswerte, echte Eingaben
 // bleiben unberührt.
+// Die Grenze des Putzers ist eine feste HISTORISCHE Zahl, keine Ableitung aus
+// CURRENT_SCHEMA_VERSION (A2, 2026-08-10). Die Werkswerte unten gab es bis
+// Schema 4; ab Schema 5 hat sie kein Stand mehr ab Werk. Beide Lade-Wege
+// haben die Grenze frueher als „aelter als aktuell" gefragt — das ist genau so
+// lange richtig, wie aktuell 5 ist. Beim Sprung auf 6 (Popup-Raster) waere
+// jeder heutige Stand ploetzlich „alt" gewesen und der Putzer erneut ueber
+// echte Eingaben gelaufen: `Heute` und `09:15` tippt der Bediener selbst.
+// Derselbe Fehler hat den Nutzer schon einmal getroffen (bis 2026-08-06 lief
+// der Putzer im Browser sogar ueber JEDEN Stand, s. persistence.ts).
+export const DEMO_CLEANUP_BEFORE_SCHEMA = 5
+
 const ALTE_KARTEN_DEMOS: ReadonlyArray<readonly [string, string]> = [
   ['heading', 'Rückruf Fr. Wagner'],
   ['time', '09:15'],

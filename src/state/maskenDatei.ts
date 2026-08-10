@@ -24,7 +24,7 @@
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
 import { sanitizeRelationTemplates, type RelationTemplate } from '../core/data/relations'
-import { CURRENT_SCHEMA_VERSION } from './migrations'
+import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
 import { baumAusRohdaten } from './persistence'
 
 // Erkennungsmarke. Waehlt der Bediener versehentlich
@@ -220,9 +220,11 @@ function auspacken(text: string): AuspackErgebnis {
   // Der Karten-Demotext-Putzer laeuft nur fuer ALTE Staende. In einer
   // aktuellen Datei ist „Heute" im Chip ein echter Wert des Bedieners — ihn
   // wegzuputzen hiesse, eine eben gespeicherte Maske beim Laden abzulehnen.
+  // Die Grenze ist die feste historische Zahl, nicht „aelter als aktuell":
+  // sonst wuerde jeder Versionssprung den Putzer erneut loslassen (A2).
   const baum = baumAusRohdaten(
     { schemaVersion, tree: o.tree },
-    schemaVersion < CURRENT_SCHEMA_VERSION,
+    schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA,
   )
   if (!baum) {
     return { ok: false, grund: 'Die Datei enthält keinen lesbaren Masken-Aufbau.' }

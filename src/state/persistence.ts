@@ -8,6 +8,7 @@ import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { sanitizeBlockEvents } from '../core/data/aktionen'
 import {
   CURRENT_SCHEMA_VERSION,
+  DEMO_CLEANUP_BEFORE_SCHEMA,
   migrateFlatBlocks,
   migrateFlowToRaster,
   migrateKanbanVorlage,
@@ -240,8 +241,11 @@ export function loadFromStorage(): LoadedState | null {
     // (beides echte Werte), war der Wert nach dem naechsten Laden still weg —
     // und der Autosave schrieb den Verlust sofort fest. Der Fix vom 2026-07-28
     // hatte nur den Datei-Weg erreicht.
+    // Die Grenze ist seit A2 die feste historische Zahl statt
+    // CURRENT_SCHEMA_VERSION: „aelter als aktuell" haette denselben Verlust
+    // beim naechsten Versionssprung von selbst wieder aufgemacht.
     const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-    const ergebnis = baumAusRohdaten(parsed, schemaVersion < CURRENT_SCHEMA_VERSION)
+    const ergebnis = baumAusRohdaten(parsed, schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA)
     if (!ergebnis) {
       // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder
       // oder halb-kaputter Inhalt, in dem echte Arbeit stecken könnte): wie

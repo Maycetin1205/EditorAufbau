@@ -409,6 +409,39 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
     expect(e.ok).toBe(true)
     if (e.ok) expect(e.inhalt.tree.k?.props.chipText).toBe('Heute')
   })
+
+  // A2 (2026-08-10): die andere Seite der Grenze, damit Datei- und Browser-Weg
+  // nachweislich GLEICH entscheiden (migrationen.test prueft dieselben zwei
+  // Faelle am Browser-Speicher). Eine Datei aus Schema 4 traegt die Werkswerte
+  // noch ab Werk — dort ist Putzen richtig.
+  //
+  // ALS it.todo STILLGELEGT, weil er einen ANDEREN, aelteren Fehler aufdeckt
+  // als den, den A2 schliesst — nachgemessen 2026-08-10:
+  // Der Putzer setzt `migrated` NICHT (persistence.ts: nur die
+  // migrate*-Aufrufe tun das). Bei einer Schema-4-Datei, an der sonst keine
+  // Migration greift, bleibt `migrated` also false, die Detail-Verlustpruefung
+  // oben laeuft — und sieht die geleerten Props als Verlust. Die Datei wird
+  // abgelehnt: „am Baustein ‚k' stimmen Angaben nicht."
+  // Folge im Produkt: eine Maskendatei aus Schema <= 4, die einen der fuenf
+  // Werkstexte enthaelt, laesst sich GAR NICHT laden.
+  // Das ist genau der Fall, den A2.1 loest (`intentionalChanges` statt einem
+  // Sammel-Boolean). Nicht in A2 mitgebaut — eigenes `go`.
+  it.todo('in einer Datei aus Schema 4 werden die Werkswerte weiterhin geleert', () => {
+    const inhalt: MaskenInhalt = {
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
+        k: { id: 'k', type: 'card', props: { chipText: 'Heute', heading: 'Rückruf Fr. Wagner' }, parentId: 'root', childIds: [] },
+      },
+      datenquellen: [], relationen: [],
+    }
+    const roh = JSON.parse(packeMaske(inhalt)) as Record<string, unknown>
+    roh.schemaVersion = 4
+    const e = packeMaskeAus(JSON.stringify(roh))
+    expect(e.ok).toBe(true)
+    if (!e.ok) return
+    expect(e.inhalt.tree.k?.props.chipText).toBe('')
+    expect(e.inhalt.tree.k?.props.heading).toBe('')
+  })
 })
 
 describe('Laden leert die Historie (kein halber Rueckweg)', () => {
