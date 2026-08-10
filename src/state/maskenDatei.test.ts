@@ -12,7 +12,7 @@
 import { describe, expect, it } from 'vitest'
 import '../blocks/card/CardBlock'
 import '../blocks/tabelle/TabelleBlock'
-import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
+import { registerTestBlocks, TEST_BLOCK, TEST_EVENT_BLOCK } from '../test/testBlocks'
 import { Editor } from './Editor'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 import { MASKEN_DATEI_ART, packeMaske, packeMaskeAus, type MaskenInhalt } from './maskenDatei'
@@ -73,6 +73,32 @@ describe('packeMaske / packeMaskeAus (Hin und zurueck)', () => {
 
   it('zweimal packen ohne Aenderung ergibt denselben Text (vergleichbare Sicherungen)', () => {
     expect(packeMaske(beispiel())).toBe(packeMaske(beispiel()))
+  })
+
+  // A1 (2026-08-10): der haerteste der drei Wege. Weil der Lader 'aus' nicht
+  // annahm, duennte sich der Baum beim Auspacken aus — und die
+  // Verlust-Kontrolle dieser Datei lehnte daraufhin die GANZE Datei als
+  // „beschaedigt" ab. Der Nutzer kam an seine eigene Sicherung nicht mehr
+  // heran, mit einer Meldung, die auf Dateischaden zeigte statt auf uns.
+  it('eine Maske mit abgeschaltetem Parameter laedt, statt als beschaedigt zu gelten', () => {
+    const inhalt = beispiel()
+    const kette = [{
+      id: 'r1', type: 'RELATION' as const, resultKey: '', relationId: 'r1',
+      params: [
+        { source: 'fixed' as const, value: 'vorne' },
+        { source: 'aus' as const, value: '' },
+        { source: 'context' as const, value: 'PINDEX' },
+      ],
+      extraParams: [],
+    }]
+    inhalt.tree.a = {
+      id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
+      events: { onClick: kette },
+    }
+    const e = packeMaskeAus(packeMaske(inhalt))
+    expect(e.ok).toBe(true)
+    if (!e.ok) return
+    expect(e.inhalt.tree.a?.events).toEqual({ onClick: kette })
   })
 })
 

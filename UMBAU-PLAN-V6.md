@@ -30,10 +30,9 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** A0 + A8.1 + A8.2 (2026-08-10), Baseline-Commit
-  siehe unten
-- **Naechste Etappe:** A1 (`aus`-Datenverlust) — oder A9 zuerst, falls der
-  Nutzer die offene Frage 1 so entscheidet
+- **Letzte fertige Etappe:** A1 (2026-08-10) — davor A0 + A8.1 + A8.2
+- **Naechste Etappe:** A2 (Migrationsschutz vor Schema 6). A9 setzt A2 bis A7
+  voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
 - **Offene Baustelle, bewusst stillgelegt:** der VAR-Abschnitt des Exports
   (offener Satz) ist NICHT gebaut. `lieferung`/`istOffenerSatz` in
@@ -49,13 +48,23 @@ zwischen zwei Chats, nicht dieser Absatz.
 
 **Offene Entscheidungen des Nutzers — ein neuer Chat FRAGT, entscheidet nicht:**
 
-1. Soll A9 (SoftEngine-Vorher-Beleg) VOR A1 laufen? A1 aendert bereits, was
-   exportiert wird — danach ist das „Vorher"-Bild keins mehr. Unbeantwortet.
-2. A0 Schritt 3 (Schriftgroessen in `field.tsx`/`side-panel.tsx`, eigener
-   Commit): roher Wert `text-[0.6875rem]` bleiben lassen, oder als zweites
-   Token sauber machen? Der rohe Wert steht heute an zwei Stellen, waehrend
-   `text-ui` an acht weiteren gilt — zwei Wahrheiten fuer eine Schriftgroesse.
-   Empfehlung: Token. Unbeantwortet.
+1. ~~Soll A9 (SoftEngine-Vorher-Beleg) VOR A1 laufen?~~ **Ueberholt
+   2026-08-10:** der Nutzer gab `go` fuer A1, A1 ist gebaut. Fuer den Vertrag
+   `aus` kann A9 kein „Vorher" mehr belegen — was auch vorher schon kaum ging:
+   eine Kette mit `aus` ueberlebte weder ein Neuladen noch die Maskendatei,
+   und in der Maske selbst verwarf `parseBlockEvents` sie ebenfalls. Ein
+   Vorher-Lauf haette diesen Punkt seiner eigenen Liste also gar nicht pruefen
+   koennen. Fuer alle anderen Vertraege (Datenpush, Tabelle/Kanban, Popup,
+   Nachschlagen) ist A9 unveraendert sinnvoll.
+2. A0 Schritt 3 (Schriftgroessen): roher Wert `text-[0.6875rem]` bleiben
+   lassen, oder auf das Token `text-ui` heben? **Die Zahlen dieser Frage waren
+   falsch** (nachgemessen 2026-08-10): nicht „zwei Stellen gegen acht", sondern
+   `text-[0.6875rem]` **20-mal in 15 Dateien** (fast alles unter
+   `src/editor/`), `text-ui` rund 10-mal und nur unter `src/ui/`. 0.6875rem ist
+   damit eine dritte Groesse neben den absichtlich **zwei** Stufen in
+   `tailwind.config.js:71`. Der Umbau macht Text in 15 Dateien sichtbar
+   groesser — das ist kein Aufraeumer nebenbei, sondern eine Optik-Aenderung.
+   Unbeantwortet.
 3. ~~Wer pflegt diese Datei?~~ **Beantwortet 2026-08-10:** Sie liegt jetzt im
    Repo und wird nach jeder Etappe im selben Commit mitgezogen. Damit ist die
    git-Historie die Sicherung, nicht mehr ein einzelner Arbeitsbaum. Es pflegt

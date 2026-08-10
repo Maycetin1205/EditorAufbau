@@ -228,6 +228,33 @@ describe('Aktionsketten (Z2) im Speicher', () => {
     expect(ed.getNode('b')?.events).toBeUndefined()
     expect(ed.getNode('c')?.events).toBeUndefined()
   })
+
+  // A1 (2026-08-10): ein mit dem x abgeschalteter Parameter ist ein GUELTIGER
+  // gespeicherter Zustand, kein kaputter Schritt. Bis hierher pruefte der
+  // Lader gegen die Auswahl-Liste, in der 'aus' absichtlich fehlt — er warf
+  // damit die ganze Kette weg, und zwar lautlos: der Nutzer sah seine Aktion
+  // erst NACH dem Neuladen verschwunden.
+  it('ein abgeschalteter Parameter (aus) reisst die Kette nicht mehr mit', () => {
+    const kette = [{
+      id: 'r1', type: 'RELATION', resultKey: '', relationId: 'rel-1',
+      params: [
+        { source: 'fixed', value: 'vorne' },
+        { source: 'aus', value: '' },
+        { source: 'context', value: 'PINDEX' },
+      ],
+      extraParams: [],
+    }]
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+        a: { id: 'a', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [], events: { onClick: kette } },
+      },
+      selectedId: null,
+    })
+    // Die Nachbarn behalten Position UND Wert — 'aus' ersatzlos zu streichen
+    // wuerde alles dahinter verschieben und den SE-Aufruf zerlegen.
+    expect(ed.getNode('a')?.events).toEqual({ onClick: kette })
+  })
 })
 
 

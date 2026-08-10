@@ -67,6 +67,19 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
     expect(resolveActionParam(b('x'), values, {})).toBe('')
   })
 
+  // A1 (2026-08-10): der abgeschaltete Parameter loest zu '' auf und BLEIBT
+  // an seiner Stelle. Weglassen wuerde alles dahinter um eins verschieben —
+  // PUT_RELATION liest die Parameter nach Position, nicht nach Namen.
+  it('aus loest zu leer auf, die Nachbarn behalten Position und Wert', () => {
+    const values = { context: { PINDEX: '271' }, previousResult: '' }
+    const params: ActionParamBinding[] = [
+      { source: 'fixed', value: 'vorne' },
+      { source: 'aus', value: '' },
+      { source: 'context', value: 'PINDEX' },
+    ]
+    expect(params.map((b) => resolveActionParam(b, values, {}))).toEqual(['vorne', '', '271'])
+  })
+
   it('step_result mit gewaehltem Feld liest DIESES Feld aus der Rohantwort (2026-08-07)', () => {
     // Der Ergebnis-Skalar traegt nur EINEN Wert (RESULT/PINDEX/…). Wer ein
     // anderes Feld der Antwort braucht, waere ohne die Rohantwort verloren —

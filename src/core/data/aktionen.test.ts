@@ -77,6 +77,44 @@ describe('Aktionsmodell', () => {
     }, ['onClick'])).toBeUndefined()
   })
 
+  // A1 (2026-08-10): 'aus' steht absichtlich NICHT im Auswahlfeld
+  // (ACTION_PARAM_SOURCES), ist als gespeicherter Zustand aber gueltig. Der
+  // Lader pruefte gegen die falsche der zwei Listen und verwarf deshalb die
+  // GANZE Kette — an einem Zustand, den das Formular selbst schreibt.
+  it('nimmt einen abgeschalteten Parameter (aus) an, in Syntax wie Zusatz', () => {
+    const kette = [{
+      id: 'r1', type: 'RELATION', resultKey: '', relationId: 'rel-1',
+      params: [
+        { source: 'fixed', value: 'vorne' },
+        { source: 'aus', value: '' },
+        { source: 'context', value: 'PINDEX' },
+      ],
+      extraParams: [{ source: 'aus', value: '' }],
+    }]
+    expect(sanitizeBlockEvents({ onClick: kette }, ['onClick'])).toEqual({ onClick: kette })
+    // Erfundene Quellen bleiben verworfen — die Liste ist nicht aufgeweicht.
+    expect(sanitizeBlockEvents({
+      onClick: [{ ...kette[0], params: [{ source: 'ausgedacht', value: '' }] }],
+    }, ['onClick'])).toBeUndefined()
+  })
+
+  // Derselbe Lader bedient die MASKE: parseBlockEvents laeuft in SoftEngine
+  // ueber dasselbe stepFields. Vor A1 verschwand eine Kette mit 'aus' dort
+  // genauso — nur ohne jede Meldung, weil in der Maske niemand hinsieht.
+  it('transportiert einen abgeschalteten Parameter bis in die Maske', () => {
+    const rel: RelationStep = {
+      id: 'r1', type: 'RELATION', resultKey: '', relationId: relation.id,
+      params: [
+        { source: 'fixed', value: 'vorne' },
+        { source: 'aus', value: '' },
+        { source: 'context', value: 'PINDEX' },
+      ],
+      extraParams: [],
+    }
+    const geladen = parseBlockEvents(serializeBlockEvents({ onClick: [rel] }, ['onClick']))
+    expect(geladen.onClick?.[0]).toMatchObject({ params: rel.params })
+  })
+
   // Nutzer-Entscheidung 2026-08-06: die Syntaxzeile listet die Parameter-NAMEN,
   // nicht deren Inhalte. Sie als Startwert zu uebernehmen schickte in
   // SoftEngine jeden Feldnamen als seinen eigenen Wert (belegter Fall, s.

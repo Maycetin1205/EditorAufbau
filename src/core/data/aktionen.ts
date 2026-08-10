@@ -67,7 +67,20 @@ export const ACTION_PARAM_SOURCES = [
 // Der Parameter verschwindet nur aus dem FORMULAR; in der Syntax behaelt er
 // seine Position und geht als leerer String raus. Er ersatzlos zu streichen
 // wuerde alle Parameter dahinter verschieben und den Aufruf zerlegen.
-export type ActionParamSource = (typeof ACTION_PARAM_SOURCES)[number] | 'aus'
+//
+// Darum ZWEI Listen, und der Unterschied ist genau einer: was man WAEHLEN kann
+// (oben, das Auswahlfeld) und was gespeichert GUELTIG ist (hier, der Lader).
+// Bis 2026-08-10 pruefte der Lader gegen die Auswahl-Liste — er lehnte damit
+// einen Zustand ab, den das Formular selbst schreibt, und riss ueber
+// `sanitizeBlockEvents` die GANZE Kette mit. Betroffen waren ALLE DREI Wege
+// durch dieselbe Pruefung: Neuladen im Browser (Kette lautlos weg), Oeffnen
+// einer Maskendatei (als „beschaedigt" abgelehnt) und `parseBlockEvents` in
+// der laufenden Maske — dort fiel die Kette in SoftEngine aus, ohne dass
+// irgendwo etwas zu sehen war. Die zweite Liste wird AUS der ersten gebaut,
+// damit eine neue Quellenart nicht in nur einer von beiden landen kann.
+export const GESPEICHERTE_PARAM_QUELLEN = [...ACTION_PARAM_SOURCES, 'aus'] as const
+
+export type ActionParamSource = (typeof GESPEICHERTE_PARAM_QUELLEN)[number]
 
 export interface ActionParamBinding {
   source: ActionParamSource
@@ -259,7 +272,7 @@ function bindingFields(raw: unknown): ActionParamBinding | null {
   if (!isRecord(raw)) return null
   if (
     typeof raw.source !== 'string'
-    || !(ACTION_PARAM_SOURCES as readonly string[]).includes(raw.source)
+    || !(GESPEICHERTE_PARAM_QUELLEN as readonly string[]).includes(raw.source)
     || typeof raw.value !== 'string'
   ) return null
   if (raw.dataSourceId !== undefined && typeof raw.dataSourceId !== 'string') return null
