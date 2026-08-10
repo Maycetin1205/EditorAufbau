@@ -6,7 +6,8 @@
 // Maskendatei. Der Store ruft nur noch loadFromStorage/persistState.
 
 import { type BlockTree } from '../core/blocks/BlockData'
-import { pruefeBaumStand, ZUKUNFT_GRUND, type LadeProblem } from './ladeKette'
+import type { LadeProblem } from '../core/data/ladeProblem'
+import { pruefeBaumStand, ZUKUNFT_GRUND } from './ladeKette'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 import {
   backupKeyFor,
@@ -66,8 +67,9 @@ function backupUnreadableState(raw: string): void {
 }
 
 // Der Satz fuer einen Stand, bei dem beim Laden etwas verlorengegangen waere
-// (A4 schaltet diesen Weg ein).
-const VERLUST_GRUND =
+// (A4). Bis dahin duennte der Browser-Weg still aus und der Autosave schrieb
+// den kleineren Stand fest.
+export const VERLUST_GRUND =
   'Beim Laden dieses Standes wären Teile verlorengegangen. Er wurde deshalb '
   + 'unter Quarantäne gestellt und NICHT geöffnet.'
 
@@ -87,19 +89,29 @@ function stelleUnterQuarantaene(
   probleme: readonly LadeProblem[],
 ): void {
   const kopieSchluessel = sichereQuarantaene(STORAGE_KEY, raw, new Date().toISOString())
-  speicherGate.sperre({ grund, probleme, kopieSchluessel, rohdaten: raw })
+  speicherGate.sperre(grund, probleme, {
+    bezeichnung: 'Maske',
+    speicherSchluessel: STORAGE_KEY,
+    kopieSchluessel,
+    rohdaten: raw,
+  })
 }
 
 // Der EINZIGE Weg, der etwas wegwirft — und nur nach ausdruecklicher
 // Bestaetigung in der Sperransicht („verwerfen und leer beginnen").
-// Entfernt GENAU den Autosave-Schluessel des Baums. Notfallkopie,
-// Quarantaene-Kopien und die zwei Bibliotheken bleiben unangetastet: was
-// nicht unter Quarantaene stand, wird auch nicht mit weggeraeumt.
-export function verwerfeLokalenStand(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY)
-  } catch (err) {
-    console.warn('Der lokale Stand konnte nicht entfernt werden.', err)
+//
+// Entfernt GENAU die Schluessel der GESPERRTEN Staende und keinen anderen: ist
+// nur eine Bibliothek betroffen, bleibt die Maske liegen, und umgekehrt. Was
+// nicht unter Quarantaene stand, wird nicht mit weggeraeumt. Notfallkopien und
+// Quarantaene-Kopien bleiben in jedem Fall — sie sind die Rettung, nicht der
+// Muell.
+export function verwerfeGesperrteStaende(): void {
+  for (const quelle of speicherGate.quarantaene?.quellen ?? []) {
+    try {
+      localStorage.removeItem(quelle.speicherSchluessel)
+    } catch (err) {
+      console.warn(`„${quelle.bezeichnung}" konnte nicht entfernt werden.`, err)
+    }
   }
   speicherGate.entsperre()
 }
@@ -146,12 +158,7 @@ export function loadFromStorage(): LoadedState | null {
     // migrieren + bereinigen (Demotext-Putzer nur fuer alte Staende, feste
     // historische Grenze aus A2), dann pruefen.
     const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-    const stand = pruefeBaumStand(
-      { ...parsed, schemaVersion },
-      // A3 baut den Riegel; ob ein TEILVERLUST im Browser sperrt, entscheidet
-      // A4. Bis dahin duennt der Browser-Weg aus wie seit 2026-07-02.
-      { verlustPruefen: false },
-    )
+    const stand = pruefeBaumStand({ ...parsed, schemaVersion })
     if (stand.art === 'quarantaene') {
       if (stand.ursache === 'unlesbar') {
         // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder

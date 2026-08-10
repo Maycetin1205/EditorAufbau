@@ -19,6 +19,8 @@
 // Regel Technikwert ≠ Anzeigename: `id`, `verb`, `nr` und die Platzhalter
 // sind Technikwerte; der Bediener sieht ausschließlich `name`.
 
+import type { EintragProblem } from './ladeProblem'
+
 export type RelationVerb = 'GET_RELATION' | 'PUT_RELATION' | 'PUTADD_RELATION'
 
 export const RELATION_VERBS: readonly RelationVerb[] = [
@@ -228,17 +230,59 @@ export function unknownPlaceholders(
 // verschieben und falsch schreiben. Inhaltliche Regeln (NR nur Ziffern,
 // bekannte Platzhalter) erzwingt das Eingabe-Formular, nicht der Lader.
 export function sanitizeRelationTemplates(raw: unknown): RelationTemplate[] {
-  if (!Array.isArray(raw)) return []
+  return pruefeRelationsVorlagen(raw).liste
+}
+
+// Dieselbe Bereinigung, aber sie sagt auch, WAS sie nicht uebernehmen konnte
+// (A4) — Muster und Begruendung wie bei `pruefeDatenquellen`.
+export function pruefeRelationsVorlagen(
+  raw: unknown,
+): { liste: RelationTemplate[]; probleme: EintragProblem[] } {
+  const probleme: EintragProblem[] = []
+  if (!Array.isArray(raw)) return { liste: [], probleme }
   const acc: RelationTemplate[] = []
   const seen = new Set<string>()
+  let nr = 0
   for (const entry of raw) {
-    if (!entry || typeof entry !== 'object') continue
+    nr++
+    const stelle = entry && typeof entry === 'object'
+      && typeof (entry as Record<string, unknown>).id === 'string'
+      && (entry as Record<string, unknown>).id !== ''
+      ? (entry as Record<string, unknown>).id as string
+      : `Eintrag ${nr}`
+    const weg = (grund: string): void => { probleme.push({ stelle, grund }) }
+    if (!entry || typeof entry !== 'object') {
+      weg('die Relations-Vorlage ist unlesbar')
+      continue
+    }
     const e = entry as Record<string, unknown>
-    if (typeof e.id !== 'string' || e.id === '' || seen.has(e.id)) continue
-    if (typeof e.name !== 'string' || e.name.trim() === '') continue
-    if (typeof e.verb !== 'string' || !RELATION_VERBS.includes(e.verb as RelationVerb)) continue
-    if (typeof e.nr !== 'string' || e.nr.trim() === '') continue
-    if (!Array.isArray(e.params) || e.params.some((p) => typeof p !== 'string')) continue
+    if (typeof e.id !== 'string' || e.id === '') {
+      weg('der Vorlage fehlt ihre Kennung')
+      continue
+    }
+    if (seen.has(e.id)) {
+      weg('diese Kennung kommt zweimal vor')
+      continue
+    }
+    if (typeof e.name !== 'string' || e.name.trim() === '') {
+      weg('der Klarname fehlt')
+      continue
+    }
+    if (typeof e.verb !== 'string' || !RELATION_VERBS.includes(e.verb as RelationVerb)) {
+      weg('die Art des Aufrufs (GET/PUT/PUTADD) fehlt oder ist unbekannt')
+      continue
+    }
+    if (typeof e.nr !== 'string' || e.nr.trim() === '') {
+      weg('die Relations-Nummer fehlt')
+      continue
+    }
+    if (!Array.isArray(e.params) || e.params.some((p) => typeof p !== 'string')) {
+      // KOMPLETT raus, nicht teilweise: ein fehlender Parameter verschiebt die
+      // Stelligkeit des Aufrufs und schreibt in SoftEngine an die falsche
+      // Stelle.
+      weg('die Parameter-Syntax ist unbrauchbar')
+      continue
+    }
     seen.add(e.id)
     acc.push({
       id: e.id,
@@ -249,5 +293,5 @@ export function sanitizeRelationTemplates(raw: unknown): RelationTemplate[] {
       allowExtraParams: e.allowExtraParams === true,
     })
   }
-  return acc
+  return { liste: acc, probleme }
 }

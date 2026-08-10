@@ -24,9 +24,16 @@
 // Umbau ohne Anlass, Regel 10.)
 
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
-import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
-import { sanitizeRelationTemplates, type RelationTemplate } from '../core/data/relations'
-import { keinVerlust, pruefeBaumStand, type LadeProblem } from './ladeKette'
+import { pruefeDatenquellen, type DataSource } from '../core/data/dataSources'
+import {
+  BEREICH_QUELLEN,
+  BEREICH_RELATIONEN,
+  mitBereich,
+  type EintragProblem,
+  type LadeProblem,
+} from '../core/data/ladeProblem'
+import { pruefeRelationsVorlagen, type RelationTemplate } from '../core/data/relations'
+import { keinVerlust, pruefeBaumStand } from './ladeKette'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 
 // Erkennungsmarke. Waehlt der Bediener versehentlich
@@ -100,7 +107,7 @@ export function packeMaske(inhalt: MaskenInhalt): string {
 // still um ein paar Angaben erleichtert zu werden.
 function bibliothekPruefen<T>(
   roh: unknown,
-  bereinige: (raw: unknown) => T[],
+  pruefe: (raw: unknown) => { liste: T[]; probleme: EintragProblem[] },
   klarname: string,
 ): { ok: true; liste: T[] } | { ok: false; grund: string; probleme: LadeProblem[] } {
   if (!Array.isArray(roh)) {
@@ -110,13 +117,16 @@ function bibliothekPruefen<T>(
       probleme: [{ bereich: klarname, stelle: '', grund: 'der Abschnitt fehlt oder ist unlesbar' }],
     }
   }
-  const liste = bereinige(roh)
+  const { liste, probleme } = pruefe(roh)
   if (!keinVerlust(roh, liste)) {
     return {
       ok: false,
       grund: `Die Datei ist beschädigt: im Abschnitt „${klarname}" stimmen Angaben nicht. `
         + 'Sie wird nicht geladen, damit nicht unbemerkt Teile deiner Maske verlorengehen.',
-      probleme: [{ bereich: klarname, stelle: '', grund: 'Angaben im Abschnitt stimmen nicht' }],
+      // Das KRITERIUM ist der Vergleich (keinVerlust), nicht die Meldung des
+      // Sanitizers — Begruendung an `mitBereich`. Die Meldungen liefern das
+      // DETAIL: welcher Eintrag, warum.
+      probleme: mitBereich(klarname, probleme),
     }
   }
   return { ok: true, liste }
@@ -213,7 +223,7 @@ function auspacken(text: string): AuspackErgebnis {
   //
   // Den Demotext-Putzer steuert die Kette selbst (feste historische Grenze
   // aus A2) — die Ableitung stand vorher an beiden Wegen getrennt im Code.
-  const stand = pruefeBaumStand({ schemaVersion, tree: o.tree }, { verlustPruefen: true })
+  const stand = pruefeBaumStand({ schemaVersion, tree: o.tree })
   if (stand.art === 'quarantaene') {
     if (stand.ursache === 'zukunft') {
       return {
@@ -232,9 +242,9 @@ function auspacken(text: string): AuspackErgebnis {
   }
   const baum = stand.baum
 
-  const quellen = bibliothekPruefen(o.datenquellen, sanitizeDataSources, 'Datenquellen')
+  const quellen = bibliothekPruefen(o.datenquellen, pruefeDatenquellen, BEREICH_QUELLEN)
   if (!quellen.ok) return { ok: false, grund: quellen.grund, probleme: quellen.probleme }
-  const relationen = bibliothekPruefen(o.relationen, sanitizeRelationTemplates, 'Relationen')
+  const relationen = bibliothekPruefen(o.relationen, pruefeRelationsVorlagen, BEREICH_RELATIONEN)
   if (!relationen.ok) return { ok: false, grund: relationen.grund, probleme: relationen.probleme }
 
   // Ein „verknuepfungen"-Abschnitt (Dateiversion 1) wird AUSDRUECKLICH

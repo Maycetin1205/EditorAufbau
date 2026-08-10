@@ -24,7 +24,25 @@
 // den Riegel spaeter in den technischen Sitzungsbesitz; DASS es zwei Bauarten
 // sind, steht bereits in CLAUDE.md.
 
-import type { LadeProblem } from './ladeKette'
+import type { LadeProblem } from '../core/data/ladeProblem'
+
+// Ein betroffener Speicherstand. Es koennen mehrere sein: der Blockbaum und
+// die zwei Bibliotheken liegen unter eigenen Schluesseln und werden einzeln
+// gelesen (A4).
+export interface QuarantaeneQuelle {
+  // Klarname fuer die Sperransicht („Maske", „Datenquellen", „Relationen").
+  bezeichnung: string
+  // Sein Schluessel im Browser-Speicher. Genau DIESE Schluessel raeumt das
+  // ausdrueckliche „verwerfen und leer beginnen" — keinen anderen.
+  speicherSchluessel: string
+  // Wo die unveraenderte Kopie liegt — null, wenn der Browser das Sichern
+  // verweigert hat (voller/gesperrter Speicher). Dann liegen die Rohdaten
+  // immer noch unangetastet unter ihrem eigenen Schluessel; nur die zweite
+  // Sicherung fehlt.
+  kopieSchluessel: string | null
+  // Die Rohdaten selbst, Byte fuer Byte wie gelesen.
+  rohdaten: string
+}
 
 // Was einen Stand unter Quarantaene gebracht hat — in Klartext, plus die
 // Rohdaten, damit die Sperransicht sie als Datei anbieten kann.
@@ -33,13 +51,7 @@ export interface Quarantaene {
   grund: string
   // Betroffener Bereich, Eintrag/Pfad und Grund — je Fund einer.
   probleme: readonly LadeProblem[]
-  // Wo die unveraenderte Kopie liegt (Schluessel im Browser-Speicher) —
-  // null, wenn der Browser das Sichern verweigert hat (voller/gesperrter
-  // Speicher). Dann liegen die Rohdaten immer noch unangetastet unter ihrem
-  // eigenen Schluessel; nur die zweite Sicherung fehlt.
-  kopieSchluessel: string | null
-  // Die Rohdaten selbst, Byte fuer Byte wie gelesen.
-  rohdaten: string
+  quellen: readonly QuarantaeneQuelle[]
 }
 
 class SpeicherGate {
@@ -49,12 +61,25 @@ class SpeicherGate {
 
   get gesperrt(): boolean { return this._quarantaene !== null }
 
-  // Sperren kann nur der LADE-Weg beim Browserstart (persistence.ts). Eine
-  // zweite Sperre ueberschreibt die erste nicht: der erste Grund ist der
-  // echte, alles danach waere Folgeschaden.
-  sperre(quarantaene: Quarantaene): void {
-    if (this._quarantaene) return
-    this._quarantaene = quarantaene
+  // Sperren kann nur der LADE-Weg beim Browserstart — der Blockbaum
+  // (persistence.ts) und die zwei Bibliotheken (VorlagenStore.ts).
+  //
+  // Mehrere Aufrufe SAMMELN sich: der erste Grund bleibt stehen (er ist der
+  // echte), Funde und betroffene Staende kommen dazu. Wuerde der zweite Aufruf
+  // verworfen, zeigte die Sperransicht nur die Haelfte — und nach dem
+  // Verwerfen des einen Standes sperrte der naechste Start erneut, ohne dass
+  // der Bediener je erfahren haette, warum.
+  sperre(
+    grund: string,
+    probleme: readonly LadeProblem[],
+    quelle: QuarantaeneQuelle,
+  ): void {
+    const bisher = this._quarantaene
+    this._quarantaene = {
+      grund: bisher?.grund ?? grund,
+      probleme: [...(bisher?.probleme ?? []), ...probleme],
+      quellen: [...(bisher?.quellen ?? []), quelle],
+    }
   }
 
   // Aufheben darf die Sperre GENAU ZWEIERLEI (Nutzer-Entscheidung A3):

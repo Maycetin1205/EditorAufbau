@@ -13,10 +13,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // echte Bausteine braucht dieser Weg nicht — alles Übrige läuft über die
 // Test-Bausteine.
 import '../blocks/popup/PopupBlock'
+import { ROOT_ID } from '../core/blocks/BlockData'
 import { BACKUP_KEY, Editor } from './Editor'
+import { sanitizeTree } from './ladeKette'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 import { quarantaeneKopien } from './notfallkopie'
-import { verwerfeLokalenStand } from './persistence'
+import { verwerfeGesperrteStaende } from './persistence'
 import { speicherGate } from './speicherGate'
 import {
   registerTestBlocks,
@@ -81,34 +83,45 @@ describe('sanitizeTree (Laden verteidigt sich)', () => {
     expect(ed.getNode('a')?.props.text).toBe('Vom Nutzer geändert')
   })
 
+  // Diese zwei Faelle liefen bis A4 (2026-08-10) ueber den LADE-Weg und
+  // pruefen seither die Funktion selbst. Grund: derselbe Stand wird jetzt
+  // unter Quarantaene gestellt, statt still ausgeduennt geladen zu werden
+  // (teilverlust.test.ts belegt das). Die Aussage HIER ist eine andere und
+  // bleibt gueltig: `sanitizeTree` selbst verteidigt sich — es wirft
+  // Unbrauchbares weg, ohne zu werfen und ohne zu raten.
   it('verwirft unbekannte Typen, Waisen und fremde Props', () => {
-    const ed = load({
-      tree: {
-        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'kaputt'] },
-        a: { id: 'a', type: TEST_BLOCK, props: { text: 'ok', boese: 'injektion' }, parentId: 'root', childIds: [] },
-        kaputt: { id: 'kaputt', type: 'gibt-es-nicht', props: {}, parentId: 'root', childIds: [] },
-        waise: { id: 'waise', type: TEST_BLOCK, props: {}, parentId: 'nirgends', childIds: [] },
-      },
-      selectedId: 'kaputt',
+    const tree = sanitizeTree({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'kaputt'] },
+      a: { id: 'a', type: TEST_BLOCK, props: { text: 'ok', boese: 'injektion' }, parentId: 'root', childIds: [] },
+      kaputt: { id: 'kaputt', type: 'gibt-es-nicht', props: {}, parentId: 'root', childIds: [] },
+      waise: { id: 'waise', type: TEST_BLOCK, props: {}, parentId: 'nirgends', childIds: [] },
     })
-    expect(ed.getNode('a')?.props.text).toBe('ok')
-    expect(ed.getNode('a')?.props.boese).toBeUndefined() // unbekannte Keys fliegen raus
-    expect(ed.getNode('kaputt')).toBeUndefined()
-    expect(ed.getNode('waise')).toBeUndefined()
-    expect(ed.selectedId).toBeNull() // Auswahl auf gelöschtem Knoten → weg
+    expect(tree.a?.props.text).toBe('ok')
+    expect(tree.a?.props.boese).toBeUndefined() // unbekannte Keys fliegen raus
+    expect(tree.kaputt).toBeUndefined()
+    expect(tree.waise).toBeUndefined()
   })
 
   it('überlebt Zyklen im gespeicherten Baum', () => {
+    const tree = sanitizeTree({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+      a: { id: 'a', type: TEST_BOX, props: {}, parentId: 'root', childIds: ['b'] },
+      b: { id: 'b', type: TEST_BOX, props: {}, parentId: 'a', childIds: ['a'] }, // Zyklus!
+    })
+    expect(tree.a?.parentId).toBe(ROOT_ID)
+    expect(tree.b?.childIds).toEqual([]) // Zyklus gekappt
+  })
+
+  it('eine Auswahl auf einem Baustein, den es nicht gibt, faellt weg', () => {
     const ed = load({
       tree: {
         root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
-        a: { id: 'a', type: TEST_BOX, props: {}, parentId: 'root', childIds: ['b'] },
-        b: { id: 'b', type: TEST_BOX, props: {}, parentId: 'a', childIds: ['a'] }, // Zyklus!
+        a: { id: 'a', type: TEST_BLOCK, props: {}, parentId: 'root', childIds: [] },
       },
-      selectedId: null,
+      selectedId: 'gibt-es-nicht',
     })
-    expect(ed.getNode('a')?.parentId).toBe(ed.rootId)
-    expect(ed.getNode('b')?.childIds).toEqual([]) // Zyklus gekappt
+    expect(ed.blockCount).toBe(1)
+    expect(ed.selectedId).toBeNull()
   })
 
   it('überlebt kompletten Müll im Speicher', () => {
@@ -260,7 +273,7 @@ describe('Quarantaene beim Browserstart (A3)', () => {
     expect(kopien).toHaveLength(1)
     expect(localStorage.getItem(kopien[0])).toBe(ZUKUNFT)
     // Der Fundort steht in der Sperransicht.
-    expect(speicherGate.quarantaene?.kopieSchluessel).toBe(kopien[0])
+    expect(speicherGate.quarantaene?.quellen[0]?.kopieSchluessel).toBe(kopien[0])
   })
 
   it('legt beim zweiten Laden desselben Standes keine zweite Kopie an', () => {
@@ -277,7 +290,7 @@ describe('Quarantaene beim Browserstart (A3)', () => {
     new Editor()
     const kopie = quarantaeneKopien(KEY)[0]
 
-    verwerfeLokalenStand()
+    verwerfeGesperrteStaende()
 
     expect(localStorage.getItem(KEY)).toBeNull()               // der Stand ist weg …
     expect(localStorage.getItem(kopie)).toBe(ZUKUNFT)          // … die Rohkopie NICHT

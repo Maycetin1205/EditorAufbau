@@ -31,6 +31,7 @@
 // analog in behandlung/).
 
 import { QUELLEN_TRENNER } from '../blocks/BlockDefinition'
+import type { EintragProblem } from './ladeProblem'
 import {
   artFuer,
   DATA_SOURCE_KINDS,
@@ -255,33 +256,90 @@ export function quellenKennung(source: DataSource): string {
 // Feldcode usw.) erzwingt das Eingabe-Formular, nicht der Lader — gespeicherte
 // Nutzerdaten werden hier nicht umgeschrieben.
 export function sanitizeDataSources(raw: unknown): DataSource[] {
-  if (!Array.isArray(raw)) return []
+  return pruefeDatenquellen(raw).liste
+}
+
+// Dieselbe Bereinigung, aber sie sagt auch, WAS sie nicht uebernehmen konnte
+// (A4). Zusaetzlich, nicht anders: `sanitizeDataSources` oben liefert
+// unveraendert dieselbe Liste wie vorher, alle bestehenden Aufrufer bleiben.
+// Wer LADET, nimmt diese Fassung — ein verworfener Eintrag darf nicht mehr
+// still verschwinden.
+export function pruefeDatenquellen(
+  raw: unknown,
+): { liste: DataSource[]; probleme: EintragProblem[] } {
+  const probleme: EintragProblem[] = []
+  if (!Array.isArray(raw)) return { liste: [], probleme }
   const acc: DataSource[] = []
   const seen = new Set<string>()
+  let nr = 0
   for (const entry of raw) {
-    if (!entry || typeof entry !== 'object') continue
+    nr++
+    // Die Stelle: die id, wo es eine gibt — sonst die Position in der Liste.
+    const stelle = entry && typeof entry === 'object'
+      && typeof (entry as Record<string, unknown>).id === 'string'
+      && (entry as Record<string, unknown>).id !== ''
+      ? (entry as Record<string, unknown>).id as string
+      : `Eintrag ${nr}`
+    const weg = (grund: string): void => { probleme.push({ stelle, grund }) }
+    if (!entry || typeof entry !== 'object') {
+      weg('die Datenquelle ist unlesbar')
+      continue
+    }
     const e = entry as Record<string, unknown>
-    if (typeof e.id !== 'string' || e.id === '' || seen.has(e.id)) continue
+    if (typeof e.id !== 'string' || e.id === '') {
+      weg('der Datenquelle fehlt ihre Kennung')
+      continue
+    }
+    if (seen.has(e.id)) {
+      weg('diese Kennung kommt zweimal vor')
+      continue
+    }
     // Der Trenner der qualifizierten Bindung (QUELLEN_TRENNER, s.
     // BlockDefinition) darf in einer Quellen-id nicht vorkommen — sonst waere
     // 'a::b::128_350' mehrdeutig. Beim Anlegen kann das nicht passieren
     // (crypto.randomUUID), wohl aber in einer von Hand bearbeiteten Datei.
     // Eindeutigkeit wird hier an der Quelle garantiert, statt beim Lesen
     // erraten zu werden.
-    if (e.id.includes(QUELLEN_TRENNER)) continue
-    if (typeof e.name !== 'string' || e.name.trim() === '') continue
-    if (typeof e.kind !== 'string' || !DATA_SOURCE_KINDS.includes(e.kind as DataSourceKind)) continue
+    if (e.id.includes(QUELLEN_TRENNER)) {
+      weg(`die Kennung enthält „${QUELLEN_TRENNER}" und wäre damit mehrdeutig`)
+      continue
+    }
+    if (typeof e.name !== 'string' || e.name.trim() === '') {
+      weg('der Klarname fehlt')
+      continue
+    }
+    if (typeof e.kind !== 'string' || !DATA_SOURCE_KINDS.includes(e.kind as DataSourceKind)) {
+      weg('die Art der Datenquelle fehlt oder ist unbekannt')
+      continue
+    }
     const fields: DataSourceField[] = []
+    let feldNr = 0
     for (const f of Array.isArray(e.fields) ? e.fields : []) {
-      if (!f || typeof f !== 'object') continue
+      feldNr++
+      const feldWeg = (grund: string): void => {
+        probleme.push({ stelle: `${stelle} · Feld ${feldNr}`, grund })
+      }
+      if (!f || typeof f !== 'object') {
+        feldWeg('das Feld ist unlesbar')
+        continue
+      }
       const ff = f as Record<string, unknown>
-      if (typeof ff.code !== 'string' || ff.code === '') continue
+      if (typeof ff.code !== 'string' || ff.code === '') {
+        feldWeg('dem Feld fehlt sein Feldcode')
+        continue
+      }
       // Gleicher Grund wie bei der id: ein Feldcode mit Trenner machte die
       // qualifizierte Bindung mehrdeutig, und sie faellt dann still auf
       // „nicht gebunden" zurueck. Echte SE-Feldcodes ('193_30') koennen ihn
       // nicht enthalten.
-      if (ff.code.includes(QUELLEN_TRENNER)) continue
-      if (typeof ff.label !== 'string' || ff.label === '') continue
+      if (ff.code.includes(QUELLEN_TRENNER)) {
+        feldWeg(`der Feldcode enthält „${QUELLEN_TRENNER}" und wäre damit mehrdeutig`)
+        continue
+      }
+      if (typeof ff.label !== 'string' || ff.label === '') {
+        feldWeg('dem Feld fehlt sein Klarname')
+        continue
+      }
       // Nur code + label — ein `sample` aus Altbeständen (bis 2026-07-10)
       // oder ein `art` aus dem halben Tag Feld-Art (2026-07-27) wird
       // bewusst verworfen: beides gibt es nicht mehr.
@@ -301,5 +359,5 @@ export function sanitizeDataSources(raw: unknown): DataSource[] {
       fields,
     })
   }
-  return acc
+  return { liste: acc, probleme }
 }

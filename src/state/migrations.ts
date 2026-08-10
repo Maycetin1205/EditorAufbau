@@ -21,9 +21,18 @@ export const CURRENT_SCHEMA_VERSION = 5
 // selbst verschwindet. Ohne den Umzug würde sanitizeTree den unbekannten
 // Typ SAMT der gestalteten Musterkarte verwerfen. Board ohne Spalte
 // (degeneriert): die Karten entfallen mit dem Kasten.
+// Liefert die ids, die diese Migration ABSICHTLICH aus dem Baum genommen hat
+// (A4, 2026-08-10). Vorher gab sie nichts zurueck — und die Verlust-Kontrolle
+// konnte gewollte Aenderung nicht von Beschaedigung unterscheiden: sie sah
+// einen Knoten weniger als in den Rohdaten und stellte den ganzen Stand unter
+// Quarantaene. Ein Bediener mit einem alten Vorlagen-Kasten im Speicher waere
+// aus seinem eigenen Editor ausgesperrt worden. Absicht muss benannt sein,
+// sonst ist sie von Schaden nicht zu trennen (dieselbe Lehre wie bei
+// `putzeAlteKartenDemos`).
 export function migrateKanbanVorlage(
   src: Record<string, { type?: unknown; childIds?: unknown }>,
-): void {
+): string[] {
+  const entfernt: string[] = []
   for (const [id, node] of Object.entries(src)) {
     if (!node || typeof node !== 'object' || node.type !== 'kanban-vorlage') continue
     const parent = Object.values(src).find(
@@ -36,9 +45,16 @@ export function migrateKanbanVorlage(
     const cards = Array.isArray(node.childIds) ? node.childIds : []
     if (spalte) {
       spalte.childIds = [...cards, ...(Array.isArray(spalte.childIds) ? spalte.childIds : [])]
+    } else {
+      // Board ohne Spalte (degeneriert): die Karten entfallen MIT dem Kasten —
+      // es gibt keinen Ort, an den sie koennten. Auch das ist Absicht und wird
+      // darum genannt.
+      for (const cid of cards) if (typeof cid === 'string') entfernt.push(cid)
     }
     parent.childIds = parent.childIds.filter((cid) => cid !== id)
+    entfernt.push(id)
   }
+  return entfernt
 }
 
 // Aufraeum-Migration 2026-08-06: KNOEPFE IN TABELLEN wieder heraus.
@@ -67,17 +83,23 @@ export function migrateKanbanVorlage(
 // Laeuft auf den ROHDATEN vor sanitizeTree (wie migrateKanbanVorlage): die
 // gestrichenen ids sind danach von der Wurzel aus unerreichbar und kommen
 // gar nicht erst in den Baum.
+// Liefert die entfernten Knopf-ids — Begruendung wie bei
+// `migrateKanbanVorlage` (A4).
 export function migrateKnopfAusTabelle(
   src: Record<string, { type?: unknown; childIds?: unknown }>,
-): void {
+): string[] {
+  const entfernt: string[] = []
   for (const node of Object.values(src)) {
     if (!node || typeof node !== 'object' || node.type !== 'tabelle') continue
     if (!Array.isArray(node.childIds)) continue
     node.childIds = node.childIds.filter((cid) => {
       const kind = typeof cid === 'string' ? src[cid] : undefined
-      return !(kind && typeof kind === 'object' && kind.type === 'button')
+      const istKnopf = Boolean(kind) && typeof kind === 'object' && kind.type === 'button'
+      if (istKnopf && typeof cid === 'string') entfernt.push(cid)
+      return !istKnopf
     })
   }
+  return entfernt
 }
 
 // Migration 2026-07-16 (Nutzer-Beschwerde): Karten trugen bis zum Paket

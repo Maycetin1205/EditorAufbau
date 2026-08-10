@@ -19,11 +19,11 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { downloadFile } from '../lib/dateiDownload'
 import type { Editor } from '../state/Editor'
-import type { LadeProblem } from '../state/ladeKette'
+import type { LadeProblem } from '../core/data/ladeProblem'
 import { uebernehmeMaske } from '../state/maskeUebernehmen'
 import { packeMaskeAus } from '../state/maskenDatei'
-import { meldeVerworfeneTypen, verwerfeLokalenStand } from '../state/persistence'
-import { speicherGate, type Quarantaene } from '../state/speicherGate'
+import { meldeVerworfeneTypen, verwerfeGesperrteStaende } from '../state/persistence'
+import { speicherGate, type Quarantaene, type QuarantaeneQuelle } from '../state/speicherGate'
 import { Button } from '@/ui/atoms/button'
 
 interface SperransichtProps {
@@ -44,9 +44,10 @@ export function Sperransicht({ quarantaene, editor, onWeiter }: SperransichtProp
   const [verwerfenGefragt, setVerwerfenGefragt] = useState(false)
   const dateiRef = useRef<HTMLInputElement>(null)
 
-  const rohdatenSichern = (): void => {
+  const rohdatenSichern = (quelle: QuarantaeneQuelle): void => {
     const stempel = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
-    downloadFile(`aufbau-editor-rohdaten-${stempel}.json`, quarantaene.rohdaten, 'application/json')
+    const teil = quelle.bezeichnung.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    downloadFile(`aufbau-editor-rohdaten-${teil}-${stempel}.json`, quelle.rohdaten, 'application/json')
   }
 
   // Die Datei ist nur ein KANDIDAT: wird sie abgelehnt, bleibt die Sperre
@@ -74,7 +75,7 @@ export function Sperransicht({ quarantaene, editor, onWeiter }: SperransichtProp
   }
 
   const verwerfen = (): void => {
-    verwerfeLokalenStand()
+    verwerfeGesperrteStaende()
     onWeiter()
   }
 
@@ -91,13 +92,19 @@ export function Sperransicht({ quarantaene, editor, onWeiter }: SperransichtProp
             unangetastet im Browser-Speicher; solange diese Seite offen ist,
             speichert der Editor nicht — weder die Maske noch Datenquellen oder
             Relationen.
-            {quarantaene.kopieSchluessel !== null && (
-              <> Zusätzlich liegt eine unveränderte Kopie unter dem Schlüssel
-                {' '}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">{quarantaene.kopieSchluessel}</code>.
-              </>
-            )}
           </p>
+          <ul className="space-y-1">
+            {quarantaene.quellen.map((q) => (
+              <li key={q.speicherSchluessel} className="text-xs text-muted-foreground">
+                <span className="text-foreground">{q.bezeichnung}</span>
+                {' — '}
+                <code className="rounded bg-muted px-1">{q.speicherSchluessel}</code>
+                {q.kopieSchluessel !== null
+                  ? <>, unveränderte Kopie unter <code className="rounded bg-muted px-1">{q.kopieSchluessel}</code></>
+                  : ' (eine zweite Kopie konnte der Browser nicht anlegen)'}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <ProblemListe titel="Gefunden wurde:" probleme={quarantaene.probleme} />
@@ -107,9 +114,18 @@ export function Sperransicht({ quarantaene, editor, onWeiter }: SperransichtProp
             titel="Rohdaten als Datei sichern"
             text="Legt den Stand Byte für Byte als Datei ab. Ändert nichts."
           >
-            <Button variant="outline" size="sm" onClick={rohdatenSichern}>
-              Rohdaten sichern…
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {quarantaene.quellen.map((q) => (
+                <Button
+                  key={q.speicherSchluessel}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => rohdatenSichern(q)}
+                >
+                  {q.bezeichnung} sichern…
+                </Button>
+              ))}
+            </div>
           </Weg>
 
           <Weg
@@ -140,9 +156,9 @@ export function Sperransicht({ quarantaene, editor, onWeiter }: SperransichtProp
 
           <Weg
             titel="Lokalen Stand verwerfen und leer beginnen"
-            text="Entfernt den gespeicherten Stand aus dem Browser und startet mit einer
-              leeren Maske. Die gesicherte Kopie und die Bibliotheken (Datenquellen,
-              Relationen) bleiben erhalten. Das lässt sich nicht rückgängig machen."
+            text={'Entfernt GENAU die oben genannten gesperrten Stände aus dem Browser — '
+              + 'nichts daneben. Die unveränderten Kopien bleiben erhalten. Das lässt '
+              + 'sich nicht rückgängig machen.'}
           >
             {verwerfenGefragt ? (
               <div className="flex items-center gap-2">

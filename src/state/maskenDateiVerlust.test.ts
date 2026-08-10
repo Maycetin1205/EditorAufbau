@@ -14,6 +14,10 @@
 
 import { describe, expect, it } from 'vitest'
 import '../blocks/card/CardBlock'
+// Karten leben laut Registry NUR in einer Kanban-Spalte (allowedParentTypes),
+// und seit A4 prueft der Lade-Weg diesen Vertrag: die Karten-Faelle unten
+// bauen ihre Karte darum an den erlaubten Platz statt direkt unter die Wurzel.
+import '../blocks/kanban/KanbanBlock'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 import { packeMaske, packeMaskeAus, type MaskenInhalt } from './maskenDatei'
 
@@ -47,7 +51,15 @@ describe('packeMaskeAus verliert nichts still (Zaehlprobe)', () => {
     ;(roh.datenquellen as unknown[]).push({ id: 'kaputt' }) // ohne name/kind
     const e = packeMaskeAus(JSON.stringify(roh))
     expect(e.ok).toBe(false)
-    if (!e.ok) expect(e.grund).toContain('Datenquellen')
+    if (!e.ok) {
+      expect(e.grund).toContain('Datenquellen')
+      // A4: die Ablehnung nennt den EINTRAG und den Grund, nicht nur den
+      // Abschnitt. Vorher stand da „im Abschnitt Datenquellen stimmen Angaben
+      // nicht" — und der Bediener durfte raten, welcher von zwanzig.
+      expect(e.probleme).toEqual([
+        { bereich: 'Datenquellen', stelle: 'kaputt', grund: 'der Klarname fehlt' },
+      ])
+    }
   })
 
   it('eine Quelle mit einem kaputten FELD -> ebenfalls abgelehnt', () => {
@@ -83,6 +95,23 @@ describe('packeMaskeAus faengt auch getarnte Verluste (Critical, Codereview)', (
     expect(verbogen((o) => {
       (o.datenquellen as Record<string, unknown>[])[0].idbId = 42
     })).toBe(false)
+  })
+
+  // A4: dieser Fall zeigt, warum das KRITERIUM der Vergleich bleibt und nicht
+  // die Meldung des Sanitizers. `idbId: 42` sieht der Sanitizer gar nicht an —
+  // er uebernimmt den Eintrag und laesst den Wert weg. Gemeldet hat er also
+  // nichts, verloren ist trotzdem etwas. Dann sagt der Fund wenigstens den
+  // Bereich, statt zu schweigen.
+  it('ein lautloser Verlust nennt wenigstens den Bereich', () => {
+    const o = JSON.parse(packeMaske(beispiel())) as Record<string, unknown>
+    ;(o.datenquellen as Record<string, unknown>[])[0].idbId = 42
+    const e = packeMaskeAus(JSON.stringify(o))
+    expect(e.ok).toBe(false)
+    if (!e.ok) {
+      expect(e.probleme).toHaveLength(1)
+      expect(e.probleme[0].bereich).toBe('Datenquellen')
+      expect(e.probleme[0].stelle).toBe('')
+    }
   })
 
   it('ein unbrauchbares Kennzeichen -> abgelehnt (allowExtraParams als Text)', () => {
@@ -199,8 +228,10 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
   it('eine Karte mit dem echten Wert „Heute" ueberlebt Speichern und Laden', () => {
     const inhalt: MaskenInhalt = {
       tree: {
-        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
-        k: { id: 'k', type: 'card', props: { chipText: 'Heute', heading: 'Rückruf' }, parentId: 'root', childIds: [] },
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+        s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['k'] },
+        k: { id: 'k', type: 'card', props: { chipText: 'Heute', heading: 'Rückruf' }, parentId: 's1', childIds: [] },
       },
       datenquellen: [], relationen: [],
     }
@@ -222,8 +253,10 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
   it('in einer Datei aus Schema 4 werden die Werkswerte weiterhin geleert', () => {
     const inhalt: MaskenInhalt = {
       tree: {
-        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
-        k: { id: 'k', type: 'card', props: { chipText: 'Heute', heading: 'Rückruf Fr. Wagner' }, parentId: 'root', childIds: [] },
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+        s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['k'] },
+        k: { id: 'k', type: 'card', props: { chipText: 'Heute', heading: 'Rückruf Fr. Wagner' }, parentId: 's1', childIds: [] },
       },
       datenquellen: [], relationen: [],
     }
@@ -244,8 +277,10 @@ describe('eine EBEN gespeicherte Maske laesst sich immer wieder laden', () => {
   it('duldet nur die geleerten Stellen — echter Schaden am selben Baustein faellt weiter auf', () => {
     const inhalt: MaskenInhalt = {
       tree: {
-        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['k'] },
-        k: { id: 'k', type: 'card', props: { chipText: 'Heute' }, parentId: 'root', childIds: [] },
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['board'] },
+        board: { id: 'board', type: 'kanban', props: {}, parentId: 'root', childIds: ['s1'] },
+        s1: { id: 's1', type: 'kanban-spalte', props: {}, parentId: 'board', childIds: ['k'] },
+        k: { id: 'k', type: 'card', props: { chipText: 'Heute' }, parentId: 's1', childIds: [] },
       },
       datenquellen: [], relationen: [],
     }

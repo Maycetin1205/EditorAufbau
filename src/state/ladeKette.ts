@@ -23,6 +23,7 @@
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { sanitizeBlockEvents } from '../core/data/aktionen'
+import { BEREICH_AUFBAU, type LadeProblem } from '../core/data/ladeProblem'
 import {
   CURRENT_SCHEMA_VERSION,
   DEMO_CLEANUP_BEFORE_SCHEMA,
@@ -35,6 +36,7 @@ import {
   migrateRootKanbanToViewportFill,
   putzeAlteKartenDemos,
 } from './migrations'
+import { topologieProbleme } from './topologie'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
@@ -52,14 +54,23 @@ import { createEmptyTree, normalizeProps } from './treeOps'
 // Migrationen laufen und wo sein Ergebnis (die geleerten Stellen) an den
 // Aufrufer weitergereicht werden kann. Verhaltensgleich: derselbe Zeitpunkt,
 // dieselbe Bedingung, nur eine Ebene hoeher.
+// meldungen.absichtlichEntfernt: die ids, die eine der zwei
+// Rohdaten-Migrationen bewusst herausgenommen hat (A4). Ohne diese Meldung
+// zaehlt die Verlust-Kontrolle sie als fehlende Bausteine und sperrt einen
+// voellig gesunden Altbestand aus.
 export function sanitizeTree(
   raw: Record<string, unknown>,
-  onDropType?: (type: string) => void,
+  meldungen?: {
+    typVerworfen?: (type: string) => void
+    absichtlichEntfernt?: (id: string) => void
+  },
 ): BlockTree {
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
-  migrateKanbanVorlage(src)
-  migrateKnopfAusTabelle(src)
+  const onDropType = meldungen?.typVerworfen
+  for (const id of [...migrateKanbanVorlage(src), ...migrateKnopfAusTabelle(src)]) {
+    meldungen?.absichtlichEntfernt?.(id)
+  }
 
   const addChild = (parentId: string, childId: unknown): void => {
     if (typeof childId !== 'string' || tree[childId]) return
@@ -113,6 +124,12 @@ export interface BaumErgebnis {
   // `bausteinId.prop`. Nur so kann der Datei-Weg gewollte Aenderung von
   // Beschaedigung unterscheiden, statt beides gleich zu behandeln.
   absichtlichGeleert: ReadonlySet<string>
+  // Bausteine, die eine der zwei Rohdaten-Migrationen ABSICHTLICH aus dem Baum
+  // genommen hat (Vorlagen-Kasten, Knopf in der Tabelle) — dieselbe Idee eine
+  // Ebene hoeher (A4). Ist die Menge nicht leer, hat der Baum sich von Berufs
+  // wegen geaendert, und der Detail-Vergleich unten entfaellt wie bei einer
+  // Schemastufe.
+  absichtlichEntfernt: ReadonlySet<string>
   // Verworfene unbekannte Bausteintypen: Typname -> Anzahl.
   verworfen: Map<string, number>
 }
@@ -128,9 +145,13 @@ export function baumAusRohdaten(parsed: {
   // 2026-07-14 abgeschafften Bausteine in alten Staenden.
   const verworfen = new Map<string, number>()
   const absichtlichGeleert = new Set<string>()
+  const absichtlichEntfernt = new Set<string>()
   if (parsed.tree && typeof parsed.tree === 'object') {
-    tree = sanitizeTree(parsed.tree as Record<string, unknown>, (type) => {
-      verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
+    tree = sanitizeTree(parsed.tree as Record<string, unknown>, {
+      typVerworfen: (type) => {
+        verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
+      },
+      absichtlichEntfernt: (id) => absichtlichEntfernt.add(id),
     })
     // Nur am Baum-Weg, genau wie vorher: der alte `blocks`-Weg unten hat den
     // Putzer nie gesehen, und das bleibt so.
@@ -161,7 +182,7 @@ export function baumAusRohdaten(parsed: {
     typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID
       ? parsed.selectedId
       : null
-  return { tree, selectedId, schemaAdvanced, absichtlichGeleert, verworfen }
+  return { tree, selectedId, schemaAdvanced, absichtlichGeleert, absichtlichEntfernt, verworfen }
 }
 
 // ---------- Verlust-Pruefungen ----------
@@ -212,21 +233,15 @@ function ohneGeleerte(
   return out
 }
 
-// Ein Fund beim Laden: WO (Bereich + Eintrag/Pfad) und WARUM.
+// Ein Fund beim Laden (`LadeProblem`) wohnt in core/data/ladeProblem, zusammen
+// mit der Form, in der die Sanitizer der zwei Bibliotheken melden. Hier wird
+// er nur benutzt.
 //
 // Der Grund ist bewusst ein Satz-BRUCHSTUECK ohne „Die Datei ist
 // beschädigt:" davor (A3): denselben Fund muss sowohl der Datei-Weg melden
 // („Die Datei ist beschädigt: …") als auch die Sperransicht des
 // Browser-Wegs, wo von einer Datei gar keine Rede ist. Den Satz baut der
 // Aufrufer, die Wahrheit steht hier.
-export interface LadeProblem {
-  bereich: string
-  // Baustein-id, Eintrags-id oder Pfad; leer, wenn der ganze Bereich gemeint ist.
-  stelle: string
-  grund: string
-}
-
-export const BEREICH_AUFBAU = 'Masken-Aufbau'
 
 // Erst die VERWEISE: zeigt ein childIds-Eintrag auf einen Knoten, den der
 // Stand gar nicht enthaelt, faellt er beim Bereinigen lautlos weg — und eine
@@ -269,7 +284,11 @@ export function verlustProbleme(
   baum: BaumErgebnis,
 ): LadeProblem[] {
   const raus: LadeProblem[] = []
-  const rohKnoten = Object.keys(rohBaum).filter((id) => id !== ROOT_ID).length
+  // Absichtlich entfernte Bausteine zaehlen NICHT als vermisst (A4): der
+  // Vorlagen-Kasten und die Knoepfe aus der Tabelle sollen weg, das ist der
+  // Sinn ihrer Migrationen. Sie melden sich dafuer namentlich.
+  const rohKnoten = Object.keys(rohBaum)
+    .filter((id) => id !== ROOT_ID && !baum.absichtlichEntfernt.has(id)).length
   const reinKnoten = Object.keys(baum.tree).filter((id) => id !== ROOT_ID).length
   const bekanntVerworfen = [...baum.verworfen.values()].reduce((a, b) => a + b, 0)
   if (rohKnoten > reinKnoten + bekanntVerworfen) {
@@ -300,7 +319,11 @@ export function verlustProbleme(
   // ungeprueft, nur weil irgendwo „Heute" stand. Stattdessen nennt er die
   // Stellen beim Namen, und genau die werden hier geduldet — alles andere
   // wird weiter vollstaendig verglichen.
-  if (baum.schemaAdvanced || bekanntVerworfen > 0) return raus
+  // Dasselbe gilt fuer die zwei Rohdaten-Migrationen: sie haengen Kinder UM
+  // (die Musterkarte wandert aus dem Kasten in die erste Spalte). Danach
+  // stimmt keine Kinderliste mehr mit den Rohdaten ueberein — ein Vergleich
+  // wuerde jeden Altbestand mit Vorlagen-Kasten sperren.
+  if (baum.schemaAdvanced || bekanntVerworfen > 0 || baum.absichtlichEntfernt.size > 0) return raus
   for (const [id, rohKnoten] of Object.entries(rohBaum)) {
     const rein = baum.tree[id]
     const roh = rohKnoten as Record<string, unknown>
@@ -382,10 +405,6 @@ export const ZUKUNFT_GRUND =
 
 export function pruefeBaumStand(
   roh: { schemaVersion: number; tree?: unknown; blocks?: unknown; selectedId?: unknown },
-  // Schlaegt ein Teilverlust auf Quarantaene an? Der Datei-Weg sagt seit
-  // 2026-07-28 ja. Der Browser-Weg sagt ab A4 ebenfalls ja — bis dahin
-  // duennt er aus wie immer, und diese eine Zeile ist die ganze Differenz.
-  optionen: { verlustPruefen: boolean },
 ): LadeAusgang {
   // 1. Zukunft — VOR jeder Aenderung, denn ab hier wird migriert.
   if (roh.schemaVersion > CURRENT_SCHEMA_VERSION) {
@@ -408,12 +427,22 @@ export function pruefeBaumStand(
   const baum = baumAusRohdaten(roh, roh.schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA)
   if (!baum) return { art: 'quarantaene', ursache: 'unlesbar', probleme: [] }
 
-  // 3. Vertragspruefung.
-  if (optionen.verlustPruefen && roh.tree && typeof roh.tree === 'object') {
+  // 3. Vertragspruefung — fuer BEIDE Leser dieselbe (A4). Der Browser-Weg
+  // duennte bis hierher still aus: eine Waise, eine kaputte Aktionskette,
+  // eine Eigenschaft, die kein Baustein mehr kennt — alles fiel lautlos weg,
+  // und der Autosave schrieb den kleineren Stand fest. Der Datei-Weg lehnte
+  // genau das seit 2026-07-28 ab. Zwei Kriterien fuer dieselbe Frage waren
+  // ein Fehler; jetzt gilt das strengere.
+  const probleme: LadeProblem[] = []
+  if (roh.tree && typeof roh.tree === 'object') {
     const rohBaum = roh.tree as Record<string, unknown>
-    const probleme = [...strukturProbleme(rohBaum), ...verlustProbleme(rohBaum, baum)]
-    if (probleme.length > 0) return { art: 'quarantaene', ursache: 'verlust', probleme }
+    probleme.push(...strukturProbleme(rohBaum), ...verlustProbleme(rohBaum, baum))
   }
+  // Und die Verhaeltnisse im FERTIGEN Baum: Eltern-Kind-Vertrag der Registry
+  // plus die Topologie-Invarianten (topologie.ts). Sie laufen auch am alten
+  // `blocks`-Weg, der keinen Rohbaum zum Vergleichen hat.
+  probleme.push(...topologieProbleme(baum.tree))
+  if (probleme.length > 0) return { art: 'quarantaene', ursache: 'verlust', probleme }
 
   // 4. Ausgang.
   return { art: baum.schemaAdvanced ? 'migriert' : 'ok', baum }

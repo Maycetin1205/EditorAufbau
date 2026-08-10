@@ -13,7 +13,8 @@
 // Installation, festgeschrieben im Code. Bestehende Bibliotheken sind davon
 // unberuehrt: was im Speicher liegt, wird geladen.
 
-import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
+import { pruefeDatenquellen, type DataSource } from '../core/data/dataSources'
+import { BEREICH_QUELLEN } from '../core/data/ladeProblem'
 import { VorlagenStore, type VorlagenBauplan } from './VorlagenStore'
 
 const BAUPLAN: VorlagenBauplan<DataSource> = {
@@ -21,7 +22,8 @@ const BAUPLAN: VorlagenBauplan<DataSource> = {
   huelle: 'sources',
   klarnameLesen: 'Datenquellen',
   klarnameSchreiben: 'Datenquellen',
-  bereinige: sanitizeDataSources,
+  bereich: BEREICH_QUELLEN,
+  pruefe: pruefeDatenquellen,
   // Kein Startbestand — restlos entfernt am 2026-07-30, nicht wieder einbauen.
 }
 

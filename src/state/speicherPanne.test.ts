@@ -210,8 +210,8 @@ describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
   it('steht ein Stand unter Quarantaene, schreibt auch keine Bibliothek', () => {
     const quellen = new DataSourceStore()
     const relationen = new RelationStore()
-    speicherGate.sperre({
-      grund: 'Test', probleme: [], kopieSchluessel: null, rohdaten: '{}',
+    speicherGate.sperre('Test', [], {
+      bezeichnung: 'Maske', speicherSchluessel: KEY, kopieSchluessel: null, rohdaten: '{}',
     })
     try {
       quellen.add(EINE_QUELLE)

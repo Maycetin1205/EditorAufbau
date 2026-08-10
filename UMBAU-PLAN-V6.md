@@ -30,13 +30,13 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** A3 (2026-08-10) — davor S3, S2, A2.1, A2, A1, A0,
+- **Letzte fertige Etappe:** A4 (2026-08-10) — davor A3, S3, S2, A2.1, A2, A1, A0,
   A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
   **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die
   Welle S abgearbeitet, bis auf das optionale S5.
-- **Naechste Etappe:** A4. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+- **Naechste Etappe:** A5. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
@@ -53,11 +53,31 @@ git log --oneline -8
   mit den drei Wegen. **Der Schalter fuer A4 ist EINE Zeile:**
   `verlustPruefen` in `persistence.loadFromStorage` steht auf `false` — der
   Browser-Weg duennt bis A4 aus wie bisher, der Datei-Weg sperrt schon.
-  Nicht gebaut, weil A3 es nicht verlangt: Topologie-Invarianten,
-  `canContain`-Pruefung, Problemlisten der zwei Bibliotheken (alles A4).
   Bewusst UNVERAENDERT: ein unlesbarer Stand (kaputtes JSON) laeuft weiter
   ueber den bewaehrten Weg Notfallkopie + Meldung + leer starten und sperrt
   NICHT.
+- **Was A4 dazugelegt hat (2026-08-10):** derselbe Verlust-Vertrag fuer BEIDE
+  Wege — der `verlustPruefen`-Schalter ist ersatzlos weg, der Browser-Weg
+  sperrt jetzt auch bei Teilverlust · `state/topologie.ts` (eine Wurzel,
+  Seiten nur direkt unter der Wurzel, keine Seite in einer Seite, Beziehungen
+  beidseitig, jeder Knoten genau einmal, `canContain` fuer jede Kante) ·
+  `pruefeDatenquellen`/`pruefeRelationsVorlagen` in `core/data` (additiv, die
+  alten `sanitize*` delegieren) · `core/data/ladeProblem.ts` mit
+  `EintragProblem`/`LadeProblem` + den drei Bereichsnamen ·
+  Bibliotheks-Quarantaene im `VorlagenStore` (ein kaputter Eintrag sperrt,
+  statt die Bibliothek auszuduennen) · der Riegel SAMMELT mehrere Quellen
+  (Maske + Bibliotheken) und `verwerfeGesperrteStaende` raeumt genau deren
+  Schluessel. **Wichtiger Nebenbefund, beim Bauen gefunden:** die zwei
+  Rohdaten-Migrationen (Vorlagen-Kasten, Knopf aus Tabelle) melden jetzt ihre
+  absichtlich entfernten ids — ohne das haette der neue Schutz jeden
+  Altbestand mit Vorlagen-Kasten gesperrt (und der Datei-Weg tat genau das
+  schon vorher).
+  **Offenes Risiko, das A4 mitbringt (nicht selbst pruefbar):** ein
+  Browser-Stand, dessen Bereinigung heute etwas wegwirft, fuehrt ab jetzt
+  in die Sperransicht statt still zu laden. Bei einem vom Editor selbst
+  geschriebenen Stand kann das nicht passieren (er reist verlustfrei hin und
+  zurueck); bei einem von Hand bearbeiteten oder sehr alten schon. Der Weg
+  heraus ist die Sperransicht — sie loescht nichts ohne Bestaetigung.
 - **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
   `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
   und `absichtlichGeleert` (die namentlich gemeldeten Stellen des

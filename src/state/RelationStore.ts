@@ -12,9 +12,10 @@
 // die Vorlagen dem Bediener — auch das Loeschen der mitgelieferten ueberlebt
 // den Reload, es wird nie ungefragt neu eingespielt.
 
+import { BEREICH_RELATIONEN } from '../core/data/ladeProblem'
 import {
   BUILTIN_RELATION_TEMPLATES,
-  sanitizeRelationTemplates,
+  pruefeRelationsVorlagen,
   type RelationTemplate,
 } from '../core/data/relations'
 import { VorlagenStore, type VorlagenBauplan } from './VorlagenStore'
@@ -26,7 +27,8 @@ const BAUPLAN: VorlagenBauplan<RelationTemplate> = {
   // Bewusst abweichend vom Lese-Klarnamen — so steht der Text seit 2026-07-28
   // vor dem Bediener (siehe VorlagenBauplan.klarnameSchreiben).
   klarnameSchreiben: 'Relationen',
-  bereinige: sanitizeRelationTemplates,
+  bereich: BEREICH_RELATIONEN,
+  pruefe: pruefeRelationsVorlagen,
   startbestand: BUILTIN_RELATION_TEMPLATES,
 }
 
