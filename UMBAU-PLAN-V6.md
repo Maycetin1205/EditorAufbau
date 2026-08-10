@@ -34,11 +34,14 @@ git log --oneline -8
   A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
-- **Naechste Etappe:** S4 (Editor-Laden im Dev-Server). Die Welle S (sichtbare
-  Fehler und Tempo) ist am 2026-08-10 nach der Zwischenbilanz eingeschoben
-  worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S) und laeuft VOR
-  A3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10, s. Etappenkopf S1 —
-  nicht wieder vorschlagen). Danach A3; A9 setzt A3 bis A7 voraus.
+  **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die
+  Welle S abgearbeitet, bis auf das optionale S5.
+- **Naechste Etappe:** A3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+  s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
+  braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
+  und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
+  worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S). A9 setzt A3 bis
+  A7 voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
 - **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
   `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
@@ -492,17 +495,34 @@ pro BlockHost pro Render (`quellenFor`/`templateMarkFor`/`isInSubtree`).
 `vite.config.ts`) — der groesste einzelne Ladeposten beim Editor-Start.
 Der fertige Build ist nicht betroffen; gearbeitet wird aber im Dev-Server.
 
-### Arbeit
+### AUSGELASSEN 2026-08-10 — es gibt keine kleine sichere Loesung
 
-Kleinste wirksame Loesung (gezielte Icon-Importe ODER eine
-optimizeDeps-Regel), in der Ansage benannt. Kein Icon wechselt, nichts
-sieht anders aus.
+Geprueft, nicht gebaut (Auslass-Klausel des Bauauftrags: „keine
+nachweislich sichere kleine Loesung → auslassen statt basteln"). Der Befund
+stimmt: `node_modules/.vite/deps/lucide-react.js` misst 1 139 089 Bytes
+(dazu 2,2 MB Quellkarte), 33 Import-Stellen, 35 verschiedene Zeichen. Nur
+die Abhilfe gibt es nicht:
 
-### Fertig, wenn
+- **Gezielte Icon-Importe** braeuchten `lucide-react/dist/esm/icons/*.mjs`.
+  Diese Dateien liegen zwar da (2007 Stueck), sind aber KEIN oeffentlicher
+  Weg: das Paket (Fassung 1.27.0) hat kein `exports`-Feld, seine
+  mitgelieferte Anleitung nennt den Pfad nirgends, und Typen gibt es nur
+  drei — alle fuer den Sammel-Eingang. Ein gezielter Import laesst damit
+  `npx tsc -b` auffallen; ihn mit einer selbstgeschriebenen Typ-Zusage
+  ruhigzustellen hiesse, einen undokumentierten Innenweg zu behaupten,
+  den niemand pruefen kann.
+- **optimizeDeps** hat keinen Schalter, der einen Sammel-Eingang auf die
+  benutzten Ausgaenge eindampft. `exclude` macht es SCHLIMMER (dann laedt
+  der Browser die ~2000 Einzelmodule statt eines Buendels), `include`
+  aendert nichts.
 
-- der Dev-Start spuerbar schneller ist (Nutzer-Urteil);
-- optisch NICHTS anders ist;
-- Export, Runtime-Bundle und Referenzabzug bytegleich sind.
+Das Buendel entsteht ausserdem EINMAL und liegt danach im Zwischenspeicher
+(die gemessene Datei ist vom 2026-08-06); es kostet den ersten Start nach
+einer Paket-Aenderung, nicht jeden Start.
+
+Wiederaufnahme braucht eine Nutzer-Entscheidung — und zwar zu der Frage,
+ob 33 Dateien auf einen undokumentierten Paket-Innenweg umgestellt werden
+duerfen. Ohne die bleibt es, wie es ist.
 
 ## S5 · Masken-Tempo (OPTIONAL — eigenes go, SE-Echttest Pflicht)
 
