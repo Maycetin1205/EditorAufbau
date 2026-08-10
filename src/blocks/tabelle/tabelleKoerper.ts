@@ -14,7 +14,7 @@
 //
 // Aussehen kommt aus ./tabelleStil, das hier sind nur die Klassennamen.
 
-import { html, type TemplateResult } from 'lit'
+import { html, nothing, type TemplateResult } from 'lit'
 import { styleMap } from 'lit/directives/style-map.js'
 import { leerZustand } from '../shared/leerZustand'
 import type { Spalte } from './spalten'
@@ -47,6 +47,9 @@ export interface KoerperLage {
   // Spalte ein Record Schluessel -> Wert (leer, wo eine Art keine hat oder
   // nichts gebunden ist). Nur „Bild + Name" liest daraus (./spaltenArten).
   zusatzzeilen: readonly Record<string, string>[][]
+  // Wie viele GANZE Zeilentakte das Lineal unter den Zeilen zeichnet
+  // (./seitengroesse, linealTakte). 0 = gar keins, null = nicht messbar.
+  linealTakte: number | null
   // Kommen echte Daten? Entscheidet, ob eine Zeile anklickbar ist.
   hatQuelle: boolean
   auswahlIndex: number
@@ -66,6 +69,37 @@ export interface KoerperHandeln {
   klickZeile: (rohIndex: number | null) => void
   // Klicks duerfen den Baustein nicht anfassen (Editor: Auswahl).
   stop: (e: Event) => void
+}
+
+// Das Lineal traegt DASSELBE Raster wie Kopf und Zeilen und zieht seine
+// senkrechten Striche mit echten Zellen. Bis 2026-08-06 malte es sie als
+// Verlauf im Takt `100% / Spaltenzahl` — das stimmte nur, solange alle Spalten
+// gleich breit waren. Mit den festen Massen (Zahl 90, Datum 100, Status 120)
+// waeren die Striche aus der Flucht gelaufen; so kann sich das Lineal gar
+// nicht mehr verrechnen.
+//
+// Seine HOEHE ist seit 2026-08-10 keine Restgroesse mehr, sondern eine feste
+// Zahl ganzer Takte (./seitengroesse, linealTakte). Vorher nahm es mit
+// `flex: 1 1 auto` auch den angebrochenen Rest-Takt auf und malte seine
+// Spaltentrenner hinein — das las sich als leere, teils duennere letzte Zeile.
+// Jetzt bleibt dieser Rest unbemalt: keine Trenner, keine Linien, nur die
+// Panel-Flaeche der Tabelle.
+//
+// `flex: 0 1 auto` statt `none`: wachsen darf das Lineal nicht mehr (genau das
+// war der Fehler), schrumpfen schon — sonst koennte ein zu flacher Rumpf durch
+// das Lineal eine Scrollleiste bekommen, die er vorher nie hatte.
+function lineal(lage: KoerperLage): TemplateResult | typeof nothing {
+  if (lage.linealTakte === 0) return nothing
+  const stil = lage.linealTakte === null
+    ? lage.cols
+    : {
+        ...lage.cols,
+        flex: '0 1 auto',
+        height: `calc(var(--zeilen-hoehe) * ${lage.linealTakte})`,
+      }
+  return html`<div class="lineal" style=${styleMap(stil)}>
+          ${lage.spalten.map(() => html`<div></div>`)}
+        </div>`
 }
 
 export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): TemplateResult {
@@ -129,15 +163,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             })}
           </div>`,
         )}
-        ${/* Das Lineal traegt DASSELBE Raster wie Kopf und Zeilen und zieht
-              seine senkrechten Striche mit echten Zellen. Bis 2026-08-06 malte
-              es sie als Verlauf im Takt `100% / Spaltenzahl` — das stimmte nur,
-              solange alle Spalten gleich breit waren. Mit den festen Massen
-              (Zahl 90, Datum 100, Status 120) waeren die Striche aus der Flucht
-              gelaufen; so kann sich das Lineal gar nicht mehr verrechnen. */ ''}
-        <div class="lineal" style=${styleMap(lage.cols)}>
-          ${lage.spalten.map(() => html`<div></div>`)}
-        </div>`}
+        ${lineal(lage)}`}
       </div>
     `
 }

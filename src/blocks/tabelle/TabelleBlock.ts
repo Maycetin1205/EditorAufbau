@@ -399,6 +399,7 @@ export class TabelleBlock extends BasicBlock {
         sortSpalte: this._sortSpalte,
         sortAuf: this._sortAuf,
         zeilen: ansicht.zeilen,
+        linealTakte: ansicht.linealTakte,
         datenzeilen: this.datenzeilen,
         zusatzzeilen: this.zusatzzeilen,
         hatQuelle: ansicht.hatQuelle,

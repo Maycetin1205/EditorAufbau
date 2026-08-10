@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+  linealTakte,
   PASSEND,
   passendeZeilen,
   proSeiteAusEinstellung,
@@ -59,6 +60,32 @@ describe('passendeZeilen', () => {
     expect(passendeZeilen(40, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(1)
     expect(passendeZeilen(0, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(1)
     expect(passendeZeilen(-100, ZEILEN_HOEHE, ZEILEN_HOEHE)).toBe(1)
+  })
+})
+
+describe('linealTakte', () => {
+  it('fuellt den Platz unter den Zeilen mit ganzen Takten', () => {
+    // Zwoelf Zeilen passen, drei stehen da -> neun Takte Lineal.
+    expect(linealTakte(12, 3)).toBe(9)
+  })
+
+  it('zeichnet unter einer VOLLEN Seite gar kein Lineal mehr', () => {
+    // Der eigentliche Fehler (Nutzer 2026-08-07 und 2026-08-10): hier blieb
+    // der angebrochene Rest-Takt von 2 bis 30 px uebrig, und das Lineal malte
+    // seine Spaltentrenner hinein — eine Scheinzeile unter der letzten Zeile.
+    expect(linealTakte(12, 12)).toBe(0)
+  })
+
+  it('geht nie ins Minus (mehr Zeilen als gemessen passen)', () => {
+    // Feste Einstellung „25 pro Seite" in einer Tabelle, in die 12 passen:
+    // der Rumpf scrollt, unter den Zeilen ist kein Platz mehr.
+    expect(linealTakte(12, 25)).toBe(0)
+  })
+
+  it('haelt sich ohne Messung heraus', () => {
+    // null = kein ResizeObserver bzw. keine vorgegebene Hoehe. Dann waere jede
+    // Takt-Zahl geraten; das Lineal waechst wie bis 2026-08-10 mit.
+    expect(linealTakte(null, 3)).toBeNull()
   })
 })
 

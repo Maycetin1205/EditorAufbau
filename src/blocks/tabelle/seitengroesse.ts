@@ -101,6 +101,31 @@ export function passendeZeilen(
   return Math.max(1, Math.floor((rumpfHoehe - kopfHoehe) / zeilenHoehe))
 }
 
+// Wie viele GANZE Zeilentakte darf das Lineal unter den Zeilen dieser Seite
+// noch zeichnen?
+//
+// Warum es die Frage gibt (Nutzer-Meldung 2026-08-07, erneut 2026-08-10:
+// „unter der letzten Zeile steht IMMER eine leere"): die Bausteinhoehe waechst
+// in 20-px-Schritten des Rasters, eine Zeile ist 32 px hoch — der Rest trifft
+// nie null, er liegt zwischen 2 und 30 px. Bis hierher nahm das Lineal diesen
+// Rest mit `flex: 1 1 auto` auf und malte seine Spaltentrenner hinein. Ein
+// solcher Streifen liest sich wie eine Zeile: leer, und je nach Rest auch noch
+// duenner als die echten darueber.
+//
+// Die Rechnung war nie falsch — `passendeZeilen` rundet ab, und das bleibt so.
+// Falsch war nur, dass ihr REST wie eine Zeile aussah. Das Lineal bekommt
+// darum eine feste Hoehe aus ganzen Takten; was darunter uebrig bleibt, traegt
+// gar keine Zeichnung mehr (die Panel-Flaeche der Tabelle).
+//
+// null heisst „nicht messbar" (kein ResizeObserver im alten WinUI, oder die
+// Tabelle steht im Fluss ohne vorgegebene Hoehe). Dann bleibt es beim
+// mitwachsenden Lineal: ohne Messung waere jede Takt-Zahl geraten — und im
+// Fluss ist gar kein Rest da, den es fuellen koennte.
+export function linealTakte(passen: number | null, gezeichnet: number): number | null {
+  if (passen === null) return null
+  return Math.max(0, passen - gezeichnet)
+}
+
 export interface Aufteilung {
   // Wie viele Seiten es gibt (mindestens 1 — „Seite 1 von 0" gibt es nicht).
   seiten: number

@@ -12,6 +12,7 @@
 
 import { spaltenArt, zeilenHoeheFuer } from './spaltenArten'
 import {
+  linealTakte,
   OHNE_MESSUNG,
   platzhalterZeilen,
   proSeiteAusEinstellung,
@@ -53,6 +54,9 @@ export interface TabelleAnsicht {
   // Was diese Seite zeichnet: Rohindex in datenzeilen, oder null fuer eine
   // Platzhalter-Zeile im Editor.
   zeilen: readonly (number | null)[]
+  // Wie viele GANZE Zeilentakte das Lineal unter diesen Zeilen noch zeichnet
+  // (./seitengroesse). 0 = keins mehr, null = nicht messbar.
+  linealTakte: number | null
 }
 
 // Die Zeilen, die der Bediener gerade sehen soll — als ROHINDIZES in
@@ -119,5 +123,11 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
     seiten,
     seite,
     zeilen,
+    // Das Lineal fuellt den Rest unter den Zeilen nur noch in GANZEN Takten.
+    // Gerechnet wird gegen die GEMESSENE Zahl, nicht gegen `proSeite`: bei
+    // einer festen Einstellung (10 pro Seite in einer Tabelle, in die 25
+    // passen) bleibt unter der zehnten Zeile echter Platz, den das Lineal
+    // weiter zeichnen soll — nur eben nicht bis in den angebrochenen Takt.
+    linealTakte: linealTakte(frage.gemessen, zeilen.length),
   }
 }

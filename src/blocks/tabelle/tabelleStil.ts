@@ -123,7 +123,15 @@ export const tabelleStil = css`
          Scrollleisten-Streifen. Der Versatz wuchs nach rechts (bei 15px
          Leiste und drei Spalten: 5px, 10px).
          Als eigenes Kind hat das Lineal EXAKT die Breite der Zeilen — mit
-         und ohne Scrollleiste. Es kann sich gar nicht mehr verrechnen. */
+         und ohne Scrollleiste. Es kann sich gar nicht mehr verrechnen.
+
+         Das flex 1 1 auto darunter ist seit 2026-08-10 nur noch der RUECKFALL
+         fuer den nicht messbaren Fall (kein ResizeObserver, oder die Tabelle
+         steht im Fluss ohne vorgegebene Hoehe). Sobald gemessen werden kann,
+         setzt ./tabelleKoerper stattdessen flex 0 1 auto und eine feste Hoehe
+         aus ganzen Takten: sonst nimmt das Lineal auch den angebrochenen
+         Rest-Takt auf (2 bis 30 px) und malt seine Spaltentrenner hinein — das
+         las sich als leere, teils duennere letzte Zeile. */
       .lineal {
         flex: 1 1 auto;
         min-height: 0;
@@ -321,8 +329,19 @@ export const tabelleStil = css`
         align-items: center;
         gap: 6px;
       }
+      /* Feste, GLEICHE Hoehe fuer Waehler und Blaetter-Knoepfe. Nicht Optik,
+         sondern die Messung: den Zeilen-Waehler zeigt der Editor immer, die
+         Maske nur auf Wunsch (Prop zeilenWaehler, Standard nein). Wie hoch
+         ein <select> von sich aus wird, bestimmt der Browser — ist es auch nur
+         zwei Pixel mehr als ein <button>, ist die Fusszeile im Editor hoeher,
+         der Rumpf darueber flacher, und die Tabelle zeigt im Editor eine Zeile
+         WENIGER als dieselbe Maske in SoftEngine (Regel 1: was zu sehen ist,
+         IST der Export). Mit derselben festen Hoehe fuer beide haengt die
+         Fusszeilenhoehe nicht mehr daran, ob der Waehler dasteht. */
       .seiten-nav select,
       .seiten-nav button {
+        box-sizing: border-box;
+        height: 22px;
         font-family: var(--se-font);
         font-size: var(--se-fs-sm);
         padding: 2px 6px;
