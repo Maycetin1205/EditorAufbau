@@ -47,11 +47,15 @@ export function eigenerText(
   return ''
 }
 
-// Sprechender Name eines Bausteins: Anzeigename + Eigentext („Formularfeld —
-// Kunde"). Ohne Eigentext bleibt es beim Anzeigenamen des Typs.
+// Sprechender Name eines Bausteins: der EIGENE Text, sobald es einen gibt
+// („Kunde"). Erst ohne Eigentext tritt der Typname ein („Formularfeld").
+//
+// Bis 2026-08-10 stand der Typname immer davor („Formularfeld — Kunde").
+// Nutzer-Ansage an diesem Tag: ein Feld, das er „Kunde" genannt hat, heisst
+// in jeder Liste „Kunde" — der Typ steht schon im Symbol daneben und wird in
+// einer Maske mit fuenf Feldern zur Wiederholung, die den Namen wegdraengt.
 export function bausteinName(node: BlockNode): string {
   const def = getBlockDefinition(node.type)
-  const basis = def?.displayName ?? node.type
   const text = eigenerText(node.props, def?.defaultProps)
-  return text === '' ? basis : `${basis} — ${text}`
+  return text === '' ? (def?.displayName ?? node.type) : text
 }

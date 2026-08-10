@@ -69,8 +69,11 @@ describe('preflightMask', () => {
       b: feld('b', 'Haustier'),
     }
     const texte = preflightMask(tree, [], []).map((r) => r.detail)
-    expect(texte.some((t) => t.includes('Formularfeld — Kunde'))).toBe(true)
-    expect(texte.some((t) => t.includes('Formularfeld — Haustier'))).toBe(true)
+    // Der EIGENE Name allein, ohne Typ davor (Nutzer-Ansage 2026-08-10, s.
+    // bausteinName): entscheidend ist, dass die zwei Meldungen die beiden
+    // Felder auseinanderhalten — „Formularfeld" vor jedem Namen tat das nie.
+    expect(texte.some((t) => t.includes('Kunde'))).toBe(true)
+    expect(texte.some((t) => t.includes('Haustier'))).toBe(true)
   })
 
   it('Popup-Schritt reist mit dem Klarnamen; Preflight blockt gelöschte Ziele und Doppelnamen (P-B)', () => {

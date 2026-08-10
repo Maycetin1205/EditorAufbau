@@ -3,13 +3,12 @@
 // aktive Seite. R1 (2026-07-21): Undo/Redo-Gezappel raus, dafür die Seite —
 // ruhige, feste Information statt blinkender Zustandsanzeigen.
 
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { bausteinName } from '../../core/blocks/bausteinName'
 import { useEditor } from '../../state/useEditor'
 
 export function StatusBar() {
   const ed = useEditor()
   const selected = ed.selectedNode
-  const def = selected ? getBlockDefinition(selected.type) : null
   const page = ed.pages.find((p) => p.id === ed.activePageId)
 
   return (
@@ -21,8 +20,11 @@ export function StatusBar() {
         {selected && (
           <span>
             Auswahl{' '}
+            {/* Der Klarname des Bausteins (bausteinName) — NICHT der Typname:
+                bei fuenf Formularfeldern in einer Maske sagt „Formularfeld"
+                nichts darueber, welches gerade ausgewaehlt ist. */}
             <strong className="font-semibold text-foreground">
-              {def?.displayName ?? selected.type}
+              {bausteinName(selected)}
             </strong>
           </span>
         )}
