@@ -27,7 +27,16 @@ export type DataSourceKind =
   | 'adressstamm'
   | 'artikelstamm'
   | 'beleg'
+  | 'belegposition'
   | 'datei'
+
+// Ein Feld einer mitgebrachten Feldliste. Dieselbe Form wie DataSourceField —
+// hier absichtlich noch einmal beschrieben statt importiert: dataSources liest
+// DIESE Datei, ein Import zurueck waere ein Kreis.
+export interface ArtFeld {
+  code: string
+  label: string
+}
 
 export interface QuellenArt {
   // Derselbe Wert wie der Schluessel in ARTEN (die Liste unten braucht ihn
@@ -48,6 +57,37 @@ export interface QuellenArt {
   kennungLabel: string
   // Ein echtes Beispiel dafuer, als Platzhalter im Eingabefeld.
   kennungBeispiel: string
+  // Darf diese Art einen KOPFSATZ_INDEX tragen — also UNTER einem anderen
+  // Satz haengen? Belegpositionen sind der Fall: SoftEngine liefert dann die
+  // Zeilen des OFFENEN Belegs statt aller Positionen der Installation.
+  // BELEGT (2026-08-07) an der ausgelieferten Belegerfassung des Nutzers:
+  // { ID: 'POS', ALIAS: 'Belegpositionen', KOPFSATZ_INDEX: 'BEL_0_11', … }.
+  // Nur „Andere Datei" fuehrt ihn: ADR/ART/BEL SIND Kopfsaetze, und fuer IDB
+  // ist die Form nicht abgelesen — dort wird nicht danach gefragt, statt zu
+  // raten (Regel 5).
+  kopfsatzMoeglich: boolean
+  // Vorbelegung fuer den Kopfsatz; '' = keine.
+  kopfsatzStandard: string
+  // Darf diese Art als OFFENER SATZ bestellt werden (VAR-Abschnitt der
+  // SEvariablen) statt als Liste (SEFILELOOP)? Der offene Satz ist der eine
+  // Datensatz, an dem die Maske haengt — in der Belegerfassung der geoeffnete
+  // Beleg samt seiner Adresse.
+  //
+  // BELEGT (2026-08-07) fuer BEL, ADR und POS: die ausgelieferten Rahmen
+  // 00001/00007/00012/00016 und die POS-Masken deklarieren genau diese drei im
+  // VAR-Abschnitt. Fuer ART und eigene IDB-Tabellen kommt es in keiner echten
+  // Maske vor — dort wird es nicht angeboten, statt zu raten (Regel 5). Wird
+  // es irgendwo belegt, ist es eine Zeile hier.
+  varMoeglich: boolean
+  // Feld-Woerterbuch, das die Art SELBST mitbringt — leer, wo es keins gibt.
+  // Erlaubt ist das nur bei Arten mit FESTER Tabellen-ID: dort sind die
+  // Positionen SoftEngine-Standard und in jeder Installation dieselben (darum
+  // steht auch die ID hier im Code). Fuer eigene IDB-Tabellen waere dasselbe
+  // falsch — deren Positionen sind installations-individuell (Regel 5), und
+  // genau daran ist der frueher mitgelieferte Startbestand am 2026-07-30
+  // gescheitert. Die Klarnamen stammen aus der Maske, die die Felder
+  // tatsaechlich BENUTZT, nie aus einer Vermutung.
+  standardFelder: readonly ArtFeld[]
 }
 
 // Schluessel = id. Ein Record (keine Liste) ist hier Absicht: tsc verlangt
@@ -61,6 +101,10 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     felderEinzeln: false,
     kennungLabel: 'IDB-ID',
     kennungBeispiel: 'ID0001',
+    kopfsatzMoeglich: false,
+    kopfsatzStandard: '',
+    varMoeglich: false,
+    standardFelder: [],
   },
   adressstamm: {
     id: 'adressstamm',
@@ -69,6 +113,10 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     felderEinzeln: true,
     kennungLabel: '',
     kennungBeispiel: '',
+    kopfsatzMoeglich: false,
+    kopfsatzStandard: '',
+    varMoeglich: true,
+    standardFelder: [],
   },
   artikelstamm: {
     id: 'artikelstamm',
@@ -77,6 +125,10 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     felderEinzeln: true,
     kennungLabel: '',
     kennungBeispiel: '',
+    kopfsatzMoeglich: false,
+    kopfsatzStandard: '',
+    varMoeglich: false,
+    standardFelder: [],
   },
   beleg: {
     id: 'beleg',
@@ -85,6 +137,80 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     felderEinzeln: true,
     kennungLabel: '',
     kennungBeispiel: '',
+    kopfsatzMoeglich: false,
+    kopfsatzStandard: '',
+    varMoeglich: true,
+    // Der Satzschluessel steht bewusst VORNE — er ist das Feld, auf das der
+    // Kopfsatz der Belegpositionen zeigt ('BEL_0_11'), und in Rahmen00001
+    // eroeffnet er die Liste genauso. Ohne ihn kann SoftEngine den Kopfsatz
+    // nicht aufloesen und verwirft die Positionen stillschweigend.
+    standardFelder: [
+      { code: '0_11', label: 'Satzschlüssel' },
+      { code: '2_1', label: 'Belegart' },
+      { code: '3_8', label: 'Belegnummer' },
+      { code: '11_8', label: 'Kundennummer' },
+      { code: '19_10', label: 'Belegdatum' },
+      { code: '393_12', label: 'Warenwert' },
+      { code: '441_12', label: 'MwSt-Betrag' },
+      { code: '453_12', label: 'Gesamtbetrag' },
+      { code: '3440_60', label: 'Name' },
+    ],
+  },
+  // Belegpositionen — die Zeilen des offenen Belegs. Eigene Art statt
+  // „Andere Datei" mit dem Kuerzel POS, weil hier ALLES feststeht: die
+  // Datei-ID, der Kopfsatz und die Feldpositionen.
+  //
+  // BELEGT (2026-08-07) an den ausgelieferten Belegerfassungs-Rahmen 00001 /
+  // 00007 / 00012 / 00016 und den POS-Masken 01 / 02 des Herstellers:
+  //   { ID: 'POS', ALIAS: 'Belegpositionen', KOPFSATZ_INDEX: 'BEL_0_11',
+  //     FELDER: '0_1, 1_1, 2_1, 11_6, 17_1, 18_25, 45_60, …' }
+  //
+  // Vier der 18 Feldpositionen dieser Liste fehlen hier absichtlich: 0_1, 1_1,
+  // 128_6 und 888_10 kommen in den echten Masken vor, ihre BEDEUTUNG steht
+  // dort aber nirgends. Ein geratener Klarname waere eine Luege im Formular —
+  // wer sie braucht, traegt sie mit eigenem Namen nach.
+  //
+  // ACHTUNG (gemessen 2026-08-07 an der Maske des Nutzers): der Kopfsatz zeigt
+  // in den VAR-Abschnitt der SEvariablen (dort steht 'BEL' mit '0_11' als
+  // erstem Feld). Solange der Export keinen VAR-Abschnitt schreibt, verwirft
+  // SoftEngine den POS-Eintrag STILLSCHWEIGEND — SEDATA.Daten.SEFileLoop kam
+  // ohne ihn zurueck. Diese Art ist also gebaut, aber ohne VAR nicht nutzbar.
+  belegposition: {
+    id: 'belegposition',
+    name: 'Belegpositionen',
+    tabellenId: 'POS',
+    felderEinzeln: true,
+    kennungLabel: '',
+    kennungBeispiel: '',
+    kopfsatzMoeglich: true,
+    kopfsatzStandard: 'BEL_0_11',
+    // POS/HTML/01 des Herstellers deklariert `VAR: [{ID: 'POS', FELDER: '*'}]`
+    // — in einer Positions-Maske IST die Position der offene Satz.
+    varMoeglich: true,
+    // Reihenfolge = Satz-Reihenfolge. Jeder Klarname stammt aus dem Code der
+    // echten Masken, die das Feld benutzen (Belegerfassung-Rahmen 00001 und
+    // POS-Maske 01) — kein Name ist geraten.
+    standardFelder: [
+      // POS/01, GET_RELATION 4232: 2_1 -> Angebot/Auftrag/Lieferschein/…
+      { code: '2_1', label: 'Belegart' },
+      { code: '3_8', label: 'Belegnummer' },
+      { code: '11_6', label: 'Positionsnummer' },
+      // Belegerfassung: `if (POS_17_1 == '0')` — nur dann eine Artikelzeile.
+      { code: '17_1', label: 'Zeilenart' },
+      { code: '18_25', label: 'Artikelnummer' },
+      { code: '45_60', label: 'Bezeichnung' },
+      { code: '164_8', label: 'Menge' },
+      { code: '246_9', label: 'Einzelpreis' },
+      { code: '280_12', label: 'Gesamtpreis' },
+      { code: '372_5', label: 'MwSt-Satz' },
+      // LANGTEXT-Schluessel der Position (POS/01) und Parameter beim Loeschen.
+      { code: '645_10', label: 'Satznummer' },
+      { code: '689_5', label: 'Mengeneinheit' },
+      { code: '1401_12', label: 'Rohertrag' },
+      // Belegerfassung: 1 rot, 2 gruen, 3 blau, 4 grau.
+      { code: '2558_1', label: 'Farbkennzeichen' },
+      { code: '3164_12', label: 'Rabatt' },
+    ],
   },
   // Jede andere ERP-Datei. BELEGT (2026-07-30) aus den 129 ausgelieferten
   // SEvariablen-Dateien des Herstellers: SEFILELOOP-Kennungen sind dort
@@ -99,7 +225,11 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     tabellenId: '',
     felderEinzeln: true,
     kennungLabel: 'Dateikürzel',
-    kennungBeispiel: 'POS',
+    kennungBeispiel: 'SERPOS',
+    kopfsatzMoeglich: true,
+    kopfsatzStandard: '',
+    varMoeglich: false,
+    standardFelder: [],
   },
 }
 

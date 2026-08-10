@@ -5,7 +5,7 @@
 // das nach, damit die Zusage nicht laenger nur Prosa ist.
 
 import { describe, expect, it } from 'vitest'
-import { quellenKennung, sanitizeDataSources, type DataSource } from './dataSources'
+import { artFuer, quellenKennung, sanitizeDataSources, type DataSource } from './dataSources'
 
 describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)', () => {
   const quelle = (fields: unknown) => [
@@ -48,6 +48,37 @@ describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)'
 // suchen. Fuer die Daten des Bedieners erzwingt Regel 3 das Formular
 // („Klarname darf kein Feldcode sein") und, beim Laden, der Test oben:
 // ein Feld ohne label wird verworfen.
+
+describe('Belegpositionen als eigene Art (2026-08-07)', () => {
+  const art = artFuer('belegposition')
+
+  it('bringt Datei-ID und Kopfsatz der echten Masken mit', () => {
+    expect(art.tabellenId).toBe('POS')
+    expect(art.kopfsatzMoeglich).toBe(true)
+    expect(art.kopfsatzStandard).toBe('BEL_0_11')
+  })
+
+  it('die mitgebrachten Felder halten Regel 3 ein und sind eindeutig', () => {
+    // Ein Klarname, der wie ein Feldcode aussieht, laeuft im Formular als
+    // Fehler auf; zwei gleiche Codes ebenso. Beides waere hier ein Tippfehler
+    // in einer Liste, die kein Bediener mehr durchsieht.
+    expect(art.standardFelder.length).toBeGreaterThan(0)
+    for (const f of art.standardFelder) {
+      expect(f.code).toMatch(/^\d+_\d+$/)
+      expect(f.label).not.toMatch(/^\d+_\d+$/)
+      expect(f.label.trim()).not.toBe('')
+    }
+    const codes = art.standardFelder.map((f) => f.code)
+    expect(new Set(codes).size).toBe(codes.length)
+  })
+
+  it('nur Arten mit fester Datei-ID bringen Felder mit', () => {
+    // Feldpositionen im Code sind nur dort erlaubt, wo sie SoftEngine-Standard
+    // sind (Regel 5). Eine eigene IDB-Tabelle hat in jeder Installation andere.
+    expect(artFuer('idb').standardFelder).toEqual([])
+    expect(artFuer('datei').standardFelder).toEqual([])
+  })
+})
 
 describe('quellenKennung (dezente Technik-Marke, 2026-08-06)', () => {
   const quelle = (kind: DataSource['kind'], idbId?: string): DataSource => ({

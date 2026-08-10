@@ -34,7 +34,12 @@ import {
 } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
-import { felderFor, tableIdFor, type DataSource } from '../core/data/dataSources'
+import {
+  felderFor,
+  kopfsatzFor,
+  tableIdFor,
+  type DataSource,
+} from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
 import { quelleBrauchbar, WEITERE_QUELLEN_PROP, weitereQuellenAus } from '../core/data/sourceLinks'
 import { dataSourceStore } from '../state/DataSourceStore'
@@ -461,14 +466,25 @@ export function exportMask(
   // INDEX_NR 0, ALIAS = Anzeigename, ID/FELDER je Quellen-ART (IDB → eigene
   // ID + '*', Stammtabellen → feste ID + explizite pos_len-Liste).
   // Nicht-ASCII wird \uXXXX-escaped (gültiges JSON, ASCII-Regel wie beim HTML).
-  const sefileloop = used.map((s) => ({
-    INDEX_NR: 0,
-    ALIAS: s.name,
-    ID: tableIdFor(s),
-    FELDER: felderFor(s),
-  }))
+  //
+  // KOPFSATZ_INDEX steht nur, wo die Quelle einen hat (kopfsatzFor): er sagt
+  // SoftEngine, an welchem Satz die Zeilen hängen (Belegpositionen am offenen
+  // Beleg, 'BEL_0_11').
+  const sefileloop = used.map((s) => {
+    const kopfsatz = kopfsatzFor(s)
+    return {
+      INDEX_NR: 0,
+      ALIAS: s.name,
+      ID: tableIdFor(s),
+      ...(kopfsatz !== '' ? { KOPFSATZ_INDEX: kopfsatz } : {}),
+      FELDER: felderFor(s),
+    }
+  })
   const sevariablen = escapeNonAsciiJs(
-    JSON.stringify({ SEFILELOOP: sefileloop, ERPAPICALL: [] }, null, 2),
+    JSON.stringify({
+      SEFILELOOP: sefileloop,
+      ERPAPICALL: [],
+    }, null, 2),
   ) + '\n'
 
   return { html, sevariablen }

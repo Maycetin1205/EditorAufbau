@@ -76,8 +76,28 @@ export interface DataSource {
   // Feldcode der Datensatz-Nummer (pindex) — braucht der Schreibweg:
   // PUT_RELATION adressiert den Satz über diese Nummer. Kein Anzeige-Feld.
   indexField?: string
+  // KOPFSATZ_INDEX der SEFILELOOP: an WELCHEN Satz die Zeilen hängen, in
+  // SoftEngine-Form 'KÜRZEL_pos_len' — 'BEL_0_11' heißt „der offene Beleg,
+  // ab Zeichen 0, 11 Zeichen lang". Damit schickt SoftEngine die Positionen
+  // DIESES Belegs statt aller Positionen der Installation. Nur Arten mit
+  // kopfsatzMoeglich führen ihn (s. quellenArten); leer = die Datei kommt
+  // ohne Kopfsatz. Technikwert, nie sichtbar.
+  kopfsatzIndex?: string
+  // Liefert SoftEngine ALLE Sätze dieser Datei oder nur den EINEN, an dem die
+  // Maske hängt? 'liste' (Standard, auch wenn nichts dasteht) = SEFILELOOP.
+  // 'offenerSatz' = VAR-Abschnitt: der geöffnete Beleg, seine Adresse, die
+  // angefasste Position. Erlaubt nur, wo die Art es führt (varMoeglich).
+  lieferung?: 'liste' | 'offenerSatz'
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
   fields: readonly DataSourceField[]
+}
+
+// Kommt diese Quelle als EIN offener Satz (VAR) statt als Liste (SEFILELOOP)?
+// Die Art-Abfrage steckt mit drin — aus demselben Grund wie bei kopfsatzFor:
+// wechselt der Bediener die Art, bleibt die alte Einstellung in der Datei
+// stehen und dürfte den Export nicht mehr beeinflussen.
+export function istOffenerSatz(source: DataSource): boolean {
+  return artFuer(source.kind).varMoeglich && source.lieferung === 'offenerSatz'
 }
 
 // SoftEngine-Tabellen-ID einer Quelle: die feste ID der Art — und wo die
@@ -93,6 +113,15 @@ export function felderFor(source: DataSource): string {
   return artFuer(source.kind).felderEinzeln
     ? source.fields.map((f) => f.code).join(',')
     : '*'
+}
+
+// Der KOPFSATZ_INDEX, den der Export schreiben darf — leer heißt „Schlüssel
+// weglassen". Die Art-Abfrage gehört HIERHER und nicht in den Export: wechselt
+// der Bediener die Art einer bestehenden Quelle, bleibt der alte Wert in der
+// Maskendatei stehen und ginge sonst still mit hinaus.
+export function kopfsatzFor(source: DataSource): string {
+  if (!artFuer(source.kind).kopfsatzMoeglich) return ''
+  return (source.kopfsatzIndex ?? '').trim()
 }
 
 // KEIN mitgelieferter Startbestand mehr (Nutzer-Entscheidung 2026-07-30:
@@ -153,6 +182,17 @@ export function kennungFromInput(raw: string): string {
   const kurz = KENNUNG_IDB_KURZ.exec(t)
   if (kurz) return `IDBID${kurz[1].padStart(4, '0')}`
   return KENNUNG_FREI.test(t) ? t : ''
+}
+
+// Eingegebener Kopfsatz -> Technikwert. Die Form ist die der ausgelieferten
+// Belegerfassung: Kürzel, Position, Länge ('BEL_0_11'). Alles andere ergibt ''
+// (das Formular zeigt dann einen Fehler) — ein Tippfehler hier wäre sonst eine
+// Maske, die klaglos die Positionen ALLER Belege zieht.
+const KOPFSATZ_FORM = /^[A-Za-z][A-Za-z0-9]*_\d+_\d+$/
+
+export function kopfsatzFromInput(raw: string): string {
+  const t = raw.trim()
+  return KOPFSATZ_FORM.test(t) ? t : ''
 }
 
 // Rückweg fürs Bearbeiten/Anzeigen: 'IDBID0004' -> 'ID0004' (die Kurzform,
@@ -217,6 +257,10 @@ export function sanitizeDataSources(raw: unknown): DataSource[] {
       kind: e.kind as DataSourceKind,
       ...(typeof e.idbId === 'string' && e.idbId !== '' ? { idbId: e.idbId } : {}),
       ...(typeof e.indexField === 'string' && e.indexField !== '' ? { indexField: e.indexField } : {}),
+      ...(typeof e.kopfsatzIndex === 'string' && e.kopfsatzIndex !== ''
+        ? { kopfsatzIndex: e.kopfsatzIndex }
+        : {}),
+      ...(e.lieferung === 'offenerSatz' ? { lieferung: 'offenerSatz' as const } : {}),
       fields,
     })
   }

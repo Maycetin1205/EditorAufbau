@@ -30,6 +30,7 @@ import {
   artFuer,
   kennungAnzeige,
   kennungFromInput,
+  kopfsatzFromInput,
   QUELLEN_ARTEN,
   type DataSource,
   type DataSourceKind,
@@ -37,7 +38,13 @@ import {
 import { useDataSources } from '../../state/useDataSources'
 import { SelectControl } from '../inspector/controls/SelectControl'
 import { FeldListe } from './FeldListe'
-import { LEERE_ZEILE, zeileFromField, zeilenCode, type FeldZeile } from './feldZeile'
+import {
+  LEERE_ZEILE,
+  zeileFromField,
+  zeileGefuellt,
+  zeilenCode,
+  type FeldZeile,
+} from './feldZeile'
 import { FormularKarte } from './FormularKarte'
 
 const FELDCODE = /^\d+_\d+$/
@@ -53,6 +60,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const [name, setName] = useState(source?.name ?? '')
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
   const [kennungEingabe, setKennungEingabe] = useState(kennungAnzeige(source?.idbId))
+  const [kopfsatzEingabe, setKopfsatzEingabe] = useState(source?.kopfsatzIndex ?? '')
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
       ? source.fields.map(zeileFromField)
@@ -67,12 +75,36 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // Aufzählung hier. Wie die Kennung dann heißt, sagt ebenfalls die Art.
   const art = artFuer(kind)
   const kennungEingeben = art.tabellenId === ''
+  // Zweite Frage an die Art: hängt so eine Datei unter einem anderen Satz?
+  // Nur dann gibt es das Kopfsatz-Feld (Belegpositionen unter dem Beleg).
+  const kopfsatzEingeben = art.kopfsatzMoeglich
+
+  // Art gewechselt: die neue bringt ihre Vorgaben mit (Belegpositionen tragen
+  // Feldliste UND Kopfsatz bei sich, s. quellenArten). Eingesetzt wird nur in
+  // LEERE Felder — getippte Zeilen oder ein eingetragener Kopfsatz dürfen von
+  // einem Klick nie weggeräumt werden.
+  function waehleArt(neu: DataSourceKind): void {
+    setKind(neu)
+    const neueArt = artFuer(neu)
+    if (neueArt.standardFelder.length > 0 && !zeilen.some(zeileGefuellt)) {
+      setZeilen(neueArt.standardFelder.map(zeileFromField))
+    }
+    if (neueArt.kopfsatzStandard !== '' && kopfsatzEingabe.trim() === '') {
+      setKopfsatzEingabe(neueArt.kopfsatzStandard)
+    }
+  }
 
   // ---------- Validierung (Fehlertexte '' = gültig) ----------
   const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
   const kennungFehler =
     kennungEingeben && kennungFromInput(kennungEingabe) === ''
       ? `${art.kennungLabel} fehlt (z. B. ${art.kennungBeispiel}).`
+      : ''
+  // Der Kopfsatz ist FREIWILLIG (nicht jede Datei hängt an einer anderen) —
+  // geprüft wird nur, was eingetippt wurde. Leer ist gültig.
+  const kopfsatzFehler =
+    kopfsatzEingeben && kopfsatzEingabe.trim() !== '' && kopfsatzFromInput(kopfsatzEingabe) === ''
+      ? 'Form: Kürzel, Position, Länge — z. B. BEL_0_11.'
       : ''
   const zeilenFehler = zeilen.map((z) => {
     if (z.label.trim() === '') return 'Klarname fehlt.'
@@ -84,7 +116,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
     ? 'Zwei Felder haben dieselbe Position + Länge.'
     : ''
-  const alleFehler = [nameFehler, kennungFehler, doppeltFehler, ...zeilenFehler]
+  const alleFehler = [nameFehler, kennungFehler, kopfsatzFehler, doppeltFehler, ...zeilenFehler]
 
   function speichern() {
     if (alleFehler.some((f) => f !== '')) {
@@ -95,6 +127,12 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       name: name.trim(),
       kind,
       ...(kennungEingeben ? { idbId: kennungFromInput(kennungEingabe) } : {}),
+      // Nur mitschreiben, wenn die Art ihn führt UND etwas Gültiges drinsteht:
+      // sonst schleppte eine Quelle, die einmal „Andere Datei" war, ihren
+      // Kopfsatz unsichtbar weiter.
+      ...(kopfsatzEingeben && kopfsatzFromInput(kopfsatzEingabe) !== ''
+        ? { kopfsatzIndex: kopfsatzFromInput(kopfsatzEingabe) }
+        : {}),
       // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
       // bleibt, neue Quellen bekommen '0_10'.
       ...(source
@@ -129,7 +167,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           label="Art"
           value={kind}
           options={QUELLEN_ARTEN.map((a) => ({ value: a.id, label: a.name }))}
-          onChange={(v) => setKind(v as DataSourceKind)}
+          onChange={(v) => waehleArt(v as DataSourceKind)}
         />
 
         {/* 2. Herkunft — nur wo die Art keine feste Kennung hat. Bei den
@@ -144,6 +182,26 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
                 placeholder={`z. B. ${art.kennungBeispiel}`}
                 className="w-32"
                 onChange={(e) => setKennungEingabe(e.target.value)}
+              />
+            )}
+          </Field>
+        )}
+
+        {/* 2b. Kopfsatz — nur bei Arten, die unter einem anderen Satz hängen.
+            Freiwillig: manche Dateien kommen ohne. */}
+        {kopfsatzEingeben && (
+          <Field
+            label="Hängt an"
+            description="Leer lassen, wenn SoftEngine die ganze Datei schickt. Sonst der Satz, zu dem die Zeilen gehören: Kürzel, ab welchem Zeichen, wie viele Zeichen. BEL_0_11 steht für den offenen Beleg — damit kommen nur die Positionen dieses Belegs."
+            error={zeigeFehler ? kopfsatzFehler : ''}
+          >
+            {(f) => (
+              <TextInput
+                {...f}
+                value={kopfsatzEingabe}
+                placeholder="z. B. BEL_0_11"
+                className="w-32"
+                onChange={(e) => setKopfsatzEingabe(e.target.value)}
               />
             )}
           </Field>

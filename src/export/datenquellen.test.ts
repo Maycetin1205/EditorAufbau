@@ -51,6 +51,114 @@ describe('exportMask: Datenquellen', () => {
     ])
   })
 
+  // --- Zeilen, die unter einem Kopfsatz haengen (2026-08-07) --------------
+  //
+  // Abgelesen an der ausgelieferten Belegerfassung des Nutzers:
+  // { ID: 'POS', ALIAS: 'Belegpositionen', KOPFSATZ_INDEX: 'BEL_0_11', FELDER: … }.
+  // Ohne den KOPFSATZ_INDEX schickt SoftEngine nicht die Positionen DIESES
+  // Belegs — und das faellt still aus: die Maske laedt sauber und zeigt die
+  // falschen Zeilen (oder keine).
+  it('schreibt den Kopfsatz in die SEFILELOOP — und nur, wo die Art ihn fuehrt', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['pos', 'termine'] },
+      pos: {
+        id: 'pos', type: TEST_DATA_BOX, props: { source: 'positionen' },
+        parentId: 'root', childIds: [],
+      },
+      termine: {
+        id: 'termine', type: TEST_DATA_BOX, props: { source: 'termine' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [
+      {
+        id: 'positionen', name: 'Belegpositionen', kind: 'datei' as const, idbId: 'POS',
+        kopfsatzIndex: 'BEL_0_11',
+        fields: [
+          { code: '18_25', label: 'Artikelnummer' },
+          { code: '45_60', label: 'Bezeichnung' },
+        ],
+      },
+      {
+        // DERSELBE Wert an einer Art, die keinen Kopfsatz fuehrt: er darf nicht
+        // hinausgehen. Der Fall entsteht, wenn der Bediener die Art einer
+        // bestehenden Quelle wechselt — der alte Wert bleibt in der Datei.
+        id: 'termine', name: 'Termine', kind: 'idb' as const, idbId: 'IDBID0001',
+        kopfsatzIndex: 'BEL_0_11', fields: [],
+      },
+    ]
+
+    const { sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      {
+        INDEX_NR: 0, ALIAS: 'Belegpositionen', ID: 'POS',
+        KOPFSATZ_INDEX: 'BEL_0_11', FELDER: '18_25,45_60',
+      },
+      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
+    ])
+  })
+
+  // --- Der offene Satz: VAR statt SEFILELOOP (2026-08-07) ----------------
+  //
+  // Belegt an den ausgelieferten Belegerfassungs-Rahmen: der Satz, an dem die
+  // Maske haengt, wird im VAR-Abschnitt bestellt (nur ID + FELDER, kein ALIAS,
+  // kein INDEX_NR), und der Kopfsatz der Positionen zeigt auf ein Feld daraus.
+  // Ohne VAR verwirft SoftEngine den POS-Eintrag stillschweigend.
+  //
+  // STILLGELEGT (2026-08-10, Nutzer-Entscheidung): Dieser Test beschreibt eine
+  // Erwartung, die NICHT gebaut ist. Es gibt keinen VAR-Abschnitt im Export --
+  // `exportMask` schreibt SEFILELOOP + ERPAPICALL, und `istOffenerSatz` in
+  // core/data/dataSources.ts ruft niemand auf. Die POS-Haelfte (KOPFSATZ_INDEX)
+  // steht, die VAR-Haelfte fehlt.
+  //
+  // Er wurde nicht geloescht und nicht passend gemacht: er IST die Bauanleitung
+  // fuer die fehlende Haelfte, samt der Laufzeit-Marke, die dazugehoert. Wer
+  // VAR baut, nimmt `todo` wieder weg -- dann prueft er wieder scharf. Bis
+  // dahin waere ein rotes Pruefbuendel das schlechtere Signal: es macht jeden
+  // spaeteren echten Fehler unsichtbar (Regel 3.5 des Umbau-Plans).
+  it.todo('bestellt den offenen Satz im VAR-Abschnitt, die Liste bleibt in der SEFILELOOP', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kopf', 'pos'] },
+      kopf: {
+        id: 'kopf', type: TEST_DATA_BOX, props: { source: 'beleg' },
+        parentId: 'root', childIds: [],
+      },
+      pos: {
+        id: 'pos', type: TEST_DATA_BOX, props: { source: 'positionen' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [
+      {
+        id: 'beleg', name: 'Offener Beleg', kind: 'beleg' as const,
+        lieferung: 'offenerSatz' as const,
+        fields: [{ code: '0_11', label: 'Satzschlüssel' }, { code: '3_8', label: 'Belegnummer' }],
+      },
+      {
+        id: 'positionen', name: 'Belegpositionen', kind: 'belegposition' as const,
+        kopfsatzIndex: 'BEL_0_11',
+        fields: [{ code: '18_25', label: 'Artikelnummer' }],
+      },
+    ]
+
+    const { html, sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(JSON.parse(sevariablen)).toEqual({
+      VAR: [{ ID: 'BEL', FELDER: '0_11,3_8' }],
+      SEFILELOOP: [
+        {
+          INDEX_NR: 0, ALIAS: 'Belegpositionen', ID: 'POS',
+          KOPFSATZ_INDEX: 'BEL_0_11', FELDER: '18_25',
+        },
+      ],
+      ERPAPICALL: [],
+    })
+    // Die Laufzeit muss wissen, WO sie die Werte holt: aus SEDATA.Daten.Var
+    // statt aus der SEFILELOOP. Ohne diese Marke lese sie ins Leere.
+    expect(html).toContain('"tableId":"BEL","indexField":"","offenerSatz":true')
+    // Und die Liste traegt die Marke NICHT — sonst aenderte sich jede Maske.
+    expect(html).not.toContain('"ALIAS":"Belegpositionen","offenerSatz"')
+  })
+
   // --- Mehrere Datenquellen an einem Baustein (2026-07-28) ---------------
   //
   // Der Fall des Nutzers: eine Tabelle auf dem Terminplaner, eine Spalte holt
