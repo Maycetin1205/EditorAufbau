@@ -31,11 +31,12 @@ git log --oneline -8
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
 - **Letzte fertige Etappe:** A2.1 (2026-08-10) — davor A2, A1, A0, A8.1, A8.2
-- **Naechste Etappe:** S1 (Meldungen lesbar). Die Welle S (sichtbare Fehler
-  und Tempo, S1–S5) ist am 2026-08-10 nach der Zwischenbilanz eingeschoben
+- **Naechste Etappe:** S2 (Tabellen-Reststreifen). Die Welle S (sichtbare
+  Fehler und Tempo) ist am 2026-08-10 nach der Zwischenbilanz eingeschoben
   worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S) und laeuft VOR
-  A3. Danach A3 (neuere Browserstaende nicht mit alter App zerstoeren);
-  A9 setzt A3 bis A7 voraus.
+  A3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10, s. Etappenkopf S1 —
+  nicht wieder vorschlagen). Danach S3, S4, dann A3; A9 setzt A3 bis A7
+  voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
 - **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
   `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
@@ -361,9 +362,8 @@ Nutzer-Entscheidung 2026-08-10 nach der Zwischenbilanz (vier gebuendelte
 Code-Untersuchungen; die Belege stehen unten je Etappe): Diese Welle laeuft
 VOR den restlichen A-Etappen. Grund: A3 bis A8 sind fuer den Nutzer
 unsichtbar — die taeglich sichtbaren Aergernisse (Scheinzeile in der
-Tabelle, traeger Editor, verstummte Pruefmeldungen) blieben sonst
-wochenlang stehen und kosten genau das Vertrauen, das der Umbau aufbauen
-soll.
+Tabelle, traeger Editor, langsames Laden) blieben sonst wochenlang stehen
+und kosten genau das Vertrauen, das der Umbau aufbauen soll.
 
 Fuer alle S-Etappen gilt:
 
@@ -373,50 +373,19 @@ Fuer alle S-Etappen gilt:
   unerklaert, gilt Abschnitt 3.5: sofortiger Stopp.
 - Ansage- und go-Ritual aus 0.2/0.3 gelten unveraendert.
 
-## S1 · Die verstummten Pruefmeldungen lesbar machen
+## S1 · GESTRICHEN — es wird keine Warn-Anzeige gebaut
 
-### Belegtes Problem
-
-`preflight.ts` erzeugt 15 Meldungsarten in EINER Datei, jede mit Klartext
-und Handlungsanweisung. Sichtbar ist davon fast nichts mehr: die Steuerung
-filtert auf die eine Art 'Datenquelle fehlt' und zeigt sie als namenlosen
-8-px-Punkt ohne Text (`Kommandozentrale.tsx:56-59`, `relationen: false`
-hart verdrahtet); der Export-Weg zeigt seit `de3a865` gar nichts mehr
-(`Toolbar.tsx:59-66`). Der Editor WEISS also von toten Bindungen,
-geloeschten Auswahl-Gebern und doppelten Popup-Namen — und der Nutzer
-findet es erst in SoftEngine.
-
-### Entschieden (Nutzer 2026-08-10, „hol die meldungen")
-
-- Anzeigen JA, blockieren NEIN. Der Export laeuft weiterhin IMMER — die
-  Entscheidung vom 2026-08-10 (Preflight blockt nicht) bleibt unangetastet.
-- EINE Anzeigestelle in Klartext, gespeist aus dem vollen
-  `preflightMask`-Ergebnis. Die Meldungstexte leben weiter NUR in
-  `preflight.ts` — keine zweite, abweichende Textquelle.
-
-### Arbeit
-
-1. Kopfleiste: neben „Exportieren" ein Zahlen-Abzeichen („N Hinweise");
-   Klick oeffnet die Klartext-Liste. Keine Probleme = kein Abzeichen und
-   kein Dauer-Banner.
-2. Der gelbe Punkt in der Steuerung wird aus derselben ungefilterten
-   Quelle gespeist oder entfernt — kein zweiter Kanal mit anderer Wahrheit.
-3. Reine Editor-UI: Export-HTML, SEvariablen, Runtime-Bundle und
-   Referenzabzug bleiben BYTEGLEICH.
-
-### Fertig, wenn
-
-- alle 15 Meldungsarten erreichbar sind (heute: 1 von 15);
-- kein Export blockiert wird;
-- die Waechter bytegleiche Exporte bestaetigen.
-
-### Nutzerprobe
-
-1. Ein Feld an eine Quelle binden, dann dieses Feld in der Steuerung
-   loeschen: Abzeichen erscheint, die Liste nennt den Baustein-KLARNAMEN
-   und die Folge („bliebe in der Maske leer").
-2. Export bleibt trotzdem ausloesbar.
-3. Problem beheben: Abzeichen verschwindet.
+**Nutzer-Ansage 2026-08-10, wenige Stunden nach Aufnahme in den Plan.**
+Hier stand eine Etappe, die die 14 unsichtbaren Preflight-Meldungen als
+Klartext-Liste zurueckgeholt haette (Befund: `Kommandozentrale.tsx:56-59`
+filtert auf eine Art, `Toolbar.tsx:59-66` zeigt nichts mehr). Der Nutzer
+will das NICHT: Bedienfehler verantwortet er selbst, der Editor soll
+funktionieren, nicht erziehen. Es wird KEINE Warn-Anzeige gebaut und
+dieser Punkt wird nicht wieder vorgeschlagen (dasselbe Muster wie die
+gestrichene Rubrik „Aufgefallen unterwegs" in CLAUDE.md). `preflight.ts`
+bleibt unangetastet liegen; ob der eine vorhandene gelbe Punkt in der
+Steuerung irgendwann faellt, waere eine eigene kleine Nutzer-Entscheidung.
+Der volle Etappentext steht in der git-Historie (`6ce5695`).
 
 ## S2 · Tabelle: der bemalte Reststreifen
 
@@ -1757,7 +1726,7 @@ Unterpunkte bekommen. Die fachliche Reihenfolge bleibt.
 **Commits sind klein, Proben sind gebuendelt.** Der Nutzer liest keine
 Commits — kleine Commits kosten ihn nichts. Was ihn kostet, ist die
 Browserprobe. Darum gilt: ein Thema = ein Commit (3.1 unveraendert), aber
-**eine Klickanleitung pro Block**. Acht Bloecke statt 38 Proberunden.
+**eine Klickanleitung pro Block**. Acht Bloecke statt 37 Proberunden.
 
 Die Spalte „Wo im sichtbaren Editor" ist die Kurzform der Ansage aus 0.2. Sie
 ersetzt die Ansage nicht — sie verhindert nur, dass eine Etappe ohne
@@ -1775,7 +1744,7 @@ Ansage belegt oder korrigiert.
 
 | # | Etappe | Wo im sichtbaren Editor |
 |---|---|---|
-| S1 | Meldungen lesbar | \* Kopfleiste: Zahlen-Abzeichen + Klartext-Liste statt namenlosem Punkt; der Export blockt weiterhin NIE |
+| S1 | GESTRICHEN (Nutzer 2026-08-10) | entfaellt — keine Warn-Anzeige, s. Etappenkopf S1 |
 | S2 | Tabellen-Reststreifen | \* Tabelle: keine leere/duennere Scheinzeile mehr unter der letzten Datenzeile — Editor UND Maske |
 | S3 | Render-Bremsen | \* ueberall spuerbar: Tippen/Ziehen ohne Haenger; optisch nichts anders |
 | S4 | Dev-Laden | Editor-Start im Dev-Server schneller; optisch nichts anders |

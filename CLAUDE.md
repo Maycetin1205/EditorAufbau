@@ -367,6 +367,13 @@ Nutzer-Entscheidung anfassen:**
   UND-verknüpft · kein Partner gefunden → Feld bleibt leer, die Zeile bleibt
   STEHEN (verschwundene Zeilen wären unsichtbarer Datenverlust) · nur EINE
   Stufe, keine Ketten über mehrere Quellen.
+- **Keine Warn-Anzeigen (Nutzer 2026-08-10, sehr deutlich):** Es wird KEINE
+  Anzeige für Preflight-/Bindungs-Warnungen gebaut und keine vorgeschlagen —
+  Bedienfehler verantwortet der Nutzer selbst, der Editor soll funktionieren,
+  nicht erziehen (dasselbe Muster wie „Aufgefallen unterwegs", s. Kopf).
+  Der Export blockt weiterhin nie. `preflightMask` bleibt lediglich Code;
+  der eine vorhandene gelbe Punkt in der Steuerung bleibt vorerst
+  unangetastet (sein Entfernen wäre eine eigene kleine Entscheidung).
 - **Restlos entfernt — nicht wieder einbauen:** „Quelle speichern" samt
   Änderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD · Projektkarte/
   project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) · der
