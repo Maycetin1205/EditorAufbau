@@ -305,8 +305,22 @@ for (const pfad of quellen) {
 //
 // Erlaubt sind Tab (0x09), LF (0x0A) und CR (0x0D) -- alles andere unter
 // 0x20 ist ein Fehler. Wer ein Steuerzeichen als WERT braucht, schreibt es
-// als Escape (' '): das ist lesbar, durchsuchbar und diffbar.
-for (const pfad of quellen) {
+// als Escape ('\u0000'): das ist lesbar, durchsuchbar und diffbar.
+// Geprueft werden hier AUCH die Waechter-Skripte selbst (2026-08-10). Bis zu
+// diesem Tag lief die Pruefung nur ueber `quellen`, also src/**/*.ts(x) -- und
+// genau deshalb trug ausgerechnet DIESE Datei ein rohes Null-Byte, mitten im
+// Erklaertext zwei Zeilen weiter oben. Ein Waechter, der sich selbst nicht
+// prueft, ist der wahrscheinlichste Ort fuer den Fehler, den er sucht: seinen
+// Code liest niemand freiwillig, und git zeigte seinen Diff gar nicht mehr an.
+//
+// Nur fuer DIESE Zeichen-Pruefung. Der Dateideckel und die Regel-2-Pruefungen
+// bleiben bei src: Skripte sind keine Bausteine und tragen keine Registry.
+const zeichenDateien = [
+  ...quellen,
+  ...readdirSync('scripts').filter((n) => /\.m?js$/.test(n)).map((n) => 'scripts/' + n),
+]
+
+for (const pfad of zeichenDateien) {
   const text = lies(pfad)
   if (text.startsWith('\uFEFF')) {
     fehler.push(
@@ -339,7 +353,10 @@ for (const pfad of quellen) {
 for (const h of hinweise) console.log('  hinweis: ' + h)
 
 if (fehler.length === 0) {
-  console.log(`check-regeln: ok (${bausteine.length} Bausteine, ${quellen.length} Dateien geprueft)`)
+  console.log(
+    `check-regeln: ok (${bausteine.length} Bausteine, ${quellen.length} Quelldateien` +
+    `, davon ${zeichenDateien.length} auch auf Zeichen geprueft)`
+  )
   process.exit(0)
 }
 
