@@ -32,7 +32,7 @@ export function SidePanel({ title, description, actions, onBack, backLabel, chil
               type="button"
               aria-label="Zurück"
               onClick={onBack}
-              className="flex min-w-0 items-center gap-1 self-start text-ui font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-w-0 items-center gap-1 self-start text-[0.6875rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft size={13} className="shrink-0" />
               <span className="truncate">{backLabel}</span>

@@ -38,11 +38,12 @@ export function Field({ label, description, error, className, children }: FieldP
         <label
           htmlFor={id}
           title={beschreibungAlsHinweis && !error ? (description as string) : undefined}
-          // Die Beschriftung war 9,9 px und damit KLEINER als ihre eigene
-          // Beschreibung darunter (10,8 px) — die Rangfolge stand auf dem Kopf.
-          // Jetzt beide auf der Normalgroesse; den Vorrang macht die Fettung.
+          // Bleibt klein (9,9 px) — Nutzer-Urteil 2026-08-07. Auf
+          // Normalgroesse (10,8 px) hochgesetzt wurde die rechte Spalte eine
+          // Wand aus gleich lauten Beschriftungen; die Rangordnung entsteht
+          // dort nicht durch Schriftgroesse, sondern durch Gruppierung.
           className={cn(
-            'text-ui font-medium text-foreground',
+            'text-[0.6875rem] font-medium leading-4 text-foreground',
             beschreibungAlsHinweis && !error && 'cursor-help',
           )}
         >
