@@ -10,9 +10,11 @@
 // Relationen). Der Editor kann sie schreiben und wieder einlesen.
 //
 // GRUNDSATZ „ein Pruef-Eingang, zwei Quellen": der Baum laeuft hier durch
-// DIESELBE Lade-Kette wie der Browser-Speicher (persistence.baumAusRohdaten)
-// — inklusive Migrationen. Zwei eigene Ketten wuerden auseinanderdriften;
-// genau diese Doppelung hat den Tabellen-Bug 2026-07-24 erzeugt.
+// DIESELBE Lade-Kette wie der Browser-Speicher (ladeKette.baumAusRohdaten)
+// — inklusive Migrationen UND inklusive der Verlust-Pruefungen, die seit
+// 2026-08-10 ebenfalls dort wohnen. Zwei eigene Ketten wuerden
+// auseinanderdriften; genau diese Doppelung hat den Tabellen-Bug 2026-07-24
+// erzeugt.
 //
 // GRUNDSATZ „alles oder nichts": geprueft wird die GANZE Datei, bevor der
 // Aufrufer irgendetwas ersetzt. Eine ungueltige Datei aendert am offenen
@@ -24,8 +26,8 @@
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
 import { sanitizeRelationTemplates, type RelationTemplate } from '../core/data/relations'
+import { baumAusRohdaten, keinVerlust, strukturProblem, verlustProblem } from './ladeKette'
 import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
-import { baumAusRohdaten } from './persistence'
 
 // Erkennungsmarke. Waehlt der Bediener versehentlich
 // index.basis.SEvariablen.json, sagt der Editor das in Klartext, statt
@@ -75,52 +77,6 @@ export function packeMaske(inhalt: MaskenInhalt): string {
 }
 
 // ---------- Auspacken ----------
-
-// Ist beim Bereinigen NICHTS verlorengegangen?
-//
-// Geprueft wird nur EINE Richtung: jede Angabe, die in der Datei stand, muss
-// unveraendert im Ergebnis wiederauftauchen. Was der Sanitizer ZUSAETZLICH
-// einsetzt, ist erlaubt — das ist Normalisierung, kein Verlust.
-// (Konkret: `sanitizeRelationTemplates` ergaenzt ein fehlendes
-// `allowExtraParams` mit `false`. Ein strikter Gleichheitsvergleich haette
-// deshalb voellig heile Dateien abgelehnt.)
-//
-// Umgekehrt schlaegt jede Veraenderung an: ein Wert, der verschwindet
-// (`idbId: 42` -> weg), ein Typ, der kippt (`fields: "kaputt"` -> `[]`), ein
-// Eintrag, der wegfaellt (Laenge stimmt nicht mehr).
-function keinVerlust(roh: unknown, rein: unknown): boolean {
-  if (roh === rein) return true
-  if (Array.isArray(roh) || Array.isArray(rein)) {
-    if (!Array.isArray(roh) || !Array.isArray(rein) || roh.length !== rein.length) return false
-    return roh.every((x, i) => keinVerlust(x, rein[i]))
-  }
-  if (typeof roh !== 'object' || typeof rein !== 'object' || roh === null || rein === null) return false
-  const a = roh as Record<string, unknown>
-  const b = rein as Record<string, unknown>
-  return Object.keys(a)
-    .filter((k) => a[k] !== undefined)
-    .every((k) => Object.prototype.hasOwnProperty.call(b, k) && keinVerlust(a[k], b[k]))
-}
-
-// Die Props eines Bausteins OHNE die Stellen, die eine Migration absichtlich
-// geleert hat (A2.1). Sie aus dem SOLL zu nehmen ist die engste moegliche
-// Ausnahme: geprueft wird weiterhin jede andere Eigenschaft desselben
-// Bausteins, und eine Stelle wird nur dann uebersprungen, wenn der Putzer sie
-// namentlich gemeldet hat. Nichts wird pauschal durchgewunken.
-function ohneGeleerte(
-  props: unknown,
-  bausteinId: string,
-  geleert: ReadonlySet<string>,
-): unknown {
-  if (geleert.size === 0 || !props || typeof props !== 'object' || Array.isArray(props)) {
-    return props
-  }
-  const out: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(props as Record<string, unknown>)) {
-    if (!geleert.has(`${bausteinId}.${k}`)) out[k] = v
-  }
-  return out
-}
 
 // Eine Bibliothek pruefen: bereinigen — und danach nachsehen, ob dabei etwas
 // verlorengegangen ist.
@@ -251,102 +207,13 @@ function auspacken(text: string): AuspackErgebnis {
   }
 
   // Und auch der BAUM darf nichts still verlieren — dieselbe Regel wie bei
-  // den Bibliotheken. `sanitizeTree` wirft Waisen, Zyklen und kaputte Knoten
-  // ohne ein Wort weg; in einem gewachsenen Browser-Speicher ist das richtig,
-  // in einer Datei ist es Datenverlust.
-  //
-  // Erlaubt bleibt GENAU eine Art von Verlust: Bausteine, deren TYP es nicht
-  // mehr gibt. Die zaehlt `baum.verworfen`, und der Bediener bekommt sie
-  // hinterher als Klartext-Meldung zu sehen — das ist der bestehende,
-  // gewollte Weg fuer abgeschaffte Bausteintypen.
-  // Erst die Verweise: zeigt ein childIds-Eintrag auf einen Knoten, den die
-  // Datei gar nicht enthaelt, faellt er beim Bereinigen lautlos weg — und
-  // eine reine Knoten-ZAEHLUNG merkt davon nichts, weil der fehlende Knoten
-  // ja auch vorher nicht da war. Also ausdruecklich pruefen.
-  for (const [id, knoten] of Object.entries(rohBaum)) {
-    if (!knoten || typeof knoten !== 'object') {
-      return { ok: false, grund: `Die Datei ist beschädigt: der Baustein „${id}" ist unlesbar.` }
-    }
-    const kinder = (knoten as Record<string, unknown>).childIds
-    if (kinder !== undefined && !Array.isArray(kinder)) {
-      return { ok: false, grund: `Die Datei ist beschädigt: der Baustein „${id}" ist unlesbar.` }
-    }
-    for (const kind of Array.isArray(kinder) ? kinder : []) {
-      if (typeof kind !== 'string' || !(kind in rohBaum)) {
-        return {
-          ok: false,
-          grund: 'Die Datei ist beschädigt: ein Baustein verweist auf einen anderen, '
-            + 'den die Datei nicht enthält. Sie wird nicht geladen, damit nicht '
-            + 'unbemerkt Teile deiner Maske verlorengehen.',
-        }
-      }
-    }
-  }
-
-  const rohKnoten = Object.keys(rohBaum).filter((id) => id !== ROOT_ID).length
-  const reinKnoten = Object.keys(baum.tree).filter((id) => id !== ROOT_ID).length
-  const bekanntVerworfen = [...baum.verworfen.values()].reduce((a, b) => a + b, 0)
-  if (rohKnoten > reinKnoten + bekanntVerworfen) {
-    return {
-      ok: false,
-      grund: 'Die Datei ist beschädigt: im Masken-Aufbau fehlen Bausteine '
-        + `(${rohKnoten - reinKnoten - bekanntVerworfen} von ${rohKnoten}). Sie wird nicht `
-        + 'geladen, damit nicht unbemerkt Teile deiner Maske verlorengehen.',
-    }
-  }
-
-  // Und zuletzt INNERHALB der Bausteine: ein Baum kann gleich viele Knoten
-  // haben und trotzdem ausgeduennt sein. `normalizeProps` wirft Eigenschaften weg, die der Typ
-  // nicht kennt; `sanitizeBlockEvents` verwirft eine GANZE Aktionskette,
-  // wenn ein einziger Schritt kaputt ist. Beides lautlos — und beides waere
-  // an einer Datei echter Arbeitsverlust.
-  //
-  // Diese Pruefung gilt nur, wenn der Baum unveraendert durchlaufen SOLLTE:
-  // lief eine Schemastufe oder fielen abgeschaffte Bausteintypen weg, dann
-  // AENDERT sich der Baum von Berufs wegen, und ein Vergleich waere Unsinn.
-  //
-  // Der Demotext-Putzer zaehlt AUSDRUECKLICH NICHT dazu (A2.1, 2026-08-10).
-  // Er hat nie eine Schemastufe gesetzt, also lief diese Pruefung auch dann,
-  // wenn nur er zugeschlagen hatte — und sah seine absichtlich geleerten
-  // Props als Verlust: eine Datei aus Schema <= 4 mit einem der fuenf
-  // Werkstexte liess sich GAR NICHT laden. Ihn pauschal wie eine Migration zu
-  // behandeln waere die falsche Abhilfe: dann bliebe die ganze Datei
-  // ungeprueft, nur weil irgendwo „Heute" stand. Stattdessen nennt er die
-  // Stellen beim Namen, und genau die werden hier geduldet — alles andere
-  // wird weiter vollstaendig verglichen.
-  if (!baum.schemaAdvanced && bekanntVerworfen === 0) {
-    for (const [id, rohKnoten] of Object.entries(rohBaum)) {
-      const rein = baum.tree[id]
-      const roh = rohKnoten as Record<string, unknown>
-      // Die WURZEL wird mitgeprueft, aber nur ihre Kinderliste: Typ und
-      // Eigenschaften baut der Editor selbst, sie stehen nie zur Debatte.
-      // Ohne diese Pruefung liesse sich ihre Kinderliste still ausduennen.
-      if (id === ROOT_ID) {
-        if (keinVerlust(roh.childIds, rein?.childIds)) continue
-        return {
-          ok: false,
-          grund: 'Die Datei ist beschädigt: im Masken-Aufbau fehlen Beziehungen '
-            + 'zwischen Bausteinen. Sie wird nicht geladen, damit nicht unbemerkt '
-            + 'Teile deiner Maske verlorengehen.',
-        }
-      }
-      // childIds mitpruefen: ein Baustein, der (durch Beschaedigung) unter
-      // ZWEI Eltern haengt, wird beim Bereinigen nur einmal eingehaengt —
-      // die zweite Beziehung faellt lautlos weg, ohne dass sich eine
-      // Knotenzahl aendert.
-      if (!rein || rein.type !== roh.type
-        || !keinVerlust(ohneGeleerte(roh.props, id, baum.absichtlichGeleert), rein.props)
-        || !keinVerlust(roh.events, rein.events)
-        || !keinVerlust(roh.childIds, rein.childIds)) {
-        return {
-          ok: false,
-          grund: `Die Datei ist beschädigt: am Baustein „${id}" stimmen Angaben nicht. `
-            + 'Sie wird nicht geladen, damit nicht unbemerkt Teile deiner Maske '
-            + 'verlorengehen.',
-        }
-      }
-    }
-  }
+  // den Bibliotheken. Die beiden Pruefungen dazu wohnen in der geteilten
+  // Lade-Kette (ladeKette.ts): erst die VERWEISE der Rohform, dann der
+  // Verlust-Vergleich (Knotenzahl + je Baustein Typ/Props/Events/childIds).
+  const struktur = strukturProblem(rohBaum)
+  if (struktur) return { ok: false, grund: struktur }
+  const verlust = verlustProblem(rohBaum, baum)
+  if (verlust) return { ok: false, grund: verlust }
 
   const quellen = bibliothekPruefen(o.datenquellen, sanitizeDataSources, 'Datenquellen')
   if (!quellen.ok) return { ok: false, grund: quellen.grund }

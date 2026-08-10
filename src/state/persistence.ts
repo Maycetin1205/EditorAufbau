@@ -1,22 +1,15 @@
 // persistence — Laden, Verteidigen, Retten und Speichern des Editor-Stands.
 // Verhaltensgleich herausgezogen aus Editor.ts.
-// Hier wohnt der komplette Lade-Weg (sanitize + Migrationen + Notfallkopie)
-// und der Speicher-Rumpf; der Store ruft nur noch loadFromStorage/persistState.
+// Hier wohnt der BROWSER-Weg (lesen, Notfallkopie, schreiben); die eigentliche
+// Lade-Kette (Migrationen, Bereinigen, Verlust-Pruefungen) wohnt seit
+// 2026-08-10 in `ladeKette.ts` — sie teilen der Browser-Speicher und die
+// Maskendatei. Der Store ruft nur noch loadFromStorage/persistState.
 
-import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
-import { getBlockDefinition } from '../core/blocks/blockRegistry'
-import { sanitizeBlockEvents } from '../core/data/aktionen'
+import { type BlockTree } from '../core/blocks/BlockData'
+import { baumAusRohdaten } from './ladeKette'
 import {
   CURRENT_SCHEMA_VERSION,
   DEMO_CLEANUP_BEFORE_SCHEMA,
-  migrateFlatBlocks,
-  migrateFlowToRaster,
-  migrateKanbanVorlage,
-  migrateKnopfAusTabelle,
-  migrateRasterBreitenReparatur,
-  migrateRasterHoehenReset,
-  migrateRootKanbanToViewportFill,
-  putzeAlteKartenDemos,
 } from './migrations'
 import {
   backupKeyFor,
@@ -24,7 +17,6 @@ import {
   merkeSpeicherErfolg,
   sichereUnlesbaren,
 } from './notfallkopie'
-import { createEmptyTree, normalizeProps } from './treeOps'
 
 export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
 // Notfallkopie eines UNLESBAREN Speicherstands: getrennter Schlüssel,
@@ -67,151 +59,11 @@ export interface LoadedState {
   resaveNeeded: boolean
 }
 
-// Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
-// Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
-// Props, repariert parentId und verwirft Waisen/Zyklen.
-// Davor laufen die zwei Reparaturen, die auf den ROHDATEN arbeiten müssen,
-// weil sie die Eltern-Kind-Kette selbst umhängen (migrations.ts):
-// migrateKanbanVorlage (Vorlagen-Kasten) und migrateKnopfAusTabelle (der
-// zurückgenommene Knöpfe-Platz in der Tabelle).
-// onDropType: meldet jeden verworfenen UNBEKANNTEN Typ (z. B. die 2026-07-14
-// abgeschafften Bausteine Text/Bereich/Infobox/Chip/Eingabefeld in alten
-// Speicherständen) — Nutzer-Regel: Verluste beim Laden passieren NIE still.
-// Der Altbestands-Putzer fuer die frueheren Karten-Demotexte lief bis A2.1
-// hier drin. Er sitzt jetzt in `baumAusRohdaten` — dort, wo auch die uebrigen
-// Migrationen laufen und wo sein Ergebnis (die geleerten Stellen) an den
-// Aufrufer weitergereicht werden kann. Verhaltensgleich: derselbe Zeitpunkt,
-// dieselbe Bedingung, nur eine Ebene hoeher.
-export function sanitizeTree(
-  raw: Record<string, unknown>,
-  onDropType?: (type: string) => void,
-): BlockTree {
-  const tree = createEmptyTree()
-  const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
-  migrateKanbanVorlage(src)
-  migrateKnopfAusTabelle(src)
-
-  const addChild = (parentId: string, childId: unknown): void => {
-    if (typeof childId !== 'string' || tree[childId]) return
-    const node = src[childId]
-    if (!node || typeof node !== 'object') return
-    if (typeof node.type !== 'string') return
-    const def = getBlockDefinition(node.type)
-    if (!def) {
-      onDropType?.(node.type)
-      // Kinder eines unbekannten Typs werden zum Eltern-Knoten HOCHGEZOGEN
-      // statt still mitzuverschwinden (z. B. der Inhalt eines abgeschafften
-      // "Bereich"): der unbekannte Rahmen fällt, der Inhalt bleibt an
-      // seiner Position im Fluss.
-      const kids = Array.isArray(node.childIds) ? node.childIds : []
-      for (const k of kids) addChild(parentId, k)
-      return
-    }
-    // Aktionsketten laufen durch den eigenen strengen Lader — nur
-    // Ereignis-Keys, die der Typ in der Registry deklariert.
-    const events = sanitizeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key))
-    tree[childId] = {
-      id: childId,
-      type: node.type,
-      props: normalizeProps(node.type, node.props && typeof node.props === 'object' ? node.props as Record<string, unknown> : {}),
-      ...(events ? { events } : {}),
-      parentId,
-      childIds: [],
-    }
-    tree[parentId].childIds.push(childId)
-    const grand = Array.isArray(node.childIds) ? node.childIds : []
-    for (const g of grand) addChild(childId, g)
-  }
-
-  const rootSrc = src[ROOT_ID]
-  const rootChildren = rootSrc && Array.isArray(rootSrc.childIds) ? rootSrc.childIds : []
-  for (const cid of rootChildren) addChild(ROOT_ID, cid)
-  return tree
-}
-
 // Einen UNLESBAREN Speicherstand behandeln (U1, Nutzer-Regel „Verluste
 // passieren nie still"). Die Mechanik selbst wohnt seit 2026-07-27 in
 // `notfallkopie.ts` — dieselbe Stelle bedient auch die drei Bibliotheken.
 function backupUnreadableState(raw: string): void {
   sichereUnlesbaren(STORAGE_KEY, raw, 'Editor-Stand')
-}
-
-// DIE eine Lade-Kette: aus einem bereits geparsten Objekt einen brauchbaren
-// Baum machen — verteidigen, migrieren, verworfene Typen sammeln.
-//
-// Herausgeloest am 2026-07-28, damit ZWEI Leser sie teilen: der
-// Browser-Speicher (unten) und die Maskendatei (maskenDatei.ts). Haette der
-// Datei-Weg eine eigene Kette bekommen, gaebe es zwei Arten, eine Maske
-// einzulesen — und die eine driftet von der anderen ab. Genau diese Doppelung
-// hat den Tabellen-Bug 2026-07-24 erzeugt.
-//
-// Meldet NICHTS und rettet NICHTS: das Ergebnis sagt nur, WAS war
-// (`migrated`, `verworfen`), und der jeweilige Aufrufer entscheidet, was
-// daraus folgt. Der Browser-Speicher legt eine Notfallkopie an, die Datei
-// nicht (sie liegt ja schon beim Bediener); und die Datei zeigt ihre Warnung
-// erst, wenn sie die Gesamtpruefung bestanden hat — sonst meldete der Editor
-// etwas ueber eine Maske, die er gleich darauf ablehnt.
-export interface BaumErgebnis {
-  tree: BlockTree
-  selectedId: string | null
-  // Eine Schemastufe wurde durchlaufen — heisst zugleich: der Stand muss unter
-  // der neuen Version neu gespeichert werden. Hiess bis A2.1 `migrated`; der
-  // alte Name klang nach „irgendetwas hat sich geaendert" und wurde vom
-  // Datei-Weg auch so gelesen (s. `absichtlichGeleert`).
-  schemaAdvanced: boolean
-  // Stellen, die eine Migration ABSICHTLICH geleert hat, als
-  // `bausteinId.prop`. Nur so kann der Datei-Weg gewollte Aenderung von
-  // Beschaedigung unterscheiden, statt beides gleich zu behandeln.
-  absichtlichGeleert: ReadonlySet<string>
-  // Verworfene unbekannte Bausteintypen: Typname -> Anzahl.
-  verworfen: Map<string, number>
-}
-
-export function baumAusRohdaten(parsed: {
-  schemaVersion?: unknown
-  tree?: unknown
-  blocks?: unknown
-  selectedId?: unknown
-}, putzeDemos = true): BaumErgebnis | null {
-  let tree: BlockTree | null = null
-  // Verworfene unbekannte Typen sammeln (nie still): trifft v. a. die
-  // 2026-07-14 abgeschafften Bausteine in alten Staenden.
-  const verworfen = new Map<string, number>()
-  const absichtlichGeleert = new Set<string>()
-  if (parsed.tree && typeof parsed.tree === 'object') {
-    tree = sanitizeTree(parsed.tree as Record<string, unknown>, (type) => {
-      verworfen.set(type, (verworfen.get(type) ?? 0) + 1)
-    })
-    // Nur am Baum-Weg, genau wie vorher: der alte `blocks`-Weg unten hat den
-    // Putzer nie gesehen, und das bleibt so.
-    if (putzeDemos) for (const p of putzeAlteKartenDemos(tree)) absichtlichGeleert.add(p)
-  } else if (Array.isArray(parsed.blocks)) {
-    tree = migrateFlatBlocks(parsed.blocks)
-  }
-  // Gueltiges JSON, aber KEINE verwertbare Baum-/Block-Struktur.
-  if (!tree) return null
-
-  // Gestufte Migrationen: jede laeuft nur beim Aufstieg ueber IHRE
-  // Schwellenversion, damit ein schon migrierter Stand nicht erneut
-  // umgeschrieben wird (z. B. bewusst gesetzte Kanban-Pixelhoehen aus Schema 2
-  // ruehrt die 1→2-Migration nicht mehr an).
-  const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-  let schemaAdvanced = false
-  if (schemaVersion < 2) schemaAdvanced = migrateRootKanbanToViewportFill(tree) || schemaAdvanced
-  if (schemaVersion < 3) schemaAdvanced = migrateFlowToRaster(tree) || schemaAdvanced
-  // Schema 4: heilt die Riesen-Rahmen aus der ersten (kaputten) Raster-
-  // Migration bei Nutzern, deren Speicher schon auf Schema 3 stand.
-  if (schemaVersion < 4) schemaAdvanced = migrateRasterBreitenReparatur(tree) || schemaAdvanced
-  // Schema 5: setzt zu grosse Alt-Starthoehen (aus der ersten Raster-
-  // Migration) auf die neuen, engen Registry-Starthoehen zurueck — jetzt, wo
-  // der Baustein seine Zelle fuellt, liegt der Rahmen damit eng am Inhalt.
-  if (schemaVersion < 5) schemaAdvanced = migrateRasterHoehenReset(tree) || schemaAdvanced
-
-  const selectedId =
-    typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID
-      ? parsed.selectedId
-      : null
-  return { tree, selectedId, schemaAdvanced, absichtlichGeleert, verworfen }
 }
 
 // Meldung ueber verworfene Bausteintypen — dieselbe fuer beide Leser.
