@@ -56,15 +56,10 @@ zwischen zwei Chats, nicht dieser Absatz.
    Vorher-Lauf haette diesen Punkt seiner eigenen Liste also gar nicht pruefen
    koennen. Fuer alle anderen Vertraege (Datenpush, Tabelle/Kanban, Popup,
    Nachschlagen) ist A9 unveraendert sinnvoll.
-2. A0 Schritt 3 (Schriftgroessen): roher Wert `text-[0.6875rem]` bleiben
-   lassen, oder auf das Token `text-ui` heben? **Die Zahlen dieser Frage waren
-   falsch** (nachgemessen 2026-08-10): nicht „zwei Stellen gegen acht", sondern
-   `text-[0.6875rem]` **20-mal in 15 Dateien** (fast alles unter
-   `src/editor/`), `text-ui` rund 10-mal und nur unter `src/ui/`. 0.6875rem ist
-   damit eine dritte Groesse neben den absichtlich **zwei** Stufen in
-   `tailwind.config.js:71`. Der Umbau macht Text in 15 Dateien sichtbar
-   groesser — das ist kein Aufraeumer nebenbei, sondern eine Optik-Aenderung.
-   Unbeantwortet.
+2. ~~A0 Schritt 3: Schriftgroessen auf ein Token heben?~~ **Gestrichen
+   2026-08-10 (Nutzer-Ansage):** die Frage kam in jedem neuen Chat wieder hoch,
+   ohne je etwas zu blockieren. `text-[0.6875rem]` bleibt, wie es ist. Nicht
+   ohne neue Nutzer-Entscheidung wieder aufmachen.
 3. ~~Wer pflegt diese Datei?~~ **Beantwortet 2026-08-10:** Sie liegt jetzt im
    Repo und wird nach jeder Etappe im selben Commit mitgezogen. Damit ist die
    git-Historie die Sicherung, nicht mehr ein einzelner Arbeitsbaum. Es pflegt
