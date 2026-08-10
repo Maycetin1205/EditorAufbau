@@ -1,8 +1,16 @@
 // BlockHost
 // Brücke zwischen serialisierbarem BlockNode (Editor-State) und Lit Web Component (View).
-// Flow-Modell: kein absolutes Positionieren mehr — der Block sitzt im Fluss
-// seines Containers und nimmt seine natürliche Größe ein. Der Host umrahmt ihn
-// nur für Auswahl/Hover.
+// Der Host umrahmt den Block nur für Auswahl/Hover; positioniert wird nie
+// absolut in Pixeln.
+//
+// ZWEI Lagen, je nachdem wo der Block hängt (bis 2026-08-10 nannte dieser
+// Kopf nur die erste, obwohl die Datei seit dem Raster `rasterSpecOf`
+// importiert):
+//   - im Fluss seines Containers, mit natürlicher Größe — Popup-Inhalt,
+//     Zeile, Gruppe, Karte, Kanban;
+//   - auf der Rasterfläche der obersten Ebene, mit Zellen aus rasterLayout.
+// Welche der beiden gilt, entscheidet heute die Elternschaft. Eine zentrale
+// Abfrage dafür gibt es noch nicht — sie ist Etappe C2.
 //
 // Datenfluss:
 //   - props werden als DOM-Properties gesetzt (Lit-Setter greifen).

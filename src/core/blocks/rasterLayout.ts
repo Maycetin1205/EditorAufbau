@@ -3,9 +3,15 @@
 // das Gegenstück zu flowLayout (Regel 1: Canvas UND Export leiten aus
 // DEMSELBEN Mapping ab, damit Editor und SoftEngine-Maske identisch sitzen).
 //
-// Geltungsbereich V1: NUR die oberste Ebene der Maske (Kinder der Wurzel) und
-// die Popup-Innenfläche. INNERHALB von Containern (Kanban-Board → Spalten →
-// Karten, Karte, Zeile) bleibt flowLayout unverändert bestehen.
+// Geltungsbereich HEUTE: NUR die oberste Ebene der Maske (Kinder der Wurzel).
+// INNERHALB von Containern (Kanban-Board → Spalten → Karten, Karte, Zeile)
+// bleibt flowLayout unverändert bestehen.
+//
+// Bis 2026-08-10 stand hier „und die Popup-Innenfläche". Das war falsch und
+// beschrieb eine Absicht als Zustand: PopupSeite.tsx kennt kein Raster, und
+// PopupBlock rendert seine Kinder als schlichten `<slot>` im Fluss. Popup als
+// echte Rasterfläche ist Etappe C2 des Umbaus und noch nicht gebaut. Wer das
+// hier liest, bevor C2 fertig ist, darf sich NICHT darauf verlassen.
 //
 // Modell: reines CSS-Grid mit fester Spaltenzahl. Der Block liegt an ganzen
 // Zellen — rasterX/rasterY = Position (0-basiert), rasterW/rasterH =

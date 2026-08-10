@@ -353,7 +353,10 @@ export interface BlockDefinition {
   // Raster-Start-/Mindestgröße auf der Maskenfläche (opt-in, Regel 2): der
   // Store vergibt beim Einfügen die Startgröße, Canvas/Export lesen die
   // Position generisch über rasterLayout. Fehlt die Deklaration, gilt der
-  // generische RASTER_FALLBACK. Wirkt NUR auf der Rasterfläche (oberste Ebene
-  // + Popup-Rumpf) — INNERHALB von Containern gilt weiter flowLayout.
+  // generische RASTER_FALLBACK. Wirkt NUR auf der EINEN Rasterfläche, die es
+  // heute gibt: der obersten Ebene (Kinder der Wurzel). INNERHALB von
+  // Containern gilt weiter flowLayout — und im Popup ebenfalls, dessen Kinder
+  // liegen im Fluss. (Bis 2026-08-10 stand hier „+ Popup-Rumpf"; das war eine
+  // Absicht, kein Zustand. Popup als Rasterfläche ist Etappe C2.)
   raster?: Partial<RasterSpec>
 }

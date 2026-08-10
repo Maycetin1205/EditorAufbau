@@ -40,9 +40,21 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
-  // Nie im Auswahlfeld sichtbar (nicht in ACTION_PARAM_SOURCES) — die Zeile
-  // eines abgeschalteten Parameters wird gar nicht erst gezeichnet. Der Name
+  // Nie im Auswahlfeld angeboten (nicht in ACTION_PARAM_SOURCES). Der Name
   // steht hier, weil die Tabelle jede Quelle kennen muss.
+  //
+  // ACHTUNG (nachgelesen 2026-08-10): Hier stand, die Zeile eines
+  // abgeschalteten Parameters werde „gar nicht erst gezeichnet". Das stimmt
+  // nicht — ParameterZeile zeichnet IMMER. Ein Parameter auf 'aus' sieht
+  // deshalb heute so aus:
+  //   - das <select> hat keinen passenden <option> und zeigt irgendetwas
+  //     anderes an, meist den ersten Eintrag. Der Zustand ist unsichtbar.
+  //   - BindingValue faellt durch alle Zweige bis zum TextInput und zeigt den
+  //     grauen Platzhalter, also den VORLAGENWERT — mit der Aussage „ohne
+  //     eigene Eingabe wird das geschickt". Bei 'aus' wird ein LEERER String
+  //     geschickt. Der Platzhalter sagt an dieser Stelle das Gegenteil.
+  // Beides ist ein echter Bedienfehler und gehoert zu Etappe A1; hier wird nur
+  // der Kommentar geradegerueckt, damit ihn niemand fuer erledigt haelt.
   aus: 'Weggelassen',
 }
 

@@ -2,10 +2,17 @@
 // Serialisierbarer Block-Baum im Editor-Store.
 // Kein DOM, keine Lit-Instanzen — pures JSON-fähiges Objekt.
 //
-// Modell 2 (Container/Flow): Die Lage eines Blocks ergibt sich aus
-// VERSCHACHTELUNG + REIHENFOLGE (parentId + geordnete childIds), NICHT aus
-// absoluten Koordinaten. Das spiegelt das HTML, das SoftEngine konsumiert
-// (Container + Flow), und ist die Grundlage für den Export (Baum -> HTML).
+// Die Lage eines Blocks ergibt sich aus VERSCHACHTELUNG + REIHENFOLGE
+// (parentId + geordnete childIds). Das spiegelt das HTML, das SoftEngine
+// konsumiert (Container + Flow), und ist die Grundlage für den Export
+// (Baum -> HTML).
+//
+// EINE Ausnahme, und sie ist echt (Stand 2026-08-10): die Kinder der Wurzel
+// liegen auf einer Rasterfläche und tragen zusätzlich rasterX/Y/W/H in props
+// (s. rasterLayout). Das sind Zellen, keine Pixel — aber es sind Koordinaten.
+// Der ursprüngliche Satz „NICHT aus absoluten Koordinaten" galt vor dem
+// Raster und beschrieb den Baum seither zur Hälfte falsch. Überall SONST
+// (Popup-Inhalt, Zeile, Gruppe, Karte, Kanban) gilt er unverändert.
 //
 // Speicherung als flache Map (craft.js-Stil): gut für Auswahl per id,
 // Reparent und Reorder. Die Wurzel ist ein impliziter Container.

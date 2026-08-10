@@ -49,7 +49,17 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    Erklär-/Tutorial-Texte in der Steuerung.)
 4. **Ein Export, eine Quelle, nichts scheitert still:** HTML + SEvariablen
    entstehen deterministisch aus demselben Baum + denselben Bibliotheken;
-   Validator + Preflight blocken mit Klartext.
+   der Validator blockt mit Klartext.
+   **Geändert 2026-08-10 (Nutzer-Ansage):** der Preflight blockt NICHT mehr.
+   Bis dahin stand hier „Validator + Preflight blocken" — `preflightMask`
+   hielt den Nutzer wiederholt vom Exportieren ab, in Fällen, die er bewusst
+   so gebaut hatte. Der Export läuft jetzt immer; die Funktion steht getestet
+   in `src/export/preflight.ts`, ruft aber niemand mehr auf. Geblieben ist
+   `validateMaskHtml` (SE-Marker, LF, reines ASCII) — schlägt die an, würde
+   SoftEngine die Datei gar nicht erst laden. Damit ist „nichts scheitert
+   still" für die DATEIFORM weiter zugesagt, für die FACHLICHE Bindung
+   dagegen nicht mehr: eine ins Leere zeigende Bindung fällt erst in
+   SoftEngine auf.
 5. **SE-Kontrakte nur aus Originalquellen** (echte Masken), nie geraten.
    Alles Installations-Individuelle (Relations-NRs, Werkzeug-Nummern,
    Felder) sind **Daten** (Vorlagen), nie fest im Code.
@@ -231,6 +241,17 @@ ohne neue Entscheidung. Geblieben ist, was BEWEIST statt zu erzählen:
 
 ### Woran gerade gearbeitet wird
 
+**Der Bauauftrag steht seit 2026-08-10 in `UMBAU-PLAN-V6.md` im Repo-Stamm.**
+Er ist die Ausnahme vom Doku-Schnitt oben und war eine ausdrückliche
+Nutzer-Entscheidung: der Nutzer arbeitet in mehreren Chats, und ein neuer Chat
+weiß nichts vom vorherigen — die Datei ist die einzige Übergabe. Sein
+Abschnitt 0 gehört zum Pflichtprogramm beim Start (zusammen mit dieser Datei
+und `git log`). Er ist Bauauftrag, **keine Chronik**: fortgeschrieben wird der
+Zeiger in 0.1, nicht eine Liste dessen, was war. Zwei Rituale daraus gelten
+zusätzlich zu den Regeln hier: **Ansage vor jeder Etappe** (was/warum mit
+`datei:zeile`/wo sichtbar/was du prüfst/was ich nicht prüfen kann), und **ein
+`go` gilt für genau EINE Etappe**.
+
 **Branch-Konsolidierung 2026-08-05 (Nutzer-Entscheidung): es gibt nur noch
 `main`, gearbeitet wird ab jetzt direkt dort.** Die zehn `claude/…`-Branches
 sind erledigt; ihr Inhalt steckt in main oder ist bewusst verworfen. Gerettet
@@ -276,10 +297,14 @@ niemand mehr eine Vorlage aus dem Gedächtnis beschreiben — **abschreiben stat
 gestalten**; fehlt ein Wert in der Demo, wird gefragt statt geraten. Die Demo ist
 reines HTML+CSS, läuft ohne Server und wird nie exportiert.
 
-Der Abgleich Demo ↔ Editor (2026-08-06): die Kanban-SPALTE passt schon (Punkt,
-Titel, Zähler) · der KARTE fehlen Reiter und Fußzeile · der TABELLE fehlt am
-meisten — Tafel-Rahmen, Spaltenbreiten, Marken, Bilder, Leerzustand. Die
-Entscheidungen des Plans dazu:
+Der Abgleich Demo ↔ Editor — **Stand nachgezogen 2026-08-10**, der Text vom
+2026-08-06 war überholt: die Kanban-SPALTE passt (Punkt, Titel, Zähler) · die
+KARTE hat Lasche und Fußzeile inzwischen (`blocks/card/CardBlock.ts`, Commits
+`7f7b76c`/`bf5846f`) — der frühere Satz „der KARTE fehlen Reiter und Fußzeile"
+stimmt nicht mehr · bei der TABELLE ist der Editor-Zeilenaufbau nachgezogen
+(`6613fe2`), **nicht nachgeprüft** habe ich Tafel-Rahmen, Spaltenbreiten,
+Marken, Bilder und Leerzustand — wer daran weiterbaut, misst selbst nach,
+statt diese Zeile zu glauben. Die Entscheidungen des Plans dazu:
 - **Spaltenbreite nach ART, nie nach Inhalt** — sonst springt eine Spalte beim
   Seitenwechsel, wenn die nächste Seite kürzere Werte trägt (Nutzer-Einwand).
   Zahl 90 px, Datum 100 px, Status 120 px, Text teilt sich den Rest.
@@ -358,8 +383,14 @@ Nutzer-Entscheidung anfassen:**
   React↔Lit-Übergabestelle · `zieheGroesse` = die EINE Zieh-Mechanik für
   Block- UND Popup-Anfasser · `src/export/serializer.ts` = die eine
   Zeichen-Regel-Stelle · `bindingAttr()` in BlockDefinition = die EINE
-  Stelle der Bindungs-Attribut-Form · `POPUP_RAND` (PopupBlock) = die
-  EINE Konstante für „Fläche − Rand".
+  Stelle der Bindungs-Attribut-Form.
+  **Korrigiert 2026-08-10:** hier stand „`POPUP_RAND` (PopupBlock) = die EINE
+  Konstante für „Fläche − Rand"". Es sind ZWEI: `POPUP_RAND`
+  (`blocks/popup/PopupBlock.ts`) und `DIALOG_RAND`
+  (`blocks/shared/DialogRahmen.ts`), beide 24, beide mit derselben Aufgabe —
+  der Kommentar an `DIALOG_RAND` sagt das selbst. Wer einen ändert, ändert
+  nur das halbe Fenster. Zusammengelegt wird das in Etappe C1/C2 (Popup
+  komponiert `DialogRahmen`), nicht nebenbei.
 - Registry-Konzepte: `src/core/blocks/` · Bausteine: `src/blocks/` ·
   Aktions-/Quellen-Modell: `src/core/data/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·
