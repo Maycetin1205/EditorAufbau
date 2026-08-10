@@ -16,8 +16,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { exportMask } from '../../export/exportMask'
-import { preflightMask } from '../../export/preflight'
-import { failedChecks, validateMaskHtml, warnChecks } from '../../export/validator'
+import { failedChecks, validateMaskHtml } from '../../export/validator'
 import { dataSourceStore } from '../../state/DataSourceStore'
 import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
 import { meldeVerworfeneTypen } from '../../state/persistence'
@@ -55,39 +54,31 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     ed.clear()
   }
 
-  // Mini-Export: Baum → Maske (HTML + SEvariablen-JSON), maschinell
-  // geprüft BEVOR eine Datei entsteht. Schlägt die Prüfung fehl, gibt es
-  // keine Datei — SoftEngine sieht nie ungeprüftes HTML.
+  // Mini-Export: Baum → Maske (HTML + SEvariablen-JSON).
+  //
+  // Die SEMANTISCHE Vorpruefung (preflightMask: gelöschte Datenquellen,
+  // gebundene Felder, Auswahl-Folgen, Kopfsatz) ist am 2026-08-10 auf
+  // Nutzer-Ansage aus dem Export-Weg entfernt. Grund des Nutzers: sie hielt
+  // ihn wiederholt vom Exportieren ab, in Faellen, die er bewusst so gebaut
+  // hatte. Der Export laeuft ab jetzt immer, auch wenn eine Bindung ins Leere
+  // zeigt — die Folge sieht der Nutzer dann in SoftEngine, nicht vorher.
+  // Die Funktion selbst steht unberuehrt in export/preflight.ts und ist
+  // getestet; sie wird hier nur nicht mehr aufgerufen.
+  //
+  // GEBLIEBEN ist die DATEIFORM-Pruefung (validateMaskHtml: SE-Marker, LF,
+  // reines ASCII). Sie hat nichts mit Datenquellen zu tun: schlaegt sie an,
+  // wuerde SoftEngine die Datei gar nicht erst laden.
   const handleExport = () => {
-    // Dieselbe Vorlagen-Bibliothek fuer Preflight UND Export (Konsistenz).
     const sources = dataSourceStore.list
     const relations = relationStore.list
     const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations)
-    // Semantische Preflight (kaputte Datenquellen-Referenz)
-    // + Dateiform-Pruefung — beide muessen gruen sein, sonst kein Download.
-    const preflight = preflightMask(ed.tree, sources, relations)
-    const failed = [
-      ...failedChecks(preflight),
-      ...failedChecks(validateMaskHtml(html)),
-    ]
+    const failed = failedChecks(validateMaskHtml(html))
     if (failed.length > 0) {
       window.alert(
-        'Export abgebrochen — Prüfung fehlgeschlagen:\n\n'
+        'Export abgebrochen — die Datei hätte in SoftEngine nicht geladen:\n\n'
         + failed.map((f) => `• ${f.name}: ${f.detail}`).join('\n'),
       )
       return
-    }
-    // WARNUNGEN (2026-08-06): Zustaende, die der Bauer waehlen darf, die aber
-    // in der Maske sichtbare Folgen haben — bisher die Status-Spalte ohne
-    // Zuordnung. Sie brechen den Export NICHT ab (das waere eine erlaubte
-    // Maske fuer unbaubar erklaert), verschwiegen werden sie aber auch nicht
-    // (Regel 4). Also: einmal zeigen, dann laeuft der Download.
-    const warnungen = warnChecks(preflight)
-    if (warnungen.length > 0) {
-      window.alert(
-        'Hinweis zum Export — er läuft trotzdem:\n\n'
-        + warnungen.map((w) => `• ${w.name}: ${w.detail}`).join('\n'),
-      )
     }
     // SE-Namenskonvention (2026-07-11): eine Maske = ein Ordner mit
     // index.basis.source.html + index.basis.SEvariablen.json — belegt durch

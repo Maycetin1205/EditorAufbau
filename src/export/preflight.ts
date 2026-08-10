@@ -376,5 +376,6 @@ export function preflightMask(
     }
   }
   visit(tree[ROOT_ID])
+
   return results
 }
