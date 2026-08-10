@@ -24,6 +24,8 @@ import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { sanitizeBlockEvents } from '../core/data/aktionen'
 import {
+  CURRENT_SCHEMA_VERSION,
+  DEMO_CLEANUP_BEFORE_SCHEMA,
   migrateFlatBlocks,
   migrateFlowToRaster,
   migrateKanbanVorlage,
@@ -210,29 +212,47 @@ function ohneGeleerte(
   return out
 }
 
+// Ein Fund beim Laden: WO (Bereich + Eintrag/Pfad) und WARUM.
+//
+// Der Grund ist bewusst ein Satz-BRUCHSTUECK ohne „Die Datei ist
+// beschädigt:" davor (A3): denselben Fund muss sowohl der Datei-Weg melden
+// („Die Datei ist beschädigt: …") als auch die Sperransicht des
+// Browser-Wegs, wo von einer Datei gar keine Rede ist. Den Satz baut der
+// Aufrufer, die Wahrheit steht hier.
+export interface LadeProblem {
+  bereich: string
+  // Baustein-id, Eintrags-id oder Pfad; leer, wenn der ganze Bereich gemeint ist.
+  stelle: string
+  grund: string
+}
+
+export const BEREICH_AUFBAU = 'Masken-Aufbau'
+
 // Erst die VERWEISE: zeigt ein childIds-Eintrag auf einen Knoten, den der
 // Stand gar nicht enthaelt, faellt er beim Bereinigen lautlos weg — und eine
 // reine Knoten-ZAEHLUNG merkt davon nichts, weil der fehlende Knoten ja auch
 // vorher nicht da war. Also ausdruecklich pruefen.
-// Liefert den Klartext-Grund oder null (alles in Ordnung).
-export function strukturProblem(rohBaum: Record<string, unknown>): string | null {
+export function strukturProbleme(rohBaum: Record<string, unknown>): LadeProblem[] {
+  const raus: LadeProblem[] = []
   for (const [id, knoten] of Object.entries(rohBaum)) {
-    if (!knoten || typeof knoten !== 'object') {
-      return `Die Datei ist beschädigt: der Baustein „${id}" ist unlesbar.`
-    }
-    const kinder = (knoten as Record<string, unknown>).childIds
-    if (kinder !== undefined && !Array.isArray(kinder)) {
-      return `Die Datei ist beschädigt: der Baustein „${id}" ist unlesbar.`
+    const kinder = knoten && typeof knoten === 'object'
+      ? (knoten as Record<string, unknown>).childIds
+      : undefined
+    if (!knoten || typeof knoten !== 'object' || (kinder !== undefined && !Array.isArray(kinder))) {
+      raus.push({ bereich: BEREICH_AUFBAU, stelle: id, grund: `der Baustein „${id}" ist unlesbar` })
+      continue
     }
     for (const kind of Array.isArray(kinder) ? kinder : []) {
       if (typeof kind !== 'string' || !(kind in rohBaum)) {
-        return 'Die Datei ist beschädigt: ein Baustein verweist auf einen anderen, '
-          + 'den die Datei nicht enthält. Sie wird nicht geladen, damit nicht '
-          + 'unbemerkt Teile deiner Maske verlorengehen.'
+        raus.push({
+          bereich: BEREICH_AUFBAU,
+          stelle: id,
+          grund: 'ein Baustein verweist auf einen anderen, den der Stand nicht enthält',
+        })
       }
     }
   }
-  return null
+  return raus
 }
 
 // Und auch der BAUM darf nichts still verlieren — dieselbe Regel wie bei
@@ -244,17 +264,21 @@ export function strukturProblem(rohBaum: Record<string, unknown>): string | null
 // mehr gibt. Die zaehlt `baum.verworfen`, und der Bediener bekommt sie
 // hinterher als Klartext-Meldung zu sehen — das ist der bestehende,
 // gewollte Weg fuer abgeschaffte Bausteintypen.
-export function verlustProblem(
+export function verlustProbleme(
   rohBaum: Record<string, unknown>,
   baum: BaumErgebnis,
-): string | null {
+): LadeProblem[] {
+  const raus: LadeProblem[] = []
   const rohKnoten = Object.keys(rohBaum).filter((id) => id !== ROOT_ID).length
   const reinKnoten = Object.keys(baum.tree).filter((id) => id !== ROOT_ID).length
   const bekanntVerworfen = [...baum.verworfen.values()].reduce((a, b) => a + b, 0)
   if (rohKnoten > reinKnoten + bekanntVerworfen) {
-    return 'Die Datei ist beschädigt: im Masken-Aufbau fehlen Bausteine '
-      + `(${rohKnoten - reinKnoten - bekanntVerworfen} von ${rohKnoten}). Sie wird nicht `
-      + 'geladen, damit nicht unbemerkt Teile deiner Maske verlorengehen.'
+    raus.push({
+      bereich: BEREICH_AUFBAU,
+      stelle: '',
+      grund: 'im Masken-Aufbau fehlen Bausteine '
+        + `(${rohKnoten - reinKnoten - bekanntVerworfen} von ${rohKnoten})`,
+    })
   }
 
   // Und zuletzt INNERHALB der Bausteine: ein Baum kann gleich viele Knoten
@@ -276,7 +300,7 @@ export function verlustProblem(
   // ungeprueft, nur weil irgendwo „Heute" stand. Stattdessen nennt er die
   // Stellen beim Namen, und genau die werden hier geduldet — alles andere
   // wird weiter vollstaendig verglichen.
-  if (baum.schemaAdvanced || bekanntVerworfen > 0) return null
+  if (baum.schemaAdvanced || bekanntVerworfen > 0) return raus
   for (const [id, rohKnoten] of Object.entries(rohBaum)) {
     const rein = baum.tree[id]
     const roh = rohKnoten as Record<string, unknown>
@@ -285,9 +309,12 @@ export function verlustProblem(
     // Ohne diese Pruefung liesse sich ihre Kinderliste still ausduennen.
     if (id === ROOT_ID) {
       if (keinVerlust(roh.childIds, rein?.childIds)) continue
-      return 'Die Datei ist beschädigt: im Masken-Aufbau fehlen Beziehungen '
-        + 'zwischen Bausteinen. Sie wird nicht geladen, damit nicht unbemerkt '
-        + 'Teile deiner Maske verlorengehen.'
+      raus.push({
+        bereich: BEREICH_AUFBAU,
+        stelle: ROOT_ID,
+        grund: 'im Masken-Aufbau fehlen Beziehungen zwischen Bausteinen',
+      })
+      continue
     }
     // childIds mitpruefen: ein Baustein, der (durch Beschaedigung) unter
     // ZWEI Eltern haengt, wird beim Bereinigen nur einmal eingehaengt —
@@ -297,10 +324,97 @@ export function verlustProblem(
       || !keinVerlust(ohneGeleerte(roh.props, id, baum.absichtlichGeleert), rein.props)
       || !keinVerlust(roh.events, rein.events)
       || !keinVerlust(roh.childIds, rein.childIds)) {
-      return `Die Datei ist beschädigt: am Baustein „${id}" stimmen Angaben nicht. `
-        + 'Sie wird nicht geladen, damit nicht unbemerkt Teile deiner Maske '
-        + 'verlorengehen.'
+      raus.push({
+        bereich: BEREICH_AUFBAU,
+        stelle: id,
+        grund: `am Baustein „${id}" stimmen Angaben nicht`,
+      })
     }
   }
-  return null
+  return raus
+}
+
+// ---------- Der eine geprüfte Lade-Ausgang (A3) ----------
+//
+// Die FESTE Reihenfolge, in der ein Stand hereinkommt — dieselbe fuer den
+// Browser-Speicher und die Maskendatei:
+//
+//   1. Zukunftsversion abweisen, VOR jeder Aenderung.
+//   2. Rohform strukturell verwertbar machen: versionsgebundene Migrationen
+//      + Bereinigen (`baumAusRohdaten`).
+//   3. gegen den heutigen Vertrag pruefen (Struktur der Rohform, Verlust).
+//   4. Ausgang: ok | migriert | quarantaene.
+//
+// EHRLICH zu Schritt 2: Migrieren und Bereinigen laufen dort ZUSAMMEN und in
+// dieser Verschraenkung — `sanitizeTree` haengt zuerst die zwei
+// Rohdaten-Migrationen ein (Vorlagen-Kasten, Knopf aus Tabelle), danach
+// laufen die Schemastufen auf dem bereinigten Baum. Sie auseinanderzuziehen
+// wuerde die Migrationsergebnisse veraendern (die Schemastufen liefen dann
+// ueber Knoten unbekannten Typs mit, und die Stapel-Positionen kaemen anders
+// heraus). Das ist ein Stoppgrund nach Plan 3.5, kein Nebenbei-Umbau — die
+// Reihenfolge „erst migrieren, DANN gegen heutige Regeln bewerten" (A4) ist
+// dadurch trotzdem eingehalten: Schritt 3 laeuft komplett nach Schritt 2.
+//
+// Und ehrlich zur Struktur-Pruefung: sie sieht die Rohform NACH den zwei
+// Rohdaten-Migrationen — die haengen childIds selbst um. Vor ihnen gepruefte
+// Altbestaende (Vorlagen-Kasten) waeren als „verweist ins Leere" gemeldet
+// worden, obwohl genau das die Migration geradezieht.
+
+export type QuarantaeneUrsache =
+  // Der Stand ist neuer als diese App. Nichts anfassen.
+  | 'zukunft'
+  // Gueltiges JSON, aber kein verwertbarer Masken-Aufbau.
+  | 'unlesbar'
+  // Beim Laden waere etwas verlorengegangen (A4).
+  | 'verlust'
+
+export type LadeAusgang =
+  | { art: 'ok'; baum: BaumErgebnis }
+  // Heil, aber eine Schemastufe lief: der Stand muss unter der neuen Version
+  // neu gespeichert werden.
+  | { art: 'migriert'; baum: BaumErgebnis }
+  | { art: 'quarantaene'; ursache: QuarantaeneUrsache; probleme: LadeProblem[] }
+
+// Was der Aufrufer wissen muss, wenn er den Grund in einen Satz gießt.
+export const ZUKUNFT_GRUND =
+  'Dieser Stand stammt aus einer neueren Version des Editors und kann hier '
+  + 'nicht geladen werden.'
+
+export function pruefeBaumStand(
+  roh: { schemaVersion: number; tree?: unknown; blocks?: unknown; selectedId?: unknown },
+  // Schlaegt ein Teilverlust auf Quarantaene an? Der Datei-Weg sagt seit
+  // 2026-07-28 ja. Der Browser-Weg sagt ab A4 ebenfalls ja — bis dahin
+  // duennt er aus wie immer, und diese eine Zeile ist die ganze Differenz.
+  optionen: { verlustPruefen: boolean },
+): LadeAusgang {
+  // 1. Zukunft — VOR jeder Aenderung, denn ab hier wird migriert.
+  if (roh.schemaVersion > CURRENT_SCHEMA_VERSION) {
+    return {
+      art: 'quarantaene',
+      ursache: 'zukunft',
+      probleme: [{
+        bereich: BEREICH_AUFBAU,
+        stelle: '',
+        grund: `gespeichert unter Aufbau-Version ${roh.schemaVersion}, `
+          + `dieser Editor kennt ${CURRENT_SCHEMA_VERSION}`,
+      }],
+    }
+  }
+
+  // 2. Migrationen + Bereinigen. Der Demotext-Putzer laeuft nur fuer ALTE
+  // Staende — die feste historische Grenze aus A2, hier fuer BEIDE Wege an
+  // EINER Stelle. Vorher stand dieselbe Ableitung zweimal im Code, und der
+  // Browser-Weg hatte sie bis 2026-08-06 falsch.
+  const baum = baumAusRohdaten(roh, roh.schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA)
+  if (!baum) return { art: 'quarantaene', ursache: 'unlesbar', probleme: [] }
+
+  // 3. Vertragspruefung.
+  if (optionen.verlustPruefen && roh.tree && typeof roh.tree === 'object') {
+    const rohBaum = roh.tree as Record<string, unknown>
+    const probleme = [...strukturProbleme(rohBaum), ...verlustProbleme(rohBaum, baum)]
+    if (probleme.length > 0) return { art: 'quarantaene', ursache: 'verlust', probleme }
+  }
+
+  // 4. Ausgang.
+  return { art: baum.schemaAdvanced ? 'migriert' : 'ok', baum }
 }

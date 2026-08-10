@@ -14,6 +14,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Test-Bausteine.
 import '../blocks/popup/PopupBlock'
 import { BACKUP_KEY, Editor } from './Editor'
+import { CURRENT_SCHEMA_VERSION } from './migrations'
+import { quarantaeneKopien } from './notfallkopie'
+import { verwerfeLokalenStand } from './persistence'
+import { speicherGate } from './speicherGate'
 import {
   registerTestBlocks,
   TEST_BLOCK,
@@ -38,8 +42,15 @@ function captureAlerts(): string[] {
   return msgs
 }
 
-beforeEach(() => localStorage.clear())
-afterEach(() => { delete (globalThis as Record<string, unknown>).alert })
+// Der Riegel (speicherGate) lebt im Modul und ueberlebt den einzelnen Test —
+// in der App ist das richtig (er soll die ganze Sitzung halten), hier muss
+// jeder Fall unverriegelt anfangen. Sonst schreibt ein spaeterer Test nichts
+// mehr und niemand versteht, warum.
+beforeEach(() => { localStorage.clear(); speicherGate.entsperre() })
+afterEach(() => {
+  delete (globalThis as Record<string, unknown>).alert
+  speicherGate.entsperre()
+})
 
 describe('sanitizeTree (Laden verteidigt sich)', () => {
   it('lädt einen gesunden Baum vollständig', () => {
@@ -194,6 +205,99 @@ describe('Notfallkopie bei unlesbarem Stand (U1)', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+// A3 (2026-08-10): der Maskendatei-Import lehnte eine Schemaversion aus der
+// Zukunft seit 2026-07-28 ab — der Browser-Speicher nicht. Eine alte oder
+// gecachte App las den neueren Stand, warf alles weg, was sie nicht kannte,
+// und der Autosave schrieb die verkleinerte Fassung 500 ms nach dem Start
+// fest. Der Bediener sah dabei NICHTS.
+describe('Quarantaene beim Browserstart (A3)', () => {
+  // Ein Stand, wie ihn eine kuenftige Editorversion geschrieben haette:
+  // hoehere Aufbau-Version, dazu ein Baustein, den es heute nicht gibt.
+  const ZUKUNFT = JSON.stringify({
+    schemaVersion: CURRENT_SCHEMA_VERSION + 1,
+    tree: {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'neu'] },
+      a: { id: 'a', type: TEST_BLOCK, props: { text: 'Arbeit' }, parentId: 'root', childIds: [] },
+      neu: { id: 'neu', type: 'gibt-es-erst-2027', props: { wichtig: 'ja' }, parentId: 'root', childIds: [] },
+    },
+    selectedId: null,
+  })
+
+  it('wird NICHT geladen und bleibt Byte fuer Byte unangetastet', () => {
+    localStorage.setItem(KEY, ZUKUNFT)
+    const ed = new Editor()
+    expect(ed.blockCount).toBe(0)                    // nicht hydriert
+    expect(localStorage.getItem(KEY)).toBe(ZUKUNFT)  // nichts angefasst
+    expect(speicherGate.gesperrt).toBe(true)
+    expect(speicherGate.quarantaene?.grund).toContain('neueren Version')
+    // Die Problemliste nennt die Zahlen, statt nur „beschaedigt" zu sagen.
+    expect(speicherGate.quarantaene?.probleme[0]?.grund)
+      .toContain(`Aufbau-Version ${CURRENT_SCHEMA_VERSION + 1}`)
+  })
+
+  it('kein Timer und kein Verlassen der Seite speichert darueber', () => {
+    vi.useFakeTimers()
+    try {
+      localStorage.setItem(KEY, ZUKUNFT)
+      const ed = new Editor()
+      // Der Bediener arbeitet trotzdem los — der Autosave darf nicht anspringen.
+      ed.addBlock(TEST_BLOCK)
+      vi.runAllTimers()
+      ed.speichereJetzt()          // der pagehide-Weg aus providers.tsx
+      expect(localStorage.getItem(KEY)).toBe(ZUKUNFT)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('sichert die Rohdaten zusaetzlich als Kopie mit Zeitstempel', () => {
+    localStorage.setItem(KEY, ZUKUNFT)
+    new Editor()
+    const kopien = quarantaeneKopien(KEY)
+    expect(kopien).toHaveLength(1)
+    expect(localStorage.getItem(kopien[0])).toBe(ZUKUNFT)
+    // Der Fundort steht in der Sperransicht.
+    expect(speicherGate.quarantaene?.kopieSchluessel).toBe(kopien[0])
+  })
+
+  it('legt beim zweiten Laden desselben Standes keine zweite Kopie an', () => {
+    localStorage.setItem(KEY, ZUKUNFT)
+    new Editor()
+    speicherGate.entsperre()   // wie ein Neuladen der Seite
+    new Editor()
+    expect(quarantaeneKopien(KEY)).toHaveLength(1)
+  })
+
+  it('„verwerfen und leer beginnen" raeumt NUR den Autosave-Schluessel', () => {
+    localStorage.setItem(KEY, ZUKUNFT)
+    localStorage.setItem(BACKUP_KEY, 'aeltere notfallkopie')
+    new Editor()
+    const kopie = quarantaeneKopien(KEY)[0]
+
+    verwerfeLokalenStand()
+
+    expect(localStorage.getItem(KEY)).toBeNull()               // der Stand ist weg …
+    expect(localStorage.getItem(kopie)).toBe(ZUKUNFT)          // … die Rohkopie NICHT
+    expect(localStorage.getItem(BACKUP_KEY)).toBe('aeltere notfallkopie')
+    expect(speicherGate.gesperrt).toBe(false)                  // erst jetzt darf geschrieben werden
+  })
+
+  it('ein Stand der AKTUELLEN Version laedt weiter normal', () => {
+    // Gegenprobe: der Riegel darf nicht bei allem anspringen.
+    const ed = load({
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+        a: { id: 'a', type: TEST_BLOCK, props: { text: 'Arbeit' }, parentId: 'root', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('a')?.props.text).toBe('Arbeit')
+    expect(speicherGate.gesperrt).toBe(false)
+    expect(quarantaeneKopien(KEY)).toEqual([])
   })
 })
 

@@ -17,32 +17,15 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { exportMask } from '../../export/exportMask'
 import { failedChecks, validateMaskHtml } from '../../export/validator'
+import { downloadFile } from '../../lib/dateiDownload'
 import { dataSourceStore } from '../../state/DataSourceStore'
+import { uebernehmeMaske } from '../../state/maskeUebernehmen'
 import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
 import { meldeVerworfeneTypen } from '../../state/persistence'
 import { relationStore } from '../../state/RelationStore'
 import { useEditor } from '../../state/useEditor'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
-
-function downloadFile(name: string, content: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([content], { type }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  // Der Anker MUSS im Dokument haengen: ein programmatischer Klick auf ein
-  // loses Element loest in Firefox keinen Download aus — die Datei kaeme
-  // wortlos nicht, und der Bediener stuende ohne Maske da.
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  // Die Blob-URL erst NACH diesem Zyklus freigeben. Ein revoke direkt hinter
-  // click() zieht dem gerade gestarteten Download bei groesseren Dateien die
-  // Quelle unter den Fuessen weg (bekanntes Timing-Risiko, v. a. Firefox);
-  // dass es meistens gutgeht, macht es nicht richtig.
-  setTimeout(() => URL.revokeObjectURL(url), 0)
-}
 
 // onSteuerung: öffnet die Kommandozentrale — Zustand hält die Shell.
 export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
@@ -116,7 +99,18 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
     }
     const ergebnis = packeMaskeAus(text)
     if (!ergebnis.ok) {
-      window.alert(ergebnis.grund)
+      // Seit A3 nennt die Ablehnung nicht nur „beschädigt", sondern die
+      // gefundenen Stellen. Sie stehen unter dem Grund, hoechstens zehn —
+      // ein Alert mit hundert Zeilen liest niemand, und die Zahl der
+      // restlichen steht dabei.
+      const liste = ergebnis.probleme.slice(0, 10)
+        .map((p) => `• ${p.bereich}${p.stelle === '' ? '' : ` (${p.stelle})`}: ${p.grund}`)
+      const rest = ergebnis.probleme.length - liste.length
+      window.alert([
+        ergebnis.grund,
+        ...(liste.length > 0 ? ['', ...liste] : []),
+        ...(rest > 0 ? [`… und ${rest} weitere.`] : []),
+      ].join('\n'))
       return
     }
     // Laden ist der einzige Knopf, der mit einem Klick ALLES ueberschreibt —
@@ -129,9 +123,9 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
       + 'nicht rückgängig machen.',
     )) return
 
-    dataSourceStore.ersetzeAlle(ergebnis.inhalt.datenquellen)
-    relationStore.ersetzeAlle(ergebnis.inhalt.relationen)
-    ed.ersetzeMaske(ergebnis.inhalt.tree)
+    // Die Reihenfolge (Bibliotheken, dann Baum) wohnt in maskeUebernehmen —
+    // dieselbe Stelle benutzt die Sperransicht (A3).
+    uebernehmeMaske(ed, ergebnis.inhalt)
     meldeVerworfeneTypen(ergebnis.verworfen)
   }
 

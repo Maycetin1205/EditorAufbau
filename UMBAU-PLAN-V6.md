@@ -30,19 +30,34 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** S3 (2026-08-10) — davor S2, A2.1, A2, A1, A0,
+- **Letzte fertige Etappe:** A3 (2026-08-10) — davor S3, S2, A2.1, A2, A1, A0,
   A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
   **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die
   Welle S abgearbeitet, bis auf das optionale S5.
-- **Naechste Etappe:** A3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+- **Naechste Etappe:** A4. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
   worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S). A9 setzt A3 bis
   A7 voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
+- **Was A3 gebaut hat (2026-08-10), damit A4 daran anschliesst:** die geteilte
+  Lade-Kette `state/ladeKette.ts` mit `pruefeBaumStand` (feste Reihenfolge:
+  Zukunft abweisen → migrieren+bereinigen → Vertragspruefung) und dem Ausgang
+  `ok | migriert | quarantaene` samt `LadeProblem`-Liste · der Riegel
+  `state/speicherGate.ts` vor BEIDEN Schreibwegen (persistState +
+  VorlagenStore) · `notfallkopie.sichereQuarantaene` (Rohkopie mit
+  Zeitstempel, ueberschreibt nie) · die Sperransicht `app/Sperransicht.tsx`
+  mit den drei Wegen. **Der Schalter fuer A4 ist EINE Zeile:**
+  `verlustPruefen` in `persistence.loadFromStorage` steht auf `false` — der
+  Browser-Weg duennt bis A4 aus wie bisher, der Datei-Weg sperrt schon.
+  Nicht gebaut, weil A3 es nicht verlangt: Topologie-Invarianten,
+  `canContain`-Pruefung, Problemlisten der zwei Bibliotheken (alles A4).
+  Bewusst UNVERAENDERT: ein unlesbarer Stand (kaputtes JSON) laeuft weiter
+  ueber den bewaehrten Weg Notfallkopie + Meldung + leer starten und sperrt
+  NICHT.
 - **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
   `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
   und `absichtlichGeleert` (die namentlich gemeldeten Stellen des

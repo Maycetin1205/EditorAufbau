@@ -26,8 +26,8 @@
 import { ROOT_ID, type BlockTree } from '../core/blocks/BlockData'
 import { sanitizeDataSources, type DataSource } from '../core/data/dataSources'
 import { sanitizeRelationTemplates, type RelationTemplate } from '../core/data/relations'
-import { baumAusRohdaten, keinVerlust, strukturProblem, verlustProblem } from './ladeKette'
-import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
+import { keinVerlust, pruefeBaumStand, type LadeProblem } from './ladeKette'
+import { CURRENT_SCHEMA_VERSION } from './migrations'
 
 // Erkennungsmarke. Waehlt der Bediener versehentlich
 // index.basis.SEvariablen.json, sagt der Editor das in Klartext, statt
@@ -50,11 +50,22 @@ export interface MaskenInhalt {
   relationen: RelationTemplate[]
 }
 
-// Ergebnis des Auspackens: entweder heil ODER ein Klartext-Grund.
+// Ergebnis des Auspackens: entweder heil ODER ein Klartext-Grund samt
+// Problemliste (A3 — der Bediener soll nicht nur „beschädigt" lesen, sondern
+// WELCHER Eintrag und WARUM).
 // Bewusst kein Wurf — eine handgepfuschte Datei darf den Editor nie anhalten.
 export type AuspackErgebnis =
   | { ok: true; inhalt: MaskenInhalt; verworfen: Map<string, number> }
-  | { ok: false; grund: string }
+  | { ok: false; grund: string; probleme: readonly LadeProblem[] }
+
+// Der Satz, in den ein Fund fuer den DATEI-Weg gegossen wird. Die Funde
+// selbst sind neutral formuliert (ladeKette.LadeProblem) — dieselben Funde
+// zeigt am Browser-Weg die Sperransicht, wo von einer Datei keine Rede ist.
+function beschaedigtSatz(probleme: readonly LadeProblem[]): string {
+  const erstes = probleme[0]?.grund ?? 'der Masken-Aufbau ist unlesbar'
+  return `Die Datei ist beschädigt: ${erstes}. Sie wird nicht geladen, damit `
+    + 'nicht unbemerkt Teile deiner Maske verlorengehen.'
+}
 
 // ---------- Packen ----------
 
@@ -91,11 +102,12 @@ function bibliothekPruefen<T>(
   roh: unknown,
   bereinige: (raw: unknown) => T[],
   klarname: string,
-): { ok: true; liste: T[] } | { ok: false; grund: string } {
+): { ok: true; liste: T[] } | { ok: false; grund: string; probleme: LadeProblem[] } {
   if (!Array.isArray(roh)) {
     return {
       ok: false,
       grund: `Die Datei ist beschädigt: der Abschnitt „${klarname}" fehlt oder ist unlesbar.`,
+      probleme: [{ bereich: klarname, stelle: '', grund: 'der Abschnitt fehlt oder ist unlesbar' }],
     }
   }
   const liste = bereinige(roh)
@@ -104,6 +116,7 @@ function bibliothekPruefen<T>(
       ok: false,
       grund: `Die Datei ist beschädigt: im Abschnitt „${klarname}" stimmen Angaben nicht. `
         + 'Sie wird nicht geladen, damit nicht unbemerkt Teile deiner Maske verlorengehen.',
+      probleme: [{ bereich: klarname, stelle: '', grund: 'Angaben im Abschnitt stimmen nicht' }],
     }
   }
   return { ok: true, liste }
@@ -117,11 +130,16 @@ export function packeMaskeAus(text: string): AuspackErgebnis {
   try {
     return auspacken(text)
   } catch {
-    return {
-      ok: false,
-      grund: 'Die Datei konnte nicht verarbeitet werden — sie ist vermutlich beschädigt.',
-    }
+    return abgelehnt('Die Datei konnte nicht verarbeitet werden — sie ist vermutlich beschädigt.')
   }
+}
+
+// Abgelehnt am RAHMEN der Datei (Marke, Formatangabe, Grundgeruest): hier gibt
+// es keine einzelne Stelle zu nennen, der Satz sagt schon alles. Die
+// Problemliste bleibt daher leer — sie wird nicht mit einer Wiederholung des
+// Satzes gefuellt.
+function abgelehnt(grund: string): AuspackErgebnis {
+  return { ok: false, grund, probleme: [] }
 }
 
 function auspacken(text: string): AuspackErgebnis {
@@ -129,35 +147,36 @@ function auspacken(text: string): AuspackErgebnis {
   try {
     roh = JSON.parse(text)
   } catch {
-    return { ok: false, grund: 'Die Datei ist keine gültige JSON-Datei und konnte nicht gelesen werden.' }
+    return abgelehnt('Die Datei ist keine gültige JSON-Datei und konnte nicht gelesen werden.')
   }
   if (!roh || typeof roh !== 'object' || Array.isArray(roh)) {
-    return { ok: false, grund: 'Die Datei enthält keine Maske.' }
+    return abgelehnt('Die Datei enthält keine Maske.')
   }
   const o = roh as Record<string, unknown>
 
   if (o.art !== MASKEN_DATEI_ART) {
-    return {
-      ok: false,
-      grund: 'Das ist keine Maskendatei des Aufbau-Editors. (Die exportierten '
-        + 'SoftEngine-Dateien lassen sich nicht wieder laden — dafür ist die '
-        + 'gespeicherte Maskendatei da.)',
-    }
+    return abgelehnt(
+      'Das ist keine Maskendatei des Aufbau-Editors. (Die exportierten '
+      + 'SoftEngine-Dateien lassen sich nicht wieder laden — dafür ist die '
+      + 'gespeicherte Maskendatei da.)',
+    )
   }
 
   // Aus der ZUKUNFT: ein aelterer Editor wuerde die Migrationen ueberspringen
   // und anschliessend alles, was er nicht kennt, als „unbekannt" wegwerfen —
   // also still Arbeit vernichten, die er nur nicht versteht.
+  // Das gilt fuer die Form der DATEI (hier) wie fuer die Version des AUFBAUS
+  // (die prueft die geteilte Kette weiter unten, damit Datei und
+  // Browser-Speicher dieselbe Versionspolitik haben).
   const dateiVersion = typeof o.dateiVersion === 'number' ? o.dateiVersion : 0
   if (dateiVersion > MASKEN_DATEI_VERSION) {
-    return {
-      ok: false,
-      grund: 'Diese Datei stammt aus einer neueren Version des Editors und kann hier '
-        + 'nicht geladen werden.',
-    }
+    return abgelehnt(
+      'Diese Datei stammt aus einer neueren Version des Editors und kann hier '
+      + 'nicht geladen werden.',
+    )
   }
   if (dateiVersion < 1) {
-    return { ok: false, grund: 'Die Datei ist beschädigt: die Formatangabe fehlt.' }
+    return abgelehnt('Die Datei ist beschädigt: die Formatangabe fehlt.')
   }
 
   // Pflichtangaben werden VERLANGT, nicht grosszuegig ergaenzt. Wer eine
@@ -166,16 +185,9 @@ function auspacken(text: string): AuspackErgebnis {
   // aber ausgehoehlte Datei „erfolgreich" und leert dabei den GESAMTEN
   // offenen Stand — genau der Schaden, den diese Funktion verhindern soll.
   if (typeof o.schemaVersion !== 'number') {
-    return { ok: false, grund: 'Die Datei ist beschädigt: die Versionsangabe des Aufbaus fehlt.' }
+    return abgelehnt('Die Datei ist beschädigt: die Versionsangabe des Aufbaus fehlt.')
   }
   const schemaVersion = o.schemaVersion
-  if (schemaVersion > CURRENT_SCHEMA_VERSION) {
-    return {
-      ok: false,
-      grund: 'Diese Datei stammt aus einer neueren Version des Editors und kann hier '
-        + 'nicht geladen werden.',
-    }
-  }
   // Der Baum MUSS eine BRAUCHBARE Wurzel mitbringen. Eine leere Maske ist
   // erlaubt (die Wurzel steht dann ohne Kinder da) — ein fehlender oder
   // kaputter Baum nicht.
@@ -184,41 +196,46 @@ function auspacken(text: string): AuspackErgebnis {
   // kaeme durch und wuerde anschliessend zu einer leeren Maske normalisiert
   // — wieder der Fall „Datei laedt erfolgreich und leert alles".
   if (!o.tree || typeof o.tree !== 'object' || Array.isArray(o.tree)) {
-    return { ok: false, grund: 'Die Datei enthält keinen lesbaren Masken-Aufbau.' }
+    return abgelehnt('Die Datei enthält keinen lesbaren Masken-Aufbau.')
   }
-  const rohBaum = o.tree as Record<string, unknown>
-  const wurzel = rohBaum[ROOT_ID]
+  const wurzel = (o.tree as Record<string, unknown>)[ROOT_ID]
   if (!wurzel || typeof wurzel !== 'object' || Array.isArray(wurzel)
     || !Array.isArray((wurzel as Record<string, unknown>).childIds)) {
-    return { ok: false, grund: 'Die Datei enthält keinen lesbaren Masken-Aufbau.' }
+    return abgelehnt('Die Datei enthält keinen lesbaren Masken-Aufbau.')
   }
 
-  // Der Karten-Demotext-Putzer laeuft nur fuer ALTE Staende. In einer
-  // aktuellen Datei ist „Heute" im Chip ein echter Wert des Bedieners — ihn
-  // wegzuputzen hiesse, eine eben gespeicherte Maske beim Laden abzulehnen.
-  // Die Grenze ist die feste historische Zahl, nicht „aelter als aktuell":
-  // sonst wuerde jeder Versionssprung den Putzer erneut loslassen (A2).
-  const baum = baumAusRohdaten(
-    { schemaVersion, tree: o.tree },
-    schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA,
-  )
-  if (!baum) {
-    return { ok: false, grund: 'Die Datei enthält keinen lesbaren Masken-Aufbau.' }
+  // Ab hier laeuft die GETEILTE Lade-Kette (ladeKette.pruefeBaumStand) in
+  // ihrer festen Reihenfolge: Zukunftsversion abweisen, migrieren +
+  // bereinigen, gegen den heutigen Vertrag pruefen. Der Datei-Weg laesst
+  // dabei KEINEN Teilverlust durch — die Datei ist nur ein KANDIDAT (A3):
+  // wird sie abgelehnt, bleibt die offene Sitzung unangetastet, inklusive
+  // ihrer Autosaves. Gemeinsames Pruef-Ergebnis, eigene Aufrufer-Politik.
+  //
+  // Den Demotext-Putzer steuert die Kette selbst (feste historische Grenze
+  // aus A2) — die Ableitung stand vorher an beiden Wegen getrennt im Code.
+  const stand = pruefeBaumStand({ schemaVersion, tree: o.tree }, { verlustPruefen: true })
+  if (stand.art === 'quarantaene') {
+    if (stand.ursache === 'zukunft') {
+      return {
+        ok: false,
+        grund: 'Diese Datei stammt aus einer neueren Version des Editors und kann hier '
+          + 'nicht geladen werden.',
+        probleme: stand.probleme,
+      }
+    }
+    if (stand.ursache === 'unlesbar') {
+      return abgelehnt('Die Datei enthält keinen lesbaren Masken-Aufbau.')
+    }
+    // Teilverlust: die Kette nennt die Stellen, der Satz drumherum ist der
+    // Datei-Satz von 2026-07-28.
+    return { ok: false, grund: beschaedigtSatz(stand.probleme), probleme: stand.probleme }
   }
-
-  // Und auch der BAUM darf nichts still verlieren — dieselbe Regel wie bei
-  // den Bibliotheken. Die beiden Pruefungen dazu wohnen in der geteilten
-  // Lade-Kette (ladeKette.ts): erst die VERWEISE der Rohform, dann der
-  // Verlust-Vergleich (Knotenzahl + je Baustein Typ/Props/Events/childIds).
-  const struktur = strukturProblem(rohBaum)
-  if (struktur) return { ok: false, grund: struktur }
-  const verlust = verlustProblem(rohBaum, baum)
-  if (verlust) return { ok: false, grund: verlust }
+  const baum = stand.baum
 
   const quellen = bibliothekPruefen(o.datenquellen, sanitizeDataSources, 'Datenquellen')
-  if (!quellen.ok) return { ok: false, grund: quellen.grund }
+  if (!quellen.ok) return { ok: false, grund: quellen.grund, probleme: quellen.probleme }
   const relationen = bibliothekPruefen(o.relationen, sanitizeRelationTemplates, 'Relationen')
-  if (!relationen.ok) return { ok: false, grund: relationen.grund }
+  if (!relationen.ok) return { ok: false, grund: relationen.grund, probleme: relationen.probleme }
 
   // Ein „verknuepfungen"-Abschnitt (Dateiversion 1) wird AUSDRUECKLICH
   // angenommen und verworfen — ohne Verlust-Kontrolle, anders als die zwei

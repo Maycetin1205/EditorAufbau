@@ -19,6 +19,7 @@
 
 import { deepClone } from '../lib/deepClone'
 import { meldeSpeicherPanne, merkeSpeicherErfolg, sichereUnlesbaren } from './notfallkopie'
+import { speicherGate } from './speicherGate'
 import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
 
@@ -188,6 +189,12 @@ export class VorlagenStore<T extends VorlagenEintrag> extends Subject<VorlagenSt
   }
 
   private schreibeJetzt(): void {
+    // Derselbe Riegel wie am Baum (A3): steht der geladene Stand unter
+    // Quarantaene, schreibt auch keine Bibliothek mehr. Sonst waere der
+    // Blockbaum geschuetzt und Datenquellen/Relationen nicht — und eine alte
+    // App haette die Bibliotheken eines neueren Standes ausgeduennt
+    // festgeschrieben.
+    if (!speicherGate.darfSchreiben()) return
     try {
       localStorage.setItem(
         this.bauplan.schluessel,

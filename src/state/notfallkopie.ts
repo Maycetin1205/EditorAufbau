@@ -30,6 +30,61 @@ export function backupKeyFor(storageKey: string): string {
   return `${storageKey}${BACKUP_SUFFIX}`
 }
 
+// --- Fall 3: der Stand ist LESBAR, darf aber nicht angefasst werden ----
+//
+// A3 (2026-08-10): ein Stand aus einer neueren Editorversion (und ab A4 auch
+// einer, bei dem beim Laden etwas verlorenginge) wird unter Quarantaene
+// gestellt. Er bleibt unangetastet unter seinem eigenen Schluessel liegen —
+// hier entsteht ZUSAETZLICH eine unveraenderte Kopie mit Zeitstempel.
+//
+// Warum eine zweite Kopie, wenn das Original doch stehenbleibt: sobald der
+// Bediener in der Sperransicht eine gueltige Maskendatei oeffnet, darf der
+// Autosave wieder schreiben — und der neue Stand landet auf demselben
+// Schluessel. Ohne diese Kopie waeren die Rohdaten dann weg. Die Kopie
+// ueberlebt das, weil kein Speicherweg sie je anfasst.
+//
+// Zwei eiserne Regeln: nichts wird ueberschrieben (der Zeitstempel bekommt
+// notfalls eine laufende Nummer), und derselbe Inhalt wird nicht zweimal
+// gesichert (sonst legt jedes Neuladen der gesperrten Seite eine weitere
+// Kopie an, bis der Speicher voll ist).
+export const QUARANTAENE_TEIL = '__quarantaene__'
+
+export function quarantaeneKopien(storageKey: string): string[] {
+  const anfang = `${storageKey}${QUARANTAENE_TEIL}`
+  const raus: string[] = []
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key !== null && key.startsWith(anfang)) raus.push(key)
+    }
+  } catch { /* Speicher gesperrt — dann gibt es eben keine Liste. */ }
+  return raus.sort()
+}
+
+// Liefert den Schluessel, unter dem die Rohdaten liegen — oder null, wenn der
+// Browser das Sichern verweigert hat.
+export function sichereQuarantaene(
+  storageKey: string,
+  raw: string,
+  zeitstempel: string,
+): string | null {
+  try {
+    for (const vorhanden of quarantaeneKopien(storageKey)) {
+      if (localStorage.getItem(vorhanden) === raw) return vorhanden
+    }
+    const anfang = `${storageKey}${QUARANTAENE_TEIL}${zeitstempel}`
+    let key = anfang
+    for (let n = 2; localStorage.getItem(key) !== null; n++) key = `${anfang}-${n}`
+    localStorage.setItem(key, raw)
+    return key
+  } catch {
+    // Voller oder gesperrter Speicher. Die Rohdaten liegen weiterhin
+    // unangetastet unter ihrem eigenen Schluessel; die Sperransicht bietet
+    // sie ausserdem als Datei an.
+    return null
+  }
+}
+
 // `bezeichnung` ist der Klarname dessen, was beschaedigt war — er steht in
 // der Meldung, damit der Bediener weiss, WAS er verloren hat.
 export function sichereUnlesbaren(
