@@ -30,15 +30,15 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** S2 (2026-08-10) — davor A2.1, A2, A1, A0, A8.1,
-  A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
-  steht noch aus.
-- **Naechste Etappe:** S3 (Editor-Tempo). Die Welle S (sichtbare
+- **Letzte fertige Etappe:** S3 (2026-08-10) — davor S2, A2.1, A2, A1, A0,
+  A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
+  steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
+  warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
+- **Naechste Etappe:** S4 (Editor-Laden im Dev-Server). Die Welle S (sichtbare
   Fehler und Tempo) ist am 2026-08-10 nach der Zwischenbilanz eingeschoben
   worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S) und laeuft VOR
   A3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10, s. Etappenkopf S1 —
-  nicht wieder vorschlagen). Danach S4, dann A3; A9 setzt A3 bis A7
-  voraus.
+  nicht wieder vorschlagen). Danach A3; A9 setzt A3 bis A7 voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
 - **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
   `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze

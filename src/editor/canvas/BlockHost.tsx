@@ -27,16 +27,21 @@
 // (useBlockResize) und die React↔Lit-Übergabestelle (useLitElement)
 // wohnen in eigenen Dateien daneben.
 
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
-import type { QuelleInReichweite } from '../../core/data/sourceLinks'
+import {
+  quellenAufloesen,
+  WEITERE_QUELLEN_PROP,
+  type QuelleInReichweite,
+} from '../../core/data/sourceLinks'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { rasterSpecOf } from '../../core/blocks/rasterLayout'
 import { bindbareStellenVon, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import { useEditorInstance } from '../../state/EditorContext'
 import { loescheBaustein } from '../../state/loescheBaustein'
+import { quellenTraeger } from '../../state/quellenOps'
 import { useDataSources } from '../../state/useDataSources'
 import { useFeldBindung } from './FeldBindung'
 import { useBlockResize } from './useBlockResize'
@@ -68,25 +73,38 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   // Stellen relevant. BlockHost rendert bei jeder Store-Änderung neu (Canvas
   // abonniert den Store) UND bei Vorlagen-Änderungen (die Bibliothek
   // ist editierbar — die Klarnamen-Vorschau muss sofort nachziehen).
-  useDataSources()
+  const quellenBibliothek = useDataSources()
   // Die Stellen, die an DIESEM Baustein gerade bindbar sind
   // (bindbareStellenVon): am Nachschlage-Feld gehört seine Wert-Stelle nicht
   // dazu — dort entsteht der Wert im Fenster, ein Klick darauf dürfte keinen
   // Bindungs-Picker öffnen.
   //
-  // Hier stand ein useMemo mit der Begruendung, eine frische Liste je Render
-  // liesse den Props-Effekt in useLitElement jedes Mal neu laufen. Das war nie
-  // wahr: `quellen` steht in denselben Abhaengigkeiten und ist bei jedem Render
-  // ein neues Array (quellenFor mappt). Der Effekt lief also trotzdem — die
-  // Memoisierung sah nach Optimierung aus und war keine. Weggelassen, und das
-  // ist folgenlos: der Effekt schreibt nur DOM-Properties, und ein unveraenderter
-  // Wert loest in Lit gar keine Aktualisierung aus (Vergleich im Setter).
-  const bindableSpots = bindbareStellenVon(block)
+  // Gemerkt am KNOTEN: die Liste haengt allein an Typ und Props dieses
+  // Bausteins, und der Baum ersetzt beim Aendern genau den einen Knoten. Ein
+  // Tastendruck in einem ANDEREN Baustein laesst diese Liste damit in Ruhe —
+  // und weil sie in den Abhaengigkeiten des Props-Effekts (useLitElement)
+  // steht, laeuft der Effekt dann auch nicht mehr mit.
+  const bindableSpots = useMemo(() => bindbareStellenVon(block), [block])
   // ALLE Quellen in Reichweite (erste zuerst) — der Picker bietet die Felder
   // jeder davon an, die Vorschau löst gegen die genannte auf.
-  const quellen = (bindableSpots.length > 0 || traegtEigeneQuelle(block))
-    ? editor.quellenFor(block.id)
-    : KEINE_QUELLEN
+  //
+  // Gemerkt am TRAEGER, nicht am Baum: die Quellen eines Bausteins haengen an
+  // genau zwei Dingen — dem naechsten Vorfahr mit eigener Quelle
+  // (quellenTraeger) und der Bibliothek. Beide werden beim Aendern ERSETZT,
+  // nie in sich veraendert; ihre Identitaet ist also ein ehrliches „hat sich
+  // wirklich geaendert". Der Baum selbst taugte dafuer NICHT: den ersetzt jeder
+  // Tastendruck irgendwo, und die Liste wuerde ueberall neu gerechnet.
+  // Darum steht hier auch nicht editor.quellenFor — nur die beiden Bausteine
+  // dieser Rechnung einzeln lassen sich als Abhaengigkeit hinschreiben.
+  const traeger = quellenTraeger(editor.tree, block.id)
+  const braucht = bindableSpots.length > 0 || traegtEigeneQuelle(block)
+  const bibliothek = quellenBibliothek.list
+  const quellen = useMemo(
+    () => (braucht && traeger
+      ? quellenAufloesen(traeger.props.source, traeger.props[WEITERE_QUELLEN_PROP], bibliothek)
+      : KEINE_QUELLEN),
+    [braucht, traeger, bibliothek],
+  )
   // Aktuellen Knoten in einer Ref halten, damit einmal registrierte
   // Event-Listener immer mit dem aktuellen Stand laufen.
   const blockRef = useRef<BlockNode>(block)

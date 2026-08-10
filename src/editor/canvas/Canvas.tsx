@@ -14,20 +14,30 @@
 // die Fläche selbst.
 
 import { MousePointerClick } from 'lucide-react'
-import { useMemo, useState, type DragEvent } from 'react'
+import { useCallback, useMemo, useState, type DragEvent } from 'react'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
 import { rasterFlaecheStyle, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { NodeList } from './CanvasNode'
 import { isNewBlockDrag } from './dnd'
-import { commitDrop, DndContext, type DndState, type DropTarget } from './dndState'
+import { commitDrop, DndContext, gleichesZiel, type DndState, type DropTarget } from './dndState'
 import { rasterZiel } from './rasterDnd'
 import { PopupSeite } from './PopupSeite'
 
 export function Canvas() {
   const ed = useEditor()
   const [dragId, setDragId] = useState<string | null>(null)
-  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
+  const [dropTarget, merkeDropTarget] = useState<DropTarget | null>(null)
+
+  // Das Ziel nur bei ECHTEM Wechsel neu setzen. Die Melder (rasterMove,
+  // rasterDnd, CanvasNode) bauen bei JEDEM Zeigerereignis ein frisches
+  // Ziel-Objekt; ohne diesen Vergleich rechnet React jedes davon als Aenderung
+  // und zeichnet die ganze Flaeche neu — beim Ziehen 60 bis 120 Mal je
+  // Sekunde, obwohl der Geist meist ueber derselben Zelle steht. Gibt der
+  // Aktualisierer denselben Stand zurueck, hoert React von selbst auf.
+  const setDropTarget = useCallback((ziel: DropTarget | null) => {
+    merkeDropTarget((vorher) => (gleichesZiel(vorher, ziel) ? vorher : ziel))
+  }, [])
 
   const dnd = useMemo<DndState>(() => ({
     dragId,
@@ -38,7 +48,7 @@ export function Canvas() {
       setDragId(null)
       setDropTarget(null)
     },
-  }), [dragId, dropTarget])
+  }), [dragId, dropTarget, setDropTarget])
 
   // Rasterfläche: die Zielzelle unter dem Zeiger bestimmen (Bibliothek-Drag oder
   // Block aus einem Container) — das ersetzt die frühere Einfüge-Linie „ans Ende

@@ -30,6 +30,28 @@ interface DndState {
   reset: () => void
 }
 
+// Zwei Drop-Ziele INHALTLICH vergleichen.
+//
+// Warum es das braucht (2026-08-10): jedes `pointermove` beim Bewegen und
+// jedes `dragover` beim Ziehen baut ein NEUES Ziel-Objekt (rasterMove,
+// rasterDnd, CanvasNode). Ein neues Objekt heisst fuer React „hat sich
+// geaendert", auch wenn dieselbe Zelle darinsteht — und weil der DnD-Zustand
+// per Context an der ganzen Flaeche haengt, rendert bei 60 bis 120 Hz jedes
+// Mal der komplette Baum neu. Gewechselt hat das Ziel aber nur, wenn eine
+// seiner ZAHLEN anders ist.
+function gleichesZiel(a: DropTarget | null, b: DropTarget | null): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  if (a.kind === 'raster' && b.kind === 'raster') {
+    return a.parentId === b.parentId
+      && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h
+  }
+  if (a.kind === 'flow' && b.kind === 'flow') {
+    return a.parentId === b.parentId && a.index === b.index
+  }
+  return false
+}
+
 const DndContext = createContext<DndState | null>(null)
 
 function useDnd(): DndState {
@@ -67,4 +89,4 @@ function commitDrop(
 }
 
 export type { DndState, DropTarget }
-export { commitDrop, DndContext, useDnd }
+export { commitDrop, DndContext, gleichesZiel, useDnd }
