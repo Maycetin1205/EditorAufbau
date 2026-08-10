@@ -31,8 +31,11 @@ git log --oneline -8
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
 - **Letzte fertige Etappe:** A2.1 (2026-08-10) — davor A2, A1, A0, A8.1, A8.2
-- **Naechste Etappe:** A3 (neuere Browserstaende nicht mit alter App
-  zerstoeren). A9 setzt A3 bis A7 voraus.
+- **Naechste Etappe:** S1 (Meldungen lesbar). Die Welle S (sichtbare Fehler
+  und Tempo, S1–S5) ist am 2026-08-10 nach der Zwischenbilanz eingeschoben
+  worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S) und laeuft VOR
+  A3. Danach A3 (neuere Browserstaende nicht mit alter App zerstoeren);
+  A9 setzt A3 bis A7 voraus.
 - **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
 - **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
   `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
@@ -76,6 +79,19 @@ zwischen zwei Chats, nicht dieser Absatz.
    git-Historie die Sicherung, nicht mehr ein einzelner Arbeitsbaum. Es pflegt
    weiterhin genau EIN Chat gleichzeitig; andere schlagen Aenderungen im Chat
    vor.
+4. **Export-Sockel akzeptieren?** 97 % jeder Exportdatei sind fester Sockel
+   (Runtime 178 KB mit allen 11 Bausteintypen + Schrift 26 KB); Nutzerdaten
+   reisen nur mit, wenn sie verwendet werden (Zwischenbilanz 2026-08-10,
+   `exportMask.ts:274-353`). Empfehlung: akzeptieren, solange das Laden in
+   SoftEngine nicht nachweislich stoert; „Export nur mit verwendeten
+   Bausteinen" waere ein eigenes spaeteres Paket. — OFFEN, ein neuer Chat
+   fragt.
+5. **F1 (Entwurfsgespraech Steuerung/Inspector) vorziehen?** Die
+   Zwischenbilanz 2026-08-10 belegt die Bedien-Befunde (sechs Bauformen fuer
+   „Feld einer Quelle waehlen", namenlose Inspector-Sektionen, StepForm in
+   der 340-px-Spalte, roher Jargon trotz vorhandenem Klartext in
+   `helfer.ts:50-59`). Kein Code ohne bestaetigten Entwurf — die F1-Regel
+   gilt unveraendert, egal wann F1 laeuft. — OFFEN.
 
 ### 0.2 Ansage-Pflicht vor jeder Etappe
 
@@ -336,6 +352,195 @@ ist von Hand gepflegt; `git log` und die Pruefungen sind es nicht.
 
 Stand nach A0 (Baseline `6640ac1` + die drei Commits dieser Etappe): alle
 fuenf Pruefungen gruen, Arbeitsbaum sauber.
+
+---
+
+# Welle S — Sichtbare Fehler und Tempo (eingeschoben 2026-08-10)
+
+Nutzer-Entscheidung 2026-08-10 nach der Zwischenbilanz (vier gebuendelte
+Code-Untersuchungen; die Belege stehen unten je Etappe): Diese Welle laeuft
+VOR den restlichen A-Etappen. Grund: A3 bis A8 sind fuer den Nutzer
+unsichtbar — die taeglich sichtbaren Aergernisse (Scheinzeile in der
+Tabelle, traeger Editor, verstummte Pruefmeldungen) blieben sonst
+wochenlang stehen und kosten genau das Vertrauen, das der Umbau aufbauen
+soll.
+
+Fuer alle S-Etappen gilt:
+
+- KEIN Umbau nebenbei, KEIN neues Framework, KEINE neue Testgattung.
+- Jede Etappe nennt die maschinelle Grenze, die ihr Diff NICHT
+  ueberschreiten darf (bytegleiche Pruefungen). Ueberschreitet er sie
+  unerklaert, gilt Abschnitt 3.5: sofortiger Stopp.
+- Ansage- und go-Ritual aus 0.2/0.3 gelten unveraendert.
+
+## S1 · Die verstummten Pruefmeldungen lesbar machen
+
+### Belegtes Problem
+
+`preflight.ts` erzeugt 15 Meldungsarten in EINER Datei, jede mit Klartext
+und Handlungsanweisung. Sichtbar ist davon fast nichts mehr: die Steuerung
+filtert auf die eine Art 'Datenquelle fehlt' und zeigt sie als namenlosen
+8-px-Punkt ohne Text (`Kommandozentrale.tsx:56-59`, `relationen: false`
+hart verdrahtet); der Export-Weg zeigt seit `de3a865` gar nichts mehr
+(`Toolbar.tsx:59-66`). Der Editor WEISS also von toten Bindungen,
+geloeschten Auswahl-Gebern und doppelten Popup-Namen — und der Nutzer
+findet es erst in SoftEngine.
+
+### Entschieden (Nutzer 2026-08-10, „hol die meldungen")
+
+- Anzeigen JA, blockieren NEIN. Der Export laeuft weiterhin IMMER — die
+  Entscheidung vom 2026-08-10 (Preflight blockt nicht) bleibt unangetastet.
+- EINE Anzeigestelle in Klartext, gespeist aus dem vollen
+  `preflightMask`-Ergebnis. Die Meldungstexte leben weiter NUR in
+  `preflight.ts` — keine zweite, abweichende Textquelle.
+
+### Arbeit
+
+1. Kopfleiste: neben „Exportieren" ein Zahlen-Abzeichen („N Hinweise");
+   Klick oeffnet die Klartext-Liste. Keine Probleme = kein Abzeichen und
+   kein Dauer-Banner.
+2. Der gelbe Punkt in der Steuerung wird aus derselben ungefilterten
+   Quelle gespeist oder entfernt — kein zweiter Kanal mit anderer Wahrheit.
+3. Reine Editor-UI: Export-HTML, SEvariablen, Runtime-Bundle und
+   Referenzabzug bleiben BYTEGLEICH.
+
+### Fertig, wenn
+
+- alle 15 Meldungsarten erreichbar sind (heute: 1 von 15);
+- kein Export blockiert wird;
+- die Waechter bytegleiche Exporte bestaetigen.
+
+### Nutzerprobe
+
+1. Ein Feld an eine Quelle binden, dann dieses Feld in der Steuerung
+   loeschen: Abzeichen erscheint, die Liste nennt den Baustein-KLARNAMEN
+   und die Folge („bliebe in der Maske leer").
+2. Export bleibt trotzdem ausloesbar.
+3. Problem beheben: Abzeichen verschwindet.
+
+## S2 · Tabelle: der bemalte Reststreifen
+
+### Belegtes Problem
+
+Unter den echten Zeilen bleibt geometrisch IMMER ein Rest von 2–30 px:
+die Bausteinhoehe waechst in 20-px-Schritten (`rasterLayout.ts:38`,
+zeile 12 + gap 8), eine Tabellenzeile ist 32 px hoch
+(`seitengroesse.ts:36`) — der Rest trifft nie 0. Das Lineal wird auch bei
+echten Daten gerendert (`tabelleKoerper.ts:138-140`), nimmt mit
+`flex: 1 1 auto` genau diesen Rest auf und malt darin seine Spaltentrenner
+(`tabelleStil.ts:127-151`). Ergebnis: eine scheinbar leere, je nach
+Resthoehe auch duennere letzte Zeile — vom Nutzer zweimal gemeldet
+(2026-08-07 und 2026-08-10); `6613fe2` korrigierte nur die
+Platzhalter-ANZAHL, nicht den Rest.
+
+### Arbeit
+
+1. Das Lineal zeichnet nur noch GANZE Zeilentakte; den Sub-Zeilen-Rest
+   nimmt ein unbemalter Fuellstreifen auf (Panel-Hintergrund, keine
+   Spaltentrenner, keine Rahmenlinien, die eine Zeile vortaeuschen).
+2. `passendeZeilen` (`seitengroesse.ts:101`) bleibt floor — die Rechnung
+   ist richtig; falsch ist nur, dass ihr Rest wie eine Zeile aussieht.
+3. Nebenursachen pruefen und im selben Thema beheben, soweit sie die
+   Messung zwischen Editor und Maske auseinanderziehen (Fusszeilen-Hoehe
+   mit/ohne Zeilen-Waehler, `TabelleBlock.ts:435` + `tabelleFuss.ts:62-77`;
+   waagerechte Scrollleiste frisst clientHeight,
+   `tabelleStil.ts:106-111`). Editor und Maske muessen dieselbe Zeilenzahl
+   zeigen — Abschnitt 3.5: Editor ≠ Export ist ein Stoppgrund.
+4. Die Aenderung liegt im Baustein (eine Render-Quelle) — Editor und
+   Maske sind mit demselben Diff repariert.
+
+### Fertig, wenn
+
+- bei jeder Bausteinhoehe unter der letzten Datenzeile keine Scheinzeile
+  mehr zu sehen ist (weder „leer" noch „duenner");
+- der Leerzustand (Lineal ohne Daten) weiterhin Takte zeigt;
+- `check:runtime` einen vollstaendig erklaerten Bundle-Diff zeigt (die
+  Runtime-Aenderung ist hier BEABSICHTIGT); der Referenzabzug bleibt
+  gruen, weil sein Waechter das Bundle ausschneidet
+  (`referenzabzug.test.ts:40-45`).
+
+### Nutzerprobe
+
+1. Tabelle mit genug Datensaetzen; Bausteinhoehe mehrfach ziehen.
+2. Nie eine leere/duennere Scheinzeile unter der letzten Datenzeile.
+3. Gegenprobe leere Tabelle: Hilfslinien wie bisher.
+4. SoftEngine-Probe noetig (Runtime-Bytes!) — gebuendelt am Blockende.
+
+## S3 · Editor-Tempo: die drei Render-Bremsen
+
+### Belegtes Problem
+
+Drei Befunde multiplizieren sich:
+
+1. kein einziges `React.memo` im Projekt — jede Aenderung rendert die
+   komplette Flaeche samt aller BlockHosts neu;
+2. der Props-Effekt in `useLitElement.ts:152` haengt an Eingaben
+   (`bindableSpots`, `quellen`), die bei jedem Render frisch allokiert
+   werden (`BlockHost.tsx:84/:87`) — er schreibt darum bei JEDEM Render
+   ALLE Props ALLER Bausteine neu;
+3. `rasterMove.ts:100` und `rasterDnd.ts:124` erzeugen bei jedem
+   `pointermove` ein NEUES dropTarget-Objekt — beim Ziehen laeuft
+   (1)+(2) mit Zeigerfrequenz (60–120 Hz).
+
+Dahinter, nur falls 1–3 nachweislich nicht reichen: ungecachte Baumlaeufe
+pro BlockHost pro Render (`quellenFor`/`templateMarkFor`/`isInSubtree`).
+
+### Arbeit
+
+1. dropTarget nur bei ECHTEM Zellenwechsel neu setzen (inhaltlicher
+   Vergleich statt neuem Objekt pro Ereignis).
+2. Stabile Identitaet fuer die useLitElement-Eingaben, damit der
+   Props-Effekt nur bei echten Aenderungen laeuft.
+3. `React.memo` an den Flaechen-Knoten (CanvasNode/BlockHost) mit
+   schmalen, korrekten Vergleichen.
+4. Baumlauf-Caching NUR, wenn 1–3 messbar nicht reichen (Regel 10 —
+   nichts auf Verdacht).
+5. KEIN neues State-Framework, kein Umbau von Store, History oder Undo.
+
+### Fertig, wenn
+
+- Tippen in einem Baustein nicht mehr die ganze Flaeche rendert;
+- Ziehen/Resize fluessig ist (Nutzer-Urteil in der Browserprobe);
+- Export-HTML, SEvariablen, Runtime-Bundle und Referenzabzug BYTEGLEICH
+  sind — das ist die harte Grenze dieser Etappe;
+- Undo/Redo, Auswahl und Tipp-Sitzungen unveraendert arbeiten (bestehende
+  Testarten wachsen um die konkreten Regressionen mit).
+
+### Nutzerprobe
+
+1. Maske mit vielen Bausteinen (Tabelle, Kanban, Formulare, Popup).
+2. Tippen ohne Verzoegerung; Ziehen/Groesse-Aendern ohne Ruckeln.
+3. Undo/Redo stichprobenartig.
+
+## S4 · Editor-Laden im Dev-Server
+
+### Belegtes Problem
+
+33 Barrel-Importe `from 'lucide-react'` erzwingen im Dev-Server ein
+1,14-MB-Prebundle (Paket mit 4014 Icon-Modulen; kein `optimizeDeps` in
+`vite.config.ts`) — der groesste einzelne Ladeposten beim Editor-Start.
+Der fertige Build ist nicht betroffen; gearbeitet wird aber im Dev-Server.
+
+### Arbeit
+
+Kleinste wirksame Loesung (gezielte Icon-Importe ODER eine
+optimizeDeps-Regel), in der Ansage benannt. Kein Icon wechselt, nichts
+sieht anders aus.
+
+### Fertig, wenn
+
+- der Dev-Start spuerbar schneller ist (Nutzer-Urteil);
+- optisch NICHTS anders ist;
+- Export, Runtime-Bundle und Referenzabzug bytegleich sind.
+
+## S5 · Masken-Tempo (OPTIONAL — eigenes go, SE-Echttest Pflicht)
+
+Nicht Teil des Block-S-Standards, weil es Runtime-Bytes aendert: die
+Diagnose-Anzeige schreibt bei jedem SE-Ereignis das JSON des ersten
+Datenpakets mehrfach neu (`bridge.ts:110-148`) — datenmengenproportionale
+Arbeit mitten im Maskenstart. Falls der Nutzer es freigibt: Diagnose nur
+noch auf Anforderung fuellen, Maskenverhalten sonst identisch; der genaue
+Schnitt kommt in der Ansage, ein SE-Echttest ist danach Pflicht.
 
 ---
 
@@ -1479,7 +1684,13 @@ gebaut.
 - `aus` ist klarer Parameterzustand, kein verschwundener Formularplatz;
 - START_TOOL zeigt keine erfundenen Parameter;
 - Ketten bleiben sichtbar und sind der einzige Schreibweg;
-- Verwendung und Folgen einer Relation werden vollstaendig angezeigt.
+- Verwendung und Folgen einer Relation werden vollstaendig angezeigt;
+- der Entwurf nimmt die Bedien-Befunde der Zwischenbilanz 2026-08-10 als
+  Eingabe: sechs verschiedene Bauformen fuer „Feld einer Quelle waehlen",
+  namenlose Inspector-Sektionen (bis 26 Bedienelemente ohne Ueberschrift),
+  die StepForm als groesste Eingabemaske in der 340-px-Spalte, roher
+  Jargon (PINDEX/VALUE/Rohsyntax) trotz vorhandenem Klartext
+  (`helfer.ts:50-59`).
 
 ### Entwurf beantwortet mindestens
 
@@ -1546,7 +1757,7 @@ Unterpunkte bekommen. Die fachliche Reihenfolge bleibt.
 **Commits sind klein, Proben sind gebuendelt.** Der Nutzer liest keine
 Commits — kleine Commits kosten ihn nichts. Was ihn kostet, ist die
 Browserprobe. Darum gilt: ein Thema = ein Commit (3.1 unveraendert), aber
-**eine Klickanleitung pro Block**. Sieben Bloecke statt 33 Proberunden.
+**eine Klickanleitung pro Block**. Acht Bloecke statt 38 Proberunden.
 
 Die Spalte „Wo im sichtbaren Editor" ist die Kurzform der Ansage aus 0.2. Sie
 ersetzt die Ansage nicht — sie verhindert nur, dass eine Etappe ohne
@@ -1559,6 +1770,19 @@ Ansage belegt oder korrigiert.
 | # | Etappe | Wo im sichtbaren Editor |
 |---|---|---|
 | 1 | A0 Baseline | nichts sichtbar — Arbeitsstand gesichert, Pruefbuendel gruen |
+
+### Block S — Sichtbare Fehler und Tempo (eingeschoben 2026-08-10) · EINE Probe am Ende
+
+| # | Etappe | Wo im sichtbaren Editor |
+|---|---|---|
+| S1 | Meldungen lesbar | \* Kopfleiste: Zahlen-Abzeichen + Klartext-Liste statt namenlosem Punkt; der Export blockt weiterhin NIE |
+| S2 | Tabellen-Reststreifen | \* Tabelle: keine leere/duennere Scheinzeile mehr unter der letzten Datenzeile — Editor UND Maske |
+| S3 | Render-Bremsen | \* ueberall spuerbar: Tippen/Ziehen ohne Haenger; optisch nichts anders |
+| S4 | Dev-Laden | Editor-Start im Dev-Server schneller; optisch nichts anders |
+| S5 | Masken-Tempo | OPTIONAL, eigenes go; nichts sichtbar, SE-Echttest Pflicht |
+
+Die SoftEngine-Probe fuer Block S ist wegen S2 (Runtime-Bytes) noetig und
+wird EINMAL am Blockende gebuendelt, zusammen mit der Browserprobe.
 
 ### Block 1 — „ergibt keinen Sinn"-Fehler · EINE Probe am Ende
 
