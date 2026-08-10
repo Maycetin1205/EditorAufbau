@@ -53,8 +53,11 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    **Geändert 2026-08-10 (Nutzer-Ansage):** der Preflight blockt NICHT mehr.
    Bis dahin stand hier „Validator + Preflight blocken" — `preflightMask`
    hielt den Nutzer wiederholt vom Exportieren ab, in Fällen, die er bewusst
-   so gebaut hatte. Der Export läuft jetzt immer; die Funktion steht getestet
-   in `src/export/preflight.ts`, ruft aber niemand mehr auf. Geblieben ist
+   so gebaut hatte. Der Export läuft jetzt immer. Die Funktion selbst lebt
+   weiter: `Kommandozentrale.tsx` speist damit den Warn-Punkt an
+   „Datenquellen" — sie WARNT also noch, sie BLOCKT nur nicht mehr.
+   (`warnChecks` in `validator.ts` ist seitdem ohne Aufrufer im Produkt.)
+   Geblieben ist
    `validateMaskHtml` (SE-Marker, LF, reines ASCII) — schlägt die an, würde
    SoftEngine die Datei gar nicht erst laden. Damit ist „nichts scheitert
    still" für die DATEIFORM weiter zugesagt, für die FACHLICHE Bindung
