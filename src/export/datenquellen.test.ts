@@ -370,4 +370,74 @@ describe('exportMask: Datenquellen', () => {
     ])
     expect(html).toContain('window.FF_DATA_SOURCES = [{"id":"parameter"')
   })
+
+  // --- Zeilen per Relation holen (Welle R, 2026-08-11) ---------------------
+  //
+  // Belegt in den Echttests des Nutzers (Relation 69): eine HOLENDE Quelle
+  // bestellt bei SoftEngine NICHTS — ihr SEFILELOOP-Eintrag entfaellt samt
+  // Kopfsatz und VAR, und die Hol-Relation reist als Daten in
+  // FF_DATA_SOURCES (die Laufzeit dazu ist R2). Beides faellt sonst STILL
+  // aus: ein liegengebliebener POS-Loop laesst die ganze SEFILELOOP-Liste
+  // scheitern (Reihenfolge-Kontrakt), und ohne die Daten am Global koennte
+  // die Laufzeit nie holen.
+  it('eine holende Quelle bestellt keine SEFILELOOP und traegt ihre Relation in FF_DATA_SOURCES', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['pos', 'belege'] },
+      pos: { id: 'pos', type: TEST_DATA_BOX, props: { source: 'positionen' }, parentId: 'root', childIds: [] },
+      belege: { id: 'belege', type: TEST_DATA_BOX, props: { source: 'belege' }, parentId: 'root', childIds: [] },
+    }
+    const sources = [
+      {
+        id: 'positionen', name: 'BelegPositionen', kind: 'belegposition' as const,
+        // Ein liegengebliebener Kopfsatz darf NICHT mit hinausgehen: die
+        // holende Quelle hat keinen SEFILELOOP-Eintrag, an dem er stuende —
+        // und ein VAR-Abschnitt entstuende sonst gleich mit.
+        kopfsatzIndex: 'BEL_0_11',
+        ladeRelation: {
+          nr: '69', geberQuelleId: 'belege',
+          belegartFeld: '2_1', belegnummerFeld: '3_8',
+          jahrFeld: '0_1', archivFeld: '1_1',
+          endeFelder: ['11_6', '18_25'],
+        },
+        fields: [{ code: '18_25', label: 'Artikelnummer' }],
+      },
+      {
+        id: 'belege', name: 'Belege', kind: 'beleg' as const,
+        fields: [{ code: '3_8', label: 'Belegnummer' }],
+      },
+    ]
+    const { html, sevariablen } = exportMask(tree, 'Maske', sources)
+    const json = JSON.parse(sevariablen)
+    expect(json.SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Belege', ID: 'BEL', FELDER: '3_8' },
+    ])
+    expect(json.VAR).toBeUndefined()
+    expect(html).toContain('"ladeRelation":{"nr":"69","geberQuelleId":"belege"')
+    expect(html).toContain('"endeFelder":["11_6","18_25"]')
+  })
+
+  // Muster wie beim Kopfsatz oben: der Bediener wechselt die Art, der alte
+  // Wert bleibt in der Datei — er darf weder die SEFILELOOP unterdruecken
+  // noch in FF_DATA_SOURCES reisen (ladeRelationFor ist Art-gebunden).
+  it('nach einem Art-Wechsel wirkt eine liegengebliebene Hol-Relation nicht mehr', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+      a: { id: 'a', type: TEST_DATA_BOX, props: { source: 'q' }, parentId: 'root', childIds: [] },
+    }
+    const sources = [
+      {
+        id: 'q', name: 'Termine', kind: 'idb' as const, idbId: 'IDBID0001',
+        ladeRelation: {
+          nr: '69', geberQuelleId: 'egal', belegartFeld: '2_1',
+          belegnummerFeld: '3_8', jahrFeld: '', archivFeld: '', endeFelder: ['11_6'],
+        },
+        fields: [],
+      },
+    ]
+    const { html, sevariablen } = exportMask(tree, 'Maske', sources)
+    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
+    ])
+    expect(html).not.toContain('ladeRelation')
+  })
 })

@@ -35,6 +35,7 @@ import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import {
   felderFor,
   kopfsatzFor,
+  ladeRelationFor,
   loopReihenfolge,
   tableIdFor,
   varAusKopfsaetzen,
@@ -354,12 +355,20 @@ export function exportMask(
   // Karten fehlen. Die Referenz JWHtmlEnde.html hängt aus genau diesem Grund
   // window.Erstellen/window.HTMLFarbe explizit an (nicht bloß deklariert).
   const sourcesJs = guardScriptContent(escapeNonAsciiJs(
-    'window.FF_DATA_SOURCES = ' + JSON.stringify(used.map((s) => ({
-      id: s.id,
-      name: s.name,
-      tableId: tableIdFor(s),
-      indexField: s.indexField ?? '',
-    }))) + ';',
+    'window.FF_DATA_SOURCES = ' + JSON.stringify(used.map((s) => {
+      // Die Hol-Relation (Welle R) reist als DATEN mit: die Laufzeit (R2)
+      // liest sie hier. Nur die wirksame (ladeRelationFor, Art-gebunden) —
+      // eine nach Art-Wechsel liegengebliebene bleibt daheim, wie der
+      // Kopfsatz in der SEFILELOOP.
+      const lade = ladeRelationFor(s)
+      return {
+        id: s.id,
+        name: s.name,
+        tableId: tableIdFor(s),
+        indexField: s.indexField ?? '',
+        ...(lade ? { ladeRelation: lade } : {}),
+      }
+    })) + ';',
   ))
   // Die benutzten Relation-Vorlagen reisen ebenso als DATEN mit:
   // die Aktionsketten lösen ihre relationId über dieses Global auf. Nur
@@ -424,7 +433,13 @@ export function exportMask(
   // die SEvariablen; FF_DATA_SOURCES bleibt in Baum-Reihenfolge, weil die
   // Laufzeit dort ausschließlich per id nachschlägt — das HTML bleibt dadurch
   // Byte für Byte, wie es war.
-  const geordnet = loopReihenfolge(used)
+  // Eine HOLENDE Quelle (Welle R) bestellt bei SoftEngine nichts: kein
+  // SEFILELOOP-Eintrag, kein Kopfsatz, kein VAR — ihre Zeilen holt die Maske
+  // zur Laufzeit selbst (die Hol-Relation reist in FF_DATA_SOURCES, s. o.).
+  // Der Schiebe-Weg ist für diesen Fall standalone nachweislich tot, und ein
+  // liegengebliebener POS-Loop ließe die GANZE Liste scheitern
+  // (Reihenfolge-Kontrakt oben).
+  const geordnet = loopReihenfolge(used.filter((s) => ladeRelationFor(s) === null))
   const sefileloop = geordnet.map((s) => {
     const kopfsatz = kopfsatzFor(s)
     return {

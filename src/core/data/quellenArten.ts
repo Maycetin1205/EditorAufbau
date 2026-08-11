@@ -77,6 +77,15 @@ export interface QuellenArt {
   kopfsatzMoeglich: boolean
   // Vorbelegung fuer den Kopfsatz; '' = keine.
   kopfsatzStandard: string
+  // Darf diese Art ihre Zeilen zur LAUFZEIT per Relation holen (Welle R,
+  // UMBAU-PLAN-V6.md)? BELEGT am 2026-08-10/11 (Echttests des Nutzers,
+  // Relation 69) NUR fuer Belegpositionen — dort ist der Schiebe-Weg
+  // standalone nachweislich tot (ohne Kopfsatz nichts, Feld-Referenz nur IM
+  // Beleg, Literal-Index = ein fester Beleg). Fuer alle anderen Arten ist
+  // keine Hol-Relation belegt: dort wird nicht danach gefragt, statt zu
+  // raten (Regel 5). Eine holende Quelle bestellt bei SoftEngine NICHTS —
+  // ihr SEFILELOOP-Eintrag entfaellt (exportMask).
+  relationLadenMoeglich: boolean
   // Darf diese Art als OFFENER SATZ bestellt werden (VAR-Abschnitt der
   // SEvariablen) statt als Liste (SEFILELOOP)? Der offene Satz ist der eine
   // Datensatz, an dem die Maske haengt — in der Belegerfassung der geoeffnete
@@ -112,6 +121,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: 'ID0001',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    relationLadenMoeglich: false,
     varMoeglich: false,
     standardFelder: [],
   },
@@ -124,6 +134,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    relationLadenMoeglich: false,
     varMoeglich: true,
     standardFelder: [],
   },
@@ -136,6 +147,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    relationLadenMoeglich: false,
     varMoeglich: false,
     standardFelder: [],
   },
@@ -148,6 +160,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    relationLadenMoeglich: false,
     varMoeglich: true,
     // Der Satzschluessel steht bewusst VORNE — er ist das Feld, auf das der
     // Kopfsatz der Belegpositionen zeigt ('BEL_0_11'), und in Rahmen00001
@@ -193,6 +206,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: true,
     kopfsatzStandard: 'BEL_0_11',
+    relationLadenMoeglich: true,
     // POS/HTML/01 des Herstellers deklariert `VAR: [{ID: 'POS', FELDER: '*'}]`
     // — in einer Positions-Maske IST die Position der offene Satz.
     varMoeglich: true,
@@ -237,6 +251,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: 'SERPOS',
     kopfsatzMoeglich: true,
     kopfsatzStandard: '',
+    relationLadenMoeglich: false,
     varMoeglich: false,
     standardFelder: [],
   },

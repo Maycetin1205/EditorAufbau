@@ -168,7 +168,20 @@ git log --oneline -8
   (war schon da, keine neue noetig), kein `if ID === 'POS'`. HTML-Bytes,
   `ff-runtime.js` und Referenzabzug unveraendert — die Referenzmaske fuehrt
   keine Kopfsatz-Quelle.
-- **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
+- **Was R1 gebaut hat (2026-08-11):** die Lade-Art „Zeilen per Relation
+  holen" an Modell (`core/data/ladeRelation.ts`), Steuerung und Export.
+  Sichtbar im Datenquellen-Formular der Belegpositionen sind NUR
+  „Woher kommen die Zeilen?", die Relationsnummer und „Beleg kommt aus";
+  die vier Feld-Zuordnungen (2_1/3_8/0_1/1_1) und die Ende-Felder
+  (11_6+18_25) sind belegte Standards und reisen unsichtbar mit
+  (Nutzer-Ansage 2026-08-11: keine Eingaben, die niemand versteht; erste
+  Formfassung mit sichtbaren Feldcodes + Erklaertext ist verworfen). Eine
+  holende Quelle bestellt KEINE SEFILELOOP (kein Kopfsatz, kein VAR); die
+  Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
+  Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
+  ist R2 (Laufzeit), naechste Etappe mit eigenem go.**
+- **Naechste Etappe:** R2 (Laufzeit des Holens), danach A9 (setzt die
+  Bedienproben von A5/A6 voraus).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
   Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein

@@ -32,6 +32,7 @@
 
 import { QUELLEN_TRENNER } from '../blocks/BlockDefinition'
 import type { EintragProblem } from './ladeProblem'
+import { pruefeLadeRelation, type LadeRelation } from './ladeRelation'
 import {
   artFuer,
   DATA_SOURCE_KINDS,
@@ -41,8 +42,14 @@ import {
 
 // Weitergereicht, damit die Quellen-Welt EINE Anlaufstelle bleibt: wer mit
 // Datenquellen arbeitet, importiert aus dataSources — die Arten-Tabelle
-// selbst muss er nicht kennen.
+// und das Hol-Modul selbst muss er nicht kennen.
 export { artFuer, DATA_SOURCE_KINDS, QUELLEN_ARTEN, type DataSourceKind }
+export {
+  LADE_RELATION_STANDARD,
+  ladeRelationFor,
+  relationNrFromInput,
+  type LadeRelation,
+} from './ladeRelation'
 
 // Eine FELD-ART (Text/Zahl/Datum/Uhrzeit) gab es hier am 2026-07-27 einen
 // halben Tag lang: sie sollte „Tag filtern nach" auf Datumsfelder verengen.
@@ -89,6 +96,11 @@ export interface DataSource {
   // 'offenerSatz' = VAR-Abschnitt: der geöffnete Beleg, seine Adresse, die
   // angefasste Position. Erlaubt nur, wo die Art es führt (varMoeglich).
   lieferung?: 'liste' | 'offenerSatz'
+  // Zeilen per Relation HOLEN statt geschoben bekommen (Welle R): die
+  // laufende Maske fragt selbst, sobald die Geber-Quelle eine Zeile wählt.
+  // Nur Arten mit relationLadenMoeglich führen sie (ladeRelationFor) — eine
+  // holende Quelle bestellt bei SoftEngine nichts (exportMask).
+  ladeRelation?: LadeRelation
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
   fields: readonly DataSourceField[]
 }
@@ -432,6 +444,14 @@ export function pruefeDatenquellen(
       // bewusst verworfen: beides gibt es nicht mehr.
       fields.push({ code: ff.code, label: ff.label })
     }
+    // Die Hol-Relation strukturell prüfen (ladeRelation.ts). Eine kaputte
+    // wird verworfen, aber GEMELDET (A4) — die Quelle selbst bleibt: ohne
+    // Hol-Relation ist sie eine normale geschobene Quelle, kein Datenverlust
+    // an den Feldern.
+    const ladeRelation = e.ladeRelation === undefined ? null : pruefeLadeRelation(e.ladeRelation)
+    if (e.ladeRelation !== undefined && ladeRelation === null) {
+      probleme.push({ stelle, grund: 'die Hol-Relation ist unvollständig und wurde verworfen' })
+    }
     seen.add(e.id)
     acc.push({
       id: e.id,
@@ -443,6 +463,7 @@ export function pruefeDatenquellen(
         ? { kopfsatzIndex: e.kopfsatzIndex }
         : {}),
       ...(e.lieferung === 'offenerSatz' ? { lieferung: 'offenerSatz' as const } : {}),
+      ...(ladeRelation ? { ladeRelation } : {}),
       fields,
     })
   }

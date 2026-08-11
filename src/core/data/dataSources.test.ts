@@ -5,7 +5,14 @@
 // das nach, damit die Zusage nicht laenger nur Prosa ist.
 
 import { describe, expect, it } from 'vitest'
-import { artFuer, quellenKennung, sanitizeDataSources, type DataSource } from './dataSources'
+import {
+  artFuer,
+  ladeRelationFor,
+  pruefeDatenquellen,
+  quellenKennung,
+  sanitizeDataSources,
+  type DataSource,
+} from './dataSources'
 
 describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)', () => {
   const quelle = (fields: unknown) => [
@@ -37,6 +44,45 @@ describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)'
   it('kein Feld-Array = Quelle ohne Felder, kein Absturz', () => {
     expect(sanitizeDataSources(quelle('quatsch'))[0].fields).toEqual([])
     expect(sanitizeDataSources('quatsch')).toEqual([])
+  })
+})
+
+// --- Hol-Relation (Welle R, 2026-08-11) ------------------------------------
+describe('Hol-Relation: laden, verwerfen, Art-Bindung', () => {
+  const holend = (ladeRelation: unknown) => [{
+    id: 'pos', name: 'Positionen', kind: 'belegposition', fields: [], ladeRelation,
+  }]
+  const gueltig = {
+    nr: '69', geberQuelleId: 'belege', belegartFeld: '2_1',
+    belegnummerFeld: '3_8', jahrFeld: '0_1', archivFeld: '1_1',
+    endeFelder: ['11_6', '18_25'],
+  }
+
+  it('eine gueltige Hol-Relation ueberlebt den Round-Trip', () => {
+    const [q] = sanitizeDataSources(holend(gueltig))
+    expect(q.ladeRelation).toEqual(gueltig)
+  })
+
+  it('eine kaputte wird verworfen UND gemeldet — die Quelle selbst bleibt', () => {
+    // Ohne Geber-Quelle kann die Maske nie wissen, WELCHEN Satz sie holen
+    // soll — so ein Eintrag darf nicht still weiterreisen (A4-Muster).
+    const { liste, probleme } = pruefeDatenquellen(holend({ ...gueltig, geberQuelleId: '' }))
+    expect(liste).toHaveLength(1)
+    expect(liste[0].ladeRelation).toBeUndefined()
+    expect(probleme.some((p) => p.grund.includes('Hol-Relation'))).toBe(true)
+  })
+
+  it('Jahr/Archiv duerfen leer sein (belegt: leer = aktueller Nummernkreis)', () => {
+    const [q] = sanitizeDataSources(holend({ ...gueltig, jahrFeld: '', archivFeld: '' }))
+    expect(q.ladeRelation?.jahrFeld).toBe('')
+  })
+
+  it('ladeRelationFor ist Art-gebunden: nach dem Art-Wechsel wirkt nichts mehr', () => {
+    // Muster kopfsatzFor: der Wert bleibt in der Datei stehen, aber eine Art
+    // ohne relationLadenMoeglich darf ihn nirgends wirken lassen.
+    const quelle = { id: 'q', name: 'Q', kind: 'idb', fields: [], ladeRelation: gueltig } as unknown as DataSource
+    expect(ladeRelationFor(quelle)).toBeNull()
+    expect(ladeRelationFor({ ...quelle, kind: 'belegposition' })).toEqual(gueltig)
   })
 })
 

@@ -31,7 +31,9 @@ import {
   kennungAnzeige,
   kennungFromInput,
   kopfsatzFromInput,
+  LADE_RELATION_STANDARD,
   QUELLEN_ARTEN,
+  relationNrFromInput,
   type DataSource,
   type DataSourceKind,
 } from '../../core/data/dataSources'
@@ -61,6 +63,25 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
   const [kennungEingabe, setKennungEingabe] = useState(kennungAnzeige(source?.idbId))
   const [kopfsatzEingabe, setKopfsatzEingabe] = useState(source?.kopfsatzIndex ?? '')
+  // Zeilen-Weg (Welle R): 'geschoben' = SoftEngine schickt beim Laden
+  // (heutiger Weg); 'holen' = die Maske fragt selbst per Relation, sobald
+  // ein Beleg angeklickt ist. Sichtbar sind NUR Relationsnummer und die
+  // Quelle, aus der der Beleg kommt. Die Feld-Zuordnungen (Belegart 2_1,
+  // Nummer 3_8, Jahr 0_1, Archiv 1_1) und die Ende-Felder (11_6+18_25) sind
+  // SoftEngine-Standard und damit Technikwerte — sie reisen unsichtbar mit
+  // (Regel 3; Nutzer-Ansage 2026-08-11: keine Eingaben, die niemand
+  // versteht). Bestand behaelt seine gespeicherten Werte.
+  const lade = source?.ladeRelation
+  const [zeilenWeg, setZeilenWeg] = useState<'geschoben' | 'holen'>(lade ? 'holen' : 'geschoben')
+  const [relationNr, setRelationNr] = useState(lade?.nr ?? LADE_RELATION_STANDARD.nr)
+  const [geberQuelleId, setGeberQuelleId] = useState(lade?.geberQuelleId ?? '')
+  const feldZuordnung = {
+    belegartFeld: lade?.belegartFeld ?? LADE_RELATION_STANDARD.belegartFeld,
+    belegnummerFeld: lade?.belegnummerFeld ?? LADE_RELATION_STANDARD.belegnummerFeld,
+    jahrFeld: lade?.jahrFeld ?? LADE_RELATION_STANDARD.jahrFeld,
+    archivFeld: lade?.archivFeld ?? LADE_RELATION_STANDARD.archivFeld,
+    endeFelder: lade?.endeFelder ?? LADE_RELATION_STANDARD.endeFelder,
+  }
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
       ? source.fields.map(zeileFromField)
@@ -78,6 +99,12 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // Zweite Frage an die Art: hängt so eine Datei unter einem anderen Satz?
   // Nur dann gibt es das Kopfsatz-Feld (Belegpositionen unter dem Beleg).
   const kopfsatzEingeben = art.kopfsatzMoeglich
+  // Dritte Frage an die Art: kann sie ihre Zeilen per Relation holen
+  // (Welle R)? Nur dann gibt es die Zeilen-Weg-Auswahl.
+  const holenMoeglich = art.relationLadenMoeglich
+  const holtZeilen = holenMoeglich && zeilenWeg === 'holen'
+  // Mögliche Geber: jede ANDERE Quelle der Bibliothek.
+  const geberOptionen = store.list.filter((s) => s.id !== source?.id)
 
   // Art gewechselt: die neue bringt ihre Vorgaben mit (Belegpositionen tragen
   // Feldliste UND Kopfsatz bei sich, s. quellenArten). Eingesetzt wird nur in
@@ -116,7 +143,20 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
     ? 'Zwei Felder haben dieselbe Position + Länge.'
     : ''
-  const alleFehler = [nameFehler, kennungFehler, kopfsatzFehler, doppeltFehler, ...zeilenFehler]
+  // Hol-Weg: geprüft wird nur, wenn er aktiv ist — und nur die zwei
+  // sichtbaren Eingaben. Die unsichtbaren Feld-Zuordnungen sind Standard
+  // und immer gültig.
+  const relationNrFehler = holtZeilen && relationNrFromInput(relationNr) === ''
+    ? 'Relationsnummer fehlt (nur Ziffern, z. B. 69).'
+    : ''
+  const geberFehler = holtZeilen && geberQuelleId === ''
+    ? 'Wähle die Quelle, in der der Beleg angeklickt wird (deine Belege-Quelle).'
+    : ''
+  const alleFehler = [
+    nameFehler, kennungFehler, kopfsatzFehler, doppeltFehler,
+    relationNrFehler, geberFehler,
+    ...zeilenFehler,
+  ]
 
   function speichern() {
     if (alleFehler.some((f) => f !== '')) {
@@ -138,6 +178,18 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       ...(source
         ? (source.indexField ? { indexField: source.indexField } : {})
         : { indexField: '0_10' }),
+      // Die Hol-Relation nur, wenn der Weg aktiv ist — beim Zurückschalten
+      // auf „geschoben" verschwindet sie aus der Vorlage (kein unsichtbares
+      // Weiterschleppen; dasselbe Muster wie der Kopfsatz oben).
+      ...(holtZeilen
+        ? {
+            ladeRelation: {
+              nr: relationNrFromInput(relationNr),
+              geberQuelleId,
+              ...feldZuordnung,
+            },
+          }
+        : {}),
       fields: zeilen.map((z) => ({
         code: zeilenCode(z),
         label: z.label.trim(),
@@ -187,9 +239,56 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </Field>
         )}
 
+        {/* 2c. Zeilen-Weg (Welle R) — nur bei Arten, die per Relation holen
+            können. Beim Holen entfällt der Kopfsatz sichtbar (2b unten):
+            eine holende Quelle bestellt bei SoftEngine nichts, an dem er
+            hinge; ein eingetragener Wert bleibt gespeichert und kommt beim
+            Zurückschalten wieder. */}
+        {holenMoeglich && (
+          <SelectControl
+            label="Woher kommen die Zeilen?"
+            value={zeilenWeg}
+            options={[
+              { value: 'geschoben', label: 'SoftEngine schickt sie beim Laden' },
+              { value: 'holen', label: 'Die Maske holt sie, sobald ein Beleg angeklickt ist' },
+            ]}
+            onChange={(v) => setZeilenWeg(v as 'geschoben' | 'holen')}
+          />
+        )}
+        {holtZeilen && (
+          <>
+            <Field
+              label="Relationsnummer"
+              description="Die Relation, die die Positionsfelder liefert — bei euch die 69."
+              error={zeigeFehler ? relationNrFehler : ''}
+            >
+              {(f) => (
+                <TextInput
+                  {...f}
+                  value={relationNr}
+                  className="w-24"
+                  onChange={(e) => setRelationNr(e.target.value)}
+                />
+              )}
+            </Field>
+            <SelectControl
+              label="Beleg kommt aus"
+              value={geberQuelleId}
+              options={[
+                { value: '', label: '— Quelle wählen —' },
+                ...geberOptionen.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+              onChange={setGeberQuelleId}
+            />
+            {zeigeFehler && geberFehler !== '' && (
+              <p className="min-w-0 break-words text-ui text-destructive">{geberFehler}</p>
+            )}
+          </>
+        )}
+
         {/* 2b. Kopfsatz — nur bei Arten, die unter einem anderen Satz hängen.
             Freiwillig: manche Dateien kommen ohne. */}
-        {kopfsatzEingeben && (
+        {kopfsatzEingeben && !holtZeilen && (
           <Field
             label="Hängt an"
             description="Leer lassen, wenn SoftEngine die ganze Datei schickt. Sonst der Satz, zu dem die Zeilen gehören: Kürzel, ab welchem Zeichen, wie viele Zeichen. BEL_0_11 steht für den offenen Beleg — damit kommen nur die Positionen dieses Belegs."
