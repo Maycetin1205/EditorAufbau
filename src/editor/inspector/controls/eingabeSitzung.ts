@@ -12,6 +12,7 @@
 // Tippen springt auf den Stand vor der Eingabe.
 
 import { useCallback, useEffect, useRef } from 'react'
+import { gestenKlammer, type GestenKlammer } from '../../../state/history'
 
 export interface Eingabesitzung {
   /** Vor jedem onChange rufen — nur der erste Aufruf oeffnet die Klammer. */
@@ -24,7 +25,13 @@ export function useEingabeSitzung(
   onBeginBearbeitung?: () => void,
   onEndeBearbeitung?: () => void,
 ): Eingabesitzung {
-  const offen = useRef(false)
+  // EINE Tipp-Sitzung = EIN Token (seit A7.2 derselbe wie beim Ziehen,
+  // gestenKlammer in state/history): er oeffnet beim ersten Tastendruck und
+  // schliesst genau einmal — bei blur ODER wenn das Feld verschwindet. Die
+  // NAECHSTE Sitzung bekommt einen frischen; ein Token ist bewusst nicht
+  // wiederverwendbar, sonst koennte ein Nachzuegler-Ereignis eine langst
+  // geschlossene Klammer erneut aufmachen.
+  const klammer = useRef<GestenKlammer | null>(null)
   // Die Rueckrufe stecken in einer Ref, damit `beginnen`/`beenden` stabil
   // bleiben: nur so darf das Aufraeumen unten an der Unmontierung haengen
   // statt bei jedem neuen Rueckruf einmal zuzuschlagen. Gesetzt wird die Ref
@@ -35,15 +42,18 @@ export function useEingabeSitzung(
   })
 
   const beenden = useCallback(() => {
-    if (!offen.current) return
-    offen.current = false
-    rueckrufe.current.onEndeBearbeitung?.()
+    klammer.current?.schliesse()
+    klammer.current = null
   }, [])
 
   const beginnen = useCallback(() => {
-    if (offen.current) return
-    offen.current = true
-    rueckrufe.current.onBeginBearbeitung?.()
+    if (klammer.current) return
+    const neue = gestenKlammer(
+      () => rueckrufe.current.onBeginBearbeitung?.(),
+      () => rueckrufe.current.onEndeBearbeitung?.(),
+    )
+    klammer.current = neue
+    neue.oeffne()
   }, [])
 
   // Verschwindet das Feld waehrend des Tippens (anderer Baustein gewaehlt,

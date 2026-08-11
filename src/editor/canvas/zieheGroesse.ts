@@ -60,7 +60,9 @@ export function zieheGroesse(
   // krumm (123.45) — unrund verglichen waere schon ein Zeiger-Ereignis ohne
   // Weg eine „Aenderung" auf 123.
   let letzter = Math.max(auftrag.min, Math.round(auftrag.start))
-  let offen = false
+  // Die Klammer selbst (oeffnet einmal, schliesst einmal) kommt seit A7.2 aus
+  // dem Store — hier stehen nur noch die Ereignisse, die sie schliessen.
+  const klammer = editor.oeffneGeste()
   const onMove = (ev: PointerEvent) => {
     const pos = auftrag.achse === 'x' ? ev.clientX : ev.clientY
     const rohDelta = (pos - startPos) * (auftrag.faktor ?? 1)
@@ -73,29 +75,20 @@ export function zieheGroesse(
     const next = Math.max(auftrag.min, Math.round(auftrag.start + delta))
     if (next === letzter) return
     letzter = next
-    if (!offen) {
-      offen = true
-      editor.beginTransaction()
-    }
+    klammer.oeffne()
     if (auftrag.anwenden) auftrag.anwenden(auftrag.getId(), next)
     else editor.updateProperty(auftrag.getId(), auftrag.prop, next)
   }
-  // Die Geste MUSS in jedem Fall abschliessen. Bleibt endTransaction aus,
-  // steht der History-Zaehler dauerhaft > 0 — und history.record() schweigt
-  // dann fuer den REST der Sitzung: ab da wird nichts mehr fuer Undo
-  // aufgezeichnet, ohne dass der Bediener etwas merkt. Darum ausser
-  // pointerup auch pointercancel (Zeiger vom Browser/System entzogen, z. B.
-  // Touch-Geste) und blur (Fenster verlassen, waehrend die Taste haelt —
-  // das pointerup kommt dann nie bei uns an). Beenden ist EINMALIG:
-  // `beendet` schuetzt davor, dass zwei Wege endTransaction doppelt rufen.
-  // Geschlossen wird nur, was auch geoeffnet wurde (`offen`) — ein blosser
-  // Klick auf den Anfasser hat gar keine Transaktion begonnen; ein
-  // endTransaction darauf schloesse eine fremde.
-  let beendet = false
+  // Die Geste MUSS in jedem Fall abschliessen — bleibt der Abschluss aus,
+  // zeichnet der Verlauf fuer den REST der Sitzung nichts mehr auf (warum,
+  // steht bei gestenKlammer). Darum ausser pointerup auch pointercancel
+  // (Zeiger vom Browser/System entzogen, z. B. Touch-Geste) und blur (Fenster
+  // verlassen, waehrend die Taste haelt — das pointerup kommt dann nie bei uns
+  // an). Dass mehrere dieser Wege zusammen GENAU EINMAL schliessen, und dass
+  // ein blosses Antippen des Anfassers keine fremde Klammer schliesst,
+  // verantwortet der Token.
   const beende = () => {
-    if (beendet) return
-    beendet = true
-    if (offen) editor.endTransaction()
+    klammer.schliesse()
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', beende)
     window.removeEventListener('pointercancel', beende)

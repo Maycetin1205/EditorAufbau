@@ -186,20 +186,6 @@ export function useFeldBindung({
       }))
     : pickerGruppen(quellen)
 
-  // Eine Feldwahl im Bibliotheks-Angebot schreibt ZWEI Props (Quelle an den
-  // Traeger, Bindung an den Baustein) — als EIN Undo-Eintrag, wie sonst im
-  // Projekt auch (updateBlockEvents, eingabeSitzung, zieheGroesse). Bis
-  // 2026-08-06 waren es zwei: EIN Strg+Z liess die frisch gesetzte Quelle mit
-  // der alten Bindung stehen, und zwei Bedienschritte lagen auf einem.
-  function inEinemSchritt(tun: () => void): void {
-    editor.beginTransaction()
-    try {
-      tun()
-    } finally {
-      editor.endTransaction()
-    }
-  }
-
   // Wahl aus dem Bibliotheks-Angebot anwenden: Quelle an den Träger,
   // zurück kommt der nackte Feldcode ('' = nichts gewählt/nichts zu lösen).
   function quelleSetzen(wert: string, blockId: string): string {
@@ -234,7 +220,14 @@ export function useFeldBindung({
           onPick={(wert) => {
             const prop = bindingProp(picker.spot.prop)
             if (bibliotheksAngebot) {
-              inEinemSchritt(() => {
+              // Eine Feldwahl im Bibliotheks-Angebot schreibt ZWEI Props (Quelle
+              // an den Traeger, Bindung an den Baustein) — als EIN Undo-Eintrag,
+              // wie sonst im Projekt auch. Bis 2026-08-06 waren es zwei: EIN
+              // Strg+Z liess die frisch gesetzte Quelle mit der alten Bindung
+              // stehen, und zwei Bedienschritte lagen auf einem. Die Klammer
+              // samt garantiertem Abschluss wohnt seit A7.2 im Store
+              // (Editor.transaktion) statt hier als eigene Abschrift.
+              editor.transaktion(() => {
                 const code = quelleSetzen(wert, blockRef.current.id)
                 if (code !== '') editor.updateProperty(blockRef.current.id, prop, code)
               })
@@ -317,7 +310,9 @@ export function useFeldBindung({
             top={listenPicker.top}
             left={listenPicker.left}
             onPick={(roh) => {
-              inEinemSchritt(() => {
+              // Quelle, Titel und Feldbindung der Spalte = EIN Undo-Eintrag
+              // (dieselbe Klammer wie beim Picker oben).
+              editor.transaktion(() => {
                 // Bibliotheks-Angebot: Quelle setzen, weiter geht es mit dem
                 // nackten Feldcode — die Titel-Auflösung unten läuft dann
                 // gegen die frisch gesetzte Quelle aus der Bibliothek.

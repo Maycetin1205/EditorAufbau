@@ -31,7 +31,7 @@ import { type DataSource } from '../core/data/dataSources'
 import { type QuelleInReichweite } from '../core/data/sourceLinks'
 import { dataSourceStore } from './DataSourceStore'
 import { ersteQuelleInReichweite, quellenInReichweite } from './quellenOps'
-import { Historie, type EditorSnapshot } from './history'
+import { gestenKlammer, Historie, type EditorSnapshot, type GestenKlammer } from './history'
 import { loadFromStorage, persistState, SAVE_DEBOUNCE_MS } from './persistence'
 import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
@@ -135,14 +135,14 @@ export class Editor extends Subject<Editor> {
     const vergeben = new Set(this.pages.map((p) => p.name))
     let name = 'Popup'
     for (let n = 2; vergeben.has(name); n++) name = `Popup ${n}`
-    this.beginTransaction()
-    const node = this.addBlock(typ, ROOT_ID)
-    if (node) {
-      this._activePageId = node.id
-      this.updateProperty(node.id, 'name', name)
-    }
-    this.endTransaction()
-    return node
+    return this.transaktion(() => {
+      const node = this.addBlock(typ, ROOT_ID)
+      if (node) {
+        this._activePageId = node.id
+        this.updateProperty(node.id, 'name', name)
+      }
+      return node
+    })
   }
 
   getNode(id: string): BlockNode | undefined { return this._tree[id] }
@@ -196,6 +196,20 @@ export class Editor extends Subject<Editor> {
 
   endTransaction(): void {
     this._historie.end()
+  }
+
+  // Mehrere Schreibvorgaenge NACHEINANDER als EIN Undo-Schritt. Der Abschluss
+  // ist garantiert — auch wenn `tun` wirft (Regeln siehe history.transaktion).
+  // Wer begin/end selbst schreibt, muss dasselbe leisten; dafuer gibt es diesen
+  // Weg, damit es niemand muss.
+  transaktion<T>(tun: () => T): T {
+    return this._historie.transaktion(() => this.snapshot(), tun)
+  }
+
+  // Geste ueber MEHRERE Ereignisse (Groesse ziehen, Tipp-Sitzung): oeffnet beim
+  // ersten echten Schritt, schliesst genau einmal — Regeln siehe gestenKlammer.
+  oeffneGeste(): GestenKlammer {
+    return gestenKlammer(() => this.beginTransaction(), () => this.endTransaction())
   }
 
   undo(): void {

@@ -163,22 +163,24 @@ export function PropControl({
             // Nachschlage-Feld kostete bis 2026-08-06 fuenf der 50
             // Undo-Plaetze — und EIN Strg+Z stellte genau den Mischzustand
             // her, den das Leeren unten verhindern soll (neue Quelle, alte
-            // Feldcodes).
-            ed.beginTransaction()
-            set(neueId)
-            // Die Felder, die AN dieser Quelle hängen, samt ihrer Klarnamen
-            // leeren: sie zeigen sonst weiter auf Felder der VORHERIGEN
-            // Quelle. Sichtbar wäre das nicht — im Inspector stünde ein
-            // Feldname, den die neue Quelle gar nicht kennt, und erst der
-            // Export blockte mit „Feld gibt es nicht (mehr)".
-            for (const andere of def?.customProperties ?? []) {
-              if (andere.quelleProp !== property.attributeName) continue
-              ed.updateProperty(block.id, andere.attributeName, '')
-              if (andere.klarnameProp) {
-                ed.updateProperty(block.id, andere.klarnameProp, '')
+            // Feldcodes). Seit A7.2 ueber `transaktion`: das blanke
+            // begin/end davor liess bei einem Wurf dazwischen den ganzen
+            // Verlauf der Sitzung verstummen.
+            ed.transaktion(() => {
+              set(neueId)
+              // Die Felder, die AN dieser Quelle hängen, samt ihrer Klarnamen
+              // leeren: sie zeigen sonst weiter auf Felder der VORHERIGEN
+              // Quelle. Sichtbar wäre das nicht — im Inspector stünde ein
+              // Feldname, den die neue Quelle gar nicht kennt, und erst der
+              // Export blockte mit „Feld gibt es nicht (mehr)".
+              for (const andere of def?.customProperties ?? []) {
+                if (andere.quelleProp !== property.attributeName) continue
+                ed.updateProperty(block.id, andere.attributeName, '')
+                if (andere.klarnameProp) {
+                  ed.updateProperty(block.id, andere.klarnameProp, '')
+                }
               }
-            }
-            ed.endTransaction()
+            })
           }}
         />
       )
@@ -199,17 +201,17 @@ export function PropControl({
             // Feldcode und Klarname gehoeren zusammen — EIN Undo-Eintrag fuer
             // beide (s. Klammer beim 'quelle'-Control oben). Getrennt liesse ein
             // Strg+Z den neuen Code mit dem alten Klarnamen stehen.
-            ed.beginTransaction()
-            set(code)
-            // klarnameProp: der KLARNAME des gewählten Feldes wandert
-            // zusätzlich in eine eigene Prop. Die Maske kennt sonst nur
-            // Feldcodes (Regel 3) — im Nachschlage-Fenster stünde „10_30"
-            // als Spaltenkopf statt „Name".
-            if (property.klarnameProp) {
-              const klarname = feldQuelle?.fields.find((f) => f.code === code)?.label ?? ''
-              ed.updateProperty(block.id, property.klarnameProp, klarname)
-            }
-            ed.endTransaction()
+            ed.transaktion(() => {
+              set(code)
+              // klarnameProp: der KLARNAME des gewählten Feldes wandert
+              // zusätzlich in eine eigene Prop. Die Maske kennt sonst nur
+              // Feldcodes (Regel 3) — im Nachschlage-Fenster stünde „10_30"
+              // als Spaltenkopf statt „Name".
+              if (property.klarnameProp) {
+                const klarname = feldQuelle?.fields.find((f) => f.code === code)?.label ?? ''
+                ed.updateProperty(block.id, property.klarnameProp, klarname)
+              }
+            })
           }}
         />
       )

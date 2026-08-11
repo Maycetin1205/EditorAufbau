@@ -58,7 +58,17 @@ git log --oneline -8
   seinem eigenen try/catch (Fehler auf die Konsole, nie verschluckt), und
   `Editor.notify` plant den Autosave im `finally`. Der Repro-Fall steht in
   `state/speicherPanne.test.ts` und faellt ohne den Fix nachweislich um.
-- **Naechste Etappe:** A7.2. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+- **Was A7.2 gebaut hat (2026-08-11):** zwei zentrale Vertraege in
+  `state/history.ts`, beide vom Store weitergegeben. `Editor.transaktion(fn)` =
+  synchrone Mehrfachschreibvorgaenge mit try/finally (Aufrufer: addPopupPage,
+  PropControl 2x, FeldBindung 2x — alle vorher blankes begin/end).
+  `Editor.oeffneGeste()` = Token fuer Gesten ueber mehrere Ereignisse, oeffnet
+  beim ersten echten Schritt, schliesst GENAU EINMAL und laesst sich danach
+  nicht wieder oeffnen (Aufrufer: zieheGroesse, eingabeSitzung — die hatten je
+  eigene Merker dafuer). **Achtung fuer die naechste Etappe:** `Editor.ts` ist
+  damit bei 487 Zeilen, also 13 unter dem Deckel — wer dort etwas ergaenzt,
+  braucht vorher einen Schnitt-Commit (Plan 3.1).
+- **Naechste Etappe:** A7.3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben

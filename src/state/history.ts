@@ -44,6 +44,25 @@ export class Historie {
     if (this._txDepth > 0) this._txDepth--
   }
 
+  // Mehrere Schreibvorgaenge als EIN Undo-Schritt — mit garantiertem Abschluss.
+  //
+  // Warum das try/finally hier wohnt und nicht bei jedem Aufrufer (A7.2,
+  // 2026-08-11): bleibt `end()` nach einem Fehler aus, steht `_txDepth`
+  // dauerhaft ueber null — und dann schweigt `record()` fuer den REST der
+  // Sitzung. Ab da entsteht kein einziger Undo-Punkt mehr, ohne dass der
+  // Bediener etwas merkt: Strg+Z springt immer weiter auf denselben alten
+  // Stand. Die Aufrufer schrieben begin/end bis dahin blank hintereinander
+  // (Inspector-Dropdowns, Popup-Seite anlegen); ein Wurf dazwischen war nicht
+  // reparierbar, nur durch Neuladen.
+  transaktion<T>(makeSnapshot: () => EditorSnapshot, tun: () => T): T {
+    this.begin(makeSnapshot)
+    try {
+      return tun()
+    } finally {
+      this.end()
+    }
+  }
+
   undo(makeCurrent: () => EditorSnapshot): EditorSnapshot | null {
     const prev = this._past.pop()
     if (!prev) return null
@@ -69,5 +88,46 @@ export class Historie {
     this._past = []
     this._future = []
     this._txDepth = 0
+  }
+}
+
+// Klammer fuer eine Geste ueber MEHRERE Ereignisse — Groesse ziehen, ziehen und
+// ablegen, eine Tipp-Sitzung. Die kann `transaktion(fn)` nicht klammern: sie
+// beginnt in einem Ereignis und endet in einem anderen, oft in gar keinem
+// (Fenster verlassen, Feld verschwindet).
+//
+// Der Token loest genau die zwei Fragen, die zieheGroesse und eingabeSitzung
+// bis 2026-08-11 jeder fuer sich mit eigenen Merkern beantworteten:
+//
+//   oeffne()   — erst der ERSTE echte Schritt oeffnet. Wer einen Anfasser nur
+//                antippt oder ins Feld klickt und wieder rausgeht, erzeugt
+//                keinen Leer-Schritt im Verlauf (und verliert damit auch nicht
+//                sein Redo, denn `begin` leert den Redo-Stapel).
+//   schliesse()— GENAU EINMAL, egal wie viele Wege ihn rufen (pointerup UND
+//                pointercancel UND blur UND Unmount kommen vor). Danach oeffnet
+//                ein Nachzuegler-Ereignis KEINE neue Klammer mehr — die liefe
+//                sonst bis zum Sitzungsende offen.
+//
+// Was nie geoeffnet wurde, schliesst auch nichts: ein `end()` auf Verdacht
+// beendete sonst die Klammer eines FREMDEN Vorgangs.
+export interface GestenKlammer {
+  oeffne(): void
+  schliesse(): void
+}
+
+export function gestenKlammer(oeffnen: () => void, schliessen: () => void): GestenKlammer {
+  let offen = false
+  let fertig = false
+  return {
+    oeffne: () => {
+      if (fertig || offen) return
+      offen = true
+      oeffnen()
+    },
+    schliesse: () => {
+      if (fertig) return
+      fertig = true
+      if (offen) schliessen()
+    },
   }
 }
