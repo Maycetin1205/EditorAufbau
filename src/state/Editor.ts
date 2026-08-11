@@ -1,7 +1,8 @@
 // Editor
 // Zentraler Store für den Editor — nach dem Umzug
 // NUR noch Zustand + öffentliche Methoden. Die Handwerksfächer liegen daneben:
-//   treeOps       — reine Baum-Helfer (leerer Baum, Props, Klonen, Teilbaum)
+//   treeOps       — reine Baum-Helfer (leerer Baum, Props, Teilbaum)
+//   duplizieren   — Kopie eines Teilbaums samt Umschreiben ihrer Verweise
 //   history       — Verlauf/Undo/Redo + Gesten-Transaktionen
 //   persistence   — Laden, Verteidigen (sanitize), Notfallkopie, Speichern
 //   migrations    — Übernahme alter Speicherstände
@@ -34,8 +35,8 @@ import { Historie, type EditorSnapshot } from './history'
 import { loadFromStorage, persistState, SAVE_DEBOUNCE_MS } from './persistence'
 import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
+import { dupliziereTeilbaum } from './duplizieren'
 import {
-  cloneSubtree,
   collectSubtree,
   createEmptyTree,
 } from './treeOps'
@@ -370,23 +371,18 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
+  // Baustein verdoppeln — Regeln siehe duplizieren: die Kopie zeigt auf die
+  // Kopie (nicht mehr aufs Original), landet im selben Elternteil und auf der
+  // Hauptfläche in einer freien Zeile. Eine Seite (Popup) meldet null.
+  // Ein pushHistory + ein notify = EIN Undo-Schritt.
   duplicateBlock(id: string): BlockNode | null {
-    const original = this._tree[id]
-    if (!original || id === ROOT_ID || !original.parentId) return null
-    const parent = this._tree[original.parentId]
-    if (!parent) return null
+    const res = dupliziereTeilbaum(this._tree, id)
+    if (!res) return null
     this.pushHistory()
-    const { nodes, rootId: copyId } = cloneSubtree(this._tree, id)
-    const childIds = [...parent.childIds]
-    childIds.splice(parent.childIds.indexOf(id) + 1, 0, copyId)
-    this._tree = {
-      ...this._tree,
-      ...nodes,
-      [parent.id]: { ...parent, childIds },
-    }
-    this._selectedId = copyId
+    this._tree = res.tree
+    this._selectedId = res.kopieId
     this.notify(this)
-    return nodes[copyId]
+    return res.tree[res.kopieId]
   }
 
   // Knoten in einen Container an eine Einfüge-Position — Regeln siehe rasterOps.

@@ -32,6 +32,30 @@ export function freieZeileAuf(tree: BlockTree, parentId: string): number {
   return naechsteFreieZeile(kinderImFluss(tree, parentId).map((n) => parseRasterPos(n.props)))
 }
 
+// Wohin eine KOPIE gelegt wird (A5, 2026-08-11). Pixelgleich auf dem Original
+// sieht Duplizieren aus wie „nichts passiert" — sichtbar wechselt nur der
+// Inspector still auf die Kopie. Sie bekommt darum die freie Zeile ganz unten,
+// dieselbe Rechnung wie ein neuer Baustein aus der Bibliothek (freieZeileAuf in
+// addBlock); Spalte, Breite und Hoehe behaelt sie.
+//
+// NUR direkt auf der Hauptfläche (Wurzel). Die Popup-Innenfläche ist heute
+// Fluss, kein Raster (s. Kopf von rasterLayout) — dort gibt es keine Position
+// zu wählen; ihre Platzierung entscheidet der Popup-Rastervertrag (Plan C3.1).
+export function freiePositionFuerKopie(
+  tree: BlockTree,
+  parentId: string,
+  kopie: BlockNode,
+): BlockNode {
+  if (parentId !== ROOT_ID) return kopie
+  const pos = parseRasterPos(kopie.props)
+  const y = freieZeileAuf(tree, parentId)
+  if (y === pos.y) return kopie
+  return {
+    ...kopie,
+    props: { ...kopie.props, rasterX: pos.x, rasterY: y, rasterW: pos.w, rasterH: pos.h },
+  }
+}
+
 // Zustandsabhängige Startgröße nachziehen (2026-08-06): manche Bausteine
 // haben je nach Einstellung eine ANDERE sinnvolle Rastergröße — die senkrecht
 // gestellte Trennlinie ist schmal und hoch, wo die waagerechte breit und flach

@@ -30,13 +30,22 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** A4 (2026-08-10) — davor A3, S3, S2, A2.1, A2, A1, A0,
-  A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
+- **Letzte fertige Etappe:** A5 (2026-08-11) — davor A4, A3, S3, S2, A2.1, A2, A1,
+  A0, A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
   **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die
   Welle S abgearbeitet, bis auf das optionale S5.
-- **Naechste Etappe:** A5. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+- **Was A5 gebaut hat (2026-08-11):** `state/duplizieren.ts` — zweiphasiges
+  Klonen (Knoten kopieren, DANN Verweise umschreiben) samt der EINEN Liste aller
+  Felder, die eine Baustein-id tragen (`schreibeBlockReferenzenUm`: geberId,
+  popupId, blockId in params/extraParams). Wer eine vierte Referenz einbaut,
+  ergaenzt sie DORT und in `core/data/schrittPruefung.ts`. `cloneSubtree` in
+  treeOps ist ersetzt, nicht daneben liegen geblieben. pageBlock-Duplizieren
+  meldet null (bleibt bis C3.1 gesperrt); eine Kopie direkt auf der Hauptflaeche
+  bekommt die freie Zeile (`freiePositionFuerKopie` in rasterOps), Popup-Inhalt
+  nicht — das entscheidet C3.1.
+- **Naechste Etappe:** A6. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben

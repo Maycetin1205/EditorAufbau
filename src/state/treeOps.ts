@@ -35,30 +35,10 @@ export function normalizeProps(type: string, rawProps: Record<string, unknown>):
   return next
 }
 
-// Klont einen Teilbaum (Knoten + Nachfahren) mit frischen ids.
-export function cloneSubtree(
-  tree: BlockTree,
-  id: string,
-): { nodes: BlockTree; rootId: string } {
-  const nodes: BlockTree = {}
-  const cloneRec = (srcId: string, parentId: string | null): string => {
-    const src = tree[srcId]
-    const newId = crypto.randomUUID()
-    const childIds = src.childIds.map((c) => cloneRec(c, newId))
-    nodes[newId] = {
-      id: newId,
-      type: src.type,
-      props: deepClone(src.props),
-      // Aktionsketten gehören zum Baustein — die Kopie behält sie.
-      ...(src.events ? { events: deepClone(src.events) } : {}),
-      parentId,
-      childIds,
-    }
-    return newId
-  }
-  const rootId = cloneRec(id, tree[id].parentId)
-  return { nodes, rootId }
-}
+// Das Klonen eines Teilbaums wohnt seit 2026-08-11 in `duplizieren.ts` —
+// es ist zweiphasig geworden (Knoten kopieren, DANN die Verweise der Kopie auf
+// die Kopie umschreiben) und traegt damit Regeln, die hier nichts zu suchen
+// haben. Kein zweiter Klon-Weg: es gibt nur den dortigen.
 
 // Alle ids eines Teilbaums (Knoten + Nachfahren) in Baumreihenfolge.
 export function collectSubtree(tree: BlockTree, id: string): string[] {
