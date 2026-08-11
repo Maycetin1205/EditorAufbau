@@ -13,11 +13,10 @@
 // Kennt keinen einzelnen Baustein (Regel 2) — nur „ein Element, das man
 // befuellen kann". Was befuellt wird, gibt der Baustein herein.
 
-import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
-import { aufAuswahlHoeren, auswahlFuer } from './auswahl'
+import { bootSe, hasSeData, onSeDaten } from '../../softengine/bridge'
+import { aufAuswahlHoeren } from './auswahl'
 import { aufTagHoeren } from './gewaehlterTag'
-import { starteRelationLader } from '../../softengine/relationLader'
-import { findRuntimeDataSource, type RuntimeDataSource } from '../../softengine/data'
+import { verdrahteHolendeQuellen } from './holendeQuellen'
 
 export interface DatenAnschluss<T extends HTMLElement> {
   // Vom Baustein in connectedCallback rufen.
@@ -60,28 +59,13 @@ export function macheDatenAnschluss<T extends HTMLElement>(opts: {
       aufTagHoeren(hydriereAlle)
       // Dritter Anlass: eine Zeile/Karte wurde gewaehlt oder abgewaehlt
       // (shared/auswahl) — Geber zeichnen ihre Markierung, Folger filtern.
-      aufAuswahlHoeren(() => {
-        // Welle R: holende Quellen neu laden, wenn sich die Auswahl ändert.
-        const g = seGlobal()
-        if (g && Array.isArray(g.FF_DATA_SOURCES)) {
-          for (const raw of g.FF_DATA_SOURCES) {
-            const ds = findRuntimeDataSource([raw], (raw as any)?.id)
-            if (ds && ds.ladeRelation) {
-              starteRelationLader(ds.id, ds.ladeRelation, {
-                gewaehlteZeile: auswahlFuer,
-                speiseZeilen: (quelleId, zeilen) => {
-                  if (!g.SEDATA) g.SEDATA = {}
-                  if (!g.SEDATA.Tabellen) g.SEDATA.Tabellen = {}
-                  // Wir legen sie genau wie geschobene IDB-Tabellen ab
-                  g.SEDATA.Tabellen[ds.name] = { Zeilen: zeilen }
-                  hydriereAlle()
-                }
-              })
-            }
-          }
-        }
-        hydriereAlle()
-      })
+      aufAuswahlHoeren(hydriereAlle)
+      // Und die holenden Quellen (Welle R) haengen sich an dieselbe
+      // Auswahl-Mechanik: Beleg gewaehlt -> Positionen holen. Einmal je
+      // Maske, das Modul schuetzt sich selbst (Muster bootSe). Die
+      // geholten Zeilen kommen ueber die normale Daten-Glocke (onSeDaten)
+      // zurueck — hydriereAlle oben zeichnet sie wie jeden Push.
+      verdrahteHolendeQuellen()
     }
     bootSe()
     // Kommen die Daten schon vor diesem Baustein an, sofort nachziehen.

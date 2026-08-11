@@ -33,12 +33,24 @@ git log --oneline -8
 - **Neu beauftragt 2026-08-11: Welle R** („Zeilen per Relation holen",
   eigener Wellen-Kopf hinter F3) — vom Nutzer nach Live-Echttests
   ausdruecklich bestellt; die Abgrenzung zur gestrichenen Welle Q und zu D2
-  steht im Wellen-Kopf. R1 in Arbeit (Chat vom 2026-08-11).
-- **Letzte fertige Etappe:** R2 (2026-08-11) — davor S2.1, P2/Symbole, P1 (Messen), A7.3,
-  A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2. R2 hat
-  den Relation-Lader (Hol-Weg) für Welle R nachgebaut (`relationLader.ts`),
-  inklusive `ladeRelation`-Support in `data.ts` und Einbindung in `datenAnschluss.ts`.
-  Die Runtime wurde gebaut. R2 ist damit abgeschlossen.
+  steht im Wellen-Kopf. R1 und R2 sind gebaut (2026-08-11); der
+  SE-Echttest der Welle (Nutzerprobe im Etappenkopf R2) steht aus.
+- **Letzte fertige Etappe:** R2 (2026-08-11, im zweiten Anlauf) — davor S2.1,
+  P2/Symbole, P1 (Messen), A7.3,
+  A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2.
+  Der ERSTE R2-Commit (31f8d94) war funktionslos und mit rotem Pruefbuendel
+  eingecheckt (sah nie eine Auswahl, legte Zeilen an eine Stelle, die kein
+  Leser kennt); die Reparatur ersetzt ihn: Lader `softengine/relationLader.ts`
+  (seriell, Generationszaehler, Ende-Erkennung, Felder hinter dem
+  255er-Schnitt je eigene Frage, Deckel 999 mit Klartext), Ausloeser
+  `blocks/shared/holendeQuellen.ts` (laedt nur bei WIRKLICH geaenderter
+  Geber-Zeile), Zeilen-Speicher `softengine/geholteZeilen.ts` (ueberlebt
+  jeden Push; rowsFor liest ihn als letzten Weg), Export gibt `zusatzFelder`
+  mit. Dabei zwei Altfehler behoben: getField trimmte den SATZ-Rohstring
+  VOR dem Ausschnitt (Spaltenversatz; Referenz behandlung Z. 598 trimmt
+  nicht), und ein Antwort-Paket konnte ZWEI Fragen der GET-Warteschlange
+  beantworten (runNextGet jetzt per queueMicrotask). Runtime-Bytes
+  absichtlich neu; **SE-Echttest steht aus.**
   S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
@@ -182,9 +194,9 @@ git log --oneline -8
   holende Quelle bestellt KEINE SEFILELOOP (kein Kopfsatz, kein VAR); die
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
-  ist R2 (Laufzeit), naechste Etappe mit eigenem go.**
-- **Naechste Etappe:** R2 (Laufzeit des Holens), danach A9 (setzt die
-  Bedienproben von A5/A6 voraus).
+  ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
+- **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
+  Vorher gehoert der SE-Echttest der Welle R dem Nutzer (Etappenkopf R2).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
   Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein

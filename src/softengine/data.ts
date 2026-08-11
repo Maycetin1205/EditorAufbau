@@ -3,10 +3,15 @@
 // Teil der gemeinsamen SoftEngine-Schicht (Umzug 2026-07-15 aus
 // blocks/kanban/seRuntime.ts, verhaltensgleich): alles, was Zeilen und
 // Felder aus SoftEngine-Datenpaketen liest bzw. zurückschreibt. Kein DOM,
-// keine Globals — die Aufrufer reichen alles herein.
+// keine Globals — die Aufrufer reichen alles herein. (Eine benannte
+// Ausnahme seit Welle R: rowsFor liest als LETZTEN Weg den
+// geholteZeilen-Speicher — Begründung dort.)
 //
 // Abhängigkeitsregel der Schicht: Bausteine importieren src/softengine/*,
 // diese Schicht kennt NIE einen Baustein.
+
+import { POS_LEN, pruefeLadeRelation, type LadeRelation } from '../core/data/ladeRelation'
+import { geholteZeilenFuer } from './geholteZeilen'
 
 export type UnknownRecord = Record<string, unknown>
 
@@ -14,15 +19,11 @@ export function isRecord(v: unknown): v is UnknownRecord {
   return typeof v === 'object' && v !== null
 }
 
-export interface RuntimeLadeRelation {
-  nr: string
-  geberQuelleId: string
-  belegartFeld: string
-  belegnummerFeld: string
-  jahrFeld: string
-  archivFeld: string
-  endeFelder: string[]
-}
+// Die Hol-Relation, wie sie in der EXPORTIERTEN Maske reist (Welle R):
+// das R1-Modell plus die vom Export abgezählten Felder hinter dem
+// 255er-Schnitt (felderHinterSchnitt) — je Position eine eigene Frage,
+// der Lader (relationLader) hängt sie als direkte Properties an die Zeile.
+export type RuntimeLadeRelation = LadeRelation & { zusatzFelder: readonly string[] }
 
 // Quellen-Definition in der EXPORTIERTEN Maske: die Vorlagen
 // sind benutzerdefiniert und leben im Editor-localStorage — exportMask
@@ -45,23 +46,17 @@ export function findRuntimeDataSource(list: unknown, id: string): RuntimeDataSou
   for (const entry of list) {
     if (!isRecord(entry) || entry.id !== id) continue
     if (typeof entry.name !== 'string' || typeof entry.tableId !== 'string') continue
-    const e = entry as Record<string, unknown>
+    // Die Hol-Relation (Welle R) prüft der SELBE Prüfer wie beim Laden aus
+    // dem Editor-Speicher (pruefeLadeRelation): kaputt oder halb -> es gibt
+    // keine, die Quelle bleibt eine normale (leere) Quelle — nie raten.
     let ladeRelation: RuntimeLadeRelation | undefined
-    if (isRecord(e.ladeRelation)) {
-      const lr = e.ladeRelation
-      const text = (v: unknown): string => (typeof v === 'string' ? v : '')
-      const endeFelder = Array.isArray(lr.endeFelder) ? lr.endeFelder.filter((f): f is string => typeof f === 'string') : []
-      if (typeof lr.nr === 'string' && typeof lr.geberQuelleId === 'string' && typeof lr.belegartFeld === 'string' && typeof lr.belegnummerFeld === 'string') {
-        ladeRelation = {
-          nr: lr.nr,
-          geberQuelleId: lr.geberQuelleId,
-          belegartFeld: lr.belegartFeld,
-          belegnummerFeld: lr.belegnummerFeld,
-          jahrFeld: text(lr.jahrFeld),
-          archivFeld: text(lr.archivFeld),
-          endeFelder,
-        }
-      }
+    const geprueft = pruefeLadeRelation(entry.ladeRelation)
+    if (geprueft && isRecord(entry.ladeRelation)) {
+      const zf = entry.ladeRelation.zusatzFelder
+      const zusatzFelder = Array.isArray(zf)
+        ? zf.filter((f): f is string => typeof f === 'string' && POS_LEN.test(f))
+        : []
+      ladeRelation = { ...geprueft, zusatzFelder }
     }
     return {
       id,
@@ -99,9 +94,13 @@ export function getField(row: unknown, code: string): string {
   }
   const m = /^(\d+)_(\d+)$/.exec(key)
   if (!m) return ''
-  const raw = asTrimmedString(
-    row.SATZNEU ?? row.SATZ ?? row.satzneu ?? row.satz ?? row.RAW ?? row.raw,
-  )
+  // Der Rohstring bleibt ROH — die Referenz trimmt ihn auch nicht
+  // (behandlung Z. 598), getrimmt wird nur der AUSSCHNITT. Bis R2 stand
+  // hier asTrimmedString: bei einem Satz, der mit Leerstellen BEGINNT
+  // (vordere Felder leer — bei per Relation geholten Positionszeilen
+  // normal), verschob das jede Spalte um die weggeputzten Zeichen.
+  const rohQuelle = row.SATZNEU ?? row.SATZ ?? row.satzneu ?? row.satz ?? row.RAW ?? row.raw
+  const raw = rohQuelle == null ? '' : String(rohQuelle)
   if (raw === '') return ''
   const pos = Number(m[1])
   const len = Number(m[2])
@@ -213,7 +212,12 @@ export function rowsFor(seData: unknown, alias: string, idbId: string): unknown[
       }
     }
   }
-  return []
+  // Zuletzt: per Relation GEHOLTE Zeilen (Welle R, relationLader). Nach den
+  // Push-Wegen, damit geschobene Daten immer gewinnen — eine holende Quelle
+  // steht aber in keiner SEFILELOOP, für sie ist dies der einzige Weg. So
+  // laufen Tabelle, Verknüpfung, Ketten und Auswahl geben/folgen unverändert
+  // über denselben Datenweg wie bei jeder anderen Quelle.
+  return geholteZeilenFuer(alias) ?? []
 }
 
 // Daten aus einem geschobenen SE-Paket ziehen (Push-Weg): SoftEngine

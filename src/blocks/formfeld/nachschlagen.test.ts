@@ -43,10 +43,13 @@ describe('nachschlagEintraege', () => {
   })
 
   it('liest auch pos_len aus dem SATZ-Rohstring (getField-Weg)', () => {
-    // getField trimmt den Rohstring VOR dem Ausschnitt — Positionen zaehlen
-    // ab dem ersten Nicht-Leerzeichen ('10077  Vogler').
+    // Positionen zaehlen ABSOLUT im Rohstring — wie in der Referenzmaske
+    // (behandlung Z. 598: raw wird NICHT getrimmt, nur der Ausschnitt).
+    // Bis R2 stand hier die Gegen-Erwartung („ab dem ersten
+    // Nicht-Leerzeichen"): sie schrieb die Abweichung fest, die bei den
+    // per Relation geholten Positionszeilen jede Spalte verschob.
     const satz = { SATZ: '  10077  Vogler' }
-    const e = nachschlagEintraege([satz], '7_6', '0_5')
+    const e = nachschlagEintraege([satz], '9_6', '2_5')
     expect(e).toEqual([{ anzeige: 'Vogler', wert: '10077', satz }])
   })
 })

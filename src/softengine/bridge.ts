@@ -74,6 +74,15 @@ function klingeln(): void {
   zuhoerer.forEach((cb) => cb())
 }
 
+// Der Relation-Lader (Welle R) speist geholte Zeilen ein und klingelt danach
+// über DENSELBEN Abo-Punkt wie ein Daten-Push: ALLE Bausteintypen zeichnen
+// neu, keiner kennt den Lader. (Hätte der Lader nur „seinen" Anschluss
+// geklingelt, sähe eine Tabelle die Positionen und das Formularfeld daneben
+// nicht — genau der halbe Neuzeichnen-Fehler, den der Abo-Punkt verhindert.)
+export function meldeNeueDaten(): void {
+  klingeln()
+}
+
 function antwortKlingeln(raw: unknown): void {
   antwortZuhoerer.forEach((cb) => {
     try { cb(raw) } catch { /* ein Konsument darf den Empfang nie stoppen */ }

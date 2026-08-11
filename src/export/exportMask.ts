@@ -34,6 +34,7 @@ import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktione
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import {
   felderFor,
+  felderHinterSchnitt,
   kopfsatzFor,
   ladeRelationFor,
   loopReihenfolge,
@@ -359,14 +360,19 @@ export function exportMask(
       // Die Hol-Relation (Welle R) reist als DATEN mit: die Laufzeit (R2)
       // liest sie hier. Nur die wirksame (ladeRelationFor, Art-gebunden) —
       // eine nach Art-Wechsel liegengebliebene bleibt daheim, wie der
-      // Kopfsatz in der SEFILELOOP.
+      // Kopfsatz in der SEFILELOOP. Dazu die benutzten Felder HINTER dem
+      // 255er-Schnitt (zusatzFelder): der Lader fragt sie je Position
+      // einzeln, und nur der Export kann sie abzählen — die laufende Maske
+      // hat kein Feld-Wörterbuch (dieselbe S5.1-Sammlung wie FELDER).
       const lade = ladeRelationFor(s)
       return {
         id: s.id,
         name: s.name,
         tableId: tableIdFor(s),
         indexField: s.indexField ?? '',
-        ...(lade ? { ladeRelation: lade } : {}),
+        ...(lade
+          ? { ladeRelation: { ...lade, zusatzFelder: felderHinterSchnitt(benutzteFelder.get(s.id)) } }
+          : {}),
       }
     })) + ';',
   ))

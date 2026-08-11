@@ -413,7 +413,56 @@ describe('exportMask: Datenquellen', () => {
     ])
     expect(json.VAR).toBeUndefined()
     expect(html).toContain('"ladeRelation":{"nr":"69","geberQuelleId":"belege"')
-    expect(html).toContain('"endeFelder":["11_6","18_25"]')
+    // Keine benutzten Felder hinter dem 255er-Schnitt -> leere zusatzFelder
+    // (der Lader stellt dann je Position nur die eine breite Frage).
+    expect(html).toContain('"endeFelder":["11_6","18_25"],"zusatzFelder":[]')
+  })
+
+  // Felder HINTER dem breiten Schnitt (POS=0/LEN=255) kann der Lader nicht
+  // aus dem SATZ schneiden — er fragt sie je Position einzeln (Wellenkopf R).
+  // WELCHE das sind, kann nur der Export abzaehlen (die laufende Maske hat
+  // kein Feld-Woerterbuch): dieselbe S5.1-Sammlung wie die FELDER-Bestellung.
+  // Ginge die Liste verloren, bliebe die Spalte in der Maske STILL leer.
+  it('gibt der Hol-Relation die benutzten Felder hinter dem 255er-Schnitt mit', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['pos', 'knopf'] },
+      pos: { id: 'pos', type: TEST_DATA_BOX, props: { source: 'positionen' }, parentId: 'root', childIds: [] },
+      knopf: {
+        id: 'knopf', type: TEST_EVENT_BLOCK, props: {}, parentId: 'root', childIds: [],
+        events: {
+          onClick: [{
+            id: 's1',
+            type: 'RELATION',
+            resultKey: '',
+            relationId: 'rel-put',
+            params: [
+              // Ein Feld hinter dem Schnitt (280+12 > 255) und eins im
+              // Fenster (18+25 = 43): nur das erste reist als zusatzFeld.
+              { source: 'data_field', value: '280_12', dataSourceId: 'positionen' },
+              { source: 'data_field', value: '18_25', dataSourceId: 'positionen' },
+            ],
+            extraParams: [],
+          }],
+        },
+      },
+    }
+    const sources = [
+      {
+        id: 'positionen', name: 'BelegPositionen', kind: 'belegposition' as const,
+        ladeRelation: {
+          nr: '69', geberQuelleId: 'belege',
+          belegartFeld: '2_1', belegnummerFeld: '3_8',
+          jahrFeld: '0_1', archivFeld: '1_1',
+          endeFelder: ['11_6', '18_25'],
+        },
+        fields: [],
+      },
+    ]
+    const relations = [
+      { id: 'rel-put', name: 'Schreiben', verb: 'PUT_RELATION' as const, nr: '82', params: ['', ''] },
+    ]
+    const { html } = exportMask(tree, 'Maske', sources, relations)
+    expect(html).toContain('"zusatzFelder":["280_12"]')
   })
 
   // Muster wie beim Kopfsatz oben: der Bediener wechselt die Art, der alte
@@ -438,6 +487,12 @@ describe('exportMask: Datenquellen', () => {
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
       { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
     ])
-    expect(html).not.toContain('ladeRelation')
+    // Gezielt die FF_DATA_SOURCES-Zeile pruefen, nicht das ganze HTML: seit
+    // R2 steckt das WORT ladeRelation auch im eingebetteten Runtime-Buendel
+    // (der Lader-Code selbst) — dort ist es richtig und meint nicht, dass
+    // die liegengebliebene Einstellung mitreist.
+    const quellenZeile = /window\.FF_DATA_SOURCES = .*/.exec(html)?.[0] ?? ''
+    expect(quellenZeile).toContain('"id":"q"')
+    expect(quellenZeile).not.toContain('ladeRelation')
   })
 })

@@ -45,6 +45,7 @@ import {
 // und das Hol-Modul selbst muss er nicht kennen.
 export { artFuer, DATA_SOURCE_KINDS, QUELLEN_ARTEN, type DataSourceKind }
 export {
+  felderHinterSchnitt,
   LADE_RELATION_STANDARD,
   ladeRelationFor,
   relationNrFromInput,

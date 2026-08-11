@@ -1,132 +1,186 @@
-// softengine/relationLader — Welle R: "Zeilen per Relation holen"
+// relationLader — Welle R: „Zeilen per Relation holen".
 //
-// Eine Quelle dieser Lade-Art bestellt bei SoftEngine keine SEFILELOOP;
-// stattdessen lauscht sie auf die Auswahl einer GEBER-Quelle und holt
-// je nach gewähltem Satz ihre Positionen selbst — serialisiert über
-// die allgemeine GET_RELATION-Warteschlange (seGetNewIndex).
+// Eine Quelle dieser Lade-Art bestellt bei SoftEngine keine SEFILELOOP
+// (R1/exportMask); stattdessen holt die laufende Maske die Positionen des
+// GEWÄHLTEN Belegs selbst — je Position ein GET_RELATION über die eine
+// serielle Warteschlange (relations, Muster seGetNewIndex). Alle Kontrakte
+// sind in der SoftEngine des Nutzers live belegt (Echttests 2026-08-10/11,
+// Wellenkopf R im UMBAU-PLAN-V6.md):
 //
-// Nachbildung des Handbau-Laders v3 aus behandlung-umbau/index.basis.source.html
-// (dort direkt am Masken-Event-Handler).
+//  - PARAMS je Frage: [BELART, POS, LEN, BELNR, JAHR, ARCHIV, '', POSNR,
+//    '', '', '', ''] — die Feldzuordnungen der GEBER-Zeile stehen in der
+//    Hol-Relation (FF_DATA_SOURCES.ladeRelation, R1).
+//  - Breiter Schnitt POS=0/LEN=255 liefert die vordere Positionszeile in
+//    EINEM Aufruf (die Antwortvariable fasst 255 Zeichen); nur Felder
+//    dahinter kosten je eine eigene Frage (lade.zusatzFelder, vom Export
+//    abgezählt — felderHinterSchnitt).
+//  - Ende der Liste: die endeFelder (belegt 11_6 + 18_25) ZUSAMMEN leer.
+//    SoftEngine antwortet hinter dem Ende mit LEEREM RESULT — darum fragt
+//    der Lader mit satzAntwort (relations): die Antwort bleibt roh
+//    (Spaltenpositionen!), und auch leer zählt als Antwort, sonst liefe
+//    jedes Listen-Ende in den Timeout.
+//  - KEIN ERPAPICALL: das friert die WinUI-Maske des Nutzers ein.
+//
+// Wer stößt an? blocks/shared/holendeQuellen — der Auswahl-Zustand wohnt in
+// der Baustein-Schicht, diese Schicht kennt NIE einen Baustein. Sie bekommt
+// die gewählte GEBER-Zeile fertig hereingereicht.
+//
+// Wohin fließen die Zeilen? In den geholteZeilen-Speicher, den rowsFor
+// (data.ts) als letzten Weg liest — ab da verhält sich die Quelle wie jede
+// andere (Tabelle, Verknüpfung, Ketten, Auswahl geben/folgen). Zum Schluss
+// klingelt meldeNeueDaten (bridge) dieselbe Glocke wie ein Daten-Push.
 
-import type { RuntimeLadeRelation } from './data'
-import { getField } from './data'
+import { meldeNeueDaten } from './bridge'
+import { getField, type RuntimeLadeRelation } from './data'
+import { geholteZeilenFuer, setzeGeholteZeilen } from './geholteZeilen'
 import { executeRelation } from './relations'
+import { meldeFehler } from './meldung'
 
-export interface LaderKontext {
-  // Liefert die gewählte Zeile des Geber-Blocks (anhand der Block-ID).
-  // undefined = keine Auswahl aktiv (oder rausklickt).
-  gewaehlteZeile: (geberId: string) => unknown | undefined
-  // Speist die geholten Zeilen unter der id der holenden Quelle ein.
-  speiseZeilen: (quelleId: string, zeilen: unknown[]) => void
+// Notbremse gegen eine Endlos-Schleife: antwortet eine falsch eingestellte
+// Relation IMMER mit Inhalt (Ende-Felder nie zusammen leer), würde der
+// Lader sonst ewig weiterfragen. 999 ist bewusst großzügig — ein echter
+// Beleg bleibt weit darunter; wird der Deckel doch erreicht, sagt es der
+// Fehlerbalken im Klartext, statt still eine halbe Liste zu zeigen.
+const MAX_POSITIONEN = 999
+
+// Der breite Schnitt (Wellenkopf R): POS=0, LEN=255.
+const SCHNITT_POS = '0'
+const SCHNITT_LEN = '255'
+
+export interface HolQuelle {
+  id: string
+  name: string
 }
 
-// Jede Quelle, die gerade holt, merkt sich hier ihre "Generation".
-// Klickt der Bediener schnell um, erhöht sich die Generation — läuft noch
-// ein asynchrones Holen der alten Generation, verwirft es am Ende sein
-// Ergebnis still, statt die neue Auswahl wieder zu überschreiben.
+// Klickt der Bediener schnell zwei Belege nacheinander, läuft das Holen des
+// ersten noch, wenn das zweite startet. Jeder Start erhöht die Generation
+// seiner Quelle; ein laufendes Holen prüft nach JEDER Antwort, ob es noch
+// die aktuelle ist — überholt heißt: still aussteigen, nichts einspeisen.
 const generationen = new Map<string, number>()
 
-export function starteRelationLader(
-  quelleId: string,
-  ladeRelation: RuntimeLadeRelation,
-  kontext: LaderKontext,
+// Leeren, aber nur klingeln, wenn vorher etwas zu sehen war — sonst
+// zeichnete jeder folgenlose Auswahl-Wechsel die ganze Maske neu.
+function leereQuelle(name: string): void {
+  const vorher = geholteZeilenFuer(name)
+  setzeGeholteZeilen(name, [])
+  if (vorher !== undefined && vorher.length > 0) meldeNeueDaten()
+}
+
+// Eine Frage an die Hol-Relation: der Ausschnitt [pos, len] der Position
+// posNr. Timeout und fehlende Verbindung lösen still zu '' auf (Optionen);
+// '' wiederum liest der Aufrufer als „nichts da" — still-harmlos.
+async function frage(
+  lade: RuntimeLadeRelation,
+  schluessel: { belegart: string; belegnummer: string; jahr: string; archiv: string },
+  posNr: number,
+  pos: string,
+  len: string,
+): Promise<string> {
+  const antwort = await executeRelation(
+    { id: 'relation-lader', verb: 'GET_RELATION', nr: lade.nr, params: [] },
+    [
+      schluessel.belegart,
+      pos,
+      len,
+      schluessel.belegnummer,
+      schluessel.jahr,
+      schluessel.archiv,
+      '',
+      String(posNr),
+      '',
+      '',
+      '',
+      '',
+    ],
+    { still: true, satzAntwort: true },
+  )
+  return antwort.wert
+}
+
+// Auswahl der Geber-Quelle hat gewechselt: Zeilen neu holen (oder leeren).
+// `geberZeile` undefined = Abwahl. Läuft asynchron; eingespeist wird erst,
+// wenn ALLES da ist (Anzeige erst am Ende) — außer dem sofortigen Leeren,
+// denn die Positionen des VORHERIGEN Belegs dürfen nicht stehen bleiben,
+// während die neuen laden.
+export function ladeZeilenPerRelation(
+  quelle: HolQuelle,
+  lade: RuntimeLadeRelation,
+  geberZeile: unknown,
 ): void {
-  const geberId = ladeRelation.geberQuelleId // Block-ID des Gebers
-  const zeile = kontext.gewaehlteZeile(geberId)
+  const gen = (generationen.get(quelle.id) ?? 0) + 1
+  generationen.set(quelle.id, gen)
 
-  // 1. Generationszähler für diese Quelle erhöhen
-  const gen = (generationen.get(quelleId) ?? 0) + 1
-  generationen.set(quelleId, gen)
-
-  // 2. Abwahl (keine Zeile) leert die Quelle
-  if (zeile === undefined) {
-    kontext.speiseZeilen(quelleId, [])
+  if (geberZeile === undefined) {
+    leereQuelle(quelle.name)
     return
   }
 
-  // 3. Schlüssel aus der gewählten Zeile lesen
-  const belegart = getField(zeile, ladeRelation.belegartFeld)
-  const belegnummer = getField(zeile, ladeRelation.belegnummerFeld)
-  const jahr = ladeRelation.jahrFeld !== '' ? getField(zeile, ladeRelation.jahrFeld) : ''
-  const archiv = ladeRelation.archivFeld !== '' ? getField(zeile, ladeRelation.archivFeld) : ''
-
-  // Kein voller Schlüssel = keine Anfrage (wie schluesselAus in fremdeQuellen)
-  if (belegart === '' || belegnummer === '') {
-    kontext.speiseZeilen(quelleId, [])
+  const schluessel = {
+    belegart: getField(geberZeile, lade.belegartFeld),
+    belegnummer: getField(geberZeile, lade.belegnummerFeld),
+    // Jahr/Archiv dürfen leer zugeordnet sein — dann gehen sie leer hinaus
+    // und die Relation findet nur den aktuellen Nummernkreis (belegt
+    // 2026-08-11: leer fand die 262er-Belege, erst mit Werten auch die 261er).
+    jahr: lade.jahrFeld === '' ? '' : getField(geberZeile, lade.jahrFeld),
+    archiv: lade.archivFeld === '' ? '' : getField(geberZeile, lade.archivFeld),
+  }
+  // Halber Schlüssel trifft nichts — dieselbe Regel wie schluesselAus in
+  // fremdeQuellen: mit leerer Belegart/-nummer zu fragen hieße raten.
+  if (schluessel.belegart === '' || schluessel.belegnummer === '') {
+    leereQuelle(quelle.name)
     return
   }
 
-  // ALTE Zeilen sofort leeren: der Bediener hat einen neuen Beleg angeklickt,
-  // die alten Positionen dürfen nicht stehen bleiben, während wir laden.
-  kontext.speiseZeilen(quelleId, [])
+  leereQuelle(quelle.name)
 
-  // 4. Positionen nacheinander abfragen
-  const geholteZeilen: unknown[] = []
-
-  // Wir starten die asynchrone Schleife ohne await (fire-and-forget),
-  // das Ende speist die Daten ein.
   void (async () => {
-    let posNr = 1
+    const zeilen: Record<string, string>[] = []
+    let endeGesehen = false
 
-    while (true) {
-      if (generationen.get(quelleId) !== gen) return // abgebrochen/überholt
+    for (let posNr = 1; posNr <= MAX_POSITIONEN; posNr += 1) {
+      const satz = await frage(lade, schluessel, posNr, SCHNITT_POS, SCHNITT_LEN)
+      if (generationen.get(quelle.id) !== gen) return // überholt: still raus
 
-      // Parameter genau nach dem Handbau-Lader v3:
-      // BELART, POS (0 = Zeilenanfang), LEN (255 = maximale Pufferbreite),
-      // BELNR, JAHR, ARCHIV, '', POSNR, '', '', '', ''
-      const params = [
-        belegart,
-        '0',
-        '255',
-        belegnummer,
-        jahr,
-        archiv,
-        '',
-        String(posNr),
-        '',
-        '',
-        '',
-        '',
-      ]
-
-      const antwort = await executeRelation(
-        { id: 'hol-lader', verb: 'GET_RELATION', nr: ladeRelation.nr, params: [] },
-        params,
-      )
-
-      if (generationen.get(quelleId) !== gen) return // abgebrochen während Wartezeit
-
-      const rohSatz = antwort.wert
-
-      // Zeile formen: SATZ-Property (wie echte Tabellenzeilen) plus
-      // direkte Ende-Felder zum Prüfen.
-      const neueZeile: Record<string, string> = {
-        SATZ: rohSatz,
+      // Ende: alle Ende-Felder ZUSAMMEN leer. Ein Timeout löst zu '' auf
+      // und liest sich genauso — die Liste endet dann eben hier, ohne
+      // Balken (still-harmlos, Etappe R2).
+      if (lade.endeFelder.every((feld) => getField({ SATZ: satz }, feld) === '')) {
+        endeGesehen = true
+        break
       }
 
-      // Ende erkennen: wenn ALLE Ende-Felder leer sind. SoftEngine bricht nicht
-      // selbst ab, sondern liefert leere Strings für Positionen hinter dem Ende.
-      let allesLeer = true
-      for (const endeCode of ladeRelation.endeFelder) {
-        // Direkte Auswertung wie getField, aber hier auf dem SATZ-Rohstring.
-        // getField würde auf neueZeile.SATZ funktionieren.
-        const wert = getField({ SATZ: rohSatz }, endeCode)
-        neueZeile[endeCode] = wert
-        if (wert !== '') allesLeer = false
+      // Die Zeile: SATZ-Rohstring (getField schneidet die Spalten im
+      // Fenster selbst) plus je eine direkte Property für jedes Feld
+      // hinter dem Schnitt.
+      const zeile: Record<string, string> = { SATZ: satz }
+      for (const feld of lade.zusatzFelder) {
+        const trenner = feld.indexOf('_')
+        const wert = await frage(
+          lade,
+          schluessel,
+          posNr,
+          feld.slice(0, trenner),
+          feld.slice(trenner + 1),
+        )
+        if (generationen.get(quelle.id) !== gen) return
+        zeile[feld] = wert
       }
-
-      // Ein Timeout führt zu wert: '' -> allesLeer ist true.
-      if (allesLeer) {
-        break // Ende der Belegpositionen
-      }
-
-      geholteZeilen.push(neueZeile)
-      posNr += 1
+      zeilen.push(zeile)
     }
 
-    // Vollständig geholt und nicht überholt -> einspeisen
-    if (generationen.get(quelleId) === gen) {
-      kontext.speiseZeilen(quelleId, geholteZeilen)
+    if (!endeGesehen) {
+      meldeFehler(
+        `Positionen laden: nach ${MAX_POSITIONEN} Zeilen ohne Ende-Kennung abgebrochen `
+        + `(Relation Nr. ${lade.nr}) — die Liste ist wahrscheinlich unvollständig, `
+        + 'vermutlich passen Relationsnummer oder Ende-Felder nicht.',
+      )
+    }
+
+    // Vollständig geholt und nicht überholt: einspeisen und ALLE Bausteine
+    // über die normale Daten-Glocke neu zeichnen lassen.
+    if (generationen.get(quelle.id) === gen) {
+      setzeGeholteZeilen(quelle.name, zeilen)
+      meldeNeueDaten()
     }
   })()
 }

@@ -76,19 +76,31 @@ function parsed(value: unknown): unknown {
   try { return JSON.parse(value) as unknown } catch { return undefined }
 }
 
-function scalar(value: unknown): string | undefined {
-  if (typeof value === 'string') return value.trim() === '' ? undefined : value.trim()
+// `satzAntwort`: für die Ketten ist ein leerer String von „keine Antwort
+// erkannt" nicht unterscheidbar (leer = undefined), und der Ergebnis-Skalar
+// darf getrimmt werden. Der Relation-Lader (Welle R) braucht BEIDES anders:
+// seine Antwort ist ein SATZ-Ausschnitt — die Spaltenpositionen zählen,
+// Trimmen verschöbe jedes Feld —, und hinter der letzten Position antwortet
+// SoftEngine mit einem LEEREN RESULT, das genau seine Antwort IST
+// (Ende-Erkennung). Ohne die Unterscheidung verrutschte jede Spalte und
+// jedes Listen-Ende liefe in den 6-Sekunden-Timeout.
+function scalar(value: unknown, satzAntwort: boolean): string | undefined {
+  if (typeof value === 'string') {
+    if (satzAntwort) return value
+    const t = value.trim()
+    return t === '' ? undefined : t
+  }
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   return undefined
 }
 
-function firstScalar(value: unknown, depth: number): string | undefined {
+function firstScalar(value: unknown, depth: number, satzAntwort: boolean): string | undefined {
   if (depth > 12) return undefined
-  const direct = scalar(value)
+  const direct = scalar(value, satzAntwort)
   if (direct !== undefined) return direct
   if (Array.isArray(value)) {
     for (const entry of value) {
-      const found = firstScalar(entry, depth + 1)
+      const found = firstScalar(entry, depth + 1, satzAntwort)
       if (found !== undefined) return found
     }
     return undefined
@@ -96,11 +108,11 @@ function firstScalar(value: unknown, depth: number): string | undefined {
   if (!isRecord(value)) return undefined
   for (const key of RESULT_KEYS) {
     if (!(key in value)) continue
-    const found = firstScalar(value[key], depth + 1)
+    const found = firstScalar(value[key], depth + 1, satzAntwort)
     if (found !== undefined) return found
   }
   for (const entry of Object.values(value)) {
-    const found = firstScalar(entry, depth + 1)
+    const found = firstScalar(entry, depth + 1, satzAntwort)
     if (found !== undefined) return found
   }
   return undefined
@@ -109,22 +121,22 @@ function firstScalar(value: unknown, depth: number): string | undefined {
 // GET_RELATION-Antworten sind nicht nummeriert oder einer Anfrage
 // zugeordnet. Darum wird nur ein expliziter Ergebnis-/Index-Schlüssel als
 // Antwort akzeptiert; irgendein fremder Skalar im Callback reicht nicht.
-export function extractRelationResult(raw: unknown): string | undefined {
+export function extractRelationResult(raw: unknown, satzAntwort = false): string | undefined {
   const value = parsed(raw)
   if (!isRecord(value)) return undefined
   for (const key of RESULT_KEYS) {
     if (!(key in value)) continue
-    const found = firstScalar(value[key], 0)
+    const found = firstScalar(value[key], 0, satzAntwort)
     if (found !== undefined) return found
   }
   for (const entry of Object.values(value)) {
     if (Array.isArray(entry)) {
       for (const item of entry) {
-        const found = extractRelationResult(item)
+        const found = extractRelationResult(item, satzAntwort)
         if (found !== undefined) return found
       }
     } else if (isRecord(entry)) {
-      const found = extractRelationResult(entry)
+      const found = extractRelationResult(entry, satzAntwort)
       if (found !== undefined) return found
     }
   }
@@ -171,22 +183,36 @@ export function seMessageKeys(seData: unknown): string[] {
 export function newSeMessageResult(
   seData: unknown,
   before: ReadonlySet<string>,
+  satzAntwort = false,
 ): RelationAntwort | undefined {
   if (!isRecord(seData)) return undefined
   const keys = seMessageKeys(seData)
     .filter((key) => !before.has(key))
     .sort((a, b) => Number(b.slice(7)) - Number(a.slice(7)))
   for (const key of keys) {
-    const found = extractRelationResult(seData[key])
+    const found = extractRelationResult(seData[key], satzAntwort)
     if (found !== undefined) return { wert: found, roh: seData[key] }
   }
   return undefined
+}
+
+// Zusatzverhalten eines GET (Welle R, Relation-Lader):
+//  still       — Fehlerwege (Timeout, fehlende Verbindung) ohne
+//                Fehlerbalken; der Lader läuft still-harmlos aus,
+//                die Ketten behalten ihre Meldungen.
+//  satzAntwort — die Antwort ist ein SATZ-Ausschnitt: roh lassen
+//                (Spaltenpositionen!) und auch LEER zählt als Antwort
+//                (Ende der Positionsliste) — s. scalar.
+export interface RelationOptionen {
+  still?: boolean
+  satzAntwort?: boolean
 }
 
 interface GetJob {
   template: RuntimeRelation
   params: string[]
   resolve: (antwort: RelationAntwort) => void
+  optionen: RelationOptionen
 }
 
 const getQueue: GetJob[] = []
@@ -210,18 +236,26 @@ function runNextGet(): void {
     clearTimeout(timeout)
     getBusy = false
     job.resolve({ wert, roh })
-    runNextGet()
+    // Die nächste Frage erst NACH diesem Antwort-Rundruf senden: läuft
+    // finish gerade INNERHALB von antwortKlingeln (bridge), würde ein
+    // synchrones runNextGet den nächsten Horcher noch WÄHREND des Rundrufs
+    // anmelden — ein Set besucht Neuzugänge mit —, und DASSELBE Paket
+    // beantwortete zwei Fragen: ab da wäre jede Antwort der Warteschlange
+    // um eins versetzt (relevant seit dem Relation-Lader, der als Erster
+    // mehrere Fragen auf einmal einreiht).
+    queueMicrotask(runNextGet)
   }
 
+  const satzAntwort = job.optionen.satzAntwort === true
   // Abonnieren, BEVOR gesendet wird: Test-Stubs und manche Hosts antworten
   // synchron. Der Callback ist für BWMSG und WWMSG derselbe Hauptweg.
   const unsubscribe = onSeAntwort((raw) => {
-    const result = extractRelationResult(raw)
+    const result = extractRelationResult(raw, satzAntwort)
     if (result !== undefined) finish(result, raw)
   })
 
   const poll = setInterval(() => {
-    const antwort = newSeMessageResult(seGlobal().SEDATA, before)
+    const antwort = newSeMessageResult(seGlobal().SEDATA, before, satzAntwort)
     if (antwort !== undefined) finish(antwort.wert, antwort.roh)
   }, GET_POLL_MS)
   // Die drei Fehlerwege eines GET lieferten bis 2026-07-27 still einen
@@ -229,13 +263,18 @@ function runNextGet(): void {
   // ein leeres Feld und hielt es fuer „keine Daten vorhanden". Jetzt sagt
   // die Maske, was los ist — der Rueckgabewert bleibt '', damit die Kette
   // sich unveraendert verhaelt (kein neuer Abbruch-Weg, kein SE-Kontrakt).
+  // `still` (Relation-Lader) unterdrückt nur den Balken, nie das Auflösen.
   const timeout = setTimeout(() => {
-    meldeFehler(`Daten laden: SoftEngine hat nicht geantwortet (Relation Nr. ${job.template.nr}).`)
+    if (!job.optionen.still) {
+      meldeFehler(`Daten laden: SoftEngine hat nicht geantwortet (Relation Nr. ${job.template.nr}).`)
+    }
     finish('', undefined)
   }, GET_TIMEOUT_MS)
 
   if (typeof g.basisHTML_SND_MSG !== 'function') {
-    meldeFehler('Daten laden nicht möglich: keine Verbindung zu SoftEngine.')
+    if (!job.optionen.still) {
+      meldeFehler('Daten laden nicht möglich: keine Verbindung zu SoftEngine.')
+    }
     finish('', undefined)
     return
   }
@@ -245,16 +284,20 @@ function runNextGet(): void {
       PARAMS: job.params,
     })
   } catch (error) {
-    meldeFehler(`Daten laden fehlgeschlagen (Relation Nr. ${job.template.nr}): ${fehlertext(error)}`)
+    if (!job.optionen.still) {
+      meldeFehler(`Daten laden fehlgeschlagen (Relation Nr. ${job.template.nr}): ${fehlertext(error)}`)
+    }
     finish('', undefined)
   }
 }
 
 // Ein gemeinsamer Vertrag für Aktionsketten: PUT/PUTADD werden nur gesendet;
 // GET wartet seriell auf die plattformneutral empfangene Antwort.
+// `optionen` (Welle R) betrifft nur den GET-Weg — s. RelationOptionen.
 export function executeRelation(
   template: RuntimeRelation,
   params: readonly string[],
+  optionen: RelationOptionen = {},
 ): Promise<RelationAntwort> {
   bootSe()
   const g = seGlobal()
@@ -278,7 +321,7 @@ export function executeRelation(
     return Promise.resolve({ wert: '', roh: undefined })
   }
   return new Promise((resolve) => {
-    getQueue.push({ template, params: [...params], resolve })
+    getQueue.push({ template, params: [...params], resolve, optionen })
     runNextGet()
   })
 }

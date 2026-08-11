@@ -52,8 +52,41 @@ export const LADE_RELATION_STANDARD = {
   endeFelder: ['11_6', '18_25'] as readonly string[],
 }
 
-const POS_LEN = /^\d+_\d+$/
+// Exportiert, weil die Laufzeit (softengine/data) die zusatzFelder mit
+// GENAU demselben Muster prueft — zwei Abschriften desselben Regex koennten
+// auseinanderlaufen.
+export const POS_LEN = /^\d+_\d+$/
 const NUR_ZIFFERN = /^\d+$/
+
+// Der breite Schnitt des Laders: POS=0, LEN=255 — die SE-Antwortvariable
+// fasst 255 Zeichen (SE-Log `zlen=255`, Echttest 2026-08-11). Felder, die
+// GANZ in diesem Fenster liegen, schneidet getField aus dem SATZ-Rohstring;
+// nur was darueber hinausragt, kostet je Position eine eigene Frage
+// (Wellenkopf R: „nur Felder dahinter (z. B. 280_12) kosten je eine
+// weitere Frage").
+export const LADE_SCHNITT_LEN = 255
+
+// Die benutzten Felder HINTER dem Schnitt — sie reisen als `zusatzFelder`
+// mit der Hol-Relation in FF_DATA_SOURCES (exportMask): die laufende Maske
+// hat kein Feld-Woerterbuch und kann die Liste nicht selbst bilden, der
+// Export zaehlt sie aus derselben S5.1-Sammlung ab wie die
+// FELDER-Bestellung (benutzteFelderJeQuelle). Ein Feld zaehlt schon, wenn
+// es nur TEILWEISE hinter dem Fenster liegt (pos+len > 255): der
+// SATZ-Ausschnitt waere sonst still abgeschnitten. Sortiert nach Position,
+// dann Laenge — deterministische Export-Bytes.
+export function felderHinterSchnitt(benutzt: ReadonlySet<string> | undefined): string[] {
+  const raus: string[] = []
+  for (const code of benutzt ?? []) {
+    const m = /^(\d+)_(\d+)$/.exec(code)
+    if (!m) continue
+    if (Number(m[1]) + Number(m[2]) > LADE_SCHNITT_LEN) raus.push(code)
+  }
+  return raus.sort((a, b) => {
+    const [posA = 0, lenA = 0] = a.split('_').map(Number)
+    const [posB = 0, lenB = 0] = b.split('_').map(Number)
+    return posA - posB || lenA - lenB
+  })
+}
 
 // Eingegebene Relationsnummer -> Technikwert; ungültig = '' (das Formular
 // zeigt dann einen Fehler, geraten wird nicht — Muster kennungFromInput).

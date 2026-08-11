@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   artFuer,
+  felderHinterSchnitt,
   ladeRelationFor,
   pruefeDatenquellen,
   quellenKennung,
@@ -83,6 +84,16 @@ describe('Hol-Relation: laden, verwerfen, Art-Bindung', () => {
     const quelle = { id: 'q', name: 'Q', kind: 'idb', fields: [], ladeRelation: gueltig } as unknown as DataSource
     expect(ladeRelationFor(quelle)).toBeNull()
     expect(ladeRelationFor({ ...quelle, kind: 'belegposition' })).toEqual(gueltig)
+  })
+
+  // R2: nur was ueber das 255er-Fenster HINAUSRAGT (pos+len > 255) kostet je
+  // Position eine eigene Frage — ein Feld, das genau an der Kante endet
+  // (250_5), schneidet getField noch aus dem SATZ. Sortiert fuer
+  // deterministische Export-Bytes; Nicht-Feldcodes zaehlen nicht.
+  it('felderHinterSchnitt: die Kante 255 entscheidet, sortiert, Fremdes faellt raus', () => {
+    const benutzt = new Set(['280_12', '250_5', '250_6', '18_25', 'TFELD.Name'])
+    expect(felderHinterSchnitt(benutzt)).toEqual(['250_6', '280_12'])
+    expect(felderHinterSchnitt(undefined)).toEqual([])
   })
 })
 
