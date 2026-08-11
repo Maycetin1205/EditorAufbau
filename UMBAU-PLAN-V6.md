@@ -82,8 +82,15 @@ git log --oneline -8
   gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
   gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
   das Pruefbuendel nicht haengt.
-- **Naechste Etappe:** offen — A8 ist gebaut, A9 setzt A3-A7 voraus und ist
-  damit dran, sobald der Nutzer die Bedienproben von A5/A6 bestanden hat.
+- **Naechste Etappe:** offen — Kandidaten: ein Performance-Block (Nutzer
+  2026-08-11: „laedt ewig, nicht performant, ging mal schneller" — erst
+  messen, dann die belegten Bremsen loesen; einschieben wie Welle S) · S2.1
+  Tabellen-Nachschlag (entschieden, wartet auf go) · A9 (setzt die
+  Bedienproben von A5/A6 voraus). **B1 ist GESTRICHEN** (Nutzer 2026-08-11,
+  s. Etappenkopf B1) — Block 2 hat damit keinen Bau-Anteil mehr. Aus A7.3
+  ist eine Nutzer-Entscheidung OFFEN: der endlose Nachschlage-Kreis (s.
+  oben) — nichts tun / Notbremse in der Masken-Laufzeit / im Editor nicht
+  anbieten.
   **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
@@ -476,6 +483,26 @@ Steuerung irgendwann faellt, waere eine eigene kleine Nutzer-Entscheidung.
 Der volle Etappentext steht in der git-Historie (`6ce5695`).
 
 ## S2 · Tabelle: der bemalte Reststreifen
+
+### S2.1 · Nachschlag: Rest verteilen, Zeilen-Waehler faellt (entschieden 2026-08-11, wartet auf go)
+
+Die Nutzerprobe zu S2 ergab: die vorgetaeuschte Zeile ist weg, aber der
+LEERE Platz zwischen letzter Zeile und Fusszeile stoert weiter. Mit dem
+Nutzer entschieden:
+
+- Der Rest (2-30 px, s. Belegtes Problem unten) wird auf die vorhandenen
+  Zeilen VERTEILT — jede wird 1-4 px hoeher, fuer das Auge gleich, die
+  Fusszeile sitzt immer buendig an der letzten Zeile. Zeilenzahl je Seite
+  wie heute, Editor und Maske identisch.
+- Der Zeilen-Waehler (passend zur Hoehe / 10 / 25 / 50) FAELLT WEG: es gilt
+  immer „passend zur Hoehe"; Suche und Blaettern bleiben. Eine Tabelle
+  scrollt nie innen (Nutzer: Blaettern mit Suchleiste ist der Weg).
+- ACHTUNG Wechselwirkung mit A4: faellt die zugehoerige Prop weg, braucht es
+  eine versionsgebundene Migration bzw. eine absichtlich-Meldung — sonst
+  stellt die Verlust-Kontrolle gesunde Altbestaende mit gesetztem Waehler
+  unter Quarantaene.
+- Aendert Runtime-Bytes: die offene SE-Probe aus Block S deckt danach BEIDES
+  in einem Lauf ab.
 
 ### Belegtes Problem
 
@@ -1027,53 +1054,18 @@ Abschlussbericht genannt.
 
 # Welle B — Export und kleine klar begrenzte Bedienverbesserung
 
-## B1 · Ein Exportstand, zwei bewusste Downloads
+## B1 · GESTRICHEN — die zwei automatischen Downloads bleiben
 
-### Ziel
-
-Ein Browser darf die zweite Datei nicht mehr still wegen automatischer
-Mehrfachdownloads verschlucken.
-
-### Arbeit
-
-1. Preflight und `exportMask` genau einmal fuer einen Stand ausfuehren.
-2. HTML und SEvariablen-JSON aus diesem selben eingefrorenen Ergebnis halten.
-3. Zwei ausdrueckliche Knoepfe anzeigen:
-   - `index.basis.source.html anfordern`
-   - `index.basis.SEvariablen.json anfordern`
-4. UI behauptet nur „Download angefordert", niemals „Datei sicher
-   heruntergeladen".
-5. Dritter `downloadFile`-Aufrufer fuer die editierbare Maskendatei bleibt
-   unveraendert funktionsfaehig.
-6. Der eingefrorene Snapshot besteht exakt aus drei exportrelevanten Inputs:
-   - Blockbaum **inklusive der in Knoten gespeicherten Events/Aktionen**;
-   - Datenquellen;
-   - Relationen.
-7. Auswahl, aktive Seite, Inspectorzustand oder andere reine UI-Aenderungen
-   machen einen Export nicht veraltet.
-8. Veraltetheit wird ueber einen stabilen Export-Fingerprint oder eine eigene
-   exportrelevante Revision dieser drei Inputs bestimmt, nicht ueber die
-   allgemeine Editor-/Store-Version.
-9. Aendert sich der Fingerprint, wird der Export sichtbar `veraltet` und die
-   alten Knoepfe werden deaktiviert.
-10. Nutzer muss danach bewusst `Export neu erzeugen` waehlen.
-11. Objekt-URLs werden nach Verwendung/Schliessen freigegeben.
-
-### Bestehende Tests
-
-- `exportMask` wird fuer ein Exportangebot nur einmal aufgerufen;
-- beide Dateien stammen aus demselben Snapshot;
-- Veraltet-Erkennung umfasst Baum, Quellen und Relationen;
-- Maskendatei-Speichern bleibt separat;
-- Dateinamen und ASCII/LF-Vertrag bleiben unveraendert.
-
-### Nutzerprobe
-
-1. Export erzeugen.
-2. Nur HTML anfordern; keine zweite Datei darf automatisch starten.
-3. JSON separat anfordern.
-4. Neuen Export erzeugen, danach einen Baustein oder eine Quelle aendern.
-5. Alte Knoepfe muessen als veraltet gesperrt sein.
+**Nutzer-Ansage 2026-08-11.** Hier stand ein Umbau des Export-Klicks (ein
+eingefrorener Exportstand, zwei ausdrueckliche Anforder-Knoepfe mit
+Veraltet-Sperre), weil Chrome/Edge den zweiten automatischen Download nur
+nach einer Nachfrage zulassen und ein abgelehnter zweiter Download still
+verschwindet. Der Nutzer nimmt genau das bewusst in Kauf („es funktioniert
+ja so — kein Problem, wenn ich Zulassen druecken muss"). Es wird kein
+Export-Umbau gebaut und dieser Punkt nicht wieder vorgeschlagen (dasselbe
+Muster wie S1). Der volle Etappentext steht in der git-Historie. Damit hat
+Block 2 keinen Bau-Anteil mehr: A9 ist ein SE-Lauf des Nutzers, A10 eine
+Entscheidung (deren Umbau ohnehin nur nach eigenem Go kaeme).
 
 ---
 
@@ -1851,6 +1843,7 @@ Ansage belegt oder korrigiert.
 |---|---|---|
 | S1 | GESTRICHEN (Nutzer 2026-08-10) | entfaellt — keine Warn-Anzeige, s. Etappenkopf S1 |
 | S2 | Tabellen-Reststreifen | \* Tabelle: keine leere/duennere Scheinzeile mehr unter der letzten Datenzeile — Editor UND Maske |
+| S2.1 | Tabellen-Nachschlag (entschieden 2026-08-11, wartet auf go) | Tabelle: kein Leerraum mehr zwischen letzter Zeile und Fusszeile; Zeilen-Waehler faellt weg — immer „passend zur Hoehe" |
 | S3 | Render-Bremsen | \* ueberall spuerbar: Tippen/Ziehen ohne Haenger; optisch nichts anders |
 | S4 | Dev-Laden | Editor-Start im Dev-Server schneller; optisch nichts anders |
 | S5 | Masken-Tempo | OPTIONAL, eigenes go; nichts sichtbar, SE-Echttest Pflicht |
@@ -1881,7 +1874,7 @@ wird EINMAL am Blockende gebuendelt, zusammen mit der Browserprobe.
 |---|---|---|
 | 14 | A9 SE-Ausgangslauf | nichts geaendert — der Nutzer belegt, was heute in SoftEngine geht |
 | 15 | A10 Sitzungsbesitz (bedingt) | nichts sichtbar; nur nach eigenem Go |
-| 16 | B1 Export | \* Kopfleiste, Knopf „Exportieren": statt zwei automatischer Downloads ein Export und zwei einzelne Knoepfe; sie werden sichtbar „veraltet", sobald etwas geaendert wird |
+| 16 | B1 GESTRICHEN (Nutzer 2026-08-11) | entfaellt — die zwei automatischen Downloads bleiben, s. Etappenkopf B1 |
 
 ### Block 3 — Popup · das riskante, steht allein
 
