@@ -82,15 +82,13 @@ git log --oneline -8
   gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
   gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
   das Pruefbuendel nicht haengt.
-- **Naechste Etappe:** offen — Kandidaten: ein Performance-Block (Nutzer
-  2026-08-11: „laedt ewig, nicht performant, ging mal schneller" — erst
-  messen, dann die belegten Bremsen loesen; einschieben wie Welle S) · S2.1
-  Tabellen-Nachschlag (entschieden, wartet auf go) · A9 (setzt die
-  Bedienproben von A5/A6 voraus). **B1 ist GESTRICHEN** (Nutzer 2026-08-11,
-  s. Etappenkopf B1) — Block 2 hat damit keinen Bau-Anteil mehr. Aus A7.3
-  ist eine Nutzer-Entscheidung OFFEN: der endlose Nachschlage-Kreis (s.
-  oben) — nichts tun / Notbremse in der Masken-Laufzeit / im Editor nicht
-  anbieten.
+- **Naechste Etappe:** Block P (Tempo, eingeschoben 2026-08-11, go ist
+  erteilt): P1 Messen → P2 Top-Bremsen, im selben Opus-Chat faehrt S2.1
+  (Tabellen-Nachschlag) mit. Danach A9 (setzt die Bedienproben von A5/A6
+  voraus). **B1 ist GESTRICHEN** (Nutzer 2026-08-11, s. Etappenkopf B1) —
+  Block 2 hat damit keinen Bau-Anteil mehr. **A7.3 ist ABGESCHLOSSEN**
+  (Nutzer 2026-08-11): Entscheidung „nichts tun" (Regel 10), s. Etappenkopf
+  A7.3 — der Beleg-Test bleibt.
   **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
@@ -645,6 +643,46 @@ Schnitt kommt in der Ansage, ein SE-Echttest ist danach Pflicht.
 
 ---
 
+# Welle P — Tempo (eingeschoben 2026-08-11)
+
+Nutzer-Ansage: „laedt ewig, nicht performant — und das ging auch mal
+schneller." Welle S hat die zwei belegten Render-Bremsen geloest (S3) und
+das Dev-Laden ausgelassen (S4, Begruendung dort); das Ergebnis reicht dem
+Nutzer nicht, und „ging mal schneller" heisst: es gibt eine
+VERSCHLECHTERUNG, die sich finden laesst. Regel dieser Welle: erst messen,
+dann bauen — kein Fix ohne Zahl.
+
+## P1 · Messen (kein Code, kein eigener Commit)
+
+- OHNE Dev-Server (Regel 9): `vite build`-Zeiten und Modulzahlen ·
+  `npx vite optimize --force` (Prebundle-Kosten der Abhaengigkeiten) ·
+  vitest-Importzeiten (zuletzt 56 s Import bei 1,4 s Tests) · Importgraph
+  des App-Starts (was wird beim ersten Laden alles gezogen) · Vergleich mit
+  aelteren Staenden ueber die git-Historie, soweit ohne Browser moeglich.
+- Ergebnis ist eine RANGLISTE MIT ZAHLEN — was kostet den Start, was das
+  Arbeiten. Sie steht im Abschlussbericht und in der jeweiligen
+  P2-Commitbeschreibung.
+- Das GEFUEHL (fluessig beim Tippen/Ziehen, Start im Browser) kann nur der
+  Nutzer beurteilen — seine Probe am Blockende bleibt das Urteil.
+
+## P2 · Die belegten Top-Bremsen loesen
+
+- NUR was P1 mit Zahlen belegt hat; je Bremse EIN Commit.
+- Bekannte Kandidaten (Zwischenbilanz 2026-08-10, alle erst nach
+  P1-Beleg): die Verlaufs-Kopie — `pushHistory` klont je Schritt den
+  GANZEN Baum, obwohl der Baum unveraenderlich fortgeschrieben wird
+  (pruefen, ob Snapshots ohne Klon auskommen) · die Icon-Bibliothek —
+  lucide-react 1.27.0 hat keinen Einzel-Icon-Weg (S4); Kandidat ist das
+  Vendorn der ~33 benutzten Icons als lokale Dateien, damit faellt das
+  1,14-MB-Prebundle ganz · was P1 sonst belegt.
+- Harte Grenze: P2 aendert KEIN Export-Byte (ff-runtime, Referenzabzug,
+  SEvariablen unveraendert) und bringt KEINE neue Abhaengigkeit mit.
+  Masken-Tempo bleibt S5 (eigenes go, SE-Echttest Pflicht).
+
+Im selben Block faehrt **S2.1** (Tabellen-Nachschlag, s. Etappenkopf in
+S2) mit — er aendert als einziger Runtime-Bytes; die offene SE-Probe aus
+Block S deckt danach beides ab.
+
 # Welle A — Bestand retten und Integritaet herstellen
 
 Diese Welle ist vor neuen sichtbaren Architekturarbeiten Pflicht. Sie schliesst
@@ -948,6 +986,14 @@ Diese Unterpunkte bleiben getrennte Commits.
 - Nach einem provozierten Fehler entstehen wieder normale Undo-Punkte.
 
 ### A7.3 Auswahlfolge-Zyklen erst belegen, nicht auf Verdacht verbieten
+
+**ABGESCHLOSSEN 2026-08-11.** Der Beleg fand einen echten Fall (zwei
+Nachschlage-Felder ueber Kreuz mit „einziger Treffer = ja", s. Zeiger 0.1
+und `blocks/shared/auswahl.test.ts`). Nutzer-Entscheidung: **nichts tun**
+(Regel 10) — keine Notbremse (koennte gewollte Nachzieh-Ketten
+abschneiden), kein Anbiete-Filter. Produktcode kommt erst, falls der Fall
+je real einfriert; der Test benennt ihn dann sofort. Der urspruengliche
+Etappentext folgt unveraendert:
 
 - Zuerst wird in einer bestehenden Testart geklaert, ob ein direkter oder
   indirekter Kreis die heutige monotone Nachmeldung tatsaechlich nicht
@@ -1867,6 +1913,17 @@ wird EINMAL am Blockende gebuendelt, zusammen mit der Browserprobe.
 | 11 | A7.3 Auswahlzyklen | moeglicherweise gar kein Code — nur Beleg |
 | 12 | A8.1 Regelwaechter | nichts sichtbar (Werkzeug) |
 | 13 | A8.2 Wahrheitskommentare | nichts sichtbar (Kommentare, CLAUDE.md) |
+
+### Block P — Tempo (eingeschoben 2026-08-11) · EINE Probe am Ende
+
+| # | Etappe | Wo im sichtbaren Editor |
+|---|---|---|
+| P1 | Messen | nichts sichtbar — Zahlen statt Gefuehl, kein Code |
+| P2 | Top-Bremsen | Start schneller und/oder Arbeiten fluessiger; optisch nichts anders |
+| S2.1 | Tabellen-Nachschlag | Tabelle: kein Leerraum mehr ueber der Fusszeile; Zeilen-Waehler weg (s. Block-S-Tabelle) |
+
+Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
+(Tempo-Gefuehl, A5/A6-Bedienung) buendeln sich am Ende dieses Blocks.
 
 ### Block 2 — Beleg und Export
 
