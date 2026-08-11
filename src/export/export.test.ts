@@ -292,9 +292,11 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(html).toMatch(/<ff-text[^>]*\ssource="q-termine"/)
     expect(html).toMatch(/<ff-text[^>]*\stextfield="40_20"/)
     // Die Quelle des Textes muss in der SEFILELOOP stehen — sonst schiebt
-    // SoftEngine ihre Daten nie, und die Stelle bliebe leer.
+    // SoftEngine ihre Daten nie, und die Stelle bliebe leer. Und sie bestellt
+    // seit S5.1 genau das gebundene Feld plus die Datensatz-Nummer (Herleitung
+    // samt Sicherheitsventil: ./felderBestellung.test.ts).
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0004', FELDER: '*' },
+      { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0004', FELDER: '0_10,40_20' },
     ])
     expect(preflightMask(tree, sources, [])).toEqual([])
     expect(failedChecks(validateMaskHtml(html))).toEqual([])

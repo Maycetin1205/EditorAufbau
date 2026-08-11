@@ -198,6 +198,16 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   `FELDER:'*'`; Stamm (ADR/ART/BEL) → explizite pos_len-Liste (+ optional
   FREISELEKT). MEMTAB/ERPAPICALL erst bauen, wenn die Form an einer echten
   Maske belegt ist.
+  **Abweichung seit S5.1 (2026-08-11), noch NICHT belegt:** unser Export
+  schreibt für IDB nicht mehr `*`, sondern die pos_len-Liste der von der Maske
+  BENUTZTEN Felder (`felderFor` in `core/data/dataSources.ts`, gesammelt in
+  `export/benutzteQuellen.ts`). Anlass: SoftEngine macht für jeden gelieferten
+  Wert einen Bild-Nachschlag (GET_RELATION 1911 — Nutzer-Log: 5 953 Aufrufe in
+  9,2 s beim Öffnen), und die Menge bestimmt allein unsere Bestellung. Der Satz
+  oben bleibt trotzdem stehen: er beschreibt, was die echten Masken TUN, und
+  genau darum ist die explizite IDB-Liste ein unbelegter Vorgriff. Entscheidet
+  der SE-Echttest gegen sie, wird der Commit per `git revert` zurückgenommen —
+  dann gilt wieder ausschließlich der Satz oben.
 - **Anlegen-Muster (GET neuer Index → PUTs → Querverweis):** belegt aus
   echtem SE-Log, s. `docs/softengine-wiki/muster-satz-anlegen.md` — beim
   Anlegen werden auch LEERE Felder geschrieben; Ketten brauchen

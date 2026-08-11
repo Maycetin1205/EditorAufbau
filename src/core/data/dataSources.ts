@@ -108,12 +108,66 @@ export function tableIdFor(source: DataSource): string {
   return feste === '' ? (source.idbId ?? '') : feste
 }
 
-// FELDER-Eintrag der SEFILELOOP: explizite pos_len-Liste (Reihenfolge =
-// Feld-Wörterbuch), wo die Art einzeln bestellt — sonst '*'.
-export function felderFor(source: DataSource): string {
-  return artFuer(source.kind).felderEinzeln
-    ? source.fields.map((f) => f.code).join(',')
-    : '*'
+// Die einzige BELEGTE Form eines Eintrags in einer expliziten FELDER-Liste:
+// Position_Länge. So steht es an jeder Stamm-Quelle der Chef-Masken ('2_8',
+// '3292_30', …) und am POS-Loop von docs/chef-maske/JsonBeleg.json. Ein
+// Feldcode darf laut DataSourceField auch ein direkter Property-Name sein —
+// für den ist die Listen-Form nirgends belegt, und geraten wird nicht (Regel 5).
+const POS_LEN = /^\d+_\d+$/
+
+// FELDER-Eintrag der SEFILELOOP — DIE eine Stelle, die entscheidet, was eine
+// Quelle bei SoftEngine bestellt.
+//
+// Zwei Wege, nach Quellen-ART:
+//   - Art bestellt EINZELN (Stammtabellen, POS, andere Dateien): ihr ganzes
+//     Feld-Wörterbuch, Reihenfolge = Wörterbuch. Unverändert — diese Form ist
+//     an echten Masken belegt, und sie zu beschneiden wäre eine zweite
+//     Änderung ohne Auftrag.
+//   - Art bestellt SAMMEL (IDB): bis 2026-08-11 immer '*'. Jetzt die explizite
+//     Liste der BENUTZTEN Felder, wenn `benutzt` sie nennt.
+//
+// WARUM (Nutzer-Log 2026-08-11): SoftEngine macht für JEDEN gelieferten Wert
+// einen Bild-Nachschlag (GET_RELATION 1911) — Maske öffnen = 5 953 Aufrufe in
+// 9,2 s. Die SE-Seite können wir nicht ändern, die Menge liefert unsere
+// Bestellung.
+//
+// ⚠ KONTRAKT-EHRLICHKEIT: für IDB ist die explizite Liste NIRGENDS belegt —
+// beide Chef-Masken führen IDB mit '*'. Belegt sind nur die FORM (s. POS_LEN)
+// und dass die Zeilen-Schlüssel pos_len tragen ('IDBID0001_253_30', softengine/
+// data getField). Es entscheidet der SE-Echttest; schlägt er fehl, wird die
+// Änderung zurückgenommen statt nachgebessert.
+//
+// `benutzt` = die Feldcodes, die diese Maske aus der Quelle liest oder schreibt
+// (export/benutzteQuellen, benutzteFelderJeQuelle). Fehlt das Argument, bleibt
+// es bei '*' — Aufrufer ohne Baumwissen sollen nicht raten müssen.
+export function felderFor(source: DataSource, benutzt?: ReadonlySet<string>): string {
+  if (artFuer(source.kind).felderEinzeln) return source.fields.map((f) => f.code).join(',')
+  // Nichts gefunden: '*' bleiben. Eine leere FELDER-Liste ist keine belegte
+  // Form, und eine Quelle, aus der die Maske nachweislich kein Feld liest,
+  // bringt beim Kürzen ohnehin nichts ein — dann lieber der alte Zustand als
+  // eine Bestellung, die auf einem Leser beruht, den ich übersehen haben
+  // könnte (Sicherheitsventil).
+  if (!benutzt || benutzt.size === 0) return '*'
+  // Die Datensatz-Nummer liest die Laufzeit IMMER, wenn die Quelle eine führt
+  // (pindex für Schreibwege: kanban/seRuntime, feldRuntime, resolveActionParam).
+  // Sie steht vorne wie in den echten Listen — der POS-Loop beginnt mit '0_1',
+  // das BEL-VAR mit '0_11'.
+  const index = (source.indexField ?? '').trim()
+  const codes = index === '' ? [] : [index]
+  // Danach die benutzten Felder in Wörterbuch-Reihenfolge (dieselbe Regel wie
+  // beim Einzel-Weg oben), zuletzt benutzte Codes, die im Wörterbuch nicht
+  // (mehr) stehen — eine ins Leere zeigende Bindung. Sie mitzubestellen kostet
+  // ein Feld und hält die Liste deterministisch.
+  for (const f of source.fields) {
+    if (benutzt.has(f.code) && !codes.includes(f.code)) codes.push(f.code)
+  }
+  for (const code of benutzt) {
+    if (!codes.includes(code)) codes.push(code)
+  }
+  // Sicherheitsventil: sobald EIN Code sich nicht als pos_len ausdrücken lässt,
+  // ist die ganze Bestellung unbelegt — dann '*'. Lieber die alte Datenmenge
+  // als eine Stelle, die in der fertigen Maske still leer bleibt.
+  return codes.every((code) => POS_LEN.test(code)) ? codes.join(',') : '*'
 }
 
 // Der KOPFSATZ_INDEX, den der Export schreiben darf — leer heißt „Schlüssel

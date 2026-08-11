@@ -262,9 +262,13 @@ describe('exportMask: Datenquellen', () => {
     expect(html).toContain('&quot;quelleId&quot;:&quot;tiere&quot;')
 
     // 2. BEIDE Quellen in der SEFILELOOP, erste zuerst (deterministisch).
+    // Und beide bestellen seit S5.1 explizit — hier zeigt sich, dass BEIDE
+    // Seiten der Schluesselregel mitbestellt werden ('10_8' in der ersten UND
+    // in der weiteren Quelle). Fehlte eine, faende die Laufzeit keine
+    // Partnerzeile und die Fremdspalte bliebe still leer.
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0001', FELDER: '*' },
-      { INDEX_NR: 0, ALIAS: 'Kundenhaustiere', ID: 'IDBID0004', FELDER: '*' },
+      { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0001', FELDER: '0_10,78_30,10_8' },
+      { INDEX_NR: 0, ALIAS: 'Kundenhaustiere', ID: 'IDBID0004', FELDER: '128_350,10_8' },
     ])
   })
 
@@ -314,8 +318,11 @@ describe('exportMask: Datenquellen', () => {
     ]
     const { html, sevariablen } = exportMask(tree, 'Maske', sources, relations)
 
+    // Seit S5.1 bestellt sie genau das Feld, das der Parameter liest — der
+    // Ketten-Weg zaehlt also mit. Ginge er hier verloren, schickte SoftEngine
+    // das Feld nie und der PUT schriebe wieder Leere.
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Parametertabelle', ID: 'IDBID0009', FELDER: '*' },
+      { INDEX_NR: 0, ALIAS: 'Parametertabelle', ID: 'IDBID0009', FELDER: '30_10' },
     ])
     expect(html).toContain('window.FF_DATA_SOURCES = [{"id":"parameter"')
   })

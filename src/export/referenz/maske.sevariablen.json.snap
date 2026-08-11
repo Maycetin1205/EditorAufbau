@@ -4,7 +4,7 @@
       "INDEX_NR": 0,
       "ALIAS": "Terminplaner",
       "ID": "IDBID0004",
-      "FELDER": "*"
+      "FELDER": "0_10,40_20,10_5,30_10,20_10,50_10"
     },
     {
       "INDEX_NR": 0,

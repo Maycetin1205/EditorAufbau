@@ -137,11 +137,23 @@ git log --oneline -8
   gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
   gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
   das Pruefbuendel nicht haengt.
-- **Laufende Etappe:** S5.1 (Export bestellt nur benutzte Felder, s. Etappenkopf
-  S5). Vorbereitend verhaltensneutral geschnitten: `collectDataSources` wohnt
-  jetzt in `export/benutzteQuellen.ts` — `exportMask.ts` stand auf 498 von 500
-  Zeilen und hatte fuer die Etappe keinen Platz (Plan 3.1: Schnitt und Fachliches
-  getrennt). Export-Bytes, Runtime-Buendel und Referenzabzug unveraendert.
+- **Was S5.1 gebaut hat (2026-08-11) — SE-ECHTTEST STEHT AUS:** eine IDB-Quelle
+  bestellt statt `FELDER:'*'` die explizite pos_len-Liste der benutzten Felder.
+  Gesammelt wird in `export/benutzteQuellen.ts` (`benutzteFelderJeQuelle`),
+  entschieden in `core/data/dataSources.ts` (`felderFor`, jetzt mit dem
+  benutzten Satz als zweitem Argument). Die Liste ist vollstaendig, weil die
+  laufende Maske KEIN Feld-Woerterbuch hat — FF_DATA_SOURCES traegt nur
+  id/name/tableId/indexField, alles andere reist als Attribut; abgezaehlt werden
+  genau die sieben Schreibstellen des Exports (Kopf der Funktion). Sicherheitsventil:
+  kein benutztes Feld gefunden ODER ein Code, der kein pos_len ist -> `*` bleibt.
+  Referenzmaske vorher `*`, nachher `0_10,40_20,10_5,30_10,20_10,50_10`;
+  Stamm-Quellen unveraendert. HTML-Bytes und `ff-runtime.js` unveraendert —
+  geaendert hat sich nur eine Zeile in `maske.sevariablen.json.snap`.
+  **Der Kontrakt ist fuer IDB NICHT belegt** (beide Chef-Masken: IDB immer `*`);
+  faellt der Echttest durch, wird der Commit per `git revert` zurueckgenommen,
+  nicht nachgebessert. Vorbereitend verhaltensneutral geschnitten:
+  `collectDataSources` zog aus `exportMask.ts` aus (stand auf 498 von 500 Zeilen),
+  die vier neuen Faelle stehen in `export/felderBestellung.test.ts`.
 - **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -155,8 +167,9 @@ git log --oneline -8
   (Nutzer 2026-08-11): Entscheidung „nichts tun" (Regel 10), s. Etappenkopf
   A7.3 — der Beleg-Test bleibt.
   **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
-  s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
-  braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
+  s. Etappenkopf S1 — nicht wieder vorschlagen), **S5.1 ist gebaut und wartet
+  auf den SE-Echttest, S5.2 (Diagnose-Anzeige) ist offen und braucht sein
+  eigenes `go`**. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
   worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S). A9 setzt A3 bis
   A7 voraus.
@@ -716,8 +729,8 @@ Felder statt `*`. Gesammelt wird registry-getrieben (Regel 2) aus allen Wegen,
 auf denen ein Feldcode in die Maske reist — Bindungen, Listen-Eintraege,
 Feld-Properties, Verknuepfungs- und Auswahl-Schluessel, Ketten-Parameter, plus
 die Datensatz-Nummer der Quelle. Der Schnitt liegt in
-`export/benutzteFelder.ts` (Sammeln) und `core/data/dataSources.ts`
-(`felderFor` entscheidet die Form je Quellen-ART).
+`export/benutzteQuellen.ts` (`benutzteFelderJeQuelle` sammelt) und
+`core/data/dataSources.ts` (`felderFor` entscheidet die Form je Quellen-ART).
 
 **Kontrakt-Ehrlichkeit:** fuer IDB ist die explizite Liste NIRGENDS belegt —
 beide Chef-Masken fuehren IDB mit `*`. Belegt ist nur die FORM (pos_len,

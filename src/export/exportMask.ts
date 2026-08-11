@@ -51,7 +51,7 @@ import {
 import { rasterFlaecheStyle } from '../core/blocks/rasterLayout'
 import schriftenCssRaw from '../design/masken-schriften.css?raw'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
-import { collectDataSources } from './benutzteQuellen'
+import { benutzteFelderJeQuelle, collectDataSources } from './benutzteQuellen'
 import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
 import { styleAttr, styleToCss } from './knotenStil'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
@@ -323,6 +323,9 @@ export function exportMask(
     .join('\n')
 
   const used = collectDataSources(tree, sources)
+  // Welche FELDER die Maske aus jeder Quelle liest — EINMAL je Export, aus
+  // DEMSELBEN Baum (Export-Grundsatz a). Speist die FELDER-Bestellung unten.
+  const benutzteFelder = benutzteFelderJeQuelle(tree, sources)
   const usedRelations = collectRelations(tree, relations)
 
   // Die Schriften stehen VOR den Tokens: @font-face zuerst deklarieren,
@@ -404,8 +407,10 @@ export function exportMask(
 
   // SEvariablen: aus DEMSELBEN Baum erzeugt wie das HTML (Grundsatz a).
   // SEFILELOOP-Einträge nach Vorbild der echten behandlung-umbau-Masken:
-  // INDEX_NR 0, ALIAS = Anzeigename, ID/FELDER je Quellen-ART (IDB → eigene
-  // ID + '*', Stammtabellen → feste ID + explizite pos_len-Liste).
+  // INDEX_NR 0, ALIAS = Anzeigename, ID je Quellen-ART (Stammtabellen feste ID,
+  // IDB die eingegebene). WAS eine Quelle bestellt, entscheidet felderFor —
+  // die eine Stelle, die die FELDER-Form je Art kennt (seit S5.1 speist sie
+  // die benutzten Felder ein, statt bei IDB immer '*' zu schreiben).
   // Nicht-ASCII wird \uXXXX-escaped (gültiges JSON, ASCII-Regel wie beim HTML).
   //
   // KOPFSATZ_INDEX steht nur, wo die Quelle einen hat (kopfsatzFor): er sagt
@@ -418,7 +423,7 @@ export function exportMask(
       ALIAS: s.name,
       ID: tableIdFor(s),
       ...(kopfsatz !== '' ? { KOPFSATZ_INDEX: kopfsatz } : {}),
-      FELDER: felderFor(s),
+      FELDER: felderFor(s, benutzteFelder.get(s.id)),
     }
   })
   // VAR steht VOR der SEFILELOOP — wie in den ausgelieferten Rahmen; die
