@@ -35,6 +35,7 @@ import {
   migrateRasterHoehenReset,
   migrateRootKanbanToViewportFill,
   putzeAlteKartenDemos,
+  weggefalleneProps,
 } from './migrations'
 import { topologieProbleme } from './topologie'
 import { createEmptyTree, normalizeProps } from './treeOps'
@@ -156,6 +157,14 @@ export function baumAusRohdaten(parsed: {
     // Nur am Baum-Weg, genau wie vorher: der alte `blocks`-Weg unten hat den
     // Putzer nie gesehen, und das bleibt so.
     if (putzeDemos) for (const p of putzeAlteKartenDemos(tree)) absichtlichGeleert.add(p)
+    // Eigenschaften, die es an ihrem Baustein nicht mehr GIBT (migrations,
+    // `WEGGEFALLENE_PROPS`). Ohne diese Meldung sperrte die Verlust-Kontrolle
+    // unten jeden Altbestand, der so eine Eigenschaft noch traegt. Bewusst OHNE
+    // Bedingung: sie haengt an keiner Schemastufe, sondern daran, dass der Wert
+    // heute keinen Empfaenger mehr hat — und das gilt fuer jeden Stand.
+    for (const p of weggefalleneProps(parsed.tree as Record<string, unknown>)) {
+      absichtlichGeleert.add(p)
+    }
   } else if (Array.isArray(parsed.blocks)) {
     tree = migrateFlatBlocks(parsed.blocks)
   }

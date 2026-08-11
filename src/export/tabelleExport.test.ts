@@ -121,25 +121,31 @@ describe('Tabelle (Fahrplan 4)', () => {
 
   it('Tabelle: die Maskeneinstellungen ueberleben den Export', () => {
     // Die Tabelle braucht mindestens EINEN Attribut-Round-Trip (Regel 9, Lehre
-    // aus dem stillen Tabellen-Bug 2026-07-24). Geprueft wird alles, was der
-    // Bauer einstellt und die Maske brauchen MUSS: das Datumsfeld des
-    // Tagesfilters, die Zeilenzahl und der Zeilen-Waehler (die letzten zwei
-    // seit der Nutzer-Entscheidung 2026-08-05). Faellt eines weg, zeigt
-    // SoftEngine andere Zeilen als der Editor bzw. einen Waehler, den der Bauer
-    // nicht wollte — und zwar still (WYSIWYG-Bruch, Regel 1).
-    const gesetzt = exportMask(tabelleBaum({
-      tagField: '118_10', proSeite: '25', zeilenWaehler: 'ja',
-    })).html
+    // aus dem stillen Tabellen-Bug 2026-07-24). Geprueft wird, was der Bauer
+    // einstellt und die Maske brauchen MUSS: das Datumsfeld des Tagesfilters.
+    // Faellt es weg, zeigt SoftEngine andere Zeilen als der Editor — still
+    // (WYSIWYG-Bruch, Regel 1).
+    const gesetzt = exportMask(tabelleBaum({ tagField: '118_10' })).html
     expect(tabelleTag(gesetzt)).toMatch(/\stagField="118_10"/i)
-    expect(tabelleTag(gesetzt)).toMatch(/\sproSeite="25"/i)
-    expect(tabelleTag(gesetzt)).toMatch(/\szeilenWaehler="ja"/i)
     expect(failedChecks(validateMaskHtml(gesetzt))).toEqual([])
-    // Die Standardwerte („passend zur Hoehe", kein Waehler) schreiben KEIN
-    // Attribut: sonst waere jede bestehende Maske im Export anders — und der
-    // Byte-Waechter (referenzabzug) haette bei diesem Paket angeschlagen.
-    const standard = tabelleTag(exportMask(tabelleBaum({ proSeite: 'passend', zeilenWaehler: 'nein' })).html)
-    expect(standard).not.toMatch(/proSeite=/i)
-    expect(standard).not.toMatch(/zeilenWaehler=/i)
+    // Der Standardwert schreibt KEIN Attribut: sonst waere jede bestehende
+    // Maske im Export anders — und der Byte-Waechter (referenzabzug) haette
+    // angeschlagen.
+    expect(tabelleTag(exportMask(tabelleBaum({ tagField: '' })).html)).not.toMatch(/tagField=/i)
+  })
+
+  it('Tabelle: der Zeilen-Waehler reist NICHT mehr mit (S2.1)', () => {
+    // Ein alter Stand kann `proSeite` und `zeilenWaehler` noch tragen (der
+    // Bediener hatte „25 pro Seite" gewaehlt). Beides gibt es nicht mehr — es
+    // passen so viele Zeilen hinein, wie hineinpassen. Reiste ein solches
+    // Attribut trotzdem in die Maske, stellte die Laufzeit eine Eigenschaft ein,
+    // die kein Baustein mehr liest: ein Wert ohne Empfaenger, der beim naechsten
+    // Leser wieder Bedeutung bekaeme.
+    // Dass ihr Fehlen im gespeicherten Stand KEIN Datenverlust ist, haelt
+    // state/ladeKette fest (`weggefalleneProps` in migrations).
+    const alt = tabelleTag(exportMask(tabelleBaum({ proSeite: '25', zeilenWaehler: 'ja' })).html)
+    expect(alt).not.toMatch(/proSeite=/i)
+    expect(alt).not.toMatch(/zeilenWaehler=/i)
   })
 
   it('Tabelle: „Text wenn leer" reist nur mit, wenn er vom Standard abweicht', () => {

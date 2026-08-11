@@ -1,7 +1,12 @@
 // tabelleFuss — die Bedienleiste unter der Tabelle.
 //
-// Drei Dinge, ein Streifen: wie viele Saetze zu sehen sind, wie viele Zeilen
-// eine Seite zeigt, und das Blaettern.
+// Zwei Dinge, ein Streifen: wie viele Saetze zu sehen sind, und das Blaettern.
+// Der Waehler „Zeilen pro Seite" stand bis 2026-08-11 dazwischen (S2.1,
+// Nutzer-Entscheidung): es gilt jetzt immer „so viele, wie hineinpassen".
+// Damit ist die Fusszeile in Editor und Maske dieselbe — vorher zeigte der
+// Editor den Waehler immer, die Maske nur auf Wunsch, und eine Fusszeile
+// unterschiedlicher Hoehe haette die Zeilenzahl auseinanderlaufen lassen
+// (dagegen stand eine feste Hoehe fuer Waehler und Knoepfe im Stylesheet).
 //
 // Aus TabelleBlock herausgeloest (2026-08-06): die Datei ueberschritt mit der
 // gemessenen Seitengroesse den 500-Zeilen-Deckel (check:regeln). Der Schnitt
@@ -15,8 +20,7 @@
 // Seiteneinstellung. Ohne Daten steht statt einer erfundenen Zahl ein Strich
 // (Regel 7) — das entscheidet datensatzText in ./suche.
 
-import { html, nothing, type TemplateResult } from 'lit'
-import { PASSEND, ZEILEN_PRO_SEITE } from './seitengroesse'
+import { html, type TemplateResult } from 'lit'
 import { datensatzText } from './suche'
 
 export interface FussLage {
@@ -27,23 +31,11 @@ export interface FussLage {
   gesamt: number
   suchtAktiv: boolean
   auswahlAktiv: boolean
-  // Steht der Zeilen-Waehler hier? Im Editor immer (dort STELLT der Bauer ihn
-  // ein), in der Maske nur, wenn er es erlaubt hat (Prop `zeilenWaehler`).
-  // Blaetter-Knoepfe und Zeilen-Info bleiben in jedem Fall — sie sind keine
-  // Einstellung, sondern das Blaettern selbst.
-  zeigeWaehler: boolean
-  // Die gerade wirksame Einstellung, wie sie auch im Attribut steht:
-  // PASSEND oder eine Zahl als Text.
-  einstellung: string
   seite: number
   seiten: number
 }
 
 export interface FussHandeln {
-  // Der gewaehlte Wert, wie er in der Prop steht (PASSEND oder Zahl als Text).
-  // Was damit passiert, entscheidet der Baustein: im Editor wird er
-  // PERSISTENT gesetzt, in der Maske gilt er nur bis zum Neuladen.
-  waehleProSeite: (wert: string) => void
   blaettere: (zu: number) => void
   // Klicks in der Leiste duerfen den Baustein nicht anfassen (Editor: Auswahl).
   stop: (e: Event) => void
@@ -59,22 +51,6 @@ export function tabelleFuss(lage: FussLage, tun: FussHandeln): TemplateResult {
       auswahlAktiv: lage.auswahlAktiv,
     })}</div>
     <div class="seiten-nav">
-      ${lage.zeigeWaehler ? html`<select
-        aria-label="Zeilen pro Seite"
-        @pointerdown=${tun.stop}
-        @change=${(e: Event) => tun.waehleProSeite((e.target as HTMLSelectElement).value)}
-      >
-        <!-- „Passend zur Hoehe" ist der Standard: die Tabelle zeigt so viele
-             Zeilen, wie in ihre Hoehe passen — kein Scrollen bei einer hohen
-             Tabelle, kein leerer Rest bei einer flachen. Die festen Zahlen
-             sind die bewusste Uebersteuerung; wer sie waehlt, nimmt das
-             Scrollen in Kauf. Im EDITOR schreibt diese Wahl den Bauplan, in
-             der MASKE gilt sie nur fuer diese Sitzung. -->
-        <option value=${PASSEND} ?selected=${lage.einstellung === PASSEND}>passend zur Höhe</option>
-        ${ZEILEN_PRO_SEITE.map(
-          (n) => html`<option value=${n} ?selected=${lage.einstellung === String(n)}>${n} pro Seite</option>`,
-        )}
-      </select>` : nothing}
       <button
         aria-label="Seite zurück"
         ?disabled=${lage.seite <= 0}

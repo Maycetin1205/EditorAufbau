@@ -9,15 +9,16 @@
 // lassen. Absichtlich kein LitElement im Typ — die Messung braucht davon
 // nichts, und ein schmaler Vertrag ist ohne Testaufbau nachvollziehbar.
 
-import { passendeZeilen } from './seitengroesse'
+import { zeilenmass, type Zeilenmass } from './seitengroesse'
 
 export interface MessZiel {
   hasAttribute(name: string): boolean
   renderRoot: { querySelector(auswahl: string): Element | null }
 }
 
-// Wie viele Zeilen passen JETZT? null heisst „nicht messbar" — der Aufrufer
-// nimmt dann seinen Rueckfall (OHNE_MESSUNG).
+// Welches Zeilenmass gilt JETZT — wie viele Zeilen, und wie hoch jede davon
+// gezeichnet wird (./seitengroesse, `zeilenmass`)? null heisst „nicht messbar" —
+// der Aufrufer nimmt dann seinen Rueckfall (OHNE_MESSUNG und den rohen Takt).
 //
 // Gemessen wird NUR auf der Rasterflaeche, erkennbar am Attribut 'fuellt'
 // (dieselbe Marke setzen Editor und Export, siehe BasicBlock). Nur dort ist
@@ -34,12 +35,12 @@ export interface MessZiel {
 //
 // Der Zeilentakt kommt vom Aufrufer: er haengt seit 2026-08-06 an den Arten der
 // Spalten (./spaltenArten, zeilenHoeheFuer), und nur der Baustein kennt sie.
-export function gemesseneZeilen(ziel: MessZiel, zeilenHoehe: number): number | null {
+export function gemessenesMass(ziel: MessZiel, takt: number): Zeilenmass | null {
   if (!ziel.hasAttribute('fuellt')) return null
   const rumpf = ziel.renderRoot.querySelector('.koerper')
   const kopf = ziel.renderRoot.querySelector('.kopf')
   if (!(rumpf instanceof HTMLElement) || !(kopf instanceof HTMLElement)) return null
-  return passendeZeilen(rumpf.clientHeight, kopf.offsetHeight, zeilenHoehe)
+  return zeilenmass(rumpf.clientHeight, kopf.offsetHeight, takt)
 }
 
 // Den Rumpf beobachten. Gibt den Beobachter zurueck (zum Abmelden) oder null,

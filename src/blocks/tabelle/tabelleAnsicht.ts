@@ -15,8 +15,8 @@ import {
   linealTakte,
   OHNE_MESSUNG,
   platzhalterZeilen,
-  proSeiteAusEinstellung,
   seitenAufteilung,
+  type Zeilenmass,
 } from './seitengroesse'
 import { sortiereIndizes } from './sortierung'
 import type { Spalte } from './spalten'
@@ -35,15 +35,18 @@ export interface AnsichtFrage {
   sortAuf: boolean
   // Auf welcher Seite der Bediener stehen WILL (kann veraltet sein).
   wunschSeite: number
-  // Zeilen pro Seite, wie sie gerade gilt (Bauplan oder Sitzungswahl).
-  einstellung: string
-  // Gemessene Zeilenzahl, null = (noch) nicht messbar.
-  gemessen: number | null
+  // Das gemessene Zeilenmass (Anzahl + gezeichnete Hoehe, ./seitengroesse).
+  // null = (noch) nicht messbar; dann gelten die Rueckfaelle.
+  gemessen: Zeilenmass | null
 }
 
 export interface TabelleAnsicht {
   // Die Rasterbreiten — EINE Rechnung, drei Leser (Kopf, Zeilen, Lineal).
   cols: Record<string, string>
+  // Der Grundtakt (Spalten-Art) — die Hoehe des KOPFES.
+  takt: number
+  // Der Takt plus dem verteilten Rest — die Hoehe einer ZEILE und eines
+  // Lineal-Taktes. Ohne Messung gleich `takt`.
   zeilenHoehe: number
   hatQuelle: boolean
   leer: boolean
@@ -79,7 +82,13 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
   // Der Zeilentakt: die anspruchsvollste Spalten-Art bestimmt ihn
   // (./spaltenArten). EINE Zahl, drei Leser — das Aussehen (als CSS-Variable),
   // die Messung und die Seitenrechnung.
-  const zeilenHoehe = zeilenHoeheFuer(frage.spalten)
+  //
+  // GEZEICHNET wird seit S2.1 mit der verteilten Hoehe: der Takt plus dem
+  // Anteil am Rest, der sonst als leerer Streifen unter der letzten Zeile
+  // stehenbliebe (./seitengroesse, `zeilenmass`). Ohne Messung bleibt es beim
+  // rohen Takt — dort gibt es keinen Rest, den man verteilen koennte.
+  const takt = zeilenHoeheFuer(frage.spalten)
+  const zeilenHoehe = frage.gemessen?.zeilenHoehe ?? takt
   // „Hat Quelle" heisst: es KOMMEN Daten — nicht, dass gerade welche da sind.
   // Bis 2026-07-28 stand hier `datenzeilen.length > 0`, und damit fiel die
   // LAUFENDE Maske auf die Editor-Platzhalter zurueck, sobald der Tagesfilter
@@ -103,19 +112,20 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
   // Platzhalter-Zeilen mit „—" (Regel 7: hier kommt spaeter ein Wert hin),
   // und zwar so viele, wie wirklich hineinpassen (platzhalterZeilen).
   const alleSichtbar = sichtbareIndizes(frage)
-  // Reihenfolge fuer echte Daten: eine feste Zahl gewinnt, sonst die Messung,
-  // sonst der Rueckfall. Ohne Messung (kein ResizeObserver, oder kein Raster mit
-  // vorgegebener Hoehe) laeuft die Tabelle wie bis 2026-08-06.
-  const proSeite = proSeiteAusEinstellung(frage.einstellung) ?? frage.gemessen ?? OHNE_MESSUNG
+  // Es gilt IMMER die Messung (S2.1: der Waehler mit den festen Zahlen ist weg).
+  // Ohne Messung (kein ResizeObserver, oder kein Raster mit vorgegebener Hoehe)
+  // laeuft die Tabelle wie bis 2026-08-06 mit dem Rueckfall.
+  const proSeite = frage.gemessen?.passen ?? OHNE_MESSUNG
   const { seiten, seite, zeilen } = seitenAufteilung({
     sichtbar: alleSichtbar,
     hatQuelle,
     proSeite,
     wunschSeite: frage.wunschSeite,
-    platzhalterZeilen: platzhalterZeilen(frage.einstellung, frage.gemessen),
+    platzhalterZeilen: platzhalterZeilen(frage.gemessen?.passen ?? null),
   })
   return {
     cols,
+    takt,
     zeilenHoehe,
     hatQuelle,
     leer,
@@ -123,11 +133,10 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
     seiten,
     seite,
     zeilen,
-    // Das Lineal fuellt den Rest unter den Zeilen nur noch in GANZEN Takten.
-    // Gerechnet wird gegen die GEMESSENE Zahl, nicht gegen `proSeite`: bei
-    // einer festen Einstellung (10 pro Seite in einer Tabelle, in die 25
-    // passen) bleibt unter der zehnten Zeile echter Platz, den das Lineal
-    // weiter zeichnen soll — nur eben nicht bis in den angebrochenen Takt.
-    linealTakte: linealTakte(frage.gemessen, zeilen.length),
+    // Das Lineal fuellt auf, was diese Seite an Zeilen schuldig bleibt — die
+    // LETZTE Seite zeigt selten volle Zeilen. Ein Takt ist seit S2.1 genau so
+    // hoch wie eine Zeile (beide `zeilenHoehe`), damit schliesst die Rechnung
+    // ohne Rest: Zeilen plus Takte fuellen den Rumpf genau aus.
+    linealTakte: linealTakte(frage.gemessen?.passen ?? null, zeilen.length),
   }
 }

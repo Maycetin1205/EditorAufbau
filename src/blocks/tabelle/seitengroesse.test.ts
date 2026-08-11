@@ -4,35 +4,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   linealTakte,
-  PASSEND,
   passendeZeilen,
-  proSeiteAusEinstellung,
   seitenAufteilung,
   ZEILEN_HOEHE,
+  zeilenmass,
 } from './seitengroesse'
-
-describe('proSeiteAusEinstellung', () => {
-  it('uebersetzt die festen Zahlen', () => {
-    expect(proSeiteAusEinstellung('10')).toBe(10)
-    expect(proSeiteAusEinstellung('25')).toBe(25)
-    expect(proSeiteAusEinstellung('50')).toBe(50)
-  })
-
-  it('„passend" heisst gemessen (null)', () => {
-    expect(proSeiteAusEinstellung(PASSEND)).toBeNull()
-  })
-
-  it('faellt bei allem Unbekannten auf gemessen zurueck, nie auf eine erfundene Zahl', () => {
-    // Ein Attribut aus einem alten Stand, von Hand verstellt oder leer: nie
-    // ein Absturz, nie eine Zahl, die niemand gewaehlt hat. Besonders „1000"
-    // waere gefaehrlich — das machte die Maske zu einer endlosen Seite.
-    expect(proSeiteAusEinstellung('1000')).toBeNull()
-    expect(proSeiteAusEinstellung('7')).toBeNull()
-    expect(proSeiteAusEinstellung('')).toBeNull()
-    expect(proSeiteAusEinstellung('viele')).toBeNull()
-    expect(proSeiteAusEinstellung('-10')).toBeNull()
-  })
-})
 
 describe('passendeZeilen', () => {
   it('rechnet den freien Rumpf in ganze Zeilen um', () => {
@@ -63,6 +39,59 @@ describe('passendeZeilen', () => {
   })
 })
 
+describe('zeilenmass', () => {
+  it('verteilt den Rest auf die Zeilen, sodass sie den Rumpf genau ausfuellen', () => {
+    // 300px Rumpf minus 32px Kopf = 268px frei. Acht Zeilen a 32 = 256, es
+    // blieben 12px uebrig — genau der Streifen, der den Nutzer stoert. Verteilt
+    // sind es 268/8 = 33,5px je Zeile, und 8 * 33,5 = 268: kein Rest.
+    const mass = zeilenmass(300, ZEILEN_HOEHE, ZEILEN_HOEHE)
+    expect(mass.passen).toBe(8)
+    expect(mass.zeilenHoehe).toBe(33.5)
+    expect(mass.passen * mass.zeilenHoehe).toBe(268)
+  })
+
+  it('aendert die ANZAHL nicht — gezaehlt wird weiter mit dem Takt', () => {
+    // Sonst liefe die Rechnung ihrem eigenen Ergebnis nach: hoehere Zeile,
+    // weniger Zeilen, noch hoehere Zeile.
+    for (const rumpf of [300, 301, 320, 331]) {
+      expect(zeilenmass(rumpf, ZEILEN_HOEHE, ZEILEN_HOEHE).passen)
+        .toBe(passendeZeilen(rumpf, ZEILEN_HOEHE, ZEILEN_HOEHE))
+    }
+  })
+
+  it('laesst eine genau aufgehende Tabelle unberuehrt', () => {
+    // Elf Takte Rumpf = Kopf + zehn Zeilen: es gibt keinen Rest zu verteilen.
+    expect(zeilenmass(ZEILEN_HOEHE * 11, ZEILEN_HOEHE, ZEILEN_HOEHE))
+      .toEqual({ passen: 10, zeilenHoehe: ZEILEN_HOEHE })
+  })
+
+  it('verteilt nichts, wenn nicht einmal ein ganzer Takt hineinpasst', () => {
+    // Sonst schrumpfte die einzige Zeile auf die Resthoehe — eine 8px-Zeile ist
+    // schlimmer als eine, die unten anstoesst.
+    expect(zeilenmass(40, ZEILEN_HOEHE, ZEILEN_HOEHE))
+      .toEqual({ passen: 1, zeilenHoehe: ZEILEN_HOEHE })
+    expect(zeilenmass(0, ZEILEN_HOEHE, ZEILEN_HOEHE))
+      .toEqual({ passen: 1, zeilenHoehe: ZEILEN_HOEHE })
+  })
+
+  it('rundet die Zeilenhoehe ab, nie auf', () => {
+    // 297 - 32 = 265 frei, 8 Zeilen -> 33,125px. Aufgerundet waeren 8 Zeilen
+    // 265,04px hoch, also einen Hauch hoeher als der Rumpf: das gibt eine
+    // senkrechte Scrollleiste, die die Breite aendert, die Messung neu anstoesst
+    // und die Tabelle zwischen zwei Zeilenzahlen zappeln laesst.
+    const mass = zeilenmass(297, ZEILEN_HOEHE, ZEILEN_HOEHE)
+    expect(mass.zeilenHoehe).toBe(33.12)
+    expect(mass.passen * mass.zeilenHoehe).toBeLessThanOrEqual(265)
+  })
+
+  it('rechnet mit dem uebergebenen Takt (Bild-Spalte erhoeht ihn)', () => {
+    const mass = zeilenmass(300, ZEILEN_HOEHE, 44)
+    expect(mass.passen).toBe(6)
+    // 268 / 6 = 44,666… -> abgeschnitten 44,66.
+    expect(mass.zeilenHoehe).toBe(44.66)
+  })
+})
+
 describe('linealTakte', () => {
   it('fuellt den Platz unter den Zeilen mit ganzen Takten', () => {
     // Zwoelf Zeilen passen, drei stehen da -> neun Takte Lineal.
@@ -77,8 +106,9 @@ describe('linealTakte', () => {
   })
 
   it('geht nie ins Minus (mehr Zeilen als gemessen passen)', () => {
-    // Feste Einstellung „25 pro Seite" in einer Tabelle, in die 12 passen:
-    // der Rumpf scrollt, unter den Zeilen ist kein Platz mehr.
+    // Kann seit S2.1 nur noch im Uebergang auftreten — die Zeilenzahl kommt
+    // immer aus der Messung, aber ein Datenpush kann zwischen Messung und
+    // Zeichnung liegen. Ein negativer Takt waere eine negative CSS-Hoehe.
     expect(linealTakte(12, 25)).toBe(0)
   })
 

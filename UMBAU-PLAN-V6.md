@@ -30,7 +30,7 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** P2/Symbole (2026-08-11) — davor P1 (Messen), A7.3,
+- **Letzte fertige Etappe:** S2.1 (2026-08-11) — davor P2/Symbole, P1 (Messen), A7.3,
   A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2. S2 hat
   Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
@@ -73,6 +73,24 @@ git log --oneline -8
   lucide-react geborgt und umging damit `no-restricted-imports` nur, weil das
   Paket nicht `react` heisst; er hat jetzt einen eigenen frameworkfreien Vertrag
   (`BausteinSymbol`), die EINE Umdeutung steht in `BlockPalette.tsx`.
+- **Was S2.1 gebaut hat (2026-08-11):** der Rest unter der letzten Zeile wird
+  auf die Zeilen VERTEILT (`blocks/tabelle/seitengroesse.ts`, `zeilenmass`) —
+  jede Zeile ist um Rest/Anzahl hoeher, die Fusszeile sitzt buendig, die ANZAHL
+  bleibt am Grundtakt. Der KOPF bleibt ebenfalls am Grundtakt (zwei
+  CSS-Variablen, `--takt` und `--zeilen-hoehe`): waechst er mit, aendert er den
+  Platz, den die Messung gerade verteilt hat, und die Tabelle zappelte zwischen
+  zwei Zeilenzahlen. Der Zeilen-Waehler ist WEG, mit ihm die Props `proSeite`
+  und `zeilenWaehler`, die Inspector-Eigenschaft, `ZEILEN_PRO_SEITE`/`PASSEND`
+  und die Sitzungs-Uebersteuerung. Die A4-Falle ist geschlossen ueber
+  `weggefalleneProps` in `state/migrations.ts` (Typ + Name, ohne Bedingung, KEIN
+  Schema-Bump — die 6 bleibt fuer C2 frei); drei Faelle in
+  `state/teilverlust.test.ts` halten fest, dass ein Altbestand mit gesetztem
+  Waehler laedt, eine wirklich unbekannte Eigenschaft an derselben Tabelle aber
+  weiter sperrt. Runtime-Bytes ABSICHTLICH geaendert (183 332 -> 182 719),
+  `build:runtime` liegt im Commit. **Die SoftEngine-Probe der Tabelle deckt
+  jetzt S2 UND S2.1 ab.** Ausdruecklich anzusehen, weil ich es nicht kann: passt
+  nur EINE Zeile in die Tabelle, wird diese Zeile bis zu doppelt so hoch — die
+  direkte Folge der Verteil-Entscheidung, kein Fehler, aber ein Anblick.
 - **Was A5 gebaut hat (2026-08-11):** `state/duplizieren.ts` — zweiphasiges
   Klonen (Knoten kopieren, DANN Verweise umschreiben) samt der EINEN Liste aller
   Felder, die eine Baustein-id tragen (`schreibeBlockReferenzenUm`: geberId,
@@ -119,9 +137,8 @@ git log --oneline -8
   gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
   gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
   das Pruefbuendel nicht haengt.
-- **Naechste Etappe:** S2.1 (Tabellen-Nachschlag, faehrt laut Block P im selben
-  Chat mit) — danach A9 (setzt die Bedienproben von A5/A6 voraus). **P1 und P2
-  sind fertig** (s. die zwei Zeilen oben); von P1s Rangliste sind ZWEI Posten
+- **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
+  **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
   Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein
   spaeteres Nachladen loesen, und das macht aus dem Export-Klick einen
@@ -525,7 +542,7 @@ Der volle Etappentext steht in der git-Historie (`6ce5695`).
 
 ## S2 · Tabelle: der bemalte Reststreifen
 
-### S2.1 · Nachschlag: Rest verteilen, Zeilen-Waehler faellt (entschieden 2026-08-11, wartet auf go)
+### S2.1 · Nachschlag: Rest verteilen, Zeilen-Waehler faellt (GEBAUT 2026-08-11)
 
 Die Nutzerprobe zu S2 ergab: die vorgetaeuschte Zeile ist weg, aber der
 LEERE Platz zwischen letzter Zeile und Fusszeile stoert weiter. Mit dem

@@ -70,9 +70,21 @@ export const tabelleStil = css`
         outline: none;
         border-color: var(--se-accent);
       }
-      /* Kopf und Zeilen tragen DIESELBE feste Hoehe — daraus entsteht der
-         gleichmaessige Takt, den man als sauberes Lineal wahrnimmt. */
-      .kopf,
+      /* Kopf und Zeilen tragen eine feste Hoehe — daraus entsteht der
+         gleichmaessige Takt, den man als sauberes Lineal wahrnimmt.
+         ZWEI Variablen, seit die Zeilen den Rest aufnehmen (S2.1, 2026-08-11):
+         die Zeilen sind um Rest/Anzahl hoeher als der Grundtakt (1 bis 4 px),
+         der KOPF bleibt beim Grundtakt. Das ist keine Kosmetik, sondern der
+         Riegel gegen eine Schleife: die Messung zieht die Kopfhoehe von der
+         Rumpfhoehe ab — waechst der Kopf mit, aendert sich der Platz, den die
+         Messung gerade verteilt hat, und die Tabelle zappelte zwischen zwei
+         Zeilenzahlen. Ohne Messung sind beide Werte gleich, dann sieht man
+         keinen Unterschied. */
+      .kopf {
+        display: grid;
+        height: var(--takt);
+        box-sizing: border-box;
+      }
       .zeile {
         display: grid;
         height: var(--zeilen-hoehe);
@@ -222,6 +234,11 @@ export const tabelleStil = css`
         text-overflow: ellipsis;
         border-right: 1px solid var(--se-line-soft);
       }
+      /* Der Kopf ist um den verteilten Rest flacher als eine Zeile (s. oben),
+         also braucht sein Text die Kopfhoehe, nicht die Zeilenhoehe — sonst
+         saesse die Ueberschrift ein bis vier Pixel zu tief. Alles andere gilt
+         aus der Regel darueber. */
+      .kopf > div { line-height: calc(var(--takt) - 1px); }
       .kopf > div:last-child,
       .zeile > div:last-child { border-right: none; }
       .kopf > div { cursor: pointer; user-select: none; }
@@ -329,16 +346,17 @@ export const tabelleStil = css`
         align-items: center;
         gap: 6px;
       }
-      /* Feste, GLEICHE Hoehe fuer Waehler und Blaetter-Knoepfe. Nicht Optik,
-         sondern die Messung: den Zeilen-Waehler zeigt der Editor immer, die
-         Maske nur auf Wunsch (Prop zeilenWaehler, Standard nein). Wie hoch
-         ein <select> von sich aus wird, bestimmt der Browser — ist es auch nur
-         zwei Pixel mehr als ein <button>, ist die Fusszeile im Editor hoeher,
-         der Rumpf darueber flacher, und die Tabelle zeigt im Editor eine Zeile
-         WENIGER als dieselbe Maske in SoftEngine (Regel 1: was zu sehen ist,
-         IST der Export). Mit derselben festen Hoehe fuer beide haengt die
-         Fusszeilenhoehe nicht mehr daran, ob der Waehler dasteht. */
-      .seiten-nav select,
+      /* Feste Hoehe fuer die Blaetter-Knoepfe: die Fusszeilenhoehe geht von der
+         Rumpfhoehe ab und bestimmt damit mit, wie viele Zeilen passen. Eine vom
+         Browser geschaetzte Knopfhoehe waere eine Zahl, die im Editor und in
+         SoftEngine verschieden ausfallen kann — und dann zeigte der Editor eine
+         Zeile mehr oder weniger als die Maske (Regel 1: was zu sehen ist, IST
+         der Export).
+         Bis 2026-08-11 (S2.1) stand daneben ein <select> fuer „Zeilen pro
+         Seite", das der Editor immer und die Maske nur auf Wunsch zeigte —
+         dieselbe feste Hoehe galt deshalb fuer beide Elemente, sonst haette
+         schon sein Dasein die Zeilenzahl verschoben. Der Waehler ist weg, die
+         Fusszeile ist in beiden Welten dieselbe; die feste Hoehe bleibt. */
       .seiten-nav button {
         box-sizing: border-box;
         height: 22px;

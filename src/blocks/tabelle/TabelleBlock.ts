@@ -37,11 +37,12 @@
 // Alles Editor-Sichtbare (Steuerung/Inline-Edit) NUR im Editor (data-ff-editor),
 // im Export nie (WYSIWYG). KEIN Spaltenbreite-Ziehen (Nutzer 2026-07-23).
 //
-// Zeilen pro Seite: der Bauer stellt sie im Editor unten AM DING ein
-// (./tabelleFuss), Standard „passend zur Hoehe" — dann rechnet
-// ./seitengroesse sie aus der gemessenen Hoehe (./rumpfMessung). Ob der
-// Bediener in der Maske umstellen darf, ist eine eigene Einstellung
-// (`zeilenWaehler`, Standard nein — Nutzer-Entscheidung 2026-08-05).
+// Zeilen pro Seite: niemand stellt sie ein (Nutzer-Entscheidung 2026-08-11,
+// S2.1). Es passen so viele hinein, wie hineinpassen — ./rumpfMessung misst den
+// Rumpf, ./seitengroesse rechnet daraus die Anzahl UND die Hoehe, mit der eine
+// Zeile gezeichnet wird (der Rest unter der letzten Zeile wird auf die Zeilen
+// verteilt, statt als leerer Streifen stehenzubleiben). Geblaettert wird mit der
+// Fusszeile, gesucht mit der Suchleiste; innen scrollt eine Tabelle nie.
 //
 // Daten: an die Tabelle laesst sich eine Datenquelle haengen (acceptsDataSource,
 // `source`-Prop -> Inspector-Sektion „Daten", Export -> SEFILELOOP). Zur
@@ -64,8 +65,8 @@ import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
 import { chipStyles } from '../shared/statusVariant'
-import { beobachteRumpf, gemesseneZeilen } from './rumpfMessung'
-import { PASSEND } from './seitengroesse'
+import { beobachteRumpf, gemessenesMass } from './rumpfMessung'
+import type { Zeilenmass } from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
 import {
   benenneSpalteUm,
@@ -119,12 +120,11 @@ export class TabelleBlock extends BasicBlock {
     // Feldcode des Datumsfelds fuer den Tageswaehler (Technikwert,
     // unsichtbar). Leer = kein Tagesfilter, alle Saetze.
     tagField: '',
-    // Wie viele Zeilen eine Seite zeigt — der BAUPLAN-Wert, den der Bauer im
-    // Editor unten am Ding einstellt (PASSEND oder eine Zahl als Text).
-    proSeite: PASSEND,
-    // Darf der BEDIENER das in der Maske umstellen? Standard nein: ein Waehler
-    // in jeder Maske war eine Einstellung, die niemand bestellt hatte.
-    zeilenWaehler: 'nein',
+    // Wie viele Zeilen eine Seite zeigt, ist KEINE Eigenschaft: es passen so
+    // viele hinein, wie hineinpassen (S2.1, 2026-08-11). Bis dahin standen hier
+    // `proSeite` (Bauplan: passend / 10 / 25 / 50) und `zeilenWaehler` (darf der
+    // Bediener umstellen) — Begruendung in ./tabelleEigenschaften, das Abraeumen
+    // alter Staende in state/ladeKette (`WEGGEFALLENE_TABELLENPROPS`).
     // Was in der MASKE steht, wenn die Quelle keine Zeile liefert
     // (shared/leerZustand). Der Standard reist nicht als Attribut mit.
     leerText: LEER_TEXT_STANDARD,
@@ -150,12 +150,6 @@ export class TabelleBlock extends BasicBlock {
 
   // Suchzeile ueber der Tabelle ein-/ausschaltbar ('ja' | 'nein').
   @property() suche = 'ja'
-
-  // Bauplan: wie viele Zeilen eine Seite zeigt (PASSEND oder Zahl als Text).
-  @property() proSeite = PASSEND
-
-  // Bauplan: darf der Bediener das in der Maske umstellen ('ja' | 'nein')?
-  @property() zeilenWaehler = 'nein'
 
   // Bauplan: der Satz fuer den Leerzustand (leer = gar keine Meldung).
   @property() leerText = LEER_TEXT_STANDARD
@@ -198,14 +192,11 @@ export class TabelleBlock extends BasicBlock {
 
   // Paginierung (nur Laufzeit, nicht persistiert).
   private _seite = 0
-  // Was der BEDIENER in der Maske umgestellt hat (null = nichts umgestellt,
-  // dann gilt der Bauplan `proSeite`). Bewusst nicht persistiert: seine Wahl
-  // gilt fuer seine Sitzung, sie aendert die Maske nicht.
-  private _proSeiteWahl: string | null = null
 
-  // Wie viele Zeilen bei der aktuellen Hoehe passen — gemessen, nicht geraten
-  // (siehe messeRumpf). null = noch nicht bzw. nicht messbar.
-  private _proSeiteGemessen: number | null = null
+  // Das Zeilenmass bei der aktuellen Hoehe — gemessen, nicht geraten (siehe
+  // messeRumpf): wie viele Zeilen passen, und wie hoch jede gezeichnet wird.
+  // null = noch nicht bzw. nicht messbar.
+  private _mass: Zeilenmass | null = null
   private _beobachter: ResizeObserver | null = null
 
   // Mit welchem Zeilentakt zuletzt gemessen wurde (0 = noch nie). Der Takt
@@ -215,46 +206,24 @@ export class TabelleBlock extends BasicBlock {
   // merkt es sich der Baustein und misst danach nach.
   private _taktGemessen = 0
 
-  // Die gerade wirksame Einstellung: die Uebersteuerung des Bedieners, sonst
-  // der Bauplan. Das ist auch, was der Waehler als gewaehlt anzeigt.
-  private get einstellung(): string {
-    return this._proSeiteWahl ?? this.proSeite
-  }
-
-  // Der Waehler ist bedient worden. Der EINE Unterschied zwischen den Welten:
-  // im Editor schreibt er den BAUPLAN (persistent, mit Undo, im Export als
-  // Attribut), in der Maske gilt er nur fuer diese Sitzung. Am Attribut
-  // data-ff-editor unterschieden, nicht an `editable`: letzteres ist nur am
-  // AUSGEWAEHLTEN Baustein true, ein nicht ausgewaehlter schriebe sonst still
-  // Laufzeit-Werte, die niemand wiederfindet.
-  private waehleProSeite(wert: string): void {
-    if (this.hasAttribute('data-ff-editor')) {
-      this.dispatchEvent(new CustomEvent('ff-prop-change', {
-        detail: { attr: 'proSeite', value: wert },
-        bubbles: true,
-        composed: true,
-      }))
-    } else {
-      this._proSeiteWahl = wert
-    }
-    this._seite = 0
-    this.requestUpdate()
-  }
-
   // Nachmessen (./rumpfMessung kennt das WIE und das Warum). Editor UND Maske,
   // eine Render-Quelle (Regel 1): im Editor zieht der Bauer den Baustein
   // groesser und sieht sofort, was in der Maske stehen wird.
   //
-  // Neu gezeichnet wird nur, wenn sich die ZAHL aendert: eine Scrollleiste,
+  // Neu gezeichnet wird nur, wenn sich das MASS aendert: eine Scrollleiste,
   // die kommt oder geht, aendert die Breite und darf keine Zeichen-Schleife
   // anstossen. null (nicht messbar, z. B. im Fluss ohne vorgegebene Hoehe)
   // ist ein gueltiges Ergebnis — dann greift der Rueckfall.
+  //
+  // Gemessen wird mit dem rohen TAKT, nicht mit der verteilten Hoehe: sonst
+  // liefe die Messung ihrem eigenen Ergebnis nach (hoehere Zeile -> weniger
+  // Zeilen -> noch hoehere Zeile). Die verteilte Hoehe ist reine Zeichnung.
   private messeRumpf(): void {
     const takt = this.zeilenHoehe
     this._taktGemessen = takt
-    const zahl = gemesseneZeilen(this, takt)
-    if (zahl === this._proSeiteGemessen) return
-    this._proSeiteGemessen = zahl
+    const mass = gemessenesMass(this, takt)
+    if (mass?.passen === this._mass?.passen && mass?.zeilenHoehe === this._mass?.zeilenHoehe) return
+    this._mass = mass
     this.requestUpdate()
   }
 
@@ -377,16 +346,19 @@ export class TabelleBlock extends BasicBlock {
       sortSpalte: this._sortSpalte,
       sortAuf: this._sortAuf,
       wunschSeite: this._seite,
-      einstellung: this.einstellung,
-      gemessen: this._proSeiteGemessen,
+      gemessen: this._mass,
     })
     return html`<div class="tabelle" style=${styleMap({
-      // EINE Zahl, EINE Stelle: der Takt kommt aus den Spalten-Arten
-      // (./spaltenArten, zeilenHoeheFuer), damit die Optik (Linien) und die
-      // Rechnung (wie viele passen) nicht auseinander laufen koennen.
+      // ZWEI Zahlen, EINE Stelle. Der GRUNDTAKT kommt aus den Spalten-Arten
+      // (./spaltenArten, zeilenHoeheFuer) und traegt den Kopf; die ZEILENHOEHE
+      // ist derselbe Takt plus dem verteilten Rest (./seitengroesse, zeilenmass)
+      // und traegt Zeilen und Lineal. Warum sie auseinandergehen duerfen und
+      // muessen, steht am .kopf-Stil in ./tabelleStil. Ohne Messung sind beide
+      // gleich, dann sieht man keinen Unterschied.
       // (--spalten-zahl stand hier bis 2026-08-06 daneben; das Lineal brauchte
       // sie fuer seine senkrechten Striche im Verlauf. Es zeichnet sie jetzt
       // mit echten Zellen im Spaltenraster, und die Zahl ist ersatzlos weg.)
+      '--takt': `${ansicht.takt}px`,
       '--zeilen-hoehe': `${ansicht.zeilenHoehe}px`,
     })}>
       ${spaltenSteuerung(() => this.spaltenListe(), (l) => this.aendere(l), stop)}
@@ -424,21 +396,16 @@ export class TabelleBlock extends BasicBlock {
         stop,
       })}
       ${/* Im Leerzustand faellt die Fusszeile weg: „Seite 1 von 1" und ein
-            Waehler „Zeilen pro Seite" sind Bedienelemente ohne Gegenstand. */ ''}
+            Blaettern ohne Seiten sind Bedienelemente ohne Gegenstand. */ ''}
       ${ansicht.leer ? nothing : tabelleFuss({
         hatQuelle: ansicht.hatQuelle,
         sichtbar: ansicht.gesamt,
         gesamt: this.datenzeilen.length,
         suchtAktiv: this._suchtext.trim() !== '',
         auswahlAktiv: this.durchAuswahlGefiltert,
-        // Im Editor steht der Waehler IMMER — dort stellt der Bauer ihn ein.
-        // In der Maske nur, wenn er es erlaubt hat.
-        zeigeWaehler: this.hasAttribute('data-ff-editor') || this.zeilenWaehler === 'ja',
-        einstellung: this.einstellung,
         seite: ansicht.seite,
         seiten: ansicht.seiten,
       }, {
-        waehleProSeite: (wert) => this.waehleProSeite(wert),
         blaettere: (zu) => {
           this._seite = zu
           this.requestUpdate()

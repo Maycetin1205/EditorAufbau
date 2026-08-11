@@ -146,6 +146,53 @@ export function putzeAlteKartenDemos(tree: BlockTree): string[] {
   return geleert
 }
 
+// Eigenschaften, die es an einem Baustein NICHT MEHR GIBT — je Eintrag der
+// Bausteintyp und der Name der Eigenschaft.
+//
+// Warum diese Liste gebraucht wird (S2.1, 2026-08-11): `normalizeProps` uebernimmt
+// nur, was der Baustein heute als Standardwert kennt. Streicht eine Etappe eine
+// Eigenschaft, verschwindet ihr gespeicherter Wert damit lautlos — und die
+// Verlust-Kontrolle (ladeKette.verlustProbleme) sieht genau das: eine Angabe, die
+// in den Rohdaten stand und im Ergebnis fehlt. Sie stellt den Stand dann unter
+// Quarantaene. Ein voellig gesunder Altbestand, dessen einzige „Beschaedigung"
+// darin besteht, dass der Bediener einmal „25 pro Seite" gewaehlt hat, waere
+// damit gesperrt — genau der Fehler, den A4 fuer den Vorlagen-Kasten schon
+// einmal beheben musste. Absicht muss benannt sein, sonst ist sie von Schaden
+// nicht zu trennen (dieselbe Lehre wie bei `putzeAlteKartenDemos`).
+//
+// Bewusst NICHT an eine Schemastufe gebunden: eine Stufe hebt den Detail-Vergleich
+// fuer den GANZEN Stand auf (ladeKette:326), und dafuer ist der Anlass zu klein.
+// Diese Liste duldet genau zwei Namen an genau einem Bausteintyp; jede andere
+// Angabe desselben Bausteins wird weiter vollstaendig verglichen.
+//
+// Eine Eigenschaft streichen heisst also: Zeile hier eintragen, und zwar in
+// demselben Commit.
+const WEGGEFALLENE_PROPS: ReadonlyArray<readonly [string, string]> = [
+  // Der Zeilen-Waehler der Tabelle (S2.1): es gilt jetzt immer „so viele Zeilen,
+  // wie hineinpassen". `proSeite` war der Bauplan (passend / 10 / 25 / 50),
+  // `zeilenWaehler` die Erlaubnis, ihn in der Maske zu uebersteuern.
+  ['tabelle', 'proSeite'],
+  ['tabelle', 'zeilenWaehler'],
+]
+
+// Die Stellen, an denen dieser Stand eine weggefallene Eigenschaft traegt, als
+// `bausteinId.prop`. Liest die ROHDATEN, nicht den fertigen Baum: im fertigen
+// Baum sind die Werte schon weg — das ist ja der Punkt.
+export function weggefalleneProps(rohBaum: Record<string, unknown>): string[] {
+  const raus: string[] = []
+  for (const [id, knoten] of Object.entries(rohBaum)) {
+    if (!knoten || typeof knoten !== 'object') continue
+    const k = knoten as { type?: unknown; props?: unknown }
+    if (!k.props || typeof k.props !== 'object') continue
+    const props = k.props as Record<string, unknown>
+    for (const [typ, prop] of WEGGEFALLENE_PROPS) {
+      if (k.type !== typ) continue
+      if (Object.prototype.hasOwnProperty.call(props, prop)) raus.push(`${id}.${prop}`)
+    }
+  }
+  return raus
+}
+
 // Altes Format (Liste mit absolutem layout) -> Baum: alle Blöcke als Kinder der
 // Wurzel, layout wird verworfen.
 export function migrateFlatBlocks(blocks: unknown[]): BlockTree {

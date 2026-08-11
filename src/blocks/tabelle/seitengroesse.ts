@@ -10,11 +10,15 @@
 // und darunter leeres Lineal. Beides bricht den Nordstern — was zu sehen ist,
 // IST der Export, und im Export sieht es genauso krumm aus.
 //
-// Wer die Zahl bestimmt (Nutzer-Entscheidung 2026-08-05): der BAUER stellt sie
-// im Editor am Ding ein (Prop `proSeite`, Standard PASSEND). Ob der BEDIENER
-// sie in der Maske noch umstellen darf, ist eine eigene Maskeneinstellung
-// (`zeilenWaehler`, Standard nein) — wie die Suchzeile. Vorher stand der
-// Waehler bedingungslos in jeder exportierten Maske.
+// Wer die Zahl bestimmt (Nutzer-Entscheidung 2026-08-11, Etappe S2.1): NIEMAND.
+// Es passen so viele Zeilen hinein, wie hineinpassen — Punkt. Bis dahin gab es
+// dafuer einen Waehler mit vier Werten (passend zur Hoehe / 10 / 25 / 50): der
+// Bauer stellte ihn im Editor am Ding ein (Prop `proSeite`), und eine zweite
+// Maskeneinstellung (`zeilenWaehler`) entschied, ob der Bediener ihn spaeter
+// uebersteuern darf. Beide sind weg, mit beiden ihre Folgen: eine feste Zahl in
+// einer hohen Tabelle liess unten Platz stehen, in einer flachen erzwang sie
+// Scrollen — und eine Tabelle scrollt nie innen (Nutzer: geblaettert wird mit
+// der Fusszeile, gesucht mit der Suchleiste).
 //
 // Warum die Zeilenhoehe HIER wohnt und nicht mehr im CSS: sie war die Zahl,
 // mit der das Aussehen (tabelleStil) und die Rechnung (diese Datei) beide
@@ -35,18 +39,10 @@
 // den Baustein bis hierher; geraten wird er nirgends.
 export const ZEILEN_HOEHE = 32
 
-// Die festen Zahlen zur Wahl. „Passend zur Hoehe" steht NICHT hier: das ist
-// kein fester Wert, sondern das Ergebnis der Messung (PASSEND als Kennung).
-export const ZEILEN_PRO_SEITE = [10, 25, 50] as const
-
-// Kennung fuer „passend zur Hoehe" — gleichzeitig der Wert der Prop `proSeite`
-// am Baustein UND der Wert im Waehler: EINE Schreibweise fuer dieselbe Sache,
-// damit Bauplan und Bedienung nicht auseinanderlaufen. Auch der Standard.
-export const PASSEND = 'passend'
-
 // Rueckfall, wenn nicht gemessen werden kann (kein ResizeObserver im alten
-// WinUI, oder kein Raster mit vorgegebener Hoehe).
-export const OHNE_MESSUNG = ZEILEN_PRO_SEITE[0]
+// WinUI, oder kein Raster mit vorgegebener Hoehe). Die 10 war bis 2026-08-11
+// der erste Wert der Waehler-Liste; die Liste ist weg, der Rueckfall bleibt.
+export const OHNE_MESSUNG = 10
 
 // Derselbe Fall im EDITOR, wo Platzhalter-Striche stehen statt Saetzen.
 const PLATZHALTER_OHNE_MESSUNG = 4
@@ -64,25 +60,11 @@ const PLATZHALTER_OHNE_MESSUNG = 4
 //      seine Tabelle in SoftEngine wirklich wird.
 // Beides faellt weg, sobald hier dieselbe Zahl gilt wie fuer echte Daten.
 //
-// Dieselbe Reihenfolge wie fuer Daten (feste Zahl gewinnt, sonst die Messung),
-// nur der Rueckfall ist ein anderer: OHNE_MESSUNG waere 10, und zehn Striche in
-// einer Tabelle, die im Fluss steht und mit ihrem Inhalt WAECHST, blasen sie
-// auf. Dort bleiben es vier.
-export function platzhalterZeilen(einstellung: string, gemessen: number | null): number {
-  return proSeiteAusEinstellung(einstellung) ?? gemessen ?? PLATZHALTER_OHNE_MESSUNG
-}
-
-// Die Einstellung („passend" oder eine Zahl als Text, wie sie im Attribut
-// steht) in eine Zeilenzahl uebersetzen. null heisst „gemessen" — dann
-// entscheidet passendeZeilen bzw. der Rueckfall.
-//
-// Defensiv gegen alles Unbekannte: ein Attribut aus einem alten Stand oder von
-// Hand verstellt fuehrt auf „passend" zurueck, nie auf einen Absturz und nie
-// auf eine erfundene Zahl. Nur die Zahlen aus ZEILEN_PRO_SEITE gelten — sonst
-// koennte eine „1000" im Attribut die Maske in eine endlose Seite verwandeln.
-export function proSeiteAusEinstellung(wert: string): number | null {
-  const zahl = Number(wert)
-  return ZEILEN_PRO_SEITE.some((n) => n === zahl) ? zahl : null
+// Dieselbe Quelle wie fuer Daten (die Messung), nur der Rueckfall ist ein
+// anderer: OHNE_MESSUNG waere 10, und zehn Striche in einer Tabelle, die im
+// Fluss steht und mit ihrem Inhalt WAECHST, blasen sie auf. Dort bleiben es vier.
+export function platzhalterZeilen(gemessen: number | null): number {
+  return gemessen ?? PLATZHALTER_OHNE_MESSUNG
 }
 
 // Wie viele Zeilen passen in einen Rumpf dieser Hoehe? Der Kopf sitzt IM
@@ -101,6 +83,50 @@ export function passendeZeilen(
   return Math.max(1, Math.floor((rumpfHoehe - kopfHoehe) / zeilenHoehe))
 }
 
+// Das ZEILENMASS dieser Tabelle: wie viele Zeilen, und wie hoch jede davon
+// GEZEICHNET wird.
+//
+// Warum die zweite Zahl noetig wurde (Nutzerprobe zu S2, Etappe S2.1
+// 2026-08-11): unter der letzten Zeile bleibt geometrisch IMMER ein Rest. Die
+// Bausteinhoehe waechst in 20-px-Schritten des Rasters (Zeile 12 + Abstand 8),
+// eine Zeile ist 32 px hoch — der Rest trifft nie null, er liegt zwischen 2 und
+// 30 px. S2 hat ihn aufgehoert zu BEMALEN (vorher las er sich als leere,
+// duennere Zeile); uebrig blieb ein leerer Streifen, und der stoert weiter.
+//
+// Jetzt bekommt ihn keine eigene Flaeche mehr, sondern er wird auf die Zeilen
+// VERTEILT: jede wird um Rest/Anzahl hoeher, bei einer normal hohen Tabelle
+// also um 1 bis 4 px. Fuer das Auge sind alle Zeilen gleich, die Fusszeile sitzt
+// buendig an der letzten, und Editor und Maske rechnen dasselbe (eine
+// Render-Quelle). Die ANZAHL bleibt unberuehrt — gezaehlt wird weiter mit dem
+// Takt, sonst haette eine hoehere Zeile wieder weniger Zeilen zur Folge.
+//
+// Zwei Grenzen, beide bewusst:
+//   * Passt nicht einmal EIN ganzer Takt hinein, wird nichts verteilt. Sonst
+//     schrumpfte die einzige Zeile auf die Resthoehe (eine 10-px-Zeile ist
+//     schlimmer als eine, die unten anstoesst).
+//   * Abgeschnitten auf 1/100 px, nie aufgerundet. Sonst koennte die Summe der
+//     Zeilen den Rumpf um einen Bruchteil ueberragen — das gibt eine senkrechte
+//     Scrollleiste, die die Breite aendert, die Messung neu anstoesst und die
+//     Tabelle zwischen zwei Zeilenzahlen zappeln laesst. Der so verschenkte
+//     Rest ist kleiner als ein halbes Pixel.
+export interface Zeilenmass {
+  // Wie viele Zeilen eine Seite zeigt.
+  passen: number
+  // Die Hoehe, mit der eine Zeile (und ein Lineal-Takt) gezeichnet wird.
+  zeilenHoehe: number
+}
+
+export function zeilenmass(
+  rumpfHoehe: number,
+  kopfHoehe: number,
+  takt: number,
+): Zeilenmass {
+  const passen = passendeZeilen(rumpfHoehe, kopfHoehe, takt)
+  const platz = rumpfHoehe - kopfHoehe
+  if (platz < takt) return { passen, zeilenHoehe: takt }
+  return { passen, zeilenHoehe: Math.floor((platz / passen) * 100) / 100 }
+}
+
 // Wie viele GANZE Zeilentakte darf das Lineal unter den Zeilen dieser Seite
 // noch zeichnen?
 //
@@ -114,8 +140,10 @@ export function passendeZeilen(
 //
 // Die Rechnung war nie falsch — `passendeZeilen` rundet ab, und das bleibt so.
 // Falsch war nur, dass ihr REST wie eine Zeile aussah. Das Lineal bekommt
-// darum eine feste Hoehe aus ganzen Takten; was darunter uebrig bleibt, traegt
-// gar keine Zeichnung mehr (die Panel-Flaeche der Tabelle).
+// darum eine feste Hoehe aus ganzen Takten. Was darunter uebrig blieb, war ab
+// S2 eine unbemalte Flaeche; seit S2.1 gibt es sie gar nicht mehr — der Rest
+// steckt in den Zeilen (s. `zeilenmass`), und ein Takt ist genau so hoch wie
+// eine Zeile.
 //
 // null heisst „nicht messbar" (kein ResizeObserver im alten WinUI, oder die
 // Tabelle steht im Fluss ohne vorgegebene Hoehe). Dann bleibt es beim

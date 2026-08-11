@@ -4,9 +4,8 @@
 // Datei ueber den 500-Zeilen-Deckel schob (check:regeln). Reine Deklaration:
 // die Registry liest sie, Inspector und Export lesen sie generisch (Regel 2).
 //
-// Was hier NICHT steht, ist ebenso Absicht — siehe der Block ueber
-// `zeilenWaehler`: alles, was der Bauer am DING sehen und anfassen kann,
-// gehoert an das Ding und nicht in den Inspector (Regel 7).
+// Was hier NICHT steht, ist ebenso Absicht: alles, was der Bauer am DING sehen
+// und anfassen kann, gehoert an das Ding und nicht in den Inspector (Regel 7).
 
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { leerTextProperty } from '../shared/leerZustand'
@@ -24,26 +23,16 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
     options: JA_NEIN,
     requiresDataSource: true,
   },
-  // WIE VIELE Zeilen eine Seite zeigt, steht bewusst NICHT hier im Inspector,
-  // sondern unten an der Tabelle selbst (Regel 7 — Bedienung am Ding):
-  // derselbe Waehler in der Fusszeile ist im Editor bedienbar und schreibt den
-  // Bauplan (`proSeite`). Der Inspector regelt nur die FRAGE, die man am Ding
-  // nicht sehen kann — ob der Bediener ihn spaeter auch umstellen darf.
-  //
-  // Vorgeschichte, damit die Wege nicht wieder auseinanderlaufen: bis
+  // WIE VIELE Zeilen eine Seite zeigt, ist KEINE Einstellung mehr — es passen
+  // so viele hinein, wie hineinpassen (Nutzer-Entscheidung 2026-08-11, S2.1).
+  // Die Vorgeschichte in drei Saetzen, damit sie nicht wiederkehrt: bis
   // 2026-07-27 stand „Zeilen pro Seite" zweimal (Inspector UND Fusszeile),
-  // danach gar nicht mehr — die Maske startete fest mit 10 Zeilen und der
-  // Waehler stand bedingungslos in jeder exportierten Maske. Seit 2026-08-05
-  // (Nutzer-Entscheidung) gilt die Aufteilung oben: der Bauer stellt ein, der
-  // Bediener darf nur umstellen, wenn es ihm erlaubt wurde.
-  {
-    attributeName: 'zeilenWaehler',
-    name: 'Zeilen-Wähler',
-    description: 'Zeigt dem Bediener unten in der Maske den Wähler „Zeilen pro Seite" — er darf die Einstellung dann für seine Sitzung übersteuern. Nein: es gilt unveränderlich, was hier im Editor eingestellt ist.',
-    kind: 'segment',
-    options: JA_NEIN,
-    requiresDataSource: true,
-  },
+  // danach startete die Maske fest mit 10 Zeilen und trug den Waehler
+  // bedingungslos; ab 2026-08-05 stellte der Bauer den Bauplan am Ding ein
+  // (`proSeite`) und eine zweite Eigenschaft hier (`zeilenWaehler`) entschied,
+  // ob der Bediener uebersteuern darf. Beide Props sind weg — eine feste Zahl
+  // liess in einer hohen Tabelle Platz stehen und erzwang in einer flachen
+  // Scrollen, und eine Tabelle scrollt nie innen.
   {
     attributeName: 'tagField',
     name: 'Tag filtern nach',

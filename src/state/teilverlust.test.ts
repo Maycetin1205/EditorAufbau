@@ -19,6 +19,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '../blocks/card/CardBlock'
 import '../blocks/kanban/KanbanBlock'
 import '../blocks/popup/PopupBlock'
+// Die Tabelle wird gebraucht, weil S2.1 zwei ihrer Eigenschaften gestrichen hat
+// und ein Altbestand damit trotzdem laden muss (unten, eigener Abschnitt).
+import '../blocks/tabelle/TabelleBlock'
 import { DataSourceStore } from './DataSourceStore'
 import { Editor } from './Editor'
 import { quarantaeneKopien } from './notfallkopie'
@@ -105,6 +108,47 @@ describe('Teilverlust im Blockbaum sperrt statt still zu schrumpfen', () => {
     })
     erwarteGesperrt(ed, roh)
     expect(gruende().some((g) => g.includes('verweist auf einen anderen'))).toBe(true)
+  })
+})
+
+// S2.1 (2026-08-11): der Zeilen-Waehler der Tabelle ist gestrichen. Ein Stand,
+// in dem der Bediener einmal „25 pro Seite" gewaehlt hat, ist trotzdem gesund —
+// er darf nicht in Quarantaene laufen, nur weil eine Etappe eine Eigenschaft
+// abgeschafft hat. Genau dieser Fehler traf 2026-08-10 schon einmal jeden
+// Altbestand mit Vorlagen-Kasten.
+describe('Eine abgeschaffte Eigenschaft ist kein Teilverlust', () => {
+  const tabellenStand = (props: Record<string, unknown>) => ({
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+    tab: { id: 'tab', type: 'tabelle', props, parentId: 'root', childIds: [] },
+  })
+
+  it('eine Tabelle mit dem alten Zeilen-Waehler laedt ohne Sperre', () => {
+    const { ed } = lade(tabellenStand({ width: 'fill', proSeite: '25', zeilenWaehler: 'ja' }))
+    expect(speicherGate.gesperrt).toBe(false)
+    expect(ed.blockCount).toBe(1)
+    // Und die Werte sind wirklich weg, nicht heimlich mitgeschleppt: sonst
+    // stellte die Laufzeit eine Eigenschaft ein, die kein Baustein mehr liest.
+    const props = ed.tree.tab.props
+    expect(props).not.toHaveProperty('proSeite')
+    expect(props).not.toHaveProperty('zeilenWaehler')
+  })
+
+  it('aber eine WIRKLICH unbekannte Eigenschaft an derselben Tabelle sperrt weiter', () => {
+    // Die Ausnahme gilt fuer genau zwei Namen. Wuerde sie fuer die Tabelle
+    // pauschal gelten, waere die Verlust-Kontrolle dort ausgeschaltet.
+    const { ed, roh } = lade(tabellenStand({ width: 'fill', proSeite: '25', gibtEsNicht: 'wichtig' }))
+    erwarteGesperrt(ed, roh)
+    expect(gruende().some((g) => g.includes('tab|') && g.includes('stimmen Angaben nicht'))).toBe(true)
+  })
+
+  it('und an einem ANDEREN Baustein bleibt derselbe Name ein Verlust', () => {
+    // Die Liste nennt Typ UND Namen. Ein `proSeite` an einem Testbaustein ist
+    // eine Eigenschaft, die dort nie existiert hat — also echter Verlust.
+    const { ed, roh } = lade({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
+      a: { id: 'a', type: TEST_BLOCK, props: { proSeite: '25' }, parentId: 'root', childIds: [] },
+    })
+    erwarteGesperrt(ed, roh)
   })
 })
 
