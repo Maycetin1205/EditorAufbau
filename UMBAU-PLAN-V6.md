@@ -45,7 +45,16 @@ git log --oneline -8
   meldet null (bleibt bis C3.1 gesperrt); eine Kopie direkt auf der Hauptflaeche
   bekommt die freie Zeile (`freiePositionFuerKopie` in rasterOps), Popup-Inhalt
   nicht — das entscheidet C3.1.
-- **Naechste Etappe:** A6. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+- **Was A6 gebaut hat (2026-08-11):** die globalen Kuerzel (Delete/Strg+Z/
+  Strg+D) pruefen den ganzen `composedPath()` statt nur `event.target` und
+  schweigen, wenn ein Eingabefeld im Pfad liegt. **Der Zeiger im Etappenkopf A6
+  war falsch:** der Listener steht nicht in `Toolbar.tsx:221` (das ist der
+  Escape-Horcher des Weitere-Aktionen-Menues), sondern in
+  `state/useKeyboardShortcuts.ts`. Er ist der EINZIGE globale Horcher mit
+  loeschenden Befehlen — alle anderen (Toolbar, Inspector, FieldPicker,
+  FormularKarte, Kommandozentrale, FeldUebernahmePicker) hoeren nur auf Escape,
+  und ein Menue soll auch beim Tippen schliessen.
+- **Naechste Etappe:** A7.1. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
