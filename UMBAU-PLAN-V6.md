@@ -35,7 +35,15 @@ git log --oneline -8
   ausdruecklich bestellt; die Abgrenzung zur gestrichenen Welle Q und zu D2
   steht im Wellen-Kopf. R1 und R2 sind gebaut (2026-08-11); der
   SE-Echttest der Welle (Nutzerprobe im Etappenkopf R2) steht aus.
-- **Letzte fertige Etappe:** R2 (2026-08-11, im zweiten Anlauf) — davor S2.1,
+- **Letzte fertige Etappe:** C1 (2026-08-11, vorgezogen: A9/A10 haengen an
+  den offenen Nutzer-Proben) — das Popup komponiert den geteilten
+  `DialogRahmen` (`blocks/shared/DialogRahmen.ts`), sein eigener
+  Zwillings-Rahmen und `POPUP_RAND` sind weg; X-Vertrag steht (Maske:
+  schliessen · Editor: zur Hauptseite via `PopupSeite`, nie loeschen);
+  kein aria-modal vorm Fokus-Fang C3.3, Rumpf bleibt alleiniger
+  Scroll-Besitzer, Kinder bleiben im Flow (Raster = C2).
+  Browser-/SE-Probe offen, buendelt sich mit den unten offenen Tests.
+  Davor: R2 (2026-08-11, im zweiten Anlauf) — davor S2.1,
   P2/Symbole, P1 (Messen), A7.3,
   A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2.
   Der ERSTE R2-Commit (31f8d94) war funktionslos und mit rotem Pruefbuendel

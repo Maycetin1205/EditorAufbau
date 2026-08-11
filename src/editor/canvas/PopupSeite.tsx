@@ -7,7 +7,7 @@
 // unter dem Zeiger).
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { POPUP_RAND } from '../../blocks/popup/PopupBlock'
+import { DIALOG_RAND, DIALOG_SCHLIESSEN_EVENT } from '../../blocks/shared/DialogRahmen'
 import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
@@ -30,7 +30,7 @@ export function PopupSeite({ popupId }: { popupId: string }) {
   const dnd = useDnd()
   // Bühnengröße (die Fläche, in der das Fenster zentriert): das Fenster
   // begrenzt sich auf „Bühne minus 24px" (dieselbe Regel wie in der Maske,
-  // s. PopupBlock max-width/height). Die Anfasser müssen an der SICHTBAREN
+  // s. DialogRahmen max-width/height). Die Anfasser müssen an der SICHTBAREN
   // Kante sitzen — sonst wären sie bei eingeklemmtem Fenster außerhalb der
   // Fläche abgeschnitten und ein zu großes Popup ließe sich nie verkleinern.
   const wrapRef = useRef<HTMLDivElement | null>(null)
@@ -43,16 +43,27 @@ export function PopupSeite({ popupId }: { popupId: string }) {
     beobachter.observe(el)
     return () => beobachter.disconnect()
   }, [])
+  // Das Dialogkopf-X in der Editor-Vorschau (C1): der Baustein selbst tut
+  // im Editor nichts (er kennt den Editor nicht) und lässt das
+  // Schließen-Ereignis des DialogRahmens steigen (composed) — HIER heißt
+  // „schließen" zurück zur Hauptseite. Gelöscht wird über das X nie.
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const zurHauptseite = (): void => { ed.setActivePage(ed.pages[0].id) }
+    el.addEventListener(DIALOG_SCHLIESSEN_EVENT, zurHauptseite)
+    return () => el.removeEventListener(DIALOG_SCHLIESSEN_EVENT, zurHauptseite)
+  }, [ed])
   const node = ed.getNode(popupId)
   if (!node) return null
   const selected = ed.selectedId === node.id
   const breite = popupZahl(node.props.breite, 520)
   const hoehe = popupZahl(node.props.hoehe, 380)
-  // EXAKT die Fenster-Regel des Bausteins (max: Fläche − POPUP_RAND, dieselbe
-  // Konstante wie im PopupBlock-CSS — P-C) — nur ein kleiner Greif-
-  // Mindestwert, damit die Anfasser nie zusammenfallen.
-  const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - POPUP_RAND)) : breite
-  const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - POPUP_RAND)) : hoehe
+  // EXAKT die Fenster-Regel des Rahmens (max: Fläche − DIALOG_RAND, dieselbe
+  // Konstante wie im DialogRahmen-CSS, den das Popup seit C1 komponiert) —
+  // nur ein kleiner Greif-Mindestwert, damit die Anfasser nie zusammenfallen.
+  const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - DIALOG_RAND)) : breite
+  const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - DIALOG_RAND)) : hoehe
 
   // Dieselbe Geste wie am Block (zieheGroesse) — nur die Daten sind anders:
   // zentriertes Fenster => Faktor 2 (die Kante bleibt unter dem Zeiger).

@@ -425,13 +425,11 @@ Nutzer-Entscheidung anfassen:**
   Block- UND Popup-Anfasser · `src/export/serializer.ts` = die eine
   Zeichen-Regel-Stelle · `bindingAttr()` in BlockDefinition = die EINE
   Stelle der Bindungs-Attribut-Form.
-  **Korrigiert 2026-08-10:** hier stand „`POPUP_RAND` (PopupBlock) = die EINE
-  Konstante für „Fläche − Rand"". Es sind ZWEI: `POPUP_RAND`
-  (`blocks/popup/PopupBlock.ts`) und `DIALOG_RAND`
-  (`blocks/shared/DialogRahmen.ts`), beide 24, beide mit derselben Aufgabe —
-  der Kommentar an `DIALOG_RAND` sagt das selbst. Wer einen ändert, ändert
-  nur das halbe Fenster. Zusammengelegt wird das in Etappe C1/C2 (Popup
-  komponiert `DialogRahmen`), nicht nebenbei.
+  **Seit C1 (2026-08-11) erledigt:** `DIALOG_RAND`
+  (`blocks/shared/DialogRahmen.ts`) ist wieder die EINE Konstante für
+  „Fläche − Rand" — das Popup komponiert den `DialogRahmen`, `POPUP_RAND`
+  ist gelöscht (bis dahin waren es zwei gleiche 24er, und wer eine änderte,
+  änderte nur das halbe Fenster).
 - Registry-Konzepte: `src/core/blocks/` · Bausteine: `src/blocks/` ·
   Aktions-/Quellen-Modell: `src/core/data/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·

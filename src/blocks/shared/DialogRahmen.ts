@@ -7,23 +7,27 @@
 // wenn der Bediener die Lupe klickt. Ein Baustein waere hier falsch (er
 // muesste im Baum liegen, exportiert und positioniert werden).
 //
-// Der PopupBlock hat heute noch seinen eigenen, fast gleichen Rahmen. Die
-// Zusammenlegung ist vorgesehen, aber bewusst NICHT Teil des Nachschlagens
-// (2026-08-05): Popup ist ein funktionierender Seiten-Baustein, ein Umbau
-// aendert seine Export-Bytes und braucht einen eigenen SE-Echttest. Wer sie
-// zusammenlegt, nimmt DIESE Datei als Ziel — nicht umgekehrt.
+// Seit C1 (2026-08-11) komponiert auch der PopupBlock diesen Rahmen — die
+// frueher fast gleiche Abschrift dort ist weg. Zwei Konsumenten, zwei
+// Betriebsarten: das Nachschlagen erzeugt den Rahmen programmatisch
+// (viewport, escape-schliesst, modal), das Popup rendert ihn in seinem
+// Schatten (ohne-modal bis zur Fokusbegrenzung C3.3, inhalt-fest weil sein
+// Rumpf selbst rollt). Wer am Fenster-Aussehen baut, baut fuer BEIDE.
 //
 // Aussehen ausschliesslich aus Masken-Tokens (--se-*), wie in jedem
 // Baustein; strukturelle Groessen als Literale.
 
-import { css, html, LitElement, type PropertyValues, type TemplateResult } from 'lit'
+import { css, html, LitElement, nothing, type PropertyValues, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 
 export const DIALOG_RAHMEN_TAG = 'ff-dialog-rahmen'
 export const DIALOG_SCHLIESSEN_EVENT = 'ff-dialog-schliessen'
 
-// „Flaeche minus Rand" — dieselbe Rolle wie POPUP_RAND im PopupBlock: das
-// Fenster darf nie bis an die Kante der Maske stossen.
+// „Flaeche minus Rand" — das Fenster darf nie bis an die Kante der Maske
+// stossen. Seit C1 die EINE Konstante dafuer: der PopupBlock (max-width/
+// height hier im CSS) und der Editor-Anfasser der Popup-Seite (PopupSeite,
+// sichtbare Kante) rechnen beide mit ihr. Bis dahin gab es daneben ein
+// gleiches POPUP_RAND — wer nur eins aenderte, aenderte das halbe Fenster.
 export const DIALOG_RAND = 24
 
 // Groessen koennen als Attribut-Strings ankommen — defensiv wandeln.
@@ -127,6 +131,10 @@ export class DialogRahmen extends LitElement {
       min-height: 0;
       overflow: auto;
     }
+    /* inhalt-fest (Popupmodus, C1): der Rumpf des Konsumenten ist ALLEINIGER
+       Scroll-Besitzer — rollte .inhalt zusaetzlich, gaebe es zwei
+       ineinander liegende Rollbalken fuer denselben Inhalt. */
+    :host([inhalt-fest]) .inhalt { overflow: hidden; }
   `
 
   @property() titel = 'Dialog'
@@ -135,6 +143,11 @@ export class DialogRahmen extends LitElement {
   @property({ type: Boolean, reflect: true }) viewport = false
   @property({ type: Boolean, reflect: true, attribute: 'mit-werkzeug' }) mitWerkzeug = false
   @property({ type: Boolean, attribute: 'escape-schliesst' }) escapeSchliesst = false
+  // Popupmodus (C1): solange die Fokusbegrenzung (C3.3) fehlt, darf das
+  // Popup nicht aria-modal=true exportieren — die Zusage „Fokus bleibt im
+  // Fenster" waere gelogen. Das Nachschlagen bleibt beim bisherigen true.
+  @property({ type: Boolean, attribute: 'ohne-modal' }) ohneModal = false
+  @property({ type: Boolean, reflect: true, attribute: 'inhalt-fest' }) inhaltFest = false
 
   private escapeRegistriert = false
 
@@ -188,11 +201,12 @@ export class DialogRahmen extends LitElement {
         <section
           class="fenster"
           role="dialog"
-          aria-modal="true"
+          aria-modal=${this.ohneModal ? nothing : 'true'}
+          aria-labelledby="dialog-titel"
           style="width:${breite}px;height:${hoehe}px"
         >
           <header class="kopf">
-            <div class="titel"><slot name="titel">${this.titel}</slot></div>
+            <div class="titel" id="dialog-titel"><slot name="titel">${this.titel}</slot></div>
             <button
               class="schliessen"
               type="button"
