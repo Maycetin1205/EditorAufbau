@@ -98,6 +98,51 @@ describe('Speicher-Panne meldet sich (B3, 2026-07-28)', () => {
   })
 })
 
+// A7.1 (2026-08-11): derselbe Schreibweg, andere Ursache. Bis hierher konnte
+// ein einzelner werfender Horcher (eine Anzeige, die sich verrechnet) den
+// GANZEN Melde-Durchlauf abbrechen — und weil Editor.notify den Autosave NACH
+// dem Melden einplant, wurde die Aenderung nie geschrieben. Der Bediener sah
+// sie auf dem Schirm und verlor sie beim Schliessen: genau der stille Verlust,
+// den dieser Weg verhindern soll.
+describe('Ein werfender Horcher reisst Meldung und Autosave nicht mit (A7.1)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    speicherGate.entsperre()
+    merkeSpeicherErfolg(KEY)
+    // Gespeichert wird entprellt (500 ms) — ohne Zeitsteuerung sieht der Test
+    // den Schreibvorgang nie.
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    localStorage.setItem = echtesSetItem
+    delete (globalThis as Record<string, unknown>).alert
+  })
+
+  it('die spaeteren Horcher laufen weiter, der Stand wird geschrieben', () => {
+    const ed = new Editor()
+    const gesehen: string[] = []
+    ed.subscribe(() => { gesehen.push('davor') })
+    ed.subscribe(() => { throw new Error('Anzeige verrechnet sich') })
+    ed.subscribe(() => { gesehen.push('danach') })
+    const konsole = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    // Ohne die Isolierung flog der Wurf bis HIER heraus.
+    const node = ed.addBlock(TEST_BLOCK, ed.rootId)
+
+    expect(node).not.toBeNull()
+    expect(gesehen).toEqual(['davor', 'danach'])
+    // Sichtbar bleiben muss er trotzdem — verschluckt wird nichts.
+    expect(konsole).toHaveBeenCalled()
+    konsole.mockRestore()
+
+    vi.advanceTimersByTime(600)
+    const roh = localStorage.getItem(KEY)
+    expect(roh, 'die Aenderung wurde nie geschrieben').not.toBeNull()
+    expect(roh).toContain(node!.id)
+  })
+})
+
 // Die beiden Bibliotheken (Datenquellen, Relations-Vorlagen) teilen seit
 // 2026-08-04 EIN Fundament: VorlagenStore.ts. Diese Faelle halten fest, was
 // dabei nicht verrutschen durfte — Speicher-Schluessel, JSON-Huelle,

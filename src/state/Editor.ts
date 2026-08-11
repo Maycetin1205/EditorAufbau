@@ -165,10 +165,19 @@ export class Editor extends Subject<Editor> {
   get canUndo(): boolean { return this._historie.canUndo }
   get canRedo(): boolean { return this._historie.canRedo }
 
+  // Die Aenderung ist an dieser Stelle SCHON im Baum. Der Autosave muss sie
+  // darum in jedem Fall einplanen — auch wenn beim Melden etwas schiefgeht
+  // (A7.1, 2026-08-11): sonst haette der Bediener eine Aenderung auf dem
+  // Schirm, die nie geschrieben wird. Subject faengt einen werfenden Horcher
+  // inzwischen selbst ab; `finally` deckt den Rest ab, damit die Zusage nicht
+  // an einer fremden Datei haengt.
   override notify(data: Editor): void {
     this._version++
-    super.notify(data)
-    if (this._hydrated) this._planer.plane()
+    try {
+      super.notify(data)
+    } finally {
+      if (this._hydrated) this._planer.plane()
+    }
   }
 
   private snapshot(): EditorSnapshot {
