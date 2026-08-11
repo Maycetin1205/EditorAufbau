@@ -116,6 +116,14 @@ export class PopupBlock extends BasicBlock {
         border-bottom: var(--se-border) solid var(--se-line-soft);
       }
       .titel {
+        /* Der Titel nimmt die ganze Kopfbreite (bis zum X) ein, nicht nur
+           seinen Text: ein LEER getippter Name hat sonst null Pixel Flaeche,
+           und die Stelle laesst sich per Doppelklick nie wieder beschreiben
+           (Nutzer-Meldung 2026-08-11). min-height aus demselben Grund — ein
+           leerer span hat auch keine Zeilenhoehe. Optisch aendert sich nichts:
+           der Text sitzt weiter links, das X rechts. */
+        flex: 1;
+        min-height: 1.4em;
         font-weight: 600;
         /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
            nie im Fliesstext — sonst verliert sie ihre Wirkung. */
