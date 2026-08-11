@@ -4,9 +4,15 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  einzigenTrefferFinden,
+  fensterEintraege,
+  satzPasstZurAuswahl,
+} from '../formfeld/nachschlagen'
+import {
   aufAuswahlHoeren,
   auswahlFuer,
   auswahlMerkmal,
+  auswahlWiederfinden,
   ersteZeileNachAuswahl,
   folgenAusAttribut,
   klareAuswahl,
@@ -257,5 +263,160 @@ describe('ersteZeileNachAuswahl (Einzelwert-Bausteine, 2026-08-06)', () => {
   it('leere Quelle bleibt leer — nichts wird erfunden', () => {
     waehleAuswahl('kunden', { '2_8': '10001' })
     expect(ersteZeileNachAuswahl(folger(paar), [])).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// A7.3 (2026-08-11): Was macht ein KREIS in den Auswahl-Folgen?
+//
+// „A folgt B, B folgt A" ist im Editor einstellbar. Die Frage des Plans war
+// nicht, ob man das verbieten soll, sondern erst einmal: endet die Nachmeldung
+// in `melde()` dann ueberhaupt? Sie laeuft `do { hoerer } while (nachmeldung)`,
+// und jeder Hoerer darf die Auswahl waehrend des Laufs erneut aendern.
+//
+// Die Faelle unten stellen die Hydrierung der Maske nach — nicht mit Bausteinen
+// (die sind DOM), sondern mit DENSELBEN puren Funktionen, die die Bausteine
+// dafuer rufen. Ein Kommentar je Fall nennt die Stelle, die er nachstellt.
+//
+// Der Rundenzaehler mit Deckel ist die Notbremse: laeuft eine Runde nicht aus,
+// soll der Test das BEHAUPTEN und nicht den Lauf haengen lassen.
+const RUNDEN_DECKEL = 12
+let hydriere: (() => void) | null = null
+let runden = 0
+
+// `aufAuswahlHoeren` hat bewusst kein Gegenstueck (die Bausteine der laufenden
+// Maske melden sich einmal an und bleiben). Darum EIN Hoerer, den jeder Fall
+// selbst ein- und wieder ausschaltet — sonst wirkte er in die folgenden hinein.
+aufAuswahlHoeren(() => {
+  if (!hydriere) return
+  runden++
+  if (runden > RUNDEN_DECKEL) return
+  hydriere()
+})
+
+function mitHydrierung(lauf: () => void, tun: () => void): number {
+  runden = 0
+  hydriere = lauf
+  try {
+    tun()
+  } finally {
+    hydriere = null
+  }
+  return runden
+}
+
+describe('Auswahl-Folge im Kreis (A7.3)', () => {
+  // Nachstellung von tabelle/seRuntime.ts:103 bzw. kanban/seRuntime.ts:206:
+  // sichtbare Zeilen ausrechnen, dann die eigene Auswahl darin wiederfinden —
+  // ist sie weg, hebt `auswahlWiederfinden` sie auf.
+  const hydriereTabelle = (id: string, el: HTMLElement, zeilen: unknown[]): void => {
+    auswahlWiederfinden(id, zeilenNachAuswahl(el, zeilen).rows, (r) => r)
+  }
+
+  const kunden = [{ '2_8': '10001' }, { '2_8': '20002' }]
+  const belege = [{ '3_8': '10001' }, { '3_8': '20002' }]
+
+  it('zwei Tabellen im Kreis: die Nachmeldung endet', () => {
+    // kunden folgt belege UND belege folgt kunden — der direkte Kreis.
+    const elKunden = elementMit({ folgtauswahl: JSON.stringify([
+      { geberId: 'belege', keyPairs: [{ fromField: '3_8', toField: '2_8' }] },
+    ]) })
+    const elBelege = elementMit({ folgtauswahl: JSON.stringify([
+      { geberId: 'kunden', keyPairs: [{ fromField: '2_8', toField: '3_8' }] },
+    ]) })
+
+    const gelaufen = mitHydrierung(() => {
+      hydriereTabelle('kunden', elKunden, kunden)
+      hydriereTabelle('belege', elBelege, belege)
+    }, () => {
+      waehleAuswahl('belege', belege[1]) // erst ein Beleg …
+      waehleAuswahl('kunden', kunden[0]) // … dann ein Kunde, der dazu nicht passt
+    })
+
+    expect(gelaufen).toBeLessThanOrEqual(RUNDEN_DECKEL)
+    // Die zweite Wahl haelt nicht: der gewaehlte Kunde ist in der (durch den
+    // Beleg eingeengten) Liste gar nicht sichtbar, und eine Auswahl auf einer
+    // unsichtbaren Zeile hebt `auswahlWiederfinden` bewusst auf — sonst filterte
+    // die Maske nach etwas, was niemand markiert sieht.
+    expect(auswahlFuer('kunden')).toBeUndefined()
+    expect(auswahlFuer('belege')).toEqual(belege[1])
+  })
+
+  it('drei Tabellen im Kreis (a folgt c, b folgt a, c folgt b): endet ebenfalls', () => {
+    const el = (geberId: string, fromField: string, toField: string): HTMLElement =>
+      elementMit({ folgtauswahl: JSON.stringify([{ geberId, keyPairs: [{ fromField, toField }] }]) })
+    const a = [{ '1_8': 'X' }, { '1_8': 'Y' }]
+    const b = [{ '2_8': 'X' }, { '2_8': 'Y' }]
+    const c = [{ '3_8': 'X' }, { '3_8': 'Y' }]
+
+    const gelaufen = mitHydrierung(() => {
+      hydriereTabelle('a', el('c', '3_8', '1_8'), a)
+      hydriereTabelle('b', el('a', '1_8', '2_8'), b)
+      hydriereTabelle('c', el('b', '2_8', '3_8'), c)
+    }, () => {
+      waehleAuswahl('c', c[1])
+      waehleAuswahl('a', a[0])
+    })
+
+    expect(gelaufen).toBeLessThanOrEqual(RUNDEN_DECKEL)
+    expect(auswahlFuer('a')).toBeUndefined()
+    expect(auswahlFuer('b')).toBeUndefined()
+    expect(auswahlFuer('c')).toEqual(c[1])
+  })
+
+  // Warum die zwei Faelle oben enden: die Tabellen-Hydrierung kann eine Auswahl
+  // nur AUFHEBEN. Der Zustand schrumpft also, und was leer ist, meldet nicht
+  // erneut — hoechstens so viele Runden, wie es Geber gibt.
+  //
+  // Zwei NACHSCHLAGE-Felder koennen mehr: ihre Hydrierung
+  // (FormFeldBlock.pruefeEigenenWert, formfeld/FormFeldBlock.ts:420) leert bei
+  // Nichtpassen UND uebernimmt danach den einzigen uebrigen Satz. Sie kann also
+  // auch SETZEN — und damit ist der Zustand nicht mehr monoton.
+  it('zwei Nachschlage-Felder im Kreis mit „einziger Treffer": die Nachmeldung endet NICHT', () => {
+    // Die Schluesselfelder zeigen in BEIDE Richtungen auf verschiedene Felder.
+    // Genau das nimmt der Vergleichbarkeit die Symmetrie: „a passt zu b" heisst
+    // dann nicht mehr „b passt zu a", und beide Felder koennen sich abwechselnd
+    // gegenseitig fuer unpassend erklaeren.
+    const elA = elementMit({ folgtauswahl: JSON.stringify([
+      { geberId: 'b', keyPairs: [{ fromField: '9_8', toField: '5_8' }] },
+    ]) })
+    const elB = elementMit({ folgtauswahl: JSON.stringify([
+      { geberId: 'a', keyPairs: [{ fromField: '7_2', toField: '11_2' }] },
+    ]) })
+    const zeilenA = [{ '5_8': '1', '7_2': 'P' }, { '5_8': '2', '7_2': 'Q' }]
+    const zeilenB = [{ '11_2': 'Q', '9_8': '1' }, { '11_2': 'P', '9_8': '2' }]
+    // Der gemerkte Satz je Feld (`this.satz` im Baustein) — er wandert mit der
+    // abgegebenen Auswahl, genau wie leereNachschlagen/uebernimmSatz es tun.
+    const satz: Record<string, unknown> = { a: zeilenA[0], b: zeilenB[1] }
+
+    const feld = (id: string, el: HTMLElement, zeilen: unknown[], anzeige: string, wert: string): void => {
+      if (satz[id] !== undefined && !satzPasstZurAuswahl(el, satz[id])) {
+        satz[id] = undefined
+        klareAuswahl(id)
+      }
+      const treffer = einzigenTrefferFinden(
+        fensterEintraege(el, zeilen, anzeige, wert),
+        satz[id] === undefined,
+      )
+      if (treffer) {
+        satz[id] = treffer.satz
+        setzeAuswahl(id, treffer.satz)
+      }
+    }
+
+    const gelaufen = mitHydrierung(() => {
+      feld('a', elA, zeilenA, '7_2', '5_8')
+      feld('b', elB, zeilenB, '11_2', '9_8')
+    }, () => {
+      setzeAuswahl('a', zeilenA[0])
+      setzeAuswahl('b', zeilenB[1])
+    })
+
+    // Ohne die Notbremse oben liefe das endlos: jede Runde raeumt das eine Feld
+    // ab, uebernimmt den einzigen uebrigen Satz, macht damit den Satz des
+    // anderen unpassend — und der tut dasselbe zurueck. In der Maske friert der
+    // Reiter ein. Was daraus folgt, ist eine Nutzerentscheidung (A7.3): dieser
+    // Test BELEGT nur, dass der Fall existiert.
+    expect(gelaufen).toBeGreaterThan(RUNDEN_DECKEL)
   })
 })

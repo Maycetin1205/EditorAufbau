@@ -68,7 +68,23 @@ git log --oneline -8
   eigene Merker dafuer). **Achtung fuer die naechste Etappe:** `Editor.ts` ist
   damit bei 487 Zeilen, also 13 unter dem Deckel — wer dort etwas ergaenzt,
   braucht vorher einen Schnitt-Commit (Plan 3.1).
-- **Naechste Etappe:** A7.3. **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
+- **Was A7.3 belegt hat (2026-08-11) — und was daraus folgt, ist OFFEN:** drei
+  Faelle in `blocks/shared/auswahl.test.ts`. Ein Kreis aus TABELLEN endet
+  (direkt wie indirekt): ihre Hydrierung kann eine Auswahl nur AUFHEBEN, der
+  Zustand schrumpft. Ein Kreis aus zwei NACHSCHLAGE-Feldern mit „einziger
+  Treffer = ja" endet NICHT: `pruefeEigenenWert`
+  (`blocks/formfeld/FormFeldBlock.ts:420`) leert bei Nichtpassen und uebernimmt
+  danach den einzigen uebrigen Satz — es kann also auch SETZEN. Bei
+  unsymmetrischen Schluesselfeldern erklaeren sich beide Felder abwechselnd
+  gegenseitig fuer unpassend; die Nachmeldeschleife in `melde()` laeuft
+  unbegrenzt (mit Rundendeckel 500 nachgeprueft), der Reiter friert ein.
+  **Kein Produktcode dazu** — laut Etappentext A7.3 entscheidet der Nutzer, ob
+  gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
+  gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
+  das Pruefbuendel nicht haengt.
+- **Naechste Etappe:** offen — A8 ist gebaut, A9 setzt A3-A7 voraus und ist
+  damit dran, sobald der Nutzer die Bedienproben von A5/A6 bestanden hat.
+  **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
   s. Etappenkopf S1 — nicht wieder vorschlagen), **S5 ist optional und
   braucht sein eigenes `go`** samt SE-Echttest. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
