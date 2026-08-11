@@ -124,7 +124,7 @@ export class TabelleBlock extends BasicBlock {
     // viele hinein, wie hineinpassen (S2.1, 2026-08-11). Bis dahin standen hier
     // `proSeite` (Bauplan: passend / 10 / 25 / 50) und `zeilenWaehler` (darf der
     // Bediener umstellen) — Begruendung in ./tabelleEigenschaften, das Abraeumen
-    // alter Staende in state/ladeKette (`WEGGEFALLENE_TABELLENPROPS`).
+    // alter Staende in state/migrations (`WEGGEFALLENE_PROPS`).
     // Was in der MASKE steht, wenn die Quelle keine Zeile liefert
     // (shared/leerZustand). Der Standard reist nicht als Attribut mit.
     leerText: LEER_TEXT_STANDARD,
