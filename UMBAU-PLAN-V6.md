@@ -164,7 +164,10 @@ git log --oneline -8
   (war schon da, keine neue noetig), kein `if ID === 'POS'`. HTML-Bytes,
   `ff-runtime.js` und Referenzabzug unveraendert — die Referenzmaske fuehrt
   keine Kopfsatz-Quelle.
-- **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
+- **Naechste Etappe:** Q1 — die Welle Q (Daten auf Abruf) ist am 2026-08-11
+  vor Block 2 eingeschoben (Nutzer-Entscheidung; Anlass, Belege und Zuschnitt
+  stehen im Wellenkopf Q). A9 folgt danach (setzt die Bedienproben von A5/A6
+  voraus).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
   Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein
@@ -832,6 +835,96 @@ dann bauen — kein Fix ohne Zahl.
 Im selben Block faehrt **S2.1** (Tabellen-Nachschlag, s. Etappenkopf in
 S2) mit — er aendert als einziger Runtime-Bytes; die offene SE-Probe aus
 Block S deckt danach beides ab.
+
+# Welle Q — Daten auf Abruf (eingeschoben 2026-08-11)
+
+Nutzer-Entscheidung 2026-08-11. Anlass ist das SE-Log desselben Tages:
+Maske oeffnen = rund 17 000 Log-Zeilen, darunter 5 953 Bild-Nachschlaege
+(GET_RELATION 1911, Antwort fast immer „No_Pic.png") in 9,2 s; eine
+Schreib-Kette mit Aktualisieren = rund 20 000 Zeilen. S5.1/S5.2 verkleinern
+nur die Bestellung JE ZEILE — die Zeilenzahl bleibt, denn der Export
+bestellt je Quelle die ganze Tabelle vorab (SEFILELOOP), und SoftEngine
+arbeitet je geliefertem Wert. Die echten ausgelieferten Masken
+(`C:\Users\mu.aycetin\Desktop\Belegerfassung`, 49 Dateien; das dortige
+BRIEFING.md ist unzuverlaessig, nur die Masken selbst zaehlen) machen es
+anders: SEFILELOOP nur fuer das, was wirklich zusammen an den Start
+gehoert; alles andere wird ZUR LAUFZEIT erfragt — GET_RELATION (36 Stellen
+in 15 Dateien) und ERPAPICALL (3 Stellen). FREISELEKT ist NIRGENDS belegt
+(weder im Repo noch dort) und scheidet aus (Regel 5). Zusaetzlich belegt
+(Echttest 2026-08-10): GET_RELATION 69 (Belegart + Belegnummer) liefert
+Positionsfelder in ~6 ms — das Muster „anklicken, dann holen" funktioniert
+in dieser Installation nachweislich.
+
+Die Form — Nutzer-Ansagen „keine Sonderlogiken" und „keine halben Sachen":
+
+- Jede QUELLE traegt kuenftig die Wahl „vorab" (wie heute) oder
+  „auf Abruf". Das ist ein Feld in der Steuerung, also Daten; der Nutzer
+  entscheidet je Quelle (kleine Nachschlage-Listen wie Verabreichungsart
+  bleiben sinnvoll vorab — auch als Verknuepfungs-Partner). Was eine ART
+  erlaubt, steht in der Arten-Tabelle (`core/data/quellenArten.ts`) —
+  dieselbe Bauart wie `felderEinzeln`/`kopfsatzMoeglich`, kein
+  `if quelle === …` (Regel 2, bewacht von `check:regeln`).
+- Abruf-Quellen bekommen KEINE SEFILELOOP (`core/data/dataSources.ts`,
+  `export/exportMask.ts`); ihre Frage-Angaben reisen als Daten in der
+  Maske, der genaue Ort ist Sache der Q2-Ansage. Achtung Namenskollision:
+  `lieferung`/`istOffenerSatz` in `dataSources.ts` gehoeren zum NICHT
+  gebauten VAR-Abschnitt (offener Satz) — die neue Einstellung braucht
+  einen eigenen Namen.
+- EINE generische Frage-Funktion in `src/softengine/` (kennt keinen
+  Baustein; die GET-Warteschlange „eine Anfrage in Flug" liegt dort
+  schon).
+- Der Anschluss liegt in der DATENSCHICHT, nicht in den Bausteinen: ein
+  Baustein fragt wie heute „gib mir Zeilen", die Schicht antwortet aus dem
+  Vorrat ODER per Frage. Dadurch koennen ALLE Verbraucher mit
+  Abruf-Quellen umgehen — Tabelle, Kanban, Karte, Text, Formularfeld,
+  Auswahl geben/folgen, Verknuepfung, Ketten-Parameter — ohne
+  je-Baustein-Code. Karte/Text/Formularfeld folgen ohnehin fast immer
+  einer Auswahl (die Zeile ist dann schon da); eigene Ausloeser brauchen
+  nur die zwei Bausteine, die OHNE Nutzeraktion ganze Listen zeigen:
+  Tabelle und Kanban (Q3).
+- Relations-/API-Nummern sind Installations-DATEN (Steuerung), nie Code
+  (Regel 5).
+
+Nach JEDER Etappe ist alles Gebaute vollstaendig benutzbar — kein halber
+Zustand dazwischen; „vorab" bleibt als Wahl bestehen. Q2 und Q3 aendern
+Export-Bytes: Referenzabzug-Diff sichtbar im Commit, SE-Echttest des
+Nutzers je Etappe Pflicht. Ansage- und go-Ritual aus 0.2/0.3 gelten
+unveraendert.
+
+## Q1 · Frageform aus den echten Masken ablesen (kein Code)
+
+Aus `Desktop\Belegerfassung` und den vorhandenen Belegen
+(`docs/softengine-wiki/`, SE-Framework V2): WIE fragt eine echte Maske zur
+Laufzeit nach Zeilen? Die GET_RELATION-Parameterform je Fall und die
+ERPAPICALL-Form (belegt bisher: `basisHTML_SND_MSG('ERPAPICALL',
+{ ID, … })` plus GET_RELATION mit ALIAS/ALS_ARRAY; die Parameter-Namen von
+BELEG.GET sind offen), dazu die Antwort-Formen. Ergebnis ist eine
+Wiki-Seite in `docs/softengine-wiki/` (dort liegen die Kontrakt-Belege).
+Findet Q1 fuer eine Quellen-Art KEINE belegte Frageform, bleibt diese Art
+vorab — geraten wird nicht (Regel 5).
+
+## Q2 · Unterbau und Nachschlagen auf Abruf
+
+Die Wahl an der Quelle (Steuerung) · der Export laesst SEFILELOOP fuer
+Abruf-Quellen weg und schreibt die Frage-Angaben · die generische
+Frage-Funktion in `src/softengine/` · der Antwortweg in der Datenschicht ·
+erster Verbraucher: das Nachschlage-Feld fragt beim Tippen, statt die
+ganze Tabelle vorab geliefert zu bekommen.
+
+Fertig, wenn: eine Maske mit Abruf-Quelle startet OHNE deren
+Vorab-Lieferung (SE-Start-Log entsprechend kleiner) · Nachschlagen findet
+weiter seine Saetze · Quellen auf „vorab" exportieren unveraendert.
+SE-Echttest Pflicht.
+
+## Q3 · Ausloeser fuer Tabelle und Kanban
+
+VORHER eine Nutzer-Entscheidung zur Ausloeser-Form: seitenweises Holen
+beim Blaettern und/oder Kopf-Anbindung („Beleg anklicken → seine
+Positionen laden", belegtes Muster GET_RELATION 69). Danach zeigen auch
+Tabelle und Kanban an Abruf-Quellen Zeilen — ueber denselben generischen
+Frage-Weg, ohne eigenen Datenpfad. Bis dahin ist nichts halb: eine Tabelle
+an einer Vorab-Quelle arbeitet unveraendert wie heute. SE-Echttest
+Pflicht.
 
 # Welle A — Bestand retten und Integritaet herstellen
 
@@ -2074,6 +2167,14 @@ wird EINMAL am Blockende gebuendelt, zusammen mit der Browserprobe.
 
 Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 (Tempo-Gefuehl, A5/A6-Bedienung) buendeln sich am Ende dieses Blocks.
+
+### Block Q — Daten auf Abruf (eingeschoben 2026-08-11) · SE-Echttest je Etappe
+
+| # | Etappe | Wo im sichtbaren Editor |
+|---|---|---|
+| Q1 | Frageform ablesen | kein Code — belegtes Muster aus den echten Masken, festgehalten im softengine-wiki |
+| Q2 | Unterbau + Nachschlagen auf Abruf | Steuerung: Quelle bekommt die Wahl „vorab/auf Abruf"; Nachschlagen fragt beim Tippen; SE-Start-Log deutlich kleiner |
+| Q3 | Ausloeser Tabelle/Kanban | erst Nutzer-Entscheidung (Blaettern und/oder Kopf-Anbindung), dann liefern auch Tabelle/Kanban an Abruf-Quellen |
 
 ### Block 2 — Beleg und Export
 
