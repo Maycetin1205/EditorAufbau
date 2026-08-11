@@ -11,10 +11,12 @@
 // jetzt Teil eines Paares: das Formularfeld traegt denselben Kasten MIT Inhalt
 // (RectangleEllipsis). Beides sind Kaesten auf der Maske — der eine ist zum
 // Druecken, der andere zum Ausfuellen.
-import { RectangleHorizontal } from '../../ui/zeichen'
+// Seit 2026-08-11 (Nutzer-Wahl „J", Musterbogen 3) in der Fellnase-Machart:
+// der Kasten ist getoent gefuellt und traegt Beschriftungsstrich + Punkt.
+import { ZeichenSchaltflaeche } from '../../ui/bausteinZeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { ButtonBlock } from './ButtonBlock'
 
 ergaenzeEditorAngaben(ButtonBlock.blockType, {
-  symbol: RectangleHorizontal,
+  symbol: ZeichenSchaltflaeche,
 })
