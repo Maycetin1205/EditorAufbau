@@ -14,7 +14,7 @@
 // der Steuerung — erst der zweite Fall erzwingt das Teilen (Regel 10).
 
 import type { SelectHTMLAttributes } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown } from '../zeichen'
 import { cn } from '@/lib/utils'
 
 export function SchrittSelect({

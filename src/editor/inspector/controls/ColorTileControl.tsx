@@ -11,7 +11,7 @@
 // Prop-Form wie SelectControl (label/description/value/options/onChange),
 // damit der Inspector generisch zwischen beiden umschalten kann.
 
-import { Check } from 'lucide-react'
+import { Check } from '@/ui/zeichen'
 import type { PropertySelectOption } from '../../../core/blocks/PropertyDescription'
 import { Field } from '@/ui/molecules/field'
 import { cn } from '@/lib/utils'

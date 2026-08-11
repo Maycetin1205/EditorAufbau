@@ -26,7 +26,7 @@
 // Der Editor erfindet keine Namen (Regel 7): eine Zeile ohne Klarname bleibt
 // ohne Klarname und wird als unvollstaendig gemeldet.
 
-import { Plus, X } from 'lucide-react'
+import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'

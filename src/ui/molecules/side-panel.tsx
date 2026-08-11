@@ -7,7 +7,7 @@
 // klickbare Rückzeile „← <backLabel>". Kein Modal, keine Abdunklung, gleiche
 // 340-px-Hülle: der Inspector-Inhalt wechselt komplett zur Aufgabe.
 
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from '../zeichen'
 import type { ReactNode } from 'react'
 
 interface SidePanelProps {

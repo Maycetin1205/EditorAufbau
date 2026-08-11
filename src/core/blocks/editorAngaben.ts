@@ -16,7 +16,7 @@
 // 2026-08-04: ein einziges zusaetzliches statisches Feld = 69 Byte mehr im
 // Export, die Registrier-Mechanik selbst = 33 geaenderte Zeilen im Minifikat.
 // Ein Bibliotheks-Icon und ein Bediener-Hinweis haben in der Maske nichts zu
-// suchen, und lucide-react gehoert dort ohnehin nie hinein.
+// suchen, und die Symbol-Datei (ui/zeichen) gehoert dort ohnehin nie hinein.
 //
 // Darum gilt fuer diese Datei EINE Regel: kein Baustein und kein
 // Laufzeit-Modul darf sie importieren. Dann erreicht sie das Buendel nicht
@@ -27,13 +27,25 @@
 // Deklariert wird je Baustein in src/blocks/<x>/editorAngaben.ts, eingesammelt
 // von src/blocks/registerEditorAngaben.ts (das laedt nur der Editor).
 
-import type { LucideIcon } from 'lucide-react'
+// Ein Symbol ist eine Komponente der Editor-Oberflaeche. Diese Datei RENDERT
+// sie nie: sie legt sie ab und gibt sie unveraendert zurueck. Darum steht hier
+// absichtlich kein React- und kein ui/-Typ — der fachliche Core bleibt
+// frameworkfrei und importiert keine aeussere Schicht (beides bewacht von
+// eslint no-restricted-imports). Bis 2026-08-11 stand hier `LucideIcon` aus
+// lucide-react: das umging die Regel nur, weil das Paket nicht `react` heisst.
+// Mehr als „nimmt eine Groesse und eine Klasse" muss der Core nicht wissen;
+// den echten Typ kennt die zeichnende Stelle (ui/zeichen, `Zeichen`), und er
+// erfuellt diesen Vertrag.
+export type BausteinSymbol = (eigenschaften: {
+  size?: number | string
+  className?: string
+}) => unknown
 
 export interface EditorAngaben {
   // Icon der Baustein-Bibliothek in der Seitenleiste. Fehlt es, zeigt die
   // Bibliothek ein neutrales Ersatz-Icon — sie bleibt immer bedienbar, auch
   // fuer einen ganz neuen Baustein.
-  symbol?: LucideIcon
+  symbol?: BausteinSymbol
   // EINE gedaempfte Hinweiszeile im Inspector. Nur fuer Bausteine, deren Panel
   // sonst leer oder fast leer aussieht („kaputt-leer", Nutzer 2026-07-21): sie
   // sagt, WO die Bedienung stattdessen stattfindet (Regel 7: Bedienung am

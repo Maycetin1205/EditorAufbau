@@ -19,7 +19,7 @@
 //                     ui/atoms — die QuellenListe ist der zweite Benutzer)
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'

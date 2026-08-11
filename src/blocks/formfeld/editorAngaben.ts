@@ -7,7 +7,7 @@
 // der Maske, nur traegt das Feld etwas. FormInput (bis 2026-08-07) setzte
 // stattdessen einen Schreibcursor an den Rand — bei 16px ein Strich, den man
 // fuer einen Teil des Rahmens hielt.
-import { RectangleEllipsis } from 'lucide-react'
+import { RectangleEllipsis } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { FormFeldBlock } from './FormFeldBlock'
 

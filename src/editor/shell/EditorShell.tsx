@@ -5,7 +5,7 @@
 // „MVP Editor"-Schriftzug ist Geschichte.
 
 import { useState } from 'react'
-import { Wand2 } from 'lucide-react'
+import { Wand2 } from '@/ui/zeichen'
 import { useKeyboardShortcuts } from '../../state/useKeyboardShortcuts'
 import { Canvas } from '../canvas/Canvas'
 import { SeitenLeiste } from '../canvas/SeitenLeiste'

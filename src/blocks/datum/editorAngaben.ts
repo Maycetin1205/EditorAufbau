@@ -4,7 +4,7 @@
 
 // Der schlichte Kalender. CalendarDays (bis 2026-08-07) hatte sechs Tagespunkte
 // im Blatt — bei 16px ein grauer Fleck, der nur unruhig wirkte.
-import { Calendar } from 'lucide-react'
+import { Calendar } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { DatumBlock } from './DatumBlock'
 

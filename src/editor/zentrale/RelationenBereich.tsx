@@ -7,7 +7,7 @@
 // UND Aktionsketten, registry-getrieben, kein `if type===`).
 
 import { useState } from 'react'
-import { Plus, Search, Share2 } from 'lucide-react'
+import { Plus, Search, Share2 } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { relationIdsVon } from '../../core/blocks/treeQuery'

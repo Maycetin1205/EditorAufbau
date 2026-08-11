@@ -7,7 +7,7 @@
 // zeichnet genau das. CreditCard (bis 2026-08-07) war ein Wortwitz auf das
 // deutsche „Karte": eine Zahlkarte mit Magnetstreifen hat mit einer
 // Karteikarte nichts zu tun.
-import { StickyNote } from 'lucide-react'
+import { StickyNote } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { CardBlock } from './CardBlock'
 

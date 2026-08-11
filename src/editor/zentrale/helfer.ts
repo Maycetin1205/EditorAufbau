@@ -1,7 +1,7 @@
 // zentrale/helfer — gemeinsame Anzeige-Helfer der Steuerung (nur Darstellung;
 // die Technikwerte und Vokabulare selbst wohnen in core/data/*).
 
-import { Boxes, Database, FileText, Users } from 'lucide-react'
+import { Boxes, Database, FileText, Users } from '@/ui/zeichen'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { bausteinName } from '../../core/blocks/bausteinName'
 import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'

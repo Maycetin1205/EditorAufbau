@@ -18,7 +18,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Database, Link2, X } from 'lucide-react'
+import { Database, Link2, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { preflightMask } from '../../export/preflight'
 import { useDataSources } from '../../state/useDataSources'

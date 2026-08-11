@@ -30,12 +30,49 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Letzte fertige Etappe:** A5 (2026-08-11) — davor A4, A3, S3, S2, A2.1, A2, A1,
-  A0, A8.1, A8.2. S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
+- **Letzte fertige Etappe:** P2/Symbole (2026-08-11) — davor P1 (Messen), A7.3,
+  A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2. S2 hat
+  Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
   **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die
-  Welle S abgearbeitet, bis auf das optionale S5.
+  Welle S abgearbeitet, bis auf das optionale S5 und den Nachschlag S2.1.
+- **Was P1 gemessen hat (2026-08-11) — die Rangliste, gegen die P2 baut:**
+  Vorbuendeln der Fremdpakete 2303 ms, davon **lucide-react 1616 ms (70 %)** und
+  1 139 089 Byte JS + 2,24 MB Quellkarte (46 % aller vorgebuendelten Bytes) fuer
+  46 von 2007 Symbolen · Startgraph **192 eigene Module / 27 947 Zeilen, KEIN
+  einziger dynamischer Import** — alles laedt beim ersten Bild, darunter 215 KB
+  Export-Rohtext (ff-runtime 179 KB + zwei CSS), die erst der Export-Klick
+  braucht (`editor/shell/Toolbar.tsx:18`) · `vite build` 2064 Module, 4,53 s ·
+  vitest steckt fast alles in Import und Transformation und fast nichts in die
+  Tests selbst (rund 80 s / 30 s gegen 2 s), aber diese drei Zahlen streuen von
+  Lauf zu Lauf um mehr als ein Drittel — sie taugen als Verhaeltnis, nicht als
+  Messpunkt.
+  **Die Verschlechterung ist gefunden und heisst Wachstum des Startgraphs:**
+  gleiche node_modules, gleiche Testdatei, nur anderer Quellstand — 2026-07-30
+  137 Module / transform 903 ms / import 1,37 s, heute 192 / 1,62 s / 2,32 s
+  (je bestes von drei Laeufen, +80 % bzw. +69 %); der Sprung liegt zwischen dem
+  03. und 07.08. (+45 Module). Die harte Zahl daran ist die Modulzahl, die
+  Zeiten stuetzen sie nur.
+  **Nicht gebaut, weil gemessen unkritisch:** die Verlaufs-Kopie
+  (`state/Editor.ts:184`) kostet 0,059 ms bei der Referenzmaske und 4,65 ms bei
+  1021 Knoten — und laeuft EINMAL je Geste, nicht je Ereignis (Tippen und Ziehen
+  sind geklammert). Regel 10: kein Aliasing-Risiko im Undo fuer nichts.
+- **Was P2 gebaut hat (2026-08-11):** die 46 benutzten Symbole liegen als eigene
+  Daten im Projekt (`ui/zeichenDaten.ts`) mit EINER Fabrik daneben
+  (`ui/zeichen.ts`), 33 Import-Stellen umgestellt. Gemessen danach: Vorbuendel
+  ohne lucide (7,72 s → 5,82 s, deps-Ordner 6986 → 3678 KB — die 1,14-MB-Datei,
+  die der Browser beim Start holte, gibt es nicht mehr), `vite build`
+  2064 → 299 Module (4,53 s → 3,01 s), Bundle
+  895,98 → 894,21 kB (also gleiche Optik, nicht weniger Symbole). **An den
+  vitest-Zeiten aendert es nichts, und das ist kein Widerspruch:** keine der 40
+  Testdateien erreicht die Symbol-Module ueberhaupt (statisch nachgegangen). Ein
+  erster Messwert schien etwas anderes zu sagen; er war Cache-Glueck. Export-Bytes,
+  Runtime-Buendel und Referenzabzug unveraendert. Nebenbefund, festgehalten weil
+  er eine Grenze schaerft: der fachliche Core hatte seinen Symbol-Typ von
+  lucide-react geborgt und umging damit `no-restricted-imports` nur, weil das
+  Paket nicht `react` heisst; er hat jetzt einen eigenen frameworkfreien Vertrag
+  (`BausteinSymbol`), die EINE Umdeutung steht in `BlockPalette.tsx`.
 - **Was A5 gebaut hat (2026-08-11):** `state/duplizieren.ts` — zweiphasiges
   Klonen (Knoten kopieren, DANN Verweise umschreiben) samt der EINEN Liste aller
   Felder, die eine Baustein-id tragen (`schreibeBlockReferenzenUm`: geberId,
@@ -82,10 +119,16 @@ git log --oneline -8
   gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
   gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
   das Pruefbuendel nicht haengt.
-- **Naechste Etappe:** Block P (Tempo, eingeschoben 2026-08-11, go ist
-  erteilt): P1 Messen → P2 Top-Bremsen, im selben Opus-Chat faehrt S2.1
-  (Tabellen-Nachschlag) mit. Danach A9 (setzt die Bedienproben von A5/A6
-  voraus). **B1 ist GESTRICHEN** (Nutzer 2026-08-11, s. Etappenkopf B1) —
+- **Naechste Etappe:** S2.1 (Tabellen-Nachschlag, faehrt laut Block P im selben
+  Chat mit) — danach A9 (setzt die Bedienproben von A5/A6 voraus). **P1 und P2
+  sind fertig** (s. die zwei Zeilen oben); von P1s Rangliste sind ZWEI Posten
+  bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
+  Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein
+  spaeteres Nachladen loesen, und das macht aus dem Export-Klick einen
+  asynchronen Weg (zwei Downloads, nicht ohne Browserprobe zu verantworten) ·
+  der Startgraph ohne jedes Code-Splitting ist der groesste Posten ueberhaupt,
+  aber sein Zerschneiden ist ein eigenes Paket, kein Tempo-Commit.
+  **B1 ist GESTRICHEN** (Nutzer 2026-08-11, s. Etappenkopf B1) —
   Block 2 hat damit keinen Bau-Anteil mehr. **A7.3 ist ABGESCHLOSSEN**
   (Nutzer 2026-08-11): Entscheidung „nichts tun" (Regel 10), s. Etappenkopf
   A7.3 — der Beleg-Test bleibt.

@@ -13,7 +13,7 @@
 // (SeitenLeiste) und Popup-Seitenansicht (PopupSeite). Hier bleibt nur
 // die Fläche selbst.
 
-import { MousePointerClick } from 'lucide-react'
+import { MousePointerClick } from '@/ui/zeichen'
 import { useCallback, useMemo, useState, type DragEvent } from 'react'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
 import { rasterFlaecheStyle, rasterItemStyle } from '../../core/blocks/rasterLayout'

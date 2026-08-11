@@ -5,7 +5,7 @@
 // Ein Buchstabe heisst „Text". Das Symbol `Text` (bis 2026-08-07) zeichnete
 // mehrere Absatzzeilen — das ist ein Textblock im Sinne von Fliesstext, waehrend
 // dieser Baustein meistens eine einzelne Zeile oder Ueberschrift traegt.
-import { Type } from 'lucide-react'
+import { Type } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { TextBlock } from './TextBlock'
 

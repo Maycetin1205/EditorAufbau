@@ -9,7 +9,7 @@
 // (340 px) nicht doppelt so hoch wird wie noetig. Lange Technikwerte kuerzen
 // sich, der Tooltip zeigt sie ganz.
 
-import { Link2, X } from 'lucide-react'
+import { Link2, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import {

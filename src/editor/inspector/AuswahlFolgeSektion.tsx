@@ -26,7 +26,7 @@
 // die Haustiere des gewaehlten Kunden), nicht einen angezeigten Wert. Die
 // Einstellung ist dieselbe — Geber plus Feldpaare.
 
-import { Plus, X } from 'lucide-react'
+import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'

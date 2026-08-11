@@ -6,8 +6,8 @@
 //
 // Genau darin liegt ihr Sinn: alles, was das Buendel erreicht, steht Byte fuer
 // Byte in jeder exportierten SoftEngine-Maske. Ein Bibliotheks-Icon und ein
-// Bediener-Hinweis haben dort nichts zu suchen, und lucide-react gehoert
-// ohnehin nie hinein. Ausfuehrliche Begruendung: core/blocks/editorAngaben.
+// Bediener-Hinweis haben dort nichts zu suchen, und die Symbol-Datei (ui/zeichen)
+// gehoert ohnehin nie hinein. Ausfuehrliche Begruendung: core/blocks/editorAngaben.
 //
 // Bausteine zuerst, Angaben danach — die Reihenfolge ist zwar egal (beide
 // Ablagen stehen unabhaengig voneinander), aber so liest sich, was hier

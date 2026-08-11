@@ -7,7 +7,7 @@
 // Quelle in der Maske benutzt wird (Registry-getrieben, kein `if type===`).
 
 import { useRef, useState } from 'react'
-import { FileUp, Plus, TriangleAlert } from 'lucide-react'
+import { FileUp, Plus, TriangleAlert } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import {
   artFuer,

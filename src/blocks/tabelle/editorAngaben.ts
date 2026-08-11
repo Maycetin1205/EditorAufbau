@@ -6,7 +6,7 @@
 // Baustein auf der Maske zeichnet. Beim Symbol-Durchgang 2026-08-07 gepruefT
 // und nicht getauscht — ein richtiges Symbol gegen ein neues zu tauschen waere
 // Bewegung ohne Gewinn.
-import { Table } from 'lucide-react'
+import { Table } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { TabelleBlock } from './TabelleBlock'
 

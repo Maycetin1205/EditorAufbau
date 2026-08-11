@@ -14,7 +14,7 @@
 // Inspector (Rückzeile „← <Baustein>", 340 px, Escape blättert zurück).
 // Sortieren/Löschen/Duplizieren bleiben hier (kein Umblättern nötig).
 
-import { ArrowDown, ArrowUp, Copy, Pencil, Plus, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Pencil, Plus, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'

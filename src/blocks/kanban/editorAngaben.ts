@@ -12,7 +12,7 @@
 // Die Spalte traegt seit 2026-08-07 gestapelte Kaesten (Rows3) statt LayoutList:
 // eine Spalte stapelt KARTEN, LayoutList zeichnete dagegen Listenzeilen mit
 // Punkten davor, also eher eine Aufzaehlung.
-import { Rows3, SquareKanban } from 'lucide-react'
+import { Rows3, SquareKanban } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { KanbanBlock } from './KanbanBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'

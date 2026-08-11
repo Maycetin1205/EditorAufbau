@@ -15,7 +15,7 @@
 // fuellt er die Hoehe. Ein Hinweis ist laut editorAngaben ohnehin nur fuer
 // Panels gedacht, die sonst LEER aussehen — dieses hat nun einen Umschalter.
 
-import { Rows2 } from 'lucide-react'
+import { Rows2 } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { TrennerBlock } from './TrennerBlock'
 

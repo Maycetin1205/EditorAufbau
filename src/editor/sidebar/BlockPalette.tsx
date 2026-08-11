@@ -1,7 +1,7 @@
 // BlockPalette
 // Zeigt die registrierten MVP-Blocks und legt per Klick neue BlockData an.
 
-import { Component, Plus, Search } from 'lucide-react'
+import { Component, Plus, Search, type Zeichen } from '@/ui/zeichen'
 import { createElement, useState } from 'react'
 import { canContain, getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
@@ -13,6 +13,18 @@ import { cn } from '@/lib/utils'
 // Ersatz-Icon fuer Bausteine, die (noch) keines deklarieren: ein neutraler
 // Baustein. Die Bibliothek bleibt so immer bedienbar.
 const ERSATZ_SYMBOL = Component
+
+// Das Symbol eines Bausteins, fertig zum Zeichnen.
+//
+// Hier steht die EINE Umdeutung von `BausteinSymbol` (dem frameworkfreien
+// Vertrag der Registry) auf `Zeichen` (die echte React-Komponente). Sie ist der
+// Preis dafuer, dass der fachliche Core keinen React-Typ kennt — Begruendung in
+// core/blocks/editorAngaben. Gefahrlos, weil die einzigen Einsetzer die
+// editorAngaben der Bausteine sind und die nichts anderes hineingeben als
+// Symbole aus ui/zeichen.
+function symbolVon(type: string): Zeichen {
+  return (editorAngabenVon(type).symbol ?? ERSATZ_SYMBOL) as Zeichen
+}
 
 const CATEGORY_LABEL: Record<BlockCategory, string> = {
   layout: 'Layout',
@@ -153,7 +165,7 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
           Die feste 24er-Breite bleibt — sie hält die Klarnamen in einer
           Spalte, gleich wie breit ein Symbol zeichnet. */}
       <span className="flex h-6 w-6 shrink-0 items-center justify-center text-muted-foreground group-hover:text-foreground">
-        {createElement(editorAngabenVon(def.type).symbol ?? ERSATZ_SYMBOL, { size: 16 })}
+        {createElement(symbolVon(def.type), { size: 16 })}
       </span>
       <span className="truncate font-medium">{def.displayName}</span>
       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">

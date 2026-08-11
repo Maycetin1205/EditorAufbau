@@ -5,7 +5,7 @@
 // Modal hatte: die Steuerung darunter bleibt offen.
 
 import { useEffect, type ReactNode } from 'react'
-import { X } from 'lucide-react'
+import { X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 
 interface FormularKarteProps {

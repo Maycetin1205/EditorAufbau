@@ -11,7 +11,7 @@
 // jetzt Teil eines Paares: das Formularfeld traegt denselben Kasten MIT Inhalt
 // (RectangleEllipsis). Beides sind Kaesten auf der Maske — der eine ist zum
 // Druecken, der andere zum Ausfuellen.
-import { RectangleHorizontal } from 'lucide-react'
+import { RectangleHorizontal } from '../../ui/zeichen'
 import { ergaenzeEditorAngaben } from '../../core/blocks/editorAngaben'
 import { ButtonBlock } from './ButtonBlock'
 

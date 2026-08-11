@@ -13,7 +13,7 @@
 // Hover-Tooltip und als Suchtreffer.
 
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search } from '@/ui/zeichen'
 import { TextInput } from '@/ui/atoms/text-input'
 import {
   formatRelationSyntax,

@@ -3,7 +3,7 @@
 // die Label+Options-Convenience baut der Aufrufer (z.B. SelectControl) daraus.
 
 import * as SelectPrimitive from '@radix-ui/react-select'
-import { Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp } from '../zeichen'
 import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 

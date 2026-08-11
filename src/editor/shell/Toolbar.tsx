@@ -13,7 +13,7 @@ import {
   SlidersHorizontal,
   Trash2,
   Undo2,
-} from 'lucide-react'
+} from '@/ui/zeichen'
 import { useEffect, useRef, useState } from 'react'
 import { exportMask } from '../../export/exportMask'
 import { failedChecks, validateMaskHtml } from '../../export/validator'

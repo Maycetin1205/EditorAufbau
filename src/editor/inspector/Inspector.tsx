@@ -13,7 +13,7 @@
 // hatten. Ein Baustein-Wechsel schließt eine offene Unteraufgabe.
 
 import { useEffect, useMemo, useState } from 'react'
-import { Copy, MousePointer2, Trash } from 'lucide-react'
+import { Copy, MousePointer2, Trash } from '@/ui/zeichen'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'

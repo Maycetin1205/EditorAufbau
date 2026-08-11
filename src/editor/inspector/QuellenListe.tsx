@@ -17,7 +17,7 @@
 // die Technikwerte (Quellen-ids, Feldcodes) arbeiten unsichtbar darunter
 // (Regel 3). Kein Speichern-Knopf: jede Aenderung geht sofort in den Baum.
 
-import { Plus, X } from 'lucide-react'
+import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { SchrittSelect } from '@/ui/atoms/schritt-select'
