@@ -217,7 +217,19 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   die ganze Liste ab. Der Export schreibt Kopfsatz-Arten deshalb ZULETZT
   (`loopReihenfolge` in `core/data/dataSources.ts`, Merkmal `kopfsatzMoeglich`
   aus der Arten-Tabelle). Wer die Ausgabe-Reihenfolge anfasst, bricht das.
-- **Anlegen-Muster (GET neuer Index → PUTs → Querverweis):** belegt aus
+- **Positionen zur Laufzeit lesen (belegt 2026-08-11, Echttests des
+  Nutzers):** Relation 69 liefert je Frage EIN Feld einer Position:
+  `basisHTML_SND_MSG('GET_RELATION', { NR: '69', PARAMS: [BELART, POS, LEN,
+  BELNR, JAHR, ARCHIV, '', POSNR, '', '', '', ''] })` → `{"RESULT":"…"}`
+  über den REGISTER-Callback, 2–19 ms. JAHR/ARCHIV = BEL-Felder 0_1/1_1 der
+  gewählten Zeile (leer findet nur den aktuellen Nummernkreis). Breiter
+  Schnitt POS=0/LEN=255 holt die vordere Positionszeile in EINEM Aufruf
+  (der Antwortpuffer fasst 255 Zeichen). Ende der Liste: 11_6 UND 18_25
+  beide leer (645_10/Positionsident ist hier LEER — kein Ende-Marker).
+  Immer seriell; `ALS_ARRAY`/`ALIAS` machen die Antwort nur zur 10er-Liste
+  mit trotzdem EINEM Wert. ⚠ ERPAPICALL per `basisHTML_SND_MSG` friert die
+  WinUI-Maske EIN (nur Task-Manager) — tabu, bis die ErpApiCall-Referenz
+  der Installation vorliegt. Bauauftrag: UMBAU-PLAN-V6.md, Welle R.
   echtem SE-Log, s. `docs/softengine-wiki/muster-satz-anlegen.md` — beim
   Anlegen werden auch LEERE Felder geschrieben; Ketten brauchen
   adressierbare Ergebnisse je Schritt („Ergebnis von Schritt N").

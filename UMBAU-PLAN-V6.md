@@ -30,6 +30,10 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **Neu beauftragt 2026-08-11: Welle R** („Zeilen per Relation holen",
+  eigener Wellen-Kopf hinter F3) — vom Nutzer nach Live-Echttests
+  ausdruecklich bestellt; die Abgrenzung zur gestrichenen Welle Q und zu D2
+  steht im Wellen-Kopf. R1 in Arbeit (Chat vom 2026-08-11).
 - **Letzte fertige Etappe:** S2.1 (2026-08-11) — davor P2/Symbole, P1 (Messen), A7.3,
   A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2. S2 hat
   Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
@@ -2011,6 +2015,113 @@ Entscheidung im Musterbogen, wird gefragt.
 
 ---
 
+## R · Zeilen per Relation holen (eingeschoben 2026-08-11, Nutzer-Auftrag)
+
+**Auftrag des Nutzers vom 2026-08-11** nach einem Tag Echttests an seiner
+laufenden Maske: eine freistehende Maske zeigt die Positionen des Belegs, den
+der Bediener in der Belege-Tabelle anklickt. Der Schiebe-Weg (SEFILELOOP)
+kann das nachweislich nicht: ohne Kopfsatz liefert SoftEngine nichts, die
+Feld-Referenz `BEL_0_11` loest nur IM Beleg auf, ein Literal-Index nagelt die
+Datei auf genau EINEN Beleg fest (Echttests 2026-08-10/11, Gedaechtnis
+`pos-braucht-kopfsatz`).
+
+**Abgrenzung — WICHTIG fuer jeden neuen Chat:**
+
+- **R ist NICHT die gestrichene Welle Q** („Daten auf Abruf", Einschub
+  `1884394`, Revert `b484e11`, Gedaechtnis `daten-auf-abruf-gestrichen`).
+  Q war ein Generalumbau: JEDE Quelle umschaltbar, generische Frage-Funktion,
+  Nachschlagen fragt beim Tippen, eigene Tabellen-Ausloeser. R ist EINE
+  zusaetzliche Lade-Art fuer den EINEN belegten Fall; bestehende Quellen,
+  Masken und Exporte bleiben byte-gleich. Der Nutzer hat R am 2026-08-11 in
+  Kenntnis der Q-Streichung ausdruecklich beauftragt („B bauen").
+- **R ist nicht D2:** D2 gibt einer TABELLEN-Komponente Zeilen von einem
+  umgebenden Baustein (fuer D3/Nachschlagen). R fuellt die QUELLE; alle
+  Verbraucher (Tabelle, Einzelwerte, Ketten, Verknuepfung, Auswahl
+  geben/folgen) lesen sie unveraendert ueber den normalen Datenweg.
+
+**Alles Folgende ist am 2026-08-10/11 in der SoftEngine des Nutzers LIVE
+belegt** (Testmaske `Desktop\test69` + Handbau-Lader in seiner echten Maske;
+Kurzfassung auch in CLAUDE.md, Kapitel SoftEngine-Kontrakte):
+
+- Relation 69 („Relation Position") liefert zur Laufzeit Positionsfelder:
+  `basisHTML_SND_MSG('GET_RELATION', { NR: '69', PARAMS: [BELART, POS, LEN,
+  BELNR, JAHR, ARCHIV, '', POSNR, '', '', '', ''] })`, Antwort
+  `{"RESULT":"..."}` ueber den REGISTER-Callback, 2–19 ms je Frage.
+- JAHR/ARCHIV muessen mit (BEL-Felder `0_1`/`1_1` der angeklickten Zeile):
+  leer fand die Relation nur den aktuellen Nummernkreis (262er), mit Werten
+  auch die 261er.
+- Ein breiter Schnitt `POS=0, LEN=255` liefert die vordere Positionszeile in
+  EINEM Aufruf (die Antwort-Variable fasst 255 Zeichen, SE-Log `zlen=255`);
+  nur Felder dahinter (z. B. `280_12`) kosten je eine weitere Frage.
+- Ende der Liste: `11_6` UND `18_25` beide leer. Der Positionsident `645_10`
+  ist in dieser Installation LEER und taugt nicht als Ende-Marker.
+- Streng seriell fragen: GET-Antworten tragen keine Zuordnung zur Frage.
+  `ALS_ARRAY`/`ALIAS` (offizielle Framework-Felder) aendern daran nichts:
+  Antwort wird eine 10er-Liste, gefuellt bleibt EIN Wert.
+- Einspeisen: Zeilen als Objekte mit direkten `pos_len`-Properties plus
+  SATZ-Rohstring in den normalen Datenweg; `getField`
+  (`src/softengine/data.ts:59`) schneidet die uebrigen Spalten selbst.
+- ERPAPICALL zur Laufzeit friert die WinUI-Maske des Nutzers EIN (nur
+  Task-Manager hilft) — NICHT verwenden, bis die ErpApiCall-Referenz der
+  Installation vorliegt (Gedaechtnis `erpapicall-laufzeit-form`).
+- Referenz-Implementierung: der Handbau-Lader in der Nutzer-Maske
+  (`Downloads\index.basis.source.html`, Block „Klick-Lader v3") — der
+  Editor-Code muss sich exakt daran messen.
+
+### R1 · Lade-Art am Quellen-Modell, Steuerung und Export
+
+**Ziel:** Eine Datenquelle traegt sichtbar die Lade-Art „Zeilen per Relation
+holen": Relationsnummer, Geber-Quelle (deren gewaehlte Zeile den Beleg
+bestimmt), die vier Parameter-Zuordnungen (Belegart/Belegnummer/Jahr/Archiv
+<- Feldcodes der Geber-Zeile) und die Ende-Felder. Vorbelegung = der belegte
+Fall (69, 2_1/3_8/0_1/1_1, Ende 11_6+18_25).
+
+**Arbeit:**
+
+- Modell als Daten am Quellen-Eintrag (`core/data/dataSources.ts`-Umfeld,
+  kein Baustein-Sondercode, Regel 2); Persistenz additiv, KEIN Schema-Bump
+  (die 6 bleibt fuer C2 frei).
+- Formular in der Steuerung (Datenquellen-Formular), Abschnitt „Woher kommen
+  die Zeilen?" mit den zwei Arten.
+- Export schreibt die Einstellung als Daten an die Maske und laesst fuer
+  solche Quellen den SEFILELOOP-Eintrag weg (`export/exportMask.ts`,
+  `collectDataSources`).
+- Export-Testfaelle (Round-Trip); Referenzabzug bleibt gruen, weil die
+  Referenzmaske die neue Art nicht nutzt.
+
+**Wo sichtbar:** Steuerung -> Datenquellen; die Export-Datei. In SoftEngine
+noch nichts — R1 laedt bewusst nicht.
+
+### R2 · Laufzeit: die Quelle holt bei Auswahl-Wechsel
+
+**Ziel:** Wechselt die Auswahl der Geber-Quelle, holt die Quelle ihre Zeilen
+selbst (Schnitt je Position + Einzelfelder, Ende-Erkennung, streng seriell,
+Anzeige erst am Ende) und speist sie in den normalen Datenweg. Danach
+verhaelt sich die Quelle wie jede andere: Tabelle, Verknuepfung, Ketten,
+Auswahl geben/folgen — alles unveraendert nutzbar.
+
+**Arbeit:**
+
+- Lader als generisches Modul in `src/softengine/` (kennt NIE einen
+  Baustein), gespeist aus der R1-Einstellung; Ausloeser = Auswahl-Abo
+  (`blocks/shared/auswahl`-Mechanik von aussen, Schichtregel beachten).
+- Ein GET in Flug (bestehende Warteschlange, `seGetNewIndex`-Muster);
+  Generationszaehler gegen ueberholte Antworten; Timeout still-harmlos.
+- Runtime-Buendel bewusst neu (`build:runtime`), Veralten-Waechter und
+  Export-Referenzabzug entsprechend.
+
+**Nutzerprobe (SE-Echttest, gebuendelt nach R2):** Beleg anklicken ->
+Positionen erscheinen (261er UND 262er Nummernkreis); Abwahl leert;
+Verknuepfung auf den Artikelstamm an einer geholten Zeile; **PUT ueber eine
+sichtbare Kette auf eine geholte Position** (Schreiben — ausdrueckliche
+Nutzer-Anforderung 2026-08-11); Maske ausserhalb von SoftEngine bleibt
+still-harmlos.
+
+**Was der bauende Agent nicht pruefen kann:** alles in SoftEngine — macht
+der Nutzer.
+
+---
+
 ## 5. Gesamtreihenfolge der Commits
 
 Die genaue Nummerierung darf bei notwendigen verhaltensneutralen Dateischnitten
@@ -2117,6 +2228,13 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | 31 | F1 Entwurf | kein Code — der Nutzer bestaetigt den sichtbaren Entwurf |
 | 32 | F2 Relationsoberflaeche | Steuerung, vollstaendig |
 | 33 | F3 Designabgleich | ueberall sichtbar; Vorbild ist `designsprache/` |
+
+### Block R — Zeilen per Relation (eingeschoben 2026-08-11) · SE-Echttest Pflicht
+
+| # | Etappe | Wo im sichtbaren Editor |
+|---|---|---|
+| 34 | R1 Lade-Art + Export | Steuerung/Datenquellen: Abschnitt „Woher kommen die Zeilen?" |
+| 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen |
 
 Nicht jeder Punkt muss gleich gross sein. Die Liste verhindert, dass ein
 Agent unter dem Etikett „Aufraeumen" fuenf unabhaengige Risiken in einen
