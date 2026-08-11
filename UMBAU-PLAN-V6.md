@@ -34,9 +34,12 @@ git log --oneline -8
   eigener Wellen-Kopf hinter F3) — vom Nutzer nach Live-Echttests
   ausdruecklich bestellt; die Abgrenzung zur gestrichenen Welle Q und zu D2
   steht im Wellen-Kopf. R1 in Arbeit (Chat vom 2026-08-11).
-- **Letzte fertige Etappe:** S2.1 (2026-08-11) — davor P2/Symbole, P1 (Messen), A7.3,
-  A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2. S2 hat
-  Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
+- **Letzte fertige Etappe:** R2 (2026-08-11) — davor S2.1, P2/Symbole, P1 (Messen), A7.3,
+  A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2. R2 hat
+  den Relation-Lader (Hol-Weg) für Welle R nachgebaut (`relationLader.ts`),
+  inklusive `ladeRelation`-Support in `data.ts` und Einbindung in `datenAnschluss.ts`.
+  Die Runtime wurde gebaut. R2 ist damit abgeschlossen.
+  S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
   steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
   warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
   **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die

@@ -13,9 +13,11 @@
 // Kennt keinen einzelnen Baustein (Regel 2) — nur „ein Element, das man
 // befuellen kann". Was befuellt wird, gibt der Baustein herein.
 
-import { bootSe, hasSeData, onSeDaten } from '../../softengine/bridge'
-import { aufAuswahlHoeren } from './auswahl'
+import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
+import { aufAuswahlHoeren, auswahlFuer } from './auswahl'
 import { aufTagHoeren } from './gewaehlterTag'
+import { starteRelationLader } from '../../softengine/relationLader'
+import { findRuntimeDataSource, type RuntimeDataSource } from '../../softengine/data'
 
 export interface DatenAnschluss<T extends HTMLElement> {
   // Vom Baustein in connectedCallback rufen.
@@ -58,7 +60,28 @@ export function macheDatenAnschluss<T extends HTMLElement>(opts: {
       aufTagHoeren(hydriereAlle)
       // Dritter Anlass: eine Zeile/Karte wurde gewaehlt oder abgewaehlt
       // (shared/auswahl) — Geber zeichnen ihre Markierung, Folger filtern.
-      aufAuswahlHoeren(hydriereAlle)
+      aufAuswahlHoeren(() => {
+        // Welle R: holende Quellen neu laden, wenn sich die Auswahl ändert.
+        const g = seGlobal()
+        if (g && Array.isArray(g.FF_DATA_SOURCES)) {
+          for (const raw of g.FF_DATA_SOURCES) {
+            const ds = findRuntimeDataSource([raw], (raw as any)?.id)
+            if (ds && ds.ladeRelation) {
+              starteRelationLader(ds.id, ds.ladeRelation, {
+                gewaehlteZeile: auswahlFuer,
+                speiseZeilen: (quelleId, zeilen) => {
+                  if (!g.SEDATA) g.SEDATA = {}
+                  if (!g.SEDATA.Tabellen) g.SEDATA.Tabellen = {}
+                  // Wir legen sie genau wie geschobene IDB-Tabellen ab
+                  g.SEDATA.Tabellen[ds.name] = { Zeilen: zeilen }
+                  hydriereAlle()
+                }
+              })
+            }
+          }
+        }
+        hydriereAlle()
+      })
     }
     bootSe()
     // Kommen die Daten schon vor diesem Baustein an, sofort nachziehen.

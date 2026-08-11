@@ -14,6 +14,16 @@ export function isRecord(v: unknown): v is UnknownRecord {
   return typeof v === 'object' && v !== null
 }
 
+export interface RuntimeLadeRelation {
+  nr: string
+  geberQuelleId: string
+  belegartFeld: string
+  belegnummerFeld: string
+  jahrFeld: string
+  archivFeld: string
+  endeFelder: string[]
+}
+
 // Quellen-Definition in der EXPORTIERTEN Maske: die Vorlagen
 // sind benutzerdefiniert und leben im Editor-localStorage — exportMask
 // bettet die benutzten Definitionen deshalb als `window.FF_DATA_SOURCES = […]`
@@ -25,6 +35,7 @@ export interface RuntimeDataSource {
   name: string
   tableId: string
   indexField: string
+  ladeRelation?: RuntimeLadeRelation
 }
 
 // Eintrag zur source-id aus einer FF_DATA_SOURCES-Liste (pur, testbar).
@@ -34,11 +45,30 @@ export function findRuntimeDataSource(list: unknown, id: string): RuntimeDataSou
   for (const entry of list) {
     if (!isRecord(entry) || entry.id !== id) continue
     if (typeof entry.name !== 'string' || typeof entry.tableId !== 'string') continue
+    const e = entry as Record<string, unknown>
+    let ladeRelation: RuntimeLadeRelation | undefined
+    if (isRecord(e.ladeRelation)) {
+      const lr = e.ladeRelation
+      const text = (v: unknown): string => (typeof v === 'string' ? v : '')
+      const endeFelder = Array.isArray(lr.endeFelder) ? lr.endeFelder.filter((f): f is string => typeof f === 'string') : []
+      if (typeof lr.nr === 'string' && typeof lr.geberQuelleId === 'string' && typeof lr.belegartFeld === 'string' && typeof lr.belegnummerFeld === 'string') {
+        ladeRelation = {
+          nr: lr.nr,
+          geberQuelleId: lr.geberQuelleId,
+          belegartFeld: lr.belegartFeld,
+          belegnummerFeld: lr.belegnummerFeld,
+          jahrFeld: text(lr.jahrFeld),
+          archivFeld: text(lr.archivFeld),
+          endeFelder,
+        }
+      }
+    }
     return {
       id,
       name: entry.name,
       tableId: entry.tableId,
       indexField: typeof entry.indexField === 'string' ? entry.indexField : '',
+      ...(ladeRelation ? { ladeRelation } : {}),
     }
   }
   return undefined
