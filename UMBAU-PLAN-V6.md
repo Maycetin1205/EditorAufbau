@@ -137,6 +137,11 @@ git log --oneline -8
   gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
   gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
   das Pruefbuendel nicht haengt.
+- **Laufende Etappe:** S5.1 (Export bestellt nur benutzte Felder, s. Etappenkopf
+  S5). Vorbereitend verhaltensneutral geschnitten: `collectDataSources` wohnt
+  jetzt in `export/benutzteQuellen.ts` — `exportMask.ts` stand auf 498 von 500
+  Zeilen und hatte fuer die Etappe keinen Platz (Plan 3.1: Schnitt und Fachliches
+  getrennt). Export-Bytes, Runtime-Buendel und Referenzabzug unveraendert.
 - **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -694,8 +699,44 @@ duerfen. Ohne die bleibt es, wie es ist.
 
 ## S5 · Masken-Tempo (OPTIONAL — eigenes go, SE-Echttest Pflicht)
 
-Nicht Teil des Block-S-Standards, weil es Runtime-Bytes aendert: die
-Diagnose-Anzeige schreibt bei jedem SE-Ereignis das JSON des ersten
+Nicht Teil des Block-S-Standards, weil es Export- bzw. Runtime-Bytes aendert.
+Zwei Posten, unabhaengig voneinander.
+
+### S5.1 · Der Export bestellt nur noch die benutzten Felder (GEBAUT 2026-08-11)
+
+**Belegtes Problem (Nutzer-Log 2026-08-11):** SoftEngine macht fuer JEDEN
+gelieferten Wert einen Bild-Nachschlag (GET_RELATION 1911, Antwort fast immer
+„No_Pic.png") — Maske oeffnen = 5 953 Aufrufe in 9,2 s, eine Schreib-Kette mit
+Aktualisieren ~20 000 Log-Zeilen. Die SE-Seite koennen wir nicht aendern, die
+MENGE liefert unsere Bestellung: jede IDB-Quelle bestellte `FELDER:'*'`, also
+alle Felder aller Zeilen, obwohl die Maske nur wenige liest.
+
+**Arbeit:** je IDB-SEFILELOOP-Quelle die explizite pos_len-Liste der BENUTZTEN
+Felder statt `*`. Gesammelt wird registry-getrieben (Regel 2) aus allen Wegen,
+auf denen ein Feldcode in die Maske reist — Bindungen, Listen-Eintraege,
+Feld-Properties, Verknuepfungs- und Auswahl-Schluessel, Ketten-Parameter, plus
+die Datensatz-Nummer der Quelle. Der Schnitt liegt in
+`export/benutzteFelder.ts` (Sammeln) und `core/data/dataSources.ts`
+(`felderFor` entscheidet die Form je Quellen-ART).
+
+**Kontrakt-Ehrlichkeit:** fuer IDB ist die explizite Liste NIRGENDS belegt —
+beide Chef-Masken fuehren IDB mit `*`. Belegt ist nur die FORM (pos_len,
+komma-getrennt) an den Stamm-Quellen und am POS-Loop von `JsonBeleg.json`;
+dass die Zeilen-Schluessel pos_len tragen (`IDBID0001_253_30`), macht sie
+plausibel. **Es entscheidet der EINE SE-Echttest des Nutzers. Schlaegt er
+fehl, wird der Commit per `git revert` zurueckgenommen** — nicht nachgebessert.
+
+**Sicherheitsventil:** laesst sich die Verwendungsliste einer Quelle nicht
+vollstaendig als pos_len ausdruecken, bleibt fuer DIESE Quelle `*`. Lieber `*`
+als ein still leeres Feld in der Maske.
+
+**Nutzerprobe:** Export ziehen, in `index.basis.SEvariablen.json` die
+FELDER-Liste ansehen; dann SE-Echttest — Daten kommen an, 1911-Flut im Log
+deutlich kleiner.
+
+### S5.2 · Diagnose-Anzeige (NICHT gebaut, eigenes go)
+
+Die Diagnose-Anzeige schreibt bei jedem SE-Ereignis das JSON des ersten
 Datenpakets mehrfach neu (`bridge.ts:110-148`) — datenmengenproportionale
 Arbeit mitten im Maskenstart. Falls der Nutzer es freigibt: Diagnose nur
 noch auf Anforderung fuellen, Maskenverhalten sonst identisch; der genaue
