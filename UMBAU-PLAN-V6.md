@@ -154,6 +154,16 @@ git log --oneline -8
   nicht nachgebessert. Vorbereitend verhaltensneutral geschnitten:
   `collectDataSources` zog aus `exportMask.ts` aus (stand auf 498 von 500 Zeilen),
   die vier neuen Faelle stehen in `export/felderBestellung.test.ts`.
+- **Was S5.2 gebaut hat (2026-08-11) — DERSELBE SE-ECHTTEST DECKT ES MIT AB:**
+  Kopfsatz-Quellen (POS) stehen in den SEvariablen jetzt ZULETZT
+  (`loopReihenfolge` in `core/data/dataSources.ts`). Anlass ist ein
+  A/B-Echttest des Nutzers: POS an erster Stelle -> KEINE Quelle liefert Daten,
+  auch die Stammtabellen dahinter nicht; POS zuletzt -> alles liefert. Das ist
+  im Gegensatz zu S5.1 ein BELEGTER Kontrakt, er steht deshalb in CLAUDE.md
+  unter „SoftEngine-Kontrakte". Merkmal ist die Arten-Spalte `kopfsatzMoeglich`
+  (war schon da, keine neue noetig), kein `if ID === 'POS'`. HTML-Bytes,
+  `ff-runtime.js` und Referenzabzug unveraendert — die Referenzmaske fuehrt
+  keine Kopfsatz-Quelle.
 - **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -167,9 +177,9 @@ git log --oneline -8
   (Nutzer 2026-08-11): Entscheidung „nichts tun" (Regel 10), s. Etappenkopf
   A7.3 — der Beleg-Test bleibt.
   **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
-  s. Etappenkopf S1 — nicht wieder vorschlagen), **S5.1 ist gebaut und wartet
-  auf den SE-Echttest, S5.2 (Diagnose-Anzeige) ist offen und braucht sein
-  eigenes `go`**. Die Welle S (sichtbare Fehler
+  s. Etappenkopf S1 — nicht wieder vorschlagen), **S5.1 und S5.2 sind gebaut
+  und warten auf DIESELBE eine SE-Probe, S5.3 (Diagnose-Anzeige) ist offen und
+  braucht sein eigenes `go`**. Die Welle S (sichtbare Fehler
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
   worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S). A9 setzt A3 bis
   A7 voraus.
@@ -715,6 +725,9 @@ duerfen. Ohne die bleibt es, wie es ist.
 Nicht Teil des Block-S-Standards, weil es Export- bzw. Runtime-Bytes aendert.
 Zwei Posten, unabhaengig voneinander.
 
+**Beide gebauten Posten (S5.1, S5.2) aendern die SEvariablen und warten auf
+DIESELBE eine SE-Probe des Nutzers.**
+
 ### S5.1 · Der Export bestellt nur noch die benutzten Felder (GEBAUT 2026-08-11)
 
 **Belegtes Problem (Nutzer-Log 2026-08-11):** SoftEngine macht fuer JEDEN
@@ -747,7 +760,30 @@ als ein still leeres Feld in der Maske.
 FELDER-Liste ansehen; dann SE-Echttest — Daten kommen an, 1911-Flut im Log
 deutlich kleiner.
 
-### S5.2 · Diagnose-Anzeige (NICHT gebaut, eigenes go)
+### S5.2 · Kopfsatz-Quellen stehen zuletzt (GEBAUT 2026-08-11)
+
+**Belegtes Problem (A/B-Echttest des Nutzers, identische Maske):** steht der
+POS-Loop (Belegpositionen) in der exportierten SEvariablen.json an ERSTER
+Stelle, liefert SoftEngine aus KEINER Quelle Daten — auch ADR/ART/IDB dahinter
+bleiben leer. Dieselbe Datei mit POS an LETZTER Stelle: alle Quellen liefern.
+Ein Kopfsatz-Loop scheitert standalone, und SoftEngine bricht beim ersten
+gescheiterten Loop offenbar die ganze Liste ab. Der Export schrieb bis dahin in
+Anlege-/Baum-Reihenfolge — wer die Positionen zuerst anlegte, bekam eine Maske,
+in der GAR NICHTS ankam, ohne Fehlermeldung und ohne Bezug zur Ursache.
+
+**Arbeit:** `loopReihenfolge` in `core/data/dataSources.ts` — Arten mit
+`kopfsatzMoeglich` ans Ende, alle uebrigen behalten ihre Reihenfolge
+untereinander (zwei Eimer statt Sortierung, damit die Stabilitaet sichtbar
+ist). Kein `if ID === 'POS'`: das Merkmal traegt die Arten-Tabelle, sie hatte
+es bereits (Regel 2). Geformt wird NUR die Ausgabe der SEvariablen; die
+Bibliothek bleibt unberuehrt, FF_DATA_SOURCES bleibt in Baum-Reihenfolge (die
+Laufzeit schlaegt dort per id nach), das HTML damit Byte fuer Byte unveraendert.
+
+**Nutzerprobe:** Export einer Maske mit Belegpositionen ziehen — in
+`index.basis.SEvariablen.json` steht der POS-Eintrag zuletzt, egal wann die
+Quelle angelegt wurde. Dann SE-Echttest: alle Quellen liefern.
+
+### S5.3 · Diagnose-Anzeige (NICHT gebaut, eigenes go)
 
 Die Diagnose-Anzeige schreibt bei jedem SE-Ereignis das JSON des ersten
 Datenpakets mehrfach neu (`bridge.ts:110-148`) — datenmengenproportionale

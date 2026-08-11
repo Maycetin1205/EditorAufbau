@@ -170,6 +170,39 @@ export function felderFor(source: DataSource, benutzt?: ReadonlySet<string>): st
   return codes.every((code) => POS_LEN.test(code)) ? codes.join(',') : '*'
 }
 
+// Die REIHENFOLGE, in der die Quellen in den SEvariablen stehen dürfen.
+//
+// ⚠ Das ist ein SE-Kontrakt, kein Geschmack. BELEGT am 2026-08-11 durch einen
+// A/B-Echttest des Nutzers mit derselben Maske: steht der POS-Loop
+// (Belegpositionen) an ERSTER Stelle, liefert SoftEngine aus KEINER Quelle
+// Daten — auch die Stammtabellen und IDB-Tabellen dahinter bleiben leer.
+// Dieselbe Datei mit POS an LETZTER Stelle: alle Quellen liefern. Erklärung:
+// ein Kopfsatz-Loop scheitert standalone, und SoftEngine bricht beim ersten
+// gescheiterten Loop offenbar die ganze Liste ab.
+//
+// Bis dahin schrieb der Export die Einträge in Baum- bzw. Anlege-Reihenfolge —
+// wer POS zuerst anlegte, bekam eine Maske, in der GAR NICHTS ankam. Ohne
+// Fehlermeldung, ohne Zusammenhang zur eigentlichen Ursache.
+//
+// Nach vorne kommt also, was allein bestehen kann; ans Ende, was unter einem
+// anderen Satz hängt. WELCHE Arten das sind, sagt die Arten-Tabelle
+// (kopfsatzMoeglich) — hier steht kein `if ID === 'POS'` (Regel 2). Innerhalb
+// beider Gruppen bleibt die bisherige Reihenfolge erhalten (stabile Teilung als
+// zwei Eimer, nicht als Sortierung — so ist die Stabilität sichtbar und nicht
+// bloß von der Sort-Implementierung geliehen): eine Maske ohne
+// Kopfsatz-Quelle exportiert Byte für Byte wie vorher.
+//
+// Die Bibliothek selbst wird NICHT umsortiert — das hier formt nur die Ausgabe.
+export function loopReihenfolge(sources: readonly DataSource[]): DataSource[] {
+  const alleinstehend: DataSource[] = []
+  const unterKopfsatz: DataSource[] = []
+  for (const source of sources) {
+    if (artFuer(source.kind).kopfsatzMoeglich) unterKopfsatz.push(source)
+    else alleinstehend.push(source)
+  }
+  return [...alleinstehend, ...unterKopfsatz]
+}
+
 // Der KOPFSATZ_INDEX, den der Export schreiben darf — leer heißt „Schlüssel
 // weglassen". Die Art-Abfrage gehört HIERHER und nicht in den Export: wechselt
 // der Bediener die Art einer bestehenden Quelle, bleibt der alte Wert in der

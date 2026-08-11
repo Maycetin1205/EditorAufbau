@@ -208,6 +208,15 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   genau darum ist die explizite IDB-Liste ein unbelegter Vorgriff. Entscheidet
   der SE-Echttest gegen sie, wird der Commit per `git revert` zurückgenommen —
   dann gilt wieder ausschließlich der Satz oben.
+- **Die REIHENFOLGE der SEFILELOOP-Einträge ist ein Kontrakt** (belegt
+  2026-08-11, A/B-Echttest des Nutzers mit derselben Maske): steht ein
+  Kopfsatz-Loop (POS/Belegpositionen) an ERSTER Stelle, liefert SoftEngine aus
+  **keiner** Quelle Daten — auch ADR/ART/IDB dahinter bleiben leer. Dieselbe
+  Datei mit POS an letzter Stelle: alle Quellen liefern. Ein Kopfsatz-Loop
+  scheitert standalone, und SoftEngine bricht beim ersten gescheiterten Loop
+  die ganze Liste ab. Der Export schreibt Kopfsatz-Arten deshalb ZULETZT
+  (`loopReihenfolge` in `core/data/dataSources.ts`, Merkmal `kopfsatzMoeglich`
+  aus der Arten-Tabelle). Wer die Ausgabe-Reihenfolge anfasst, bricht das.
 - **Anlegen-Muster (GET neuer Index → PUTs → Querverweis):** belegt aus
   echtem SE-Log, s. `docs/softengine-wiki/muster-satz-anlegen.md` — beim
   Anlegen werden auch LEERE Felder geschrieben; Ketten brauchen

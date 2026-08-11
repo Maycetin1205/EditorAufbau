@@ -89,13 +89,57 @@ describe('exportMask: Datenquellen', () => {
     ]
 
     const { sevariablen } = exportMask(tree, 'Maske', sources)
+    // Die Positionen stehen ZULETZT, obwohl sie zuerst angelegt und zuerst im
+    // Baum stehen — s. den Reihenfolge-Fall weiter unten.
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
       {
         INDEX_NR: 0, ALIAS: 'Belegpositionen', ID: 'POS',
         KOPFSATZ_INDEX: 'BEL_0_11', FELDER: '18_25,45_60',
       },
-      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
     ])
+  })
+
+  // --- Die REIHENFOLGE der Eintraege (2026-08-11) -------------------------
+  //
+  // ⚠ SE-Kontrakt, belegt im A/B-Echttest des Nutzers mit DERSELBEN Maske:
+  // steht der POS-Loop an ERSTER Stelle, liefert SoftEngine aus KEINER Quelle
+  // Daten — auch ADR/ART/IDB dahinter bleiben leer. Dieselbe Datei mit POS an
+  // LETZTER Stelle: alle Quellen liefern. Ein Kopfsatz-Loop scheitert
+  // standalone, und SoftEngine bricht beim ersten gescheiterten Loop die ganze
+  // Liste ab.
+  //
+  // Bis dahin schrieb der Export in Anlege-/Baum-Reihenfolge: wer die
+  // Positionen zuerst anlegte, bekam eine Maske, in der GAR NICHTS ankam —
+  // ohne Fehlermeldung und ohne Zusammenhang zur Ursache.
+  //
+  // Geprueft wird BEIDE Anlege-Richtungen mit demselben Soll: Kopfsatz-Quellen
+  // zuletzt, alle uebrigen untereinander unveraendert.
+  it('schreibt Kopfsatz-Quellen zuletzt, egal in welcher Reihenfolge angelegt', () => {
+    const bauBaum = (ersteQuelle: string, zweiteQuelle: string): BlockTree => ({
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'b', 'c'] },
+      a: { id: 'a', type: TEST_DATA_BOX, props: { source: ersteQuelle }, parentId: 'root', childIds: [] },
+      b: { id: 'b', type: TEST_DATA_BOX, props: { source: zweiteQuelle }, parentId: 'root', childIds: [] },
+      c: { id: 'c', type: TEST_DATA_BOX, props: { source: 'adressen' }, parentId: 'root', childIds: [] },
+    })
+    const sources = [
+      {
+        id: 'positionen', name: 'Belegpositionen', kind: 'belegposition' as const,
+        kopfsatzIndex: 'BEL_0_11', fields: [{ code: '18_25', label: 'Artikelnummer' }],
+      },
+      { id: 'termine', name: 'Termine', kind: 'idb' as const, idbId: 'IDBID0001', fields: [] },
+      { id: 'adressen', name: 'Adressen', kind: 'adressstamm' as const, fields: [{ code: '2_8', label: 'Nr' }] },
+    ]
+    const aliasse = (baum: BlockTree): string[] =>
+      JSON.parse(exportMask(baum, 'Maske', sources).sevariablen)
+        .SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS)
+
+    // Positionen zuerst gebaut — sie muessen trotzdem hinten landen.
+    expect(aliasse(bauBaum('positionen', 'termine')))
+      .toEqual(['Termine', 'Adressen', 'Belegpositionen'])
+    // Und andersherum: an der Reihenfolge der uebrigen aendert sich nichts.
+    expect(aliasse(bauBaum('termine', 'positionen')))
+      .toEqual(['Termine', 'Adressen', 'Belegpositionen'])
   })
 
   // --- Der Kopfsatz braucht seine Variable (2026-08-10) ------------------

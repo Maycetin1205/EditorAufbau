@@ -65,6 +65,15 @@ export interface QuellenArt {
   // Nur „Andere Datei" fuehrt ihn: ADR/ART/BEL SIND Kopfsaetze, und fuer IDB
   // ist die Form nicht abgelesen — dort wird nicht danach gefragt, statt zu
   // raten (Regel 5).
+  //
+  // ZWEITE, HAERTERE Folge (belegt 2026-08-11, A/B-Echttest des Nutzers):
+  // Quellen dieser Arten stehen in den SEvariablen ZULETZT. Steht ein POS-Loop
+  // an ERSTER Stelle, liefert SoftEngine aus KEINER Quelle Daten — auch die
+  // Stammtabellen und IDB-Tabellen dahinter bleiben leer. Derselbe Export mit
+  // POS am Ende liefert alles. SoftEngine bricht beim ersten gescheiterten Loop
+  // offenbar die ganze Liste ab, und ein Kopfsatz-Loop scheitert standalone.
+  // Wer eine Art mit `true` ergaenzt, verschiebt sie damit automatisch ans Ende
+  // (loopReihenfolge in ./dataSources) — das ist Absicht, kein Nebeneffekt.
   kopfsatzMoeglich: boolean
   // Vorbelegung fuer den Kopfsatz; '' = keine.
   kopfsatzStandard: string
