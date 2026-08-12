@@ -46,11 +46,14 @@ git log --oneline -8
   anlegen und sofort sehen — WARTET auf das Anlege-Protokoll, GET 1020),
   **R5** (Refresh-Flut/Zeilenfilter — BAUBAR, FREISELEKT-Form am
   2026-08-12 aus `Desktop\VORLAGEN` belegt). Details im Wellen-Kopf R.
-- **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben;
-  Design-Mix `designsprache/mix-fellnase-empfang.html` gebaut
-  (Fellnase-Basis + empfang-Zutaten) — wartet auf das Nutzer-Urteil,
-  ebenso das Popup-Overlay-Konzept (U0-7). Baubar per Opus-Kopier-Auftrag:
-  R3, R5, U1, U2, U3, U6; danach N1/N2/N3.
+- **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben
+  und erweitert um N4 (Kanban-Untergruppen/„Zimmer") und N5
+  (Bild-Baustein, Stufe 1 statisch). Design-Mix v2
+  (`designsprache/mix-fellnase-empfang.html`) ist vom Nutzer ANGENOMMEN
+  und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
+  („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
+  niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
+  R3, R5, U1, U2, U3, U6; danach N1–N5.
 - **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
@@ -233,8 +236,8 @@ git log --oneline -8
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
 - **Naechste Etappe:** Welle U, Etappe fuer Etappe per Opus-Kopier-Auftrag
-  (Wellen-Kopf U); daneben R3, sobald der Nutzer es zieht. A9/A10 bleiben
-  liegen, bis die gesammelten Bedienproben nachgeholt sind.
+  (Wellen-Kopf U); daneben R3/R5, sobald der Nutzer sie zieht. A9 ist per
+  Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
   Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein
@@ -1269,6 +1272,11 @@ Registry-Umbau. A8 baut sie nicht ein zweites Mal vorab.
 
 ## A9 · Belegter SoftEngine-Ausgangslauf
 
+**ABGEHAKT per Praxis (Nutzer 2026-08-12: „a9 a10 ist doch erledigt").**
+Die laufenden Echttests (R2 bestanden, taegliche Nutzung) ersetzen den
+formalen Ausgangslauf. Als Rest-Pflicht bleibt nur: VOR C2 die
+Maskendatei sichern (steht im C2-Kopf). Keine eigene Etappe mehr.
+
 Nach A0 bis A8, vor dem sichtbaren Komponentenumbau:
 
 1. Agent nennt exakten Commit und erstellt eine kurze Testanleitung.
@@ -1292,6 +1300,12 @@ Nach A0 bis A8, vor dem sichtbaren Komponentenumbau:
 Dieser Lauf ist der Vorher-Beleg fuer die folgenden Runtime-Etappen.
 
 ## A10 · Store-Besitz vor dem atomaren Export entscheiden
+
+**Fachliche Haelfte BEANTWORTET (Nutzer 2026-08-12): die Bibliothek
+bleibt editorweit — keine Maske bringt eigene Quellen/Relationen mit.**
+Die Technik-Haelfte (Sitzungs-Besitz statt Modul-Singletons) wartet auf
+KEINE Nutzer-Entscheidung mehr; sie bekommt ihr eigenes go, wenn ein
+Umbau sie wirklich erzwingt (Regel 10).
 
 ### Zwei getrennte Fragen
 
@@ -2417,12 +2431,12 @@ Ohne die Antworten 1/2/3/4 baut U1/U2 nicht. Empfehlung steht dabei.
    ich kann den kaum einstellen": er wird im **U4-Entwurf neu gedacht**
    (was muss er koennen, wie heisst er); die Namens-Kollision wird dort
    mitgeloest.
-7. **ABGELEHNT — der Reiter faellt.** Vorgeschlagenes Konzept (liegt dem
-   Nutzer vor): das Popup wird ueber der abgedunkelten Hauptseite
-   bearbeitet, genau wie es in der Maske erscheint; Zugang ueber eine
-   Popups-Liste in der Werkzeugleiste und ueber die oeffnende Kette;
-   X schliesst. Eigene Etappe, Zuschnitt erst nach dem Ok des Nutzers
-   (vor oder mit C2).
+7. **ABGELEHNT — der Reiter faellt.** Das Overlay-Konzept ist am
+   2026-08-12 vom Nutzer BESTAETIGT („popup soll doch wie canva"): das
+   Popup wird ueber der abgedunkelten Hauptseite bearbeitet, genau wie
+   es in der Maske erscheint; Zugang ueber eine Popups-Liste in der
+   Werkzeugleiste und ueber die oeffnende Kette; X schliesst. Eigene
+   Etappe, laeuft vor oder mit C2.
 8. **JA — Fellnase** („schon geil", 2026-08-12), ausdruecklich AUCH als
    Richtung fuer das Editor-Gesicht selbst. Kein externes Vorbild mehr
    noetig; U7 ist damit zugeschnitten (U7a/b/c, s. dort).
@@ -2638,13 +2652,42 @@ neu, SE-/Browserprobe des Nutzers. Aktions-Knopf auf der Karte und
 Zimmer-/Untergruppen sind NICHT Teil von N3 — eigene Entscheidungen,
 erst auf Nutzer-Wunsch.
 
+## N4 · Kanban-Untergruppen („Zimmer") — Nutzer-Wunsch 2026-08-12
+
+Je SPALTE optional — der Nutzer entscheidet OB und WELCHE („ich will ja
+entscheiden welche zimmer, und OB ich welche will"): die Spalte bekommt
+wahlweise eine Unterteilung nach einem Datenfeld der Quelle; je Datenwert
+eine Untergruppe mit Klarnamen — DIESELBE Zuordnungs-Bedienung wie heute
+„Einsortieren nach" an den Spalten, nichts Neues zu lernen. Ohne die
+Einstellung aendert sich nichts. Eine leere Untergruppe zeigt den
+gestalteten Leerzustand aus N3 (Muster „frei · hierher ziehen"). Ein Drop
+zwischen Untergruppen fuehrt NUR die sichtbare Kette „Karte verschoben"
+aus — die feste Zusage (kein eingebauter Schreibweg) gilt unveraendert.
+Runtime-Buendel bewusst neu; Export-Testfall (Waechter-Pflicht).
+
+## N5 · Bild-Baustein (Upload) — Nutzer-Wunsch 2026-08-12
+
+**Stufe 1, sofort machbar:** ein Bild-Baustein in der Palette. Der Nutzer
+laedt das Bild IM Editor hoch; es reist als eingebetteter Daten-URI in
+der Export-Datei mit (eine Maske = EINE Datei — dieselbe Technik wie die
+Tierbilder). Der Editor verkleinert beim Upload auf eine vernuenftige
+Kante (Richtwert max. 1024 px, im Etappen-Commit begruendet), damit die
+Maskendatei nicht explodiert — still, ohne Warn-UI. Export-Testfall.
+
+**Stufe 2, SPAETER und erst mit Beleg:** Bilder aus SoftEngine-FELDERN.
+Der Nutzer sagt, SoftEngine hat dafuer Felder, kennt die Form aber selbst
+noch nicht — Regel 5: erst ein echtes Beispiel (Feld-Art, Ablage,
+Abrufweg), dann bauen. Bis dahin bleibt der Baustein rein statisch.
+
 **Nutzer-Urteil zu Mix v1 (2026-08-12): „leblos / ki slop".** v2 ist
 gebaut: die EIGENEN Tierbilder des Nutzers (tier-*.png in designsprache/;
 seine Ansage dazu gab es schon am 2026-08-06 — SEINE Zeichen, nicht die
 Demo-Silhouetten), Marke auf jeder Karte, getoente Zaehler; die
 erfundenen Aktions-Knoepfe, das Tag/Woche-Segment und der
-Bediener-Kasten sind raus (nichts zeigen, was es nicht gibt). v2 wartet
-auf das Urteil des Nutzers.
+Bediener-Kasten sind raus (nichts zeigen, was es nicht gibt).
+**v2 ist ANGENOMMEN (Nutzer 2026-08-12: „fellnase passt ganz gut"),**
+mit einer Korrektur: Tierbilder ein paar Prozent kleiner (37/45 px,
+eingepflegt). Der Mix ist damit das feste Optik-Vorbild fuer N3 und U7.
 
 ---
 
@@ -2785,6 +2828,8 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | N1 | Ansicht-Seite | Seiten-Leiste: neue Ansicht anlegen, Flaeche wie Hauptseite |
 | N2 | Navi-Baustein | Palette: „Navi"; in der Maske schaltet er die Ansichten um |
 | N3 | Kanban lebendig | Kanban: getoente Spalten nach Bedeutung, gestalteter Leerzustand |
+| N4 | Kanban-Untergruppen | Spalte: optional „Unterteilen nach" — Zimmer erscheinen als Gruppen |
+| N5 | Bild-Baustein | Palette: „Bild"; Upload im Editor, eingebettet im Export |
 
 Nicht jeder Punkt muss gleich gross sein. Die Liste verhindert, dass ein
 Agent unter dem Etikett „Aufraeumen" fuenf unabhaengige Risiken in einen
