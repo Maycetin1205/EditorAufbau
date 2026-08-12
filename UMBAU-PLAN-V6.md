@@ -57,11 +57,9 @@ git log --oneline -8
   Protokoll aus der R2-Probe: PUT ueber eine Kette auf eine geholte
   Position, Verknuepfung an geholter Zeile, Abwahl. **R3 ist GEBAUT und
   seine SE-Probe BESTANDEN** (Nutzer-Ansage 2026-08-12: „test funzt" —
-  Beleg per Nachschlagefeld waehlen fuellt die Positionen). Offen: **R4** (Beleg
-  anlegen und sofort sehen — BAUBAR, Anlege-Protokoll 2026-08-12 im
-  Etappenkopf: GET 1020 antwortet mit dem Index des frischen Belegs),
-  **R5 ist GESTRICHEN** (Nutzer-Ansage 2026-08-12, s. Etappenkopf R5 —
-  nicht wieder vorschlagen). Details im Wellen-Kopf R.
+  Beleg per Nachschlagefeld waehlen fuellt die Positionen). Damit ist die
+  Welle R fertig: **R4 und R5 sind GESTRICHEN** (Nutzer-Ansage 2026-08-12 —
+  nicht wieder vorschlagen, in keiner Form). Details im Wellen-Kopf R.
 - **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben
   und erweitert um N4 (Kanban-Untergruppen/„Zimmer") und N5
   (Bild-Baustein, Stufe 1 statisch). Design-Mix v2
@@ -69,7 +67,7 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  R4, U1, U2, U3, U6; danach N1–N5.
+  U1, U2, U3, U6; danach N1–N5.
 - **Letzte fertige Etappe:** R3 (2026-08-12) — der Ausloeser der holenden
   Quellen (`blocks/shared/holendeQuellen.ts`) liest das Quellen-Attribut
   eines Auswahl-Gebers jetzt aus der Registry (`satzWahl.quelleProp`,
@@ -2286,28 +2284,11 @@ Export). „Wahl leeren" brauchte keinen Code: `leereNachschlagen` ruft schon
 Registry) — der DOM-Scan selbst bleibt ungetestet, das waere eine neue
 Testgattung (Regel 9).
 
-### R4 · Beleg anlegen und sofort sehen (BAUBAR — Protokoll geliefert 2026-08-12)
+### R4 · GESTRICHEN — es wird nichts gebaut
 
-**Belegt (empfang-Log des Nutzers, 2026-08-12):**
-`GET_RELATION[1020!L!!10004!!!!]` — PARAMS `[BELART, '', ADRNR, '', '',
-'', '']` — legt den Beleg an und antwortet mit dessen INDEX, z. B.
-`0NL26105743`: **Byte 3 = Belegart, ab Byte 4 = Belegnummer.** Die
-empfang-Maske liest daraus die Nummer und schreibt sie weiter — der
-frische Beleg ist sofort adressierbar; Jahr/Archiv leer genuegt fuer die
-Hol-Relation 69, denn er liegt im aktuellen Nummernkreis.
-
-**Arbeit:** Am GET-Schritt einer Kette eine optionale Angabe „Ergebnis
-ist ein Beleg — Quelle X laedt ihn" (Quelle = eine holende Quelle aus
-R1/R2). Laufzeit: Antwort zerlegen (Belegart Byte 3, Belegnummer ab
-Byte 4, Jahr/Archiv leer), dann denselben Lader anstossen wie beim
-Beleg-Klick (`ladeZeilenPerRelation`). KEIN neuer Schreibweg, KEINE
-Automatik ohne sichtbare Kette — die Zusagen bleiben. Registry-Angabe
-generisch (kein Schritt-Sondercode), Runtime-Buendel bewusst neu,
-Export-Testfaelle fuer die neue Schritt-Angabe.
-
-**Nutzerprobe (SE):** Kette „Beleg anlegen" (GET 1020 steht schon als
-Vorlage in der Bibliothek) ausfuehren — die Positions-/Beleg-Anzeige
-springt ohne Refresh auf den frischen Beleg.
+**Nutzer-Ansage 2026-08-12.** Hier stand eine Etappe „Beleg anlegen und
+sofort sehen". Sie ist restlos gestrichen und **wird nicht wieder
+vorgeschlagen, in keiner Form und unter keinem anderen Namen.**
 
 ### R5 · GESTRICHEN — es wird kein Zeilenfilter gebaut
 
@@ -2371,7 +2352,7 @@ was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
 dir der Plan oder der Code: STOPP und fragen, nicht raten.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus, mit der NAECHSTEN Etappe der Reihenfolge
-R3 -> R4 -> U1 -> U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
+R3 -> U1 -> U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
 eingesetzt — der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -2868,7 +2849,6 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | 34 | R1 Lade-Art + Export | Steuerung/Datenquellen: Abschnitt „Woher kommen die Zeilen?" |
 | 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen (SE-Kern BESTANDEN 2026-08-12) |
 | 36 | R3 Formularfeld als Geber | in SoftEngine: Beleg im Nachschlagefeld waehlen fuellt die Positionen |
-| 37 | R4 Beleg anlegen (BAUBAR) | Kette legt Beleg an, Maske zeigt ihn sofort — ohne Refresh |
 
 ### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Klickanleitungen sammeln, EINE Probe am Ende
 

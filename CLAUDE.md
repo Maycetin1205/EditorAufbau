@@ -196,7 +196,9 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   (z. B. `0NL26105743`: Byte 3 = Belegart, ab Byte 4 = Belegnummer);
   Jahr/Archiv leer trifft ihn, er liegt im aktuellen Nummernkreis.
   Nebenbei belegt: `GET_RELATION[43!_BNR_!3!30]` → Name des angemeldeten
-  Bedieners. Bauauftrag Beleg-Anlegen: UMBAU-PLAN-V6.md, Etappe R4.
+  Bedieners. **Daraus wird NICHTS gebaut** (Nutzer-Ansage 2026-08-12): die
+  Etappe „Beleg anlegen und sofort sehen" ist gestrichen und wird nicht
+  wieder vorgeschlagen. Die Zeilen hier bleiben nur als SE-Wissen stehen.
   Neue BELEGPOSITION (behandlung-Log 2026-08-12):
   `PUT_RELATION[82!0!L!26105745!!ART03045!!1]` — belegt sind Reihenfolge
   und Werte `[0, Belegart, Belegnummer, '', Artikelnummer, '', Menge]`;
