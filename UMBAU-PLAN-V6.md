@@ -91,13 +91,16 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13 (U8 …):** U8 — die Auswahl
-  trifft, was man anklickt: EIN Klick waehlt die Karte, ein weiterer auf
-  denselben Baustein geht eine Ebene nach AUSSEN; ein Klick auf eine Stelle des
-  Bausteins bleibt dem Feld-Picker/Inline-Edit vorbehalten. Die Karte sieht
+- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13 (U8, U9 …):** U8 — die
+  Auswahl trifft, was man anklickt: EIN Klick waehlt die Karte, ein weiterer
+  auf denselben Baustein geht eine Ebene nach AUSSEN; ein Klick auf eine Stelle
+  des Bausteins bleibt dem Feld-Picker/Inline-Edit vorbehalten. Die Karte sieht
   ausgewaehlt aus wie daneben. Runtime-Bytes absichtlich neu (529 Byte
-  kleiner), Export-Markup und Referenzabzug unveraendert. Einzelheiten im
-  Etappenkopf U8.
+  kleiner). · U9 — ein Baustein hat nur noch EINEN sichtbaren Loeschknopf (das
+  Kreuzchen am Ding); der Papierkorb im Inspector-Kopf ist weg, der am
+  Seiten-Reiter bleibt (einziger Weg, eine Seite zu loeschen — Begruendung im
+  Etappenkopf U9). Export-Markup und Referenzabzug beide Male unveraendert;
+  Einzelheiten in den Etappenkoepfen.
   Davor: N2.1 (2026-08-12) — die Navi ist eine Leiste des
   Masken-RAHMENS. Neue Registry-Faehigkeit `maskenRand`
   (`core/blocks/maskenRand.ts`, Masse 56/224): der Baustein liegt am Rand der
@@ -416,7 +419,7 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U9, dann U10 -> N3 -> N4 -> N5 per
+- **Naechste Etappe:** U10, dann N3 -> N4 -> N5 per
   Opus-Kopier-Auftrag (Wellen-Kopf U; seit
   2026-08-12 mehrere Etappen je Sitzung). Dazwischen angemeldet, weil aus der
   N2.1-Probe entstanden: **die Hauptseite umbenennen** (Kleinfix, braucht eine
@@ -3099,7 +3102,7 @@ jetzt im Dateikopf ausserhalb des `css`-Blocks, wo sie nicht in jede
 exportierte Maske mitreist). Export-Markup und Referenzabzug unveraendert.
 Sieben Faelle in `state/selectionOps.test.ts` halten beide Richtungen fest.
 
-## U9 · EIN sichtbarer Loeschweg je Ding (Nutzer-Befund 2026-08-12, „ueberall doppelt und dreifach")
+## U9 · EIN sichtbarer Loeschweg je Ding (GEBAUT 2026-08-13)
 
 **Befund (Screenshot Seiten-Leiste):** Loeschen ist fuer dasselbe Ding
 mehrfach sichtbar — Papierkorb am Seiten-Reiter (`SeitenLeiste.tsx`, mit N1
@@ -3119,6 +3122,27 @@ Teil nicht mit.
 
 **Nutzerprobe:** je Ding genau EIN sichtbarer Loeschknopf; Entf geht
 ueberall; Undo holt alles zurueck.
+
+**Gebaut 2026-08-13 — Inventur und was daraus folgte.** Sichtbare Loeschknoepfe
+je Ding: **Baustein** = Kreuzchen (`BlockHost.tsx:251`) UND Papierkorb im
+Inspector-Kopf (`Inspector.tsx:251`) → doppelt; **Seite** = Papierkorb am
+aktiven Reiter (`SeitenLeiste.tsx:77`) → genau einer; **alle Bausteine** =
+„Alle Bloecke loeschen…" im „…"-Menue → Sonderweg. Je genau EINEN und darum
+unveraendert: Schritt einer Kette, weitere Quelle, Feldpaar-Zeile, Feld einer
+Quelle, Parameter-Zeile, Quelle/Relation im Datencenter. Die X in
+`Meldungen`/`FormularKarte`/`Kommandozentrale` sind SCHLIESSEN, kein Loeschen.
+Gefallen ist genau die eine Doppelung: **der Papierkorb im Inspector-Kopf.**
+An der Musterkarte war er ohnehin ein Knopf, der nie etwas tat (ihr Kreuzchen
+ist wegen des Loeschschutzes ausgeblendet, er blieb stehen und erklaerte beim
+Druecken nur den Schutz). Entf tut unveraendert dasselbe, Netz bleibt Strg+Z.
+**Bewusst NICHT gefallen — Abweichung von der Empfehlung oben, begruendet:**
+der Reiter-Papierkorb. Er ist der EINZIGE Weg, eine Seite zu loeschen (das X am
+Popup geht laut C1-Vertrag zur Hauptseite und loescht nie; eine Ansicht hat als
+`display:contents` gar nichts Anklickbares). Ihn zu entfernen waere kein
+„weniger Knoepfe", sondern eine Funktion weniger — und der Loesch-VERTRAG der
+Seiten gehoert laut dieser Etappe selbst zu C3.4. Bei „je Ding genau EIN
+sichtbarer Knopf" steht die Seite damit schon heute richtig.
+Reine Editor-UI: Runtime-Bytes, Export-Markup und Referenzabzug unveraendert.
 
 ## U10 · Kleinfix: Leerzeichen beim Benennen im Formularfeld (Nutzer-Befund 2026-08-12, „immer noch")
 

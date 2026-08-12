@@ -13,14 +13,13 @@
 // hatten. Ein Baustein-Wechsel schließt eine offene Unteraufgabe.
 
 import { useEffect, useMemo, useState } from 'react'
-import { Copy, MousePointer2, Trash } from '@/ui/zeichen'
+import { Copy, MousePointer2 } from '@/ui/zeichen'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { darfAuswahlFolgen, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import type { ActionStep } from '../../core/data/aktionen'
-import { loescheBaustein } from '../../state/loescheBaustein'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -237,25 +236,24 @@ export function Inspector() {
       // Keine Technik-Unterzeile mehr (Typ-Code · ID) — Technikwerte sind
       // unsichtbar (Regel 3, Nutzer-Entscheidung 2026-07-21). Der Klarname
       // im Kopf sagt dem Bediener, welcher Baustein gewählt ist.
-      // Bedienung am Ding (Regel 7): Duplizieren/Löschen stehen bei der
-      // Auswahl, nicht in der globalen Top-Bar (R1-Feinschliff 2026-07-21).
+      // Bedienung am Ding (Regel 7): Duplizieren steht bei der Auswahl, nicht
+      // in der globalen Top-Bar (R1-Feinschliff 2026-07-21).
+      //
+      // LÖSCHEN steht hier NICHT mehr (U9, 2026-08-12): derselbe Baustein hatte
+      // zwei sichtbare Löschknöpfe gleichzeitig — diesen und das Kreuzchen am
+      // Baustein selbst, beide mit demselben Aufruf. Geblieben ist der am Ding;
+      // die Entf-Taste tut weiterhin dasselbe. An der Musterkarte war dieser
+      // hier ohnehin ein Knopf, der nie etwas tat: ihr Kreuzchen ist wegen des
+      // Löschschutzes ausgeblendet, dieser blieb stehen und erklärte beim
+      // Drücken nur den Schutz.
       actions={(
-        <>
-          <IconButton
-            aria-label="Duplizieren (Ctrl+D)"
-            title="Duplizieren"
-            onClick={() => ed.duplicateBlock(block.id)}
-          >
-            <Copy size={14} />
-          </IconButton>
-          <IconButton
-            aria-label="Löschen (Entf)"
-            title="Löschen"
-            onClick={() => loescheBaustein(ed, block.id)}
-          >
-            <Trash size={14} />
-          </IconButton>
-        </>
+        <IconButton
+          aria-label="Duplizieren (Ctrl+D)"
+          title="Duplizieren"
+          onClick={() => ed.duplicateBlock(block.id)}
+        >
+          <Copy size={14} />
+        </IconButton>
       )}
     >
       {/* Keine Abschnitts-Überschriften mehr (Nutzer-Entscheidung 2026-07-21):
