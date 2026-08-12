@@ -3,23 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mix-Vorschlag: Fellnase × empfang</title>
+<title>Mix-Vorschlag v2: Fellnase × empfang</title>
 <link rel="stylesheet" href="schriften.css">
 <link rel="stylesheet" href="atome.css">
 <style>
 /*
- * Mix-Vorschlag 2026-08-12: Fellnase bleibt die Basis (Kanten, Schrift,
- * Palette, Flachheit), von der empfang-Maske kommen die Lebendig-Zutaten:
- * Navi-Seitenleiste, getönte Spalten-Hüllen, Zähler im Spaltenkopf,
- * Fähnchen, Aktions-Knöpfe auf der Karte, gestaltete Leerzustände.
- * Reines Anschauungs-HTML wie der Musterbogen — nichts importiert es.
+ * Mix-Vorschlag v2 (2026-08-12). Regeln aus dem Nutzer-Urteil zu v1:
+ *  - die eigenen Tierbilder des Nutzers (tier-*.png hier im Ordner),
+ *    NICHT die Silhouetten des Musterbogens;
+ *  - nichts zeigen, was es nicht gibt: keine Aktions-Knoepfe auf Karten,
+ *    kein Tag/Woche-Segment, kein automatischer Bediener-Kasten;
+ *  - Kanban lebendiger: getoente Spalten, getoente Zaehler, Marke auf
+ *    jeder Karte.
+ * Alles Gezeigte existiert als Baustein oder ist Welle N im Plan
+ * (Navi = N2, Ansichten = N1, Spalten-Toenung + Leerzustand = N3).
  */
 
 body { margin: 0; }
 
 .rahmen { display: flex; min-height: 100vh; }
 
-/* ── Navi: empfang-Struktur in Fellnase-Tönen (Espresso statt Petrol) ── */
+/* ── Navi (Welle N2): Eintraege mit waehlbarer Farbe je Eintrag ── */
 
 .navi {
   width: 224px;
@@ -41,7 +45,7 @@ body { margin: 0; }
   font: 600 18px/1.2 var(--schrift-schmuck);
 }
 
-.navi-marke .tier { --fell: var(--koralle); --bauch: var(--koralle-zart); --strich: var(--creme); }
+.navi-marke img { width: 30px; height: 30px; }
 
 .navi-eintrag {
   display: flex;
@@ -59,33 +63,9 @@ body { margin: 0; }
 
 .navi-eintrag.ist-aktiv { background: var(--koralle); color: #fff7f0; }
 
-.navi-eintrag svg { width: 19px; height: 19px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-
-.navi-fuss {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 10px 4px;
-  border-top: 1.5px solid #55402f;
-  color: #cbbcb0;
-  font-size: 12.5px;
-  line-height: 1.3;
-}
-
-.navi-fuss b { display: block; color: var(--creme); font-size: 13.5px; }
-
-.navi-avatar {
-  width: 34px;
-  height: 34px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: var(--rundung-klein);
-  background: #55402f;
-  color: var(--creme);
-  font: 700 13px/1 var(--schrift-werk);
-}
+/* die waehlbare Eintrag-Farbe: derselbe quadratische Punkt wie ueberall */
+.navi-punkt { width: 8px; height: 8px; flex: none; background: var(--sonne); }
+.navi-eintrag.ist-aktiv .navi-punkt { background: #fff7f0; }
 
 /* ── Inhalt ── */
 
@@ -102,27 +82,7 @@ body { margin: 0; }
 
 .kopfzeile .luft { flex: 1; }
 
-/* Segment-Schalter (empfang: Tag/Woche) — flach, aktiv = Espresso.
-   Koralle bleibt dem EINEN lauten Element der Fläche vorbehalten. */
-.segment {
-  display: inline-flex;
-  border: 1.5px solid var(--espresso);
-  border-radius: var(--rundung);
-  overflow: hidden;
-}
-
-.segment button {
-  padding: 7px 15px;
-  border: none;
-  background: var(--papier);
-  color: var(--espresso);
-  font: 600 13.5px/1.2 var(--schrift-werk);
-  cursor: pointer;
-}
-
-.segment button.ist-aktiv { background: var(--espresso); color: var(--creme); }
-
-/* ── Brett: Fellnase-Spalten mit empfang-Tönung ── */
+/* ── Brett: Fellnase-Spalten mit empfang-Toenung (Welle N3) ── */
 
 .spalte { --ton-flaeche: var(--sand); --ton-punkt: var(--espresso-zart); background: var(--ton-flaeche); }
 
@@ -133,22 +93,21 @@ body { margin: 0; }
 /* der quadratische Farbpunkt — die Fellnase-Signatur, im Spaltenkopf */
 .spalte-punkt { width: 8px; height: 8px; flex: none; background: var(--ton-punkt); }
 
-/* Aktions-Knopf unten auf der Karte (empfang-Zutat) */
-.karte-aktion {
-  padding: 5px 11px;
-  border: 1.5px solid var(--linie);
-  border-radius: var(--rundung-klein);
+/* Zaehler im Spaltenkopf traegt den Spaltenton (empfang-Zutat) */
+.spalte .zaehler {
   background: var(--papier);
+  border: 1.5px solid var(--ton-punkt);
   color: var(--espresso);
-  font: 600 12.5px/1.2 var(--schrift-werk);
-  cursor: pointer;
-  transition: border-color 0.13s ease, background 0.13s ease;
-  white-space: nowrap;
+  height: 24px;
 }
 
-.karte-aktion:hover { border-color: var(--espresso); background: var(--sand); }
+/* die Tierbilder des Nutzers — freistehend, keine Kachel dahinter */
+.tier-bild { width: 40px; height: 40px; flex: none; object-fit: contain; }
+.tier-bild--gross { width: 48px; height: 48px; }
 
-/* Zimmer-Slots (empfang „In Behandlung") als kleine Fellnase-Kästen */
+.karte-kopf .marke { margin-left: auto; align-self: flex-start; }
+
+/* Zimmer-Slots in „In Behandlung" */
 .zimmer { display: grid; gap: 8px; }
 
 .zimmer-kopf {
@@ -162,8 +121,6 @@ body { margin: 0; }
   padding: 2px 2px 0;
 }
 
-.zimmer-kopf .zaehler { margin-left: auto; }
-
 .zimmer-frei {
   border: 1.5px dashed var(--linie);
   border-radius: var(--rundung);
@@ -173,7 +130,6 @@ body { margin: 0; }
   font-size: 12.5px;
 }
 
-/* Legende unten */
 .legende {
   margin-top: 26px;
   padding: 14px 18px;
@@ -190,58 +146,25 @@ body { margin: 0; }
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <symbol id="tier-hund" viewBox="0 0 48 48">
-      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
-        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
-        <path style="fill:var(--bauch);stroke:none" d="M24 25C30 25 34.6 27.5 34.6 31C34.6 35.8 29.8 39.6 24 39.6C18.2 39.6 13.4 35.8 13.4 31C13.4 27.5 18 25 24 25Z"/>
-        <path d="M14 15.8C9.2 14.2 5 17 5 22.2C5 27.4 8.4 32 12.4 33C14 29.4 14.4 21.6 14 15.8Z"/>
-        <path d="M34 15.8C38.8 14.2 43 17 43 22.2C43 27.4 39.6 32 35.6 33C34 29.4 33.6 21.6 34 15.8Z"/>
-        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
-        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
-        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="29.4" rx="2" ry="1.5"/>
-        <path style="fill:none" d="M20.2 33.4C21.5 35.5 26.5 35.5 27.8 33.4"/>
-      </g>
-    </symbol>
-    <symbol id="tier-katze" viewBox="0 0 48 48">
-      <g style="fill:var(--fell);stroke:var(--strich);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round">
-        <path d="M13.2 17.8L12.3 7.4L21.8 13.2Z"/>
-        <path d="M34.8 17.8L35.7 7.4L26.2 13.2Z"/>
-        <path d="M24 12C31.7 12 38 18.3 38 26C38 33.7 31.7 40 24 40C16.3 40 10 33.7 10 26C10 18.3 16.3 12 24 12Z"/>
-        <path style="fill:var(--bauch);stroke:none" d="M24 25C30 25 34.6 27.5 34.6 31C34.6 35.8 29.8 39.6 24 39.6C18.2 39.6 13.4 35.8 13.4 31C13.4 27.5 18 25 24 25Z"/>
-        <circle style="fill:var(--strich);stroke:none" cx="18.4" cy="22.8" r="2.2"/>
-        <circle style="fill:var(--strich);stroke:none" cx="29.6" cy="22.8" r="2.2"/>
-        <ellipse style="fill:var(--strich);stroke:none" cx="24" cy="29.4" rx="2" ry="1.5"/>
-        <path style="fill:none" d="M20.2 33.4C21.5 35.5 26.5 35.5 27.8 33.4"/>
-      </g>
-    </symbol>
-  </defs>
-</svg>
-
 <div class="rahmen">
 
   <aside class="navi">
     <div class="navi-marke">
-      <span class="tier tier--klein"><svg><use href="#tier-hund"/></svg></span>
+      <img src="tier-hund.png" alt="">
       Fellnase
     </div>
     <span class="navi-eintrag ist-aktiv">
-      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7"/><rect x="11" y="2" width="7" height="7"/><rect x="2" y="11" width="7" height="7"/><rect x="11" y="11" width="7" height="7"/></svg>
+      <span class="navi-punkt"></span>
       Empfang
     </span>
     <span class="navi-eintrag">
-      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="1"/><path d="M2.5 8h15M6.5 1.5v4M13.5 1.5v4"/></svg>
+      <span class="navi-punkt" style="background: var(--himmel)"></span>
       Terminkalender
     </span>
     <span class="navi-eintrag">
-      <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" rx="1"/><path d="M7 7h6M7 10.5h6M7 14h3.5"/></svg>
+      <span class="navi-punkt" style="background: var(--salbei)"></span>
       Abrechnung
     </span>
-    <div class="navi-fuss">
-      <span class="navi-avatar">MA</span>
-      <span><b>Bediener</b>Empfang · angemeldet</span>
-    </div>
   </aside>
 
   <main class="inhalt">
@@ -250,10 +173,6 @@ body { margin: 0; }
       <h1>Empfang</h1>
       <span class="etikett">Dienstag, 12. August</span>
       <span class="luft"></span>
-      <span class="segment">
-        <button class="ist-aktiv" type="button">Tag</button>
-        <button type="button">Woche</button>
-      </span>
       <button class="knopf knopf--primaer" type="button">＋ Termin</button>
     </div>
 
@@ -264,38 +183,38 @@ body { margin: 0; }
           <div class="spalte-kopf">
             <span class="spalte-punkt"></span>
             <span class="spalte-titel">Termine heute</span>
-            <span class="zaehler zaehler--leise">2</span>
+            <span class="zaehler">2</span>
           </div>
 
           <article class="karte">
             <span class="karte-reiter">09:15</span>
             <div class="karte-kopf">
-              <span class="tier tier--hund"><svg><use href="#tier-hund"/></svg></span>
+              <img class="tier-bild" src="tier-hund.png" alt="">
               <div>
                 <div class="karte-name">Balu</div>
                 <div class="karte-zusatz">Hund · Labrador</div>
               </div>
+              <span class="marke marke--angemeldet">Geplant</span>
             </div>
             <p class="karte-grund">Impfung auffrischen, danach Krallen.</p>
             <div class="karte-fuss">
               <span class="karte-halter">M. Sommer</span>
-              <button class="karte-aktion" type="button">Anmelden →</button>
             </div>
           </article>
 
           <article class="karte karte--notfall">
             <span class="karte-reiter">jetzt</span>
             <div class="karte-kopf">
-              <span class="tier tier--katze"><svg><use href="#tier-katze"/></svg></span>
+              <img class="tier-bild" src="tier-katze.png" alt="">
               <div>
                 <div class="karte-name">Minka</div>
                 <div class="karte-zusatz">Katze · EKH</div>
               </div>
+              <span class="marke marke--notfall">Notfall</span>
             </div>
             <p class="karte-grund">Frisst seit gestern nicht, apathisch.</p>
             <div class="karte-fuss">
-              <span class="marke marke--notfall">Notfall</span>
-              <button class="karte-aktion" type="button">Anmelden →</button>
+              <span class="karte-halter">Fam. Öztürk</span>
             </div>
           </article>
         </section>
@@ -304,21 +223,36 @@ body { margin: 0; }
           <div class="spalte-kopf">
             <span class="spalte-punkt"></span>
             <span class="spalte-titel">Wartezimmer</span>
-            <span class="zaehler zaehler--leise">1</span>
+            <span class="zaehler">2</span>
           </div>
 
           <article class="karte">
             <span class="karte-reiter">seit 10:40</span>
             <div class="karte-kopf">
-              <span class="tier tier--hund"><svg><use href="#tier-hund"/></svg></span>
+              <img class="tier-bild" src="tier-kaninchen.png" alt="">
               <div>
                 <div class="karte-name">Rocky</div>
-                <div class="karte-zusatz">Hund · Dackel</div>
+                <div class="karte-zusatz">Kaninchen · Widder</div>
               </div>
+              <span class="marke marke--wartet">Wartet</span>
             </div>
             <div class="karte-fuss">
+              <span class="karte-halter">L. Brandt</span>
+            </div>
+          </article>
+
+          <article class="karte">
+            <span class="karte-reiter">seit 10:55</span>
+            <div class="karte-kopf">
+              <img class="tier-bild" src="tier-vogel.png" alt="">
+              <div>
+                <div class="karte-name">Coco</div>
+                <div class="karte-zusatz">Vogel · Nymphensittich</div>
+              </div>
               <span class="marke marke--wartet">Wartet</span>
-              <button class="karte-aktion" type="button">Ins Zimmer →</button>
+            </div>
+            <div class="karte-fuss">
+              <span class="karte-halter">T. Weber</span>
             </div>
           </article>
         </section>
@@ -327,29 +261,29 @@ body { margin: 0; }
           <div class="spalte-kopf">
             <span class="spalte-punkt"></span>
             <span class="spalte-titel">In Behandlung</span>
-            <span class="zaehler zaehler--leise">1</span>
+            <span class="zaehler">1</span>
           </div>
 
           <div class="zimmer">
             <div>
-              <div class="zimmer-kopf">Zimmer 1 <span class="zaehler zaehler--leise">1</span></div>
+              <div class="zimmer-kopf">Zimmer 1</div>
               <article class="karte">
                 <span class="karte-reiter">seit 10:05</span>
                 <div class="karte-kopf">
-                  <span class="tier tier--katze"><svg><use href="#tier-katze"/></svg></span>
+                  <img class="tier-bild" src="tier-schildkroete.png" alt="">
                   <div>
-                    <div class="karte-name">Felix</div>
-                    <div class="karte-zusatz">Katze · Maine Coon</div>
+                    <div class="karte-name">Emma</div>
+                    <div class="karte-zusatz">Schildkröte</div>
                   </div>
+                  <span class="marke marke--behandlung">Behandlung</span>
                 </div>
                 <div class="karte-fuss">
-                  <span class="marke marke--behandlung">Behandlung</span>
-                  <button class="karte-aktion" type="button">Zur Kasse →</button>
+                  <span class="karte-halter">Dr. Krüger</span>
                 </div>
               </article>
             </div>
             <div>
-              <div class="zimmer-kopf">Zimmer 2 <span class="zaehler zaehler--leise">0</span></div>
+              <div class="zimmer-kopf">Zimmer 2</div>
               <div class="zimmer-frei">frei · Patient hierher ziehen</div>
             </div>
           </div>
@@ -359,11 +293,11 @@ body { margin: 0; }
           <div class="spalte-kopf">
             <span class="spalte-punkt"></span>
             <span class="spalte-titel">Zur Kasse</span>
-            <span class="zaehler zaehler--leise">0</span>
+            <span class="zaehler">0</span>
           </div>
 
           <div class="leer">
-            <svg viewBox="0 0 24 24"><path d="M12 3c2.7 0 5 1.6 5 4.2 0 1.9-1.2 3.2-2.6 4.4-1 .9-1.4 1.4-1.4 2.4h-2c0-1.8.8-2.7 2-3.7 1.1-1 2-1.8 2-3.1C15 5.7 13.7 5 12 5s-3 .8-3 2.3H7C7 4.6 9.3 3 12 3zm-1 13h2v2h-2v-2z"/></svg>
+            <img class="tier-bild tier-bild--gross" src="tier-hamster.png" alt="" style="opacity:.55">
             Nichts offen an der Kasse.<br>
             Abgeschlossene Behandlungen landen hier.
           </div>
@@ -373,13 +307,12 @@ body { margin: 0; }
     </div>
 
     <div class="legende">
-      <b>Was hier gemischt ist:</b> Basis = Fellnase (Kanten, Espresso statt
-      Schwarz, Koralle als einziger lauter Ton, Figtree/Fraunces, flach ohne
-      Schatten, Karteikarten-Reiter, quadratischer Punkt, gekappte Marken).
-      Von empfang übernommen = die Navi-Seitenleiste mit aktivem Eintrag und
-      Bediener-Fuß, die getönten Spalten-Hüllen je Phase, der Zähler im
-      Spaltenkopf, Fähnchen und Aktions-Knopf auf der Karte, Zimmer-Slots
-      und die beschrifteten Leerzustände („frei · Patient hierher ziehen").
+      <b>v2 — alles hier existiert oder steht als Etappe im Plan:</b>
+      Navi mit Farbe je Eintrag (N2) · Ansichten zum Umschalten (N1) ·
+      getönte Spalten, getönte Zähler, gestaltete Leerzustände (N3) ·
+      Karten, Marken, Tierbilder und Schaltfläche gibt es heute schon.
+      Raus gegenüber v1: erfundene Aktions-Knöpfe, Tag/Woche-Segment,
+      Bediener-Kasten. Die Tierbilder sind deine eigenen.
     </div>
 
   </main>
