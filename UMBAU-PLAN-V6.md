@@ -2520,6 +2520,19 @@ seines einzigen Test-Aufrufs raus · `setzeHolendeQuellenZurueck`
 (`scripts/check-regeln.mjs:263`) berichtigen. `istOffenerSatz` BLEIBT
 (dokumentierte VAR-Bauanleitung, `datenquellen.test.ts:210-225`).
 
+**Harte Grenze (Plan-Review 2026-08-12, am Buendel nachgeprueft):** die
+zwei Parser-Kopien in `softengine/data.ts:95/:131` BLEIBEN stehen —
+diese Datei steckt im Runtime-Buendel; jeder Umbau dort aenderte
+Runtime- und damit Export-Bytes, gegen das „unveraendert" dieser
+Etappe. Zusammenlegbar sind nur die Editor-/Export-Seiten:
+`ladeRelation.ts:80` -> `splitFieldCode`, und das POS_LEN-Paar
+(`dataSources.ts:129` / `ladeRelation.ts:58` — beide core/data; der
+Runtime-Lader importiert nur softengine/*, an den Imports von
+`relationLader.ts` nachgeprueft). Auch `holendeQuellen.ts` ist Runtime:
+das Entfernen des unbenutzten Exports gilt nur, solange `check:runtime`
+byte-gleich bleibt (tree-shaking wirft ihn heute schon aus dem
+Buendel); aendert sich ein Byte, STOPP statt erklaeren.
+
 **Fertig, wenn:** je Aufgabe eine Bauform; Verhalten, Export-Bytes und
 Referenzabzug unveraendert; 500er-Deckel ueberall eingehalten.
 
@@ -2575,10 +2588,20 @@ deklariert, aber bewusst unerreichbar (`FormFeldBlock.ts:124-134` vs
 
 **Arbeit:** zwei Hinweis-Saetze ergaenzen (Muster Zeile/Karte, KEIN
 Tutorial) · „Farbe" -> „Bedeutung" · Checkbox-Deklaration ehrlich
-machen. Export-Bytes unveraendert.
+machen.
+
+**Byte-Ehrlichkeit (korrigiert im Plan-Review 2026-08-12 — hier stand
+faelschlich „Export-Bytes unveraendert"):** nur die zwei Hinweis-Saetze
+sind editor-only (editorAngaben laedt nie das Runtime-Buendel). „Farbe"
+-> „Bedeutung" (`statusVariant.ts:55`) und die Checkbox-Deklaration
+(`FormFeldBlock.ts:124-134`) sind statics der Baustein-Klassen und
+stehen woertlich im `ff-runtime.js` (nachgeprueft): Runtime-Bytes
+aendern sich BEWUSST — `build:runtime` liegt im Commit, Referenzabzug
+erneuern, und die Etappe braucht dadurch eine SE-Delta-Probe.
 
 **Nutzerprobe (Browser):** Datum anklicken — statt Leere ein Satz;
-Karten-/Spaltenregler heisst „Bedeutung".
+Karten-/Spaltenregler heisst „Bedeutung". SE-Delta gebuendelt mit den
+ohnehin offenen SE-Proben.
 
 ## U7 · Optik: der Editor uebernimmt die Fellnase-Richtung (zugeschnitten 2026-08-12)
 
@@ -2653,6 +2676,13 @@ Je Eintrag eine FARBE aus den Palettentoenen (Nutzer-Anforderung
 2026-08-12, „navi mit farbmoeglichkeiten"). KEIN automatischer
 Bediener-Fuss und keine sonstigen eingebauten Zonen — wer so etwas will,
 baut es aus normalen Bausteinen.
+Die Seiten-id je Eintrag ist eine BLOCK-Referenz und kommt darum in die
+EINE Referenzliste aus A5 (`schreibeBlockReferenzenUm` in
+`state/duplizieren.ts` + `core/data/schrittPruefung.ts`) — sonst zeigt
+eine duplizierte Navi still aufs Original (genau die A5-Fehlerklasse).
+Die Ansage legt ausserdem fest, was ein Eintrag tut, dessen Ansicht
+geloescht wurde (stehen lassen und leer zeigen oder mitfallen — nicht
+raten).
 
 ## N3 · Kanban lebendig (Optik-Angleich an den Mix)
 
@@ -2675,6 +2705,10 @@ Einstellung aendert sich nichts. Eine leere Untergruppe zeigt den
 gestalteten Leerzustand aus N3 (Muster „frei · hierher ziehen"). Ein Drop
 zwischen Untergruppen fuehrt NUR die sichtbare Kette „Karte verschoben"
 aus — die feste Zusage (kein eingebauter Schreibweg) gilt unveraendert.
+Die Ansage klaert vorab, ob die Kette den ZIEL-ZIMMER-Wert als
+Parameterquelle bekommt (analog zum Ziel-Spalten-Wert) — ohne ihn kann
+ein Zimmer-Drop nichts schreiben, und die Untergruppen waeren reine
+Anzeige.
 Runtime-Buendel bewusst neu; Export-Testfall (Waechter-Pflicht).
 
 ## N5 · Bild-Baustein (Upload) — Nutzer-Wunsch 2026-08-12
