@@ -16,6 +16,7 @@ import '../blocks/popup/PopupBlock'
 import { ROOT_ID } from '../core/blocks/BlockData'
 import { BACKUP_KEY, Editor } from './Editor'
 import { sanitizeTree } from './ladeKette'
+import { meldungen } from './meldungen'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 import {
   registerTestBlocks,
@@ -33,17 +34,27 @@ function load(state: unknown): Editor {
   return new Editor()
 }
 
-// Sammelt alert-Meldungen für die Dauer eines Tests (die meisten Lade-Tests
-// prüfen sie nicht — dann bleibt alert schlicht ungestubbt wie bisher).
-function captureAlerts(): string[] {
+// Sammelt die Editor-Meldungen für die Dauer eines Tests. Bis U2 (2026-08-12)
+// lief dieser Weg über `window.alert` und wurde hier gestubbt; jetzt melden
+// Ladeweg und Notfallkopie in die Meldungsspur des Editors (state/meldungen.ts).
+// Die ist ein Modul-Singleton und überlebt den einzelnen Test — darum das
+// Leeren in beforeEach und das Abmelden danach.
+let abmelden: (() => void) | null = null
+function captureMeldungen(): string[] {
   const msgs: string[] = []
-  ;(globalThis as Record<string, unknown>).alert = (m: string) => { msgs.push(m) }
+  meldungen.leere() // jeder Fall faengt bei null an
+  abmelden = meldungen.subscribe(() => {
+    msgs.length = 0
+    for (const m of meldungen.liste) msgs.push(m.text)
+  })
   return msgs
 }
 
-beforeEach(() => { localStorage.clear() })
+beforeEach(() => { localStorage.clear(); meldungen.leere() })
 afterEach(() => {
-  delete (globalThis as Record<string, unknown>).alert
+  abmelden?.()
+  abmelden = null
+  meldungen.leere()
 })
 
 describe('sanitizeTree (Laden verteidigt sich)', () => {
@@ -125,40 +136,35 @@ describe('sanitizeTree (Laden verteidigt sich)', () => {
   // bekommt eine Meldung, und der INHALT eines abgeschafften Rahmens wird an
   // seiner Stelle eingegliedert statt mitgelöscht.
   it('meldet verworfene unbekannte Typen sichtbar und zieht deren Kinder hoch', () => {
-    const meldungen: string[] = []
-    ;(globalThis as Record<string, unknown>).alert = (msg: string) => { meldungen.push(msg) }
-    try {
-      const ed = load({
-        tree: {
-          root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'c1', 't2'] },
-          t1: { id: 't1', type: 'text', props: {}, parentId: 'root', childIds: [] },
-          // Abgeschaffter "Bereich" mit echtem Inhalt: der Rahmen fällt,
-          // der Block darin rückt an dieselbe Stelle unter die Wurzel.
-          c1: { id: 'c1', type: 'container', props: {}, parentId: 'root', childIds: ['drin'] },
-          drin: { id: 'drin', type: TEST_BLOCK, props: { text: 'Gerettet' }, parentId: 'c1', childIds: [] },
-          t2: { id: 't2', type: 'text', props: {}, parentId: 'root', childIds: [] },
-        },
-        selectedId: null,
-      })
-      expect(ed.getNode('t1')).toBeUndefined()
-      expect(ed.getNode('c1')).toBeUndefined()
-      expect(ed.getNode('drin')?.props.text).toBe('Gerettet')
-      expect(ed.getNode('drin')?.parentId).toBe(ed.rootId)
-      // Reihenfolge: der gerettete Inhalt steht an der Stelle des Rahmens.
-      expect(ed.getNode(ed.rootId)?.childIds).toEqual(['drin'])
-      expect(meldungen).toHaveLength(1)
-      expect(meldungen[0]).toContain('3 Baustein(e)')
-      expect(meldungen[0]).toContain('"text"')
-      expect(meldungen[0]).toContain('"container"')
-    } finally {
-      delete (globalThis as Record<string, unknown>).alert
-    }
+    const texte = captureMeldungen()
+    const ed = load({
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'c1', 't2'] },
+        t1: { id: 't1', type: 'text', props: {}, parentId: 'root', childIds: [] },
+        // Abgeschaffter "Bereich" mit echtem Inhalt: der Rahmen fällt,
+        // der Block darin rückt an dieselbe Stelle unter die Wurzel.
+        c1: { id: 'c1', type: 'container', props: {}, parentId: 'root', childIds: ['drin'] },
+        drin: { id: 'drin', type: TEST_BLOCK, props: { text: 'Gerettet' }, parentId: 'c1', childIds: [] },
+        t2: { id: 't2', type: 'text', props: {}, parentId: 'root', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('t1')).toBeUndefined()
+    expect(ed.getNode('c1')).toBeUndefined()
+    expect(ed.getNode('drin')?.props.text).toBe('Gerettet')
+    expect(ed.getNode('drin')?.parentId).toBe(ed.rootId)
+    // Reihenfolge: der gerettete Inhalt steht an der Stelle des Rahmens.
+    expect(ed.getNode(ed.rootId)?.childIds).toEqual(['drin'])
+    expect(texte).toHaveLength(1)
+    expect(texte[0]).toContain('3 Baustein(e)')
+    expect(texte[0]).toContain('"text"')
+    expect(texte[0]).toContain('"container"')
   })
 })
 
 describe('Notfallkopie bei unlesbarem Stand (U1)', () => {
   it('sichert kaputtes JSON als Notfallkopie und meldet es, statt still leer zu starten', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     localStorage.setItem(KEY, '{{{kein json')
     const ed = new Editor()
     expect(ed.blockCount).toBe(0)                                 // leerer, benutzbarer Editor
@@ -169,7 +175,7 @@ describe('Notfallkopie bei unlesbarem Stand (U1)', () => {
   })
 
   it('behandelt gültiges JSON ohne verwertbaren Baum wie einen Lesefehler', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     // Hatte mal einen tree-Schlüssel (also echte Editor-Daten), aber die
     // Struktur ist unbrauchbar — nicht still verwerfen.
     const raw = JSON.stringify({ schemaVersion: 2, tree: 'kaputt', selectedId: null })
@@ -181,7 +187,7 @@ describe('Notfallkopie bei unlesbarem Stand (U1)', () => {
   })
 
   it('überschreibt eine bereits vorhandene Notfallkopie NICHT (früheste bleibt)', () => {
-    captureAlerts()
+    captureMeldungen()
     localStorage.setItem(BACKUP_KEY, 'aeltere kopie')
     localStorage.setItem(KEY, '{{{kein json')
     new Editor()
@@ -191,7 +197,7 @@ describe('Notfallkopie bei unlesbarem Stand (U1)', () => {
   it('der Autosave überschreibt die Notfallkopie nie (getrennter Schlüssel)', () => {
     vi.useFakeTimers()
     try {
-      captureAlerts()
+      captureMeldungen()
       localStorage.setItem(KEY, '{{{kein json')
       const ed = new Editor()
       const kopie = localStorage.getItem(BACKUP_KEY)
@@ -231,7 +237,7 @@ describe('Der Browserstart laedt nachsichtig (Nutzer-Ansage 2026-08-12)', () => 
   })
 
   it('ein Stand aus einer neueren Version laedt, was diese App lesen kann', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     localStorage.setItem(KEY, ZUKUNFT)
     const ed = new Editor()
     expect(ed.getNode('a')?.props.text).toBe('Arbeit')   // hydriert
@@ -240,7 +246,7 @@ describe('Der Browserstart laedt nachsichtig (Nutzer-Ansage 2026-08-12)', () => 
   })
 
   it('und der Autosave laeuft normal weiter', () => {
-    captureAlerts()
+    captureMeldungen()
     vi.useFakeTimers()
     try {
       localStorage.setItem(KEY, ZUKUNFT)

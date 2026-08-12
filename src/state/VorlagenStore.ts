@@ -14,8 +14,12 @@
 // waren ({"sources":[…]} bzw. {"relations":[…]}). Die Bibliotheken im Browser
 // des Bedieners muessen unveraendert lesbar bleiben — es gibt KEINE Migration.
 //
-// Bewusst KEIN Undo/Redo: eine Bibliothek ist kein Canvas-Gestenraum; vor
-// destruktiven Aktionen fragt die UI nach (wie das Kreuzchen).
+// Bewusst KEIN Undo/Redo: eine Bibliothek ist kein Canvas-Gestenraum; vor dem
+// Loeschen eines BENUTZTEN Eintrags fragt die UI im Datencenter nach
+// (DatenquellenBereich / RelationenBereich). Der Vergleich mit dem Kreuzchen am
+// Baustein stand hier bis U2 (2026-08-12) — das Kreuzchen fragt nicht mehr,
+// weil auf der Flaeche Strg+Z das Netz ist. In einer Bibliothek gibt es das
+// nicht, darum bleibt die Rueckfrage dort.
 
 import { type EintragProblem } from '../core/data/ladeProblem'
 import { deepClone } from '../lib/deepClone'

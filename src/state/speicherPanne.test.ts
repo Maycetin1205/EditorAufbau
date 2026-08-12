@@ -13,6 +13,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataSourceStore } from './DataSourceStore'
 import { Editor } from './Editor'
+import { meldungen } from './meldungen'
 import { backupKeyFor, merkeSpeicherErfolg } from './notfallkopie'
 import { persistState } from './persistence'
 import { RelationStore } from './RelationStore'
@@ -25,10 +26,26 @@ const KEY = 'aufbau_editor_mvp_v1'
 const QUELLEN_KEY = 'aufbau_editor_datenquellen_v1'
 const RELATIONEN_KEY = 'aufbau_editor_relationen_v1'
 
-function captureAlerts(): string[] {
+// Bis U2 (2026-08-12) meldete der Schreib-Weg per `window.alert` und wurde hier
+// gestubbt; jetzt meldet er in die Meldungsspur des Editors
+// (state/meldungen.ts). Die ist ein Modul-Singleton und überlebt den einzelnen
+// Test — darum das Leeren/Abmelden in den Hooks unten.
+let abmelden: (() => void) | null = null
+function captureMeldungen(): string[] {
   const msgs: string[] = []
-  ;(globalThis as Record<string, unknown>).alert = (m: string) => { msgs.push(m) }
+  meldungen.leere() // jeder Fall faengt bei null an
+  abmelden = meldungen.subscribe(() => {
+    msgs.length = 0
+    for (const m of meldungen.liste) msgs.push(m.text)
+  })
   return msgs
+}
+
+// Beide Beschreibungsblöcke unten räumen gleich auf.
+function meldungenAufraeumen(): void {
+  abmelden?.()
+  abmelden = null
+  meldungen.leere()
 }
 
 // Modulweit, weil beide Beschreibungsbloecke unten denselben Griff brauchen:
@@ -54,11 +71,11 @@ describe('Speicher-Panne meldet sich (B3, 2026-07-28)', () => {
   beforeEach(() => { localStorage.clear(); merkeSpeicherErfolg(KEY) })
   afterEach(() => {
     localStorage.setItem = echtesSetItem
-    delete (globalThis as Record<string, unknown>).alert
+    meldungenAufraeumen()
   })
 
   it('Fehler -> Fehler -> Erfolg -> Fehler ergibt GENAU ZWEI Meldungen', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     setItemFaellt((k) => k === KEY)
     persistState(createEmptyTree(), null)
     persistState(createEmptyTree(), null)
@@ -74,7 +91,7 @@ describe('Speicher-Panne meldet sich (B3, 2026-07-28)', () => {
   })
 
   it('der Erfolg eines FREMDEN Speicherwegs entschaerft den Merker nicht', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     setItemFaellt((k) => k === KEY)
     persistState(createEmptyTree(), null)
     expect(msgs).toHaveLength(1)
@@ -88,7 +105,7 @@ describe('Speicher-Panne meldet sich (B3, 2026-07-28)', () => {
   })
 
   it('der Editor laeuft trotz Speicher-Panne normal weiter', () => {
-    captureAlerts()
+    captureMeldungen()
     setItemFaellt(() => true)
     const ed = new Editor()
     const node = ed.addBlock(TEST_BLOCK, ed.rootId)
@@ -114,7 +131,7 @@ describe('Ein werfender Horcher reisst Meldung und Autosave nicht mit (A7.1)', (
   afterEach(() => {
     vi.useRealTimers()
     localStorage.setItem = echtesSetItem
-    delete (globalThis as Record<string, unknown>).alert
+    meldungenAufraeumen()
   })
 
   it('die spaeteren Horcher laufen weiter, der Stand wird geschrieben', () => {
@@ -159,7 +176,7 @@ describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
   afterEach(() => {
     vi.useRealTimers()
     localStorage.setItem = echtesSetItem
-    delete (globalThis as Record<string, unknown>).alert
+    meldungenAufraeumen()
   })
 
   const speichernAbwarten = () => { vi.advanceTimersByTime(600) }
@@ -222,7 +239,7 @@ describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
   })
 
   it('beschaedigter Stand wird gesichert und gemeldet, nicht still ersetzt', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     localStorage.setItem(QUELLEN_KEY, '{ das ist kein JSON')
 
     const store = new DataSourceStore()
@@ -234,7 +251,7 @@ describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
   })
 
   it('gueltiges JSON ohne Liste zaehlt ebenfalls als beschaedigt', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     localStorage.setItem(RELATIONEN_KEY, '{"relations":"keine Liste"}')
 
     // Beschaedigt -> Startbestand, aber MIT Meldung und gesicherter Kopie.
@@ -245,7 +262,7 @@ describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
   })
 
   it('jede Bibliothek meldet ihren eigenen Klarnamen, wenn Speichern scheitert', () => {
-    const msgs = captureAlerts()
+    const msgs = captureMeldungen()
     setItemFaellt((k) => k === QUELLEN_KEY || k === RELATIONEN_KEY)
 
     const quellen = new DataSourceStore()

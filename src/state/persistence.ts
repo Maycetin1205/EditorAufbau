@@ -7,6 +7,7 @@
 
 import { type BlockTree } from '../core/blocks/BlockData'
 import { baumAusRohdaten } from './ladeKette'
+import { meldungen } from './meldungen'
 import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
 import {
   backupKeyFor,
@@ -64,11 +65,15 @@ function backupUnreadableState(raw: string): void {
 }
 
 // Meldung ueber verworfene Bausteintypen — dieselbe fuer beide Leser.
+// Seit U2 (2026-08-12) ueber die Meldungsspur des Editors statt per `alert`:
+// der Aufruf faellt beim Laden, also noch vor dem ersten Bild — die Spur haelt
+// eine Liste und zeigt ihn nach, sobald die Shell rendert. Die frueher noetige
+// `typeof alert`-Wache (Node-Tests) entfaellt damit.
 export function meldeVerworfeneTypen(verworfen: Map<string, number>): void {
-  if (verworfen.size === 0 || typeof alert !== 'function') return
+  if (verworfen.size === 0) return
   const anzahl = [...verworfen.values()].reduce((a, b) => a + b, 0)
   const typen = [...verworfen.keys()].map((t) => `"${t}"`).join(', ')
-  alert(
+  meldungen.melde(
     `Beim Laden entfernt: ${anzahl} Baustein(e) der nicht mehr vorhandenen Typen ${typen}.\n`
     + 'Diese Bausteintypen gibt es im Editor nicht mehr. Ihr Inhalt wurde — '
     + 'falls vorhanden — an ihrer Stelle eingegliedert; der Rest der Maske ist unverändert.',

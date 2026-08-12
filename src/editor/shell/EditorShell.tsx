@@ -12,6 +12,7 @@ import { SeitenLeiste } from '../canvas/SeitenLeiste'
 import { Inspector } from '../inspector/Inspector'
 import { Sidebar } from '../sidebar/Sidebar'
 import { Kommandozentrale } from '../zentrale/Kommandozentrale'
+import { Meldungen } from './Meldungen'
 import { StatusBar } from './StatusBar'
 import { Toolbar, VerlaufKnoepfe } from './Toolbar'
 
@@ -56,6 +57,9 @@ export function EditorShell() {
       </div>
 
       <StatusBar />
+
+      {/* Meldungsspur: liegt ueber allem, gehoert zu keinem Bereich (U2). */}
+      <Meldungen />
     </div>
   )
 }

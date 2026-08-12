@@ -24,6 +24,13 @@
 // zurueck: die echten Vorlagen des Bedieners waren weg, ersetzt durch die
 // mitgelieferten, ohne ein Wort. Gefunden im Architektur-Review 2026-07-27.
 
+// Gemeldet wird seit U2 (2026-08-12) ueber die Meldungsspur des Editors
+// (state/meldungen.ts) statt per `alert`. Beide Faelle hier fallen zum Teil
+// noch vor dem ersten Bild (Lesen beim Start) — die Spur haelt eine Liste und
+// zeigt sie nach, sobald die Shell rendert. Die frueher noetigen
+// `typeof alert === 'function'`-Wachen (Node-Tests) entfallen damit.
+import { meldungen } from './meldungen'
+
 export const BACKUP_SUFFIX = '__notfallkopie'
 
 export function backupKeyFor(storageKey: string): string {
@@ -48,15 +55,13 @@ export function sichereUnlesbaren(
       localStorage.setItem(backupKey, raw)
     }
   } catch { /* Das Sichern selbst darf nie zusaetzlich Schaden anrichten. */ }
-  if (typeof alert === 'function') {
-    alert(
-      `Der gespeicherte Stand „${bezeichnung}" war beschädigt und konnte nicht `
-      + 'gelesen werden.\nEr wurde NICHT gelöscht, sondern als Notfallkopie '
-      + `gesichert (Schlüssel „${backupKey}" im Browser-Speicher).\n`
-      + 'Es geht vorerst ohne diesen Stand weiter; die Kopie bleibt erhalten, '
-      + 'bis sie gerettet oder bewusst entfernt wird.',
-    )
-  }
+  meldungen.melde(
+    `Der gespeicherte Stand „${bezeichnung}" war beschädigt und konnte nicht `
+    + 'gelesen werden.\nEr wurde NICHT gelöscht, sondern als Notfallkopie '
+    + `gesichert (Schlüssel „${backupKey}" im Browser-Speicher).\n`
+    + 'Es geht vorerst ohne diesen Stand weiter; die Kopie bleibt erhalten, '
+    + 'bis sie gerettet oder bewusst entfernt wird.',
+  )
 }
 
 // --- Fall 2: SCHREIBEN schlaegt fehl ----------------------------------
@@ -95,15 +100,13 @@ export function meldeSpeicherPanne(
   console.warn(`Speichern fehlgeschlagen (${bezeichnung})`, fehler)
   if (gemeldet.has(storageKey)) return
   gemeldet.add(storageKey)
-  if (typeof alert === 'function') {
-    alert(
-      `„${bezeichnung}" konnte nicht im Browser gespeichert werden.\n\n`
-      + 'Das heißt: Änderungen von jetzt an sind beim Schließen des Fensters '
-      + 'verloren. Der Editor läuft weiter, aber ohne Sicherung.\n\n'
-      + 'Was hilft: die Maske exportieren, damit die Arbeit als Datei '
-      + 'vorliegt — und Speicherplatz des Browsers freiräumen. Gelingt das '
-      + 'Speichern wieder, meldet sich der Editor erst bei der nächsten '
-      + 'Störung erneut.',
-    )
-  }
+  meldungen.melde(
+    `„${bezeichnung}" konnte nicht im Browser gespeichert werden.\n\n`
+    + 'Das heißt: Änderungen von jetzt an sind beim Schließen des Fensters '
+    + 'verloren. Der Editor läuft weiter, aber ohne Sicherung.\n\n'
+    + 'Was hilft: die Maske exportieren, damit die Arbeit als Datei '
+    + 'vorliegt — und Speicherplatz des Browsers freiräumen. Gelingt das '
+    + 'Speichern wieder, meldet sich der Editor erst bei der nächsten '
+    + 'Störung erneut.',
+  )
 }

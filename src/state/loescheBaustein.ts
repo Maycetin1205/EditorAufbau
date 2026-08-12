@@ -9,26 +9,24 @@
 //
 // Jetzt gehen alle drei Wege hier durch, und die Erklaerung steht EINMAL da.
 // Wer die Meldung aendert, aendert sie fuer alle drei.
+//
+// U2 (2026-08-12): Loeschen fragt NIE nach. Bis dahin hatte das Kreuzchen eine
+// eigene Rueckfrage („… mit 3 Elementen darin loeschen?"), Entf und der
+// Inspector-Knopf nicht — derselbe Baustein verschwand je Weg anders. Der
+// Parameter `frageNach` dafuer ist ersatzlos weg (Nutzer-Entscheidung U0-3);
+// das Netz ist Strg+Z.
 
+import { meldungen } from './meldungen'
 import type { Editor } from './Editor'
 
 const MUSTERKARTE_GESCHUETZT =
   'Hier liegt die Musterkarte — aus ihr entstehen die Datenkarten, sie kann '
   + 'nicht gelöscht werden. Ziehe sie erst in eine andere Spalte.'
 
-// `frageNach` ist die ZUSAETZLICHE Rueckfrage des Aufrufers (das Kreuzchen
-// fragt, wenn der Baustein Inhalte traegt). Sie laeuft erst, wenn ueberhaupt
-// geloescht werden darf — sonst fragte der Editor erst und erklaerte danach,
-// dass es gar nicht geht.
-export function loescheBaustein(
-  editor: Editor,
-  id: string,
-  frageNach?: () => boolean,
-): void {
+export function loescheBaustein(editor: Editor, id: string): void {
   if (editor.isRemoveProtected(id)) {
-    window.alert(MUSTERKARTE_GESCHUETZT)
+    meldungen.melde(MUSTERKARTE_GESCHUETZT)
     return
   }
-  if (frageNach && !frageNach()) return
   editor.removeBlock(id)
 }

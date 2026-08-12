@@ -21,6 +21,7 @@ import { downloadFile } from '../../lib/dateiDownload'
 import { dataSourceStore } from '../../state/DataSourceStore'
 import { uebernehmeMaske } from '../../state/maskeUebernehmen'
 import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
+import { meldungen } from '../../state/meldungen'
 import { meldeVerworfeneTypen } from '../../state/persistence'
 import { relationStore } from '../../state/RelationStore'
 import { useEditor } from '../../state/useEditor'
@@ -31,9 +32,20 @@ import { IconButton } from '@/ui/atoms/icon-button'
 export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
   const ed = useEditor()
 
+  // Die Rueckfrage BLEIBT blockierend (U2, 2026-08-12): sie raeumt in einem
+  // Klick die ganze Maske, nicht nur die offene Seite — `Editor.clear()`
+  // ersetzt den GANZEN Baum, Popup-Seiten fallen also mit. Genau das
+  // verschwieg der Text bis dahin; die Zahl zaehlte sie schon immer mit
+  // (`Editor.blockCount` = alle Knoten des Baums).
   const handleClear = () => {
     if (ed.blockCount === 0) return
-    if (!window.confirm(`Alle ${ed.blockCount} Blöcke löschen?`)) return
+    const popups = ed.pages.filter((p) => !p.istHauptseite).length
+    const zusatz = popups === 0
+      ? ''
+      : popups === 1
+        ? ' Die Popup-Seite fällt mit.'
+        : ` Die ${popups} Popup-Seiten fallen mit.`
+    if (!window.confirm(`Alle ${ed.blockCount} Blöcke aller Seiten löschen?${zusatz}`)) return
     ed.clear()
   }
 
@@ -57,7 +69,7 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
     const { html, sevariablen } = exportMask(ed.tree, 'Maske', sources, relations)
     const failed = failedChecks(validateMaskHtml(html))
     if (failed.length > 0) {
-      window.alert(
+      meldungen.melde(
         'Export abgebrochen — die Datei hätte in SoftEngine nicht geladen:\n\n'
         + failed.map((f) => `• ${f.name}: ${f.detail}`).join('\n'),
       )
@@ -94,19 +106,19 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
     try {
       text = await datei.text()
     } catch {
-      window.alert('Die Datei konnte nicht gelesen werden.')
+      meldungen.melde('Die Datei konnte nicht gelesen werden.')
       return
     }
     const ergebnis = packeMaskeAus(text)
     if (!ergebnis.ok) {
       // Seit A3 nennt die Ablehnung nicht nur „beschädigt", sondern die
       // gefundenen Stellen. Sie stehen unter dem Grund, hoechstens zehn —
-      // ein Alert mit hundert Zeilen liest niemand, und die Zahl der
+      // eine Meldung mit hundert Zeilen liest niemand, und die Zahl der
       // restlichen steht dabei.
       const liste = ergebnis.probleme.slice(0, 10)
         .map((p) => `• ${p.bereich}${p.stelle === '' ? '' : ` (${p.stelle})`}: ${p.grund}`)
       const rest = ergebnis.probleme.length - liste.length
-      window.alert([
+      meldungen.melde([
         ergebnis.grund,
         ...(liste.length > 0 ? ['', ...liste] : []),
         ...(rest > 0 ? [`… und ${rest} weitere.`] : []),

@@ -154,23 +154,20 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   // (Löschschutz, s. onRemoveClick).
   const templateMark = editor.templateMarkFor(block.id)
 
-  // Kreuzchen: Entfernen direkt am Block, Rückfrage nur wenn
-  // er Inhalte trägt. Die Musterkarte selbst zeigt gar kein Kreuzchen (s. u.);
-  // ein Teilbaum, der sie enthält (Spalte), erklärt den Schutz statt still
-  // nichts zu tun — der Store erzwingt ihn zusätzlich (removeBlock).
+  // Kreuzchen: Entfernen direkt am Block, OHNE Rückfrage. Die Musterkarte
+  // selbst zeigt gar kein Kreuzchen (s. u.); ein Teilbaum, der sie enthält
+  // (Spalte), erklärt den Schutz statt still nichts zu tun — der Store
+  // erzwingt ihn zusätzlich (removeBlock).
+  //
+  // Bis U2 (2026-08-12) fragte dieser Weg nach, wenn der Baustein Inhalte
+  // trug — Entf-Taste und Inspector-Papierkorb nicht. Derselbe Baustein
+  // verschwand also je Weg anders. Jetzt verhalten sich alle drei gleich, das
+  // Netz ist Strg+Z (Nutzer-Entscheidung U0-3).
   function onRemoveClick(e: ReactMouseEvent<HTMLButtonElement>) {
     e.stopPropagation()
-    const node = blockRef.current
-    // Schutz-Erklaerung + Entfernen liegen in loescheBaustein (dieselbe Stelle
-    // wie Inspector-Knopf und Entf-Taste); die Inhalts-Rueckfrage ist die
-    // Zusatzfrage NUR dieses Wegs.
-    loescheBaustein(editor, node.id, () => {
-      const n = node.childIds.length
-      if (n === 0) return true
-      return window.confirm(
-        `„${def?.displayName ?? node.type}" mit ${n} ${n === 1 ? 'Element' : 'Elementen'} darin löschen?`,
-      )
-    })
+    // Schutz-Erklaerung + Entfernen liegen in loescheBaustein — dieselbe
+    // Stelle wie Inspector-Knopf und Entf-Taste.
+    loescheBaustein(editor, blockRef.current.id)
   }
 
   return (

@@ -78,26 +78,31 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  U2, U3, U6; danach N1–N5.
-- **Letzte fertige Etappe:** U1 (2026-08-12) — der Wortlaut-Putz. Das
-  Verwaltungsfenster heisst jetzt ueberall **Datencenter** (Toolbar-Knopf +
-  Tooltip, Fenstertitel, aria-label, der Verweis in der Inspector-Meldung;
-  Prop `onSteuerung` -> `onDatencenter`). Raus sind die zwei roten Kaesten
-  „Ohne Felder liefert SoftEngine … nichts" (`FeldListe`,
-  `DatenquellenBereich`), der Erklaerabsatz „… ohnehin alle Felder", die
-  Beschreibung „bei euch die 69" und der Kopfsatz-Absatz — die 69 stand
-  ausserdem in einer Fehlermeldung (`Relationsnummer fehlt (… z. B. 69)`),
-  auch dort weg. Die drei Jargon-Beschriftungen sind ersetzt:
-  „IDB-ID" UND „Dateikuerzel" -> **Kennung** (ein Begriff je Ding),
-  „Haengt an" -> **Gehoert zu**. Mit den Texten fiel der Prop `kind` der
-  FeldListe weg — er diente ALLEIN dieser Unterscheidung. Das Warndreieck an
-  einer feldlosen Stammquelle BLEIBT (Marke, keine Belehrung).
-  **Runtime-Bytes absichtlich neu, ausdrueckliche Abweichung vom Wellen-Kopf
-  U:** `quellenArten.ts` haengt ueber `DATA_SOURCE_KINDS` im Buendel, die
-  zwei Editor-Beschriftungen reisen also als toter Ballast in jede
-  Exportdatei. Der Diff ist EINE Zeile und genau diese zwei Strings
-  (nachgeprueft, keine Minifier-Umbenennung). Export-MARKUP unveraendert,
-  Referenzabzug byte-gleich (er schneidet das Buendel heraus).
+  U3, U6; danach N1–N5.
+- **Letzte fertige Etappe:** U2 (2026-08-12) — Loeschen und Browser-Kaesten.
+  **Loeschen fragt nie mehr nach:** die Inhalts-Rueckfrage des Kreuzchens ist
+  weg, mit ihr der Parameter `frageNach` in `state/loescheBaustein.ts`; Entf,
+  Kreuzchen und Inspector-Papierkorb tun jetzt dasselbe, Netz ist Strg+Z.
+  **Neu: die EINE Meldungsspur des Editors** (`state/meldungen.ts` +
+  `state/useMeldungen.ts` + `editor/shell/Meldungen.tsx`, Karten unten rechts,
+  z-50 also auch ueber dem Datencenter). Sie ersetzt alle sieben `alert()`
+  (Export-Abbruch, Datei nicht lesbar, abgelehnte Maskendatei, Musterkarten-
+  Schutz, verworfene Bausteintypen, Notfallkopie, Speicher-Panne). Nicht
+  blockierend, aber auch NICHT selbst ausblendend — es sind Verlustmeldungen.
+  Bewusst NICHT `softengine/meldung.ts` mitbenutzt (das ist der Balken der
+  fertigen MASKE und reist im Runtime-Buendel). **Blockierend geblieben sind
+  genau vier `window.confirm`:** Maske laden (kein Undo), „Alle Bloecke
+  loeschen" (raeumt alle Seiten) und die zwei Bibliotheks-Rueckfragen
+  (U0-3: bleiben vorerst). **Zwei unehrliche Texte richtig:** die Statuszeile
+  heisst „Bloecke (alle Seiten)" — `Editor.blockCount` zaehlt jeden Knoten,
+  auch den Inhalt der Popup-Seiten; und „Alle N Bloecke aller Seiten
+  loeschen?" nennt die fallenden Popup-Seiten. Runtime-Bytes, Export-Markup
+  und Referenzabzug UNVERAENDERT (`check:runtime`: Buendel == frischer Build).
+  Davor: U1 (2026-08-12) — Wortlaut-Putz: „Steuerung" heisst ueberall
+  **Datencenter**, die roten Belehrungskaesten und die installations-
+  individuelle „69" sind raus, „IDB-ID"/„Dateikuerzel" -> **Kennung**,
+  „Haengt an" -> **Gehoert zu** (Details im Etappenkopf U1; Runtime-Bytes
+  dort absichtlich neu, Export-Markup unveraendert).
   Davor: R3 (2026-08-12) — der Ausloeser der holenden
   Quellen (`blocks/shared/holendeQuellen.ts`) liest das Quellen-Attribut
   eines Auswahl-Gebers jetzt aus der Registry (`satzWahl.quelleProp`,
@@ -291,7 +296,7 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U2, dann U3 -> U6 -> N1–N5, Etappe fuer Etappe per
+- **Naechste Etappe:** U3, dann U6 -> N1–N5, Etappe fuer Etappe per
   Opus-Kopier-Auftrag (Wellen-Kopf U). Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
@@ -2529,7 +2534,7 @@ weg bzw. neu, Verhalten unveraendert.
 - Nicht angefasst: der Dateiname `Kommandozentrale.tsx` (Datei-Umbenennen
   waere ein eigenes Thema) und die Loesch-Rueckfragen (U2).
 
-## U2 · Loeschen und Browser-Kaesten vereinheitlichen (BAUBAR — U0-3: Ja)
+## U2 · Loeschen und Browser-Kaesten vereinheitlichen (GEBAUT 2026-08-12)
 
 **Belegte Stellen:** drei Loeschwege, zwei Verhalten
 (`BlockHost.tsx:167-173` fragt; `useKeyboardShortcuts.ts:45` und
@@ -2556,6 +2561,47 @@ window.alert im Editor-Alltag; Texte ehrlich.
 **Nutzerprobe (Browser):** Baustein mit Inhalt per Kreuzchen loeschen —
 keine Frage, Undo holt ihn zurueck; fehlerhafte Maskendatei laden —
 app-eigene Meldung statt Browser-Kasten.
+
+**Gebaut (2026-08-12), Entscheidungen und Abweichungen:**
+
+- Die Kreuzchen-Rueckfrage ist weg, und mit ihr der Parameter `frageNach` in
+  `state/loescheBaustein.ts` — er hatte danach keinen Aufrufer mehr (alte UI
+  wird restlos entfernt, nicht auf Vorrat stehengelassen). Alle drei Wege
+  rufen dieselbe Funktion ohne Zusatzfrage.
+- **Die Meldungsspur ist neu gebaut, nicht von der Maske geborgt:**
+  `state/meldungen.ts` (Modul-Singleton mit LISTE, kein blosser Ereignis-Kanal
+  — die erste Meldung faellt beim Laden, also vor dem ersten Bild) +
+  `state/useMeldungen.ts` (Muster useDataSources) + `editor/shell/Meldungen.tsx`
+  (Karten unten rechts, `z-50`, also auch ueber dem Datencenter-Overlay `z-40`:
+  eine Speicher-Panne muss den Bediener auch dort erreichen).
+  `softengine/meldung.ts` bleibt unberuehrt — das ist der Fehlerbalken der
+  fertigen MASKE, blendet sich aus und reist im Runtime-Buendel mit. Der
+  Grund steht in beiden Dateikoepfen, damit sie niemand „zusammenlegt".
+- **Nichts blendet sich von selbst aus, und es gibt nur EINE Sorte Karte.**
+  Auto-Ausblenden waere bei „Beim Laden entfernt: …" wieder ein stiller
+  Verlust; eine zweite Sorte (Erfolg/Warnung) gibt es nicht — es gibt keinen
+  zweiten Fall (Regel 10) und keine Erfolgs-Toasts (Wellen-Kopf U).
+- **Vier `window.confirm` bleiben blockierend:** Maske laden (kein Undo,
+  `Toolbar.tsx`), „Alle Bloecke loeschen" (raeumt in einem Klick ALLE Seiten —
+  der Plan verlangt hier ausdruecklich nur einen ehrlichen Text) und die zwei
+  Bibliotheks-Rueckfragen im Datencenter (U0-3: bleiben vorerst). Kein `alert`
+  mehr im Produktcode.
+- Statuszeile: der KLEINE Weg gewaehlt (der Plan liess die Wahl) — die Zahl
+  bleibt `Editor.blockCount`, nur die Beschriftung sagt „Bloecke (alle
+  Seiten)". Ein Zaehler je Seite haette eine neue Rechnung in den Store
+  gebracht, und dieselbe Zahl steuert auch „Alle Bloecke loeschen" und den
+  Export-Knopf.
+- Nebenbei EIN unwahrer Kommentar richtig: `state/VorlagenStore.ts` verglich
+  seine Loesch-Rueckfrage mit „dem Kreuzchen" — das fragt seit dieser Etappe
+  nicht mehr.
+- Bestehende Tests nachgezogen (keine neue Testart): `persistence.test.ts` und
+  `speicherPanne.test.ts` lesen die Meldungen jetzt aus der Spur statt aus
+  einem `alert`-Stub, gleiche Zusagen und Zahlen. Neu `state/meldungen.test.ts`
+  — Spur (sammeln, genau eine schliessen, Horcher wecken) und Loeschen ohne
+  Rueckfrage inkl. „Musterkarte bleibt stehen UND sagt warum".
+- **Runtime-Bytes, Export-Markup und Referenzabzug unveraendert** — die Etappe
+  hat keine Datei angefasst, die im Buendel landet (`check:runtime`: Buendel
+  == frischer Build).
 
 ## U3 · Doppelbauten zusammenlegen (Verhalten identisch, Code halbiert)
 

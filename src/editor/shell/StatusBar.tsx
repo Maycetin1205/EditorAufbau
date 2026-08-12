@@ -14,8 +14,15 @@ export function StatusBar() {
   return (
     <footer className="flex h-6 shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-3 text-[0.6875rem] text-muted-foreground">
       <div className="flex items-center gap-3">
+        {/* „alle Seiten" steht dabei, weil `Editor.blockCount` JEDEN Knoten des
+            Baums zaehlt — auch den Inhalt der Popup-Seiten, die hier gar nicht
+            zu sehen sind. Bis U2 (2026-08-12) hiess die Zahl nur „Blöcke" und
+            log damit ueber die offene Seite. Bewusst der kleine Weg: die Zahl
+            bleibt, was sie ist (sie steuert auch „Alle Blöcke löschen" und den
+            Export-Knopf), nur ihre Beschriftung sagt die Wahrheit. */}
         <span>
-          Blöcke <strong className="font-semibold text-foreground">{ed.blockCount}</strong>
+          Blöcke (alle Seiten){' '}
+          <strong className="font-semibold text-foreground">{ed.blockCount}</strong>
         </span>
         {selected && (
           <span>
