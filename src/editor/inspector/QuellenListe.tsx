@@ -20,20 +20,18 @@
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
-import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { quellenKennung } from '../../core/data/dataSources'
 import {
-  MAX_SCHLUESSELPAARE,
   quelleBrauchbar,
   WEITERE_QUELLEN_PROP,
   weitereQuellenAus,
   type BausteinQuelle,
-  type SchluesselPaar,
 } from '../../core/data/sourceLinks'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { SelectControl } from './controls/SelectControl'
+import { SchluesselPaarZeilen } from './SchluesselPaarZeilen'
 
 // Zwei Auswahl-Bauteile, je nach Platz (Angleichung 2026-07-30 — vorher ein
 // selbstgebautes nacktes <select>, das anders aussah als die
@@ -43,7 +41,9 @@ import { SelectControl } from './controls/SelectControl'
 //   - Schluesselregel-Zeilen („Feld = Feld", drei Dinge nebeneinander) →
 //     SchrittSelect: kompakt, ohne das Label/Beschreibungs-Gepaeck des
 //     Field-Molekuels, mit eigenem Aufklapp-Pfeil (der Browser-Pfeil laege
-//     sonst auf dem Text, Nutzer-Korrektur 2026-07-22).
+//     sonst auf dem Text, Nutzer-Korrektur 2026-07-22). Diese Zeilen wohnen
+//     seit U3 in SchluesselPaarZeilen — die AuswahlFolgeSektion stellt
+//     dieselbe Frage und hatte sie zweitgebaut.
 //
 // Radix-Select verbietet '' als Option-Wert — interner Platzhalter fuer
 // „keine Quelle" (die Prop bleibt dabei der Leer-String; dasselbe Muster
@@ -73,12 +73,6 @@ export function QuellenListe({ block }: QuellenListeProps) {
 
   function aendere(index: number, teil: Partial<BausteinQuelle>) {
     setzeWeitere(weitere.map((q, i) => (i === index ? { ...q, ...teil } : q)))
-  }
-
-  function setzePaar(index: number, paarAt: number, teil: Partial<SchluesselPaar>) {
-    aendere(index, {
-      keyPairs: weitere[index].keyPairs.map((p, i) => (i === paarAt ? { ...p, ...teil } : p)),
-    })
   }
 
   // Optionen einer Quellen-Auswahl: schon belegte Quellen fallen raus —
@@ -139,54 +133,16 @@ export function QuellenListe({ block }: QuellenListeProps) {
               <X size={13} />
             </IconButton>
           </div>
-          <span className="text-xs text-muted-foreground">
-            Woran erkennt man die zusammengehörige Zeile?
-          </span>
-          {q.keyPairs.map((paar, at) => (
-            <div key={at} className="flex items-center gap-1.5">
-              <SchrittSelect
-                className="min-w-0 flex-1"
-                aria-label={`Feld ${at + 1} der ersten Datenquelle`}
-                value={paar.fromField}
-                onChange={(e) => setzePaar(i, at, { fromField: e.target.value })}
-              >
-                <option value="">— Feld —</option>
-                {felderVon(erste).map((f) => (
-                  <option key={f.code} value={f.code}>{f.label}</option>
-                ))}
-              </SchrittSelect>
-              <span className="shrink-0 text-xs text-muted-foreground">=</span>
-              <SchrittSelect
-                className="min-w-0 flex-1"
-                aria-label={`Feld ${at + 1} der Datenquelle ${i + 2}`}
-                value={paar.toField}
-                onChange={(e) => setzePaar(i, at, { toField: e.target.value })}
-              >
-                <option value="">— Feld —</option>
-                {felderVon(q.quelleId).map((f) => (
-                  <option key={f.code} value={f.code}>{f.label}</option>
-                ))}
-              </SchrittSelect>
-              {q.keyPairs.length > 1 && (
-                <IconButton
-                  aria-label={`Zeile ${at + 1} entfernen`}
-                  onClick={() => aendere(i, { keyPairs: q.keyPairs.filter((_, x) => x !== at) })}
-                >
-                  <X size={13} />
-                </IconButton>
-              )}
-            </div>
-          ))}
-          {q.keyPairs.length < MAX_SCHLUESSELPAARE && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="self-start"
-              onClick={() => aendere(i, { keyPairs: [...q.keyPairs, { fromField: '', toField: '' }] })}
-            >
-              <Plus size={13} /> Feld dazu
-            </Button>
-          )}
+          <SchluesselPaarZeilen
+            frage="Woran erkennt man die zusammengehörige Zeile?"
+            paare={q.keyPairs}
+            linkeFelder={felderVon(erste)}
+            rechteFelder={felderVon(q.quelleId)}
+            linkeBezeichnung={(at) => `Feld ${at + 1} der ersten Datenquelle`}
+            rechteBezeichnung={(at) => `Feld ${at + 1} der Datenquelle ${i + 2}`}
+            entfernenBezeichnung={(at) => `Zeile ${at + 1} entfernen`}
+            onAendern={(keyPairs) => aendere(i, { keyPairs })}
+          />
           {/* Klartext statt stillem Nichtstun (Regel 4). */}
           {!quelleBrauchbar(q) && (
             <p className="text-xs text-muted-foreground">

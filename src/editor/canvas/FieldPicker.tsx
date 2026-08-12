@@ -13,9 +13,11 @@
 //
 // Reine Editor-Hilfe (Editor-UI-Tokens/Tailwind, KEIN Masken-Design):
 // lebt im BlockHost über der Maske und erscheint nie im Export.
+//
+// Den Rahmen (Portal, feste Position, Schließ-Wege) stellt seit U3 das geteilte
+// AuswahlFenster — hier steht nur noch, was DIESES Fenster zeigt.
 
-import { useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { AuswahlFenster } from '@/ui/molecules/auswahl-fenster'
 import {
   QUELLEN_TRENNER,
   bindungMitQuelle,
@@ -120,33 +122,6 @@ export function FieldPicker({
   onPick,
   onClose,
 }: FieldPickerProps) {
-  const ref = useRef<HTMLDivElement | null>(null)
-
-  // Außenklick + Escape schließen. pointerdown (nicht click), damit auch
-  // ein Klick, der woanders eine Auswahl startet, sofort schließt.
-  // Scrollen außerhalb schließt ebenfalls: der Picker sitzt fixiert im
-  // Viewport — beim Scrollen wanderte die Stelle sonst unter ihm weg.
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    const onScroll = (e: Event) => {
-      if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return
-      onClose()
-    }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    document.addEventListener('keydown', onKeyDown, true)
-    document.addEventListener('scroll', onScroll, true)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown, true)
-      document.removeEventListener('keydown', onKeyDown, true)
-      document.removeEventListener('scroll', onScroll, true)
-    }
-  }, [onClose])
-
   // Der Haken sitzt am ZERLEGTEN Wert: bei einer Bindung an eine weitere
   // Quelle muss er in DEREN Gruppe stehen, nicht beim gleichnamigen Feldcode
   // der ersten Quelle. Im Bestand des Nutzers heisst „Tiername" in beiden
@@ -172,27 +147,17 @@ export function FieldPicker({
     )
   }
 
-  return createPortal(
-    <div
-      ref={ref}
-      role="dialog"
-      aria-label={`Feld für ${spotLabel}`}
-      data-ff-editor-helper
-      draggable={false}
-      onClick={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onDragStart={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-      }}
-      style={{ position: 'fixed', top, left, zIndex: 50 }}
+  return (
+    <AuswahlFenster
+      bezeichnung={`Feld für ${spotLabel}`}
+      oben={top}
+      links={left}
+      onClose={onClose}
       /* Mit Zuordnungstabelle oder zusaetzlichen Feldern braucht das Fenster
          mehr Platz: drei Felder je Zeile bzw. Beschriftung samt Auswahlliste
          passen nicht in die schmale Feldliste. Ohne beides bleibt es exakt so
          breit wie bisher. */
-      className={`overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md ${
-        zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-64 w-60'
-      }`}
+      className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-64 w-60'}
     >
       {/* Die zusätzliche Wahl steht OBEN und abgesetzt: sie gehört zur
           Stelle selbst, nicht zu einer der Quellen darunter. Ein Klick
@@ -388,7 +353,6 @@ export function FieldPicker({
           {g.fields.map((f) => eintrag(g.quelleId, f.code, f.label))}
         </div>
       ))}
-    </div>,
-    document.body,
+    </AuswahlFenster>
   )
 }

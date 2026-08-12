@@ -32,7 +32,7 @@
 
 import { QUELLEN_TRENNER } from '../blocks/BlockDefinition'
 import type { EintragProblem } from './ladeProblem'
-import { pruefeLadeRelation, type LadeRelation } from './ladeRelation'
+import { POS_LEN, pruefeLadeRelation, type LadeRelation } from './ladeRelation'
 import {
   artFuer,
   DATA_SOURCE_KINDS,
@@ -128,12 +128,9 @@ export function tableIdFor(source: DataSource): string {
   return feste === '' ? (source.idbId ?? '') : feste
 }
 
-// Die einzige BELEGTE Form eines Eintrags in einer expliziten FELDER-Liste:
-// Position_Länge. So steht es an jeder Stamm-Quelle der Chef-Masken ('2_8',
-// '3292_30', …) und am POS-Loop von docs/chef-maske/JsonBeleg.json. Ein
-// Feldcode darf laut DataSourceField auch ein direkter Property-Name sein —
-// für den ist die Listen-Form nirgends belegt, und geraten wird nicht (Regel 5).
-const POS_LEN = /^\d+_\d+$/
+// Die einzige BELEGTE Form eines Eintrags in einer expliziten FELDER-Liste ist
+// Position_Länge — POS_LEN, seit U3 nur noch EINMAL geschrieben (in
+// ladeRelation, wo auch die Laufzeit sie holt; Begründung dort).
 
 // FELDER-Eintrag der SEFILELOOP — DIE eine Stelle, die entscheidet, was eine
 // Quelle bei SoftEngine bestellt.

@@ -260,8 +260,12 @@ for (const { pfad } of bausteine.length ? quellen.filter((p) => p.startsWith('sr
 const BAUSTEIN_IMPORT_AUSNAHMEN = [
   {
     pfad: 'src/editor/canvas/PopupSeite.tsx',
-    grund: 'POPUP_RAND ist laut CLAUDE.md die EINE Konstante fuer „Flaeche minus Rand" -- ' +
-      'Editor und Baustein MUESSEN denselben Wert benutzen, sonst driftet die Popup-Groesse.',
+    // Berichtigt in U3 (2026-08-12): hier stand seit C1 ein toter Name.
+    // POPUP_RAND ist geloescht -- das Popup komponiert seither den geteilten
+    // DialogRahmen, und DIESSEN Konstante holt sich die Seite.
+    grund: 'DIALOG_RAND (blocks/shared/DialogRahmen) ist laut CLAUDE.md die EINE Konstante ' +
+      'fuer „Flaeche minus Rand", DIALOG_SCHLIESSEN_EVENT der eine Schliess-Weg -- Editor ' +
+      'und Baustein MUESSEN dieselben Werte benutzen, sonst driftet die Popup-Groesse.',
   },
 ]
 

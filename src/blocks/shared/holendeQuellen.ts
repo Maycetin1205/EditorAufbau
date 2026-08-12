@@ -102,8 +102,3 @@ export function verdrahteHolendeQuellen(): void {
   verdrahtet = true
   aufAuswahlHoeren(pruefeHolendeQuellen)
 }
-
-// Nur für gezielte Laufzeit-Tests: definierter Ausgangszustand.
-export function setzeHolendeQuellenZurueck(): void {
-  letzterAbdruck.clear()
-}

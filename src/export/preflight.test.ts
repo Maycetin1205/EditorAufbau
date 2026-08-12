@@ -13,7 +13,7 @@ import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
-import { failedChecks, warnChecks } from './validator'
+import { failedChecks } from './validator'
 import { registerTestBlocks, TEST_EVENT_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
@@ -206,7 +206,6 @@ describe('preflightMask', () => {
     expect(ohne.map((r) => r.name)).toEqual(['Status-Zuordnung fehlt'])
     expect(ohne[0].warnung).toBe(true)
     expect(failedChecks(ohne)).toEqual([])
-    expect(warnChecks(ohne)).toHaveLength(1)
     // Die Meldung nennt die Spalte beim Klarnamen und sagt, was passieren wird.
     expect(ohne[0].detail).toContain('Zustand')
     expect(ohne[0].detail).toContain('Grau')

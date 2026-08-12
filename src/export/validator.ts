@@ -85,7 +85,8 @@ export function failedChecks(results: CheckResult[]): CheckResult[] {
   return results.filter((r) => !r.ok && r.warnung !== true)
 }
 
-// Die Warnungen: gemeldet, aber kein Grund abzubrechen (s. CheckResult).
-export function warnChecks(results: CheckResult[]): CheckResult[] {
-  return results.filter((r) => !r.ok && r.warnung === true)
-}
+// Ein Gegenstueck `warnChecks` gab es hier bis U3 (2026-08-12). Seit der
+// Preflight nicht mehr blockt (Regel 4, Nutzer-Ansage 2026-08-10) hatte es
+// keinen Aufrufer mehr ausser einem Test, der sich selbst pruefte. Wer die
+// Warnungen wieder braucht, filtert `r.warnung === true` — das ist eine Zeile,
+// keine Funktion auf Vorrat (Regel 10). Warn-ANZEIGEN sind ohnehin gestrichen.

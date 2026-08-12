@@ -22,7 +22,7 @@ import { DataSourceForm } from './DataSourceForm'
 import { DtkImportForm } from './DtkImportForm'
 import { Gruppe } from './Gruppe'
 import { bausteinName } from '../../core/blocks/bausteinName'
-import { ikonFuer } from './helfer'
+import { bestaetigeLoeschen, ikonFuer } from './helfer'
 
 export function DatenquellenBereich() {
   const store = useDataSources()
@@ -80,10 +80,13 @@ export function DatenquellenBereich() {
   const kennung = (s: DataSource): string => quellenKennung(s)
 
   function loeschen(s: DataSource) {
-    const frage = verwendungFor(s.id).length > 0
-      ? `„${s.name}" wird in der Maske BENUTZT. Trotzdem löschen? Die Bausteine bleiben stehen, ihre Daten-Bindungen ruhen.`
-      : `Datenquelle „${s.name}" löschen?`
-    if (!window.confirm(frage)) return
+    const ja = bestaetigeLoeschen(
+      'Datenquelle',
+      s.name,
+      verwendungFor(s.id).length > 0,
+      'Die Bausteine bleiben stehen, ihre Daten-Bindungen ruhen.',
+    )
+    if (!ja) return
     store.remove(s.id)
     setModus('lesen')
   }

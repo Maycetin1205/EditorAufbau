@@ -56,7 +56,8 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    so gebaut hatte. Der Export läuft jetzt immer. Die Funktion selbst lebt
    weiter: `Kommandozentrale.tsx` speist damit den Warn-Punkt an
    „Datenquellen" — sie WARNT also noch, sie BLOCKT nur nicht mehr.
-   (`warnChecks` in `validator.ts` ist seitdem ohne Aufrufer im Produkt.)
+   (`warnChecks` in `validator.ts` war seitdem ohne Aufrufer im Produkt und ist
+   in U3, 2026-08-12, geloescht.)
    Geblieben ist
    `validateMaskHtml` (SE-Marker, LF, reines ASCII) — schlägt die an, würde
    SoftEngine die Datei gar nicht erst laden. Damit ist „nichts scheitert

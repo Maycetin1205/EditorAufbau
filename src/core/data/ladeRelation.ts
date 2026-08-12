@@ -13,6 +13,15 @@
 // für die Quellen-Welt). Importiert wird hier NUR aus quellenArten —
 // dataSources liest diese Datei, ein Import zurück wäre ein Kreis; darum
 // nehmen die Helfer strukturell `{ kind, ladeRelation }` statt DataSource.
+//
+// ⚠ DIESE DATEI STECKT IM RUNTIME-BÜNDEL (`softengine/data.ts` holt POS_LEN
+// und pruefeLadeRelation hier). Jeder zusätzliche Import verschiebt darum
+// Export-Bytes — auch einer, den das Baumschütteln später wieder wegwirft:
+// er ändert die Reihenfolge der Module im Bündel. In U3 (2026-08-12)
+// nachgemessen: ein `import { splitFieldCode } from './relations'` lieferte
+// ein Bündel mit exakt derselben Länge (187 019 Byte) und trotzdem 11
+// geänderten Zeilen — reine Umsortierung samt Umbenennung durch den
+// Minifier. Wer hier etwas dazuholt, plant eine SoftEngine-Probe ein.
 
 import { artFuer, type DataSourceKind } from './quellenArten'
 
@@ -52,9 +61,16 @@ export const LADE_RELATION_STANDARD = {
   endeFelder: ['11_6', '18_25'] as readonly string[],
 }
 
-// Exportiert, weil die Laufzeit (softengine/data) die zusatzFelder mit
-// GENAU demselben Muster prueft — zwei Abschriften desselben Regex koennten
-// auseinanderlaufen.
+// Die einzige BELEGTE Form eines Feldcodes in einer SoftEngine-Liste:
+// Position_Länge. So steht es an jeder Stamm-Quelle der Chef-Masken ('2_8',
+// '3292_30', …) und am POS-Loop von docs/chef-maske/JsonBeleg.json. Ein
+// Feldcode darf laut DataSourceField auch ein direkter Property-Name sein —
+// für den ist die Listen-Form nirgends belegt, und geraten wird nicht (Regel 5).
+//
+// DIE eine Stelle: die Laufzeit (softengine/data) prüft damit die zusatzFelder,
+// die FELDER-Bestellung (dataSources) die Feldcodes einer Quelle. Bis U3
+// (2026-08-12) stand derselbe Ausdruck zweimal da — zwei Abschriften, die
+// auseinanderlaufen können.
 export const POS_LEN = /^\d+_\d+$/
 const NUR_ZIFFERN = /^\d+$/
 
@@ -74,6 +90,12 @@ export const LADE_SCHNITT_LEN = 255
 // es nur TEILWEISE hinter dem Fenster liegt (pos+len > 255): der
 // SATZ-Ausschnitt waere sonst still abgeschnitten. Sortiert nach Position,
 // dann Laenge — deterministische Export-Bytes.
+//
+// Der pos_len-Schnitt steht hier als eigener Ausdruck, obwohl `splitFieldCode`
+// (core/data/relations) genau dasselbe kann — U3 wollte die Kopie einziehen und
+// hat es nachgemessen zurückgenommen: der Import zieht `relations` im Bündel
+// vor und ändert damit Export-Bytes (Begründung im Dateikopf). Zusammengelegt
+// wird das erst, wenn ohnehin eine SoftEngine-Probe ansteht.
 export function felderHinterSchnitt(benutzt: ReadonlySet<string> | undefined): string[] {
   const raus: string[] = []
   for (const code of benutzt ?? []) {

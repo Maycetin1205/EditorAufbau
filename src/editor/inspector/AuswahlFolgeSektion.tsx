@@ -7,10 +7,11 @@
 // filtert Tabelle 2 dann nach der angeklickten Kundenzeile — ohne Auswahl
 // zeigt sie alles, nichts passiert automatisch.
 //
-// Bedienmuster und Bauteile sind DIESELBEN wie in der QuellenListe daneben
-// (SelectControl fuer die Wahl, SchrittSelect-Zeilen fuer „Feld = Feld") —
+// Bedienmuster und Bauteile sind DIESELBEN wie in der QuellenListe daneben —
 // zwei Verknuepfungs-Formulare, die verschieden aussehen, waeren fuer den
-// Bediener zwei Sprachen fuer dieselbe Sache.
+// Bediener zwei Sprachen fuer dieselbe Sache. Seit U3 (2026-08-12) ist das
+// nicht mehr nur Absicht, sondern derselbe Code: die „Feld = Feld"-Zeilen
+// stehen in SchluesselPaarZeilen, die Wahl darueber im SelectControl.
 //
 // Der Bediener sieht ausschliesslich Klarnamen (Baustein-Name + Quellen-
 // Name, Feld-Klarnamen); die Technikwerte (Baum-id, Feldcodes) arbeiten
@@ -26,10 +27,6 @@
 // die Haustiere des gewaehlten Kunden), nicht einen angezeigten Wert. Die
 // Einstellung ist dieselbe — Geber plus Feldpaare.
 
-import { Plus, X } from '@/ui/zeichen'
-import { Button } from '@/ui/atoms/button'
-import { IconButton } from '@/ui/atoms/icon-button'
-import { SchrittSelect } from '@/ui/atoms/schritt-select'
 import { cn } from '@/lib/utils'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { auswahlQuelleIdVon, istAuswahlGeber } from '../../core/blocks/treeQuery'
@@ -40,11 +37,11 @@ import {
   type AuswahlFolge,
 } from '../../core/data/auswahlFolge'
 import { quellenKennung } from '../../core/data/dataSources'
-import { MAX_SCHLUESSELPAARE, type SchluesselPaar } from '../../core/data/sourceLinks'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { bausteinName } from '../../core/blocks/bausteinName'
 import { SelectControl } from './controls/SelectControl'
+import { SchluesselPaarZeilen } from './SchluesselPaarZeilen'
 
 // Radix-Select verbietet '' als Option-Wert — Platzhalter wie in QuellenListe.
 const KEINER = '__keiner__'
@@ -109,14 +106,6 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
         : [{ fromField: '', toField: '' }],
     }])
   }
-  function setzePaar(at: number, teil: Partial<SchluesselPaar>): void {
-    if (!folge) return
-    setze([{
-      ...folge,
-      keyPairs: folge.keyPairs.map((p, i) => (i === at ? { ...p, ...teil } : p)),
-    }])
-  }
-
   return (
     <div className={cn('flex flex-col gap-2', mitTrenner && 'mt-4 border-t border-border pt-4')}>
       <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -139,60 +128,16 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
       />
       {folge && (
         <>
-          <span className="text-xs text-muted-foreground">
-            Woran erkennt man die zusammengehörigen Zeilen?
-          </span>
-          {folge.keyPairs.map((paar, at) => (
-            <div key={at} className="flex items-center gap-1.5">
-              <SchrittSelect
-                className="min-w-0 flex-1"
-                aria-label={`Feld ${at + 1} beim Auswahl-Geber`}
-                value={paar.fromField}
-                onChange={(e) => setzePaar(at, { fromField: e.target.value })}
-              >
-                <option value="">— Feld —</option>
-                {(geberQuelle?.fields ?? []).map((f) => (
-                  <option key={f.code} value={f.code}>{f.label}</option>
-                ))}
-              </SchrittSelect>
-              <span className="shrink-0 text-xs text-muted-foreground">=</span>
-              <SchrittSelect
-                className="min-w-0 flex-1"
-                aria-label={`Feld ${at + 1} in diesem Baustein`}
-                value={paar.toField}
-                onChange={(e) => setzePaar(at, { toField: e.target.value })}
-              >
-                <option value="">— Feld —</option>
-                {(eigeneQuelle?.fields ?? []).map((f) => (
-                  <option key={f.code} value={f.code}>{f.label}</option>
-                ))}
-              </SchrittSelect>
-              {folge.keyPairs.length > 1 && (
-                <IconButton
-                  aria-label={`Feldpaar ${at + 1} entfernen`}
-                  onClick={() => setze([{
-                    ...folge,
-                    keyPairs: folge.keyPairs.filter((_, x) => x !== at),
-                  }])}
-                >
-                  <X size={13} />
-                </IconButton>
-              )}
-            </div>
-          ))}
-          {folge.keyPairs.length < MAX_SCHLUESSELPAARE && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="self-start"
-              onClick={() => setze([{
-                ...folge,
-                keyPairs: [...folge.keyPairs, { fromField: '', toField: '' }],
-              }])}
-            >
-              <Plus size={13} /> Feld dazu
-            </Button>
-          )}
+          <SchluesselPaarZeilen
+            frage="Woran erkennt man die zusammengehörigen Zeilen?"
+            paare={folge.keyPairs}
+            linkeFelder={geberQuelle?.fields ?? []}
+            rechteFelder={eigeneQuelle?.fields ?? []}
+            linkeBezeichnung={(at) => `Feld ${at + 1} beim Auswahl-Geber`}
+            rechteBezeichnung={(at) => `Feld ${at + 1} in diesem Baustein`}
+            entfernenBezeichnung={(at) => `Feldpaar ${at + 1} entfernen`}
+            onAendern={(keyPairs) => setze([{ ...folge, keyPairs }])}
+          />
           {/* Klartext statt stillem Nichtstun (Regel 4). */}
           {(!geberQuelle || !eigeneQuelle) && (
             <p className="text-xs text-muted-foreground">

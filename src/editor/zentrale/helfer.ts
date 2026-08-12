@@ -35,6 +35,30 @@ export const VERB_KURZ: Record<RelationTemplate['verb'], string> = {
   PUTADD_RELATION: 'PUTADD',
 }
 
+// Die Lösch-Rückfrage der beiden Bibliotheken (Datenquellen, Relationen).
+// Bis U3 (2026-08-12) stand sie zweimal Wort für Wort da, mit demselben
+// Doppel-Fall: wird der Eintrag in der Maske BENUTZT, sagt die Frage das
+// deutlich und nennt die Folge — sonst fragt sie schlicht.
+//
+// Sie ist der einzige window.confirm-Rest im Datencenter und bleibt vorerst
+// blockierend (U0-3, Nutzer-Entscheidung 2026-08-12): anders als beim
+// Baustein-Löschen gibt es hier kein Undo.
+//
+// `folge` ist der eine Unterschied zwischen den zwei Aufrufern — was am
+// Baustein weiterlebt, wenn seine Vorlage verschwindet.
+export function bestaetigeLoeschen(
+  art: string,
+  name: string,
+  benutzt: boolean,
+  folge: string,
+): boolean {
+  return window.confirm(
+    benutzt
+      ? `„${name}" wird in der Maske BENUTZT. Trotzdem löschen? ${folge}`
+      : `${art} „${name}" löschen?`,
+  )
+}
+
 // Lesen/Schreiben als Optionen für den gemeinsamen Umschalter (SegmentControl):
 // EINE Ablage für beide Stellen — Steuerungs-Filter (RelationenBereich) UND
 // Schritt-Vorlagenauswahl (StepForm), Nutzer-Entscheidung 2026-07-22 („Alle"

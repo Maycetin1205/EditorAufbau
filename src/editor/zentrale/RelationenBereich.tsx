@@ -24,7 +24,7 @@ import { SegmentControl } from '../inspector/controls/SegmentControl'
 import { Gruppe } from './Gruppe'
 import { RelationForm } from './RelationForm'
 import { bausteinName } from '../../core/blocks/bausteinName'
-import { parameterBedeutung, RELATION_GRUPPEN, VERB_KURZ } from './helfer'
+import { bestaetigeLoeschen, parameterBedeutung, RELATION_GRUPPEN, VERB_KURZ } from './helfer'
 
 export function RelationenBereich() {
   const store = useRelations()
@@ -67,10 +67,13 @@ export function RelationenBereich() {
       .map((n) => bausteinName(n))
 
   function loeschen(r: RelationTemplate) {
-    const frage = verwendungFor(r.id).length > 0
-      ? `„${r.name}" wird in der Maske BENUTZT. Trotzdem löschen? Die Bausteine bleiben stehen, ihr Schreibweg ruht.`
-      : `Relation „${r.name}" löschen?`
-    if (!window.confirm(frage)) return
+    const ja = bestaetigeLoeschen(
+      'Relation',
+      r.name,
+      verwendungFor(r.id).length > 0,
+      'Die Bausteine bleiben stehen, ihr Schreibweg ruht.',
+    )
+    if (!ja) return
     store.remove(r.id)
     setModus('lesen')
   }

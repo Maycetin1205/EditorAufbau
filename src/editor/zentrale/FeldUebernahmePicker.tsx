@@ -1,5 +1,14 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+// FeldUebernahmePicker — „ein Feld aus einer Quelle in einen Schritt-Parameter
+// übernehmen": zuerst die Quelle, dann ihr Feld, beides mit Suche.
+//
+// Den Rahmen (Portal, feste Position, Schließ-Wege) stellt seit U3 das geteilte
+// AuswahlFenster. Zwei Eigenheiten bleiben als Schalter gesetzt und sind DORT
+// begründet: das Fenster klemmt sich in den Viewport (es öffnet im schmalen,
+// rechts angedockten Bereich) und es hält Escape auf (sonst schlösse derselbe
+// Tastendruck auch das Schritt-Formular darunter).
+
+import { useMemo, useState } from 'react'
+import { AuswahlFenster } from '@/ui/molecules/auswahl-fenster'
 import { TextInput } from '@/ui/atoms/text-input'
 import type {
   FeldUebernahmeZiel,
@@ -28,61 +37,9 @@ export function FeldUebernahmePicker({
   onPick,
   onClose,
 }: FeldUebernahmePickerProps) {
-  const ref = useRef<HTMLDivElement | null>(null)
   const [suche, setSuche] = useState('')
   const [quelle, setQuelle] = useState<UebernahmeQuelle | null>(null)
   const needle = suche.trim().toLocaleLowerCase('de')
-  const [pos, setPos] = useState({ top, left })
-
-  // Im Sichtfenster halten (Nutzer-Fund 2026-07-22): der Inspector ist rechts
-  // angedockt und schmal — ein an der Knopf-Position geöffnetes Fenster liefe
-  // sonst rechts (und bei kleinen Höhen unten) aus dem Bild und wäre halb
-  // unlesbar. Nach dem Messen an den Rand klemmen; der ResizeObserver deckt
-  // Stufenwechsel (Quellen → Felder) und Such-Filter (Höhenänderung) mit ab.
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const klemmen = () => {
-      const rect = el.getBoundingClientRect()
-      const rand = 8
-      const maxLeft = Math.max(rand, window.innerWidth - rand - rect.width)
-      const maxTop = Math.max(rand, window.innerHeight - rand - rect.height)
-      const nextLeft = Math.max(rand, Math.min(left, maxLeft))
-      const nextTop = Math.max(rand, Math.min(top, maxTop))
-      setPos((prev) =>
-        prev.left === nextLeft && prev.top === nextTop ? prev : { top: nextTop, left: nextLeft },
-      )
-    }
-    klemmen()
-    const ro = new ResizeObserver(klemmen)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [top, left])
-
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    const onScroll = (e: Event) => {
-      if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return
-      onClose()
-    }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      e.stopImmediatePropagation()
-      e.stopPropagation()
-      onClose()
-    }
-
-    document.addEventListener('pointerdown', onPointerDown, true)
-    document.addEventListener('scroll', onScroll, true)
-    window.addEventListener('keydown', onKeyDown, true)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown, true)
-      document.removeEventListener('scroll', onScroll, true)
-      window.removeEventListener('keydown', onKeyDown, true)
-    }
-  }, [onClose])
 
   const sichtbareQuellen = useMemo(
     () => sources.filter((source) => needle === '' || source.sourceName.toLocaleLowerCase('de').includes(needle)),
@@ -96,21 +53,15 @@ export function FeldUebernahmePicker({
     [fields, needle, quelle?.sourceId],
   )
 
-  return createPortal(
-    <div
-      ref={ref}
-      role="dialog"
-      aria-label="Feld übernehmen"
-      data-ff-editor-helper
-      draggable={false}
-      onClick={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onDragStart={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-      }}
-      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 50 }}
-      className="max-h-72 w-64 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+  return (
+    <AuswahlFenster
+      bezeichnung="Feld übernehmen"
+      oben={top}
+      links={left}
+      onClose={onClose}
+      imBildHalten
+      escapeAbfangen
+      className="max-h-72 w-64 max-w-[calc(100vw-1rem)]"
     >
       <TextInput
         aria-label="Feld oder Quelle suchen"
@@ -182,7 +133,6 @@ export function FeldUebernahmePicker({
           )}
         </>
       )}
-    </div>,
-    document.body,
+    </AuswahlFenster>
   )
 }

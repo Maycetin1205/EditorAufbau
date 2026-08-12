@@ -78,8 +78,22 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  U3, U6; danach N1–N5.
-- **Letzte fertige Etappe:** U2 (2026-08-12) — Loeschen und Browser-Kaesten.
+  U6; danach N1–N5.
+- **Letzte fertige Etappe:** U3 (2026-08-12) — Doppelbauten zusammengelegt,
+  netto 137 Zeilen weniger, nichts sichtbar geaendert. EIN Rahmen fuer die
+  zwei schwebenden Auswahl-Fenster (`ui/molecules/auswahl-fenster.tsx`) · EINE
+  „Feld = Feld"-Zeile (`editor/inspector/SchluesselPaarZeilen.tsx`, benutzt von
+  QuellenListe UND AuswahlFolgeSektion) · EINE Loesch-Rueckfrage
+  (`bestaetigeLoeschen` in `zentrale/helfer.ts`) · POS_LEN nur noch in
+  `ladeRelation` · `warnChecks` und `setzeHolendeQuellenZurueck` raus, der
+  POPUP_RAND-Kommentar im Waechter berichtigt. **ZWEI Punkte der Etappe sind
+  bewusst NICHT gebaut** und im Etappenkopf U3 belegt: die zwei Dropdown-Bauteile
+  bleiben zweierlei (kein Duplikat, sondern zwei Aufgaben — gehoert nach U4), und
+  der pos/len-Parser bleibt viermal, weil `core/data/ladeRelation.ts` entgegen der
+  Plan-Annahme IM Runtime-Buendel steckt (`softengine/data.ts:13`) und der Import
+  Export-Bytes verschob. Runtime-Bytes, Export-Markup und Referenzabzug
+  unveraendert.
+  Davor: U2 (2026-08-12) — Loeschen und Browser-Kaesten.
   **Loeschen fragt nie mehr nach:** die Inhalts-Rueckfrage des Kreuzchens ist
   weg, mit ihr der Parameter `frageNach` in `state/loescheBaustein.ts`; Entf,
   Kreuzchen und Inspector-Papierkorb tun jetzt dasselbe, Netz ist Strg+Z.
@@ -296,7 +310,7 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U3, dann U6 -> N1–N5, Etappe fuer Etappe per
+- **Naechste Etappe:** U6, dann N1–N5, Etappe fuer Etappe per
   Opus-Kopier-Auftrag (Wellen-Kopf U). Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
@@ -2708,7 +2722,7 @@ app-eigene Meldung statt Browser-Kasten.
   hat keine Datei angefasst, die im Buendel landet (`check:runtime`: Buendel
   == frischer Build).
 
-## U3 · Doppelbauten zusammenlegen (Verhalten identisch, Code halbiert)
+## U3 · Doppelbauten zusammenlegen (GEBAUT 2026-08-12)
 
 **Belegte Paare:** SelectControl vs SchrittSelect
 (`QuellenListe.tsx:38-46` benennt die Zweiheit selbst) ·
@@ -2747,6 +2761,62 @@ Referenzabzug unveraendert; 500er-Deckel ueberall eingehalten.
 **Nutzerprobe (Browser, Stichprobe):** Verknuepfung anlegen, „Auswahl
 folgen" einstellen, Feld uebernehmen — sieht aus und verhaelt sich wie
 vorher.
+
+**Gebaut (2026-08-12), Entscheidungen und Abweichungen:**
+
+- Netto 137 Zeilen weniger. **Runtime-Bytes, Export-Markup und Referenzabzug
+  unveraendert** (`check:runtime`: Buendel == frischer Build).
+- **Die zwei schwebenden Auswahl-Fenster teilen EINEN Rahmen**
+  (`ui/molecules/auswahl-fenster.tsx`): Portal an den body, feste Position im
+  Sichtfenster, das Abfangen der Editor-Gesten (Klick/Zeiger/Ziehen) und die drei
+  Schliess-Wege Aussenklick / Escape / Scrollen daneben. **Zwei Unterschiede
+  bleiben als benannte Schalter stehen**, weil sie ECHT verschieden sind und
+  diese Etappe „Verhalten unveraendert" zusagt: `imBildHalten` (nur das Fenster
+  im schmalen, rechts angedockten Bereich klemmt sich an den Viewport-Rand —
+  Nutzer-Fund 2026-07-22) und `escapeAbfangen` (nur DIESES Fenster haelt Escape
+  auf, sonst schloesse derselbe Tastendruck das Schritt-Formular darunter; der
+  Feld-Picker laesst Escape bewusst weiterlaufen). Wer einen dritten Schalter
+  braucht, baut vermutlich ein drittes Fenster.
+- **Die „Feld = Feld"-Zeilen stehen einmal**
+  (`editor/inspector/SchluesselPaarZeilen.tsx`), benutzt von QuellenListe UND
+  AuswahlFolgeSektion. Die Bezeichnungen fuer Hilfstechnik kommen als Funktionen
+  herein: sie benennen je Sektion etwas anderes („Feld 1 der ersten Datenquelle"
+  vs. „Feld 1 beim Auswahl-Geber"), und genau das ist dort der Unterschied, der
+  zaehlt. Deckel, Entfernen-Knopf und „Feld dazu" gelten jetzt fuer beide gleich.
+- **Die Loesch-Rueckfrage steht einmal** (`bestaetigeLoeschen` in
+  `zentrale/helfer.ts`), Wortlaut buchstabengleich; der einzige Unterschied
+  zwischen den Aufrufern (was am Baustein weiterlebt) reist als Parameter.
+- **POS_LEN steht einmal** (`core/data/ladeRelation.ts`), `dataSources` holt es
+  von dort — byte-neutral nachgemessen. `warnChecks` und
+  `setzeHolendeQuellenZurueck` sind weg; der eine Test-Aufruf von `warnChecks`
+  prueft dieselbe Zusage weiter ueber `r.warnung`. Der POPUP_RAND-Kommentar im
+  Waechter nennt jetzt DIALOG_RAND (die Datei importiert seit C1 genau das).
+
+**ZWEI Punkte der Etappe sind bewusst NICHT gebaut:**
+
+- **SelectControl vs SchrittSelect bleibt zweierlei.** Es sind keine Duplikate,
+  sondern zwei Bauteile fuer zwei Aufgaben: `SelectControl` ist Radix +
+  Label-Molekuel (beschriftetes Eigenschaftsfeld), `SchrittSelect` ein nacktes
+  `<select>` fuer dichte Zeilen. Zusammenlegen wuerde rund 19 Auswahlfelder
+  SICHTBAR aendern (allein `ParameterZeile.tsx` hat elf) — gegen die
+  Fertig-Zeile dieser Etappe —, die Nutzer-Korrektur vom 2026-07-22 kippen
+  (`QuellenListe.tsx:38-46`: der Browser-Pfeil lag auf dem Text) und fuer jedes
+  „— Feld —" ein Platzhalter-Konstrukt brauchen, weil Radix `''` als Wert
+  verbietet. Gehoert nach **U4** („EINE Bedienform"), wo es ohnehin steht.
+- **Der pos/len-Parser bleibt VIERMAL — die harte Grenze oben war zu eng
+  gezogen.** Sie erklaert `ladeRelation.ts:80` fuer zusammenlegbar, weil „der
+  Runtime-Lader nur softengine/* importiert, an den Imports von
+  `relationLader.ts` nachgeprueft". Das stimmt fuer relationLader — aber
+  `softengine/data.ts:13` holt `POS_LEN` und `pruefeLadeRelation` direkt aus
+  `core/data/ladeRelation`: die Datei STECKT im Runtime-Buendel. Gebaut,
+  gemessen, zurueckgenommen: mit `import { splitFieldCode } from './relations'`
+  war das Buendel exakt gleich LANG (187 019 Byte) und trotzdem in 11 Zeilen
+  anders — rollup zieht `relations` vor, der Minifier benennt danach alles um.
+  Nach der Grenze dieser Etappe („aendert sich ein Byte, STOPP statt erklaeren")
+  ist der Import wieder raus; die Warnung steht jetzt im Kopf von
+  `ladeRelation.ts`, damit es der naechste nicht noch einmal misst.
+  Zusammengelegt wird das in einer Etappe, die ohnehin eine SoftEngine-Probe
+  mitbringt.
 
 ## U4 · ENTWURF: Quelle anlegen, Feld waehlen, Relation anlegen (kein Code)
 
