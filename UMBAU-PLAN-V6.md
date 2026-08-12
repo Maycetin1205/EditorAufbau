@@ -55,8 +55,8 @@ git log --oneline -8
   SE-Echttests ist am **2026-08-12 BESTANDEN** (Nutzer: Beleg-Klick fuellt
   die Positionen; nach Nachbesserung 1 auch alte Nummernkreise). Noch ohne
   Protokoll aus der R2-Probe: PUT ueber eine Kette auf eine geholte
-  Position, Verknuepfung an geholter Zeile, Abwahl. Neu beauftragt:
-  **R3** (Beleg per Nachschlage-Formularfeld waehlen), **R4** (Beleg
+  Position, Verknuepfung an geholter Zeile, Abwahl. **R3 ist GEBAUT**
+  (2026-08-12, SE-Probe steht aus). Offen: **R4** (Beleg
   anlegen und sofort sehen — BAUBAR, Anlege-Protokoll 2026-08-12 im
   Etappenkopf: GET 1020 antwortet mit dem Index des frischen Belegs),
   **R5 ist GESTRICHEN** (Nutzer-Ansage 2026-08-12, s. Etappenkopf R5 —
@@ -68,8 +68,20 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  R3, U1, U2, U3, U6; danach N1–N5.
-- **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
+  R4, U1, U2, U3, U6; danach N1–N5.
+- **Letzte fertige Etappe:** R3 (2026-08-12) — der Ausloeser der holenden
+  Quellen (`blocks/shared/holendeQuellen.ts`) liest das Quellen-Attribut
+  eines Auswahl-Gebers jetzt aus der Registry (`satzWahl.quelleProp`,
+  neue `quelleAttrJeTag`) statt hart aus `source`. Damit waehlt auch das
+  Nachschlage-Formularfeld den Beleg: es GAB seine Wahl laengst ab
+  (`setzeAuswahl`/`klareAuswahl` im FormFeldBlock), nur dieser eine
+  Vergleich hoerte nicht hin — und `source` reist am Nachschlage-Feld gar
+  nicht mit (`traegtEigeneQuelle`, exportMask). Kein Formularfeld-
+  Sondercode, kein Editor-Sichtbares, Export-MARKUP unveraendert (der
+  Referenzabzug schneidet das Buendel heraus und blieb gruen);
+  Runtime-Bytes absichtlich neu (+211 Byte, der Rest des Diffs ist
+  Minifier-Umbenennung — nachgeprueft). **SE-Echttest steht aus.**
+  Davor: R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
   Schluessel der Hol-Relation jetzt bei der GEBER-Quelle mit
@@ -2233,7 +2245,7 @@ still-harmlos.
 **Was der bauende Agent nicht pruefen kann:** alles in SoftEngine — macht
 der Nutzer.
 
-### R3 · Beleg per Nachschlage-Formularfeld waehlen (eingeschoben 2026-08-12)
+### R3 · Beleg per Nachschlage-Formularfeld waehlen (GEBAUT 2026-08-12)
 
 **Nutzer-Wunsch 2026-08-12:** einen Beleg ansehen/beschreiben, ohne immer
 eine Belege-Tabelle auf der Maske zu haben — das Nachschlage-Formularfeld
@@ -2260,6 +2272,17 @@ neue Test-Gattung.
 
 **Nutzerprobe (SE):** Beleg im Nachschlagefeld waehlen -> Positionen
 erscheinen; Wahl leeren -> Positionen leeren.
+
+**Gebaut 2026-08-12:** `quelleAttrJeTag` in `blocks/shared/holendeQuellen.ts`
+(Tag -> Quellen-Attribut, aus `satzWahl.quelleProp`, sonst `source`); der
+DOM-Scan vergleicht damit statt hart mit `source`. Die Zustands-Bedingung
+(`satzWahl.wenn`) bildet die Laufzeit NICHT nach — `data-ff-id` steht ohnehin
+nur an Bausteinen, die gerade wirklich Geber sind (`istAuswahlGeber` beim
+Export). „Wahl leeren" brauchte keinen Code: `leereNachschlagen` ruft schon
+`klareAuswahl`, und leere Auswahl heisst beim Lader „leeren". Test:
+`blocks/shared/holendeQuellen.test.ts` (Node, Zuordnung aus der echten
+Registry) — der DOM-Scan selbst bleibt ungetestet, das waere eine neue
+Testgattung (Regel 9).
 
 ### R4 · Beleg anlegen und sofort sehen (BAUBAR — Protokoll geliefert 2026-08-12)
 
