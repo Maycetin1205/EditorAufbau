@@ -45,15 +45,19 @@ export const STATUS_BEDEUTUNGEN: readonly { wert: StatusVariant; name: string }[
 ]
 
 // Die Status-Property fuer den Inspector. Der Bediener waehlt weiterhin die
-// Bedeutung per Klarname; die feste Farbe ergibt sich daraus.
+// Bedeutung per Klarname; die feste Farbe ergibt sich daraus. Genau darum
+// heisst der Regler seit U6 (2026-08-12) „Bedeutung" und nicht mehr „Farbe":
+// er versprach eine Wahl, die es hier nie gab — waehlbar sind
+// Hinweis/Erfolg/Warnung/Fehler, die Farbe haengt fest daran.
 export function statusVariantProperty(
   attributeName: string,
   description: string,
 ): PropertyDescription {
   return {
     attributeName,
-    name: 'Farbe',
-    description,    kind: 'select',
+    name: 'Bedeutung',
+    description,
+    kind: 'select',
     // Aus DERSELBEN Liste wie die Status-Zuordnung der Tabellenspalte.
     options: STATUS_BEDEUTUNGEN.map((b) => ({ value: b.wert, label: b.name })),
   }

@@ -32,13 +32,21 @@ export interface PropertySelectOption {
 
 export interface PropertyVisibilityCondition {
   attributeName: string
-  // Genau EINE der beiden Formen: equals (sichtbar, wenn gleich) oder
+  // Genau EINE der drei Formen: equals (sichtbar, wenn gleich),
   // notEquals (sichtbar, wenn UNGLEICH — z. B. das normale Feld-Control an
   // jedem Feldtyp AUSSER Nachschlagen, wo der Wert aus dem Fenster kommt
-  // statt aus einer Bindung). Ohne notEquals muesste jeder einzelne Feldtyp
-  // aufgezaehlt werden, und ein neuer Typ fiele still hinten runter.
+  // statt aus einer Bindung) oder keinesVon (sichtbar, wenn KEINER der
+  // aufgezaehlten Werte). Ohne notEquals/keinesVon muesste jeder einzelne
+  // Feldtyp aufgezaehlt werden, und ein neuer Typ fiele still hinten runter.
   equals?: unknown
   notEquals?: unknown
+  // Zwei Ausnahmen statt einer. Gebraucht seit U6 (2026-08-12): die Wert-
+  // Stelle des Formularfelds ist weder am Nachschlage-Feld bindbar (der Wert
+  // entsteht im Fenster) noch am Ankreuzfeld (der SE-Wert-Kontrakt J/N? 1/0?
+  // ist an keiner echten Maske belegt, CLAUDE.md). Bewusst hier und nicht als
+  // eigene Bedingung am Baustein: es gibt EINE Sprache fuer „wann gilt das"
+  // und EINE Auswertung darunter (s. propertySichtbar).
+  keinesVon?: readonly unknown[]
 }
 
 // DIE eine Auswertung der Bedingung. Inspector, Export und Preflight muessen
@@ -56,10 +64,14 @@ export function propertySichtbar(
   props: Record<string, unknown>,
 ): boolean {
   if (!bedingung) return true
-  if ('notEquals' in bedingung) {
-    return !Object.is(props[bedingung.attributeName], bedingung.notEquals)
+  const wert = props[bedingung.attributeName]
+  if (bedingung.keinesVon) {
+    return !bedingung.keinesVon.some((v) => Object.is(wert, v))
   }
-  return Object.is(props[bedingung.attributeName], bedingung.equals)
+  if ('notEquals' in bedingung) {
+    return !Object.is(wert, bedingung.notEquals)
+  }
+  return Object.is(wert, bedingung.equals)
 }
 
 export interface PropertyDescription {

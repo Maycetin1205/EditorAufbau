@@ -5,6 +5,9 @@
 // steht, was den Export ueberleben MUSS, sonst kann der Bediener in der Maske
 // nichts nachschlagen, und zwar STILL: die Einstellungen als Attribute und
 // die Nachschlage-Quelle in den SEvariablen.
+// Dazu (seit U6) die Kehrseite derselben Regel: welche Feldtypen KEINE
+// bindbare Wert-Stelle haben — Nachschlagen und Ankreuzfeld — und dass eine
+// liegen gebliebene Bindung an ihnen zu Hause bleibt.
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
@@ -229,6 +232,20 @@ describe('Nachschlage-Feld im Export', () => {
     expect(JSON.parse(sevariablen).SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS)).toEqual(['Adressen'])
     // Und blockieren darf die unsichtbare Bindung auch nicht.
     expect(preflightMask(tree, BEIDE, [])).toEqual([])
+  })
+
+  it('Ankreuzfeld: eine alte Bindung bleibt ebenso daheim (U6, 2026-08-12)', () => {
+    // Zweite Haelfte DERSELBEN Regel wie eben: das Ankreuzfeld hat keine
+    // bindbare Wert-Stelle, weil der SE-Wert-Kontrakt (J/N? 1/0?) an keiner
+    // echten Maske belegt ist (Zusage in CLAUDE.md). Bis U6 sagte die Registry
+    // das Gegenteil — der Bauer band ein Textfeld und stellte es auf
+    // „Ankreuzfeld" um, das valuefield reiste mit, und die Maske legte dafuer
+    // einen Schreib-Eintrag an (feldRuntime.hydrateField). Zu sehen war davon
+    // nichts: das Ankreuzfeld zeigt seinen Wert nie, es zeigt seinen Haken.
+    const tree = baumMit({ ...TEXT_PROPS, fieldType: 'checkbox', source: 'q-tiere', valueField: '18_30' })
+    const tag = /<ff-formfeld[^>]*/.exec(exportMask(tree, 'Maske', BEIDE).html)?.[0] ?? ''
+    expect(tag).toContain('fieldtype="checkbox"')
+    expect(tag).not.toContain('valuefield=')
   })
 
   it('Gegenprobe Textfeld: dieselbe Bindung reist mit und laedt ihre Quelle', () => {

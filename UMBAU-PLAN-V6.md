@@ -78,8 +78,28 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  U6; danach N1–N5.
-- **Letzte fertige Etappe:** U3 (2026-08-12) — Doppelbauten zusammengelegt,
+  N1–N5.
+- **Letzte fertige Etappe:** U6 (2026-08-12) — Inspector-Kleinputz. Datum und
+  Popup haben statt eines wortlos leeren Panels je EINEN Hinweissatz (in ihren
+  `editorAngaben.ts`, die nie ins Runtime-Buendel reisen) · der Status-Regler
+  heisst „Bedeutung" statt „Farbe" (`shared/statusVariant.ts`) — waehlbar
+  waren immer schon Hinweis/Erfolg/Warnung/Fehler, die Farbe haengt fest
+  daran · das Ankreuzfeld erklaert sich in der Registry endlich selbst als
+  unbindbar (`FormFeldBlock.bindableSpots`, neue Bedingungsform `keinesVon` in
+  `core/blocks/PropertyDescription.ts` — die Sprache konnte bis dahin nur EINEN
+  Wert ausschliessen, gebraucht werden zwei). Folge: an einem vom Textfeld auf
+  Ankreuzfeld umgestellten Feld reist eine liegen gebliebene Bindung nicht mehr
+  hinaus (Beleg-Test in `export/nachschlagenExport.test.ts`). Runtime-Bytes
+  ABSICHTLICH neu (genau zwei Stellen im Minifikat, gelesen: `Bedeutung` und
+  `keinesVon`) — `build:runtime` liegt im Commit, **SE-Delta-Probe offen**.
+  Referenzabzug brauchte KEINE Erneuerung (die Referenzmaske fuehrt kein
+  Ankreuzfeld, das Buendel schneidet der Abzug heraus) — der Etappentext U6
+  erwartete das anders. Die Laufzeit wertet `wenn` nirgends aus (nachgeprueft:
+  kein `Object.is` im Buendel), die neue Form kann dort also nichts brechen.
+  **Achtung fuer die naechste Etappe:** `FormFeldBlock.ts` steht wieder exakt
+  am Deckel (500) — wer dort etwas ergaenzt, braucht vorher einen
+  Schnitt-Commit (Plan 3.1).
+  Davor: U3 (2026-08-12) — Doppelbauten zusammengelegt,
   netto 137 Zeilen weniger, nichts sichtbar geaendert. EIN Rahmen fuer die
   zwei schwebenden Auswahl-Fenster (`ui/molecules/auswahl-fenster.tsx`) · EINE
   „Feld = Feld"-Zeile (`editor/inspector/SchluesselPaarZeilen.tsx`, benutzt von
@@ -310,8 +330,8 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U6, dann N1–N5, Etappe fuer Etappe per
-  Opus-Kopier-Auftrag (Wellen-Kopf U). Welle R ist fertig. A9 ist per
+- **Naechste Etappe:** N1–N5 per Opus-Kopier-Auftrag (Wellen-Kopf U; seit
+  2026-08-12 mehrere Etappen je Sitzung). U6 ist gebaut, Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -2490,24 +2510,58 @@ Klarnamen vor Technikwerten; Ketten bleiben sichtbar und der einzige
 Schreibweg; alte UI wird restlos entfernt, wenn sie ersetzt ist; keine
 zweite Terminologie.
 
-**Arbeitsmodus (Token-Entscheidung des Nutzers 2026-08-12):** Gebaut wird
-von OPUS in frischen Sitzungen — eine Etappe je Sitzung, mit diesem
-Kopier-Auftrag (nur die Etappen-Nummer tauschen):
+**Arbeitsmodus (Token-Entscheidung des Nutzers 2026-08-12, Fassung 2 vom
+selben Tag):** Gebaut wird von OPUS in frischen Sitzungen — jetzt MEHRERE
+Etappen je Sitzung, mit diesem Kopier-Auftrag (nur die erste Etappe und
+die Restreihenfolge tauschen):
 
 ```text
-Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0, Abschnitt 3, den
-zugehoerigen Wellen-Kopf und die Etappe <NUMMER> (z. B. U1 oder R3).
-Der Einwurf dieses Auftrags ist das go fuer genau diese EINE Etappe:
-gib vor dem ersten Code die kurze Ansage nach 0.2, dann baue — nichts
-daneben. Pruefbuendel einmal am Ende (Abschnitt 3.3), ein Commit, KEIN
-Push. Im selben Commit: Zeiger 0.1 nachziehen und die Etappe als GEBAUT
-markieren. Danach im Chat: kurze Klickanleitung (was oeffnen, was tun,
-was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
-dir der Plan oder der Code: STOPP und fragen, nicht raten.
+Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0 und Abschnitt 3.
+Pruefe als Erstes `git status`: ist der Arbeitsbaum NICHT sauber,
+arbeitet dort noch eine andere Sitzung — dann STOPP und sag es dem
+Nutzer, bevor du irgendetwas anfasst.
+
+ACHTUNG: der Kopier-Auftrag im Wellen-Kopf U der Plandatei ist die ALTE
+Fassung („genau EINE Etappe"). DIESER Auftrag hier schlaegt ihn.
+Ersetze ihn dort woertlich durch diesen Text — im ersten Commit dieser
+Sitzung.
+
+Den Wellen-Kopf und den Etappentext liest du je Etappe DANN, wenn du bei
+ihr bist — nicht alle auf Vorrat.
+
+Erste Etappe: U6.
+
+Der Einwurf dieses Auftrags ist das go — nicht fuer eine Etappe, sondern
+fuer so viele, wie in diese Sitzung SAUBER hineinpassen.
+
+Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
+  1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
+  2. bauen — nichts daneben
+  3. Pruefbuendel (Abschnitt 3.3) komplett
+  4. EIN Commit, KEIN Push; im selben Commit Zeiger 0.1 nachziehen und
+     die Etappe als GEBAUT markieren
+Dann die naechste Etappe, wieder ab 1.
+
+Der Zeiger 0.1 bleibt KURZ: alle Etappen dieser Sitzung kommen als EIN
+Eintrag hinein, nicht als vier.
+
+Aufhoeren: nach spaetestens VIER Etappen — und frueher, sobald du
+nachlaesst: wenn du Dateien nur noch ueberfliegst statt sie zu lesen,
+oder dir nicht mehr zutraust, deinen eigenen Diff zu beurteilen. Eine
+Etappe wird NIE halb gebaut: passt sie nicht mehr ganz rein, fang sie
+gar nicht erst an. Aufhoeren ist billiger als ein schlechter Commit.
+
+Widerspricht dir der Plan oder der Code: STOPP und fragen, nicht raten.
+
+Am Ende der Sitzung im Chat: EINE Klickanleitung, nach Etappen
+gegliedert (was oeffnen, was tun, was zu sehen sein muss), und was du
+NICHT pruefen konntest.
+
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
-aus, mit der NAECHSTEN Etappe der Reihenfolge
-U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
-eingesetzt — der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
+aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
+den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
+U6 -> N1 -> N2 -> N3 -> N4 -> N5
+Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
 ihn selbst im Chat braucht.
@@ -2852,7 +2906,7 @@ Zuschnitt folgt aus U4 (z. B. 5a Quellen-Formular, 5b Relationen,
 keine zweite Terminologie, bestehende Masken exportieren byte-gleich,
 Migration nur mit eigenem Schutz).
 
-## U6 · Inspector-Kleinputz (unabhaengig, jederzeit baubar)
+## U6 · Inspector-Kleinputz (GEBAUT 2026-08-12)
 
 **Belegte Stellen:** leere Panels ohne ein Wort bei Datum
 (`DatumBlock.ts:35`) und Popup (`popup/editorAngaben.ts`) — Zeile und

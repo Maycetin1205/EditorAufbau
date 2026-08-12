@@ -1,6 +1,6 @@
-// Editor-Angaben des Popups — Icon der Baustein-Bibliothek.
-// Diese Datei laedt NUR der Editor, nie das Runtime-Buendel (Begruendung:
-// editorAngaben in core/blocks).
+// Editor-Angaben des Popups — Icon der Baustein-Bibliothek + Hinweiszeile im
+// Inspector. Diese Datei laedt NUR der Editor, nie das Runtime-Buendel
+// (Begruendung: editorAngaben in core/blocks).
 
 // Rechteck mit Kopfleiste = ein Dialog, so wie das Popup auf der Maske liegt.
 // AppWindow (bis 2026-08-07) trug in der Kopfleiste noch drei Fensterknoepfe —
@@ -13,4 +13,9 @@ import { PopupBlock } from './PopupBlock'
 
 ergaenzeEditorAngaben(PopupBlock.blockType, {
   symbol: ZeichenPopup,
+  // Das Panel waere sonst wortlos leer: das Popup fuehrt keine einzige
+  // Inspector-Eigenschaft, weil beides am Ding bedient wird — Titel per
+  // Doppelklick am Fensterkopf (PopupBlock.inlineEdit), Groesse an den zwei
+  // Anfassern der Popup-Seite (canvas/PopupSeite, breite/hoehe).
+  hinweis: 'Keine Einstellungen — Titel per Doppelklick am Fensterkopf, Größe an den Anfassern.',
 })

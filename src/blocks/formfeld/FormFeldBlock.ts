@@ -116,16 +116,16 @@ export class FormFeldBlock extends BasicBlock {
     quelleProp: 'nachschlagQuelle',
     wenn: { attributeName: 'fieldType', equals: 'nachschlagen' },
   }
-  // Bindbare Wert-Stelle — NICHT als Nachschlage-Feld (dieselbe Bedingung wie
-  // die eigene Datenquelle oben und das valueField-Control unten): dort
-  // ENTSTEHT der Wert durch die Auswahl im Fenster. Ein Klick auf das Feld
-  // duerfte dort keinen Bindungs-Picker oeffnen — die Bindung waere nur beim
-  // naechsten SoftEngine-Push zu sehen, und zwar als ueberschriebener Wert.
+  // Bindbare Wert-Stelle — an zwei Feldtypen NICHT: beim NACHSCHLAGEN
+  // entsteht der Wert durch die Auswahl im Fenster (eine Bindung obendrauf
+  // ueberschriebe ihn beim naechsten SoftEngine-Push), beim ANKREUZFELD ist
+  // der SE-Wert-Kontrakt (J/N? 1/0?) an keiner echten Maske belegt (Regel 5,
+  // Zusage in CLAUDE.md) — es rendert darum auch kein Klick-Ziel, s. render.
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [
     {
       prop: 'value',
       label: 'Wert',
-      wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
+      wenn: { attributeName: 'fieldType', keinesVon: ['checkbox', 'nachschlagen'] satisfies readonly FeldTyp[] },
       // Die Vorschau steht im Platzhalter, nicht im Wert: das Feld sieht leer
       // aus wie in SoftEngine, und der Feld-Klarname verraet grau, was
       // angeschlossen ist (s. BindableSpot.vorschauProp).
@@ -463,9 +463,9 @@ export class FormFeldBlock extends BasicBlock {
       </div>`
     }
     // Klick-Ziel und Daten-Markierung der Wert-Stelle nur, wo sie wirklich
-    // bindbar ist (dieselbe Bedingung wie bindableSpots oben): am
-    // Nachschlage-Feld gibt es keine Bindung, also auch nichts anzuklicken und
-    // nichts zu markieren — eine Marke „hier stehen Daten" waere gelogen.
+    // bindbar ist (dieselben Feldtypen wie bindableSpots oben; das dort
+    // ebenfalls ausgenommene Ankreuzfeld kommt hier nie an): am Nachschlage-
+    // Feld gibt es keine Bindung, eine Marke „hier stehen Daten" waere gelogen.
     const wertBindbar = typ !== 'nachschlagen'
     // Was SICHTBAR im Feld steht — daran haengt der Platzhalter, er darf nie
     // ueber geschriebenem Text liegen. Beim Nachschlagen taugt `value` dafuer
