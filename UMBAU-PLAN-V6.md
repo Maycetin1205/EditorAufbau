@@ -43,7 +43,8 @@ git log --oneline -8
   Protokoll aus der R2-Probe: PUT ueber eine Kette auf eine geholte
   Position, Verknuepfung an geholter Zeile, Abwahl. Neu beauftragt:
   **R3** (Beleg per Nachschlage-Formularfeld waehlen), **R4** (Beleg
-  anlegen und sofort sehen — WARTET auf das Anlege-Protokoll, GET 1020),
+  anlegen und sofort sehen — BAUBAR, Anlege-Protokoll 2026-08-12 im
+  Etappenkopf: GET 1020 antwortet mit dem Index des frischen Belegs),
   **R5** (Refresh-Flut/Zeilenfilter — BAUBAR, FREISELEKT-Form am
   2026-08-12 aus `Desktop\VORLAGEN` belegt). Details im Wellen-Kopf R.
 - **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben
@@ -2246,17 +2247,28 @@ neue Test-Gattung.
 **Nutzerprobe (SE):** Beleg im Nachschlagefeld waehlen -> Positionen
 erscheinen; Wahl leeren -> Positionen leeren.
 
-### R4 · Beleg anlegen und sofort sehen — WARTET auf das Anlege-Protokoll
+### R4 · Beleg anlegen und sofort sehen (BAUBAR — Protokoll geliefert 2026-08-12)
 
-**Nutzer-Wunsch 2026-08-12.** GET 1020 ist laut Nutzer die Anlege-Relation
-seiner Installation („Neuanlage Belegkopf", steht schon in seiner
-Relations-Bibliothek). Es FEHLT das Echttest-Protokoll: die PARAMS-Form,
-die Antwort (liefert sie die neue Belegnummer?), und ob der frische Beleg
-sofort ueber Relation 69 lesbar ist. KEIN Bau ohne diese Belege (Regel 5).
-Zusaetzlich noetig und eine EIGENE Entwurfs-Entscheidung: „Ketten-Ergebnis
-wird Auswahl" — der neu angelegte Beleg soll sich anschliessend selbst
-zeigen. Der erste Versuch des Nutzers, das Protokoll zu liefern, wurde von
-der Refresh-Flut abgewuergt -> R5 hat Vorrang.
+**Belegt (empfang-Log des Nutzers, 2026-08-12):**
+`GET_RELATION[1020!L!!10004!!!!]` — PARAMS `[BELART, '', ADRNR, '', '',
+'', '']` — legt den Beleg an und antwortet mit dessen INDEX, z. B.
+`0NL26105743`: **Byte 3 = Belegart, ab Byte 4 = Belegnummer.** Die
+empfang-Maske liest daraus die Nummer und schreibt sie weiter — der
+frische Beleg ist sofort adressierbar; Jahr/Archiv leer genuegt fuer die
+Hol-Relation 69, denn er liegt im aktuellen Nummernkreis.
+
+**Arbeit:** Am GET-Schritt einer Kette eine optionale Angabe „Ergebnis
+ist ein Beleg — Quelle X laedt ihn" (Quelle = eine holende Quelle aus
+R1/R2). Laufzeit: Antwort zerlegen (Belegart Byte 3, Belegnummer ab
+Byte 4, Jahr/Archiv leer), dann denselben Lader anstossen wie beim
+Beleg-Klick (`ladeZeilenPerRelation`). KEIN neuer Schreibweg, KEINE
+Automatik ohne sichtbare Kette — die Zusagen bleiben. Registry-Angabe
+generisch (kein Schritt-Sondercode), Runtime-Buendel bewusst neu,
+Export-Testfaelle fuer die neue Schritt-Angabe.
+
+**Nutzerprobe (SE):** Kette „Beleg anlegen" (GET 1020 steht schon als
+Vorlage in der Bibliothek) ausfuehren — die Positions-/Beleg-Anzeige
+springt ohne Refresh auf den frischen Beleg.
 
 ### R5 · Refresh-Flut: Zeilenfilter FREISELEKT (BAUBAR — Form belegt 2026-08-12)
 
@@ -2805,7 +2817,7 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | 34 | R1 Lade-Art + Export | Steuerung/Datenquellen: Abschnitt „Woher kommen die Zeilen?" |
 | 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen (SE-Kern BESTANDEN 2026-08-12) |
 | 36 | R3 Formularfeld als Geber | in SoftEngine: Beleg im Nachschlagefeld waehlen fuellt die Positionen |
-| 37 | R4 Beleg anlegen (WARTET auf Anlege-Protokoll) | Kette legt Beleg an, Maske zeigt ihn sofort |
+| 37 | R4 Beleg anlegen (BAUBAR) | Kette legt Beleg an, Maske zeigt ihn sofort — ohne Refresh |
 | 38 | R5 Zeilenfilter FREISELEKT (BAUBAR) | weniger Daten je Refresh — die Debug-Flut faellt weg |
 
 ### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Browserproben je Etappe

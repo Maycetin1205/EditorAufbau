@@ -185,8 +185,18 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
 - **Schreiben:** `basisHTML_SND_MSG('PUT_RELATION', { NR, PARAMS })`,
   PARAMS = sechs Strings `[pos, len, art, pindex, relId, wert]` — `art` =
   Feld-Art: `'L'` (Text), `'D'` (Datum; Nutzer-Praxis, belegt im Echttest
-  2026-07-22). ⚠ `relId` OHNE `IDB`-Präfix (`ID0001`, nicht `IDBID0001`).
+  2026-07-22), `'Z'` (Uhrzeit, z. B. `15:00` — belegt im empfang-Log
+  2026-08-12). ⚠ `relId` OHNE `IDB`-Präfix (`ID0001`, nicht `IDBID0001`).
   Standard-PUT NR 174 ist nur die mitgelieferte Vorlage.
+- **Anlegen (belegt im empfang-Log des Nutzers, 2026-08-12, WinUI):**
+  Neuer IDB-Satz: `GET_RELATION[640!<IDBID>]` → Antwort = die NEUE
+  Satznummer (z. B. `21`); danach schreiben die PUT_RELATION-174-Aufrufe
+  mit genau dieser pindex. Neuer BELEG: `GET_RELATION[1020!<BELART>!!
+  <ADRNR>!!!!]` → Antwort = der Beleg-INDEX des frischen Belegs
+  (z. B. `0NL26105743`: Byte 3 = Belegart, ab Byte 4 = Belegnummer);
+  Jahr/Archiv leer trifft ihn, er liegt im aktuellen Nummernkreis.
+  Nebenbei belegt: `GET_RELATION[43!_BNR_!3!30]` → Name des angemeldeten
+  Bedieners. Bauauftrag Beleg-Anlegen: UMBAU-PLAN-V6.md, Etappe R4.
 - **GET-Antworten:** Das offizielle `basisHTML_REGISTER` vereinheitlicht
   `BWMSG` (BüroWARE/WinUI) und `WWMSG` (WEBWARE) zu demselben Callback.
   Dieser Callback ist der Hauptweg; neue `SEDATA.Message<N>` sind nur der
