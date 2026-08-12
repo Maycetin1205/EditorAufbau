@@ -121,7 +121,7 @@ export function QuellenListe({ block }: QuellenListeProps) {
       {fehlt(erste) && (
         <p className="text-xs text-destructive">
           Die gewählte Datenquelle fehlt in der Bibliothek. Neu wählen — oder
-          unter Steuerung → Datenquellen wieder anlegen.
+          unter Datencenter → Datenquellen wieder anlegen.
         </p>
       )}
 

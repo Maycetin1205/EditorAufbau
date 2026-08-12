@@ -158,7 +158,7 @@ function PaletteCard({ def, onAdd }: PaletteCardProps) {
       )}
     >
       {/* Das Symbol steht BLANK da — einfarbig über currentColor, wie überall
-          sonst im Editor (Inspector, Steuerung, Toolbar). Bis 2026-08-05 saß
+          sonst im Editor (Inspector, Datencenter, Toolbar). Bis 2026-08-05 saß
           es in einer getönten 24er-Kachel mit eigener Farbe, die beim Zeigen
           umschlug: neben dem Kachel-Rahmen des Knopfs die zweite Umrandung um
           dasselbe Ding, und als einzige Icon-Stelle des Editors zweifarbig.

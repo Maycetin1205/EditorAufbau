@@ -54,6 +54,13 @@ export interface QuellenArt {
   felderEinzeln: boolean
   // Wie die Kennung heisst, die der Bediener eingeben muss — leer, wo die
   // Art eine feste hat (dann fragt das Formular nicht danach).
+  //
+  // Seit U1 (2026-08-12) steht hier ueberall dasselbe Wort: „Kennung". Vorher
+  // hiess dasselbe Ding bei IDB „IDB-ID" und bei „Andere Datei" „Dateikuerzel"
+  // — zwei Fachwoerter fuer eine Eingabe (U1: ein Begriff je Ding). Das Feld
+  // bleibt trotzdem hier und wird nicht zur Konstanten: '' traegt weiterhin
+  // die Aussage „diese Art hat eine feste Kennung, frag nicht danach", und
+  // eine spaetere Art darf ein anderes Wort brauchen.
   kennungLabel: string
   // Ein echtes Beispiel dafuer, als Platzhalter im Eingabefeld.
   kennungBeispiel: string
@@ -117,7 +124,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     name: 'IDB-Tabelle',
     tabellenId: '',
     felderEinzeln: false,
-    kennungLabel: 'IDB-ID',
+    kennungLabel: 'Kennung',
     kennungBeispiel: 'ID0001',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
@@ -247,7 +254,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     name: 'Andere Datei',
     tabellenId: '',
     felderEinzeln: true,
-    kennungLabel: 'Dateikürzel',
+    kennungLabel: 'Kennung',
     kennungBeispiel: 'SERPOS',
     kopfsatzMoeglich: true,
     kopfsatzStandard: '',

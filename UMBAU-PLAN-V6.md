@@ -78,8 +78,27 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  U1, U2, U3, U6; danach N1–N5.
-- **Letzte fertige Etappe:** R3 (2026-08-12) — der Ausloeser der holenden
+  U2, U3, U6; danach N1–N5.
+- **Letzte fertige Etappe:** U1 (2026-08-12) — der Wortlaut-Putz. Das
+  Verwaltungsfenster heisst jetzt ueberall **Datencenter** (Toolbar-Knopf +
+  Tooltip, Fenstertitel, aria-label, der Verweis in der Inspector-Meldung;
+  Prop `onSteuerung` -> `onDatencenter`). Raus sind die zwei roten Kaesten
+  „Ohne Felder liefert SoftEngine … nichts" (`FeldListe`,
+  `DatenquellenBereich`), der Erklaerabsatz „… ohnehin alle Felder", die
+  Beschreibung „bei euch die 69" und der Kopfsatz-Absatz — die 69 stand
+  ausserdem in einer Fehlermeldung (`Relationsnummer fehlt (… z. B. 69)`),
+  auch dort weg. Die drei Jargon-Beschriftungen sind ersetzt:
+  „IDB-ID" UND „Dateikuerzel" -> **Kennung** (ein Begriff je Ding),
+  „Haengt an" -> **Gehoert zu**. Mit den Texten fiel der Prop `kind` der
+  FeldListe weg — er diente ALLEIN dieser Unterscheidung. Das Warndreieck an
+  einer feldlosen Stammquelle BLEIBT (Marke, keine Belehrung).
+  **Runtime-Bytes absichtlich neu, ausdrueckliche Abweichung vom Wellen-Kopf
+  U:** `quellenArten.ts` haengt ueber `DATA_SOURCE_KINDS` im Buendel, die
+  zwei Editor-Beschriftungen reisen also als toter Ballast in jede
+  Exportdatei. Der Diff ist EINE Zeile und genau diese zwei Strings
+  (nachgeprueft, keine Minifier-Umbenennung). Export-MARKUP unveraendert,
+  Referenzabzug byte-gleich (er schneidet das Buendel heraus).
+  Davor: R3 (2026-08-12) — der Ausloeser der holenden
   Quellen (`blocks/shared/holendeQuellen.ts`) liest das Quellen-Attribut
   eines Auswahl-Gebers jetzt aus der Registry (`satzWahl.quelleProp`,
   neue `quelleAttrJeTag`) statt hart aus `source`. Damit waehlt auch das
@@ -272,8 +291,8 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** Welle U, Etappe fuer Etappe per Opus-Kopier-Auftrag
-  (Wellen-Kopf U); daneben R3, sobald der Nutzer sie zieht. A9 ist per
+- **Naechste Etappe:** U2, dann U3 -> U6 -> N1–N5, Etappe fuer Etappe per
+  Opus-Kopier-Auftrag (Wellen-Kopf U). Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -2363,7 +2382,7 @@ was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
 dir der Plan oder der Code: STOPP und fragen, nicht raten.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus, mit der NAECHSTEN Etappe der Reihenfolge
-R3 -> U1 -> U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
+U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
 eingesetzt — der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -2462,7 +2481,7 @@ Ohne die Antworten 1/2/3/4 baut U1/U2 nicht. Empfehlung steht dabei.
    Richtung fuer das Editor-Gesicht selbst. Kein externes Vorbild mehr
    noetig; U7 ist damit zugeschnitten (U7a/b/c, s. dort).
 
-## U1 · Wortlaut-Putz in der Steuerung (BAUBAR — U0 1/2 beantwortet; Punkt 4 wanderte in U4)
+## U1 · Wortlaut-Putz im Datencenter (GEBAUT 2026-08-12)
 
 **Belegte Stellen:** Belehrungstexte `FeldListe.tsx:70-80`,
 `DatenquellenBereich.tsx:199-204`, `DataSourceForm.tsx:134/262/294`
@@ -2478,8 +2497,37 @@ neuen Erklaertexte. Der Export-Referenzabzug bleibt byte-gleich.
 **Fertig, wenn:** kein roter Belehrungskasten mehr; kein
 installationsindividueller Wert in einem UI-Text; ein Begriff je Ding.
 
-**Nutzerprobe (Browser):** Steuerung oeffnen, Quelle anlegen — Texte
+**Nutzerprobe (Browser):** Datencenter oeffnen, Quelle anlegen — Texte
 weg bzw. neu, Verhalten unveraendert.
+
+**Gebaut (2026-08-12), Abweichungen und Entscheidungen:**
+
+- „bei euch die 69" stand nicht nur in der Beschreibung, sondern ein
+  zweites Mal in der Fehlermeldung `Relationsnummer fehlt (nur Ziffern,
+  z. B. 69)`. Beide weg — die zweite faellt unter dieselbe Fertig-Zeile
+  („kein installationsindividueller Wert in einem UI-Text").
+- Beide Kennungs-Beschriftungen heissen jetzt **Kennung** (statt „IDB-ID"
+  und „Dateikuerzel"): ein Begriff je Ding. Das Registry-Feld
+  `kennungLabel` bleibt, weil `''` weiterhin „diese Art hat eine feste
+  Kennung, frag nicht danach" traegt.
+- „Haengt an" -> **Gehoert zu**. Die FORM des Werts (`BEL_0_11`) bleibt
+  Handeingabe — sie zu ersetzen ist U4/U5, nicht Wortlaut-Putz.
+- Die Format-Platzhalter (`z. B. ID0001`, `z. B. SERPOS`, `z. B. BEL_0_11`,
+  `z. B. Terminplaner`) bleiben: sie zeigen eine FORM, sie behaupten nichts
+  ueber die Installation. Gestrichen wurde die Behauptung, nicht das
+  Beispiel.
+- Das Warndreieck an einer feldlosen Stammquelle bleibt (Marke in der
+  Liste, keine Belehrung); nur sein roter Erklaerkasten im Detail fiel.
+- Mit den Texten fiel der Prop `kind` der `FeldListe` weg — er diente
+  ALLEIN der Unterscheidung Stammquelle/IDB in genau diesen zwei Absaetzen.
+- **Runtime-Bytes ABSICHTLICH neu** (Abweichung vom Wellen-Kopf U, dort
+  ausdruecklich vorgesehen): `quellenArten.ts` haengt ueber
+  `DATA_SOURCE_KINDS` im Runtime-Buendel, die zwei Editor-Beschriftungen
+  reisen als toter Ballast in jede Exportdatei mit. Der Buendel-Diff ist
+  EINE Zeile und exakt diese zwei Strings — keine Minifier-Umbenennung,
+  nachgeprueft. Export-MARKUP unveraendert, Referenzabzug byte-gleich.
+- Nicht angefasst: der Dateiname `Kommandozentrale.tsx` (Datei-Umbenennen
+  waere ein eigenes Thema) und die Loesch-Rueckfragen (U2).
 
 ## U2 · Loeschen und Browser-Kaesten vereinheitlichen (BAUBAR — U0-3: Ja)
 

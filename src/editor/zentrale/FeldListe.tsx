@@ -25,19 +25,24 @@
 //
 // Der Editor erfindet keine Namen (Regel 7): eine Zeile ohne Klarname bleibt
 // ohne Klarname und wird als unvollstaendig gemeldet.
+//
+// Ueber der Liste standen bis U1 (2026-08-12) zwei Belehrungen — ein roter
+// Kasten „Ohne Felder liefert SoftEngine … nichts" fuer Stammquellen und ein
+// Erklaerabsatz „… ohnehin alle Felder" fuer IDB. Beide auf Nutzer-Ansage raus
+// (U0-2): der Editor soll funktionieren, nicht erziehen. Mit ihnen fiel der
+// Prop `kind` weg — er diente ALLEIN dieser Unterscheidung. Nicht wieder
+// einbauen.
 
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
-import { artFuer, type DataSourceKind } from '../../core/data/dataSources'
-import { LEERE_ZEILE, zeileGefuellt, type FeldZeile } from './feldZeile'
+import { LEERE_ZEILE, type FeldZeile } from './feldZeile'
 
 // Spaltenraster: Klarname | Position | Länge | Entfernen.
 const SPALTEN = 'grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2'
 
 interface FeldListeProps {
-  kind: DataSourceKind
   zeilen: FeldZeile[]
   setZeilen: (naechste: FeldZeile[]) => void
   zeilenFehler: string[]
@@ -46,11 +51,8 @@ interface FeldListeProps {
 }
 
 export function FeldListe({
-  kind, zeilen, setZeilen, zeilenFehler, doppeltFehler, zeigeFehler,
+  zeilen, setZeilen, zeilenFehler, doppeltFehler, zeigeFehler,
 }: FeldListeProps) {
-  const einzeln = artFuer(kind).felderEinzeln
-  const istLeer = !zeilen.some(zeileGefuellt)
-
   const setZeile = (at: number, patch: Partial<FeldZeile>) =>
     setZeilen(zeilen.map((row, i) => (i === at ? { ...row, ...patch } : row)))
 
@@ -62,23 +64,6 @@ export function FeldListe({
           <Plus size={13} /> Feld
         </Button>
       </div>
-
-      {/* Der Unterschied, an dem sich der Bediener sonst die Zaehne ausbeisst:
-          bei einer Stammquelle IST diese Liste die Bestellung ans ERP. */}
-      {einzeln ? (
-        istLeer && (
-          <p className="rounded-md border border-destructive/40 bg-destructive/5 px-2.5 py-2 text-xs text-destructive">
-            Ohne Felder liefert SoftEngine für diese Quelle nichts. Was hier
-            nicht steht, wird nicht geladen — die gebundene Stelle bliebe leer.
-          </p>
-        )
-      ) : (
-        <p className="text-xs text-muted-foreground">
-          SoftEngine liefert bei einer eigenen Tabelle ohnehin alle Felder.
-          Diese Liste ist nur für die Namen im Feld-Picker — sie muss nicht
-          vollständig sein.
-        </p>
-      )}
 
       <div className={`${SPALTEN} text-[0.6875rem] text-muted-foreground`}>
         <span>Klarname</span>

@@ -17,8 +17,8 @@ import { Toolbar, VerlaufKnoepfe } from './Toolbar'
 
 export function EditorShell() {
   useKeyboardShortcuts()
-  // Kommandozentrale: öffnet über den Toolbar-Knopf „Steuerung".
-  const [steuerungOffen, setSteuerungOffen] = useState(false)
+  // Kommandozentrale: öffnet über den Toolbar-Knopf „Datencenter".
+  const [datencenterOffen, setDatencenterOffen] = useState(false)
 
   return (
     <div className="flex h-screen w-screen flex-col bg-background text-foreground">
@@ -36,10 +36,10 @@ export function EditorShell() {
         <div className="justify-self-center">
           <SeitenLeiste />
         </div>
-        <Toolbar onSteuerung={() => setSteuerungOffen(true)} />
+        <Toolbar onDatencenter={() => setDatencenterOffen(true)} />
       </header>
 
-      {steuerungOffen && <Kommandozentrale onClose={() => setSteuerungOffen(false)} />}
+      {datencenterOffen && <Kommandozentrale onClose={() => setDatencenterOffen(false)} />}
 
       <div className="flex min-h-0 flex-1">
         <aside className="w-60 shrink-0 overflow-hidden border-r border-border bg-card">

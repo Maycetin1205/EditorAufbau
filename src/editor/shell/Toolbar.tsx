@@ -27,8 +27,8 @@ import { useEditor } from '../../state/useEditor'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 
-// onSteuerung: öffnet die Kommandozentrale — Zustand hält die Shell.
-export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
+// onDatencenter: öffnet die Kommandozentrale — Zustand hält die Shell.
+export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
   const ed = useEditor()
 
   const handleClear = () => {
@@ -143,10 +143,10 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
       <Button
         variant="outline"
         size="sm"
-        onClick={onSteuerung}
-        title="Steuerung — Datenquellen und Relationen der Maske"
+        onClick={onDatencenter}
+        title="Datencenter — Datenquellen und Relationen der Maske"
       >
-        <SlidersHorizontal size={14} /> Steuerung
+        <SlidersHorizontal size={14} /> Datencenter
       </Button>
 
       <Button

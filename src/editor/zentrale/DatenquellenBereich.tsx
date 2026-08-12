@@ -67,6 +67,10 @@ export function DatenquellenBereich() {
   // Eine Stammquelle OHNE Felder bestellt beim ERP nichts — sie sieht heil
   // aus und liefert nie einen Wert. Bei IDB ist dieselbe Lage harmlos
   // (SoftEngine schickt dort ohnehin alles), darum nur hier.
+  //
+  // Seit U1 (2026-08-12) traegt das nur noch das Dreieck in der Liste. Der
+  // rote Erklaerkasten im Detail ist auf Nutzer-Ansage weg (U0-2, gleiche
+  // Linie wie „keine Warn-Anzeigen") — nicht wieder einbauen.
   const unvollstaendig = (s: DataSource): boolean =>
     artFuer(s.kind).felderEinzeln && s.fields.length === 0
 
@@ -195,13 +199,6 @@ export function DatenquellenBereich() {
                 {kennung(auswahl) !== '' ? ` · ${kennung(auswahl)}` : ''}
               </p>
             </div>
-
-            {unvollstaendig(auswahl) && (
-              <p className="rounded-md border border-destructive/40 bg-destructive/5 px-2.5 py-2 text-destructive">
-                Ohne Felder liefert SoftEngine für diese Quelle nichts.
-                Bearbeiten und die Felder eintragen.
-              </p>
-            )}
 
             <Gruppe titel="Felder">
               <div className="overflow-hidden rounded-md border border-border">

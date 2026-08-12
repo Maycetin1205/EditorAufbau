@@ -9,8 +9,12 @@
 // verworfen, die Schlüsselregel lebt am Baustein (QuellenListe im
 // Inspector, Regel 7).
 //
-// Öffnet über den Toolbar-Knopf „Steuerung". Optik: Editor-UI
+// Öffnet über den Toolbar-Knopf „Datencenter". Optik: Editor-UI
 // (shadcn-Tokens) — bewusst KEINE Übernahme des alten Editors.
+//
+// Der Name: bis U1 (2026-08-12) hieß das Fenster „Steuerung"; „Datencenter"
+// ist das Wort des Nutzers (U0-1). Die Datei heißt weiterhin
+// Kommandozentrale — ein Datei-Umbenennen wäre ein eigenes Thema.
 //
 // Escape schließt — im BUBBLE-Lauf: ein offenes Inline-Formular
 // (FormularKarte: capture + stopPropagation) fängt sein Escape vorher ab,
@@ -73,11 +77,11 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Steuerung"
+        aria-label="Datencenter"
         className="flex h-full max-h-[47.5rem] w-full max-w-5xl flex-col rounded-lg border border-border bg-background shadow-lg"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-          <h2 className="text-sm font-semibold">Steuerung</h2>
+          <h2 className="text-sm font-semibold">Datencenter</h2>
           <IconButton aria-label="Schließen" onClick={onClose}>
             <X size={16} />
           </IconButton>

@@ -21,6 +21,14 @@
 //
 // Beim Bearbeiten bleibt die id der Vorlage stabil (angehaengte Bloecke
 // behalten ihre Quelle) — das erledigt dataSourceStore.update.
+//
+// KEINE Erklaertexte in diesem Formular (U1, 2026-08-12, Nutzer-Ansage U0-2).
+// Weg sind die Beschreibung „bei euch die 69" an der Relationsnummer und der
+// Absatz unter „Gehoert zu" — die 69 ist die Relationsnummer DIESER
+// Installation und stand hier als allgemeine Wahrheit (Regel 5: solche Werte
+// sind Daten, nie Text im Code). Fehlermeldungen sagen, was falsch ist, und
+// unterrichten nicht. Ein Beispiel gehoert in den Platzhalter, nicht in einen
+// Absatz. Nicht wieder einbauen.
 
 import { useState } from 'react'
 import { Button } from '@/ui/atoms/button'
@@ -131,7 +139,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // geprüft wird nur, was eingetippt wurde. Leer ist gültig.
   const kopfsatzFehler =
     kopfsatzEingeben && kopfsatzEingabe.trim() !== '' && kopfsatzFromInput(kopfsatzEingabe) === ''
-      ? 'Form: Kürzel, Position, Länge — z. B. BEL_0_11.'
+      ? 'Ungültig — Beispiel: BEL_0_11.'
       : ''
   const zeilenFehler = zeilen.map((z) => {
     if (z.label.trim() === '') return 'Klarname fehlt.'
@@ -147,10 +155,10 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // sichtbaren Eingaben. Die unsichtbaren Feld-Zuordnungen sind Standard
   // und immer gültig.
   const relationNrFehler = holtZeilen && relationNrFromInput(relationNr) === ''
-    ? 'Relationsnummer fehlt (nur Ziffern, z. B. 69).'
+    ? 'Relationsnummer fehlt — nur Ziffern.'
     : ''
   const geberFehler = holtZeilen && geberQuelleId === ''
-    ? 'Wähle die Quelle, in der der Beleg angeklickt wird (deine Belege-Quelle).'
+    ? 'Wähle die Quelle, in der der Beleg angeklickt wird.'
     : ''
   const alleFehler = [
     nameFehler, kennungFehler, kopfsatzFehler, doppeltFehler,
@@ -259,7 +267,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           <>
             <Field
               label="Relationsnummer"
-              description="Die Relation, die die Positionsfelder liefert — bei euch die 69."
               error={zeigeFehler ? relationNrFehler : ''}
             >
               {(f) => (
@@ -290,8 +297,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
             Freiwillig: manche Dateien kommen ohne. */}
         {kopfsatzEingeben && !holtZeilen && (
           <Field
-            label="Hängt an"
-            description="Leer lassen, wenn SoftEngine die ganze Datei schickt. Sonst der Satz, zu dem die Zeilen gehören: Kürzel, ab welchem Zeichen, wie viele Zeichen. BEL_0_11 steht für den offenen Beleg — damit kommen nur die Positionen dieses Belegs."
+            label="Gehört zu"
             error={zeigeFehler ? kopfsatzFehler : ''}
           >
             {(f) => (
@@ -308,7 +314,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
         {/* 3. Felder */}
         <FeldListe
-          kind={kind}
           zeilen={zeilen}
           setZeilen={setZeilen}
           zeilenFehler={zeilenFehler}

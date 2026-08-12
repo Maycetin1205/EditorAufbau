@@ -311,7 +311,7 @@ export function Inspector() {
           />
         )}
         {/* Aktionen (R3 2026-07-21): die Ereignis-Ketten des Bausteins wohnen
-            jetzt hier, nicht mehr in der Steuerung. Nur für Bausteine, die per
+            jetzt hier, nicht mehr im Datencenter. Nur für Bausteine, die per
             Registry Ereignisse deklarieren (blockEvents) — kein Typ-Check.
             Feine Trennlinie, wenn Inhalt/Daten darüber stehen. */}
         {def.blockEvents && def.blockEvents.length > 0 && (
