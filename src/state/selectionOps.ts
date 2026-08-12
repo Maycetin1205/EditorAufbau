@@ -1,6 +1,5 @@
-// selectionOps — Aufklapp-Auswahl auf der Rasterfläche.
-// Verhaltensgleich herausgezogen aus Editor.ts:
-// kein Zustand, kein DOM — alles wird hereingereicht, zurück kommt nur das
+// selectionOps — welcher Baustein nach einem Klick auf der Fläche gewählt ist.
+// Kein Zustand, kein DOM — alles wird hereingereicht, zurück kommt nur das
 // Ziel (null = nichts auswählen). Wer auswählt und wer meldet, bleibt Sache
 // des Stores.
 
@@ -26,30 +25,38 @@ export function auswahlAufSeite(
   return seiteVon(tree, id) === seitenWurzel ? id : null
 }
 
-// Nutzer-Regel 2026-07-23 („Kanban-Problem"): ein Klick wählt IMMER zuerst den
-// obersten Baustein unter dem Zeiger (das Board — egal, wo hineingeklickt
-// wurde); ein weiterer Klick in den bereits gewählten steigt EINE Ebene tiefer
-// (Board → Spalte → Karte). Registry-frei: die Kette entsteht aus dem Baum bis
-// zur nächsten Rasterfläche (Wurzel/Popup-Rumpf). `clickedId` ist der TIEFSTE
-// Baustein unter dem Zeiger (der innerste BlockHost fängt den Klick zuerst ab).
-export function drillDownZiel(
+// Auswahl AM DING (U8, Nutzer-Befund 2026-08-12 „drei Klicks bis zur Karte"):
+// ein Klick wählt den Baustein, auf den geklickt wurde — `getroffenId` ist der
+// TIEFSTE unter dem Zeiger (der innerste BlockHost fängt den Klick zuerst ab).
+// Ein weiterer Klick auf den bereits Gewählten geht EINE Ebene nach AUSSEN
+// (Karte → Spalte → Board) und bleibt an der obersten Ebene der Fläche stehen.
+//
+// Bis dahin (Regel 2026-07-23) lief es genau andersherum: der erste Klick nahm
+// die oberste Hülle, jeder weitere stieg eine Ebene tiefer — auf eine Karte im
+// Board waren das drei Klicks, und das widerspricht Regel 7 („Klick auf die
+// Stelle").
+//
+// `aufStelle` = der Klick landete auf einer bedienbaren Stelle des Bausteins
+// (data-ff-spot, s. useBindingPicker). Dann gibt es KEINEN Schritt nach außen:
+// an einem gewählten Baustein ist dieser Klick bereits vergeben — er öffnet den
+// Feld-Picker. Ohne die Ausnahme ließe sich keine gewählte Stelle mehr binden,
+// und der erste Klick eines Doppelklicks zöge die Auswahl weg, bevor der
+// Inline-Edit greift (BasicBlock.inlineEdit prüft `editable`).
+//
+// Registry-frei: wo die Fläche aufhört, sagt der Baum (Wurzel/Seiten-Baustein).
+export function auswahlZiel(
   tree: BlockTree,
-  clickedId: string,
+  getroffenId: string,
   selectedId: string | null,
+  aufStelle: boolean,
 ): string | null {
-  const node = tree[clickedId]
-  if (!node || clickedId === ROOT_ID) return null
-  const kette: string[] = []
-  let cur: BlockNode | undefined = node
-  while (cur && cur.id !== ROOT_ID) {
-    kette.unshift(cur.id)
-    const parent: BlockNode | undefined = cur.parentId ? tree[cur.parentId] : undefined
-    // Oberste Ebene erreicht, sobald das Elternteil eine Rasterfläche ist.
-    if (!parent || parent.id === ROOT_ID || istSeitenBaustein(parent)) break
-    cur = parent
-  }
-  if (kette.length === 0) return null
-  const i = selectedId ? kette.indexOf(selectedId) : -1
-  // In der Kette → eine Ebene tiefer (am Grund bleiben); sonst → oberste Ebene.
-  return i >= 0 ? kette[Math.min(i + 1, kette.length - 1)] : kette[0]
+  const node = tree[getroffenId]
+  if (!node || getroffenId === ROOT_ID) return null
+  if (aufStelle || selectedId !== getroffenId) return getroffenId
+  // Schon gewählt → seine Hülle. Nicht über die oberste Ebene der Fläche
+  // hinaus: die Seite selbst (Wurzel, Popup-Rumpf, Ansicht) ist kein Baustein,
+  // den die Fläche auswählen könnte.
+  const eltern: BlockNode | undefined = node.parentId ? tree[node.parentId] : undefined
+  if (!eltern || eltern.id === ROOT_ID || istSeitenBaustein(eltern)) return getroffenId
+  return eltern.id
 }

@@ -10,7 +10,7 @@
 //   pageOps       — Seiten der Maske (Hauptseite + Popups), Fluss-Kinder
 //   rasterOps     — wo ein Baustein liegt: Bewegen (Fluss wie Zelle), Größe,
 //                   Einfügen an der Zelle
-//   selectionOps  — Aufklapp-Auswahl (Board → Spalte → Karte)
+//   selectionOps  — Auswahl am Ding (Klick trifft, weiterer Klick geht nach außen)
 //   speicherPlaner— entprellt speichern + „sofort" beim Verlassen der Seite
 //
 // Die REINEN Fächer rechnen nur (treeOps, templateRules, pageOps, rasterOps,
@@ -60,7 +60,7 @@ import {
   zelleneinzug,
   zellenGroesse,
 } from './rasterOps'
-import { auswahlAufSeite, drillDownZiel } from './selectionOps'
+import { auswahlAufSeite, auswahlZiel } from './selectionOps'
 import { deepClone } from '../lib/deepClone'
 
 // Der persistence-Wächter (und Rettungs-Anleitungen) importieren den
@@ -310,9 +310,11 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Aufklapp-Auswahl (Board → Spalte → Karte) — Regel siehe selectionOps.
-  selectDrillDown(clickedId: string): void {
-    const ziel = drillDownZiel(this._tree, clickedId, this._selectedId)
+  // Auswahl am Ding: ein Klick wählt den getroffenen Baustein, ein weiterer
+  // auf denselben geht eine Ebene nach außen — Regel siehe selectionOps.
+  // `aufStelle` = der Klick landete auf einer bedienbaren Stelle des Bausteins.
+  waehleGetroffenen(getroffenId: string, aufStelle: boolean): void {
+    const ziel = auswahlZiel(this._tree, getroffenId, this._selectedId, aufStelle)
     if (ziel !== null) this.selectBlock(ziel)
   }
 

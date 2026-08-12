@@ -150,13 +150,13 @@ function CanvasNode({ node, index, parentId, listDirection, raster = false }: Ca
   }
 
   // Der Baustein selbst (BlockHost) + rekursive Kinder — in beiden Welten gleich.
-  // Auswahl = Aufklapp-Auswahl (selectDrillDown): ein Klick wählt zuerst den
-  // obersten Baustein, der nächste steigt eine Ebene tiefer (Regel Step 4).
+  // Auswahl am Ding (U8): ein Klick wählt DIESEN Baustein, ein weiterer auf
+  // denselben geht eine Ebene nach außen (Regel siehe selectionOps).
   const inhalt = (
     <BlockHost
       block={node}
       selected={ed.selectedId === node.id}
-      onSelect={() => ed.selectDrillDown(node.id)}
+      onSelect={(aufStelle) => ed.waehleGetroffenen(node.id, aufStelle)}
       raster={raster}
     >
       {isContainer && <NodeList parentId={node.id} direction={childDirection} />}

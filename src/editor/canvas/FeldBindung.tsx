@@ -59,7 +59,8 @@ interface FeldBindungArgs {
   quellen: readonly QuelleInReichweite[]
   // Container-Element des Hosts: dort läuft das `ff-listen-bind`-Ereignis auf.
   containerRef: RefObject<HTMLDivElement | null>
-  onSelect?: () => void
+  // Auswahl melden; `aufStelle` s. useBindingPicker.
+  onSelect?: (aufStelle: boolean) => void
 }
 
 // Aus den erreichbaren Quellen die Abschnitte des Pickers bauen. Die ERSTE

@@ -51,7 +51,9 @@ import { useLitElement } from './useLitElement'
 interface BlockHostProps {
   block: BlockNode
   selected?: boolean
-  onSelect?: () => void
+  // Auswahl melden; `aufStelle` = der Klick landete auf einer Stelle des
+  // Bausteins (s. useBindingPicker.aufBedienstelle).
+  onSelect?: (aufStelle: boolean) => void
   // true = der Block sitzt auf einer Rasterfläche (oberste Ebene / Popup-Rumpf):
   // die Größe-Anfasser ziehen dann rasterW/rasterH mit Zellen-Snap statt der
   // Fluss-Maße width/height. INNERHALB von Containern (Fluss) false.

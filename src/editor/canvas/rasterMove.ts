@@ -11,7 +11,7 @@
 // kind:'raster', in Canvas gerendert) der Maus und rastet auf ganze Zellen;
 // Loslassen legt den Block über moveNodeToCell an der Zielzelle ab (Nachbarn
 // bleiben EXAKT stehen, EINE Undo-Transaktion). Ein reiner Klick (unter der
-// Schwelle) bleibt ein Klick → die Aufklapp-Auswahl (selectDrillDown) greift.
+// Schwelle) bleibt ein Klick → die Auswahl am Ding (waehleGetroffenen) greift.
 
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
@@ -24,7 +24,7 @@ import { zelleAusZeiger } from './rasterDnd'
 const ZUG_SCHWELLE = 4
 
 // Schluckt genau den Klick, der auf ein abgeschlossenes Ziehen folgt, damit die
-// Aufklapp-Auswahl nach dem Ablegen nicht zusätzlich eine Ebene umschaltet.
+// Auswahl nach dem Ablegen nicht zusätzlich eine Ebene umschaltet.
 function schluckeKlick(ev: MouseEvent): void {
   ev.stopPropagation()
   ev.preventDefault()

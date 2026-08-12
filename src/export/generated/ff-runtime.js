@@ -463,23 +463,17 @@
          nicht auf. */
       .fuss .chip { flex: none; margin-left: auto; }
 
-      /* Leere Stellen: NUR an der ausgewaehlten Karte (Nutzer-Ansage
-         2026-08-06 „keine haesslichen Platzhalter"). In der Maske rendert die
-         Karte sie ohnehin gar nicht, und im Editor stand bisher an JEDER
-         Karte ein Strich je leerer Stelle — auch an der, die niemand gerade
-         bearbeitet. Ganz weglassen geht nicht: eine leere Stelle ist 0px hoch
-         und liesse sich nie anklicken, also nie an ein Feld binden.
-         data-editable setzt der BlockHost am AUSGEWAEHLTEN Baustein
-         (BasicBlock, reflektiert) — anfassen heisst sehen, wo Stellen sind. */
-      :host([data-ff-editor][data-editable]) [data-ff-spot]:empty::before {
+      /* Leere Stellen: im Editor an JEDER Karte gleich, in der Maske nie.
+         Warum, steht im Dateikopf (U8). */
+      :host([data-ff-editor]) [data-ff-spot]:empty::before {
         content: '—';
         color: var(--se-faint);
       }
-      :host([data-ff-editor][data-editable]) .avatar:empty {
+      :host([data-ff-editor]) .avatar:empty {
         border: var(--se-border) dashed var(--se-faint);
         border-radius: var(--se-r-sm);
       }
-      :host([data-ff-editor][data-editable]) .avatar:empty::before {
+      :host([data-ff-editor]) .avatar:empty::before {
         content: none;
       }
 `,q=class extends j{constructor(...e){super(...e),this.chipVariant=`info`,this.heading=``,this.heading2=``,this.time=``,this.date=``,this.avatar=``,this.meta=``,this.text=``,this.chipText=``,this.headingField=``,this.heading2Field=``,this.timeField=``,this.dateField=``,this.avatarField=``,this.metaField=``,this.textField=``,this.chipTextField=``}static{this.blockType=`card`}static{this.tagName=`ff-card`}static{this.displayName=`Karte`}static{this.category=`anzeige`}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.showInPalette=!1}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={chipVariant:`info`,heading:``,heading2:``,time:``,date:``,avatar:``,meta:``,text:``,chipText:``,headingField:``,heading2Field:``,timeField:``,dateField:``,avatarField:``,metaField:``,textField:``,chipTextField:``}}static{this.bindableSpots=[{prop:`time`,label:`Zeit`},{prop:`date`,label:`Datum`},{prop:`avatar`,label:`Avatar`},{prop:`heading`,label:`Titel`},{prop:`heading2`,label:`Titel 2`},{prop:`meta`,label:`Unterzeile`},{prop:`text`,label:`Textzeile`},{prop:`chipText`,label:`Chip`}]}static{this.customProperties=[Bn(`chipVariant`,`Bedeutung des Chips auf der Karte — bestimmt die Chip-Farbe.`)]}static{this.styles=[j.styles,Vn,Yn]}stelle(e,t){return w`<span

@@ -15,6 +15,21 @@
 // Die Karte ist eine KARTEIKARTE: die Lasche oben links gehoert zu ihr und
 // ueberdeckt ihre Oberkante um 3px — grosszuegig genug, dass bei krummen
 // Zoomstufen keine Haarlinie durchscheint (Begruendung aus der Demo).
+//
+// LEERE STELLEN (die drei :empty-Regeln am Ende) — warum sie im Editor an
+// JEDER Karte stehen: in der Maske rendert die Karte leere Stellen gar nicht
+// erst, im Editor muessen sie aber anklickbar bleiben (eine leere Stelle ist
+// 0px hoch und liesse sich sonst nie an ein Feld binden). Bis U8 (2026-08-12)
+// hingen sie zusaetzlich an [data-editable], das der BlockHost nur am
+// AUSGEWAEHLTEN Baustein setzt — dieselbe Karte sah ausgewaehlt anders aus als
+// daneben (Nutzer-Befund mit zwei Screenshots). Damit ist die Ansage vom
+// 2026-08-06 („keine haesslichen Platzhalter") ueberholt: eine Karte hat EIN
+// Gesicht, die Auswahl zeigt sich allein am Rahmen des BlockHosts.
+//
+// Diese Begruendung steht HIER und nicht im Stil: jeder Kommentar innerhalb
+// des css-Blocks reist Byte fuer Byte in JEDE exportierte Maske (s. Kopf von
+// base/BasicBlock). Die aelteren Kommentare unten stehen noch drin — sie
+// herauszuziehen ist ein eigener Schnitt, nicht Teil von U8.
 
 import { css } from 'lit'
 
@@ -203,23 +218,17 @@ export const kartenStil = css`
          nicht auf. */
       .fuss .chip { flex: none; margin-left: auto; }
 
-      /* Leere Stellen: NUR an der ausgewaehlten Karte (Nutzer-Ansage
-         2026-08-06 „keine haesslichen Platzhalter"). In der Maske rendert die
-         Karte sie ohnehin gar nicht, und im Editor stand bisher an JEDER
-         Karte ein Strich je leerer Stelle — auch an der, die niemand gerade
-         bearbeitet. Ganz weglassen geht nicht: eine leere Stelle ist 0px hoch
-         und liesse sich nie anklicken, also nie an ein Feld binden.
-         data-editable setzt der BlockHost am AUSGEWAEHLTEN Baustein
-         (BasicBlock, reflektiert) — anfassen heisst sehen, wo Stellen sind. */
-      :host([data-ff-editor][data-editable]) [data-ff-spot]:empty::before {
+      /* Leere Stellen: im Editor an JEDER Karte gleich, in der Maske nie.
+         Warum, steht im Dateikopf (U8). */
+      :host([data-ff-editor]) [data-ff-spot]:empty::before {
         content: '—';
         color: var(--se-faint);
       }
-      :host([data-ff-editor][data-editable]) .avatar:empty {
+      :host([data-ff-editor]) .avatar:empty {
         border: var(--se-border) dashed var(--se-faint);
         border-radius: var(--se-r-sm);
       }
-      :host([data-ff-editor][data-editable]) .avatar:empty::before {
+      :host([data-ff-editor]) .avatar:empty::before {
         content: none;
       }
 `

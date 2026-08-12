@@ -4,6 +4,11 @@
 // SCHON selektierten Blocks öffnet den Feld-Picker. Verzögert (Timer),
 // damit ein Doppelklick (= Inline-Edit einer ungebundenen Stelle) den
 // Picker nicht zusätzlich aufreißt.
+//
+// Hier hängt AUSSERDEM der Klick, der die Auswahl meldet (onSelect) — der
+// Host-Rahmen hat genau einen onClick, und diese Datei besitzt ihn. Seit U8
+// meldet er mit, ob der Klick auf einer Stelle des Bausteins landete
+// (aufBedienstelle, s. u.).
 
 import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, RefObject } from 'react'
@@ -28,7 +33,12 @@ interface BindingPickerArgs {
   // FeldBindung die ganze Bibliothek an und setzt die Quelle beim Wählen
   // gleich mit — vorher tat der Klick dann still nichts, 2026-08-03).
   hatAngebot: boolean
-  onSelect?: () => void
+  // Auswahl melden. `aufStelle` = der Klick landete auf einer bedienbaren
+  // Stelle dieses Bausteins (data-ff-spot). Die Auswahl braucht das, weil ein
+  // Klick auf eine Stelle des schon gewählten Bausteins bereits vergeben ist
+  // (er öffnet den Picker) und darum NICHT zusätzlich eine Ebene nach außen
+  // gehen darf — s. selectionOps.auswahlZiel.
+  onSelect?: (aufStelle: boolean) => void
 }
 
 export function useBindingPicker({
@@ -81,9 +91,31 @@ export function useBindingPicker({
     }
   }
 
+  // Landete der Klick auf einer Stelle, die der BAUSTEIN selbst bedient — eine
+  // bindbare Stelle (data-ff-spot) oder ein Inline-Edit-Ziel
+  // (data-ff-editable)? Dann gehört der Klick ihm und nicht der Auswahl: an
+  // einem schon gewählten Baustein öffnet er den Picker bzw. leitet den
+  // Doppelklick zum Inline-Edit ein. Die Auswahl darf in dem Fall NICHT
+  // zusätzlich eine Ebene nach außen gehen (s. selectionOps.auswahlZiel) —
+  // sonst wäre der Baustein beim Eintreffen des Doppelklicks nicht mehr
+  // gewählt und BasicBlock.inlineEdit stiege sofort wieder aus.
+  //
+  // Bewusst breiter als `spotAt`: das prüft die AKTUELL bindbaren Stellen
+  // (am Nachschlage-Feld gehört seine Wert-Stelle nicht dazu, und der
+  // Spaltentitel ist gar keine); hier zählt jede Stelle, die der Baustein
+  // markiert hat.
+  function aufBedienstelle(e: ReactMouseEvent<HTMLDivElement>): boolean {
+    for (const t of e.nativeEvent.composedPath()) {
+      if (t === e.currentTarget) return false
+      if (t instanceof HTMLElement
+        && (t.hasAttribute('data-ff-spot') || t.hasAttribute('data-ff-editable'))) return true
+    }
+    return false
+  }
+
   function onClick(e: ReactMouseEvent<HTMLDivElement>) {
     e.stopPropagation() // Klick auf Elternteile / Canvas (= andere Auswahl) nicht auslösen
-    onSelect?.()
+    onSelect?.(aufBedienstelle(e))
     clearPickerTimer()
     // Erst selektieren, dann binden: der Picker öffnet nur am Block, der
     // beim Klick schon selektiert war — und nur, wenn es etwas zu wählen gibt.

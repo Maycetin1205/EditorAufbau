@@ -21,10 +21,10 @@
 //
 // Leer-Regel: In der MASKE verschwinden Stellen ohne Inhalt restlos — samt
 // ihrer Zeile, wenn alles darin leer ist. Im EDITOR bleibt jede Stelle ein
-// Klick-Ziel (Strich bzw. gestrichelte Bildflaeche), aber NUR an der
-// ausgewaehlten Karte (Nutzer-Ansage 2026-08-06 „keine haesslichen
-// Platzhalter"): ganz weglassen geht nicht, eine leere Stelle waere 0px hoch
-// und liesse sich nie anklicken. Das WIE steht in ./kartenStil.
+// Klick-Ziel (Strich bzw. gestrichelte Bildflaeche): ganz weglassen geht
+// nicht, eine leere Stelle waere 0px hoch und liesse sich nie anklicken.
+// Seit U8 (2026-08-12) an JEDER Karte gleich — die Auswahl aendert das Gesicht
+// der Karte nicht mehr (Begruendung in ./kartenStil). Das WIE steht dort.
 //
 // Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
 // (Inline-Edit, WYSIWYG) und sind bindbare Stellen; der Avatar

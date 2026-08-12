@@ -91,7 +91,14 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe:** N2.1 (2026-08-12) — die Navi ist eine Leiste des
+- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13 (U8 …):** U8 — die Auswahl
+  trifft, was man anklickt: EIN Klick waehlt die Karte, ein weiterer auf
+  denselben Baustein geht eine Ebene nach AUSSEN; ein Klick auf eine Stelle des
+  Bausteins bleibt dem Feld-Picker/Inline-Edit vorbehalten. Die Karte sieht
+  ausgewaehlt aus wie daneben. Runtime-Bytes absichtlich neu (529 Byte
+  kleiner), Export-Markup und Referenzabzug unveraendert. Einzelheiten im
+  Etappenkopf U8.
+  Davor: N2.1 (2026-08-12) — die Navi ist eine Leiste des
   Masken-RAHMENS. Neue Registry-Faehigkeit `maskenRand`
   (`core/blocks/maskenRand.ts`, Masse 56/224): der Baustein liegt am Rand der
   Flaeche statt in einer Zelle UND steht auf jeder Flaechen-Seite; die Flaeche
@@ -409,7 +416,7 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U8, dann U9 -> U10 -> N3 -> N4 -> N5 per
+- **Naechste Etappe:** U9, dann U10 -> N3 -> N4 -> N5 per
   Opus-Kopier-Auftrag (Wellen-Kopf U; seit
   2026-08-12 mehrere Etappen je Sitzung). Dazwischen angemeldet, weil aus der
   N2.1-Probe entstanden: **die Hauptseite umbenennen** (Kleinfix, braucht eine
@@ -3042,7 +3049,7 @@ und die Export-Bytes bleiben byte-gleich.
 **Reihenfolge-Ehrlichkeit:** U7b/U7c laufen NACH U4/U5 — sonst werden
 Formulare angestrichen, die kurz danach neu gebaut werden.
 
-## U8 · Auswahl am Ding: EIN Klick trifft die Karte, die Karte wechselt ihr Gesicht nicht (Nutzer-Befund 2026-08-12, zwei Screenshots)
+## U8 · Auswahl am Ding: EIN Klick trifft die Karte, die Karte wechselt ihr Gesicht nicht (GEBAUT 2026-08-13)
 
 **Zwei Befunde, ein Thema — die Auswahl im Kanban luegt:**
 
@@ -3069,6 +3076,28 @@ SE-Delta-Probe gebuendelt).
 
 **Nutzerprobe:** volle Spalte, EIN Klick auf eine Karte → Karte ist
 gewaehlt; Karte sieht vor, waehrend und nach der Auswahl gleich aus.
+
+**Gebaut 2026-08-13 — der festgelegte Weg (die Ansage entschied ihn):** Klick
+waehlt den getroffenen Baustein; ein weiterer Klick auf DENSELBEN geht eine
+Ebene nach AUSSEN (Karte → Spalte → Board) und bleibt an der obersten Ebene
+der Flaeche stehen (`state/selectionOps.ts`, `auswahlZiel` ersetzt
+`drillDownZiel` — die Kettenrechnung entfaellt, es genuegt der Elternknoten).
+**Ausnahme, ohne die es nicht geht:** landet der Klick auf einer Stelle des
+Bausteins (`data-ff-spot` oder `data-ff-editable`), gibt es KEINEN Schritt nach
+aussen — an einem gewaehlten Baustein ist dieser Klick bereits vergeben (er
+oeffnet den Feld-Picker), und der erste Klick eines Doppelklicks zoege sonst
+die Auswahl weg, bevor `BasicBlock.inlineEdit` sie prueft. Der Klick meldet
+das jetzt mit (`useBindingPicker.aufBedienstelle` → `onSelect(aufStelle)` →
+`Editor.waehleGetroffenen`). Huellen bleiben zusaetzlich direkt treffbar
+(Spaltenkopf, Luecke zwischen Spalten) — und bleiben es auch bei EINER Spalte,
+weil deren freie Flaeche den Schritt nach aussen ausloest.
+Zweiter Teil: die drei `:empty`-Regeln in `blocks/card/kartenStil.ts` haengen
+nicht mehr an `[data-editable]` — Striche und Bildrahmen stehen an JEDER Karte
+im Editor. Runtime-Bytes ABSICHTLICH neu und 529 Byte KLEINER (gelesen: die
+drei Selektoren plus der gekuerzte Stil-Kommentar; die lange Begruendung steht
+jetzt im Dateikopf ausserhalb des `css`-Blocks, wo sie nicht in jede
+exportierte Maske mitreist). Export-Markup und Referenzabzug unveraendert.
+Sieben Faelle in `state/selectionOps.test.ts` halten beide Richtungen fest.
 
 ## U9 · EIN sichtbarer Loeschweg je Ding (Nutzer-Befund 2026-08-12, „ueberall doppelt und dreifach")
 
