@@ -1379,6 +1379,13 @@ ist kein Grund, beide Risiken in einen Commit zu packen.
 
 ## C2 · Schema 6, zentraler Kind-Layoutvertrag und Popup-Raster atomar
 
+**Zusatzauftrag 2026-08-12 (Nutzer, U0-5):** der Baustein „Zeile"
+ENTFAELLT mit diesem Umbau. Die Migration loest bestehende Zeilen auf
+(Kinder ruecken in Reihenfolge an die Stelle der Zeile); Palette,
+Registry, Export-Test und Veralten-Positivliste ziehen mit. Bis C2
+bleibt Zeile unveraendert — im rasterlosen Popup ist sie der einzige
+Weg fuer Nebeneinander.
+
 ### Ziel
 
 Store, Editor, DnD und Export entscheiden nicht mehr separat, ob Kinder in
@@ -2198,6 +2205,12 @@ der Nutzer.
 eine Belege-Tabelle auf der Maske zu haben — das Nachschlage-Formularfeld
 soll ihn waehlen.
 
+**Kein Sonderweg (Nutzer-Klarstellung 2026-08-12: „ich will einfach ganz
+normal Auswahl folgt benutzen koennen"):** R3 vervollstaendigt genau das —
+Folger-Bausteine hoeren heute schon auf das Nachschlagefeld, nur das
+NACHLADEN holender Quellen (holendeQuellen) tat es nicht. Danach geben
+Tabelle, Kanban und Nachschlagefeld ihre Auswahl ueber EINEN Mechanismus.
+
 **Stand im Code:** Der Ausloeser `blocks/shared/holendeQuellen.ts` kennt
 heute nur Geber-BLOECKE mit `source`-Attribut (Tabelle/Kanban). Das
 Nachschlage-Formularfeld gibt seine Wahl bereits als Auswahl weiter
@@ -2360,7 +2373,31 @@ Ohne die Antworten 1/2/3/4 baut U1/U2 nicht. Empfehlung steht dabei.
    gefaellt — ODER die Ansage „Fellnase-Demo als Richtung". Ohne Vorbild
    startet U7 nicht (abschreiben statt gestalten).
 
-## U1 · Wortlaut-Putz in der Steuerung (braucht U0-Antworten 1/2/4)
+**Antworten des Nutzers (2026-08-12, im Chat):**
+
+1. Ja — Name ist ihm „egal", also gilt der Vorschlag: **Datencenter**.
+2. **Ja, raus.**
+3. **Ja — Loeschen fragt nie nach.**
+4. Ersetzt: nicht umbenennen, sondern die **Arten-Liste wird im
+   U4-Entwurf gemeinsam durchgegangen** (was gibt es, was braucht er,
+   wie heisst es verstaendlich).
+5. **GEAENDERT — „Zeile" fliegt RAUS**, umgesetzt im Popup-Umbau (C2,
+   dort als Zusatzauftrag vermerkt); bis dahin bleibt sie, weil das
+   Popup ohne Raster sonst kein Nebeneinander kann.
+6. Der Text-Baustein ist fuer den Nutzer „sinnlos wie es jetzt ist —
+   ich kann den kaum einstellen": er wird im **U4-Entwurf neu gedacht**
+   (was muss er koennen, wie heisst er); die Namens-Kollision wird dort
+   mitgeloest.
+7. **ABGELEHNT — der Reiter faellt.** Vorgeschlagenes Konzept (liegt dem
+   Nutzer vor): das Popup wird ueber der abgedunkelten Hauptseite
+   bearbeitet, genau wie es in der Maske erscheint; Zugang ueber eine
+   Popups-Liste in der Werkzeugleiste und ueber die oeffnende Kette;
+   X schliesst. Eigene Etappe, Zuschnitt erst nach dem Ok des Nutzers
+   (vor oder mit C2).
+8. Offen — der Nutzer sieht sich `designsprache/musterbogen.html` an
+   und sagt Ja/Nein.
+
+## U1 · Wortlaut-Putz in der Steuerung (BAUBAR — U0 1/2 beantwortet; Punkt 4 wanderte in U4)
 
 **Belegte Stellen:** Belehrungstexte `FeldListe.tsx:70-80`,
 `DatenquellenBereich.tsx:199-204`, `DataSourceForm.tsx:134/262/294`
@@ -2379,7 +2416,7 @@ installationsindividueller Wert in einem UI-Text; ein Begriff je Ding.
 **Nutzerprobe (Browser):** Steuerung oeffnen, Quelle anlegen — Texte
 weg bzw. neu, Verhalten unveraendert.
 
-## U2 · Loeschen und Browser-Kaesten vereinheitlichen (braucht U0-3)
+## U2 · Loeschen und Browser-Kaesten vereinheitlichen (BAUBAR — U0-3: Ja)
 
 **Belegte Stellen:** drei Loeschwege, zwei Verhalten
 (`BlockHost.tsx:167-173` fragt; `useKeyboardShortcuts.ts:45` und
