@@ -47,21 +47,6 @@ describe('sanitizeDataSources (kaputter Speicher darf nie den Start blockieren)'
     expect(sanitizeDataSources(quelle('quatsch'))[0].fields).toEqual([])
     expect(sanitizeDataSources('quatsch')).toEqual([])
   })
-
-  // Der Zeilenfilter (R5) reist WOERTLICH durch den Speicher — auch mit
-  // Leerzeichen am Rand. Wuerde der Lader hier trimmen oder den Wert
-  // wegwerfen, sperrte die Verlust-Kontrolle (keinVerlust in state/ladeKette)
-  // die ganze Bibliothek: sie vergleicht Gespeichertes mit Geladenem.
-  it('der Zeilenfilter kommt woertlich zurueck, leer wird weggelassen', () => {
-    const mitFilter = (zeilenFilter: unknown) => [
-      { id: 'q1', name: 'Belege', kind: 'beleg', fields: [], zeilenFilter },
-    ]
-    expect(sanitizeDataSources(mitFilter('BEL_3_8<99990000'))[0].zeilenFilter)
-      .toBe('BEL_3_8<99990000')
-    expect(sanitizeDataSources(mitFilter(' BEL_3_8<9 '))[0].zeilenFilter).toBe(' BEL_3_8<9 ')
-    expect(sanitizeDataSources(mitFilter(''))[0]).not.toHaveProperty('zeilenFilter')
-    expect(sanitizeDataSources(mitFilter(42))[0]).not.toHaveProperty('zeilenFilter')
-  })
 })
 
 // --- Hol-Relation (Welle R, 2026-08-11) ------------------------------------

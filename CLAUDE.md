@@ -212,8 +212,8 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
 - **START_TOOL:** `sendBWLinkIntern('0,START_TOOL,<nr>[,params URL-kodiert]')`,
   Fallback `basisHTML_SND_MSG`. Werkzeug-Nummern je Installation individuell.
 - **Quellen-Arten bestimmen die SEvariablen-Form:** IDB → SEFILELOOP
-  `FELDER:'*'`; Stamm (ADR/ART/BEL) → explizite pos_len-Liste (+ optional
-  FREISELEKT). MEMTAB/ERPAPICALL erst bauen, wenn die Form an einer echten
+  `FELDER:'*'`; Stamm (ADR/ART/BEL) → explizite pos_len-Liste.
+  MEMTAB/ERPAPICALL erst bauen, wenn die Form an einer echten
   Maske belegt ist.
   **Abweichung seit S5.1 (2026-08-11), BESTÄTIGT 2026-08-12 (Nutzer-Ansage):** unser Export
   schreibt für IDB nicht mehr `*`, sondern die pos_len-Liste der von der Maske
@@ -235,19 +235,15 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   die ganze Liste ab. Der Export schreibt Kopfsatz-Arten deshalb ZULETZT
   (`loopReihenfolge` in `core/data/dataSources.ts`, Merkmal `kopfsatzMoeglich`
   aus der Arten-Tabelle). Wer die Ausgabe-Reihenfolge anfasst, bricht das.
-- **FREISELEKT ist belegt (2026-08-12, `Desktop\VORLAGEN` — 267 echte
-  SEvariablen-Dateien, 10 mit Treffern):** optionales Filter-Prädikat je
-  SEFILELOOP-/WINDOWLOOP-Eintrag, „ein freier Selektionsausdruck"
-  (Doku-Vorlage des HTMLEditors dort). Beispiele:
-  `"FREISELEKT": "BEL_3_8<99990000"` (daneben `"SORTIERUNG":
-  "ABSTEIGEND"` im selben Eintrag), `SERPOS_3_1='N'`, `ART_1_25<>''`,
-  `SUBLGR_BESTAND<>0&SUBLGR_BESTAND_KALKULIERT<>0`, `BEL_11_8=ADA_1_8`
-  (Feld-mit-Feld). Felder MIT Datei-Präfix; Operatoren `=`, `<>`, `<`,
-  `&` (UND), laut Doku-Vorlage auch `#` (ODER) und Klammern; je Eintrag
-  optional, leerer String erlaubt. Ebenfalls dort belegt:
-  `VON_INDEX`/`BIS_INDEX`+`INDEX_NR` (Index-Bereich, auch CONCAT-Formeln)
-  und `MAX_DURCHLAEUFE` (nur an WINDOWLOOP); MEMTAB kommt in KEINER der
-  echten Masken vor. Bauauftrag: UMBAU-PLAN-V6.md, Etappe R5.
+- **Zeilenfilter am SEFILELOOP-Eintrag: GESTRICHEN** (Nutzer-Ansage
+  2026-08-12). Hier standen die Belege für ein optionales Filter-Prädikat je
+  Loop-Eintrag, aus 267 echten SEvariablen-Dateien in `Desktop\VORLAGEN`.
+  Die Etappe R5 war damit gebaut und ist auf Ansage restlos zurückgenommen:
+  das Formularfeld verlangte einen von Hand getippten Ausdruck mit
+  Feldcodes, obwohl die Quelle die Felder mit Klarnamen kennt (Regel 3).
+  **Nicht wieder vorschlagen, nicht wieder dokumentieren** — die Belege
+  stehen in der git-Historie (`44a3b81`, `63942b0`). Aus derselben
+  Durchsuchung bleibt festgehalten: MEMTAB kommt in KEINER echten Maske vor.
 - **Positionen zur Laufzeit lesen (belegt 2026-08-11, Echttests des
   Nutzers):** Relation 69 liefert je Frage EIN Feld einer Position:
   `basisHTML_SND_MSG('GET_RELATION', { NR: '69', PARAMS: [BELART, POS, LEN,

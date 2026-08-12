@@ -40,7 +40,6 @@ import {
   loopReihenfolge,
   tableIdFor,
   varAusKopfsaetzen,
-  zeilenFilterFor,
   type DataSource,
 } from '../core/data/dataSources'
 import type { RelationTemplate } from '../core/data/relations'
@@ -455,23 +454,15 @@ export function exportMask(
   // Der Schiebe-Weg ist für diesen Fall standalone nachweislich tot, und ein
   // liegengebliebener POS-Loop ließe die GANZE Liste scheitern
   // (Reihenfolge-Kontrakt oben).
-  //
-  // FREISELEKT steht HINTER FELDER — so führen es die echten SEvariablen des
-  // Herstellers ({ ID, …, FELDER, FREISELEKT, SORTIERUNG }, nachgesehen in
-  // Desktop\VORLAGEN am 2026-08-12). Es schränkt ein, WELCHE Zeilen SoftEngine
-  // schickt (R5: ein Refresh schob bisher jedes Mal den ganzen Bestand); leer
-  // = Schlüssel weg, die Datei bleibt Byte für Byte wie vorher.
   const geordnet = loopReihenfolge(used.filter((s) => ladeRelationFor(s) === null))
   const sefileloop = geordnet.map((s) => {
     const kopfsatz = kopfsatzFor(s)
-    const zeilenFilter = zeilenFilterFor(s)
     return {
       INDEX_NR: 0,
       ALIAS: s.name,
       ID: tableIdFor(s),
       ...(kopfsatz !== '' ? { KOPFSATZ_INDEX: kopfsatz } : {}),
       FELDER: felderFor(s, benutzteFelder.get(s.id), holSchluessel.get(s.id) ?? []),
-      ...(zeilenFilter !== '' ? { FREISELEKT: zeilenFilter } : {}),
     }
   })
   // VAR steht VOR der SEFILELOOP — wie in den ausgelieferten Rahmen; die

@@ -59,8 +59,8 @@ git log --oneline -8
   **R3** (Beleg per Nachschlage-Formularfeld waehlen), **R4** (Beleg
   anlegen und sofort sehen — BAUBAR, Anlege-Protokoll 2026-08-12 im
   Etappenkopf: GET 1020 antwortet mit dem Index des frischen Belegs),
-  **R5** (Refresh-Flut/Zeilenfilter — **GEBAUT 2026-08-12**, s. oben).
-  Details im Wellen-Kopf R.
+  **R5 ist GESTRICHEN** (Nutzer-Ansage 2026-08-12, s. Etappenkopf R5 —
+  nicht wieder vorschlagen). Details im Wellen-Kopf R.
 - **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben
   und erweitert um N4 (Kanban-Untergruppen/„Zimmer") und N5
   (Bild-Baustein, Stufe 1 statisch). Design-Mix v2
@@ -69,24 +69,7 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   R3, U1, U2, U3, U6; danach N1–N5.
-- **Letzte fertige Etappe: R5** (2026-08-12) — eine Datenquelle traegt einen
-  optionalen **Zeilenfilter**, den der Export als `FREISELEKT` hinter `FELDER`
-  in ihren SEFILELOOP-Eintrag schreibt (`zeilenFilterFor` in
-  `core/data/dataSources.ts`, geschrieben in `export/exportMask.ts`). Damit
-  bestimmt die Maske, welche Zeilen SoftEngine beim Refresh ueberhaupt
-  schiebt. Die Position hinter `FELDER` ist an den echten SEvariablen des
-  Herstellers nachgesehen (`Desktop\VORLAGEN`), nicht geraten; der Ausdruck
-  reist UNGEPRUEFT hinaus (Installations-Daten, Regel 5). Der Lader nimmt ihn
-  woertlich, ohne Trimmen — sonst sperrt `keinVerlust` die Bibliothek. Leerer
-  Filter = Datei Byte fuer Byte wie vorher; Runtime-Buendel und Referenzabzug
-  unveraendert. Bei einer HOLENDEN Quelle ist das Feld ausgeblendet (kein
-  SEFILELOOP-Eintrag, an dem der Filter staende), der Wert bleibt gespeichert.
-  Vorbereitend verhaltensneutral geschnitten (eigener Commit, Plan 3.1): die
-  Eingabe-Helfer zogen aus `dataSources.ts` (496 von 500 Zeilen) nach
-  `core/data/quellenEingabe.ts` aus, weitergereicht wie bisher.
-  **Was hier NICHT gebaut ist:** Sortierung, Index-Bereich, MAX_DURCHLAEUFE —
-  alle daneben belegt, alle bewusst draussen (Regel 10, s. Etappenkopf R5).
-  Davor: R2-Nachbesserung (2026-08-12, zwei Commits) nach
+- **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
   Schluessel der Hol-Relation jetzt bei der GEBER-Quelle mit
@@ -2301,55 +2284,21 @@ Export-Testfaelle fuer die neue Schritt-Angabe.
 Vorlage in der Bibliothek) ausfuehren — die Positions-/Beleg-Anzeige
 springt ohne Refresh auf den frischen Beleg.
 
-### R5 · Refresh-Flut: Zeilenfilter FREISELEKT (GEBAUT 2026-08-12)
+### R5 · GESTRICHEN — es wird kein Zeilenfilter gebaut
 
-**Belegtes Problem (Nutzer 2026-08-12, sein Blocker):** Ein Refresh ist
-noetig, damit neue Saetze erscheinen — aber SoftEngine schiebt dabei ALLE
-Zeilen ALLER bestellten Quellen erneut (Nutzer: „diese 20000 zeilen im
-debug ... das geht nicht weiter, OHNE das wir das problem beheben"). Die
-Menge bestimmt allein unsere Bestellung (vgl. S5.1: 5 953 Bild-Nachschlaege
-beim Oeffnen).
+**Nutzer-Ansage 2026-08-12, unmittelbar nach dem Bau.** Hier stand eine
+Etappe „Zeilenfilter an der Datenquelle" (gegen die Refresh-Flut). Sie war
+gebaut und ist auf Ansage des Nutzers restlos zurueckgenommen — Code, Tests
+und Etappentext. Grund: das Feld verlangte einen von Hand getippten
+SoftEngine-Ausdruck mit Feldcodes, obwohl die Quelle die Felder des Nutzers
+mit Klarnamen kennt (Regel 3 gebrochen), und der Nutzer braucht die Sache in
+dieser Form nicht.
 
-**Form belegt (Durchsuchung `Desktop\VORLAGEN` am 2026-08-12 — 267 echte
-SEvariablen-Dateien, 10 Dateien mit Treffern):** `FREISELEKT` ist ein
-optionales Filter-Praedikat direkt am SEFILELOOP- (und WINDOWLOOP-)
-Eintrag; die Doku-Vorlage des HTMLEditors nennt es woertlich „ein freier
-Selektionsausdruck". Echte Beispiele:
-
-- `"FREISELEKT": "BEL_3_8<99990000"` — daneben im selben Eintrag
-  `"SORTIERUNG": "ABSTEIGEND"` (MIS_V3\LANDINGPAGES\KDE\HTML\01 und
-  LFR\HTML\01, dort im SEFILELOOP; nur EIN Geschwister-Eintrag traegt
-  den Filter, die uebrigen nicht — es ist je Eintrag optional).
-- `"FREISELEKT": "SERPOS_3_1='N'"` — Textwert in einfachen
-  Anfuehrungszeichen (SER\HTML\01).
-- `"FREISELEKT": "ART_1_25<>''"` und
-  `"SUBLGR_BESTAND<>0&SUBLGR_BESTAND_KALKULIERT<>0"` — ungleich und
-  UND-Verkettung mit `&` (LGR_LagerPlatz\HTML\01).
-- `"FREISELEKT": "BEL_11_8=ADA_1_8"` — Feld-mit-Feld-Vergleich
-  (ADA\HTML\01). Leerer String kommt vor und ist erlaubt
-  (BESTELLSYSTEM_STANDARD).
-
-Felder tragen den DATEI-Praefix (`BEL_3_8`); belegte Operatoren `=`,
-`<>`, `<`, `&` (UND); die Doku-Vorlage zeigt zusaetzlich `#` (ODER) und
-Klammern.
-
-**Arbeit:** Die Datenquelle bekommt ein optionales Feld „Zeilenfilter"
-(freier Ausdruck; Installations-Daten, der Editor prueft und erfindet
-nichts). Der Export schreibt ihn unveraendert als `FREISELEKT` in den
-SEFILELOOP-Eintrag der Quelle, weggelassen wenn leer. Persistenz additiv,
-KEIN Schema-Bump. Ein Export-Testfall (Round-Trip). Runtime unveraendert
-— gefiltert wird von SoftEngine.
-
-**Nutzerprobe (SE):** grosse Quelle (Belege) mit Filter versehen —
-Refresh liefert sichtbar weniger Zeilen, die Debug-Flut faellt.
-
-**Daneben belegt, bewusst NICHT gebaut (Regel 10):**
-`VON_INDEX`/`BIS_INDEX` + `INDEX_NR` (Index-Bereich, auch mit
-CONCAT-Formeln — pinnt einen Loop z. B. auf Adresse+Belegart),
-`MAX_DURCHLAEUFE` (haengt nur an WINDOWLOOP — ein Loop-Typ, den unser
-Export nicht schreibt), `NUR_AKTUELLE_ZEILE` (TABELLE-Eintraege),
-`MAX_ZEILEN` (nur in der Doku-Vorlage, in KEINER echten Maske).
-Lazy-Loading (Welle Q) bleibt gestrichen.
+**Es wird nicht wieder vorgeschlagen** — dasselbe Muster wie S1 und die
+gestrichene Rubrik „Aufgefallen unterwegs" in CLAUDE.md. Der volle
+Etappentext samt Umsetzung steht in der git-Historie (`44a3b81`, `63942b0`).
+Die Refresh-Flut selbst bleibt damit ein offenes Thema ohne beauftragte
+Loesung; Lazy-Loading (Welle Q) bleibt ebenfalls gestrichen.
 
 ---
 
@@ -2397,7 +2346,7 @@ was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
 dir der Plan oder der Code: STOPP und fragen, nicht raten.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus, mit der NAECHSTEN Etappe der Reihenfolge
-R5 -> R3 -> R4 -> U1 -> U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
+R3 -> R4 -> U1 -> U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
 eingesetzt — der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -2895,7 +2844,6 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen (SE-Kern BESTANDEN 2026-08-12) |
 | 36 | R3 Formularfeld als Geber | in SoftEngine: Beleg im Nachschlagefeld waehlen fuellt die Positionen |
 | 37 | R4 Beleg anlegen (BAUBAR) | Kette legt Beleg an, Maske zeigt ihn sofort — ohne Refresh |
-| 38 | R5 Zeilenfilter FREISELEKT (BAUBAR) | weniger Daten je Refresh — die Debug-Flut faellt weg |
 
 ### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Klickanleitungen sammeln, EINE Probe am Ende
 

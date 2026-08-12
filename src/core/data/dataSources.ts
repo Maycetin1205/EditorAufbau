@@ -109,11 +109,6 @@ export interface DataSource {
   // Nur Arten mit relationLadenMoeglich führen sie (ladeRelationFor) — eine
   // holende Quelle bestellt bei SoftEngine nichts (exportMask).
   ladeRelation?: LadeRelation
-  // FREISELEKT der SEFILELOOP (R5): welche Zeilen SoftEngine überhaupt
-  // schicken soll. Ein freier Selektionsausdruck der Installation, z. B.
-  // 'BEL_3_8<99990000' — Daten, nie Code (Regel 5). Leer = alle Zeilen, wie
-  // bisher. Was der Export daraus macht, entscheidet zeilenFilterFor.
-  zeilenFilter?: string
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
   fields: readonly DataSourceField[]
 }
@@ -259,33 +254,6 @@ export function loopReihenfolge(sources: readonly DataSource[]): DataSource[] {
 export function kopfsatzFor(source: DataSource): string {
   if (!artFuer(source.kind).kopfsatzMoeglich) return ''
   return (source.kopfsatzIndex ?? '').trim()
-}
-
-// Der FREISELEKT, den der Export schreiben darf — leer heißt „Schlüssel
-// weglassen" (dieselbe Zusage wie beim Kopfsatz: eine Maske ohne Filter
-// exportiert Byte für Byte wie vorher).
-//
-// BELEGTE FORM (Durchsuchung Desktop\VORLAGEN am 2026-08-12: 267 echte
-// SEvariablen-Dateien des Herstellers, 10 mit Treffern): ein optionales
-// Filter-Prädikat direkt am SEFILELOOP-Eintrag, in der Doku-Vorlage des
-// HTMLEditors wörtlich „ein freier Selektionsausdruck". Echte Werte:
-// 'BEL_3_8<99990000', "SERPOS_3_1='N'", "ART_1_25<>''",
-// 'SUBLGR_BESTAND<>0&SUBLGR_BESTAND_KALKULIERT<>0', 'BEL_11_8=ADA_1_8'.
-// Felder tragen den DATEI-Präfix; belegte Operatoren '=', '<>', '<', '&'
-// (UND), laut Doku-Vorlage auch '#' (ODER) und Klammern.
-//
-// Der Editor PRÜFT den Ausdruck NICHT und erfindet nichts: welche Felder und
-// Operatoren die Installation kennt, weiß nur SoftEngine — eine eigene
-// Grammatik hier wäre geraten (Regel 5) und würde gültige Ausdrücke sperren.
-// Getrimmt wird, damit ein versehentliches Leerzeichen keinen leeren Filter
-// hinausschickt.
-//
-// KEINE Art-Abfrage, im Gegensatz zu kopfsatzFor: FREISELEKT hängt an der
-// SEFILELOOP-Zeile selbst, nicht an einer Eigenschaft der Art — belegt ist es
-// an BEL (Stamm) wie an eigenen Dateien. Eine HOLENDE Quelle bekommt gar
-// keinen Eintrag, dort kann der Filter also auch nicht mit hinausgehen.
-export function zeilenFilterFor(source: DataSource): string {
-  return (source.zeilenFilter ?? '').trim()
 }
 
 // Der VAR-Abschnitt der SEvariablen, abgeleitet aus den Kopfsätzen.
@@ -458,13 +426,6 @@ export function pruefeDatenquellen(
         ? { kopfsatzIndex: e.kopfsatzIndex }
         : {}),
       ...(e.lieferung === 'offenerSatz' ? { lieferung: 'offenerSatz' as const } : {}),
-      // Wörtlich übernommen, nicht getrimmt: die Verlust-Kontrolle (keinVerlust
-      // in state/ladeKette) sperrt die Bibliothek, sobald ein gespeicherter Wert
-      // beim Laden anders wieder herauskommt. Getrimmt wird erst beim Lesen
-      // (zeilenFilterFor).
-      ...(typeof e.zeilenFilter === 'string' && e.zeilenFilter !== ''
-        ? { zeilenFilter: e.zeilenFilter }
-        : {}),
       ...(ladeRelation ? { ladeRelation } : {}),
       fields,
     })

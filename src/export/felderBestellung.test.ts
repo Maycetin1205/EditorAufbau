@@ -1,5 +1,4 @@
-// Export-Tests: die BESTELLUNG einer Datenquelle — welche SPALTEN (FELDER,
-// S5.1, 2026-08-11) und welche ZEILEN (FREISELEKT, R5, 2026-08-12).
+// Export-Tests: die FELDER-BESTELLUNG einer Datenquelle (S5.1, 2026-08-11)
 //
 // Bis dahin bestellte jede IDB-Quelle `FELDER:'*'` — alle Felder aller Zeilen.
 // SoftEngine macht fuer JEDEN gelieferten Wert einen Bild-Nachschlag
@@ -221,83 +220,6 @@ describe('exportMask: FELDER-Bestellung', () => {
     const { sevariablen } = exportMask(tree, 'Maske', sources)
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
       { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0001', FELDER: '*' },
-    ])
-  })
-
-  // --- Der ZEILENfilter: FREISELEKT (R5, 2026-08-12) ---------------------
-  //
-  // Dieselbe Frage wie oben, andere Achse: FELDER sagt WELCHE SPALTEN eine
-  // Quelle bestellt, FREISELEKT WELCHE ZEILEN. Anlass ist der Blocker des
-  // Nutzers: ein Refresh schiebt jedes Mal den ganzen Bestand erneut, und die
-  // Menge bestimmt allein unsere Bestellung.
-  //
-  // Belegt (Desktop\VORLAGEN, 267 echte SEvariablen-Dateien des Herstellers,
-  // 10 mit Treffern): FREISELEKT ist ein optionales Praedikat am
-  // SEFILELOOP-Eintrag und steht HINTER FELDER
-  // ({ ID, …, FELDER, FREISELEKT, SORTIERUNG }). Geprueft wird darum die
-  // Schluessel-REIHENFOLGE mit, nicht nur der Wert.
-  //
-  // Und: eine Quelle OHNE Filter behaelt ihren Eintrag Byte fuer Byte —
-  // sonst waere jede bestehende Maske betroffen.
-  it('haengt den Zeilenfilter als FREISELEKT hinter FELDER, nur wo einer steht', () => {
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['belege', 'adr'] },
-      belege: {
-        id: 'belege', type: 'tabelle', parentId: 'root', childIds: [],
-        props: { source: 'belege', suche: 'nein', spalten: [{ titel: 'Nummer', feld: '3_8' }] },
-      },
-      adr: {
-        id: 'adr', type: 'tabelle', parentId: 'root', childIds: [],
-        props: { source: 'adressen', suche: 'nein', spalten: [{ titel: 'Nr', feld: '2_8' }] },
-      },
-    }
-    const sources = [
-      {
-        id: 'belege', name: 'Belege', kind: 'beleg' as const,
-        // Wie in der echten Datei: Feld MIT Datei-Praefix, Operator '<'.
-        zeilenFilter: 'BEL_3_8<99990000',
-        fields: [{ code: '3_8', label: 'Belegnummer' }],
-      },
-      {
-        id: 'adressen', name: 'Adressen', kind: 'adressstamm' as const,
-        fields: [{ code: '2_8', label: 'Adressnummer' }],
-      },
-    ]
-
-    const eintraege = JSON.parse(exportMask(tree, 'Maske', sources).sevariablen).SEFILELOOP
-    expect(eintraege).toEqual([
-      {
-        INDEX_NR: 0, ALIAS: 'Belege', ID: 'BEL', FELDER: '3_8',
-        FREISELEKT: 'BEL_3_8<99990000',
-      },
-      { INDEX_NR: 0, ALIAS: 'Adressen', ID: 'ADR', FELDER: '2_8' },
-    ])
-    expect(Object.keys(eintraege[0])).toEqual(['INDEX_NR', 'ALIAS', 'ID', 'FELDER', 'FREISELEKT'])
-  })
-
-  // Ein leerer bzw. nur aus Leerzeichen bestehender Filter darf NICHT als
-  // Schluessel hinausgehen: ein leeres FREISELEKT kommt in echten Dateien vor,
-  // aber wir haben keinen Beleg, was SoftEngine mit einem Ausdruck aus
-  // Leerzeichen macht — weglassen ist der Zustand von vorher.
-  it('schreibt keinen FREISELEKT, wenn der Filter leer oder nur Leerzeichen ist', () => {
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['adr'] },
-      adr: {
-        id: 'adr', type: 'tabelle', parentId: 'root', childIds: [],
-        props: { source: 'adressen', suche: 'nein', spalten: [{ titel: 'Nr', feld: '2_8' }] },
-      },
-    }
-    const sources = [
-      {
-        id: 'adressen', name: 'Adressen', kind: 'adressstamm' as const,
-        zeilenFilter: '   ',
-        fields: [{ code: '2_8', label: 'Adressnummer' }],
-      },
-    ]
-
-    const { sevariablen } = exportMask(tree, 'Maske', sources)
-    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Adressen', ID: 'ADR', FELDER: '2_8' },
     ])
   })
 })
