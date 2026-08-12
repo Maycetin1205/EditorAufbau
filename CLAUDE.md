@@ -215,16 +215,17 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   `FELDER:'*'`; Stamm (ADR/ART/BEL) → explizite pos_len-Liste (+ optional
   FREISELEKT). MEMTAB/ERPAPICALL erst bauen, wenn die Form an einer echten
   Maske belegt ist.
-  **Abweichung seit S5.1 (2026-08-11), noch NICHT belegt:** unser Export
+  **Abweichung seit S5.1 (2026-08-11), BESTÄTIGT 2026-08-12 (Nutzer-Ansage):** unser Export
   schreibt für IDB nicht mehr `*`, sondern die pos_len-Liste der von der Maske
   BENUTZTEN Felder (`felderFor` in `core/data/dataSources.ts`, gesammelt in
   `export/benutzteQuellen.ts`). Anlass: SoftEngine macht für jeden gelieferten
   Wert einen Bild-Nachschlag (GET_RELATION 1911 — Nutzer-Log: 5 953 Aufrufe in
   9,2 s beim Öffnen), und die Menge bestimmt allein unsere Bestellung. Der Satz
   oben bleibt trotzdem stehen: er beschreibt, was die echten Masken TUN, und
-  genau darum ist die explizite IDB-Liste ein unbelegter Vorgriff. Entscheidet
-  der SE-Echttest gegen sie, wird der Commit per `git revert` zurückgenommen —
-  dann gilt wieder ausschließlich der Satz oben.
+  genau darum war die explizite IDB-Liste zunächst ein unbelegter Vorgriff.
+  **Inzwischen bestätigt (Nutzer-Ansage 2026-08-12, kein eigenes Protokoll;
+  der bestandene R2-Kerntest lief bereits mit genau diesem Export):** die
+  Maske liefert mit expliziter Liste. Der Revert-Vorbehalt ist verbraucht.
 - **Die REIHENFOLGE der SEFILELOOP-Einträge ist ein Kontrakt** (belegt
   2026-08-11, A/B-Echttest des Nutzers mit derselben Maske): steht ein
   Kopfsatz-Loop (POS/Belegpositionen) an ERSTER Stelle, liefert SoftEngine aus

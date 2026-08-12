@@ -30,6 +30,20 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **Proben-Stand und Arbeitsmodus (Nutzer-Ansage 2026-08-12, Chat):**
+  ALLE bis dahin offenen Browser-/SE-Proben sind durch und BESTANDEN
+  (S5.1/S5.2 · Tabelle S2/S2.1 · C1 · R2-Rest: PUT auf geholte Position,
+  Verknuepfung, Abwahl). Kein Protokoll — die Ansage gilt; die „steht
+  aus"-Vermerke in den Zeilen darunter sind damit ueberholt und bleiben
+  nur als Chronik stehen. S5.1 ist bestaetigt, der Revert-Vorbehalt
+  verbraucht (in CLAUDE.md nachgezogen). AUSSERDEM: die Umsetzung laeuft
+  OHNE Fable (kein Diff-Lese-Schritt) — Opus-Sitzungen nach dem
+  Kopier-Auftrag im Wellen-Kopf U; Netz sind Pruefbuendel + Waechter.
+  **KEINE Proben zwischendurch (Nutzer-Ansage 2026-08-12, sehr deutlich):
+  der Nutzer testet EINMAL, wenn alles fertig ist.** Jede Opus-Sitzung
+  schreibt nur ihre Klickanleitung (was sich geaendert hat, was zu
+  pruefen ist) in den Chat; der Nutzer meldet sich NUR, wenn er dabei
+  etwas findet. Keine Etappe wartet auf eine Probe.
 - **Neu beauftragt 2026-08-12: Welle U** — Generalsanierung der
   Editor-Bedienung (Steuerung, Inspector, Palette, Begriffe, Meldungen,
   Optik), eigener Wellen-Kopf hinter R. Sie ersetzt F1/F2 (dort vermerkt)
@@ -2366,7 +2380,12 @@ was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
 dir der Plan oder der Code: STOPP und fragen, nicht raten.
 ```
 
-Der Planer-Chat (Fable) liest danach nur den Diff und meldet Abweichungen.
+~~Der Planer-Chat (Fable) liest danach nur den Diff und meldet
+Abweichungen.~~ **GESTRICHEN (Nutzer-Ansage 2026-08-12): die Umsetzung
+laeuft ohne Fable.** Kein Diff-Lese-Schritt; das Netz sind Pruefbuendel
+und Waechter. KEINE Proben zwischendurch — der Nutzer testet EINMAL am
+Ende und meldet nur Funde (Ansage 2026-08-12); die Sitzung liefert ihre
+Klickanleitung und baut weiter, ohne auf eine Probe zu warten.
 
 **Inventur 2026-08-12 — Kurzbefund (drei Lese-Trupps; Belege stehen als
 datei:zeile in den Etappen):**
@@ -2854,7 +2873,7 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | 37 | R4 Beleg anlegen (BAUBAR) | Kette legt Beleg an, Maske zeigt ihn sofort — ohne Refresh |
 | 38 | R5 Zeilenfilter FREISELEKT (BAUBAR) | weniger Daten je Refresh — die Debug-Flut faellt weg |
 
-### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Browserproben je Etappe
+### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Klickanleitungen sammeln, EINE Probe am Ende
 
 | # | Etappe | Wo im sichtbaren Editor |
 |---|---|---|
