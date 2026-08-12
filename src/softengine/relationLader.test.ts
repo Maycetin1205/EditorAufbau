@@ -38,9 +38,16 @@ g.basisHTML_SND_MSG = (_verb: string, nachricht: { NR: string; PARAMS: string[] 
 // Push) — sonst bliebe der 30s-Warte-Poll von bootSe offen.
 g.SEDATA = { Daten: {} }
 
-function antworte(wert: string): void {
+// Irgendein Paket ueber den REGISTER-Callback — so, wie SoftEngine es
+// schickt (roher JSON-String).
+function sende(paket: unknown): void {
   if (!seCallback) throw new Error('SoftEngine-Callback nie registriert (bootSe nicht gelaufen?)')
-  seCallback(JSON.stringify({ RESULT: wert }))
+  seCallback(JSON.stringify(paket))
+}
+
+// Die belegte Antwortform der Hol-Relation: {"RESULT": …}.
+function antworte(wert: string): void {
+  sende({ RESULT: wert })
 }
 
 // Mikrotask-Kette abarbeiten lassen: Antwort -> executeRelation-Auflösung ->
@@ -174,6 +181,39 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     // Direkte Property an der Zeile — getField findet sie VOR dem
     // SATZ-Ausschnitt (der hinter 255 ohnehin nichts hergäbe).
     expect(getField(rows[0], '280_12')).toBe('54321')
+  })
+
+  // Nachbesserung 2026-08-12: weil eine LEERE Antwort hier „Ende der Liste"
+  // bedeutet, darf nur die belegte RESULT-Form als Antwort gelten. Bis dahin
+  // lief auch die Satz-Frage durch extractRelationResult und nahm jeden
+  // Schlüssel der RESULT_KEYS-Liste an (PINDEX, INDEX, KEY, ID, VALUE …) —
+  // ein Fremdpaket mit irgendeinem leeren ID-Feld hätte die Positionsliste
+  // still mittendrin abgeschnitten.
+  it('ein Fremdpaket beendet die Liste NICHT, die echte Antwort zählt normal', async () => {
+    const quelle = { id: 'q-fremd', name: 'MitFremdpaket' }
+    ladeZeilenPerRelation(quelle, LADE, BELEG)
+    await tick()
+    antworte(satz('4711', 'Wurmkur'))
+    await tick()
+    expect(anfragen).toHaveLength(2)
+
+    // Kein RESULT, aber ein leeres ID-Feld: der alte Weg hätte darin eine
+    // leere Antwort gesehen und hier abgebrochen.
+    sende({ MSGART: 'x', ID: '' })
+    await tick()
+    // Frage 2 wartet weiter — nichts ist nachgerückt, nichts eingespeist.
+    expect(anfragen).toHaveLength(2)
+    expect(geholteZeilenFuer('MitFremdpaket')).toEqual([])
+
+    antworte(satz('4712', 'Futter'))
+    await tick()
+    // Und die LEERE RESULT-Antwort bleibt das Ende.
+    antworte('')
+    await tick()
+
+    const rows = rowsFor({ Daten: {} }, 'MitFremdpaket', 'POS')
+    expect(rows).toHaveLength(2)
+    expect(getField(rows[1], '11_6')).toBe('4712')
   })
 
   it('ein halber Schlüssel fragt nicht, er leert (nie raten)', () => {

@@ -18,7 +18,10 @@
 //    SoftEngine antwortet hinter dem Ende mit LEEREM RESULT — darum fragt
 //    der Lader mit satzAntwort (relations): die Antwort bleibt roh
 //    (Spaltenpositionen!), und auch leer zählt als Antwort, sonst liefe
-//    jedes Listen-Ende in den Timeout.
+//    jedes Listen-Ende in den Timeout. Weil hier LEER etwas bedeutet, gilt
+//    auch nur die belegte RESULT-Form als Antwort (extractSatzAntwort):
+//    ein fremdes Paket mit irgendeinem leeren Feld schnitte die Liste sonst
+//    mitten in den Positionen ab.
 //  - KEIN ERPAPICALL: das friert die WinUI-Maske des Nutzers ein.
 //
 // Wer stößt an? blocks/shared/holendeQuellen — der Auswahl-Zustand wohnt in

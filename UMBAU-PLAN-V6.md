@@ -33,9 +33,23 @@ git log --oneline -8
 - **Neu beauftragt 2026-08-11: Welle R** („Zeilen per Relation holen",
   eigener Wellen-Kopf hinter F3) — vom Nutzer nach Live-Echttests
   ausdruecklich bestellt; die Abgrenzung zur gestrichenen Welle Q und zu D2
-  steht im Wellen-Kopf. R1 und R2 sind gebaut (2026-08-11); der
-  SE-Echttest der Welle (Nutzerprobe im Etappenkopf R2) steht aus.
-- **Letzte fertige Etappe:** C1 (2026-08-11, vorgezogen: A9/A10 haengen an
+  steht im Wellen-Kopf. R1 und R2 sind gebaut (2026-08-11) und am 2026-08-12
+  nach einem ersten SE-Echttest in zwei Punkten nachgebessert (s. u.); der
+  SE-Echttest der Welle (Nutzerprobe im Etappenkopf R2) steht weiter aus.
+- **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
+  dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
+  Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
+  Schluessel der Hol-Relation jetzt bei der GEBER-Quelle mit
+  (`holSchluesselJeGeber` in `export/benutzteQuellen` -> `felderFor`):
+  Jahr/Archiv standen in keiner FELDER-Bestellung, gingen darum LEER hinaus,
+  und leer findet belegt nur den aktuellen Nummernkreis. (2) Die
+  Antwort-Erkennung des Laders nimmt nur noch die belegte RESULT-Form
+  (`extractSatzAntwort` in `softengine/relations`) — vorher galt jeder
+  Schluessel der RESULT_KEYS-Liste, und weil LEER hier „Ende der Liste"
+  bedeutet, haette ein Fremdpaket mit leerem ID-Feld die Positionsliste still
+  mittendrin abgeschnitten. Runtime-Bytes aus (2) absichtlich neu.
+  **SE-Echttest der Welle weiter offen.**
+  Davor: C1 (2026-08-11, vorgezogen: A9/A10 haengen an
   den offenen Nutzer-Proben) — das Popup komponiert den geteilten
   `DialogRahmen` (`blocks/shared/DialogRahmen.ts`), sein eigener
   Zwillings-Rahmen und `POPUP_RAND` sind weg; X-Vertrag steht (Maske:

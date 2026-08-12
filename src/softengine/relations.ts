@@ -76,17 +76,8 @@ function parsed(value: unknown): unknown {
   try { return JSON.parse(value) as unknown } catch { return undefined }
 }
 
-// `satzAntwort`: für die Ketten ist ein leerer String von „keine Antwort
-// erkannt" nicht unterscheidbar (leer = undefined), und der Ergebnis-Skalar
-// darf getrimmt werden. Der Relation-Lader (Welle R) braucht BEIDES anders:
-// seine Antwort ist ein SATZ-Ausschnitt — die Spaltenpositionen zählen,
-// Trimmen verschöbe jedes Feld —, und hinter der letzten Position antwortet
-// SoftEngine mit einem LEEREN RESULT, das genau seine Antwort IST
-// (Ende-Erkennung). Ohne die Unterscheidung verrutschte jede Spalte und
-// jedes Listen-Ende liefe in den 6-Sekunden-Timeout.
-function scalar(value: unknown, satzAntwort: boolean): string | undefined {
+function scalar(value: unknown): string | undefined {
   if (typeof value === 'string') {
-    if (satzAntwort) return value
     const t = value.trim()
     return t === '' ? undefined : t
   }
@@ -94,13 +85,13 @@ function scalar(value: unknown, satzAntwort: boolean): string | undefined {
   return undefined
 }
 
-function firstScalar(value: unknown, depth: number, satzAntwort: boolean): string | undefined {
+function firstScalar(value: unknown, depth: number): string | undefined {
   if (depth > 12) return undefined
-  const direct = scalar(value, satzAntwort)
+  const direct = scalar(value)
   if (direct !== undefined) return direct
   if (Array.isArray(value)) {
     for (const entry of value) {
-      const found = firstScalar(entry, depth + 1, satzAntwort)
+      const found = firstScalar(entry, depth + 1)
       if (found !== undefined) return found
     }
     return undefined
@@ -108,11 +99,11 @@ function firstScalar(value: unknown, depth: number, satzAntwort: boolean): strin
   if (!isRecord(value)) return undefined
   for (const key of RESULT_KEYS) {
     if (!(key in value)) continue
-    const found = firstScalar(value[key], depth + 1, satzAntwort)
+    const found = firstScalar(value[key], depth + 1)
     if (found !== undefined) return found
   }
   for (const entry of Object.values(value)) {
-    const found = firstScalar(entry, depth + 1, satzAntwort)
+    const found = firstScalar(entry, depth + 1)
     if (found !== undefined) return found
   }
   return undefined
@@ -121,24 +112,70 @@ function firstScalar(value: unknown, depth: number, satzAntwort: boolean): strin
 // GET_RELATION-Antworten sind nicht nummeriert oder einer Anfrage
 // zugeordnet. Darum wird nur ein expliziter Ergebnis-/Index-Schlüssel als
 // Antwort akzeptiert; irgendein fremder Skalar im Callback reicht nicht.
-export function extractRelationResult(raw: unknown, satzAntwort = false): string | undefined {
+export function extractRelationResult(raw: unknown): string | undefined {
   const value = parsed(raw)
   if (!isRecord(value)) return undefined
   for (const key of RESULT_KEYS) {
     if (!(key in value)) continue
-    const found = firstScalar(value[key], 0, satzAntwort)
+    const found = firstScalar(value[key], 0)
     if (found !== undefined) return found
   }
   for (const entry of Object.values(value)) {
     if (Array.isArray(entry)) {
       for (const item of entry) {
-        const found = extractRelationResult(item, satzAntwort)
+        const found = extractRelationResult(item)
         if (found !== undefined) return found
       }
     } else if (isRecord(entry)) {
-      const found = extractRelationResult(entry, satzAntwort)
+      const found = extractRelationResult(entry)
       if (found !== undefined) return found
     }
+  }
+  return undefined
+}
+
+// Die Antwort auf eine SATZ-Frage (Relation-Lader, Welle R) — eine ANDERE,
+// engere Treffer-Regel als oben, und das ist der Kern der Sache.
+//
+// BELEGT ist genau EINE Form: {"RESULT":"…"} über den REGISTER-Callback
+// (Wellenkopf R, Echttests 2026-08-10/11). Bis 2026-08-12 lief auch diese
+// Frage durch extractRelationResult und nahm damit JEDEN Schlüssel der
+// RESULT_KEYS-Liste an — auch PINDEX, INDEX, KEY, ID, VALUE, auch leer, auch
+// tief verschachtelt. Der Lader wertet aber eine leere Antwort als „Ende der
+// Liste": ein beliebiges Fremdpaket mit einem leeren ID- oder INDEX-Feld,
+// das während des Ladens hereinkommt, hätte die Liste MITTEN in den
+// Positionen abgeschnitten. Still, ohne Fehler, mit halbem Beleg auf dem
+// Schirm (Regel 4).
+//
+// Darum hier: nur RESULT/result, nur mit skalarem Wert. Strings kommen
+// UNGETRIMMT zurück — die Antwort ist ein Ausschnitt des Satzes, Trimmen
+// verschöbe jede Spalte. Und LEER zählt als Antwort, sonst liefe jedes
+// Listen-Ende in den 6-Sekunden-Timeout.
+//
+// Gegraben wird wie oben (SoftEngine verpackt je nach Weg unterschiedlich
+// tief: roher JSON-String, { MSG: { DATA } }, SEDATA.MessageN), Tiefendeckel
+// 12 — nur die Treffer-Regel ist streng.
+const SATZ_SCHLUESSEL = ['RESULT', 'result'] as const
+
+export function extractSatzAntwort(raw: unknown, tiefe = 0): string | undefined {
+  if (tiefe > 12) return undefined
+  const value = typeof raw === 'string' ? parsed(raw) : raw
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const found = extractSatzAntwort(entry, tiefe + 1)
+      if (found !== undefined) return found
+    }
+    return undefined
+  }
+  if (!isRecord(value)) return undefined
+  for (const key of SATZ_SCHLUESSEL) {
+    const wert = value[key]
+    if (typeof wert === 'string') return wert
+    if (typeof wert === 'number' || typeof wert === 'boolean') return String(wert)
+  }
+  for (const entry of Object.values(value)) {
+    const found = extractSatzAntwort(entry, tiefe + 1)
+    if (found !== undefined) return found
   }
   return undefined
 }
@@ -190,7 +227,9 @@ export function newSeMessageResult(
     .filter((key) => !before.has(key))
     .sort((a, b) => Number(b.slice(7)) - Number(a.slice(7)))
   for (const key of keys) {
-    const found = extractRelationResult(seData[key], satzAntwort)
+    // Die SATZ-Frage des Laders hat ihre eigene, engere Treffer-Regel
+    // (extractSatzAntwort) — der Ketten-Weg bleibt beim breiten Schlüsselsatz.
+    const found = satzAntwort ? extractSatzAntwort(seData[key]) : extractRelationResult(seData[key])
     if (found !== undefined) return { wert: found, roh: seData[key] }
   }
   return undefined
@@ -200,9 +239,10 @@ export function newSeMessageResult(
 //  still       — Fehlerwege (Timeout, fehlende Verbindung) ohne
 //                Fehlerbalken; der Lader läuft still-harmlos aus,
 //                die Ketten behalten ihre Meldungen.
-//  satzAntwort — die Antwort ist ein SATZ-Ausschnitt: roh lassen
-//                (Spaltenpositionen!) und auch LEER zählt als Antwort
-//                (Ende der Positionsliste) — s. scalar.
+//  satzAntwort — die Antwort ist ein SATZ-Ausschnitt: nur die belegte
+//                RESULT-Form zählt, roh (Spaltenpositionen!), und auch LEER
+//                ist eine Antwort (Ende der Positionsliste)
+//                — s. extractSatzAntwort.
 export interface RelationOptionen {
   still?: boolean
   satzAntwort?: boolean
@@ -250,7 +290,7 @@ function runNextGet(): void {
   // Abonnieren, BEVOR gesendet wird: Test-Stubs und manche Hosts antworten
   // synchron. Der Callback ist für BWMSG und WWMSG derselbe Hauptweg.
   const unsubscribe = onSeAntwort((raw) => {
-    const result = extractRelationResult(raw, satzAntwort)
+    const result = satzAntwort ? extractSatzAntwort(raw) : extractRelationResult(raw)
     if (result !== undefined) finish(result, raw)
   })
 
