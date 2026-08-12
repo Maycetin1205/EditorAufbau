@@ -63,6 +63,11 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
   const [kennungEingabe, setKennungEingabe] = useState(kennungAnzeige(source?.idbId))
   const [kopfsatzEingabe, setKopfsatzEingabe] = useState(source?.kopfsatzIndex ?? '')
+  // Zeilenfilter (R5): freier Selektionsausdruck der Installation, den
+  // SoftEngine auswertet. Ungeprueft uebernommen — welche Felder und
+  // Operatoren gelten, weiss nur die Installation (Regel 5, s.
+  // zeilenFilterFor).
+  const [filterEingabe, setFilterEingabe] = useState(source?.zeilenFilter ?? '')
   // Zeilen-Weg (Welle R): 'geschoben' = SoftEngine schickt beim Laden
   // (heutiger Weg); 'holen' = die Maske fragt selbst per Relation, sobald
   // ein Beleg angeklickt ist. Sichtbar sind NUR Relationsnummer und die
@@ -173,6 +178,11 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       ...(kopfsatzEingeben && kopfsatzFromInput(kopfsatzEingabe) !== ''
         ? { kopfsatzIndex: kopfsatzFromInput(kopfsatzEingabe) }
         : {}),
+      // Der Zeilenfilter bleibt gespeichert, auch solange die Quelle ihre
+      // Zeilen holt (dann ist das Feld nur ausgeblendet, s. u.) — dasselbe
+      // Muster wie der Kopfsatz. Wirkungslos wird er dort ohnehin: eine
+      // holende Quelle hat keinen SEFILELOOP-Eintrag, an dem er staende.
+      ...(filterEingabe.trim() !== '' ? { zeilenFilter: filterEingabe.trim() } : {}),
       // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
       // bleibt, neue Quellen bekommen '0_10'.
       ...(source
@@ -301,6 +311,25 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
                 placeholder="z. B. BEL_0_11"
                 className="w-32"
                 onChange={(e) => setKopfsatzEingabe(e.target.value)}
+              />
+            )}
+          </Field>
+        )}
+
+        {/* 2d. Zeilenfilter — für jede Quelle, die SoftEngine schickt. Beim
+            Holen ausgeblendet: dort gibt es keinen SEFILELOOP-Eintrag, an dem
+            der Filter stünde (der eingetippte Wert bleibt gespeichert). */}
+        {!holtZeilen && (
+          <Field
+            label="Zeilenfilter"
+            description="Leer lassen, wenn alle Zeilen kommen sollen. Sonst die Bedingung, die eine Zeile erfüllen muss — Feld mit Datei-Kürzel: BEL_3_8<99990000. Mehrere mit & verbinden. Kommt unverändert zu SoftEngine."
+          >
+            {(f) => (
+              <TextInput
+                {...f}
+                value={filterEingabe}
+                placeholder="z. B. BEL_3_8<99990000"
+                onChange={(e) => setFilterEingabe(e.target.value)}
               />
             )}
           </Field>

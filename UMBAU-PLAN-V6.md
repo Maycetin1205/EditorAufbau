@@ -59,8 +59,8 @@ git log --oneline -8
   **R3** (Beleg per Nachschlage-Formularfeld waehlen), **R4** (Beleg
   anlegen und sofort sehen — BAUBAR, Anlege-Protokoll 2026-08-12 im
   Etappenkopf: GET 1020 antwortet mit dem Index des frischen Belegs),
-  **R5** (Refresh-Flut/Zeilenfilter — BAUBAR, FREISELEKT-Form am
-  2026-08-12 aus `Desktop\VORLAGEN` belegt). Details im Wellen-Kopf R.
+  **R5** (Refresh-Flut/Zeilenfilter — **GEBAUT 2026-08-12**, s. oben).
+  Details im Wellen-Kopf R.
 - **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben
   und erweitert um N4 (Kanban-Untergruppen/„Zimmer") und N5
   (Bild-Baustein, Stufe 1 statisch). Design-Mix v2
@@ -68,8 +68,25 @@ git log --oneline -8
   und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  R3, R5, U1, U2, U3, U6; danach N1–N5.
-- **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
+  R3, U1, U2, U3, U6; danach N1–N5.
+- **Letzte fertige Etappe: R5** (2026-08-12) — eine Datenquelle traegt einen
+  optionalen **Zeilenfilter**, den der Export als `FREISELEKT` hinter `FELDER`
+  in ihren SEFILELOOP-Eintrag schreibt (`zeilenFilterFor` in
+  `core/data/dataSources.ts`, geschrieben in `export/exportMask.ts`). Damit
+  bestimmt die Maske, welche Zeilen SoftEngine beim Refresh ueberhaupt
+  schiebt. Die Position hinter `FELDER` ist an den echten SEvariablen des
+  Herstellers nachgesehen (`Desktop\VORLAGEN`), nicht geraten; der Ausdruck
+  reist UNGEPRUEFT hinaus (Installations-Daten, Regel 5). Der Lader nimmt ihn
+  woertlich, ohne Trimmen — sonst sperrt `keinVerlust` die Bibliothek. Leerer
+  Filter = Datei Byte fuer Byte wie vorher; Runtime-Buendel und Referenzabzug
+  unveraendert. Bei einer HOLENDEN Quelle ist das Feld ausgeblendet (kein
+  SEFILELOOP-Eintrag, an dem der Filter staende), der Wert bleibt gespeichert.
+  Vorbereitend verhaltensneutral geschnitten (eigener Commit, Plan 3.1): die
+  Eingabe-Helfer zogen aus `dataSources.ts` (496 von 500 Zeilen) nach
+  `core/data/quellenEingabe.ts` aus, weitergereicht wie bisher.
+  **Was hier NICHT gebaut ist:** Sortierung, Index-Bereich, MAX_DURCHLAEUFE —
+  alle daneben belegt, alle bewusst draussen (Regel 10, s. Etappenkopf R5).
+  Davor: R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
   Schluessel der Hol-Relation jetzt bei der GEBER-Quelle mit
@@ -251,7 +268,7 @@ git log --oneline -8
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
 - **Naechste Etappe:** Welle U, Etappe fuer Etappe per Opus-Kopier-Auftrag
-  (Wellen-Kopf U); daneben R3/R5, sobald der Nutzer sie zieht. A9 ist per
+  (Wellen-Kopf U); daneben R3, sobald der Nutzer sie zieht. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -2284,7 +2301,7 @@ Export-Testfaelle fuer die neue Schritt-Angabe.
 Vorlage in der Bibliothek) ausfuehren — die Positions-/Beleg-Anzeige
 springt ohne Refresh auf den frischen Beleg.
 
-### R5 · Refresh-Flut: Zeilenfilter FREISELEKT (BAUBAR — Form belegt 2026-08-12)
+### R5 · Refresh-Flut: Zeilenfilter FREISELEKT (GEBAUT 2026-08-12)
 
 **Belegtes Problem (Nutzer 2026-08-12, sein Blocker):** Ein Refresh ist
 noetig, damit neue Saetze erscheinen — aber SoftEngine schiebt dabei ALLE
