@@ -6,17 +6,14 @@
 // Maskendatei. Der Store ruft nur noch loadFromStorage/persistState.
 
 import { type BlockTree } from '../core/blocks/BlockData'
-import type { LadeProblem } from '../core/data/ladeProblem'
-import { pruefeBaumStand, ZUKUNFT_GRUND } from './ladeKette'
-import { CURRENT_SCHEMA_VERSION } from './migrations'
+import { baumAusRohdaten } from './ladeKette'
+import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
 import {
   backupKeyFor,
   meldeSpeicherPanne,
   merkeSpeicherErfolg,
-  sichereQuarantaene,
   sichereUnlesbaren,
 } from './notfallkopie'
-import { speicherGate } from './speicherGate'
 
 export const STORAGE_KEY = 'aufbau_editor_mvp_v1'
 // Notfallkopie eines UNLESBAREN Speicherstands: getrennter Schlüssel,
@@ -66,56 +63,6 @@ function backupUnreadableState(raw: string): void {
   sichereUnlesbaren(STORAGE_KEY, raw, 'Editor-Stand')
 }
 
-// Der Satz fuer einen Stand, bei dem beim Laden etwas verlorengegangen waere
-// (A4). Bis dahin duennte der Browser-Weg still aus und der Autosave schrieb
-// den kleineren Stand fest.
-export const VERLUST_GRUND =
-  'Beim Laden dieses Standes wären Teile verlorengegangen. Er wurde deshalb '
-  + 'unter Quarantäne gestellt und NICHT geöffnet.'
-
-// Einen lesbaren, aber unantastbaren Stand unter Quarantaene stellen (A3):
-//   1. Rohdaten unveraendert mit Zeitstempel sichern (die Kopie fasst nie
-//      wieder jemand an);
-//   2. den Riegel vorlegen — ab hier schreibt KEIN Speicherweg mehr, auch
-//      nicht die zwei Bibliotheken;
-//   3. nichts hydrieren: der Aufrufer bekommt null und der Editor startet
-//      leer, waehrend die Oberflaeche die Sperransicht zeigt.
-// Der ORIGINAL-Schluessel bleibt dabei unangetastet. Er wird erst
-// ueberschrieben, wenn der Bediener in der Sperransicht ausdruecklich einen
-// anderen Weg waehlt — dafuer gibt es die Kopie aus Schritt 1.
-function stelleUnterQuarantaene(
-  raw: string,
-  grund: string,
-  probleme: readonly LadeProblem[],
-): void {
-  const kopieSchluessel = sichereQuarantaene(STORAGE_KEY, raw, new Date().toISOString())
-  speicherGate.sperre(grund, probleme, {
-    bezeichnung: 'Maske',
-    speicherSchluessel: STORAGE_KEY,
-    kopieSchluessel,
-    rohdaten: raw,
-  })
-}
-
-// Der EINZIGE Weg, der etwas wegwirft — und nur nach ausdruecklicher
-// Bestaetigung in der Sperransicht („verwerfen und leer beginnen").
-//
-// Entfernt GENAU die Schluessel der GESPERRTEN Staende und keinen anderen: ist
-// nur eine Bibliothek betroffen, bleibt die Maske liegen, und umgekehrt. Was
-// nicht unter Quarantaene stand, wird nicht mit weggeraeumt. Notfallkopien und
-// Quarantaene-Kopien bleiben in jedem Fall — sie sind die Rettung, nicht der
-// Muell.
-export function verwerfeGesperrteStaende(): void {
-  for (const quelle of speicherGate.quarantaene?.quellen ?? []) {
-    try {
-      localStorage.removeItem(quelle.speicherSchluessel)
-    } catch (err) {
-      console.warn(`„${quelle.bezeichnung}" konnte nicht entfernt werden.`, err)
-    }
-  }
-  speicherGate.entsperre()
-}
-
 // Meldung ueber verworfene Bausteintypen — dieselbe fuer beide Leser.
 export function meldeVerworfeneTypen(verworfen: Map<string, number>): void {
   if (verworfen.size === 0 || typeof alert !== 'function') return
@@ -154,27 +101,32 @@ export function loadFromStorage(): LoadedState | null {
     // Eine fehlende Versionsangabe gilt weiter als 1 (Altbestand aus der Zeit
     // vor der Zaehlung) — anders als am Datei-Weg, der sie VERLANGT. Ein
     // gewachsener Browser-Speicher ist kein Dateiformat.
-    // Alles andere entscheidet die geteilte Kette: Zukunft abweisen,
-    // migrieren + bereinigen (Demotext-Putzer nur fuer alte Staende, feste
-    // historische Grenze aus A2), dann pruefen.
+    //
+    // Der Browser-Weg laedt NACHSICHTIG (Nutzer-Ansage 2026-08-12): migrieren
+    // + bereinigen, was der Sanitizer nicht kennt, faellt weg, und der Editor
+    // oeffnet. Die Quarantaene aus A3/A4 (Sperransicht, Schreib-Riegel) ist
+    // auf dieselbe Ansage restlos entfernt — sie sperrte den Bediener aus
+    // seiner eigenen Arbeit aus. Die strenge Verlust-Pruefung lebt weiter am
+    // DATEI-Weg (maskenDatei.pruefeBaumStand): eine Datei ist nur ein
+    // Kandidat, ihre Ablehnung kostet nichts. Damit laedt auch ein Stand aus
+    // einer neueren Editor-Version wieder kommentarlos, so weit er lesbar ist.
     const schemaVersion = typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1
-    const stand = pruefeBaumStand({ ...parsed, schemaVersion })
-    if (stand.art === 'quarantaene') {
-      if (stand.ursache === 'unlesbar') {
-        // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder
-        // oder halb-kaputter Inhalt, in dem echte Arbeit stecken könnte): wie
-        // einen Lesefehler behandeln — sichern + melden, nicht still leer starten.
-        backupUnreadableState(raw)
-        return null
-      }
-      stelleUnterQuarantaene(raw, stand.ursache === 'zukunft' ? ZUKUNFT_GRUND : VERLUST_GRUND, stand.probleme)
+    const baum = baumAusRohdaten(
+      { ...parsed, schemaVersion },
+      schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA,
+    )
+    if (!baum) {
+      // Gültiges JSON, aber KEINE verwertbare Baum-/Block-Struktur (fremder
+      // oder halb-kaputter Inhalt, in dem echte Arbeit stecken könnte): wie
+      // einen Lesefehler behandeln — sichern + melden, nicht still leer starten.
+      backupUnreadableState(raw)
       return null
     }
-    meldeVerworfeneTypen(stand.baum.verworfen)
+    meldeVerworfeneTypen(baum.verworfen)
     return {
-      tree: stand.baum.tree,
-      selectedId: stand.baum.selectedId,
-      resaveNeeded: stand.art === 'migriert',
+      tree: baum.tree,
+      selectedId: baum.selectedId,
+      resaveNeeded: baum.schemaAdvanced,
     }
   } catch (error) {
     // Unlesbarer Stand (kaputtes JSON, unerwarteter Fehler beim Aufbau):
@@ -188,10 +140,6 @@ export function loadFromStorage(): LoadedState | null {
 
 // Speicher-Rumpf des Autosave (der Store entprellt; hier wird geschrieben).
 export function persistState(tree: BlockTree, selectedId: string | null): void {
-  // Der Riegel aus A3: steht der geladene Stand unter Quarantaene, schreibt
-  // hier NICHTS mehr — kein Timer, kein pagehide, kein Klick. Sonst haette
-  // die alte App den neueren Stand 500 ms nach dem Start ueberschrieben.
-  if (!speicherGate.darfSchreiben()) return
   try {
     const state: PersistedState = {
       schemaVersion: CURRENT_SCHEMA_VERSION,

@@ -23,12 +23,11 @@ export const CURRENT_SCHEMA_VERSION = 5
 // (degeneriert): die Karten entfallen mit dem Kasten.
 // Liefert die ids, die diese Migration ABSICHTLICH aus dem Baum genommen hat
 // (A4, 2026-08-10). Vorher gab sie nichts zurueck — und die Verlust-Kontrolle
-// konnte gewollte Aenderung nicht von Beschaedigung unterscheiden: sie sah
-// einen Knoten weniger als in den Rohdaten und stellte den ganzen Stand unter
-// Quarantaene. Ein Bediener mit einem alten Vorlagen-Kasten im Speicher waere
-// aus seinem eigenen Editor ausgesperrt worden. Absicht muss benannt sein,
-// sonst ist sie von Schaden nicht zu trennen (dieselbe Lehre wie bei
-// `putzeAlteKartenDemos`).
+// (heute nur noch am DATEI-Weg, maskenDatei) konnte gewollte Aenderung nicht
+// von Beschaedigung unterscheiden: sie sah einen Knoten weniger als in den
+// Rohdaten und lehnte eine voellig gesunde alte Maskendatei ab. Absicht muss
+// benannt sein, sonst ist sie von Schaden nicht zu trennen (dieselbe Lehre
+// wie bei `putzeAlteKartenDemos`).
 export function migrateKanbanVorlage(
   src: Record<string, { type?: unknown; childIds?: unknown }>,
 ): string[] {
@@ -152,11 +151,11 @@ export function putzeAlteKartenDemos(tree: BlockTree): string[] {
 // Warum diese Liste gebraucht wird (S2.1, 2026-08-11): `normalizeProps` uebernimmt
 // nur, was der Baustein heute als Standardwert kennt. Streicht eine Etappe eine
 // Eigenschaft, verschwindet ihr gespeicherter Wert damit lautlos — und die
-// Verlust-Kontrolle (ladeKette.verlustProbleme) sieht genau das: eine Angabe, die
-// in den Rohdaten stand und im Ergebnis fehlt. Sie stellt den Stand dann unter
-// Quarantaene. Ein voellig gesunder Altbestand, dessen einzige „Beschaedigung"
-// darin besteht, dass der Bediener einmal „25 pro Seite" gewaehlt hat, waere
-// damit gesperrt — genau der Fehler, den A4 fuer den Vorlagen-Kasten schon
+// Verlust-Kontrolle (ladeKette.verlustProbleme, heute nur noch am DATEI-Weg)
+// sieht genau das: eine Angabe, die in den Rohdaten stand und im Ergebnis
+// fehlt. Sie lehnte dann eine voellig gesunde Maskendatei ab, deren einzige
+// „Beschaedigung" darin besteht, dass der Bediener einmal „25 pro Seite"
+// gewaehlt hat — genau der Fehler, den A4 fuer den Vorlagen-Kasten schon
 // einmal beheben musste. Absicht muss benannt sein, sonst ist sie von Schaden
 // nicht zu trennen (dieselbe Lehre wie bei `putzeAlteKartenDemos`).
 //

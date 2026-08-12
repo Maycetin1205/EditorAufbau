@@ -66,8 +66,7 @@ export type AuspackErgebnis =
   | { ok: false; grund: string; probleme: readonly LadeProblem[] }
 
 // Der Satz, in den ein Fund fuer den DATEI-Weg gegossen wird. Die Funde
-// selbst sind neutral formuliert (ladeKette.LadeProblem) — dieselben Funde
-// zeigt am Browser-Weg die Sperransicht, wo von einer Datei keine Rede ist.
+// selbst sind neutral formuliert (ladeKette.LadeProblem).
 function beschaedigtSatz(probleme: readonly LadeProblem[]): string {
   const erstes = probleme[0]?.grund ?? 'der Masken-Aufbau ist unlesbar'
   return `Die Datei ist beschädigt: ${erstes}. Sie wird nicht geladen, damit `
@@ -214,17 +213,18 @@ function auspacken(text: string): AuspackErgebnis {
     return abgelehnt('Die Datei enthält keinen lesbaren Masken-Aufbau.')
   }
 
-  // Ab hier laeuft die GETEILTE Lade-Kette (ladeKette.pruefeBaumStand) in
+  // Ab hier laeuft die strenge Lade-Kette (ladeKette.pruefeBaumStand) in
   // ihrer festen Reihenfolge: Zukunftsversion abweisen, migrieren +
   // bereinigen, gegen den heutigen Vertrag pruefen. Der Datei-Weg laesst
   // dabei KEINEN Teilverlust durch — die Datei ist nur ein KANDIDAT (A3):
   // wird sie abgelehnt, bleibt die offene Sitzung unangetastet, inklusive
-  // ihrer Autosaves. Gemeinsames Pruef-Ergebnis, eigene Aufrufer-Politik.
+  // ihrer Autosaves. (Der Browser-Speicher laedt seit 2026-08-12 bewusst
+  // nachsichtig — Nutzer-Ansage; die Strenge gilt nur noch hier.)
   //
   // Den Demotext-Putzer steuert die Kette selbst (feste historische Grenze
   // aus A2) — die Ableitung stand vorher an beiden Wegen getrennt im Code.
   const stand = pruefeBaumStand({ schemaVersion, tree: o.tree })
-  if (stand.art === 'quarantaene') {
+  if (stand.art === 'abgelehnt') {
     if (stand.ursache === 'zukunft') {
       return {
         ok: false,

@@ -10,9 +10,8 @@
 // Aufrufer, nicht der Sanitizer. Der Aufrufer setzt ihn davor
 // (state/ladeKette.LadeProblem).
 //
-// Und bewusst ein SATZ-BRUCHSTUECK als Grund, kleingeschrieben: derselbe Fund
-// erscheint im Datei-Weg hinter „Die Datei ist beschädigt: …" und in der
-// Sperransicht als Listenpunkt.
+// Und bewusst ein SATZ-BRUCHSTUECK als Grund, kleingeschrieben: der Fund
+// erscheint im Datei-Weg hinter „Die Datei ist beschädigt: …".
 export interface EintragProblem {
   // Eintrags-id, wo es eine gibt — sonst die Position („Eintrag 3"), damit
   // der Bediener die Stelle in seiner Datei findet.
@@ -21,7 +20,7 @@ export interface EintragProblem {
 }
 
 // Derselbe Fund, sobald der Aufrufer weiss, WORIN er steckt. Diese Form
-// zeigen die Ablehnung einer Maskendatei und die Sperransicht.
+// zeigt die Ablehnung einer Maskendatei.
 export interface LadeProblem extends EintragProblem {
   bereich: string
 }

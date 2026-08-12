@@ -9,9 +9,7 @@ import { dataSourceStore } from '../state/DataSourceStore'
 import { Editor } from '../state/Editor'
 import { EditorProvider } from '../state/EditorProvider'
 import { relationStore } from '../state/RelationStore'
-import { speicherGate } from '../state/speicherGate'
 import { Fehlergrenze } from './Fehlergrenze'
-import { Sperransicht } from './Sperransicht'
 
 interface ProvidersProps {
   children: ReactNode
@@ -20,12 +18,6 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   // Lazy-Init: genau EINE Instanz für die Lebenszeit der App.
   const [editor] = useState(() => new Editor())
-  // Stand unter Quarantaene (A3)? Der Editor hat ihn beim Bauen geprueft und
-  // NICHT hydriert; der Riegel steht. Gefragt wird genau EINMAL, direkt nach
-  // dem Bauen — spaeteres Sperren gibt es nicht (nur der Browserstart sperrt),
-  // und ein Zustand hier laesst die Ansicht sauber verschwinden, sobald der
-  // Bediener einen der drei Wege gegangen ist.
-  const [quarantaene, setQuarantaene] = useState(() => speicherGate.quarantaene)
 
   // Alle drei Speicher schreiben entprellt (500 ms). Waehrend einer
   // durchgehenden Arbeitsserie meldet jeder Schritt schneller als das —
@@ -54,21 +46,10 @@ export function Providers({ children }: ProvidersProps) {
     }
   }, [editor])
 
-  // Ein gesperrter Stand ersetzt den Editor, statt neben ihm zu stehen: ein
-  // Editor, der jede Aenderung annimmt und nie speichert, waere die
-  // schlimmere Falle (A3).
   return (
     <EditorProvider editor={editor}>
       <Fehlergrenze>
-        {quarantaene
-          ? (
-            <Sperransicht
-              quarantaene={quarantaene}
-              editor={editor}
-              onWeiter={() => setQuarantaene(null)}
-            />
-            )
-          : children}
+        {children}
       </Fehlergrenze>
     </EditorProvider>
   )

@@ -16,12 +16,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import '../blocks/popup/PopupBlock'
 import { ROOT_ID } from '../core/blocks/BlockData'
 import { Editor } from './Editor'
-import { speicherGate } from './speicherGate'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
 
-beforeEach(() => { localStorage.clear(); speicherGate.entsperre() })
+beforeEach(() => { localStorage.clear() })
 
 // Text des einen Testbausteins — sein Standardwert steht in testBlocks.
 const STANDARD = 'Standard'

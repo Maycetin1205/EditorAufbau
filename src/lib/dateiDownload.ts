@@ -1,10 +1,8 @@
 // dateiDownload — DIE eine Stelle, die dem Bediener eine Datei hinlegt.
 //
-// Aus Toolbar.tsx herausgeloest (A3, 2026-08-10), als die Sperransicht die
-// Rohdaten eines gesperrten Standes als Datei anbieten musste — der zweite
-// echte Aufrufer (Regel 10: erst beim zweiten Fall herausziehen).
-// Verhaltensgleich uebernommen, inklusive der zwei Stolpersteine, die hier
-// schon teuer gelernt wurden.
+// Aus Toolbar.tsx herausgeloest (A3, 2026-08-10) fuer die inzwischen restlos
+// entfernte Sperransicht. Verhaltensgleich uebernommen, inklusive der zwei
+// Stolpersteine, die hier schon teuer gelernt wurden.
 
 export function downloadFile(name: string, content: string, type: string): void {
   const url = URL.createObjectURL(new Blob([content], { type }))

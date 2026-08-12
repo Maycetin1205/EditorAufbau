@@ -123,8 +123,7 @@ export function Toolbar({ onSteuerung }: { onSteuerung: () => void }) {
       + 'nicht rückgängig machen.',
     )) return
 
-    // Die Reihenfolge (Bibliotheken, dann Baum) wohnt in maskeUebernehmen —
-    // dieselbe Stelle benutzt die Sperransicht (A3).
+    // Die Reihenfolge (Bibliotheken, dann Baum) wohnt in maskeUebernehmen.
     uebernehmeMaske(ed, ergebnis.inhalt)
     meldeVerworfeneTypen(ergebnis.verworfen)
   }

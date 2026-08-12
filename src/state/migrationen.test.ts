@@ -24,7 +24,6 @@ import '../blocks/trenner/TrennerBlock'
 import '../blocks/tabelle/TabelleBlock'
 import { Editor } from './Editor'
 import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
-import { speicherGate } from './speicherGate'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
@@ -37,9 +36,7 @@ function load(state: unknown): Editor {
   return new Editor()
 }
 
-// Der Riegel (speicherGate, A3) lebt im Modul und ueberlebt den einzelnen
-// Test — ein gesperrter Stand wuerde jeden folgenden Fall leer laden lassen.
-beforeEach(() => { localStorage.clear(); speicherGate.entsperre() })
+beforeEach(() => { localStorage.clear() })
 
 describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
   it('zieht die Musterkarte aus dem Kasten an den ANFANG der ersten Spalte, der Kasten verschwindet', () => {
@@ -200,24 +197,18 @@ describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => 
     expect(props?.heading).toBe('Rückruf Fr. Wagner')
   })
 
-  // Schema 6 war bis A3 derselbe Fall wie 5: laden, aber nicht putzen. Seit A3
-  // ist er STAERKER geschuetzt — ein Stand aus der Zukunft wird gar nicht mehr
-  // geladen, sondern unter Quarantaene gestellt (persistence.test). „Heute"
-  // bleibt damit nicht nur im Baum stehen, sondern unangetastet im Speicher:
-  // diese App fasst ihn nicht an, weil sie ihn nicht versteht.
+  // Schema 6 ist NEUER als diese App. Bis A3 hiess das: laden, aber nicht
+  // putzen; A3/A4 sperrten stattdessen; die Sperre ist am 2026-08-12 auf
+  // Nutzer-Ansage restlos entfernt. Es gilt wieder: laden, nicht putzen.
   //
   // Der Fall bleibt hier stehen, weil er die A2-Zusage weiter bewacht: waere
   // die Putzer-Grenze mit der Schemaversion mitgewandert, wuerde ein Stand mit
   // Version 6 nach einem kuenftigen Sprung auf 7 wieder GEPUTZT — und dann
   // muesste dieser Fall rot werden.
-  it('Schema 6 wird nicht mehr geladen, sondern gesperrt — und bleibt roh', () => {
-    const ed = mitKarte(6)
-    expect(ed.getNode('getippt')).toBeUndefined()
-    expect(speicherGate.gesperrt).toBe(true)
-    const roh = localStorage.getItem(KEY) ?? ''
-    expect(roh).toContain('Heute')
-    expect(roh).toContain('Rückruf Fr. Wagner')
-    speicherGate.entsperre()
+  it('Schema 6 laedt nachsichtig und wird NICHT geputzt', () => {
+    const props = mitKarte(6).getNode('getippt')?.props
+    expect(props?.chipText).toBe('Heute')
+    expect(props?.heading).toBe('Rückruf Fr. Wagner')
   })
 
   // Stolperdraht fuer den Tag, an dem jemand CURRENT_SCHEMA_VERSION hochsetzt:

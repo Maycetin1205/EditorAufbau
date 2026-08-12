@@ -18,7 +18,6 @@ import { registerTestBlocks, TEST_BLOCK, TEST_EVENT_BLOCK } from '../test/testBl
 import { Editor } from './Editor'
 import { CURRENT_SCHEMA_VERSION } from './migrations'
 import { MASKEN_DATEI_ART, packeMaske, packeMaskeAus, type MaskenInhalt } from './maskenDatei'
-import { speicherGate } from './speicherGate'
 
 registerTestBlocks()
 
@@ -157,19 +156,13 @@ describe('packeMaskeAus lehnt Dateien aus der ZUKUNFT ab', () => {
     if (!e.ok) expect(e.grund).toContain('neueren Version')
   })
 
-  // A3 (2026-08-10): Browser-Speicher und Datei haben dieselbe
-  // Versionspolitik, aber NICHT dieselbe Aufrufer-Politik. Der Browser-Stand
-  // ist die Sitzung — er sperrt. Die Datei ist nur ein KANDIDAT: sie wird mit
-  // Problemliste abgelehnt und laesst die offene, gueltige Sitzung samt ihren
-  // Autosaves unberuehrt. Sonst koennte ein Fehlgriff im Datei-Dialog den
-  // laufenden Editor lahmlegen.
-  it('ein abgelehnter Kandidat sperrt die offene Sitzung NICHT', () => {
+  // Die Datei ist nur ein KANDIDAT: sie wird mit Problemliste abgelehnt und
+  // laesst die offene, gueltige Sitzung samt ihren Autosaves unberuehrt.
+  it('ein abgelehnter Kandidat nennt die Stelle, nicht nur „geht nicht"', () => {
     const roh = JSON.parse(packeMaske(beispiel())) as Record<string, unknown>
     roh.schemaVersion = CURRENT_SCHEMA_VERSION + 1
     const e = packeMaskeAus(JSON.stringify(roh))
     expect(e.ok).toBe(false)
-    expect(speicherGate.gesperrt).toBe(false)
-    // Und die Ablehnung nennt die Stelle, nicht nur „geht nicht".
     if (!e.ok) {
       expect(e.probleme).toHaveLength(1)
       expect(e.probleme[0].grund).toContain(`Aufbau-Version ${CURRENT_SCHEMA_VERSION + 1}`)

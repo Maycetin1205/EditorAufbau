@@ -16,7 +16,6 @@ import { Editor } from './Editor'
 import { backupKeyFor, merkeSpeicherErfolg } from './notfallkopie'
 import { persistState } from './persistence'
 import { RelationStore } from './RelationStore'
-import { speicherGate } from './speicherGate'
 import { createEmptyTree } from './treeOps'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 
@@ -52,7 +51,7 @@ describe('Speicher-Panne meldet sich (B3, 2026-07-28)', () => {
   // Der Merker lebt im Modul und ueberlebt damit den einzelnen Test — in der
   // App ist das richtig (er soll die ganze Sitzung halten), hier muss jeder
   // Fall bei null anfangen.
-  beforeEach(() => { localStorage.clear(); speicherGate.entsperre(); merkeSpeicherErfolg(KEY) })
+  beforeEach(() => { localStorage.clear(); merkeSpeicherErfolg(KEY) })
   afterEach(() => {
     localStorage.setItem = echtesSetItem
     delete (globalThis as Record<string, unknown>).alert
@@ -107,7 +106,6 @@ describe('Speicher-Panne meldet sich (B3, 2026-07-28)', () => {
 describe('Ein werfender Horcher reisst Meldung und Autosave nicht mit (A7.1)', () => {
   beforeEach(() => {
     localStorage.clear()
-    speicherGate.entsperre()
     merkeSpeicherErfolg(KEY)
     // Gespeichert wird entprellt (500 ms) — ohne Zeitsteuerung sieht der Test
     // den Schreibvorgang nie.
@@ -152,8 +150,6 @@ describe('Ein werfender Horcher reisst Meldung und Autosave nicht mit (A7.1)', (
 describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
   beforeEach(() => {
     localStorage.clear()
-    // Der Riegel (A3) lebt im Modul und ueberlebt den einzelnen Test.
-    speicherGate.entsperre()
     merkeSpeicherErfolg(QUELLEN_KEY)
     merkeSpeicherErfolg(RELATIONEN_KEY)
     // Gespeichert wird entprellt (500 ms) — ohne Zeitsteuerung sieht der Test
@@ -246,37 +242,6 @@ describe('Vorlagen-Bibliotheken auf gemeinsamem Fundament (2026-08-04)', () => {
     expect(localStorage.getItem(backupKeyFor(RELATIONEN_KEY))).toBe('{"relations":"keine Liste"}')
     expect(msgs).toHaveLength(1)
     expect(msgs[0]).toContain('Relations-Vorlagen')
-  })
-
-  // A3 (2026-08-10): der Riegel muss ALLE Schreibwege halten, nicht nur den
-  // Baum. Waere der Baum gesperrt und die Bibliotheken nicht, haette eine
-  // alte App die Datenquellen und Relationen eines neueren Standes
-  // ausgeduennt festgeschrieben — derselbe Verlust, nur eine Tuer weiter.
-  it('steht ein Stand unter Quarantaene, schreibt auch keine Bibliothek', () => {
-    const quellen = new DataSourceStore()
-    const relationen = new RelationStore()
-    speicherGate.sperre('Test', [], {
-      bezeichnung: 'Maske', speicherSchluessel: KEY, kopieSchluessel: null, rohdaten: '{}',
-    })
-    try {
-      quellen.add(EINE_QUELLE)
-      relationen.add(EINE_RELATION)
-      speichernAbwarten()
-      expect(localStorage.getItem(QUELLEN_KEY)).toBeNull()
-      expect(localStorage.getItem(RELATIONEN_KEY)).toBeNull()
-
-      // Nach dem Entsperren (gueltige Maske geoeffnet bzw. bestaetigtes
-      // Leeren) laeuft das Speichern wieder — der Riegel ist keine Einbahn.
-      // Die naechste Aenderung tragt den GANZEN Stand hinaus, nicht nur sich
-      // selbst: geschrieben wird immer die komplette Liste.
-      speicherGate.entsperre()
-      quellen.add({ ...EINE_QUELLE, name: 'Zweite' })
-      speichernAbwarten()
-      expect(localStorage.getItem(QUELLEN_KEY)).not.toBeNull()
-      expect(quellen.list).toHaveLength(2)
-    } finally {
-      speicherGate.entsperre()
-    }
   })
 
   it('jede Bibliothek meldet ihren eigenen Klarnamen, wenn Speichern scheitert', () => {

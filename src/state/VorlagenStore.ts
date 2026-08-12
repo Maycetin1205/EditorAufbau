@@ -17,16 +17,13 @@
 // Bewusst KEIN Undo/Redo: eine Bibliothek ist kein Canvas-Gestenraum; vor
 // destruktiven Aktionen fragt die UI nach (wie das Kreuzchen).
 
-import { mitBereich, type EintragProblem } from '../core/data/ladeProblem'
+import { type EintragProblem } from '../core/data/ladeProblem'
 import { deepClone } from '../lib/deepClone'
-import { keinVerlust } from './ladeKette'
 import {
   meldeSpeicherPanne,
   merkeSpeicherErfolg,
-  sichereQuarantaene,
   sichereUnlesbaren,
 } from './notfallkopie'
-import { speicherGate } from './speicherGate'
 import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
 
@@ -53,11 +50,10 @@ export interface VorlagenBauplan<T extends VorlagenEintrag> {
   // Meldungstexte zu vereinheitlichen ist eine eigene Entscheidung, nicht die
   // Nebenwirkung eines Aufraeumens.
   klarnameSchreiben: string
-  // Der Bereich, in dem ein Fund gemeldet wird (A4) — dieselbe Konstante, die
-  // der Datei-Weg benutzt, damit beide Wege denselben Bereich nennen.
-  bereich: string
   // Defensives Bereinigen beim Laden (pruefe*): wirft nie, wirft Unbrauchbares
-  // weg — und sagt seit A4, WAS es weggeworfen hat.
+  // weg — und sagt, WAS es weggeworfen hat. Die Fundliste liest hier niemand
+  // mehr (die Quarantaene ist auf Nutzer-Ansage 2026-08-12 restlos raus);
+  // gebraucht wird sie weiter vom DATEI-Weg (maskenDatei).
   pruefe: (roh: unknown) => { liste: T[]; probleme: EintragProblem[] }
   // Mitgelieferter Startbestand beim ALLERERSTEN Start — nur die Relationen
   // haben einen (der Standard-PUT). Ohne Startbestand beginnt ein frischer
@@ -100,35 +96,10 @@ function ladeAusSpeicher<T extends VorlagenEintrag>(bauplan: VorlagenBauplan<T>)
       sichereUnlesbaren(bauplan.schluessel, roh, bauplan.klarnameLesen)
       return null
     }
-    const { liste, probleme } = bauplan.pruefe(rohListe)
-    // A4: ein EINZELNER kaputter Eintrag verschwand bis hierher lautlos, und
-    // die naechste Aenderung schrieb die ausgeduennte Bibliothek fest. Das
-    // KRITERIUM ist dasselbe wie am Datei-Weg — vergleichen, nicht zaehlen:
-    // ein Wert, den der Sanitizer gar nicht ansieht (`idbId: 42`), aendert
-    // keine Anzahl und ist trotzdem weg.
-    //
-    // Die bereinigte Liste wird trotzdem zurueckgegeben: geschrieben wird sie
-    // nie (der Riegel steht), und die Sperransicht laeuft ohnehin statt des
-    // Editors. Nicht zu hydrieren haette nur eine leere Bibliothek gezeigt,
-    // ohne irgendetwas zu retten.
-    if (probleme.length > 0 || !keinVerlust(rohListe, liste)) {
-      const kopieSchluessel = sichereQuarantaene(
-        bauplan.schluessel,
-        roh,
-        new Date().toISOString(),
-      )
-      speicherGate.sperre(
-        `Beim Laden von „${bauplan.klarnameLesen}" wären Einträge verlorengegangen. `
-        + 'Der Stand wurde unter Quarantäne gestellt.',
-        mitBereich(bauplan.bereich, probleme),
-        {
-          bezeichnung: bauplan.klarnameLesen,
-          speicherSchluessel: bauplan.schluessel,
-          kopieSchluessel,
-          rohdaten: roh,
-        },
-      )
-    }
+    // Nachsichtig laden (Nutzer-Ansage 2026-08-12): Unbrauchbares faellt weg,
+    // die brauchbaren Eintraege oeffnen. Die Bibliotheks-Quarantaene aus A4
+    // (Riegel + Sperransicht bei jedem Fund) ist restlos entfernt.
+    const { liste } = bauplan.pruefe(rohListe)
     return liste
   } catch {
     sichereUnlesbaren(bauplan.schluessel, roh, bauplan.klarnameLesen)
@@ -228,12 +199,6 @@ export class VorlagenStore<T extends VorlagenEintrag> extends Subject<VorlagenSt
   }
 
   private schreibeJetzt(): void {
-    // Derselbe Riegel wie am Baum (A3): steht der geladene Stand unter
-    // Quarantaene, schreibt auch keine Bibliothek mehr. Sonst waere der
-    // Blockbaum geschuetzt und Datenquellen/Relationen nicht — und eine alte
-    // App haette die Bibliotheken eines neueren Standes ausgeduennt
-    // festgeschrieben.
-    if (!speicherGate.darfSchreiben()) return
     try {
       localStorage.setItem(
         this.bauplan.schluessel,

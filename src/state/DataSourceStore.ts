@@ -14,7 +14,6 @@
 // unberuehrt: was im Speicher liegt, wird geladen.
 
 import { pruefeDatenquellen, type DataSource } from '../core/data/dataSources'
-import { BEREICH_QUELLEN } from '../core/data/ladeProblem'
 import { VorlagenStore, type VorlagenBauplan } from './VorlagenStore'
 
 const BAUPLAN: VorlagenBauplan<DataSource> = {
@@ -22,7 +21,6 @@ const BAUPLAN: VorlagenBauplan<DataSource> = {
   huelle: 'sources',
   klarnameLesen: 'Datenquellen',
   klarnameSchreiben: 'Datenquellen',
-  bereich: BEREICH_QUELLEN,
   pruefe: pruefeDatenquellen,
   // Kein Startbestand — restlos entfernt am 2026-07-30, nicht wieder einbauen.
 }

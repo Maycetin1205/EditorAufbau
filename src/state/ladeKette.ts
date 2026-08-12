@@ -12,8 +12,10 @@
 //
 // Die Kette MELDET nichts und RETTET nichts: sie sagt nur, was war. Was
 // daraus folgt, entscheidet der jeweilige Aufrufer — der Browser-Speicher
-// legt eine Notfallkopie an und sperrt notfalls das Schreiben, die
-// Maskendatei lehnt einen Kandidaten ab, ohne die offene Sitzung anzufassen.
+// laedt NACHSICHTIG (nur `baumAusRohdaten`; die Quarantaene aus A3/A4 ist auf
+// Nutzer-Ansage 2026-08-12 restlos entfernt), die Maskendatei prueft streng
+// (`pruefeBaumStand`) und lehnt einen Kandidaten ab, ohne die offene Sitzung
+// anzufassen.
 //
 // Herausgeloest am 2026-08-10 aus persistence.ts (Kette) und maskenDatei.ts
 // (Verlust-Pruefungen), damit beide Leser dieselben Pruefungen benutzen
@@ -57,8 +59,8 @@ import { createEmptyTree, normalizeProps } from './treeOps'
 // dieselbe Bedingung, nur eine Ebene hoeher.
 // meldungen.absichtlichEntfernt: die ids, die eine der zwei
 // Rohdaten-Migrationen bewusst herausgenommen hat (A4). Ohne diese Meldung
-// zaehlt die Verlust-Kontrolle sie als fehlende Bausteine und sperrt einen
-// voellig gesunden Altbestand aus.
+// zaehlt die Verlust-Kontrolle sie als fehlende Bausteine und lehnt eine
+// voellig gesunde alte Maskendatei ab.
 export function sanitizeTree(
   raw: Record<string, unknown>,
   meldungen?: {
@@ -247,10 +249,8 @@ function ohneGeleerte(
 // er nur benutzt.
 //
 // Der Grund ist bewusst ein Satz-BRUCHSTUECK ohne „Die Datei ist
-// beschädigt:" davor (A3): denselben Fund muss sowohl der Datei-Weg melden
-// („Die Datei ist beschädigt: …") als auch die Sperransicht des
-// Browser-Wegs, wo von einer Datei gar keine Rede ist. Den Satz baut der
-// Aufrufer, die Wahrheit steht hier.
+// beschädigt:" davor (A3): den Satz drumherum baut der Aufrufer (heute nur
+// noch der Datei-Weg), die Wahrheit steht hier.
 
 // Erst die VERWEISE: zeigt ein childIds-Eintrag auf einen Knoten, den der
 // Stand gar nicht enthaelt, faellt er beim Bereinigen lautlos weg — und eine
@@ -281,8 +281,9 @@ export function strukturProbleme(rohBaum: Record<string, unknown>): LadeProblem[
 
 // Und auch der BAUM darf nichts still verlieren — dieselbe Regel wie bei
 // den Bibliotheken. `sanitizeTree` wirft Waisen, Zyklen und kaputte Knoten
-// ohne ein Wort weg; in einem gewachsenen Browser-Speicher war das bis A4
-// richtig, in einer Datei ist es Datenverlust.
+// ohne ein Wort weg; im gewachsenen Browser-Speicher ist das gewollt
+// (nachsichtig laden, Nutzer-Ansage 2026-08-12), in einer DATEI ist es
+// Datenverlust — darum prueft der Datei-Weg hier streng.
 //
 // Erlaubt bleibt GENAU eine Art von Verlust: Bausteine, deren TYP es nicht
 // mehr gibt. Die zaehlt `baum.verworfen`, und der Bediener bekommt sie
@@ -368,14 +369,15 @@ export function verlustProbleme(
 
 // ---------- Der eine geprüfte Lade-Ausgang (A3) ----------
 //
-// Die FESTE Reihenfolge, in der ein Stand hereinkommt — dieselbe fuer den
-// Browser-Speicher und die Maskendatei:
+// Die FESTE Reihenfolge, in der ein DATEI-Kandidat hereinkommt (einziger
+// Aufrufer: maskenDatei — der Browser-Speicher laedt seit 2026-08-12
+// nachsichtig direkt ueber `baumAusRohdaten`):
 //
 //   1. Zukunftsversion abweisen, VOR jeder Aenderung.
 //   2. Rohform strukturell verwertbar machen: versionsgebundene Migrationen
 //      + Bereinigen (`baumAusRohdaten`).
 //   3. gegen den heutigen Vertrag pruefen (Struktur der Rohform, Verlust).
-//   4. Ausgang: ok | migriert | quarantaene.
+//   4. Ausgang: ok | migriert | abgelehnt.
 //
 // EHRLICH zu Schritt 2: Migrieren und Bereinigen laufen dort ZUSAMMEN und in
 // dieser Verschraenkung — `sanitizeTree` haengt zuerst die zwei
@@ -392,7 +394,7 @@ export function verlustProbleme(
 // Altbestaende (Vorlagen-Kasten) waeren als „verweist ins Leere" gemeldet
 // worden, obwohl genau das die Migration geradezieht.
 
-export type QuarantaeneUrsache =
+export type AblehnGrund =
   // Der Stand ist neuer als diese App. Nichts anfassen.
   | 'zukunft'
   // Gueltiges JSON, aber kein verwertbarer Masken-Aufbau.
@@ -405,12 +407,7 @@ export type LadeAusgang =
   // Heil, aber eine Schemastufe lief: der Stand muss unter der neuen Version
   // neu gespeichert werden.
   | { art: 'migriert'; baum: BaumErgebnis }
-  | { art: 'quarantaene'; ursache: QuarantaeneUrsache; probleme: LadeProblem[] }
-
-// Was der Aufrufer wissen muss, wenn er den Grund in einen Satz gießt.
-export const ZUKUNFT_GRUND =
-  'Dieser Stand stammt aus einer neueren Version des Editors und kann hier '
-  + 'nicht geladen werden.'
+  | { art: 'abgelehnt'; ursache: AblehnGrund; probleme: LadeProblem[] }
 
 export function pruefeBaumStand(
   roh: { schemaVersion: number; tree?: unknown; blocks?: unknown; selectedId?: unknown },
@@ -418,7 +415,7 @@ export function pruefeBaumStand(
   // 1. Zukunft — VOR jeder Aenderung, denn ab hier wird migriert.
   if (roh.schemaVersion > CURRENT_SCHEMA_VERSION) {
     return {
-      art: 'quarantaene',
+      art: 'abgelehnt',
       ursache: 'zukunft',
       probleme: [{
         bereich: BEREICH_AUFBAU,
@@ -434,14 +431,12 @@ export function pruefeBaumStand(
   // EINER Stelle. Vorher stand dieselbe Ableitung zweimal im Code, und der
   // Browser-Weg hatte sie bis 2026-08-06 falsch.
   const baum = baumAusRohdaten(roh, roh.schemaVersion < DEMO_CLEANUP_BEFORE_SCHEMA)
-  if (!baum) return { art: 'quarantaene', ursache: 'unlesbar', probleme: [] }
+  if (!baum) return { art: 'abgelehnt', ursache: 'unlesbar', probleme: [] }
 
-  // 3. Vertragspruefung — fuer BEIDE Leser dieselbe (A4). Der Browser-Weg
-  // duennte bis hierher still aus: eine Waise, eine kaputte Aktionskette,
-  // eine Eigenschaft, die kein Baustein mehr kennt — alles fiel lautlos weg,
-  // und der Autosave schrieb den kleineren Stand fest. Der Datei-Weg lehnte
-  // genau das seit 2026-07-28 ab. Zwei Kriterien fuer dieselbe Frage waren
-  // ein Fehler; jetzt gilt das strengere.
+  // 3. Vertragspruefung — der Datei-Weg lehnt Teilverlust seit 2026-07-28 ab:
+  // eine Waise, eine kaputte Aktionskette, eine Eigenschaft, die kein
+  // Baustein mehr kennt. Eine Datei ist nur ein Kandidat; ihre Ablehnung
+  // laesst die offene Sitzung unberuehrt.
   const probleme: LadeProblem[] = []
   if (roh.tree && typeof roh.tree === 'object') {
     const rohBaum = roh.tree as Record<string, unknown>
@@ -451,7 +446,7 @@ export function pruefeBaumStand(
   // plus die Topologie-Invarianten (topologie.ts). Sie laufen auch am alten
   // `blocks`-Weg, der keinen Rohbaum zum Vergleichen hat.
   probleme.push(...topologieProbleme(baum.tree))
-  if (probleme.length > 0) return { art: 'quarantaene', ursache: 'verlust', probleme }
+  if (probleme.length > 0) return { art: 'abgelehnt', ursache: 'verlust', probleme }
 
   // 4. Ausgang.
   return { art: baum.schemaAdvanced ? 'migriert' : 'ok', baum }

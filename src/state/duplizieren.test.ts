@@ -17,7 +17,6 @@ import { ROOT_ID, type BlockNode } from '../core/blocks/BlockData'
 import { type ActionStep, type RelationStep } from '../core/data/aktionen'
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import { Editor } from './Editor'
-import { speicherGate } from './speicherGate'
 import {
   registerTestBlocks,
   TEST_BLOCK,
@@ -30,7 +29,7 @@ registerTestBlocks()
 
 // Der Riegel lebt im Modul und ueberlebt den einzelnen Test (s.
 // persistence.test.ts) — jeder Fall faengt unverriegelt und ohne Altbestand an.
-beforeEach(() => { localStorage.clear(); speicherGate.entsperre() })
+beforeEach(() => { localStorage.clear() })
 
 // Ein Knopf, dessen Klick-Kette EINEN Baustein ausliest.
 function kette(blockId: string): ActionStep[] {

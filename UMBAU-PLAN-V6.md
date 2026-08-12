@@ -30,6 +30,17 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **QUARANTAENE RESTLOS ENTFERNT (Nutzer-Ansage 2026-08-12, sehr deutlich):**
+  Die Sperransicht + der Schreib-Riegel aus A3/A4 haben den Nutzer aus seiner
+  eigenen Arbeit ausgesperrt („am Baustein stimmen Angaben nicht"). Auf Ansage
+  restlos raus: `Sperransicht.tsx` und `speicherGate.ts` geloescht, der
+  Browser-Weg laedt wieder NACHSICHTIG (bereinigen, oeffnen, immer speichern),
+  auch fuer Zukunfts-Staende. Die strenge Verlust-Pruefung lebt NUR noch am
+  Datei-Weg (maskenDatei lehnt einen Kandidaten ab, Sitzung bleibt). **Keine
+  Lade-Sperre und keinen Schreib-Riegel wieder vorschlagen** — dasselbe Muster
+  wie S1/R4/R5. AUSSERDEM Nutzer-Ansage vom selben Tag: **„nichts umbauen" ist
+  als Haltung GEKUENDIGT** — nicht immer nur anbauen; ein echter Umbau ist
+  ausdruecklich erlaubt, wenn es dadurch besser/einfacher wird.
 - **Proben-Stand und Arbeitsmodus (Nutzer-Ansage 2026-08-12, Chat):**
   ALLE bis dahin offenen Browser-/SE-Proben sind durch und BESTANDEN
   (S5.1/S5.2 · Tabelle S2/S2.1 · C1 · R2-Rest: PUT auf geholte Position,
