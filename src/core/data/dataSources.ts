@@ -41,8 +41,8 @@ import {
 } from './quellenArten'
 
 // Weitergereicht, damit die Quellen-Welt EINE Anlaufstelle bleibt: wer mit
-// Datenquellen arbeitet, importiert aus dataSources — die Arten-Tabelle
-// und das Hol-Modul selbst muss er nicht kennen.
+// Datenquellen arbeitet, importiert aus dataSources — die Arten-Tabelle,
+// das Hol-Modul und die Eingabe-Helfer selbst muss er nicht kennen.
 export { artFuer, DATA_SOURCE_KINDS, QUELLEN_ARTEN, type DataSourceKind }
 export {
   felderHinterSchnitt,
@@ -51,6 +51,13 @@ export {
   relationNrFromInput,
   type LadeRelation,
 } from './ladeRelation'
+export {
+  fieldCode,
+  kennungAnzeige,
+  kennungFromInput,
+  kopfsatzFromInput,
+  quellenKennung,
+} from './quellenEingabe'
 
 // Eine FELD-ART (Text/Zahl/Datum/Uhrzeit) gab es hier am 2026-07-27 einen
 // halben Tag lang: sie sollte „Tag filtern nach" auf Datumsfelder verengen.
@@ -304,75 +311,6 @@ export function varAusKopfsaetzen(
 //
 // Der Store startet darum leer; bestehende Bibliotheken bleiben unberührt
 // (localStorage + Maskendatei tragen sie).
-
-// ---------- Pure Helfer für das Eingabe-Formular ----------
-// Regel Technikwert ≠ Anzeigename: der Bediener gibt Klarname + Position +
-// Länge bzw. die IDB-ID im SoftEngine-Format ('ID0004') ein — die
-// Technikwerte ('pos_len', 'IDBIDnnnn') entstehen daraus unsichtbar.
-// Ungültige Eingaben ergeben '' (das Formular zeigt dann einen Fehler,
-// es wird nie geraten).
-
-// Position + Länge -> Feldcode: ('193', '30') -> '193_30'. Position darf 0
-// sein (Datensatz-Nummer '0_10'), Länge muss mindestens 1 sein.
-export function fieldCode(pos: string, len: string): string {
-  const p = pos.trim()
-  const l = len.trim()
-  if (!/^\d+$/.test(p) || !/^\d+$/.test(l) || Number(l) < 1) return ''
-  return `${p}_${l}`
-}
-
-// Eingegebene Kennung -> Technikwert, für jede Art, die keine feste hat.
-//
-// Zwei Formen, und die zweite fehlte bis 2026-07-30:
-//   1. Die IDB-Kurzform, die der Bediener in der SoftEngine-GUI sieht:
-//      'ID0004' (auch klein, auch schon mit IDB davor) -> 'IDBID0004',
-//      Ziffern auf vier Stellen aufgefüllt.
-//   2. Jede andere Kennung WÖRTLICH: 'IDBSE0880', 'POS', 'SERPOS',
-//      'JSDDWZE05'. Vorher fielen genau diese durch — die Prüfung kannte nur
-//      Form 1 und meldete „IDB-ID fehlt", obwohl es die Tabelle wirklich
-//      gibt (belegt in den 129 ausgelieferten SEvariablen-Dateien des
-//      Herstellers). Solche Tabellen waren im Editor nicht anlegbar.
-//
-// Ungültige Eingaben ergeben '' (das Formular zeigt dann einen Fehler); ein
-// Feldcode wie '2_8' ist keine Kennung und fällt durch, weil eine Kennung
-// mit einem Buchstaben beginnt.
-const KENNUNG_IDB_KURZ = /^(?:IDB)?ID(\d{1,4})$/i
-const KENNUNG_FREI = /^[A-Za-z][A-Za-z0-9]*$/
-
-export function kennungFromInput(raw: string): string {
-  const t = raw.trim()
-  const kurz = KENNUNG_IDB_KURZ.exec(t)
-  if (kurz) return `IDBID${kurz[1].padStart(4, '0')}`
-  return KENNUNG_FREI.test(t) ? t : ''
-}
-
-// Eingegebener Kopfsatz -> Technikwert. Die Form ist die der ausgelieferten
-// Belegerfassung: Kürzel, Position, Länge ('BEL_0_11'). Alles andere ergibt ''
-// (das Formular zeigt dann einen Fehler) — ein Tippfehler hier wäre sonst eine
-// Maske, die klaglos die Positionen ALLER Belege zieht.
-const KOPFSATZ_FORM = /^[A-Za-z][A-Za-z0-9]*_\d+_\d+$/
-
-export function kopfsatzFromInput(raw: string): string {
-  const t = raw.trim()
-  return KOPFSATZ_FORM.test(t) ? t : ''
-}
-
-// Rückweg fürs Bearbeiten/Anzeigen: 'IDBID0004' -> 'ID0004' (die Kurzform,
-// die der Bediener kennt); alles andere bleibt, wie es ist.
-export function kennungAnzeige(kennung: string | undefined): string {
-  const m = /^IDB(ID\d{4})$/.exec(kennung ?? '')
-  return m ? m[1] : (kennung ?? '')
-}
-
-// Die SoftEngine-Kennung einer Quelle in BEDIENER-Form — fuer die dezente
-// Technik-Marke neben dem Klarnamen (Nutzer-Wunsch 2026-08-06: „nicht nur
-// der Alias, auch die ID0001"): die feste Tabellen-ID der Art (ADR/ART/BEL)
-// oder die eingegebene Kennung in Kurzform (ID0001, POS, …). EINE Stelle —
-// vorher stand dieselbe Ableitung lokal im DatenquellenBereich.
-export function quellenKennung(source: DataSource): string {
-  const feste = artFuer(source.kind).tabellenId
-  return feste !== '' ? feste : kennungAnzeige(source.idbId)
-}
 
 // Baut aus rohen (evtl. kaputten) localStorage-Daten eine saubere
 // Vorlagen-Liste (Muster: sanitizeTree in Editor.ts — strukturell prüfen,
