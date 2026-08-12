@@ -153,9 +153,31 @@ const POS_LEN = /^\d+_\d+$/
 // `benutzt` = die Feldcodes, die diese Maske aus der Quelle liest oder schreibt
 // (export/benutzteQuellen, benutzteFelderJeQuelle). Fehlt das Argument, bleibt
 // es bei '*' — Aufrufer ohne Baumwissen sollen nicht raten müssen.
-export function felderFor(source: DataSource, benutzt?: ReadonlySet<string>): string {
-  if (artFuer(source.kind).felderEinzeln) return source.fields.map((f) => f.code).join(',')
-  // Nichts gefunden: '*' bleiben. Eine leere FELDER-Liste ist keine belegte
+//
+// `holSchluessel` = die Feldcodes, die eine HOLENDE Quelle (Welle R) aus einer
+// Zeile DIESER Quelle als Schlüssel liest (export/benutzteQuellen,
+// holSchluesselJeGeber). Sie stehen in keinem Attribut des Baums, sondern in
+// der Einstellung der anderen Quelle — ohne sie schickt SoftEngine die Werte
+// nie mit, der Schlüssel geht halb leer hinaus und die Relation findet nur den
+// aktuellen Nummernkreis (SE-Echttest 2026-08-12: 261er-Belege lieferten
+// nichts). Sie stehen HINTEN, damit eine Maske ohne holende Quelle Byte für
+// Byte bestellt wie vorher.
+export function felderFor(
+  source: DataSource,
+  benutzt?: ReadonlySet<string>,
+  holSchluessel: readonly string[] = [],
+): string {
+  const mitSchluesseln = (codes: string[]): string[] => {
+    for (const code of holSchluessel) {
+      if (!codes.includes(code)) codes.push(code)
+    }
+    return codes
+  }
+  if (artFuer(source.kind).felderEinzeln) {
+    return mitSchluesseln(source.fields.map((f) => f.code)).join(',')
+  }
+  // Nichts gefunden: '*' bleiben — das liefert ohnehin ALLES, auch die
+  // Schlüsselfelder einer Hol-Relation. Eine leere FELDER-Liste ist keine belegte
   // Form, und eine Quelle, aus der die Maske nachweislich kein Feld liest,
   // bringt beim Kürzen ohnehin nichts ein — dann lieber der alte Zustand als
   // eine Bestellung, die auf einem Leser beruht, den ich übersehen haben
@@ -177,6 +199,8 @@ export function felderFor(source: DataSource, benutzt?: ReadonlySet<string>): st
   for (const code of benutzt) {
     if (!codes.includes(code)) codes.push(code)
   }
+  // Zuletzt die Schlüssel, die eine holende Quelle aus dieser Zeile liest.
+  mitSchluesseln(codes)
   // Sicherheitsventil: sobald EIN Code sich nicht als pos_len ausdrücken lässt,
   // ist die ganze Bestellung unbelegt — dann '*'. Lieber die alte Datenmenge
   // als eine Stelle, die in der fertigen Maske still leer bleibt.

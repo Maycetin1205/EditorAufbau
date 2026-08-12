@@ -1,9 +1,16 @@
 // benutzteQuellen — „was benutzt diese Maske aus der Datenquellen-Bibliothek?"
 //
-// Zwei Antworten auf dieselbe Frage, beide aus DEMSELBEN Baum wie das Markup
+// Drei Antworten auf dieselbe Frage, alle aus DEMSELBEN Baum wie das Markup
 // (Export-Grundsatz a):
 //   collectDataSources     -> WELCHE Quellen (SEFILELOOP + FF_DATA_SOURCES)
 //   benutzteFelderJeQuelle -> welche FELDER davon (die FELDER-Bestellung, S5.1)
+//   holSchluesselJeGeber   -> welche Felder eine GEBER-Quelle zusaetzlich
+//                             liefern muss, damit die Hol-Relation (Welle R)
+//                             ihren Schluessel voll bekommt
+//
+// Die dritte ist eine BIBLIOTHEKS-Schreibstelle, keine achte Baum-Schreibstelle
+// (Liste unten): sie zaehlt nicht ab, was das MARKUP liest, sondern was die
+// Einstellung EINER Quelle von einer ANDEREN verlangt.
 //
 // Herausgeloest aus exportMask (2026-08-11), weil die Datei mit 498 von 500
 // Zeilen keinen Platz mehr fuer die zweite Antwort hatte (check:regeln, Deckel).
@@ -32,7 +39,7 @@ import {
   traegtEigeneQuelle,
 } from '../core/blocks/treeQuery'
 import { AUSWAHL_FOLGE_PROP, auswahlFolgenAus, folgeBrauchbar } from '../core/data/auswahlFolge'
-import type { DataSource } from '../core/data/dataSources'
+import { ladeRelationFor, type DataSource } from '../core/data/dataSources'
 import {
   quelleBrauchbar,
   vollstaendigePaare,
@@ -271,4 +278,44 @@ export function benutzteFelderJeQuelle(
   }
   visit(tree[ROOT_ID])
   return felder
+}
+
+// ---------- Was eine GEBER-Quelle fuer die Hol-Relation liefern muss ----------
+//
+// ANLASS (SE-Echttest des Nutzers, WinUI-Log 2026-08-12): die Hol-Relation
+// (Welle R) fand nur Belege des AKTUELLEN Nummernkreises — 261er-Belege
+// antworteten mit 255 Leerzeichen, 262er lieferten Positionen. Ursache: der
+// Lader liest JAHR/ARCHIV (0_1/1_1) per getField aus der angeklickten
+// Geber-Zeile, aber die FELDER-Bestellung der Geber-Quelle enthielt sie nicht
+// — SoftEngine schickte die Werte also nie mit der Zeile, die Parameter gingen
+// LEER hinaus, und leer findet belegt nur den aktuellen Nummernkreis
+// (Wellenkopf R). Belegart/Belegnummer (2_1/3_8) waren nur ZUFAELLIG bestellt,
+// weil eine Tabellenspalte sie anzeigte.
+//
+// Warum das die S5.1-Sammlung oben NICHT mitbekommt: dort wird der BAUM
+// befragt („welches Attribut traegt einen Feldcode?"). Diese vier Feldcodes
+// stehen aber in keinem Attribut eines Bausteins, sondern in der Einstellung
+// einer ANDEREN Quelle (ladeRelation, R1). Darum eine eigene Sammelstelle.
+//
+// Ergebnis: geberQuelleId -> Feldcodes, in Modell-Reihenfolge (belegart,
+// belegnummer, jahr, archiv), leere uebersprungen, dedupliziert. Zeigen zwei
+// holende Quellen auf denselben Geber, stehen beide Schluessel drin.
+// Deterministisch, weil `used` deterministisch ist (collectDataSources).
+export function holSchluesselJeGeber(
+  used: readonly DataSource[],
+): Map<string, string[]> {
+  const proGeber = new Map<string, string[]>()
+  for (const source of used) {
+    // Nur die WIRKSAME Hol-Relation (ladeRelationFor ist Art-gebunden): eine
+    // nach Art-Wechsel liegengebliebene laedt nichts und darf darum auch die
+    // Bestellung des Gebers nicht aufblaehen.
+    const lade = ladeRelationFor(source)
+    if (!lade) continue
+    const codes = proGeber.get(lade.geberQuelleId) ?? []
+    for (const code of [lade.belegartFeld, lade.belegnummerFeld, lade.jahrFeld, lade.archivFeld]) {
+      if (code !== '' && !codes.includes(code)) codes.push(code)
+    }
+    proGeber.set(lade.geberQuelleId, codes)
+  }
+  return proGeber
 }

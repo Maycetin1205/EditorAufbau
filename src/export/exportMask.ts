@@ -54,7 +54,11 @@ import {
 import { rasterFlaecheStyle } from '../core/blocks/rasterLayout'
 import schriftenCssRaw from '../design/masken-schriften.css?raw'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
-import { benutzteFelderJeQuelle, collectDataSources } from './benutzteQuellen'
+import {
+  benutzteFelderJeQuelle,
+  collectDataSources,
+  holSchluesselJeGeber,
+} from './benutzteQuellen'
 import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
 import { styleAttr, styleToCss } from './knotenStil'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
@@ -329,6 +333,11 @@ export function exportMask(
   // Welche FELDER die Maske aus jeder Quelle liest — EINMAL je Export, aus
   // DEMSELBEN Baum (Export-Grundsatz a). Speist die FELDER-Bestellung unten.
   const benutzteFelder = benutzteFelderJeQuelle(tree, sources)
+  // Und was eine GEBER-Quelle zusätzlich liefern muss, damit die Hol-Relation
+  // einer holenden Quelle ihren Schlüssel voll bekommt (Nachbesserung nach dem
+  // SE-Echttest 2026-08-12: ohne Jahr/Archiv fand die Relation nur den
+  // aktuellen Nummernkreis). Gerechnet wird drüben — hier wird durchgereicht.
+  const holSchluessel = holSchluesselJeGeber(used)
   const usedRelations = collectRelations(tree, relations)
 
   // Die Schriften stehen VOR den Tokens: @font-face zuerst deklarieren,
@@ -453,7 +462,7 @@ export function exportMask(
       ALIAS: s.name,
       ID: tableIdFor(s),
       ...(kopfsatz !== '' ? { KOPFSATZ_INDEX: kopfsatz } : {}),
-      FELDER: felderFor(s, benutzteFelder.get(s.id)),
+      FELDER: felderFor(s, benutzteFelder.get(s.id), holSchluessel.get(s.id) ?? []),
     }
   })
   // VAR steht VOR der SEFILELOOP — wie in den ausgelieferten Rahmen; die

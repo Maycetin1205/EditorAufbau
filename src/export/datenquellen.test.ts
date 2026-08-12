@@ -409,7 +409,8 @@ describe('exportMask: Datenquellen', () => {
     const { html, sevariablen } = exportMask(tree, 'Maske', sources)
     const json = JSON.parse(sevariablen)
     expect(json.SEFILELOOP).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Belege', ID: 'BEL', FELDER: '3_8' },
+      // Der GEBER bestellt die Schluessel der Hol-Relation MIT (2026-08-12, s. dataSources.test).
+      { INDEX_NR: 0, ALIAS: 'Belege', ID: 'BEL', FELDER: '3_8,2_1,0_1,1_1' },
     ])
     expect(json.VAR).toBeUndefined()
     expect(html).toContain('"ladeRelation":{"nr":"69","geberQuelleId":"belege"')

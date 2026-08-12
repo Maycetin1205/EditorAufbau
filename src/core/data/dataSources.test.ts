@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   artFuer,
+  felderFor,
   felderHinterSchnitt,
   ladeRelationFor,
   pruefeDatenquellen,
@@ -94,6 +95,50 @@ describe('Hol-Relation: laden, verwerfen, Art-Bindung', () => {
     const benutzt = new Set(['280_12', '250_5', '250_6', '18_25', 'TFELD.Name'])
     expect(felderHinterSchnitt(benutzt)).toEqual(['250_6', '280_12'])
     expect(felderHinterSchnitt(undefined)).toEqual([])
+  })
+})
+
+// Nachbesserung nach dem SE-Echttest 2026-08-12: die GEBER-Quelle muss die
+// Schluesselfelder der Hol-Relation mitliefern. Sie standen bis dahin in
+// keiner FELDER-Bestellung — SoftEngine schickte Jahr/Archiv also nie mit der
+// angeklickten Zeile, die Parameter gingen LEER hinaus, und leer findet
+// belegt nur den aktuellen Nummernkreis: 261er-Belege lieferten 255
+// Leerzeichen, 262er lieferten Positionen.
+describe('felderFor: der GEBER bestellt die Schluessel der Hol-Relation mit', () => {
+  const belege: DataSource = {
+    id: 'belege',
+    name: 'Belege',
+    kind: 'beleg',
+    fields: [{ code: '3_8', label: 'Belegnummer' }],
+  }
+
+  it('haengt die fehlenden Schluessel ans Woerterbuch an — Woerterbuch zuerst', () => {
+    // Modell-Reihenfolge belegart, belegnummer, jahr, archiv; 3_8 steht schon
+    // im Woerterbuch und kommt nicht doppelt.
+    expect(felderFor(belege, undefined, ['2_1', '3_8', '0_1', '1_1']))
+      .toBe('3_8,2_1,0_1,1_1')
+  })
+
+  it('ohne Hol-Relation bleibt die Bestellung Byte fuer Byte, wie sie war', () => {
+    expect(felderFor(belege)).toBe('3_8')
+    expect(felderFor(belege, undefined, [])).toBe('3_8')
+  })
+
+  it("eine '*'-Quelle bleibt '*' — sie liefert ohnehin alles", () => {
+    const idb: DataSource = { id: 'q', name: 'Termine', kind: 'idb', idbId: 'IDBID0001', fields: [] }
+    expect(felderFor(idb, undefined, ['2_1', '0_1'])).toBe('*')
+    expect(felderFor(idb, new Set<string>(), ['2_1', '0_1'])).toBe('*')
+  })
+
+  it('bei einer expliziten Liste stehen die Schluessel hinten, ohne Dopplung', () => {
+    const idb: DataSource = {
+      id: 'q',
+      name: 'Termine',
+      kind: 'idb',
+      idbId: 'IDBID0001',
+      fields: [{ code: '40_20', label: 'Titel' }, { code: '2_1', label: 'Art' }],
+    }
+    expect(felderFor(idb, new Set(['40_20', '2_1']), ['2_1', '0_1'])).toBe('40_20,2_1,0_1')
   })
 })
 
