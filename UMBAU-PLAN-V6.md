@@ -55,8 +55,9 @@ git log --oneline -8
   SE-Echttests ist am **2026-08-12 BESTANDEN** (Nutzer: Beleg-Klick fuellt
   die Positionen; nach Nachbesserung 1 auch alte Nummernkreise). Noch ohne
   Protokoll aus der R2-Probe: PUT ueber eine Kette auf eine geholte
-  Position, Verknuepfung an geholter Zeile, Abwahl. **R3 ist GEBAUT**
-  (2026-08-12, SE-Probe steht aus). Offen: **R4** (Beleg
+  Position, Verknuepfung an geholter Zeile, Abwahl. **R3 ist GEBAUT und
+  seine SE-Probe BESTANDEN** (Nutzer-Ansage 2026-08-12: „test funzt" —
+  Beleg per Nachschlagefeld waehlen fuellt die Positionen). Offen: **R4** (Beleg
   anlegen und sofort sehen — BAUBAR, Anlege-Protokoll 2026-08-12 im
   Etappenkopf: GET 1020 antwortet mit dem Index des frischen Belegs),
   **R5 ist GESTRICHEN** (Nutzer-Ansage 2026-08-12, s. Etappenkopf R5 —
@@ -80,7 +81,7 @@ git log --oneline -8
   Sondercode, kein Editor-Sichtbares, Export-MARKUP unveraendert (der
   Referenzabzug schneidet das Buendel heraus und blieb gruen);
   Runtime-Bytes absichtlich neu (+211 Byte, der Rest des Diffs ist
-  Minifier-Umbenennung — nachgeprueft). **SE-Echttest steht aus.**
+  Minifier-Umbenennung — nachgeprueft). **SE-Echttest BESTANDEN.**
   Davor: R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
@@ -2270,8 +2271,9 @@ Runtime-Buendel bewusst neu (`build:runtime`). Bestehende Testdatei
 (`softengine/relationLader.test.ts`-Umfeld) um den Fall erweitern — keine
 neue Test-Gattung.
 
-**Nutzerprobe (SE):** Beleg im Nachschlagefeld waehlen -> Positionen
-erscheinen; Wahl leeren -> Positionen leeren.
+**Nutzerprobe (SE) — BESTANDEN 2026-08-12** (Nutzer-Ansage, kein Protokoll):
+Beleg im Nachschlagefeld waehlen -> Positionen erscheinen; Wahl leeren ->
+Positionen leeren.
 
 **Gebaut 2026-08-12:** `quelleAttrJeTag` in `blocks/shared/holendeQuellen.ts`
 (Tag -> Quellen-Attribut, aus `satzWahl.quelleProp`, sonst `source`); der
