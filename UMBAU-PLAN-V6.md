@@ -85,7 +85,28 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe:** U6 (2026-08-12) — Inspector-Kleinputz. Datum und
+- **Letzte fertige Etappe:** N1 (2026-08-12) — die Maske kann mehrere
+  ANSICHTEN tragen. Neuer Seiten-Typ `ff-ansicht` (`blocks/ansicht/`):
+  pageBlock wie das Popup, aber `display:contents` — sie hat gar keinen
+  eigenen Kasten, ihre Kinder sind unmittelbar Zellen des EINEN Wurzel-
+  Rasters (kein zweites Raster, das driften koennte). Im Export traegt jede
+  Ansicht `hidden`; umgeschaltet wird in N2. Die Registry unterscheidet ab
+  jetzt FENSTER-Seite (Popup) und FLAECHEN-Seite (Ansicht) ueber das neue
+  Kennzeichen `flaechenSeite` — vier Stellen rieten vorher: der Store nahm
+  „die erste Definition mit pageBlock" (`Editor.addPopupPage`, jetzt
+  `addSeite(typ)`), und die zwei Popup-Waehler + die Preflight boten
+  Ansichten als waehlbares Popup an, obwohl die Laufzeit nur `ff-popup`
+  oeffnet. Seiten-Leiste ist jetzt registry-getrieben (ein „＋" je
+  Seiten-Art) und bedient am Ding: Doppelklick benennt um, Papierkorb am
+  aktiven Reiter loescht (Netz Strg+Z) — ohne das haette eine Ansicht
+  NICHTS Anklickbares. Der Leer-Hinweis fragt nach der OFFENEN Seite statt
+  nach der ganzen Maske (nebenbei: auf der Hauptseite verschwand er bisher,
+  sobald irgendwo ein Popup lag). Runtime-Bytes ABSICHTLICH neu
+  (+761 Byte = der eine neue Baustein), Referenzabzug ABSICHTLICH neu
+  (drei Zeilen: `<ff-ansicht … hidden>` ohne eigenen Stil, ihr Kind MIT
+  Zellen-Stil + `fuellt`) — **SE-Echttest offen:** dass `display:contents`
+  die Kinder wirklich ins Wurzel-Raster stellt, kann nur der Browser sagen.
+  Davor: U6 (2026-08-12) — Inspector-Kleinputz. Datum und
   Popup haben statt eines wortlos leeren Panels je EINEN Hinweissatz (in ihren
   `editorAngaben.ts`, die nie ins Runtime-Buendel reisen) · der Status-Regler
   heisst „Bedeutung" statt „Farbe" (`shared/statusVariant.ts`) — waehlbar
@@ -336,8 +357,9 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** N1–N5 per Opus-Kopier-Auftrag (Wellen-Kopf U; seit
-  2026-08-12 mehrere Etappen je Sitzung). U6 ist gebaut, Welle R ist fertig. A9 ist per
+- **Naechste Etappe:** N2, dann U8 -> U9 -> N3 -> N4 -> N5 per
+  Opus-Kopier-Auftrag (Wellen-Kopf U; seit
+  2026-08-12 mehrere Etappen je Sitzung). U6 und N1 sind gebaut, Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -2535,7 +2557,7 @@ Sitzung.
 Den Wellen-Kopf und den Etappentext liest du je Etappe DANN, wenn du bei
 ihr bist — nicht alle auf Vorrat.
 
-Erste Etappe: U6.
+Erste Etappe: N1.
 
 Der Einwurf dieses Auftrags ist das go — nicht fuer eine Etappe, sondern
 fuer so viele, wie in diese Sitzung SAUBER hineinpassen.
@@ -2566,7 +2588,7 @@ NICHT pruefen konntest.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
 den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-U6 -> N1 -> N2 -> U8 -> U9 -> N3 -> N4 -> N5
+N1 -> N2 -> U8 -> U9 -> N3 -> N4 -> N5
 Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -3042,7 +3064,7 @@ Ehrliche Kosten: die Maskendatei waechst mit jeder Ansicht, und ein
 Daten-Push aktualisiert auch verborgene Ansichten — genau wie heute
 schon bei Popups.
 
-## N1 · Ansicht als zweite Hauptseite
+## N1 · Ansicht als zweite Hauptseite (GEBAUT 2026-08-12)
 
 Registry-Eintrag „Ansicht": pageBlock wie das Popup, aber volle
 Rasterflaeche wie die Hauptseite, kein Fenster. Die Seiten-Leiste zeigt

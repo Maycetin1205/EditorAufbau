@@ -7,6 +7,7 @@
 // Warum es genau diese Bausteine sind (Kahlschlag der Anfangs-Bausteine,
 // Formularfeld-Neubau): docs/decisions/2026-07-14-kahlschlag-bausteine.md.
 
+import './ansicht/AnsichtBlock'
 import './button/ButtonBlock'
 import './card/CardBlock'
 import './datum/DatumBlock'

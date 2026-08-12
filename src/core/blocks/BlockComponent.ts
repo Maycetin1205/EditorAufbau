@@ -69,6 +69,8 @@ export interface BlockComponentStatic {
   readonly blockEvents?: readonly BlockEventSpec[]
   // Seiten-Baustein (Popup, P-A) — Bedeutung siehe BlockDefinition.
   readonly pageBlock?: boolean
+  // Flächenseite statt Fensterseite (Ansicht) — Bedeutung siehe BlockDefinition.
+  readonly flaechenSeite?: boolean
   // Raster-Start-/Mindestgröße (opt-in) — Bedeutung siehe BlockDefinition.
   readonly raster?: Partial<RasterSpec>
   new(): BlockComponent

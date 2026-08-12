@@ -12,7 +12,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 // Side-Effect-Import: der echte Popup-Baustein — nur er traegt das
 // pageBlock-Kennzeichen, um das der Sperr-Fall unten geht.
-import '../blocks/popup/PopupBlock'
+import { PopupBlock } from '../blocks/popup/PopupBlock'
 import { ROOT_ID, type BlockNode } from '../core/blocks/BlockData'
 import { type ActionStep, type RelationStep } from '../core/data/aktionen'
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
@@ -102,7 +102,7 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
   it('ein Verweis NACH AUSSEN bleibt extern', () => {
     const ed = new Editor()
     const aussen = ed.addBlock(TEST_BLOCK, ROOT_ID)!
-    const popup = ed.addPopupPage()!
+    const popup = ed.addSeite(PopupBlock.blockType)!
     ed.setActivePage(ROOT_ID)
     const box = ed.addBlock(TEST_BOX, ROOT_ID)!
     const knopf = ed.addBlock(TEST_EVENT_BLOCK, box.id)!
@@ -125,7 +125,7 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
 
   it('eine SEITE (Popup) kann noch nicht dupliziert werden', () => {
     const ed = new Editor()
-    const popup = ed.addPopupPage()!
+    const popup = ed.addSeite(PopupBlock.blockType)!
     const vorher = ed.blockCount
 
     expect(ed.duplicateBlock(popup.id)).toBeNull()

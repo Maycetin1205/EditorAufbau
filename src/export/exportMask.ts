@@ -135,8 +135,9 @@ function nodeToHtml(
   sources: readonly DataSource[],
   templateCtx?: TemplateCtx,
   // true = dieser Knoten liegt auf der Raster-Ebene (direktes Wurzel-Kind der
-  // Hauptseite). Die Rekursion in Container/Popups reicht false weiter (Fluss);
-  // die Popup-Innenfläche folgt in einer späteren Etappe.
+  // Hauptseite ODER Kind einer Ansicht — die hat keinen eigenen Kasten und
+  // gibt die Rasterebene durch). Die Rekursion in Container/Popups reicht
+  // false weiter (Fluss); die Popup-Innenfläche folgt in einer späteren Etappe.
   rasterEbene = false,
 ): string {
   const def = getBlockDefinition(node.type)
@@ -247,7 +248,12 @@ function nodeToHtml(
   // Editor, useLitElement/'fuellt') — sein Baustein-CSS streckt den Inhalt auf
   // die Zellhoehe. Popup-Overlays (pageBlock) sind kein Rasterkind.
   const fuelltAttr = rasterEbene && def.pageBlock !== true ? ' fuellt' : ''
-  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${auswahlIdAttr}${fuelltAttr}${styleAttr(node, parentDirection, def.lockedWidth, rasterEbene, def.pageBlock === true)}>`
+  // Eine ANSICHT (flaechenSeite) ist beim Oeffnen der Maske nie dran — die
+  // Hauptseite hat den Start, und zwei Flaechen zugleich lägen uebereinander
+  // im selben Raster. Sie faehrt darum verborgen aus; umgeschaltet wird sie
+  // von der Navi (N2), die genau dieses Attribut setzt und nimmt.
+  const verborgenAttr = def.flaechenSeite === true ? ' hidden' : ''
+  const open = `${pad}<${def.tagName}${attrs}${aktionenAttr}${actionValueIdAttr}${auswahlIdAttr}${fuelltAttr}${verborgenAttr}${styleAttr(node, parentDirection, def.lockedWidth, rasterEbene, def.pageBlock === true)}>`
   if (!def.acceptsChildren || node.childIds.length === 0) {
     return `${open}</${def.tagName}>`
   }
@@ -261,7 +267,11 @@ function nodeToHtml(
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))
-    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, sources, childCtx))
+    // Die Kinder einer ANSICHT liegen auf DERSELBEN Rasterebene wie die der
+    // Hauptseite: die Ansicht selbst hat keinen eigenen Kasten
+    // (display:contents), ihre Kinder sind unmittelbar Zellen der
+    // Maskenwurzel. Ein Raster, eine Quelle. Alles andere reicht Fluss weiter.
+    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, sources, childCtx, def.flaechenSeite === true))
     .filter((html) => html !== '')
     .join('\n')
   return children === ''

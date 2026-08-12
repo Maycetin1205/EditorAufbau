@@ -8,6 +8,8 @@
 import { describe, expect, it } from 'vitest'
 // Side-Effect-Import: registriert den echten Popup-Baustein (Seiten-Test P-A).
 import '../blocks/popup/PopupBlock'
+// … und die Ansicht, die zweite Seiten-Art (Seiten-Test N1).
+import '../blocks/ansicht/AnsichtBlock'
 // Side-Effect-Import: registriert die statischen Atome (Fahrplan 3).
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
@@ -166,6 +168,39 @@ describe('exportMask', () => {
     expect(html).toMatch(/<ff-popup[^>]*>\n\s+<ff-t-block[^>]*text="Im Popup"/)
   })
 
+  it('exportiert eine Ansicht VERBORGEN, ihre Kinder liegen im Wurzel-Raster (N1)', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'a1'] },
+      t1: { id: 't1', type: TEST_BLOCK, props: { text: 'Hauptseite' }, parentId: 'root', childIds: [] },
+      a1: {
+        id: 'a1', type: 'ansicht',
+        props: { name: 'Terminkalender' },
+        parentId: 'root', childIds: ['t2'],
+      },
+      t2: {
+        id: 't2', type: TEST_BLOCK,
+        props: { text: 'In der Ansicht', rasterX: 6, rasterY: 4, rasterW: 12, rasterH: 3 },
+        parentId: 'a1', childIds: [],
+      },
+    }
+    const { html } = exportMask(tree)
+    const tag = /<ff-ansicht[^>]*/.exec(html)?.[0] ?? ''
+    expect(tag).toContain('name="Terminkalender"')
+    // Die Hauptseite hat den Start: eine Ansicht faehrt immer verborgen aus.
+    expect(tag).toContain('hidden')
+    // Sie ist selbst KEIN Rasterkind (kein fuellt, kein Zellen-Style) —
+    // display:contents, sie gibt die Rasterebene nur durch.
+    expect(tag).not.toContain('fuellt')
+    expect(tag).not.toContain('style=')
+    // ... und genau das muss beim Kind ankommen: Zellen-Style + fuellt,
+    // gleichwertig zu einem Kind der Hauptseite. Ohne das laege der Baustein
+    // in der Ansicht im Fluss und saesse woanders als im Editor (Regel 1).
+    const kind = /<ff-t-block[^>]*text="In der Ansicht"[^>]*/.exec(html)?.[0] ?? ''
+    expect(kind).toContain('fuellt')
+    expect(kind).toContain('grid-column:7 / span 12')
+    expect(kind).toContain('grid-row:5 / span 3')
+  })
+
 })
 
 // Die Verteidigung (Validator: Marker/LF/ASCII/Interface/Buendel) und die
@@ -182,7 +217,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
+    for (const tag of ['ff-ansicht', 'ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,

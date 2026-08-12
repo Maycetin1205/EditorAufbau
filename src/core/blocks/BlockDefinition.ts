@@ -350,6 +350,19 @@ export interface BlockDefinition {
   // nur als eigenen Seiten-Reiter. Kein `if type===`: Editor.childNodesOf
   // und die Seitenleiste lesen ausschließlich dieses Kennzeichen.
   pageBlock?: boolean
+  // Nur zusammen mit pageBlock: WELCHE Art Seite. true = FLÄCHENSEITE
+  // (Ansicht) — eine Alternative zur Hauptseite: ihre Kinder liegen auf
+  // DEMSELBEN Raster, sie hat kein Fenster, und weil immer nur EINE Fläche
+  // zugleich sichtbar sein kann und die Hauptseite den Start hat, verlässt
+  // sie den Export `hidden` (umgeschaltet wird sie später von der Navi).
+  // false/fehlend = FENSTERSEITE (Popup): ein Overlay über der Fläche, das
+  // sich selbst öffnet und schließt.
+  // Wer beides unterscheidet, tut es über dieses Kennzeichen — Canvas,
+  // Export, Seitenleiste, Preflight und die zwei Popup-Wähler lesen es
+  // generisch. Sonst stünde eine Ansicht als wählbares „Popup" in einer
+  // Kette, und der Schritt träfe zur Laufzeit nichts (seAktionen sucht
+  // ausschließlich ff-popup).
+  flaechenSeite?: boolean
   // Raster-Start-/Mindestgröße auf der Maskenfläche (opt-in, Regel 2): der
   // Store vergibt beim Einfügen die Startgröße, Canvas/Export lesen die
   // Position generisch über rasterLayout. Fehlt die Deklaration, gilt der

@@ -27,6 +27,7 @@ import {
 import { stepProblem } from '../../core/data/schrittPruefung'
 import { formatRelationSyntax } from '../../core/data/relations'
 import { istUngetaufteVorlage, relationAnzeige } from '../zentrale/relationAnzeige'
+import { istFensterSeite } from '../../state/pageOps'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
@@ -77,7 +78,8 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
     setChain(eventKey, next)
   }
 
-  const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
+  // Nur FENSTER-Seiten: eine Ansicht kann kein Popup-Schritt öffnen.
+  const popupSeiten = ed.pages.filter(istFensterSeite)
   const actionValueRefs = actionValueTargets(ed.tree).map(({ node, spot }) => ({
     blockId: node.id,
     prop: spot.prop,

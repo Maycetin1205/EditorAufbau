@@ -18,6 +18,7 @@
 
 import './register'
 
+import './ansicht/editorAngaben'
 import './button/editorAngaben'
 import './card/editorAngaben'
 import './datum/editorAngaben'

@@ -17,11 +17,11 @@ import {
   RASTER,
   rasterSpecOf,
 } from '../core/blocks/rasterLayout'
-import { istSeitenBaustein, kinderImFluss } from './pageOps'
+import { istFlaechenSeite, istSeitenBaustein, kinderImFluss } from './pageOps'
 import { collectSubtree } from './treeOps'
 
-// Rasterfläche = die oberste Ebene (Wurzel) oder ein Popup-Rumpf: dort liegen
-// die Blöcke im Raster, nicht im Fluss.
+// Rasterfläche = die oberste Ebene (Wurzel) oder eine Seite (Ansicht, Popup):
+// dort liegen die Blöcke im Raster, nicht im Fluss.
 export function istRasterFlaeche(node: BlockNode): boolean {
   return node.id === ROOT_ID || istSeitenBaustein(node)
 }
@@ -38,15 +38,18 @@ export function freieZeileAuf(tree: BlockTree, parentId: string): number {
 // dieselbe Rechnung wie ein neuer Baustein aus der Bibliothek (freieZeileAuf in
 // addBlock); Spalte, Breite und Hoehe behaelt sie.
 //
-// NUR direkt auf der Hauptfläche (Wurzel). Die Popup-Innenfläche ist heute
-// Fluss, kein Raster (s. Kopf von rasterLayout) — dort gibt es keine Position
-// zu wählen; ihre Platzierung entscheidet der Popup-Rastervertrag (Plan C3.1).
+// NUR auf einer FLÄCHE: der Hauptseite (Wurzel) oder einer Ansicht — beide
+// zeigen dasselbe Raster, also gilt dort dieselbe Rechnung (N1, 2026-08-12).
+// Die Popup-Innenfläche ist heute Fluss, kein Raster (s. Kopf von
+// rasterLayout) — dort gibt es keine Position zu wählen; ihre Platzierung
+// entscheidet der Popup-Rastervertrag (Plan C3.1).
 export function freiePositionFuerKopie(
   tree: BlockTree,
   parentId: string,
   kopie: BlockNode,
 ): BlockNode {
-  if (parentId !== ROOT_ID) return kopie
+  const eltern = tree[parentId]
+  if (parentId !== ROOT_ID && !(eltern && istFlaechenSeite(eltern))) return kopie
   const pos = parseRasterPos(kopie.props)
   const y = freieZeileAuf(tree, parentId)
   if (y === pos.y) return kopie

@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // Side-Effect-Import: der echte Popup-Baustein für die Seiten-Tests. Mehr
 // echte Bausteine braucht dieser Weg nicht — alles Übrige läuft über die
 // Test-Bausteine.
-import '../blocks/popup/PopupBlock'
+import { PopupBlock } from '../blocks/popup/PopupBlock'
 import { ROOT_ID } from '../core/blocks/BlockData'
 import { BACKUP_KEY, Editor } from './Editor'
 import { sanitizeTree } from './ladeKette'
@@ -367,10 +367,10 @@ describe('Popup-Seiten (P-A)', () => {
     expect(load({ tree: baum, selectedId: 'a' }).selectedId).toBe('a')
   })
 
-  it('addPopupPage: eindeutiger Name, Seite wird aktiv, Anlegen+Benennen = EIN Undo-Schritt', () => {
+  it('addSeite: eindeutiger Name, Seite wird aktiv, Anlegen+Benennen = EIN Undo-Schritt', () => {
     const ed = new Editor()
-    const p1 = ed.addPopupPage()
-    const p2 = ed.addPopupPage()
+    const p1 = ed.addSeite(PopupBlock.blockType)
+    const p2 = ed.addSeite(PopupBlock.blockType)
     expect(p1).not.toBeNull()
     expect(p2).not.toBeNull()
     expect(ed.getNode(p1!.id)?.props.name).toBe('Popup')

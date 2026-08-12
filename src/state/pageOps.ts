@@ -10,12 +10,39 @@ export interface SeitenEintrag {
   id: string
   name: string
   istHauptseite: boolean
+  // true = FLÄCHE (Hauptseite oder Ansicht): die Seite ist die Maskenfläche
+  // selbst, ihre Bausteine liegen im Raster. false = FENSTER (Popup).
+  istFlaeche: boolean
 }
 
-// Ein Seiten-Baustein (Popup) ist eine eigene Seite, kein Inhalt seiner
-// Elternseite — die EINE Stelle, die das entscheidet.
+// Ein Seiten-Baustein (Popup, Ansicht) ist eine eigene Seite, kein Inhalt
+// seiner Elternseite — die EINE Stelle, die das entscheidet.
 export function istSeitenBaustein(node: BlockNode): boolean {
   return getBlockDefinition(node.type)?.pageBlock === true
+}
+
+// Und WELCHE Art Seite: Fläche (Ansicht) oder Fenster (Popup) —
+// Registry-Kennzeichen, kein `if type===` (Bedeutung: BlockDefinition).
+export function istFlaechenSeite(node: BlockNode): boolean {
+  return getBlockDefinition(node.type)?.flaechenSeite === true
+}
+
+// Die FENSTER-Seiten unter den Seiten einer Maske: nur sie kann ein
+// Ketten-Schritt öffnen und schließen. Ohne diese Frage stünden Ansichten in
+// den Popup-Wählern, und der Schritt träfe zur Laufzeit nichts.
+export function istFensterSeite(eintrag: SeitenEintrag): boolean {
+  return !eintrag.istHauptseite && !eintrag.istFlaeche
+}
+
+// Ein noch freier Klarname für eine neue Seite: „Ansicht", „Ansicht 2", …
+// Die Zählung beginnt bei 2, weil der unbenutzte Grundname selbst der erste
+// ist. Namen sind der Adressweg der Laufzeit (Popup-Schritte) — doppelte
+// träfen still das falsche Fenster.
+export function freierSeitenName(vergeben: readonly string[], basis: string): string {
+  const belegt = new Set(vergeben)
+  let name = basis
+  for (let n = 2; belegt.has(name); n++) name = `${basis} ${n}`
+  return name
 }
 
 // Wurzel der AKTIVEN Seite. Verschwindet die Seite (Undo, Löschen),
@@ -38,17 +65,22 @@ export function seiteVon(tree: BlockTree, id: string): string {
 }
 
 // Seiten der Maske: Hauptseite + alle Seiten-Bausteine unter der Wurzel,
-// in Baum-Reihenfolge.
+// in Baum-Reihenfolge. Der Ersatzname eines namenlosen Eintrags kommt aus der
+// Registry (displayName), nicht als Literal von hier — sonst hiesse eine
+// namenlose Ansicht „Popup".
 export function seitenDerMaske(tree: BlockTree): SeitenEintrag[] {
-  const popups = (tree[ROOT_ID]?.childIds ?? [])
+  const seiten = (tree[ROOT_ID]?.childIds ?? [])
     .map((id) => tree[id])
     .filter((n): n is BlockNode => Boolean(n) && istSeitenBaustein(n))
     .map((n) => ({
       id: n.id,
-      name: typeof n.props.name === 'string' && n.props.name !== '' ? n.props.name : 'Popup',
+      name: typeof n.props.name === 'string' && n.props.name !== ''
+        ? n.props.name
+        : getBlockDefinition(n.type)?.displayName ?? 'Seite',
       istHauptseite: false,
+      istFlaeche: istFlaechenSeite(n),
     }))
-  return [{ id: ROOT_ID, name: 'Hauptseite', istHauptseite: true }, ...popups]
+  return [{ id: ROOT_ID, name: 'Hauptseite', istHauptseite: true, istFlaeche: true }, ...seiten]
 }
 
 // Kinder im FLUSS eines Containers: Seiten-Bausteine (Popups) erscheinen

@@ -44,6 +44,7 @@ import {
   uebernahmeQuellen,
 } from './feldUebernahme'
 import { eigenerText } from '../../core/blocks/bausteinName'
+import { istFensterSeite } from '../../state/pageOps'
 import {
   auswahlGeberOptionen,
   blockValueKey,
@@ -75,8 +76,9 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const ergebnisSchritte = ergebnisSchritteVor(kette, step?.id, relations.list)
   const ergebnisIds = ergebnisSchritte.map((s) => s.id)
   // Popup-Seiten der Maske: Auswahl per Klarname, gespeichert wird
-  // die stabile Seiten-id (übersteht Umbenennen).
-  const popupSeiten = ed.pages.filter((seite) => !seite.istHauptseite)
+  // die stabile Seiten-id (übersteht Umbenennen). Nur FENSTER-Seiten —
+  // eine Ansicht ist kein Popup (istFensterSeite).
+  const popupSeiten = ed.pages.filter(istFensterSeite)
   const blockValues: BlockValueOption[] = actionValueTargets(ed.tree).map(({ node, spot }) => {
     const def = getBlockDefinition(node.type)
     const name = eigenerText(node.props, def?.defaultProps) || def?.displayName || node.type

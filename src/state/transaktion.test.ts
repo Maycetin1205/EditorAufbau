@@ -12,8 +12,8 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 // Side-Effect-Import: die echte Popup-Seite — ohne einen Baustein mit
-// pageBlock-Kennzeichen legt addPopupPage gar keine Seite an.
-import '../blocks/popup/PopupBlock'
+// pageBlock-Kennzeichen legt addSeite gar keine Seite an.
+import { PopupBlock } from '../blocks/popup/PopupBlock'
 import { ROOT_ID } from '../core/blocks/BlockData'
 import { Editor } from './Editor'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
@@ -33,7 +33,7 @@ function editorMitBaustein(): { ed: Editor; id: string } {
 
 describe('Ein Fehler mitten im Schreiben laesst den Verlauf nicht sterben (A7.2)', () => {
   it('REPRO: das blanke begin/end der bisherigen Aufrufer macht den Verlauf stumm', () => {
-    // Genau das Muster, das PropControl und addPopupPage bis A7.2 schrieben:
+    // Genau das Muster, das PropControl und addSeite bis A7.2 schrieben:
     // begin, mehrere Schreibvorgaenge, end — ohne finally. Wirft einer davon,
     // wird `end` nie erreicht.
     const { ed, id } = editorMitBaustein()
@@ -82,9 +82,9 @@ describe('Ein Fehler mitten im Schreiben laesst den Verlauf nicht sterben (A7.2)
     expect(ed.getNode(id)?.props.text).toBe(STANDARD)
   })
 
-  it('transaktion() gibt zurueck, was ihr Inhalt liefert (addPopupPage braucht das)', () => {
+  it('transaktion() gibt zurueck, was ihr Inhalt liefert (addSeite braucht das)', () => {
     const ed = new Editor()
-    const seite = ed.addPopupPage()
+    const seite = ed.addSeite(PopupBlock.blockType)
     expect(seite).not.toBeNull()
     expect(ed.pages).toHaveLength(2)
     // Anlegen UND Benennen sind zusammen EIN Schritt.

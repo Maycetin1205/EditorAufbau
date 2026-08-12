@@ -60,9 +60,14 @@ export function Canvas() {
     setDropTarget(rasterZiel(e, ed, dnd, ed.rootId, e.currentTarget as HTMLElement))
   }
 
-  // Aktive Seite: Hauptseite = Wurzel-Fluss; Popup-Seite = das eine
-  // Popup-Element über der abgedunkelten Maskenfläche (Seiten-Leiste oben).
-  const hauptseite = ed.activePageId === ed.pages[0].id
+  // Aktive Seite in zwei Sorten (Registry, kein `if type===`):
+  // FLÄCHE (Hauptseite oder Ansicht) = das Raster hier; FENSTER (Popup) = das
+  // eine Popup-Element über der abgedunkelten Maskenfläche. Eine Ansicht
+  // arbeitet damit Zug um Zug wie die Hauptseite — dieselbe Rasterfläche,
+  // dieselben Drop-Wege; sie unterscheiden sich nur darin, welche Wurzel
+  // ed.rootId gerade meldet.
+  const aktiveSeite = ed.pages.find((p) => p.id === ed.activePageId)
+  const flaeche = aktiveSeite?.istFlaeche ?? true
 
   return (
     <DndContext.Provider value={dnd}>
@@ -114,11 +119,11 @@ export function Canvas() {
               }
             }}
           >
-            {hauptseite && <NodeList parentId={ed.rootId} direction="column" raster />}
+            {flaeche && <NodeList parentId={ed.rootId} direction="column" raster />}
             {/* „Geist" (E2/E3): halbtransparente Vorschau der Zielzelle beim
                 Bewegen (rasterMove) UND beim Einfügen aus der Bibliothek — rastet
                 auf ganze Zellen. Reine Editor-Hilfe, nie Teil des Baums. */}
-            {hauptseite && dropTarget?.kind === 'raster' && dropTarget.parentId === ed.rootId && (
+            {flaeche && dropTarget?.kind === 'raster' && dropTarget.parentId === ed.rootId && (
               <div
                 aria-hidden
                 data-ff-editor-helper
@@ -138,19 +143,26 @@ export function Canvas() {
             )}
           </div>
           {/* Leerzustand (R1): sagt, was zu tun ist — reine Editor-Hilfe,
-              nie Teil des Baums; pointer-events-none lässt Drops durch. */}
-          {hauptseite && ed.blockCount === 0 && (
+              nie Teil des Baums; pointer-events-none lässt Drops durch.
+              Gefragt wird nach der OFFENEN Seite, nicht nach der ganzen Maske
+              (ed.blockCount zählt jeden Knoten aller Seiten): sonst bliebe
+              eine frisch angelegte, leere Ansicht eine wortlose Fläche —
+              und auf der Hauptseite verschwand der Hinweis schon, sobald
+              irgendwo ein Popup lag. */}
+          {flaeche && ed.childNodesOf(ed.rootId).length === 0 && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
               <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-8 py-6 text-center font-sans">
                 <MousePointerClick size={18} className="text-muted-foreground/60" />
-                <p className="text-[0.8125rem] font-medium text-foreground/80">Leere Maske</p>
+                <p className="text-[0.8125rem] font-medium text-foreground/80">
+                  {aktiveSeite?.istHauptseite ? 'Leere Maske' : `Leere Seite „${aktiveSeite?.name ?? ''}"`}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Zieh einen Baustein aus der Bibliothek links hierher.
                 </p>
               </div>
             </div>
           )}
-          {!hauptseite && <PopupSeite popupId={ed.activePageId} />}
+          {!flaeche && <PopupSeite popupId={ed.activePageId} />}
         </div>
       </div>
     </DndContext.Provider>

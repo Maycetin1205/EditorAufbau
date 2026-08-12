@@ -30,6 +30,7 @@ import {
 } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
+import { istFlaechenSeite } from '../state/pageOps'
 import {
   actionValueTargets,
   auswahlGeberImBaum,
@@ -357,9 +358,13 @@ export function preflightMask(
   // P-B: Popup-Seiten des Baums (pageBlock) — Schritte zeigen auf ihre id,
   // die Laufzeit adressiert sie über den Klarnamen. Darum: doppelte Namen
   // blockieren (der Öffnen-Schritt träfe sonst still das falsche Fenster).
+  // NUR FENSTER-Seiten: eine Ansicht (flaechenSeite) ist kein Popup, die
+  // Laufzeit öffnet ausschließlich ff-popup — stünde sie hier, ginge ein
+  // Schritt auf sie als gültig durch und täte dann nichts.
   const popupSeiten = (tree[ROOT_ID]?.childIds ?? [])
     .map((id) => tree[id])
-    .filter((n): n is BlockNode => n !== undefined && getBlockDefinition(n.type)?.pageBlock === true)
+    .filter((n): n is BlockNode =>
+      n !== undefined && getBlockDefinition(n.type)?.pageBlock === true && !istFlaechenSeite(n))
   const popupIds = popupSeiten.map((n) => n.id)
   const nameZaehler = new Map<string, number>()
   for (const seite of popupSeiten) {

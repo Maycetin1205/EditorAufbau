@@ -188,6 +188,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       listenBindung: BlockClass.listenBindung,
       blockEvents: BlockClass.blockEvents,
       pageBlock: BlockClass.pageBlock,
+      flaechenSeite: BlockClass.flaechenSeite,
       raster: BlockClass.raster,
     })
   }

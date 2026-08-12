@@ -24,7 +24,7 @@
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
-import { canContain, getAllBlockDefinitions, getBlockDefinition } from '../core/blocks/blockRegistry'
+import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
 import { rasterSpecOf } from '../core/blocks/rasterLayout'
 import { type BlockEventsMap } from '../core/data/aktionen'
 import { type DataSource } from '../core/data/dataSources'
@@ -46,6 +46,7 @@ import {
 } from './templateRules'
 import {
   aktiveSeitenWurzel,
+  freierSeitenName,
   kinderImFluss,
   seitenDerMaske,
   type SeitenEintrag,
@@ -121,20 +122,20 @@ export class Editor extends Subject<Editor> {
     this.notify(this)
   }
 
-  // Neue Popup-Seite: ein Seiten-Baustein als Kind der Wurzel mit
-  // eindeutigem Klarnamen; die Seite wird sofort aktiv. Transaktion =
+  // Neue Seite (Popup oder Ansicht): ein Seiten-Baustein als Kind der Wurzel
+  // mit eindeutigem Klarnamen; die Seite wird sofort aktiv. Transaktion =
   // Anlegen + Benennen sind zusammen EIN Undo-Schritt.
-  addPopupPage(): BlockNode | null {
-    // Welcher Baustein eine Seite IST, sagt die Registry (pageBlock) — nicht
-    // ein Typ-Name hier im Store (Regel 2). Als Funktionsargument haette der
-    // fest verdrahtete 'popup'-String den Wächter nie ausgeloest; pageOps
-    // macht es zwei Dateien weiter schon richtig. Der sichtbare Name "Popup"
-    // unten ist davon unberuehrt — das ist Anzeige, kein Typ.
-    const typ = getAllBlockDefinitions().find((d) => d.pageBlock)?.type
-    if (!typ) return null
-    const vergeben = new Set(this.pages.map((p) => p.name))
-    let name = 'Popup'
-    for (let n = 2; vergeben.has(name); n++) name = `Popup ${n}`
+  //
+  // WELCHER Seiten-Typ, sagt der Aufrufer — die Seiten-Leiste bietet jeden
+  // an, den die Registry als pageBlock fuehrt. Bis N1 (2026-08-12) suchte der
+  // Store sich stattdessen selbst „die erste Definition mit pageBlock": mit
+  // einem zweiten Seiten-Typ legte der Knopf damit still den falschen an.
+  // Ein unbekannter oder Nicht-Seiten-Typ ergibt null, statt irgendetwas
+  // anzulegen (Regel 4).
+  addSeite(typ: string): BlockNode | null {
+    const def = getBlockDefinition(typ)
+    if (def?.pageBlock !== true) return null
+    const name = freierSeitenName(this.pages.map((p) => p.name), def.displayName)
     return this.transaktion(() => {
       const node = this.addBlock(typ, ROOT_ID)
       if (node) {

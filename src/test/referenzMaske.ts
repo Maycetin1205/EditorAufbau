@@ -3,7 +3,8 @@
 // ECHTEN Bausteinen, die möglichst viele Export-Wege gleichzeitig
 // beschreitet: Kanban mit Musterkarte/Bindungen/Auffangspalte + Demo-Karte
 // (fällt raus), Formularfeld mit eigener Quelle, Datum, Zeile, Popup-Seite,
-// Aktionsketten (RELATION/START_TOOL/POPUP_OPEN), zwei Quellen-Arten
+// Ansicht-Seite (zweite Fläche), Aktionsketten (RELATION/START_TOOL/
+// POPUP_OPEN), zwei Quellen-Arten
 // (IDB + Adreßstamm), Relations-Vorlage, Umlaute in Titel/Texten/Namen.
 // Reine Daten — der Wächter (export/referenzabzug.test.ts) exportiert sie
 // und vergleicht Byte für Byte gegen die festgeschriebene Referenz.
@@ -21,7 +22,7 @@ export interface ReferenzMaske {
 
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'txt2', 'p1'] },
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'txt2', 'p1', 'a1'] },
     z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
     // Ohne Eigenschaften: DatumBlock.defaultProps ist leer. Bis 2026-07-28
     // stand hier ein `zeigt: 'datum'` aus einer alten Fassung — der Export
@@ -136,6 +137,22 @@ export function referenzMaske(): ReferenzMaske {
     },
     pz1: { id: 'pz1', type: 'zeile', props: {}, parentId: 'p1', childIds: ['pdatum'] },
     pdatum: { id: 'pdatum', type: 'datum', props: {}, parentId: 'pz1', childIds: [] },
+    // Die zweite FLÄCHE (N1, 2026-08-12): sie faellt im Abzug durch drei
+    // Dinge auf, die je fuer sich still kaputtgehen koennten — `hidden` (ohne
+    // das startet die Maske mit zwei Flaechen uebereinander), KEIN eigener
+    // Zellen-Style/fuellt am Ansicht-Element selbst (es hat keinen Kasten),
+    // und der durchgereichte ZELLEN-Style an ihrem Kind. Genau dieses letzte
+    // Byte entscheidet, ob ein Baustein in der Maske dort sitzt, wo er im
+    // Editor lag (Regel 1).
+    a1: {
+      id: 'a1', type: 'ansicht', props: { name: 'Terminkalender' },
+      parentId: 'root', childIds: ['atext'],
+    },
+    atext: {
+      id: 'atext', type: 'text',
+      props: { text: 'Wochenübersicht', rasterX: 2, rasterY: 1, rasterW: 10, rasterH: 2 },
+      parentId: 'a1', childIds: [],
+    },
   }
 
   const sources: DataSource[] = [
