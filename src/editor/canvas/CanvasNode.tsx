@@ -17,6 +17,7 @@ import {
   resolveChildDirection,
   type FlowDirection,
 } from '../../core/blocks/flowLayout'
+import { istRandBaustein, randItemStyle } from '../../core/blocks/maskenRand'
 import { parseRasterPos, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
@@ -49,12 +50,16 @@ function InsertionLine({ direction }: { direction: FlowDirection }) {
 // Linie (die Zell-Vorschau „Geist" rendert der Canvas), nur die Fluss-Liste in
 // Containern zeigt sie (kind:'flow').
 export function NodeList(
-  { parentId, direction, raster = false }:
-  { parentId: string; direction: FlowDirection; raster?: boolean },
+  { parentId, direction, raster = false, nurRand = false }:
+  { parentId: string; direction: FlowDirection; raster?: boolean; nurRand?: boolean },
 ) {
   const ed = useEditor()
   const dnd = useDnd()
-  const nodes = ed.childNodesOf(parentId)
+  // nurRand: nur die Bausteine des Masken-RAHMENS. Der Canvas holt sie
+  // zusaetzlich von der Hauptseite, wenn eine Ansicht offen ist — sie stehen
+  // auf jeder Flaeche (maskenRand). Alles andere der Hauptseite bleibt aus.
+  const alle = ed.childNodesOf(parentId)
+  const nodes = nurRand ? alle.filter(istRandBaustein) : alle
   const lineAt = (i: number) =>
     !raster
     && dnd.dropTarget?.kind === 'flow'
@@ -160,13 +165,19 @@ function CanvasNode({ node, index, parentId, listDirection, raster = false }: Ca
 
   // Rasterfläche: Zelle bestimmt Platz+Größe (rasterItemStyle, DIESELBE Quelle
   // wie der Export). Bewegt wird per Pointer (ziehePosition) — KEIN draggable.
+  //
+  // AUSNAHME Rand-Baustein (maskenRand, N2.1): er liegt nicht in einer Zelle,
+  // sondern am Rand der Fläche (randItemStyle, ebenfalls DIESELBE Quelle wie
+  // der Export). Sein Platz ist damit vergeben — er lässt sich nicht ziehen,
+  // und ein Zug-Versuch täuschte eine Freiheit vor, die es nicht gibt.
   if (raster) {
+    const rand = istRandBaustein(node)
     return (
       <div
-        onPointerDown={(e) => ziehePosition(ed, dnd, e, node, parentId)}
+        onPointerDown={rand ? undefined : (e) => ziehePosition(ed, dnd, e, node, parentId)}
         style={{
           opacity: dnd.dragId === node.id ? 0.4 : 1,
-          ...rasterItemStyle(parseRasterPos(node.props)),
+          ...(rand ? randItemStyle() : rasterItemStyle(parseRasterPos(node.props))),
         }}
       >
         {inhalt}

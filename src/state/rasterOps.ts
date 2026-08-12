@@ -11,6 +11,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
+import { istRandBaustein } from '../core/blocks/maskenRand'
 import {
   naechsteFreieZeile,
   parseRasterPos,
@@ -28,8 +29,17 @@ export function istRasterFlaeche(node: BlockNode): boolean {
 
 // Freie Zeile ganz unten auf einer Rasterfläche — sonst lägen alle neuen
 // Blöcke aufeinander in Zeile 0.
+//
+// Bausteine des Masken-RAHMENS zählen NICHT mit (maskenRand, N2.1): sie liegen
+// am Rand der Fläche, nicht in Zellen. Ihre Rasterprops stehen nur noch für die
+// Einfüge-Vorschau da — würden sie hier mitgerechnet, schöbe eine Navi jeden
+// neuen Baustein um ihre alte Zellhöhe nach unten, ins Leere.
 export function freieZeileAuf(tree: BlockTree, parentId: string): number {
-  return naechsteFreieZeile(kinderImFluss(tree, parentId).map((n) => parseRasterPos(n.props)))
+  return naechsteFreieZeile(
+    kinderImFluss(tree, parentId)
+      .filter((n) => !istRandBaustein(n))
+      .map((n) => parseRasterPos(n.props)),
+  )
 }
 
 // Wohin eine KOPIE gelegt wird (A5, 2026-08-11). Pixelgleich auf dem Original

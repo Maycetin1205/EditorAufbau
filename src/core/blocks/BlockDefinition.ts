@@ -363,6 +363,14 @@ export interface BlockDefinition {
   // Kette, und der Schritt träfe zur Laufzeit nichts (seAktionen sucht
   // ausschließlich ff-popup).
   flaechenSeite?: boolean
+  // true = der Baustein gehört zum RAHMEN der Maske, nicht zu einer Seite
+  // (N2.1, heute die Navi): er liegt am Rand der Fläche statt in einer
+  // Rasterzelle, und er ist auf JEDER Flächen-Seite zu sehen — Hauptseite wie
+  // Ansicht. Beides folgt aus derselben Aussage, deshalb EIN Kennzeichen.
+  // Bedeutung, Maße und die eine Style-Quelle: core/blocks/maskenRand.ts.
+  // Canvas, Export und die Zeilen-Rechnung des Stores lesen es generisch;
+  // ohne das Kennzeichen wäre die Navi Sondercode im Raster (Regel 2).
+  maskenRand?: boolean
   // Raster-Start-/Mindestgröße auf der Maskenfläche (opt-in, Regel 2): der
   // Store vergibt beim Einfügen die Startgröße, Canvas/Export lesen die
   // Position generisch über rasterLayout. Fehlt die Deklaration, gilt der

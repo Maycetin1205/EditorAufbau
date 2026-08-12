@@ -37,6 +37,7 @@ import {
   type QuelleInReichweite,
 } from '../../core/data/sourceLinks'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { istRandBaustein } from '../../core/blocks/maskenRand'
 import { rasterSpecOf } from '../../core/blocks/rasterLayout'
 import { bindbareStellenVon, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import { useEditorInstance } from '../../state/EditorContext'
@@ -147,6 +148,26 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   // Breiten-Anfasser). Zustandsabhängig deklariert der Baustein selbst
   // (raster.varianten) — hier steht kein Wissen über einen Bausteintyp.
   const rasterSpec = rasterSpecOf(def, block.props)
+  // Ein Baustein des Masken-RAHMENS (maskenRand, N2.1) hat keine Zellgröße zu
+  // ziehen: seine Größe ist der Rand der Fläche (volle Höhe, feste schmale
+  // Breite — core/blocks/maskenRand). Anfasser dafür versprächen etwas, das
+  // kein Ziehen einlösen kann.
+  const rand = istRandBaustein(block)
+  const rasterZiehbar = raster && !rand
+  // Am Rand müssen die Editor-Hilfen NACH INNEN (Nutzer-Befund 2026-08-12:
+  // „ich kann den Button nicht mal anklicken"). Kreuzchen und „+"-Anstecker
+  // sitzen sonst 9 px ÜBER dem Baustein — bei einer Leiste, die bündig an der
+  // Blattkante klebt, liegt das außerhalb des Blattes, und das Blatt schneidet
+  // ab (overflow:hidden). Dasselbe gilt für die Kinder IN der Leiste: sie
+  // stecken in deren Ausschnitt. Der Auswahlrahmen wandert aus demselben Grund
+  // nach innen (outlineOffset negativ) — außen wäre seine halbe Linie weg.
+  const eltern = block.parentId ? editor.getNode(block.parentId) : undefined
+  const amRand = rand || (eltern ? istRandBaustein(eltern) : false)
+  // 4 px von der Ecke: knapp innen. Der „+"-Anstecker geht am Rand nach UNTEN
+  // links — er ist breiter als die schmale Leiste, oben rechts würde er über
+  // die Blattkante hinaus laufen und träfe das Kreuzchen.
+  const kreuzStil = amRand ? { top: 4, right: 4 } : { top: -9, right: -9 }
+  const plusStil = amRand ? { bottom: 4, left: 4 } : { top: -9, right: 14 }
 
   // Musterkarte (templateChild in der Registry): KEIN sichtbares
   // Etikett (docs/decisions/2026-07-16-karte-empfang-anatomie.md). Die
@@ -188,7 +209,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
         height: '100%',
         cursor: selected ? 'default' : 'pointer',
         outline: selected ? '2px solid hsl(var(--ring))' : '2px solid transparent',
-        outlineOffset: 1,
+        outlineOffset: amRand ? -2 : 1,
         borderRadius: 6,
         userSelect: 'none',
       }}
@@ -224,6 +245,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
           label={def.addChildButton.label}
           childType={def.addChildButton.childType}
           parentId={block.id}
+          platz={plusStil}
         />
       )}
       {selected && !templateMark && (
@@ -236,8 +258,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
           onDragStart={(e) => { e.preventDefault(); e.stopPropagation() }}
           style={{
             position: 'absolute',
-            top: -9,
-            right: -9,
+            ...kreuzStil,
             width: 18,
             height: 18,
             padding: 0,
@@ -265,7 +286,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
           Raster-Angaben ab (rasterSpec.breiteZiehbar — die senkrechte
           Trennlinie ist ein Strich, kein Kasten). Registry-Daten, kein
           `if typ ===` (Regel 2). */}
-      {selected && raster && rasterSpec.breiteZiehbar && (
+      {selected && rasterZiehbar && rasterSpec.breiteZiehbar && (
         <div
           draggable={false}
           onPointerDown={(e) => startRasterResize(e, 'x')}
@@ -290,7 +311,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
           }}
         />
       )}
-      {selected && raster && (
+      {selected && rasterZiehbar && (
         <div
           draggable={false}
           onPointerDown={(e) => startRasterResize(e, 'y')}
@@ -375,24 +396,34 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
 }
 
 // Editor-Hilfe "Plus-Knopf" (aus der Registry: addChildButton).
-// Ein kleiner Anstecker am Wrapper-Rand (Muster Kreuzchen), bewusst NIE im
-// Baustein selbst (er stähle dem Baustein Platz — WYSIWYG-Bruch; Herkunft:
+// Ein kleiner Anstecker am Wrapper-Rand, bewusst NIE im Baustein selbst (er
+// stähle dem Baustein Platz — WYSIWYG-Bruch; Herkunft:
 // docs/decisions/2026-07-10-editor-hilfen.md), sichtbar NUR wenn die
 // Auswahl im Teilbaum des Containers liegt — ein unselektierter Baustein
 // sieht im Editor exakt aus wie im Export.
+//
+// Form: derselbe runde Knopf wie das Kreuzchen daneben, nur mit „+" — bis
+// 2026-08-12 war es ein Kasten mit Rahmen, Schatten und Beschriftung
+// („sieht aus wie 1999", Nutzer). Was er tut, sagt jetzt der Tooltip; zwei
+// verschiedene Knopfformen dicht nebeneinander sagten ohnehin nichts.
 interface AddChildButtonProps {
   label: string
   childType: string
   parentId: string
+  // Wo der Anstecker sitzt. Normal über dem Baustein; am Maskenrand nach
+  // INNEN, weil ausserhalb des Blattes abgeschnitten wird (s. BlockHost).
+  platz: { top?: number; right?: number; bottom?: number; left?: number }
 }
 
-function AddChildButton({ label, childType, parentId }: AddChildButtonProps) {
+function AddChildButton({ label, childType, parentId, platz }: AddChildButtonProps) {
   const editor = useEditorInstance()
   return (
     <button
       type="button"
       data-ff-editor-helper
       draggable={false}
+      aria-label={label}
+      title={label}
       onClick={(e) => {
         e.stopPropagation()
         editor.addBlock(childType, parentId)
@@ -401,25 +432,22 @@ function AddChildButton({ label, childType, parentId }: AddChildButtonProps) {
       onDragStart={(e) => { e.preventDefault(); e.stopPropagation() }}
       style={{
         position: 'absolute',
-        top: -9,
-        right: 14,
+        ...platz,
+        width: 18,
         height: 18,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 3,
-        padding: '0 7px',
-        border: '1px solid hsl(var(--border))',
-        borderRadius: 4,
-        background: 'hsl(var(--card))',
-        color: 'hsl(var(--muted-foreground))',
-        fontSize: 11,
-        fontWeight: 500,
-        lineHeight: 1,
+        padding: 0,
+        border: 'none',
+        borderRadius: 9999,
+        background: 'hsl(var(--ring))',
+        color: '#fff',
+        fontSize: 13,
+        lineHeight: '16px',
         cursor: 'pointer',
-        boxShadow: '0 1px 2px hsl(var(--foreground) / 0.06)',
+        display: 'grid',
+        placeItems: 'center',
       }}
     >
-      + {label}
+      +
     </button>
   )
 }

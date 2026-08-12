@@ -19,13 +19,29 @@
 // (Zusage 2026-08-10). Sein Klick zeigt dann die Hauptseite.
 //
 // Der Klick selbst gehoert nicht dem Baustein: er meldet nur
-// SEITEN_WECHSEL_EVENT (composed) — im Editor wechselt die Arbeitsflaeche
-// darauf die offene Seite, in der Maske blendet die Navi-Laufzeit um.
-// Dieselbe Bauart wie das X am Dialograhmen.
+// SEITEN_WECHSEL_EVENT (composed) — in der MASKE blendet die Navi-Laufzeit
+// darauf um. Im EDITOR wechselt er NICHTS (Nutzer-Befund N2.1-4: der Editor
+// sprang beim Anfassen weg, die Navi war nicht einzustellen); dort waehlt der
+// Klick den Baustein wie bei jedem anderen, gewechselt wird ueber die
+// Seiten-Reiter. Dieselbe Bauart wie das X am Dialograhmen: der Baustein
+// meldet, der Ort entscheidet.
 //
-// Aussehen aus dem Optik-Vorbild (designsprache/mix-fellnase-empfang.html,
-// .navi-eintrag): Hover mildert auf, der aktive Eintrag traegt Koralle.
-// Ausschliesslich Masken-Tokens, keine Farb-Literale.
+// `breit` setzt die Navi an ihre Eintraege, wenn sie aufgeklappt ist — nur
+// dann ist Platz fuer den Namen (Vorbild: .vnav-lbl ist in der schmalen
+// Leiste display:none, halb abgeschnittene Schrift sieht kaputt aus). Kein
+// Zustand des Eintrags, darum kein Prop und kein Export-Attribut.
+//
+// Sichtbar ist in der SCHMALEN Leiste allein die Farbflaeche — und zwar in der
+// Zeichen-Groesse des Vorbilds (20 px, `.vnav-ic`), nicht als 8-px-Punkt
+// (Nutzer-Ansage 2026-08-12: „zwei Pixel, wenn es zugeklappt ist"). Damit ist
+// die eingestellte Farbe das, was man von einem Eintrag zuerst sieht, und die
+// Einstellung „Farbe" hat eine sichtbare Wirkung.
+//
+// Aussehen und Masse abgeschrieben aus der echten empfang-Maske
+// (docs/chef-maske/empfang/…, `.vnav-item`), Farben aus dem Optik-Vorbild
+// (designsprache/mix-fellnase-empfang.html, .navi-eintrag): Hover mildert
+// auf, der aktive Eintrag traegt Koralle. Ausschliesslich Masken-Tokens,
+// keine Farb-Literale.
 
 import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
@@ -34,7 +50,7 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { SEITEN_WECHSEL_EVENT, type SeitenWechselDetail } from '../../core/blocks/seitenWechsel'
 
-// Die waehlbaren Punkt-Farben. Klarname sichtbar, Token unsichtbar — und
+// Die waehlbaren Zeichen-Farben. Klarname sichtbar, Token unsichtbar — und
 // bewusst dieselben Toene, aus denen die ganze Maske gebaut ist (die
 // Statusfarben-Tokens), damit eine Navi nie aus der Palette faellt.
 const TOENE: readonly { wert: string; name: string }[] = [
@@ -72,7 +88,7 @@ export class NaviEintragBlock extends BasicBlock {
     {
       attributeName: 'ton',
       name: 'Farbe',
-      description: 'Farbe des Punkts vor dem Namen.',
+      description: 'Farbe des Zeichens vor dem Namen.',
       kind: 'select',
       options: TOENE.map((t) => ({ value: t.wert, label: t.name })),
     },
@@ -85,26 +101,31 @@ export class NaviEintragBlock extends BasicBlock {
         --ton: var(--se-amber);
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 13px;
         box-sizing: border-box;
-        padding: 9px 12px;
+        margin: 2px 6px;
+        padding: 10px 11px;
         border-radius: var(--se-r-md);
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
         color: var(--se-bg);
+        white-space: nowrap;
         cursor: pointer;
       }
       :host(:hover) { background: var(--se-muted); }
       /* Der aktive Eintrag: genau EINER traegt ihn, gesetzt von der Navi. */
       :host([aktiv]) { background: var(--se-accent); color: var(--se-panel); }
-      .punkt {
-        width: 8px;
-        height: 8px;
+      /* Zeichen-Groesse des Vorbilds (.vnav-ic 20px), rund und ohne Schrift:
+         geschlossen ist DAS der ganze Eintrag. */
+      .zeichen {
+        width: 22px;
+        height: 22px;
         flex: none;
+        border-radius: 50%;
         background: var(--ton);
       }
-      :host([aktiv]) .punkt { background: var(--se-panel); }
+      :host([aktiv]) .zeichen { background: var(--se-panel); }
       /* Die waehlbaren Toene: je Wert genau ein Masken-Token. Der Grundwert
          steht oben am :host und ist DERSELBE wie 'sonne' — der Export laesst
          Standardwerte weg, ein Eintrag im Standardton traegt also gar kein
@@ -114,10 +135,12 @@ export class NaviEintragBlock extends BasicBlock {
       :host([ton='himmel'])  { --ton: var(--se-blue); }
       :host([ton='flieder']) { --ton: var(--se-violet); }
       :host([ton='koralle']) { --ton: var(--se-accent); }
-      .name {
+      /* Name erst in der offenen Leiste (s. Dateikopf) */
+      .name { display: none; }
+      :host([breit]) .name {
+        display: block;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
       }
     `,
   ]
@@ -134,10 +157,7 @@ export class NaviEintragBlock extends BasicBlock {
   // Der Baustein entscheidet NICHT, was ein Klick bewirkt — er meldet ihn.
   // Wer darauf hoert, haengt am Ort (Editor-Flaeche bzw. Navi-Laufzeit).
   private melde(): void {
-    const detail: SeitenWechselDetail = {
-      ansicht: this.seitename,
-      seiteId: this.seite,
-    }
+    const detail: SeitenWechselDetail = { ansicht: this.seitename }
     this.dispatchEvent(new CustomEvent<SeitenWechselDetail>(SEITEN_WECHSEL_EVENT, {
       detail,
       bubbles: true,
@@ -148,8 +168,9 @@ export class NaviEintragBlock extends BasicBlock {
   override render(): TemplateResult {
     // Ohne gewaehlte Seite steht der Eintrag mit Strich da — der Editor
     // erfindet keine Daten (Regel 7), und der Bauer sieht, dass hier noch
-    // etwas fehlt.
-    return html`<span class="punkt"></span>
+    // etwas fehlt. Zugeklappt bleibt allein die Farbflaeche stehen: KEINE
+    // Buchstaben (Nutzer-Ansage 2026-08-12), der Name kommt beim Aufklappen.
+    return html`<span class="zeichen"></span>
       <span class="name">${this.seitename === '' ? '—' : this.seitename}</span>`
   }
 }

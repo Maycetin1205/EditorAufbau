@@ -71,6 +71,9 @@ export interface BlockComponentStatic {
   readonly pageBlock?: boolean
   // Flächenseite statt Fensterseite (Ansicht) — Bedeutung siehe BlockDefinition.
   readonly flaechenSeite?: boolean
+  // Baustein des Masken-RAHMENS (Leiste am Rand, auf jeder Seite sichtbar) —
+  // Bedeutung siehe BlockDefinition, Maße siehe core/blocks/maskenRand.
+  readonly maskenRand?: boolean
   // Raster-Start-/Mindestgröße (opt-in) — Bedeutung siehe BlockDefinition.
   readonly raster?: Partial<RasterSpec>
   new(): BlockComponent

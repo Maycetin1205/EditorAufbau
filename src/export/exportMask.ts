@@ -50,6 +50,7 @@ import {
   ROOT_FLOW,
   type FlowDirection,
 } from '../core/blocks/flowLayout'
+import { randPlatzLinks } from '../core/blocks/maskenRand'
 import { rasterFlaecheStyle } from '../core/blocks/rasterLayout'
 import schriftenCssRaw from '../design/masken-schriften.css?raw'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
@@ -397,6 +398,17 @@ export function exportMask(
     }))) + ';',
   ))
 
+  // Platz fuer die Randleiste des Maskenrahmens (N2.1): liegt eine in der
+  // Maske, haelt die Flaeche ihre schmale Breite links frei — sonst laege sie
+  // ueber den Bausteinen (Vorbild empfang: `.vnav-spacer`). DIESELBE Quelle
+  // rechnet der Editor-Canvas (WYSIWYG). Ohne Rand-Baustein bleibt es beim
+  // einen padding-Wert — eine Maske ohne Navi behaelt Byte fuer Byte ihre
+  // bisherige Wurzel-Regel.
+  const randLinks = randPlatzLinks(tree)
+  const wurzelPadding = randLinks === 0
+    ? `${ROOT_FLOW.padding}px`
+    : `${ROOT_FLOW.padding}px ${ROOT_FLOW.padding}px ${ROOT_FLOW.padding}px ${ROOT_FLOW.padding + randLinks}px`
+
   const html = [
     '<!--SOFTENGINE-VAR!JWHtmlStart-->',
     '<!DOCTYPE html>',
@@ -412,7 +424,7 @@ export function exportMask(
     '/* Grundgeruest + Wurzel-Raster (identisch zum Editor-Canvas, rasterFlaecheStyle) */',
     'html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }',
     'body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); line-height: var(--se-lh); color: var(--se-ink); }',
-    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; ${styleToCss(rasterFlaecheStyle())}; padding: ${ROOT_FLOW.padding}px; }`,
+    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; ${styleToCss(rasterFlaecheStyle())}; padding: ${wurzelPadding}; }`,
     '</style>',
     '</head>',
     '<body>',

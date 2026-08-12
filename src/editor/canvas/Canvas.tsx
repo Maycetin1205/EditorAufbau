@@ -14,9 +14,10 @@
 // die Fläche selbst.
 
 import { MousePointerClick } from '@/ui/zeichen'
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useMemo, useState, type DragEvent } from 'react'
+import { ROOT_ID } from '../../core/blocks/BlockData'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
-import { SEITEN_WECHSEL_EVENT, type SeitenWechselDetail } from '../../core/blocks/seitenWechsel'
+import { randPlatzLinks } from '../../core/blocks/maskenRand'
 import { rasterFlaecheStyle, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { NodeList } from './CanvasNode'
@@ -70,28 +71,19 @@ export function Canvas() {
   const aktiveSeite = ed.pages.find((p) => p.id === ed.activePageId)
   const flaeche = aktiveSeite?.istFlaeche ?? true
 
-  // „Zeig eine andere Seite" (N2): die Navi meldet den Klick, WER darauf
-  // hoert, haengt am Ort — hier die Arbeitsflaeche, in der fertigen Maske
-  // die Navi-Laufzeit. Der Baustein selbst entscheidet nichts (Regel 1,
-  // dieselbe Bauart wie das X am Dialograhmen). Ueber die Baum-id, nicht
-  // ueber den Namen: im Editor ist sie da und eindeutig.
-  const blattRef = useRef<HTMLDivElement | null>(null)
-  useEffect(() => {
-    const el = blattRef.current
-    if (!el) return
-    const wechsle = (e: Event): void => {
-      const ziel = (e as CustomEvent<SeitenWechselDetail>).detail?.seiteId
-      if (ziel) ed.setActivePage(ziel)
-    }
-    el.addEventListener(SEITEN_WECHSEL_EVENT, wechsle)
-    return () => el.removeEventListener(SEITEN_WECHSEL_EVENT, wechsle)
-  }, [ed])
+  // Platz fuer die Randleiste des Maskenrahmens (N2.1): liegt eine in der
+  // Maske, haelt die Flaeche ihre schmale Breite links frei — sonst laege sie
+  // ueber den Bausteinen. DIESELBE Quelle rechnet der Export (exportMask).
+  // Ein Klick auf einen Navi-Eintrag wechselt hier BEWUSST keine Seite mehr
+  // (Nutzer-Befund N2.1-4: die Navi war dadurch nicht einzustellen). Im Editor
+  // waehlt er den Baustein; die Seite wechselt die Seiten-Leiste. Zuhoerer ist
+  // nur noch die Maske selbst (blocks/navi/seRuntime).
+  const randLinks = randPlatzLinks(ed.tree)
 
   return (
     <DndContext.Provider value={dnd}>
       <div className="flex h-full w-full flex-col">
         <div
-          ref={blattRef}
           onClick={() => ed.selectBlock(null)}
           // Das „Blatt": die Maske liegt sichtbar AUF dem Grund — Kante +
           // dreistufiger Schatten geben die Tiefe, der Inhalt selbst bleibt
@@ -123,6 +115,7 @@ export function Canvas() {
             style={{
               ...rasterFlaecheStyle(),
               padding: ROOT_FLOW.padding,
+              paddingLeft: ROOT_FLOW.padding + randLinks,
               boxSizing: 'border-box',
               background: 'var(--se-bg)',
             }}
@@ -139,6 +132,15 @@ export function Canvas() {
             }}
           >
             {flaeche && <NodeList parentId={ed.rootId} direction="column" raster />}
+            {/* Der RAHMEN der Maske steht auf jeder Flaeche (N2.1, Befund 1:
+                die Navi war auf der zweiten Ansicht weg — in der Maske stand
+                sie dort, im Editor nicht: WYSIWYG-Bruch). Er wohnt auf der
+                Hauptseite; ist eine ANSICHT offen, wird er zusaetzlich von
+                dort geholt. Registry-getrieben (maskenRand), kein Wissen
+                ueber die Navi. */}
+            {flaeche && ed.rootId !== ROOT_ID && (
+              <NodeList parentId={ROOT_ID} direction="column" raster nurRand />
+            )}
             {/* „Geist" (E2/E3): halbtransparente Vorschau der Zielzelle beim
                 Bewegen (rasterMove) UND beim Einfügen aus der Bibliothek — rastet
                 auf ganze Zellen. Reine Editor-Hilfe, nie Teil des Baums. */}

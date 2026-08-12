@@ -15,10 +15,12 @@
 //
 // Sichtbarkeit: eine Ansicht ist nie beim Öffnen der Maske dran — die
 // Hauptseite hat den Start. Der Export gibt jeder Ansicht darum `hidden`
-// mit; umgeschaltet wird später von der Navi (N2), die genau dieses Attribut
-// setzt und nimmt. `hidden` muss hier ausdrücklich behandelt werden: die
-// Regel [hidden]{display:none} des Browsers steht in seinem eigenen
-// Stylesheet und verliert gegen jedes :host aus dem Baustein.
+// mit; umgeschaltet wird von der Navi (N2), die genau dieses Attribut setzt
+// und nimmt. Dass `hidden` überhaupt wirkt, ist NICHT selbstverständlich: die
+// Regel [hidden]{display:none} steht im Stylesheet des Browsers und verliert
+// gegen jedes :host aus einem Baustein. Die Gegenregel dazu stand bis N2.1
+// hier — sie gilt seither für JEDEN Baustein (BasicBlock), weil das
+// Umschalten die Bausteine der Hauptseite genauso verbergen muss.
 //
 // Im EDITOR erscheint die Ansicht nicht als Baustein, sondern als Reiter in
 // der Seiten-Leiste — genau wie die Hauptseite selbst, die auch kein
@@ -53,15 +55,16 @@ export class AnsichtBlock extends BasicBlock {
 
   static override styles = [
     BasicBlock.styles,
-    // Nur zwei Regeln — und beide muessen sein. Warum, steht ausfuehrlich im
-    // Dateikopf; hier bleibt es knapp, weil CSS-Kommentare eines Bausteins
-    // Byte fuer Byte in JEDER exportierten Maske landen (Umlaute darin sogar
-    // sechsfach, als \uXXXX).
+    // Nur EINE Regel — warum sie sein muss, steht im Dateikopf; hier bleibt es
+    // knapp, weil CSS-Kommentare eines Bausteins Byte fuer Byte in JEDER
+    // exportierten Maske landen (Umlaute darin sogar sechsfach, als \uXXXX).
+    // Das `hidden`-Verbergen stand bis N2.1 hier noch einmal als eigene Zeile;
+    // es gilt jetzt fuer JEDEN Baustein aus der Basis (BasicBlock) — sonst
+    // wirkte es nur an der Ansicht, und die Hauptseite blieb beim Umschalten
+    // stehen.
     css`
       /* kein eigener Kasten: Kinder sind Zellen des Wurzel-Rasters */
       :host { display: contents; }
-      /* schlaegt die UA-Regel [hidden]{display:none}, die gegen :host verliert */
-      :host([hidden]) { display: none; }
     `,
   ]
 

@@ -37,8 +37,24 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
   // aus seiner Bindungs-Prop gerendert) bekommen eine gepunktete Linie in
   // der Hausfarbe — aber NUR im Editor: data-ff-editor setzt ausschließlich
   // der BlockHost (wie data-editable), im Export bleibt die Maske sauber.
+  // Die zweite Zeile unten (:host([hidden])) ist die eine, die das Umschalten
+  // der Ansichten in SoftEngine ueberhaupt erst wirksam macht — Befund N2.1-6
+  // aus dem Echttest: zwei Flaechen lagen uebereinander. Warum sie sein muss:
+  // die gleichnamige Regel [hidden]{display:none} steht im Stylesheet des
+  // BROWSERS und verliert damit gegen jede Autoren-Regel, also auch gegen
+  // :host{display:block} darueber. Wer das hidden-Attribut an einen Baustein
+  // schreibt (navi/seRuntime blendet damit die nicht gewaehlte Flaeche weg),
+  // aendert ohne sie gar nichts. Bis N2.1 trug nur die Ansicht selbst eine
+  // eigene Abschrift davon; die Bausteine der Hauptseite blieben stehen.
+  // Bewusst OHNE !important: ein GEOEFFNETES Popup traegt seine eigene
+  // display-Regel mit derselben Spezifitaet spaeter im Stapel und bleibt
+  // darum offen (so steht es im Vertrag in navi/seRuntime).
+  // Die Begruendung steht HIER und nicht im CSS: jeder Kommentar innerhalb des
+  // Stils reist Byte fuer Byte in JEDE exportierte Maske (Umlaute darin
+  // sechsfach, als \uXXXX).
   static override styles: CSSResultGroup = css`
     :host { display: block; }
+    :host([hidden]) { display: none; } /* s. Kommentar ueber dieser Klasse */
     /* Rasterflaeche (Attribut 'fuellt' — im Editor von useLitElement gesetzt,
        im Export vom Wurzel-Kind): der Baustein fuellt seine Zelle in der Hoehe
        (die Breite fuellt display:block ohnehin). NUR auf der Maskenflaeche
@@ -189,6 +205,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       blockEvents: BlockClass.blockEvents,
       pageBlock: BlockClass.pageBlock,
       flaechenSeite: BlockClass.flaechenSeite,
+      maskenRand: BlockClass.maskenRand,
       raster: BlockClass.raster,
     })
   }

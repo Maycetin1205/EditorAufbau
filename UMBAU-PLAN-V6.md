@@ -91,7 +91,26 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe:** N2 (2026-08-12) — die Navi. Ein Baustein aus der
+- **Letzte fertige Etappe:** N2.1 (2026-08-12) — die Navi ist eine Leiste des
+  Masken-RAHMENS. Neue Registry-Faehigkeit `maskenRand`
+  (`core/blocks/maskenRand.ts`, Masse 56/224): der Baustein liegt am Rand der
+  Flaeche statt in einer Zelle UND steht auf jeder Flaechen-Seite; die Flaeche
+  haelt seine schmale Breite links frei (Editor und Export aus DERSELBEN
+  Quelle). Der Kern-Fund ist eine einzige CSS-Zeile: `hidden` war in
+  SoftEngine wirkungslos, weil die Browser-Regel `[hidden]{display:none}`
+  gegen jedes `:host` eines Bausteins verliert — sie steht jetzt in
+  `BasicBlock` (vorher nur in der Ansicht, darum blieb beim Umschalten die
+  Hauptseite stehen und beide Flaechen lagen uebereinander). Der Klick im
+  Editor wechselt keine Seite mehr (er waehlt den Baustein; die Zuhoerer-Seite
+  in `Canvas.tsx` ist weg), dafuer sind die Seiten-Reiter da.
+  **Nutzer-Probe ist gelaufen** (SE-Export, mehrfach im Chat): Umschalten
+  funktioniert, „navi bleibt stabil" — OFFEN geblieben ist ein Rest-Scroll von
+  wenigen Pixeln (Maskenhoehe gegen SE-Fensterhoehe) und, als naechster
+  Kleinfix angemeldet, das UMBENENNEN der Hauptseite (Details im Etappenkopf
+  N2.1). Runtime-Bytes ABSICHTLICH neu (+2027, gelesen: nur Navi-CSS/-Template,
+  die hidden-Zeile und Minifier-Umbenennung — kein Editor-Code), Referenzabzug
+  ABSICHTLICH neu (zwei Zeilen: Wurzel-Padding und der Navi-Stil).
+  Davor: N2 (2026-08-12) — die Navi. Ein Baustein aus der
   Bibliothek (`blocks/navi/`), seine EINTRAEGE sind Kind-Bausteine wie die
   Kanban-Spalten — angelegt ueber den vorhandenen „+"-Anstecker
   (addChildButton), damit sie Auswahl, Inspector, Umsortieren und Duplizieren
@@ -390,10 +409,12 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** N2.1 (Navi-Nachbesserung, fuenf Nutzer-Befunde am
-  frischen N2 — s. Etappe), dann U8 -> U9 -> U10 -> N3 -> N4 -> N5 per
+- **Naechste Etappe:** U8, dann U9 -> U10 -> N3 -> N4 -> N5 per
   Opus-Kopier-Auftrag (Wellen-Kopf U; seit
-  2026-08-12 mehrere Etappen je Sitzung). U6, N1 und N2 sind gebaut, Welle R ist fertig. A9 ist per
+  2026-08-12 mehrere Etappen je Sitzung). Dazwischen angemeldet, weil aus der
+  N2.1-Probe entstanden: **die Hauptseite umbenennen** (Kleinfix, braucht eine
+  Ablage fuer ihren Namen — s. Etappenkopf N2.1). U6, N1, N2 und N2.1 sind
+  gebaut, Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -2591,7 +2612,7 @@ Sitzung.
 Den Wellen-Kopf und den Etappentext liest du je Etappe DANN, wenn du bei
 ihr bist — nicht alle auf Vorrat.
 
-Erste Etappe: N2.1.
+Erste Etappe: U8.
 
 Der Einwurf dieses Auftrags ist das go — nicht fuer eine Etappe, sondern
 fuer so viele, wie in diese Sitzung SAUBER hineinpassen.
@@ -2622,7 +2643,7 @@ NICHT pruefen konntest.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
 den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-N2.1 -> U8 -> U9 -> U10 -> N3 -> N4 -> N5
+U8 -> U9 -> U10 -> N3 -> N4 -> N5
 Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -3138,7 +3159,7 @@ Die Ansage legt ausserdem fest, was ein Eintrag tut, dessen Ansicht
 geloescht wurde (stehen lassen und leer zeigen oder mitfallen — nicht
 raten).
 
-### N2.1 · Nachbesserung Navi (Nutzer-Befunde 2026-08-12, direkt nach dem N2-Bau — NAECHSTE Etappe)
+### N2.1 · Nachbesserung Navi (GEBAUT 2026-08-12; Optik danach im Chat nachgeschaerft)
 
 Der erste N2-Stand ist am Vorbild vorbei. FUENF Befunde, alle vom Nutzer
 am fertigen Stand gezeigt; das Vorbild ist und bleibt die empfang-Maske
@@ -3153,8 +3174,13 @@ bzw. der Mix (abschreiben statt gestalten):
    klappt beim Aufklappen DEZENT UEBER die Maske (Overlay); der gebaute
    Stand steht breit im Weg. Aufklappen ueberlagert, verschiebt nie
    Inhalt.
-3. **Links oben nicht buendig:** der Baustein schliesst nicht mit der
-   Flaechen-Ecke ab (Luecke/Versatz).
+3. **Nicht buendig — links, oben UND unten (Nutzer 2026-08-12):** die
+   Navi soll wie im Vorbild als volle Leiste am echten Maskenrand
+   anliegen. Ursache benannt: das Raster haelt Abstand zum Rand, kein
+   Baustein erreicht die Kante. Die Loesung ist eine REGISTRY-Faehigkeit
+   (Regel 2, z. B. „darf an den Maskenrand"), die genau dieser
+   Baustein-Art den Rand-Anschlag erlaubt — kein Navi-Sondercode im
+   Raster, kein Aufweichen des Rasters fuer alle.
 4. **Im EDITOR unbearbeitbar:** Klick auf einen Eintrag WECHSELT sofort
    die Seite — man kann die Navi nicht anfassen/einstellen. Der
    N2-Satz oben („Klick schaltet um — im Editor auf die Seite") ist
@@ -3185,6 +3211,35 @@ Zwei ZUSATZ-Befunde aus dem SE-Echttest des Nutzers (Screenshot,
 
 Runtime-Bytes bewusst neu (Baustein-Verhalten + Optik); Referenzabzug
 erneuern, SE-Delta mit der Gesamtprobe.
+
+**Gebaut 2026-08-12 — was daraus wurde (und was NICHT):** Die Navi ist ein
+Baustein des Masken-RAHMENS geworden, neue Registry-Faehigkeit `maskenRand`
+(`core/blocks/maskenRand.ts`): sie liegt am Rand der Flaeche statt in einer
+Zelle (Befund 3) und steht auf JEDER Flaechen-Seite (Befund 1) — beides
+folgt aus derselben Aussage, darum EIN Kennzeichen. Befund 6 ist am Export
+belegt und nicht geraten: `hidden` blieb wirkungslos, weil die Browser-Regel
+`[hidden]{display:none}` gegen jedes `:host` eines Bausteins verliert; die
+Gegenregel steht jetzt EINMAL in `BasicBlock` statt nur in der Ansicht.
+Befund 7 war zum groessten Teil dessen Folge (zwei Flaechen im selben Raster
+= Vereinigung ihrer Zeilen) plus die 24 Rasterzeilen, die die Navi belegte;
+**ein Rest von wenigen Pixeln bleibt** (Nutzer-Probe: „wirklich Millimeter")
+— das ist Maskenhoehe gegen SE-Fensterhoehe, kein Editor/Export-Unterschied
+mehr. Befund 4/5: der Editor hoert nicht mehr auf das Wechsel-Ereignis
+(`Canvas.tsx`), der Klick waehlt den Baustein, Seiten wechselt die
+Seiten-Leiste. Aus der Nutzer-Probe nachgeschaerft: Editor-Hilfen am Rand
+nach INNEN (Kreuzchen/„+", sonst schneidet das Blatt sie ab), Auswahlrahmen
+ebenfalls · aufgeklappt ist die Leiste leicht durchscheinend · zugeklappt
+zeigt ein Eintrag eine runde Farbflaeche in Zeichen-Groesse (der 8-px-Punkt
+war „zwei Pixel") · KEINE Buchstaben darin (verworfen auf Ansage) · der
+„+"-Anstecker ist derselbe runde Knopf wie das Kreuzchen (der Kasten mit
+Rahmen und Beschriftung „sah aus wie 1999") · schmale Breite 56 statt 72,
+weil unsere Leiste die Marke und den Bediener-Fuss des Vorbilds nicht hat.
+NICHT gebaut, weil es ein eigenes Thema ist: das Abdunkeln der Restflaeche
+beim Aufklappen (unser Baustein kann die Flaeche um sich herum nicht
+ehrlich abdecken) und **die Hauptseite umbenennen** — ihr Name ist heute ein
+Literal (`pageOps.seitenDerMaske`), sie hat keinen Baustein, der ihn tragen
+koennte; Props an der WURZEL fallen beim Laden weg (`normalizeProps` kennt
+den Typ `root` nicht). Steht als naechster Kleinfix an.
 
 **Nutzerprobe:** Navi auf Hauptseite bauen, zweite Ansicht anlegen →
 Navi steht auch dort · Eintrag im Editor anklicken → Navi ist gewaehlt,

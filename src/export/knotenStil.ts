@@ -16,6 +16,7 @@ import {
   type FlowDirection,
   type FlowWidth,
 } from '../core/blocks/flowLayout'
+import { istRandBaustein, randItemStyle } from '../core/blocks/maskenRand'
 import { parseRasterPos, rasterItemStyle } from '../core/blocks/rasterLayout'
 import { escapeHtmlAttr } from './serializer'
 
@@ -29,9 +30,11 @@ export function styleToCss(style: Record<string, string | number>): string {
 
 // Layout-Style eines Blocks als HTML-style-Attribut — DIESELBE Quelle wie der
 // Canvas-Wrapper (WYSIWYG). Auf der Rasterebene (direkte Wurzel-Kinder)
-// bestimmt die Zelle Platz+Größe (rasterItemStyle); Popup-Overlays (pageBlock)
-// positionieren sich selbst über position:absolute (kein Layout-Style);
-// INNERHALB von Containern gilt weiter der Fluss (flowItemStyle).
+// bestimmt die Zelle Platz+Größe (rasterItemStyle) — außer bei einem Baustein
+// des Masken-RAHMENS (maskenRand, N2.1): der liegt am Rand der Fläche, nicht
+// in einer Zelle (randItemStyle). Popup-Overlays (pageBlock) positionieren
+// sich selbst über position:absolute (kein Layout-Style); INNERHALB von
+// Containern gilt weiter der Fluss (flowItemStyle).
 export function styleAttr(
   node: BlockNode,
   parentDirection: FlowDirection,
@@ -42,6 +45,8 @@ export function styleAttr(
   let style: Record<string, string | number>
   if (istPage) {
     style = {}
+  } else if (istRandBaustein(node)) {
+    style = randItemStyle()
   } else if (rasterEbene) {
     style = rasterItemStyle(parseRasterPos(node.props))
   } else {

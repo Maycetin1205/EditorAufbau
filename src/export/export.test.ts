@@ -24,6 +24,7 @@ import '../blocks/kanban/KanbanBlock'
 // tabelleExport.test.ts — diese Datei war ueber den 500-Zeilen-Deckel
 // gewachsen (check:regeln), und der Schnitt liegt am Gegenstand.
 import type { BlockTree } from '../core/blocks/BlockData'
+import { RAND } from '../core/blocks/maskenRand'
 import type { DataSource } from '../core/data/dataSources'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'
@@ -228,6 +229,50 @@ describe('exportMask', () => {
     expect(html).toMatch(/<ff-navi[^>]*>\n\s+<ff-navi-eintrag/)
   })
 
+  it('Navi liegt am Maskenrand, nicht in einer Zelle — und die Flaeche haelt ihre Breite frei (N2.1)', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['nav', 't1'] },
+      nav: {
+        id: 'nav', type: 'navi',
+        // Alte Zellen-Angaben liegen weiter in den Props — sie duerfen im
+        // Export nichts mehr bewirken (Befund N2.1-3: nichts war buendig).
+        props: { rasterX: 0, rasterY: 38, rasterW: 5, rasterH: 24 },
+        parentId: 'root', childIds: [],
+      },
+      t1: { id: 't1', type: TEST_BLOCK, props: { text: 'Inhalt' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    const tag = /<ff-navi[^>]*/.exec(html)?.[0] ?? ''
+    // Buendig links, oben UND unten an der Maskenkante; der Bezug ist das
+    // Fenster selbst (kein positionierter Vorfahr) — dieselbe Bauart wie beim
+    // Popup. Deshalb rollt sie auch nicht mit dem Inhalt weg.
+    expect(tag).toContain('position:absolute')
+    expect(tag).toContain('left:0')
+    expect(tag).toContain('top:0')
+    expect(tag).toContain('bottom:0')
+    // Die BREITE steht bewusst NICHT im style-Attribut: sie haengt am
+    // Auf-/Zuklappen und gehoert darum dem Baustein. Ein style-Attribut wuerde
+    // dessen Regel schlagen — im Editor blieb der Auswahlrahmen dann auf der
+    // schmalen Spur stehen und lief mitten durch die offene Leiste.
+    expect(tag).not.toContain('width')
+    // KEINE Rasterzelle mehr — sonst zaehlten ihre 24 Zeilen weiter zur
+    // Maskenhoehe (Befund N2.1-7: SoftEngine rollte, der Editor nicht).
+    expect(tag).not.toContain('grid-column')
+    expect(tag).not.toContain('grid-row')
+    // Und die Flaeche haelt die schmale Breite frei, damit die Leiste keinen
+    // Baustein verdeckt (Vorbild empfang: .vnav-spacer).
+    expect(html).toContain(`padding: 16px 16px 16px ${16 + RAND.breite}px;`)
+    // Ein normales Wurzel-Kind bleibt unberuehrt in seiner Zelle.
+    const inhalt = /<ff-t-block[^>]*text="Inhalt"[^>]*/.exec(html)?.[0] ?? ''
+    expect(inhalt).toContain('grid-column:1 / span 24')
+  })
+
+  it('ohne Rand-Baustein bleibt die Wurzel-Regel unveraendert (N2.1)', () => {
+    const { html } = exportMask(demoTree())
+    // Eine Maske ohne Navi darf sich durch N2.1 um kein Byte aendern.
+    expect(html).toContain('padding: 16px;')
+  })
+
 })
 
 // Die Verteidigung (Validator: Marker/LF/ASCII/Interface/Buendel) und die
@@ -241,6 +286,17 @@ describe('Runtime-Bündel', () => {
     expect(script).not.toBeNull()
     // Kompilieren (nicht ausführen) — wirft bei Syntaxfehlern.
     expect(() => new Function(script![1])).not.toThrow()
+  })
+
+  it('traegt die Regel, die das Umschalten der Ansichten erst wirksam macht (N2.1)', () => {
+    // Diese EINE Zeile (BasicBlock) entscheidet, ob das hidden-Attribut in
+    // SoftEngine etwas tut: die gleichnamige Browser-Regel verliert gegen
+    // jedes :host aus einem Baustein. Ohne sie schreibt navi/seRuntime das
+    // Attribut, und die Flaechen liegen uebereinander — genau der
+    // Nutzer-Echttest vom 2026-08-12. Geprueft wird das BUENDEL, weil der
+    // Referenzabzug es herausschneidet und im Browser niemand von uns nachsieht.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — die hidden-Regel fehlt')
+      .toContain(':host([hidden]) { display: none; }')
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {

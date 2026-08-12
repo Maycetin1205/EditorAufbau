@@ -16,9 +16,17 @@
 // traegt, meint die Hauptseite: ihr eigener („Hauptseite"), der leere und
 // der einer geloeschten Ansicht.
 //
-// Laeuft NUR im Export: Editor-Elemente tragen data-ff-editor und melden
-// sich hier nie an. Im Editor wechselt statt dessen die Arbeitsflaeche die
-// offene Seite (Canvas hoert auf dasselbe Ereignis).
+// Das UMBLENDEN laeuft nur im Export: Editor-Elemente tragen data-ff-editor
+// und werden hier ausgelassen. Im Editor wechselt der Klick seit N2.1
+// ueberhaupt keine Seite mehr (er waehlt den Baustein) — dafuer sind die
+// Seiten-Reiter da. Was in BEIDEN Welten laeuft: die Hervorhebung und das
+// Zuklappen, damit der Editor zeigt, was die Maske zeigt (Regel 1).
+//
+// Dass `hidden` ueberhaupt etwas bewirkt, ist EINE Zeile in BasicBlock
+// (:host([hidden])). Ohne sie schrieb dieser Code das Attribut, und in
+// SoftEngine passierte nichts — die Flaechen lagen uebereinander
+// (Nutzer-Echttest 2026-08-12, Befund N2.1-6). Wer sie entfernt, bricht
+// diese Datei, ohne sie anzufassen.
 
 import { SEITEN_WECHSEL_EVENT, type SeitenWechselDetail } from '../../core/blocks/seitenWechsel'
 import { AnsichtBlock } from '../ansicht/AnsichtBlock'
@@ -40,6 +48,15 @@ export function haltePunktAktiv(navi: Element, gewaehlt?: Element): void {
     if (e === ziel) e.setAttribute(AKTIV, '')
     else e.removeAttribute(AKTIV)
   }
+}
+
+// Die Eintraege erfahren, ob die Leiste gerade breit ist: nur dann haben sie
+// Platz fuer den Namen. Die Navi sagt es ihnen per Attribut, weil der Name im
+// Schatten des EINTRAGS liegt — von aussen ist er mit CSS nicht erreichbar.
+// Dieselbe Bauart wie die Hervorhebung darunter.
+export function zeigeBreite(navi: Element): void {
+  const breit = navi.hasAttribute('offen')
+  for (const e of eintraegeVon(navi)) e.toggleAttribute('breit', breit)
 }
 
 function nameVon(ansicht: Element): string {
@@ -100,6 +117,11 @@ export function verbindeNavi(navi: Element): void {
     const detail = (e as CustomEvent<SeitenWechselDetail>).detail
     if (!detail) return
     haltePunktAktiv(navi, e.target instanceof Element ? e.target : undefined)
+    // Gewaehlt heisst fertig: die aufgeklappte Leiste geht wieder zu, sonst
+    // stuende sie ueber der Flaeche, die der Bediener gerade sehen wollte
+    // (Vorbild: derselbe Zug schliesst dort die Sidebar).
+    navi.removeAttribute('offen')
+    zeigeBreite(navi)
     if (navi.hasAttribute('data-ff-editor')) return
     schalteUm(navi, detail.ansicht)
   }
@@ -119,6 +141,9 @@ export function trenneNavi(navi: Element): void {
 // Eintraege gibt es da noch gar nicht.
 export function naviAktualisiert(navi: Element): void {
   haltePunktAktiv(navi)
+  // Ein frisch angelegter Eintrag muss den Zustand der Leiste sofort kennen —
+  // sonst zeigte er seinen Namen, obwohl die Leiste schmal ist.
+  zeigeBreite(navi)
   if (navi.hasAttribute('data-ff-editor') || gestartet.has(navi)) return
   const erster = eintraegeVon(navi)[0]
   if (!erster) return
