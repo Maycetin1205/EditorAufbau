@@ -215,6 +215,42 @@ export function PropControl({
           }}
         />
       )
+    // Seite DIESER Maske (Navi-Eintrag): waehlbar sind Hauptseite und
+    // Ansichten — keine freien Links, keine externen Ziele (Nutzer-Vorgabe
+    // 2026-08-12). Fenster-Seiten (Popups) stehen NICHT zur Wahl: sie
+    // oeffnet eine Kette, nicht die Navi.
+    // Gespeichert wird die id, sichtbar ist der Klarname — und derselbe
+    // Klarname wandert ueber klarnameProp in eine eigene Prop, weil die
+    // laufende Maske ihre Seite genau darueber findet (Editor-ids kennt sie
+    // nicht). Eine geloeschte Seite faellt auf '— keine —' zurueck, ihr
+    // Klarname bleibt aber am Eintrag stehen: er soll seine Beschriftung
+    // nicht verlieren, nur weil woanders etwas geloescht wurde.
+    case 'seite': {
+      const seiten = ed.pages.filter((s) => s.istFlaeche)
+      return (
+        <SelectControl
+          label={property.name}
+          description={property.description}
+          options={[
+            { value: KEIN_FELD, label: '— keine —' },
+            ...seiten.map((s) => ({ value: s.id, label: s.name })),
+          ]}
+          value={seiten.some((s) => s.id === value) ? String(value) : KEIN_FELD}
+          onChange={(v) => {
+            const id = v === KEIN_FELD ? '' : v
+            // id und Klarname gehoeren zusammen — EIN Undo-Eintrag fuer
+            // beide (Muster: das Feld-Control unten).
+            ed.transaktion(() => {
+              set(id)
+              if (property.klarnameProp) {
+                ed.updateProperty(block.id, property.klarnameProp,
+                  seiten.find((s) => s.id === id)?.name ?? '')
+              }
+            })
+          }}
+        />
+      )
+    }
     // Relation-Vorlage aus der Bibliothek: Anzeigenamen sichtbar, Vorlagen-id
     // (Technikwert) wird gespeichert. '— keine —' schaltet den Schreibweg ab.
     // Gelöschte/unbekannte ids fallen auf '— keine —' zurück.

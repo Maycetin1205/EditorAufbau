@@ -165,6 +165,10 @@ function nodeToHtml(
   // Vorschau in eine ANDERE Prop (Registry: das Formularfeld schickt den
   // Klarnamen in seinen Platzhalter).
   const vorschauStellen = vorschauStellenVon(node)
+  // Props, die laut Registry nur der Editor braucht (nurImEditor).
+  const nurImEditor = new Set(
+    def.customProperties.filter((p) => p.nurImEditor).map((p) => p.attributeName),
+  )
 
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
   // Layout-Props (width/height im Fluss, rasterX/Y/W/H auf dem Raster) werden
@@ -189,6 +193,12 @@ function nodeToHtml(
       // in die Maske (Praezedenz: der zurueckgestellte Feldtyp).
       if (EIGENE_QUELLE_PROPS.has(key) && !traegtEigeneQuelle(node)) return ''
       if (stilleBindungen.has(key)) return ''
+      // Technikwerte, die nur der Editor braucht, bleiben daheim: die
+      // Seiten-id eines Navi-Eintrags zeigt auf einen Knoten des
+      // EDITOR-Baums. Die laufende Maske findet ihre Seite ueber den
+      // Klarnamen (klarnameProp) — die id waere dort eine Zeichenfolge,
+      // die niemand liest und niemand deuten kann (nurImEditor).
+      if (nurImEditor.has(key)) return ''
       const standard = def.defaultProps[key]
       // Die bindbare LISTE geht geputzt hinaus: Einstellungen, die zur
       // aktuellen Darstellung eines Eintrags nicht gehoeren, liest in der Maske

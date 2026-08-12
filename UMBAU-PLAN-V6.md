@@ -91,7 +91,34 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe:** N1 (2026-08-12) — die Maske kann mehrere
+- **Letzte fertige Etappe:** N2 (2026-08-12) — die Navi. Ein Baustein aus der
+  Bibliothek (`blocks/navi/`), seine EINTRAEGE sind Kind-Bausteine wie die
+  Kanban-Spalten — angelegt ueber den vorhandenen „+"-Anstecker
+  (addChildButton), damit sie Auswahl, Inspector, Umsortieren und Duplizieren
+  geschenkt bekommen statt einer eigenen Listen-Bedienung. Ein Eintrag zeigt
+  auf eine SEITE dieser Maske (neue Property-Art `seite` im Inspector:
+  Hauptseite + Ansichten, keine freien Links); gespeichert wird die id,
+  SICHTBAR und fuer die Laufzeit maßgeblich ist der Klarname — sie findet ihre
+  Ansicht darueber, genau wie ein Popup-Schritt sein Fenster
+  (`blocks/navi/seRuntime.ts`). Die id bleibt daheim (neues
+  Registry-Kennzeichen `nurImEditor`): sie zeigt auf einen Knoten des
+  Editor-Baums, den die Maske nicht kennt. Modell des Umschaltens: der Ast, in
+  dem die Navi liegt, bleibt IMMER stehen (Leiste, Kopfzeilen), dazu genau
+  eine Sache — die gewaehlte Ansicht oder der Rest der Hauptseite. Drei
+  Festlegungen, die der Etappentext verlangte: geloeschte Ansicht -> der
+  Eintrag BLEIBT mit seiner Beschriftung stehen und zeigt dann die Hauptseite
+  (kein Baustein verschwindet, weil woanders geloescht wurde; keine
+  Warn-Anzeige) · die Seiten-id kommt in die A5-Referenzliste
+  (`schreibeBlockReferenzenUm`, Registry-gefuehrt ueber die Property-Art —
+  in `schrittPruefung` hat sie nichts verloren, das ist die Liste fuer
+  Ketten-Schritte) · waehlbar sind nur Seiten dieser Maske. Optik abgeschrieben
+  aus `designsprache/mix-fellnase-empfang.html` (.navi). Runtime-Bytes
+  ABSICHTLICH neu (+5237 Byte = zwei Bausteine + Umschalt-Laufzeit; nachgeprueft,
+  dass KEIN Editor-Code mitkam), Referenzabzug ABSICHTLICH neu (vier Zeilen).
+  **Nicht selbst pruefbar:** ob das Umblenden in SoftEngine sitzt.
+  Davor im selben Zug ein verhaltensneutraler Schnitt (`collectRelations` aus
+  `exportMask` nach `export/benutzteRelationen.ts`, eigener Commit nach Plan 3.1).
+  Davor: N1 (2026-08-12) — die Maske kann mehrere
   ANSICHTEN tragen. Neuer Seiten-Typ `ff-ansicht` (`blocks/ansicht/`):
   pageBlock wie das Popup, aber `display:contents` — sie hat gar keinen
   eigenen Kasten, ihre Kinder sind unmittelbar Zellen des EINEN Wurzel-
@@ -363,9 +390,10 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** N2, dann U8 -> U9 -> U10 -> N3 -> N4 -> N5 per
+- **Naechste Etappe:** N2.1 (Navi-Nachbesserung, fuenf Nutzer-Befunde am
+  frischen N2 — s. Etappe), dann U8 -> U9 -> U10 -> N3 -> N4 -> N5 per
   Opus-Kopier-Auftrag (Wellen-Kopf U; seit
-  2026-08-12 mehrere Etappen je Sitzung). U6 und N1 sind gebaut, Welle R ist fertig. A9 ist per
+  2026-08-12 mehrere Etappen je Sitzung). U6, N1 und N2 sind gebaut, Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
@@ -2563,7 +2591,7 @@ Sitzung.
 Den Wellen-Kopf und den Etappentext liest du je Etappe DANN, wenn du bei
 ihr bist — nicht alle auf Vorrat.
 
-Erste Etappe: N1.
+Erste Etappe: N2.1.
 
 Der Einwurf dieses Auftrags ist das go — nicht fuer eine Etappe, sondern
 fuer so viele, wie in diese Sitzung SAUBER hineinpassen.
@@ -2594,7 +2622,7 @@ NICHT pruefen konntest.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
 den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-N1 -> N2 -> U8 -> U9 -> U10 -> N3 -> N4 -> N5
+N2.1 -> U8 -> U9 -> U10 -> N3 -> N4 -> N5
 Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -3091,7 +3119,7 @@ Export: alle Ansichten stehen in der Datei, die Hauptseite ist sichtbar,
 weitere Ansichten tragen `hidden` (empfang-Muster setView). Pflicht des
 Waechters: Export-Testfall, Veralten-Positivliste, Referenzabzug.
 
-## N2 · Navi-Baustein
+## N2 · Navi-Baustein (GEBAUT 2026-08-12 — Nachbesserung N2.1 folgt)
 
 Normaler Baustein aus der Palette. Eintraege = Ansichten der Maske
 (Referenz auf die Seiten-id, sichtbar ist der Ansichtsname); Klick
@@ -3109,6 +3137,61 @@ eine duplizierte Navi still aufs Original (genau die A5-Fehlerklasse).
 Die Ansage legt ausserdem fest, was ein Eintrag tut, dessen Ansicht
 geloescht wurde (stehen lassen und leer zeigen oder mitfallen — nicht
 raten).
+
+### N2.1 · Nachbesserung Navi (Nutzer-Befunde 2026-08-12, direkt nach dem N2-Bau — NAECHSTE Etappe)
+
+Der erste N2-Stand ist am Vorbild vorbei. FUENF Befunde, alle vom Nutzer
+am fertigen Stand gezeigt; das Vorbild ist und bleibt die empfang-Maske
+bzw. der Mix (abschreiben statt gestalten):
+
+1. **Die Navi steht nur auf EINER Seite.** Wechselt man auf die zweite
+   Ansicht, ist die Navi WEG — im Vorbild ist sie die feste Leiste, die
+   auf JEDER Ansicht steht. Entscheidung noetig (Ansage, nicht raten):
+   Navi-Baustein reist sichtbar auf allen Ansichten mit (EIN Baustein,
+   ueberall gezeichnet) — NICHT je Ansicht eine Kopie pflegen.
+2. **Optik am Vorbild vorbei:** im Vorbild ist die Navi KLEIN/schmal und
+   klappt beim Aufklappen DEZENT UEBER die Maske (Overlay); der gebaute
+   Stand steht breit im Weg. Aufklappen ueberlagert, verschiebt nie
+   Inhalt.
+3. **Links oben nicht buendig:** der Baustein schliesst nicht mit der
+   Flaechen-Ecke ab (Luecke/Versatz).
+4. **Im EDITOR unbearbeitbar:** Klick auf einen Eintrag WECHSELT sofort
+   die Seite — man kann die Navi nicht anfassen/einstellen. Der
+   N2-Satz oben („Klick schaltet um — im Editor auf die Seite") ist
+   damit UEBERSCHRIEBEN: im Editor waehlt der Klick den Baustein
+   (Bedienung am Ding, Regel 7); gewechselt wird im Editor ueber die
+   Seiten-Leiste (oder Doppelklick auf den Eintrag — die Ansage legt es
+   fest). In der MASKE wechselt der Klick, das ist ihr Sinn.
+5. Damit ist auch die Doppelung beantwortet („wozu Navi UND + Ansicht
+   oben?"): die Seiten-Leiste ist das EDITOR-Werkzeug (Seiten anlegen/
+   verwalten/wechseln), die Navi ist der MASKEN-Baustein (wechselt zur
+   Laufzeit). Im Editor wechselt die Navi nicht mehr (Punkt 4), dann
+   gibt es keine zwei Wege mehr.
+
+Zwei ZUSATZ-Befunde aus dem SE-Echttest des Nutzers (Screenshot,
+2026-08-12 abends, Maske laeuft in SoftEngine):
+
+6. **Die Ansichten ueberlagern sich in SoftEngine:** Inhalte der ersten
+   Ansicht (Suchfelder, Tabelle) und der zweiten (Kanban — sollte laut
+   Nutzer auf der ZWEITEN Seite liegen) sind GLEICHZEITIG sichtbar und
+   liegen uebereinander. Das hidden-Umschalten aus N1/N2 greift in der
+   Maske nicht, und/oder der Baustein liegt im Baum auf der falschen
+   Seite. ERST am Export belegen (welche Seite traegt `hidden`, wo haengt
+   das Kanban im Baum), DANN fixen — nicht raten.
+7. **SoftEngine scrollt minimal, der Editor nicht:** Editor und Maske
+   zeigen nicht dasselbe Mass — Plan 3.5: „Editor und Export stellen
+   dieselbe Eigenschaft unterschiedlich dar" ist ein Stoppgrund. Ursache
+   messen (Viewport-/Rand-/Leisten-Differenz), im selben Thema beheben.
+
+Runtime-Bytes bewusst neu (Baustein-Verhalten + Optik); Referenzabzug
+erneuern, SE-Delta mit der Gesamtprobe.
+
+**Nutzerprobe:** Navi auf Hauptseite bauen, zweite Ansicht anlegen →
+Navi steht auch dort · Eintrag im Editor anklicken → Navi ist gewaehlt,
+KEIN Wechsel · in der Maske: Klick wechselt, Aufklappen legt sich dezent
+UEBER den Inhalt · Baustein sitzt buendig in der Ecke · in SoftEngine ist
+IMMER genau EINE Ansicht sichtbar, und nichts scrollt, was im Editor
+nicht scrollt.
 
 ## N3 · Kanban lebendig (Optik-Angleich an den Mix)
 

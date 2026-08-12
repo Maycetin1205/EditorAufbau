@@ -24,6 +24,13 @@ export type PropertyKind =
   // bliebe in der fertigen Maske leer.
   | 'quelle'
   | 'relation'
+  // seite speichert die id einer SEITE DIESER MASKE (Hauptseite oder
+  // Ansicht) — waehlbar ist nur, was es in der Maske gibt: keine freien
+  // Links, keine externen Ziele (Nutzer-Vorgabe zur Navi, 2026-08-12).
+  // Die id ist ein Editor-Technikwert und bleibt daheim (nurImEditor); was
+  // die fertige Maske braucht, ist der KLARNAME der Seite — er wandert wie
+  // beim Feld-Control ueber klarnameProp in eine eigene Prop.
+  | 'seite'
 
 export interface PropertySelectOption {
   value: string
@@ -113,4 +120,13 @@ export interface PropertyDescription {
    * kennen (Regel 2).
    */
   klarnameProp?: string
+  /**
+   * true = diese Prop reist NICHT in den Export. Fuer Technikwerte, die nur
+   * der Editor braucht: die Seiten-id einer Navi zeigt auf einen Knoten des
+   * Editor-Baums, den die laufende Maske gar nicht kennt — sie findet ihre
+   * Seite ueber den Klarnamen (klarnameProp), genau wie ein Popup-Schritt.
+   * Ohne dieses Kennzeichen stuende in jeder Maske eine Editor-id, die
+   * niemand liest und niemand deuten kann.
+   */
+  nurImEditor?: boolean
 }

@@ -114,6 +114,10 @@ body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--s
     <ff-ansicht name="Terminkalender" hidden>
       <ff-text text="Wochen&#xFC;bersicht" fuellt style="grid-column:3 / span 10;grid-row:2 / span 2;min-width:0;min-height:0"></ff-text>
     </ff-ansicht>
+    <ff-navi fuellt style="grid-column:1 / span 5;grid-row:39 / span 6;min-width:0;min-height:0">
+      <ff-navi-eintrag seitename="Hauptseite" ton="koralle"></ff-navi-eintrag>
+      <ff-navi-eintrag seitename="Terminkalender" ton="himmel"></ff-navi-eintrag>
+    </ff-navi>
   </div>
 <script>
 window.FF_DATA_SOURCES = [{"id":"q-termine","name":"Terminplaner","tableId":"IDBID0004","indexField":"0_10"},{"id":"q-adressen","name":"Adre\u00DFstamm","tableId":"ADR","indexField":""}];

@@ -22,7 +22,7 @@ export interface ReferenzMaske {
 
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'txt2', 'p1', 'a1'] },
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'txt2', 'p1', 'a1', 'nav'] },
     z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
     // Ohne Eigenschaften: DatumBlock.defaultProps ist leer. Bis 2026-07-28
     // stand hier ein `zeigt: 'datum'` aus einer alten Fassung — der Export
@@ -152,6 +152,25 @@ export function referenzMaske(): ReferenzMaske {
       id: 'atext', type: 'text',
       props: { text: 'Wochenübersicht', rasterX: 2, rasterY: 1, rasterW: 10, rasterH: 2 },
       parentId: 'a1', childIds: [],
+    },
+    // Die Navi (N2) mit zwei Eintraegen — Hauptseite und Ansicht. Der Abzug
+    // haelt damit fest, dass der KLARNAME mitreist (der Adressweg der
+    // Laufzeit) und die Seiten-id NICHT: sie zeigt auf einen Knoten des
+    // Editor-Baums, den die Maske nicht kennt.
+    nav: {
+      id: 'nav', type: 'navi',
+      props: { rasterX: 0, rasterY: 38, rasterW: 5, rasterH: 6 },
+      parentId: 'root', childIds: ['nav1', 'nav2'],
+    },
+    nav1: {
+      id: 'nav1', type: 'navi-eintrag',
+      props: { seite: 'root', seitename: 'Hauptseite', ton: 'koralle' },
+      parentId: 'nav', childIds: [],
+    },
+    nav2: {
+      id: 'nav2', type: 'navi-eintrag',
+      props: { seite: 'a1', seitename: 'Terminkalender', ton: 'himmel' },
+      parentId: 'nav', childIds: [],
     },
   }
 

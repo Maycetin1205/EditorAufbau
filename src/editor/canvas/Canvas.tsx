@@ -14,8 +14,9 @@
 // die Fläche selbst.
 
 import { MousePointerClick } from '@/ui/zeichen'
-import { useCallback, useMemo, useState, type DragEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
+import { SEITEN_WECHSEL_EVENT, type SeitenWechselDetail } from '../../core/blocks/seitenWechsel'
 import { rasterFlaecheStyle, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { NodeList } from './CanvasNode'
@@ -69,10 +70,28 @@ export function Canvas() {
   const aktiveSeite = ed.pages.find((p) => p.id === ed.activePageId)
   const flaeche = aktiveSeite?.istFlaeche ?? true
 
+  // „Zeig eine andere Seite" (N2): die Navi meldet den Klick, WER darauf
+  // hoert, haengt am Ort — hier die Arbeitsflaeche, in der fertigen Maske
+  // die Navi-Laufzeit. Der Baustein selbst entscheidet nichts (Regel 1,
+  // dieselbe Bauart wie das X am Dialograhmen). Ueber die Baum-id, nicht
+  // ueber den Namen: im Editor ist sie da und eindeutig.
+  const blattRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = blattRef.current
+    if (!el) return
+    const wechsle = (e: Event): void => {
+      const ziel = (e as CustomEvent<SeitenWechselDetail>).detail?.seiteId
+      if (ziel) ed.setActivePage(ziel)
+    }
+    el.addEventListener(SEITEN_WECHSEL_EVENT, wechsle)
+    return () => el.removeEventListener(SEITEN_WECHSEL_EVENT, wechsle)
+  }, [ed])
+
   return (
     <DndContext.Provider value={dnd}>
       <div className="flex h-full w-full flex-col">
         <div
+          ref={blattRef}
           onClick={() => ed.selectBlock(null)}
           // Das „Blatt": die Maske liegt sichtbar AUF dem Grund — Kante +
           // dreistufiger Schatten geben die Tiefe, der Inhalt selbst bleibt

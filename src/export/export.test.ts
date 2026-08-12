@@ -10,6 +10,10 @@ import { describe, expect, it } from 'vitest'
 import '../blocks/popup/PopupBlock'
 // … und die Ansicht, die zweite Seiten-Art (Seiten-Test N1).
 import '../blocks/ansicht/AnsichtBlock'
+// Navi + Eintrag (N2): der Eintrag traegt den einen Technikwert, der NICHT
+// mitreisen darf (nurImEditor) — genau das prueft der Fall unten.
+import '../blocks/navi/NaviBlock'
+import '../blocks/navi/NaviEintragBlock'
 // Side-Effect-Import: registriert die statischen Atome (Fahrplan 3).
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
@@ -201,6 +205,29 @@ describe('exportMask', () => {
     expect(kind).toContain('grid-row:5 / span 3')
   })
 
+  it('Navi-Eintrag: Klarname reist, Editor-id bleibt daheim (N2)', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['nav', 'a1'] },
+      nav: { id: 'nav', type: 'navi', props: {}, parentId: 'root', childIds: ['e1'] },
+      e1: {
+        id: 'e1', type: 'navi-eintrag',
+        props: { seite: 'a1', seitename: 'Terminkalender', ton: 'himmel' },
+        parentId: 'nav', childIds: [],
+      },
+      a1: { id: 'a1', type: 'ansicht', props: { name: 'Terminkalender' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    const tag = /<ff-navi-eintrag[^>]*/.exec(html)?.[0] ?? ''
+    // Der Klarname ist der Adressweg der Laufzeit UND die Beschriftung.
+    expect(tag).toContain('seitename="Terminkalender"')
+    expect(tag).toContain('ton="himmel"')
+    // Die Editor-id zeigt auf einen Knoten, den die Maske gar nicht kennt —
+    // sie bleibt daheim (PropertyDescription.nurImEditor). Ohne diese Regel
+    // stuende in jeder Maske eine Zeichenfolge, die niemand deuten kann.
+    expect(tag).not.toContain('seite="a1"')
+    expect(html).toMatch(/<ff-navi[^>]*>\n\s+<ff-navi-eintrag/)
+  })
+
 })
 
 // Die Verteidigung (Validator: Marker/LF/ASCII/Interface/Buendel) und die
@@ -217,7 +244,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-ansicht', 'ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
+    for (const tag of ['ff-ansicht', 'ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-navi', 'ff-navi-eintrag', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,

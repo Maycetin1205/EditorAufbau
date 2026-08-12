@@ -21,6 +21,7 @@
 // Popup oeffnen und dieselbe Fremdtabelle lesen wie das Original.
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
+import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { type ActionParamBinding, type ActionStep, type BlockEventsMap } from '../core/data/aktionen'
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import { deepClone } from '../lib/deepClone'
@@ -37,6 +38,12 @@ export type NeueIdFuer = (alteId: string) => string | undefined
 // ergaenzt, muss ihn hier ebenfalls kennen:
 //
 //   props.folgtAuswahl[].geberId       „Auswahl folgen" (core/data/auswahlFolge)
+//   props[<kind 'seite'>]              Seite der Navi (N2) — Registry-gefuehrt,
+//                                      darum ohne Zeile in dieser Liste zu
+//                                      pflegen. In `stepProblem` hat sie
+//                                      nichts verloren: das ist die Pruefliste
+//                                      fuer KETTEN-Schritte, und die Navi ist
+//                                      keiner.
 //   events[..][].popupId               Popup oeffnen / schliessen
 //   events[..][].params[].blockId      Parameterquelle „Wert eines Bausteins"
 //   events[..][].extraParams[].blockId dieselbe Quelle, Zusatzparameter
@@ -50,12 +57,20 @@ export function schreibeBlockReferenzenUm(node: BlockNode, neueIdFuer: NeueIdFue
   const events = node.events === undefined
     ? undefined
     : umgeschriebeneEreignisse(node.events, neueIdFuer)
-  const propsNeu = folgen !== node.props[AUSWAHL_FOLGE_PROP]
+  // Seiten-Verweise (kind 'seite', heute der Navi-Eintrag): sie zeigen auf
+  // eine SEITE der Maske. Welche Props das sind, sagt die Registry — so
+  // kann ein neuer Baustein mit Seiten-Verweis hier nicht vergessen werden
+  // (Regel 2). Ohne das zeigte eine mitkopierte Navi still auf die
+  // Original-Ansicht: genau die Fehlerklasse, gegen die A5 gebaut wurde.
+  const seiten = umgeschriebeneSeiten(node, neueIdFuer)
+  const propsNeu = folgen !== node.props[AUSWAHL_FOLGE_PROP] || seiten !== null
   const eventsNeu = events !== undefined && events !== node.events
   if (!propsNeu && !eventsNeu) return node
   return {
     ...node,
-    ...(propsNeu ? { props: { ...node.props, [AUSWAHL_FOLGE_PROP]: folgen } } : {}),
+    ...(propsNeu
+      ? { props: { ...node.props, ...seiten, [AUSWAHL_FOLGE_PROP]: folgen } }
+      : {}),
     ...(eventsNeu ? { events } : {}),
   }
 }
@@ -83,6 +98,22 @@ function umgeschriebeneFolgen(roh: unknown, neueIdFuer: NeueIdFuer): unknown {
     return { ...felder, geberId: ziel }
   })
   return geaendert ? naechste : roh
+}
+
+// Alle Seiten-Verweise eines Knotens (Registry: kind 'seite') mit neuen ids.
+// null = nichts zu tauschen.
+function umgeschriebeneSeiten(
+  node: BlockNode,
+  neueIdFuer: NeueIdFuer,
+): Record<string, unknown> | null {
+  let treffer: Record<string, unknown> | null = null
+  for (const p of getBlockDefinition(node.type)?.customProperties ?? []) {
+    if (p.kind !== 'seite') continue
+    const ziel = ersatzId(node.props[p.attributeName], neueIdFuer)
+    if (ziel === undefined) continue
+    treffer = { ...(treffer ?? {}), [p.attributeName]: ziel }
+  }
+  return treffer
 }
 
 function umgeschriebeneBindung(
