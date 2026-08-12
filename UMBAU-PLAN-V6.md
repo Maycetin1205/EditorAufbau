@@ -1778,6 +1778,73 @@ nicht behauptet werden.
 
 # Welle D — Eine echte Tabelle im Nachschlagen
 
+## D · BESCHLUSS 2026-08-12 (Nutzer, im Chat entschieden)
+
+Der Nutzer wollte wissen, ob das Nachschlage-Fenster nicht einfach ein POPUP
+sein sollte, das er selbst auf der Flaeche baut und ans Feld bindet.
+**Entschieden: NEIN.** Das Nachschlagen bleibt ein fluechtiges Fenster —
+kein Baustein, nicht im Baum, nicht im Export. Es bekommt die echte Tabelle,
+waehlbare Spalten, und eingestellt wird es AM DING.
+
+**Warum der Popup-Weg abgelehnt ist (nicht wieder vorschlagen):**
+
+1. Ein Popup wird EXPORTIERT. Jedes Nachschlage-Feld haenge ein weiteres
+   Popup an die Maskendatei — mit Namen, id, Loeschen/Duplizieren/Undo, von
+   Hand aufgebaut. Mehr Gefummel, nicht weniger; das war der Anlass der
+   ganzen Welle U.
+2. **Ein Popup weiss nicht, WER es geoeffnet hat.** Zwei Felder am selben
+   Popup: ein Klick auf eine Zeile fuellt BEIDE, still und falsch. Um das zu
+   heilen, brauchte die Laufzeit den Begriff „wer hat gefragt, wohin geht
+   die Antwort" — einen Rueckgabeweg quer durch die Maske. Den hat sie
+   nicht und soll sie nicht bekommen.
+3. Das fluechtige Fenster hat diese Fehlerklasse gar nicht: es gehoert von
+   Natur aus zu genau EINEM Feld.
+
+**Was heute fehlte, falls es doch je gebaut wird** (am Code nachgesehen
+2026-08-12, damit niemand raet): das Formularfeld hat genau EIN Ereignis,
+`onChange` „Wert geaendert" (`FormFeldBlock.ts:139`) — kein „angeklickt",
+ein Feld kann also kein Popup oeffnen. Die Tabelle hat GAR KEIN Ereignis
+(`blockEvents` gibt es nur an Knopf, Formularfeld und Kanban) — „Zeile
+geklickt -> Popup zu" existiert nicht. Plus der Rueckgabeweg aus Punkt 2.
+Drei neue Begriffe, nicht einer.
+
+### Was damit beschlossen ist
+
+1. Nachschlagen bleibt ein fluechtiges Laufzeit-Fenster.
+2. Es zeigt die ECHTE Tabelle (D1–D3). Suche, Sortieren per Spaltenklick
+   und Blaettern kommen damit mit — die Tabelle kann sie bereits
+   (`TabelleBlock.ts:152` Suche, `:266` klickSortiere).
+3. Die SPALTEN sind waehlbar (D4).
+4. Eingestellt wird am Ding: Lupe IM EDITOR klicken -> das Fenster geht
+   ueber der abgedunkelten Maske auf -> Spalten stellen -> zu. Nicht mehr
+   blind ueber zwei Klapplisten im Inspector.
+
+### Durchdacht bis zum Schluss — diese Punkte sind entschieden, nicht offen
+
+- **Die Spalten wohnen am FELD, nicht an der Quelle.** Zwei Felder auf
+  dieselbe Quelle duerfen verschiedene Spalten zeigen.
+- **„Angezeigt wird" und „Gespeichert wird" BLEIBEN BEIDE.** Sie sind nicht
+  dasselbe wie Spalten: „Angezeigt wird" ist der Wert, den das FELD nach der
+  Wahl traegt, „Gespeichert wird" der Technikwert, den es sich merkt. Wer
+  sie fuer Spalte 1 und 2 haelt und loescht, nimmt dem Feld seinen Inhalt.
+- **Die Spalten-Einstellung ist EIN Bauteil, benutzt von Tabelle UND
+  Nachschlagen** — nicht zweimal gebaut. Sonst entsteht genau das Paar, das
+  U3 gerade aufloest. Spaltenart (Text/Zahl/Datum/Status/„Bild + Name")
+  kommt aus der Tabelle, es wird kein zweiter Begriff erfunden.
+- **Das Overlay ist EIN Mechanismus, zweimal benutzt** — dasselbe
+  „ueber der abgedunkelten Flaeche bearbeiten" wie beim Popup (U0-7). Wer
+  von beiden zuerst gebaut wird, baut ihn; der andere komponiert ihn.
+- **Im Editor uebernimmt ein Zeilenklick NICHTS.** Dort dient das Fenster
+  dem Einstellen, nicht dem Bedienen — sonst schriebe der Editor Demo-Daten
+  ins Feld (Regel 7: der Editor erfindet nie Daten).
+- **Bestand ohne Spalten-Einstellung zeigt weiter die heutigen zwei Spalten**
+  (Anzeige + Wert). Kein Zwang, kein Verlust.
+- **Export-Bytes:** die Spalten reisen als Attribut am FELD mit, wie die
+  heutigen zwei Einstellungen. Steht die Einstellung auf Standard, wird
+  NICHTS geschrieben (Standardwert-Attribute schreibt der Export nicht) —
+  eine Altmaske exportiert damit byte-gleich. Das ist die Abnahmebedingung
+  von D4, nicht eine Hoffnung.
+
 ## D0 · Nur bei Bedarf verhaltensneutral schneiden
 
 Vor D1 wird anhand des geplanten Diffs entschieden, welche Datei wirklich
@@ -1948,6 +2015,44 @@ Tabellenkomponente im bereitgestellten Modus ersetzt.
 9. Fokus zurueck zur Lupe.
 10. Normale Tabelle ausserhalb des Dialogs unveraendert.
 11. SoftEngine-Probe in WinUI und, soweit verfuegbar, WebUI.
+
+## D4 · Spalten waehlen — eingestellt am Ding (Beschluss 2026-08-12)
+
+**Laeuft NACH D3.** D3 baut die echte Tabelle ins Fenster, mit den heutigen
+zwei Spalten — bis dahin gibt es sichtbar nichts einzustellen. D4 macht die
+Spalten waehlbar. Zwei Etappen, nicht eine: D3 baut unter der Haube um, D4
+wird sichtbar bedienbar; klemmt es, weiss der Nutzer sonst nicht, woran.
+
+**Arbeit:**
+
+1. Neue Feld-Eigenschaft: welche Felder der Quelle als SPALTEN erscheinen.
+   Sie wohnt am FELD (zwei Felder auf dieselbe Quelle duerfen verschiedene
+   Spalten zeigen), nicht an der Quelle.
+2. Eingestellt wird AM DING: die Lupe im Editor oeffnet dasselbe Fenster
+   ueber der abgedunkelten Flaeche; dort werden die Spalten gestellt.
+   Der Mechanismus ist DERSELBE wie die Popup-Overlay-Bearbeitung (U0-7) —
+   wer zuerst gebaut wird, baut ihn, der andere komponiert ihn. Kein
+   zweites Overlay.
+3. Die Spalten-Einstellung selbst ist EIN Bauteil, geteilt mit der Tabelle.
+   Spaltenart (Text/Zahl/Datum/Status/„Bild + Name") kommt von dort; es
+   wird kein zweiter Begriff erfunden.
+4. Migration: Bestand ohne die Eigenschaft zeigt weiter Anzeige + Wert.
+5. Im Editor uebernimmt ein Zeilenklick NICHTS (Regel 7).
+
+**Fertig, wenn:**
+
+- Spalten waehlbar, Editor und laufende Maske zeigen dieselben;
+- „Angezeigt wird" und „Gespeichert wird" gibt es unveraendert weiter —
+  sie sind NICHT durch Spalten ersetzt (s. Beschluss oben);
+- **eine Altmaske exportiert BYTE-GLEICH** (Standard-Einstellung schreibt
+  kein Attribut). Das ist die harte Grenze dieser Etappe, keine Hoffnung;
+- der Referenzabzug bleibt gruen, solange die Referenzmaske keine
+  Spalten stellt.
+
+**Nutzerprobe:** Nachschlage-Feld im Editor anlegen, Lupe klicken, Spalten
+stellen, schliessen, speichern, neu laden — Einstellung ist da. In der
+Maske: Lupe zeigt genau diese Spalten, Suche und Sortieren arbeiten,
+Uebernahme fuellt das Feld wie vorher.
 
 ---
 

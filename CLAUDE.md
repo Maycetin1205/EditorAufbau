@@ -427,6 +427,17 @@ Nutzer-Entscheidung anfassen:**
   UND-verknüpft · kein Partner gefunden → Feld bleibt leer, die Zeile bleibt
   STEHEN (verschwundene Zeilen wären unsichtbarer Datenverlust) · nur EINE
   Stufe, keine Ketten über mehrere Quellen.
+- **Nachschlagen wird KEIN Popup (Nutzer-Entscheidung 2026-08-12):** Das
+  Nachschlage-Fenster bleibt ein flüchtiger Laufzeitdialog — kein Baustein,
+  nicht im Baum, nicht im Export. Es bekommt die ECHTE Tabelle (damit Suche,
+  Sortieren per Spaltenklick und Blättern), wählbare Spalten, und eingestellt
+  wird es am Ding: Lupe im Editor klicken, Fenster über der abgedunkelten
+  Fläche, Spalten stellen. **Der Popup-Weg (Fenster selbst bauen und ans Feld
+  binden) ist geprüft und abgelehnt** — ein Popup weiß nicht, WER es geöffnet
+  hat: zwei Felder am selben Popup füllen sich bei einem Zeilenklick beide.
+  Nicht wieder vorschlagen; Begründung und die drei fehlenden Bausteine
+  (Feld-Klick-Ereignis, Tabellen-Zeilen-Ereignis, Rückgabeweg) stehen im
+  Beschluss-Kopf der Welle D in `UMBAU-PLAN-V6.md`, die Bauschritte in D4.
 - **Keine Warn-Anzeigen (Nutzer 2026-08-10, sehr deutlich):** Es wird KEINE
   Anzeige für Preflight-/Bindungs-Warnungen gebaut und keine vorgeschlagen —
   Bedienfehler verantwortet der Nutzer selbst, der Editor soll funktionieren,
