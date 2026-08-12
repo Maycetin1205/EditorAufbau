@@ -2378,6 +2378,13 @@ Push. Im selben Commit: Zeiger 0.1 nachziehen und die Etappe als GEBAUT
 markieren. Danach im Chat: kurze Klickanleitung (was oeffnen, was tun,
 was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
 dir der Plan oder der Code: STOPP und fragen, nicht raten.
+ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
+aus, mit der NAECHSTEN Etappe der Reihenfolge
+R5 -> R3 -> R4 -> U1 -> U2 -> U3 -> U6 -> N1 -> N2 -> N3 -> N4 -> N5
+eingesetzt — der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
+Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
+dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
+ihn selbst im Chat braucht.
 ```
 
 ~~Der Planer-Chat (Fable) liest danach nur den Diff und meldet
