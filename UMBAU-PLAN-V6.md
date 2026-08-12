@@ -35,7 +35,13 @@ git log --oneline -8
   ausgewaehlt anders aus als unausgewaehlt (U8) · Loeschknoepfe doppelt und
   dreifach sichtbar, u. a. Papierkorb am Seiten-Reiter seit N1 (U9). Beide
   stehen im Wellen-Kopf U und in der Bau-Reihenfolge VOR N3 — erst das
-  Verhalten geraderuecken, dann die Optik.
+  Verhalten geraderuecken, dann die Optik. Dazu U10 (Kleinfix: Leerzeichen
+  beim Benennen im Formularfeld kommt nicht an; Ursache erst belegen).
+  AUSSERDEM vom Nutzer bestaetigt („oki", 2026-08-12): das wartende Paket
+  „Filter ueber Bedienelement" bekommt einen „Alle"-Zustand am
+  Datum-Baustein (Filter zur Laufzeit aufheben statt auf ein Datum
+  filtern) — gehoert zu dem Paket, wenn es sein go bekommt, keine eigene
+  Etappe hier.
 - **QUARANTAENE RESTLOS ENTFERNT (Nutzer-Ansage 2026-08-12, sehr deutlich):**
   Die Sperransicht + der Schreib-Riegel aus A3/A4 haben den Nutzer aus seiner
   eigenen Arbeit ausgesperrt („am Baustein stimmen Angaben nicht"). Auf Ansage
@@ -357,7 +363,7 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** N2, dann U8 -> U9 -> N3 -> N4 -> N5 per
+- **Naechste Etappe:** N2, dann U8 -> U9 -> U10 -> N3 -> N4 -> N5 per
   Opus-Kopier-Auftrag (Wellen-Kopf U; seit
   2026-08-12 mehrere Etappen je Sitzung). U6 und N1 sind gebaut, Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
@@ -2588,7 +2594,7 @@ NICHT pruefen konntest.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
 den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-N1 -> N2 -> U8 -> U9 -> N3 -> N4 -> N5
+N1 -> N2 -> U8 -> U9 -> U10 -> N3 -> N4 -> N5
 Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -3035,6 +3041,17 @@ Teil nicht mit.
 
 **Nutzerprobe:** je Ding genau EIN sichtbarer Loeschknopf; Entf geht
 ueberall; Undo holt alles zurueck.
+
+## U10 · Kleinfix: Leerzeichen beim Benennen im Formularfeld (Nutzer-Befund 2026-08-12, „immer noch")
+
+Beim Vergeben eines Namens im Formularfeld (Editor) kommt ein getipptes
+Leerzeichen nicht an. **Ursache NICHT belegt** — es gibt KEINEN expliziten
+Space-Handler im Code (nachgesucht 2026-08-12); die Ansage der bauenden
+Sitzung belegt die Ursache zuerst (Kandidaten: Tipp-Sitzung/Inline-Edit im
+Shadow-DOM, ein preventDefault auf dem Weg, eine trimmende
+Namens-Uebernahme) und fixt dann genau sie. Kein Umbau.
+
+**Nutzerprobe:** Formularfeld benennen mit „Vor Name" → Leerzeichen sitzt.
 
 ---
 
