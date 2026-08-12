@@ -2253,12 +2253,12 @@ fuer Stamm-Quellen als „+ optional FREISELEKT"). Seine konkrete Schreibform
 ist NIRGENDS belegt: `docs/chef-maske/` und `Desktop\Belegerfassung\` sind
 durchsucht — null Treffer. Regel 5: nicht raten.
 
-**Was der Nutzer liefert, bevor gebaut wird:** den Pfad zum Masken-Ordner
-seiner SoftEngine-Installation — der Ordner, in den die zwei Export-Dateien
-(`index.basis.source.html` + `index.basis.SEvariablen.json`) kopiert
-werden, damit SoftEngine sie zeigt; eine Ebene darueber liegen die
-ausgelieferten Masken. Der Planer-Chat durchsucht sie nach einem echten
-FREISELEKT-Beispiel (oder einem anderen belegten Zeilen-Filter) und
+**Was der Nutzer liefert, bevor gebaut wird (Zusage 2026-08-12):** einen
+Ordner mit echten Masken/Datenquellen seiner Installation („du kriegst
+von mir einen ordner, wo du dir datenquellen anguckst"). Sobald der Pfad
+da ist, durchsucht ihn der Planer-Chat nach einem echten
+FREISELEKT-Beispiel (oder einem anderen belegten Zeilen-Filter) fuer R5
+UND nach dem tatsaechlichen Arten-Bestand fuer den U4-Entwurf — und
 schreibt DANN die Etappe fertig.
 
 **Ausdruecklich NICHT der Weg:** Lazy-Loading/„Daten auf Abruf" (die
@@ -2394,8 +2394,9 @@ Ohne die Antworten 1/2/3/4 baut U1/U2 nicht. Empfehlung steht dabei.
    Popups-Liste in der Werkzeugleiste und ueber die oeffnende Kette;
    X schliesst. Eigene Etappe, Zuschnitt erst nach dem Ok des Nutzers
    (vor oder mit C2).
-8. Offen — der Nutzer sieht sich `designsprache/musterbogen.html` an
-   und sagt Ja/Nein.
+8. **JA — Fellnase** („schon geil", 2026-08-12), ausdruecklich AUCH als
+   Richtung fuer das Editor-Gesicht selbst. Kein externes Vorbild mehr
+   noetig; U7 ist damit zugeschnitten (U7a/b/c, s. dort).
 
 ## U1 · Wortlaut-Putz in der Steuerung (BAUBAR — U0 1/2 beantwortet; Punkt 4 wanderte in U4)
 
@@ -2524,13 +2525,29 @@ machen. Export-Bytes unveraendert.
 **Nutzerprobe (Browser):** Datum anklicken — statt Leere ein Satz;
 Karten-/Spaltenregler heisst „Bedeutung".
 
-## U7 · Optik nach Vorbild — WARTET auf U0-8
+## U7 · Optik: der Editor uebernimmt die Fellnase-Richtung (zugeschnitten 2026-08-12)
 
-Erst wenn das Vorbild da ist (Screenshots oder „Fellnase-Richtung"):
-Steuerung, Inspector, Palette optisch daran ausrichten — abschreiben,
-nicht erfinden (Regel aus F3). Editor-Tokens (`src/index.css`) bleiben
-strikt von den Masken-Tokens getrennt. Der Etappen-Zuschnitt entsteht
-erst mit dem Vorbild.
+**Entscheidung des Nutzers:** die eingecheckte Demo (`designsprache/`)
+ist das Vorbild — auch fuer den Editor selbst. Die Grenze aus CLAUDE.md
+bleibt hart: Masken-Tokens und Editor-Tokens werden NIE gemischt. Der
+Editor bekommt EIGENE Tokens mit den Fellnase-Werten; `masken-tokens.css`
+und die Export-Bytes bleiben byte-gleich.
+
+- **U7a · Musterbogen ergaenzen (kein Editor-Code):** die Muster, die der
+  Demo fehlen, weil sie Masken-Bausteine zeigt und keine Editor-Teile:
+  Formularzeile, Auswahlmenue, Liste-mit-Detail, Fenster/Dialog,
+  Knopfreihe, Meldung. Aus den vorhandenen Atomen (`atome.css`)
+  ABGELEITET, nicht erfunden; fehlt eine Entscheidung, wird gefragt.
+  In `designsprache/` einchecken; der Nutzer nickt sie IM BROWSER ab,
+  bevor irgendwer den Editor anfasst. U7a darf frueh laufen.
+- **U7b · Editor-Tokens umstellen:** `src/index.css` (shadcn-Variablen)
+  auf die abgenickten Werte, Schrift wie die Demo.
+- **U7c · Steuerung/Inspector/Palette angleichen:** Stelle fuer Stelle
+  gegen den ergaenzten Musterbogen; die app-eigene Meldung aus U2 nimmt
+  ihr Aussehen von dort.
+
+**Reihenfolge-Ehrlichkeit:** U7b/U7c laufen NACH U4/U5 — sonst werden
+Formulare angestrichen, die kurz danach neu gebaut werden.
 
 ---
 
@@ -2662,7 +2679,7 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | U4 | Entwurf Quellen/Felder/Relationen | kein Code — der Nutzer bestaetigt den Entwurf |
 | U5 | Umsetzung Entwurf | Steuerung und Inspector, vollstaendig |
 | U6 | Inspector-Kleinputz | Datum/Popup erklaeren sich; „Farbe" heisst „Bedeutung" |
-| U7 | Optik nach Vorbild (WARTET auf Vorbild) | Steuerung/Inspector/Palette im neuen Gesicht |
+| U7 | Optik: Fellnase-Richtung (U7a Musterbogen frueh; U7b/c nach U5) | Steuerung/Inspector/Palette im neuen Gesicht |
 
 Nicht jeder Punkt muss gleich gross sein. Die Liste verhindert, dass ein
 Agent unter dem Etikett „Aufraeumen" fuenf unabhaengige Risiken in einen
