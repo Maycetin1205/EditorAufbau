@@ -27,7 +27,6 @@ import {
   firstDescendantOfType,
   istAuswahlGeber,
   QUELLE_PROP,
-  relationIdsVon,
   traegtEigeneQuelle,
 } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
@@ -59,6 +58,7 @@ import {
   collectDataSources,
   holSchluesselJeGeber,
 } from './benutzteQuellen'
+import { collectRelations } from './benutzteRelationen'
 import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
 import { styleAttr, styleToCss } from './knotenStil'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
@@ -284,30 +284,9 @@ function nodeToHtml(
 // (collectDataSources) — dort ausgezogen, weil diese Datei am Deckel steht.
 
 // ---------- Relation-Vorlagen → FF_RELATIONS ----------
-
-// Sammelt benutzte Vorlagen — WELCHE ein Baustein benutzt, sagt relationIdsVon
-// (dieselbe Stelle, die auch die Verwendungs-Anzeige der Steuerung fragt).
-// Baum-, Ereignis- und Schritt-Reihenfolge sind deterministisch; unbekannte IDs
-// werden von der Preflight abgefangen.
-function collectRelations(
-  tree: BlockTree,
-  relations: readonly RelationTemplate[],
-): RelationTemplate[] {
-  const seen = new Set<string>()
-  const acc: RelationTemplate[] = []
-  const visit = (node: BlockNode | undefined): void => {
-    if (!node) return
-    for (const id of relationIdsVon(node)) {
-      const rel = relations.find((r) => r.id === id)
-      if (!rel || seen.has(rel.id)) continue
-      seen.add(rel.id)
-      acc.push(rel)
-    }
-    node.childIds.forEach((id) => visit(tree[id]))
-  }
-  visit(tree[ROOT_ID])
-  return acc
-}
+// WELCHE Vorlagen die Maske benutzt, beantwortet ./benutzteRelationen
+// (collectRelations) — dort ausgezogen, weil diese Datei am Deckel steht;
+// dieselbe Aufteilung wie bei den Datenquellen nebenan.
 
 // ---------- Maske zusammensetzen ----------
 
