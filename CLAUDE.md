@@ -197,6 +197,13 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   Jahr/Archiv leer trifft ihn, er liegt im aktuellen Nummernkreis.
   Nebenbei belegt: `GET_RELATION[43!_BNR_!3!30]` → Name des angemeldeten
   Bedieners. Bauauftrag Beleg-Anlegen: UMBAU-PLAN-V6.md, Etappe R4.
+  Neue BELEGPOSITION (behandlung-Log 2026-08-12):
+  `PUT_RELATION[82!0!L!26105745!!ART03045!!1]` — belegt sind Reihenfolge
+  und Werte `[0, Belegart, Belegnummer, '', Artikelnummer, '', Menge]`;
+  was die `0` und die Leerstellen genau bedeuten, ist noch ungedeutet
+  (vor dem Bau am Log nachprüfen, nicht raten). Die zigtausend
+  `Selektion …`-Zeilen danach sind SE-INTERNE Kalkulation je Position —
+  sie entstehen im ERP, nicht durch unsere Maske.
 - **GET-Antworten:** Das offizielle `basisHTML_REGISTER` vereinheitlicht
   `BWMSG` (BüroWARE/WinUI) und `WWMSG` (WEBWARE) zu demselben Callback.
   Dieser Callback ist der Hauptweg; neue `SEDATA.Message<N>` sind nur der
