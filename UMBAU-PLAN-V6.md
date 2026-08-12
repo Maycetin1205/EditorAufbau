@@ -30,6 +30,12 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **Neu 2026-08-12 abends: U8 + U9 eingereiht (Nutzer-Befunde mit
+  Screenshots):** drei Klicks bis zur Kanban-Karte und die Karte sieht
+  ausgewaehlt anders aus als unausgewaehlt (U8) · Loeschknoepfe doppelt und
+  dreifach sichtbar, u. a. Papierkorb am Seiten-Reiter seit N1 (U9). Beide
+  stehen im Wellen-Kopf U und in der Bau-Reihenfolge VOR N3 — erst das
+  Verhalten geraderuecken, dann die Optik.
 - **QUARANTAENE RESTLOS ENTFERNT (Nutzer-Ansage 2026-08-12, sehr deutlich):**
   Die Sperransicht + der Schreib-Riegel aus A3/A4 haben den Nutzer aus seiner
   eigenen Arbeit ausgesperrt („am Baustein stimmen Angaben nicht"). Auf Ansage
@@ -2560,7 +2566,7 @@ NICHT pruefen konntest.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
 den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-U6 -> N1 -> N2 -> N3 -> N4 -> N5
+U6 -> N1 -> N2 -> U8 -> U9 -> N3 -> N4 -> N5
 Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -2958,6 +2964,55 @@ und die Export-Bytes bleiben byte-gleich.
 
 **Reihenfolge-Ehrlichkeit:** U7b/U7c laufen NACH U4/U5 — sonst werden
 Formulare angestrichen, die kurz danach neu gebaut werden.
+
+## U8 · Auswahl am Ding: EIN Klick trifft die Karte, die Karte wechselt ihr Gesicht nicht (Nutzer-Befund 2026-08-12, zwei Screenshots)
+
+**Zwei Befunde, ein Thema — die Auswahl im Kanban luegt:**
+
+1. **Drei Klicks bis zur Karte** (Board → Spalte → Karte): die Auswahl
+   drillt sich durch die Huellen, statt das Getroffene zu waehlen. Belegte
+   Kette: Klick-Handler mit stopPropagation je Ebene
+   (`CanvasNode.tsx:99/:108`, `BlockHost.tsx:167/:176`). Der Nutzer klickt
+   auf die Karte und will die Karte — Regel 7 („Klick auf die Stelle").
+2. **Dieselbe Karte sieht ausgewaehlt ANDERS aus als unausgewaehlt:**
+   Platzhalter-Striche und Bild-Rahmen erscheinen nur an der ausgewaehlten
+   Karte (`CardBlock.ts:25`, gebaut nach der Ansage 2026-08-06 „keine
+   haesslichen …"). Diese Ansage ist durch den heutigen Befund UEBERHOLT:
+   eine Karte hat EIN Gesicht, unabhaengig von der Auswahl — was im Editor
+   zu sehen ist, IST die Maske (Regel 1). Auswahl zeigt sich NUR am
+   BlockHost (Rahmen + Anfasser), nie im Baustein.
+
+**Arbeit:** Klick waehlt den INNERSTEN getroffenen Baustein (ein Klick =
+Karte); Huellen (Spalte, Board) werden an Kopf/Rand getroffen oder ueber
+einen weiteren Klick auf bereits Gewaehltes — den genauen Weg legt die
+Ansage fest, nicht der Bauende unterwegs. Karten-Rendering
+auswahl-unabhaengig machen; steckt der Unterschied im Baustein selbst,
+aendern sich Runtime-Bytes BEWUSST (Ansage sagt es, Referenzabzug erneuern,
+SE-Delta-Probe gebuendelt).
+
+**Nutzerprobe:** volle Spalte, EIN Klick auf eine Karte → Karte ist
+gewaehlt; Karte sieht vor, waehrend und nach der Auswahl gleich aus.
+
+## U9 · EIN sichtbarer Loeschweg je Ding (Nutzer-Befund 2026-08-12, „ueberall doppelt und dreifach")
+
+**Befund (Screenshot Seiten-Leiste):** Loeschen ist fuer dasselbe Ding
+mehrfach sichtbar — Papierkorb am Seiten-Reiter (`SeitenLeiste.tsx`, mit N1
+dazugekommen), Kreuzchen am Baustein (BlockHost), Entf, Loeschen im
+Inspector, „Alle Bloecke loeschen" im Menue. U2 hat das VERHALTEN
+vereinheitlicht (fragt nie nach, Undo ist das Netz) — die ANZAHL der
+sichtbaren Knoepfe blieb und waechst mit jeder neuen Flaeche weiter.
+
+**Arbeit:** Die Ansage zaehlt zuerst ALLE sichtbaren Loesch-Stellen auf
+(Inventur), der Nutzer streicht. Empfehlung: Entf + Kreuzchen am Ding
+bleiben; Inspector-Loeschknopf und Reiter-Papierkorb fallen; „Alle Bloecke
+loeschen" bleibt als bewusster Sonderweg im Menue. Kein neues Verhalten,
+nur weniger Knoepfe; Export-Bytes unveraendert. **Grenze zu C3.4:** C3.4
+regelt den Loesch-VERTRAG der Seiten (gleiches Verhalten aller Wege), U9
+die ANZAHL der sichtbaren Knoepfe — wer zuerst baut, nimmt den anderen
+Teil nicht mit.
+
+**Nutzerprobe:** je Ding genau EIN sichtbarer Loeschknopf; Entf geht
+ueberall; Undo holt alles zurueck.
 
 ---
 
