@@ -44,8 +44,13 @@ git log --oneline -8
   Position, Verknuepfung an geholter Zeile, Abwahl. Neu beauftragt:
   **R3** (Beleg per Nachschlage-Formularfeld waehlen), **R4** (Beleg
   anlegen und sofort sehen — WARTET auf das Anlege-Protokoll, GET 1020),
-  **R5** (Refresh-Flut/Zeilenfilter — WARTET auf einen FREISELEKT-Beleg
-  aus echten Masken). Details und Wartepunkte im Wellen-Kopf R.
+  **R5** (Refresh-Flut/Zeilenfilter — BAUBAR, FREISELEKT-Form am
+  2026-08-12 aus `Desktop\VORLAGEN` belegt). Details im Wellen-Kopf R.
+- **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben;
+  Design-Mix `designsprache/mix-fellnase-empfang.html` gebaut
+  (Fellnase-Basis + empfang-Zutaten) — wartet auf das Nutzer-Urteil,
+  ebenso das Popup-Overlay-Konzept (U0-7). Baubar per Opus-Kopier-Auftrag:
+  R3, R5, U1, U2, U3, U6; danach N1/N2/N3.
 - **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
@@ -2239,7 +2244,7 @@ wird Auswahl" — der neu angelegte Beleg soll sich anschliessend selbst
 zeigen. Der erste Versuch des Nutzers, das Protokoll zu liefern, wurde von
 der Refresh-Flut abgewuergt -> R5 hat Vorrang.
 
-### R5 · Refresh-Flut: weniger Zeilen bestellen — WARTET auf FREISELEKT-Beleg
+### R5 · Refresh-Flut: Zeilenfilter FREISELEKT (BAUBAR — Form belegt 2026-08-12)
 
 **Belegtes Problem (Nutzer 2026-08-12, sein Blocker):** Ein Refresh ist
 noetig, damit neue Saetze erscheinen — aber SoftEngine schiebt dabei ALLE
@@ -2248,22 +2253,46 @@ debug ... das geht nicht weiter, OHNE das wir das problem beheben"). Die
 Menge bestimmt allein unsere Bestellung (vgl. S5.1: 5 953 Bild-Nachschlaege
 beim Oeffnen).
 
-**Hebel-Kandidat:** FREISELEKT am SEFILELOOP-Eintrag (CLAUDE.md fuehrt es
-fuer Stamm-Quellen als „+ optional FREISELEKT"). Seine konkrete Schreibform
-ist NIRGENDS belegt: `docs/chef-maske/` und `Desktop\Belegerfassung\` sind
-durchsucht — null Treffer. Regel 5: nicht raten.
+**Form belegt (Durchsuchung `Desktop\VORLAGEN` am 2026-08-12 — 267 echte
+SEvariablen-Dateien, 10 Dateien mit Treffern):** `FREISELEKT` ist ein
+optionales Filter-Praedikat direkt am SEFILELOOP- (und WINDOWLOOP-)
+Eintrag; die Doku-Vorlage des HTMLEditors nennt es woertlich „ein freier
+Selektionsausdruck". Echte Beispiele:
 
-**Was der Nutzer liefert, bevor gebaut wird (Zusage 2026-08-12):** einen
-Ordner mit echten Masken/Datenquellen seiner Installation („du kriegst
-von mir einen ordner, wo du dir datenquellen anguckst"). Sobald der Pfad
-da ist, durchsucht ihn der Planer-Chat nach einem echten
-FREISELEKT-Beispiel (oder einem anderen belegten Zeilen-Filter) fuer R5
-UND nach dem tatsaechlichen Arten-Bestand fuer den U4-Entwurf — und
-schreibt DANN die Etappe fertig.
+- `"FREISELEKT": "BEL_3_8<99990000"` — daneben im selben Eintrag
+  `"SORTIERUNG": "ABSTEIGEND"` (MIS_V3\LANDINGPAGES\KDE\HTML\01 und
+  LFR\HTML\01, dort im SEFILELOOP; nur EIN Geschwister-Eintrag traegt
+  den Filter, die uebrigen nicht — es ist je Eintrag optional).
+- `"FREISELEKT": "SERPOS_3_1='N'"` — Textwert in einfachen
+  Anfuehrungszeichen (SER\HTML\01).
+- `"FREISELEKT": "ART_1_25<>''"` und
+  `"SUBLGR_BESTAND<>0&SUBLGR_BESTAND_KALKULIERT<>0"` — ungleich und
+  UND-Verkettung mit `&` (LGR_LagerPlatz\HTML\01).
+- `"FREISELEKT": "BEL_11_8=ADA_1_8"` — Feld-mit-Feld-Vergleich
+  (ADA\HTML\01). Leerer String kommt vor und ist erlaubt
+  (BESTELLSYSTEM_STANDARD).
 
-**Ausdruecklich NICHT der Weg:** Lazy-Loading/„Daten auf Abruf" (die
-gestrichene Welle Q) — nicht wieder vorschlagen (Gedaechtnis
-`daten-auf-abruf-gestrichen`; die Ausnahme galt nur fuer Welle R).
+Felder tragen den DATEI-Praefix (`BEL_3_8`); belegte Operatoren `=`,
+`<>`, `<`, `&` (UND); die Doku-Vorlage zeigt zusaetzlich `#` (ODER) und
+Klammern.
+
+**Arbeit:** Die Datenquelle bekommt ein optionales Feld „Zeilenfilter"
+(freier Ausdruck; Installations-Daten, der Editor prueft und erfindet
+nichts). Der Export schreibt ihn unveraendert als `FREISELEKT` in den
+SEFILELOOP-Eintrag der Quelle, weggelassen wenn leer. Persistenz additiv,
+KEIN Schema-Bump. Ein Export-Testfall (Round-Trip). Runtime unveraendert
+— gefiltert wird von SoftEngine.
+
+**Nutzerprobe (SE):** grosse Quelle (Belege) mit Filter versehen —
+Refresh liefert sichtbar weniger Zeilen, die Debug-Flut faellt.
+
+**Daneben belegt, bewusst NICHT gebaut (Regel 10):**
+`VON_INDEX`/`BIS_INDEX` + `INDEX_NR` (Index-Bereich, auch mit
+CONCAT-Formeln — pinnt einen Loop z. B. auf Adresse+Belegart),
+`MAX_DURCHLAEUFE` (haengt nur an WINDOWLOOP — ein Loop-Typ, den unser
+Export nicht schreibt), `NUR_AKTUELLE_ZEILE` (TABELLE-Eintraege),
+`MAX_ZEILEN` (nur in der Doku-Vorlage, in KEINER echten Maske).
+Lazy-Loading (Welle Q) bleibt gestrichen.
 
 ---
 
@@ -2551,6 +2580,74 @@ Formulare angestrichen, die kurz danach neu gebaut werden.
 
 ---
 
+# Welle N — Ansichten und Navi (eingeschoben 2026-08-12, Nutzer-Auftrag)
+
+**Auftrag:** Der Nutzer will Masken wie die empfang-Vorlage bauen koennen:
+mehrere ANSICHTEN in einer Maske (z. B. Empfang / Terminkalender), links
+eine Navi, die umschaltet, dazu gestaltete Leerzustaende. Optik-Vorbild
+ist der Mix `designsprache/mix-fellnase-empfang.html` (gebaut 2026-08-12,
+wartet auf das Nutzer-Urteil).
+
+**Bauart — ausdruecklich ohne Overengineering (Nutzer-Ansage 2026-08-12:
+kein „falls der Bediener vergisst"-Kram):** kein Router, kein Verlauf,
+keine Uebergangs-Animationen, keine neuen Warnungen, keine neuen
+Test-Gattungen. Der vorhandene Seiten-Unterbau (Hauptseite/Popup,
+pageBlock) traegt alles.
+
+**Ablauf und Kosten (Nutzer-Fragen 2026-08-12):** Der Nutzer entscheidet
+je Maske, OB eine Navi da ist (normaler Baustein aus der Palette, keine
+Automatik). „+" IN der Navi legt einen Eintrag an: benennen, Farbe
+waehlen, und wahlweise eine vorhandene Ansicht verknuepfen ODER eine neue
+LEERE Ansicht anlegen — die Flaeche wechselt sofort dorthin und wird
+aufgebaut (Bedienung am Ding, Regel 7). Technisch ist Umschalten nur
+Ein-/Ausblenden im selben Dokument: sofort, kein Neuladen. Die
+Datenquellen werden EINMAL bestellt und von allen Ansichten geteilt.
+Ehrliche Kosten: die Maskendatei waechst mit jeder Ansicht, und ein
+Daten-Push aktualisiert auch verborgene Ansichten — genau wie heute
+schon bei Popups.
+
+## N1 · Ansicht als zweite Hauptseite
+
+Registry-Eintrag „Ansicht": pageBlock wie das Popup, aber volle
+Rasterflaeche wie die Hauptseite, kein Fenster. Die Seiten-Leiste zeigt
+Ansichten wie heute die Seiten (die Popup-Reiter ziehen laut U0-7 spaeter
+in die Overlay-Bearbeitung um — die Leiste gehoert dann den Ansichten).
+Export: alle Ansichten stehen in der Datei, die Hauptseite ist sichtbar,
+weitere Ansichten tragen `hidden` (empfang-Muster setView). Pflicht des
+Waechters: Export-Testfall, Veralten-Positivliste, Referenzabzug.
+
+## N2 · Navi-Baustein
+
+Normaler Baustein aus der Palette. Eintraege = Ansichten der Maske
+(Referenz auf die Seiten-id, sichtbar ist der Ansichtsname); Klick
+schaltet um — im Editor auf die Seite, in der Maske per hidden-Toggle
+(Runtime-Buendel bewusst neu). Optik aus dem Mix (Espresso-Leiste,
+aktiver Eintrag in Koralle). Keine freien Links, keine externen Ziele.
+Je Eintrag eine FARBE aus den Palettentoenen (Nutzer-Anforderung
+2026-08-12, „navi mit farbmoeglichkeiten"). KEIN automatischer
+Bediener-Fuss und keine sonstigen eingebauten Zonen — wer so etwas will,
+baut es aus normalen Bausteinen.
+
+## N3 · Kanban lebendig (Optik-Angleich an den Mix)
+
+Getoente Spaltenhuelle nach Bedeutung (dieselbe Bedeutungs-Zuordnung wie
+die Marke, `shared/statusVariant`) und gestalteter Leerzustand nach dem
+leer-Atom des Mix (der Text kommt weiter aus „Text ohne Datensaetze",
+nichts Neues zu bedienen). AENDERT die Masken-Optik: Runtime/CSS bewusst
+neu, SE-/Browserprobe des Nutzers. Aktions-Knopf auf der Karte und
+Zimmer-/Untergruppen sind NICHT Teil von N3 — eigene Entscheidungen,
+erst auf Nutzer-Wunsch.
+
+**Nutzer-Urteil zu Mix v1 (2026-08-12): „leblos / ki slop".** v2 ist
+gebaut: die EIGENEN Tierbilder des Nutzers (tier-*.png in designsprache/;
+seine Ansage dazu gab es schon am 2026-08-06 — SEINE Zeichen, nicht die
+Demo-Silhouetten), Marke auf jeder Karte, getoente Zaehler; die
+erfundenen Aktions-Knoepfe, das Tag/Woche-Segment und der
+Bediener-Kasten sind raus (nichts zeigen, was es nicht gibt). v2 wartet
+auf das Urteil des Nutzers.
+
+---
+
 ## 5. Gesamtreihenfolge der Commits
 
 Die genaue Nummerierung darf bei notwendigen verhaltensneutralen Dateischnitten
@@ -2666,7 +2763,7 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen (SE-Kern BESTANDEN 2026-08-12) |
 | 36 | R3 Formularfeld als Geber | in SoftEngine: Beleg im Nachschlagefeld waehlen fuellt die Positionen |
 | 37 | R4 Beleg anlegen (WARTET auf Anlege-Protokoll) | Kette legt Beleg an, Maske zeigt ihn sofort |
-| 38 | R5 Zeilenfilter (WARTET auf FREISELEKT-Beleg) | weniger Daten je Refresh — die Debug-Flut faellt weg |
+| 38 | R5 Zeilenfilter FREISELEKT (BAUBAR) | weniger Daten je Refresh — die Debug-Flut faellt weg |
 
 ### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Browserproben je Etappe
 
@@ -2680,6 +2777,14 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 | U5 | Umsetzung Entwurf | Steuerung und Inspector, vollstaendig |
 | U6 | Inspector-Kleinputz | Datum/Popup erklaeren sich; „Farbe" heisst „Bedeutung" |
 | U7 | Optik: Fellnase-Richtung (U7a Musterbogen frueh; U7b/c nach U5) | Steuerung/Inspector/Palette im neuen Gesicht |
+
+### Block N — Ansichten und Navi (eingeschoben 2026-08-12) · SE-Echttest wegen Runtime
+
+| # | Etappe | Wo im sichtbaren Editor |
+|---|---|---|
+| N1 | Ansicht-Seite | Seiten-Leiste: neue Ansicht anlegen, Flaeche wie Hauptseite |
+| N2 | Navi-Baustein | Palette: „Navi"; in der Maske schaltet er die Ansichten um |
+| N3 | Kanban lebendig | Kanban: getoente Spalten nach Bedeutung, gestalteter Leerzustand |
 
 Nicht jeder Punkt muss gleich gross sein. Die Liste verhindert, dass ein
 Agent unter dem Etikett „Aufraeumen" fuenf unabhaengige Risiken in einen

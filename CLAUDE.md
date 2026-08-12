@@ -217,6 +217,19 @@ bestehende englische bleiben; umbenannt wird nur, was ohnehin angefasst wird.
   die ganze Liste ab. Der Export schreibt Kopfsatz-Arten deshalb ZULETZT
   (`loopReihenfolge` in `core/data/dataSources.ts`, Merkmal `kopfsatzMoeglich`
   aus der Arten-Tabelle). Wer die Ausgabe-Reihenfolge anfasst, bricht das.
+- **FREISELEKT ist belegt (2026-08-12, `Desktop\VORLAGEN` — 267 echte
+  SEvariablen-Dateien, 10 mit Treffern):** optionales Filter-Prädikat je
+  SEFILELOOP-/WINDOWLOOP-Eintrag, „ein freier Selektionsausdruck"
+  (Doku-Vorlage des HTMLEditors dort). Beispiele:
+  `"FREISELEKT": "BEL_3_8<99990000"` (daneben `"SORTIERUNG":
+  "ABSTEIGEND"` im selben Eintrag), `SERPOS_3_1='N'`, `ART_1_25<>''`,
+  `SUBLGR_BESTAND<>0&SUBLGR_BESTAND_KALKULIERT<>0`, `BEL_11_8=ADA_1_8`
+  (Feld-mit-Feld). Felder MIT Datei-Präfix; Operatoren `=`, `<>`, `<`,
+  `&` (UND), laut Doku-Vorlage auch `#` (ODER) und Klammern; je Eintrag
+  optional, leerer String erlaubt. Ebenfalls dort belegt:
+  `VON_INDEX`/`BIS_INDEX`+`INDEX_NR` (Index-Bereich, auch CONCAT-Formeln)
+  und `MAX_DURCHLAEUFE` (nur an WINDOWLOOP); MEMTAB kommt in KEINER der
+  echten Masken vor. Bauauftrag: UMBAU-PLAN-V6.md, Etappe R5.
 - **Positionen zur Laufzeit lesen (belegt 2026-08-11, Echttests des
   Nutzers):** Relation 69 liefert je Frage EIN Feld einer Position:
   `basisHTML_SND_MSG('GET_RELATION', { NR: '69', PARAMS: [BELART, POS, LEN,
