@@ -30,12 +30,22 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
-- **Neu beauftragt 2026-08-11: Welle R** („Zeilen per Relation holen",
-  eigener Wellen-Kopf hinter F3) — vom Nutzer nach Live-Echttests
-  ausdruecklich bestellt; die Abgrenzung zur gestrichenen Welle Q und zu D2
-  steht im Wellen-Kopf. R1 und R2 sind gebaut (2026-08-11) und am 2026-08-12
-  nach einem ersten SE-Echttest in zwei Punkten nachgebessert (s. u.); der
-  SE-Echttest der Welle (Nutzerprobe im Etappenkopf R2) steht weiter aus.
+- **Neu beauftragt 2026-08-12: Welle U** — Generalsanierung der
+  Editor-Bedienung (Steuerung, Inspector, Palette, Begriffe, Meldungen,
+  Optik), eigener Wellen-Kopf hinter R. Sie ersetzt F1/F2 (dort vermerkt)
+  und ist ab jetzt der Arbeitsschwerpunkt. Gebaut wird sie von
+  OPUS-Sitzungen ueber die Kopier-Auftraege im Wellen-Kopf U; der
+  Planer-Chat liest nur Diffs. U0 (Entscheidungsliste) wartet auf die
+  Ja/Nein-Antworten des Nutzers.
+- **Welle R:** R1+R2 gebaut, zweifach nachgebessert, und der KERN des
+  SE-Echttests ist am **2026-08-12 BESTANDEN** (Nutzer: Beleg-Klick fuellt
+  die Positionen; nach Nachbesserung 1 auch alte Nummernkreise). Noch ohne
+  Protokoll aus der R2-Probe: PUT ueber eine Kette auf eine geholte
+  Position, Verknuepfung an geholter Zeile, Abwahl. Neu beauftragt:
+  **R3** (Beleg per Nachschlage-Formularfeld waehlen), **R4** (Beleg
+  anlegen und sofort sehen — WARTET auf das Anlege-Protokoll, GET 1020),
+  **R5** (Refresh-Flut/Zeilenfilter — WARTET auf einen FREISELEKT-Beleg
+  aus echten Masken). Details und Wartepunkte im Wellen-Kopf R.
 - **Letzte fertige Etappe:** R2-Nachbesserung (2026-08-12, zwei Commits) nach
   dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
   Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
@@ -48,7 +58,7 @@ git log --oneline -8
   Schluessel der RESULT_KEYS-Liste, und weil LEER hier „Ende der Liste"
   bedeutet, haette ein Fremdpaket mit leerem ID-Feld die Positionsliste still
   mittendrin abgeschnitten. Runtime-Bytes aus (2) absichtlich neu.
-  **SE-Echttest der Welle weiter offen.**
+  Der Kern des SE-Echttests ist danach bestanden (s. o.).
   Davor: C1 (2026-08-11, vorgezogen: A9/A10 haengen an
   den offenen Nutzer-Proben) — das Popup komponiert den geteilten
   `DialogRahmen` (`blocks/shared/DialogRahmen.ts`), sein eigener
@@ -217,8 +227,9 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** A9 (setzt die Bedienproben von A5/A6 voraus).
-  Vorher gehoert der SE-Echttest der Welle R dem Nutzer (Etappenkopf R2).
+- **Naechste Etappe:** Welle U, Etappe fuer Etappe per Opus-Kopier-Auftrag
+  (Wellen-Kopf U); daneben R3, sobald der Nutzer es zieht. A9/A10 bleiben
+  liegen, bis die gesammelten Bedienproben nachgeholt sind.
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
   bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
   Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein
@@ -237,7 +248,8 @@ git log --oneline -8
   und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
   worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S). A9 setzt A3 bis
   A7 voraus.
-- **Arbeitsbaum:** sauber. Alle fuenf Pruefungen gruen.
+- **Arbeitsbaum:** sauber; main liegt mehrere Commits vor origin/main, der
+  Push steht aus (vorher `git fetch`, Regel 8 — nie force-pushen).
 - **Was A3 gebaut hat (2026-08-10), damit A4 daran anschliesst:** die geteilte
   Lade-Kette `state/ladeKette.ts` mit `pruefeBaumStand` (feste Reihenfolge:
   Zukunft abweisen → migrieren+bereinigen → Vertragspruefung) und dem Ausgang
@@ -322,12 +334,15 @@ zwischen zwei Chats, nicht dieser Absatz.
    SoftEngine nicht nachweislich stoert; „Export nur mit verwendeten
    Bausteinen" waere ein eigenes spaeteres Paket. — OFFEN, ein neuer Chat
    fragt.
-5. **F1 (Entwurfsgespraech Steuerung/Inspector) vorziehen?** Die
-   Zwischenbilanz 2026-08-10 belegt die Bedien-Befunde (sechs Bauformen fuer
-   „Feld einer Quelle waehlen", namenlose Inspector-Sektionen, StepForm in
-   der 340-px-Spalte, roher Jargon trotz vorhandenem Klartext in
-   `helfer.ts:50-59`). Kein Code ohne bestaetigten Entwurf — die F1-Regel
-   gilt unveraendert, egal wann F1 laeuft. — OFFEN.
+5. ~~F1 (Entwurfsgespraech Steuerung/Inspector) vorziehen?~~ **Beantwortet
+   2026-08-12:** Ja, und groesser als gedacht — der Nutzer hat die
+   Generalsanierung der GESAMTEN Editor-Bedienung beauftragt („die
+   funktionen sind gut, die umsetzung ist widerlich"). F1/F2 sind in der
+   neuen Welle U aufgegangen; ihre Regeln gelten dort weiter. Die
+   Bedien-Befunde der Zwischenbilanz (sechs Bauformen fuer „Feld einer
+   Quelle waehlen", namenlose Inspector-Sektionen, StepForm in der
+   340-px-Spalte, roher Jargon trotz Klartext in `helfer.ts:50-59`) sind
+   Eingabe der Inventur 2026-08-12 im Wellen-Kopf U.
 
 ### 0.2 Ansage-Pflicht vor jeder Etappe
 
@@ -1988,6 +2003,10 @@ gebaut.
 
 ## F1 · Relationen- und Aktionsbedienung erst entwerfen
 
+**AUFGEGANGEN IN WELLE U (2026-08-12, Nutzer-Auftrag Generalsanierung).**
+Nicht mehr getrennt bearbeiten. Die Regeln und die Entwurfsfragen unten
+gelten in Welle U unveraendert weiter.
+
 ### Regeln
 
 - kein Code, bevor der Nutzer den sichtbaren Entwurf in Klartext beziehungsweise
@@ -2020,6 +2039,9 @@ gebaut.
 7. Wie bleiben Tastatur und Fokus nachvollziehbar?
 
 ## F2 · Bestaetigten Relations-/Aktionsentwurf implementieren
+
+**AUFGEGANGEN IN WELLE U (2026-08-12).** Die Punkte unten gelten dort als
+Bau-Regeln weiter.
 
 - bestehendes Datenmodell nur aendern, wenn der bestaetigte Entwurf es
   wirklich verlangt;
@@ -2170,6 +2192,309 @@ still-harmlos.
 **Was der bauende Agent nicht pruefen kann:** alles in SoftEngine — macht
 der Nutzer.
 
+### R3 · Beleg per Nachschlage-Formularfeld waehlen (eingeschoben 2026-08-12)
+
+**Nutzer-Wunsch 2026-08-12:** einen Beleg ansehen/beschreiben, ohne immer
+eine Belege-Tabelle auf der Maske zu haben — das Nachschlage-Formularfeld
+soll ihn waehlen.
+
+**Stand im Code:** Der Ausloeser `blocks/shared/holendeQuellen.ts` kennt
+heute nur Geber-BLOECKE mit `source`-Attribut (Tabelle/Kanban). Das
+Nachschlage-Formularfeld gibt seine Wahl bereits als Auswahl weiter
+(satzWahl ueber `nachschlagQuelle`, `setzeAuswahl` in
+`blocks/formfeld/FormFeldBlock.ts`) — es fehlt NUR das Mapping in
+holendeQuellen; die Luecke ist dort im Kommentar dokumentiert.
+
+**Arbeit:** Mapping generisch ueber die Registry-Angabe erweitern
+(satzWahl.quelleProp), KEIN Formularfeld-Sondercode (Regel 2).
+Runtime-Buendel bewusst neu (`build:runtime`). Bestehende Testdatei
+(`softengine/relationLader.test.ts`-Umfeld) um den Fall erweitern — keine
+neue Test-Gattung.
+
+**Nutzerprobe (SE):** Beleg im Nachschlagefeld waehlen -> Positionen
+erscheinen; Wahl leeren -> Positionen leeren.
+
+### R4 · Beleg anlegen und sofort sehen — WARTET auf das Anlege-Protokoll
+
+**Nutzer-Wunsch 2026-08-12.** GET 1020 ist laut Nutzer die Anlege-Relation
+seiner Installation („Neuanlage Belegkopf", steht schon in seiner
+Relations-Bibliothek). Es FEHLT das Echttest-Protokoll: die PARAMS-Form,
+die Antwort (liefert sie die neue Belegnummer?), und ob der frische Beleg
+sofort ueber Relation 69 lesbar ist. KEIN Bau ohne diese Belege (Regel 5).
+Zusaetzlich noetig und eine EIGENE Entwurfs-Entscheidung: „Ketten-Ergebnis
+wird Auswahl" — der neu angelegte Beleg soll sich anschliessend selbst
+zeigen. Der erste Versuch des Nutzers, das Protokoll zu liefern, wurde von
+der Refresh-Flut abgewuergt -> R5 hat Vorrang.
+
+### R5 · Refresh-Flut: weniger Zeilen bestellen — WARTET auf FREISELEKT-Beleg
+
+**Belegtes Problem (Nutzer 2026-08-12, sein Blocker):** Ein Refresh ist
+noetig, damit neue Saetze erscheinen — aber SoftEngine schiebt dabei ALLE
+Zeilen ALLER bestellten Quellen erneut (Nutzer: „diese 20000 zeilen im
+debug ... das geht nicht weiter, OHNE das wir das problem beheben"). Die
+Menge bestimmt allein unsere Bestellung (vgl. S5.1: 5 953 Bild-Nachschlaege
+beim Oeffnen).
+
+**Hebel-Kandidat:** FREISELEKT am SEFILELOOP-Eintrag (CLAUDE.md fuehrt es
+fuer Stamm-Quellen als „+ optional FREISELEKT"). Seine konkrete Schreibform
+ist NIRGENDS belegt: `docs/chef-maske/` und `Desktop\Belegerfassung\` sind
+durchsucht — null Treffer. Regel 5: nicht raten.
+
+**Was der Nutzer liefert, bevor gebaut wird:** den Pfad zum Masken-Ordner
+seiner SoftEngine-Installation — der Ordner, in den die zwei Export-Dateien
+(`index.basis.source.html` + `index.basis.SEvariablen.json`) kopiert
+werden, damit SoftEngine sie zeigt; eine Ebene darueber liegen die
+ausgelieferten Masken. Der Planer-Chat durchsucht sie nach einem echten
+FREISELEKT-Beispiel (oder einem anderen belegten Zeilen-Filter) und
+schreibt DANN die Etappe fertig.
+
+**Ausdruecklich NICHT der Weg:** Lazy-Loading/„Daten auf Abruf" (die
+gestrichene Welle Q) — nicht wieder vorschlagen (Gedaechtnis
+`daten-auf-abruf-gestrichen`; die Ausnahme galt nur fuer Welle R).
+
+---
+
+# Welle U — Generalsanierung der Editor-Bedienung (eingeschoben 2026-08-12)
+
+**Auftrag des Nutzers vom 2026-08-12 (Kern woertlich):** „die funktionen
+sind ja echt gut mittlerweile aber die umsetzung ist widerlich" · „es ist
+alles zusammengeflickt, zusammengeschmissen, das sieht aus wie 1999 [...]
+allgemein die art und weise, form, design, layout" · „ich glaube es gibt
+zig stellschrauben fuer jede einstellung, zu viele abhaengigkeiten".
+Dazu drei Screenshots (Steuerung/Datenquellen-Formular,
+Steuerung/Relationen, Inspector Formularfeld + Tabelle) und die
+Einzel-Befunde in U0. Eingabe ist AUSSERDEM die Bedien-Befundliste der
+Zwischenbilanz 2026-08-10 (s. Entscheidung 5 in 0.1) und die Inventur vom
+2026-08-12 (Etappen U1 ff.).
+
+**Geltungsbereich:** NUR die Editor-Bedienoberflaeche — Steuerung,
+Inspector, Palette, Tab-Leiste, Meldungen, Begriffe, Editor-Optik. Die
+Maske selbst (Bausteine, Export-Bytes, Runtime, SoftEngine-Anschluss)
+bleibt UNVERAENDERT; der Export-Referenzabzug beweist das bei jeder
+Etappe. Eine Etappe, die davon abweichen muss, sagt es in ihrer Ansage
+ausdruecklich und begruendet es.
+
+**Ersetzt F1/F2.** Deren Regeln gelten hier unveraendert weiter — vor
+allem: kein Code fuer die Relations-Bedienung vor bestaetigtem Entwurf;
+keine Tutorial-/Erklaertexte in der Steuerung; die SE-Fachbegriffe
+START_TOOL/GET_RELATION/PUT_RELATION/PUTADD_RELATION bleiben sichtbar;
+Klarnamen vor Technikwerten; Ketten bleiben sichtbar und der einzige
+Schreibweg; alte UI wird restlos entfernt, wenn sie ersetzt ist; keine
+zweite Terminologie.
+
+**Arbeitsmodus (Token-Entscheidung des Nutzers 2026-08-12):** Gebaut wird
+von OPUS in frischen Sitzungen — eine Etappe je Sitzung, mit diesem
+Kopier-Auftrag (nur die Etappen-Nummer tauschen):
+
+```text
+Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0, Abschnitt 3, den
+zugehoerigen Wellen-Kopf und die Etappe <NUMMER> (z. B. U1 oder R3).
+Der Einwurf dieses Auftrags ist das go fuer genau diese EINE Etappe:
+gib vor dem ersten Code die kurze Ansage nach 0.2, dann baue — nichts
+daneben. Pruefbuendel einmal am Ende (Abschnitt 3.3), ein Commit, KEIN
+Push. Im selben Commit: Zeiger 0.1 nachziehen und die Etappe als GEBAUT
+markieren. Danach im Chat: kurze Klickanleitung (was oeffnen, was tun,
+was zu sehen sein muss) und was du NICHT pruefen konntest. Widerspricht
+dir der Plan oder der Code: STOPP und fragen, nicht raten.
+```
+
+Der Planer-Chat (Fable) liest danach nur den Diff und meldet Abweichungen.
+
+**Inventur 2026-08-12 — Kurzbefund (drei Lese-Trupps; Belege stehen als
+datei:zeile in den Etappen):**
+
+- **Das Fundament traegt.** Inspector und Palette sind rein generisch (kein
+  einziges `if type === ...`), keine Schichtverstoesse ausser den zwei
+  dokumentierten Waechter-Ausnahmen, `any`/Stummschaltung exakt am
+  eingefrorenen Budget (nur `softengine/bridge.ts`), keine Handschrift-Datei
+  ueber 500 Zeilen. Der Verfall sitzt NICHT in der Architektur.
+- **Der Muell sitzt in der Bedienschicht:** sechs Bauformen fuer „ein
+  SE-Feld benennen" · zwei Dropdown-Bauteile · Schluesselzeilen,
+  Loesch-Rueckfragen und Feld-Popups je doppelt gebaut · drei verschiedene
+  Speicher-Verhalten (Speichern-Knopf vs sofort vs Formular) ·
+  Belehrungstexte inkl. installationsindividueller „69" als UI-Tatsache ·
+  Datenverlust beim Schliessen ueber X/Hintergrund-Klick · Entf loescht
+  ohne, Kreuzchen mit Rueckfrage · Zaehler und „Alle Bloecke loeschen"
+  zaehlen unsichtbar alle Popup-Seiten mit · leere Inspector-Panels ohne
+  ein Wort (Datum, Popup) · Relation anlegen = rohe SE-Syntax in ein
+  Textfeld tippen · der Editor meldet NUR Fehler, nie Erfolg — daher das
+  Gefuehl „dauernd Meldungen".
+- **Kleinkram im Code:** pos/len-Parser viermal, POS_LEN-Regex doppelt,
+  `warnChecks`/`setzeHolendeQuellenZurueck` ohne Aufrufer, veralteter
+  POPUP_RAND-Kommentar im Waechter, drei Englisch-Ausreisser in der
+  Infra-Schicht (`dateiDownload.ts`/`downloadFile`, `speicherGate` vs
+  Prosa „Riegel").
+
+## U0 · Entscheidungsliste — der Nutzer antwortet je Zeile (Ja/Nein reicht)
+
+Ohne die Antworten 1/2/3/4 baut U1/U2 nicht. Empfehlung steht dabei.
+
+1. **Dialog umbenennen:** „Steuerung" -> „Datencenter" (das Wort des
+   Nutzers)? Empfehlung: Ja.
+2. **Belehrungs-/Warntexte ersatzlos raus:** rote Kaesten („Ohne Felder
+   liefert SoftEngine ... nichts", `FeldListe.tsx:70` /
+   `DatenquellenBereich.tsx:200`), „bei euch die 69"
+   (`DataSourceForm.tsx:262`), Erklaer-Fliesstexte. Empfehlung: Ja —
+   gleiche Linie wie „keine Warn-Anzeigen" (2026-08-10).
+3. **Loeschen fragt NIE nach:** die Kreuzchen-Rueckfrage
+   (`BlockHost.tsx:167`) faellt, Entf/Kreuzchen/Papierkorb verhalten sich
+   gleich, Undo ist das Netz (Nutzer 2026-08-12: „ohne rueckfragen ist
+   ok"). Die zwei Bibliotheks-Rueckfragen in der Steuerung („wird
+   BENUTZT. Trotzdem loeschen?") bleiben vorerst. Empfehlung: Ja.
+4. **„Andere Datei" umbenennen** — Vorschlag „SoftEngine-Datei
+   (Kuerzel)"; der Nutzer darf ein eigenes Wort setzen.
+5. **Baustein „Zeile" BLEIBT** — im Popup ist er bis C2 der einzige Weg,
+   Dinge nebeneinanderzustellen (`rasterLayout.ts:10-14`; die
+   Hauptflaeche hat dafuer ihr Raster). Nur Erklaerung wird besser.
+   Einverstanden?
+6. **Namens-Kollision „Text":** der Baustein „Text" (Anzeige) und der
+   Formularfeld-Feldtyp „Text" (Eingabe) tragen denselben Namen
+   (`TextBlock.ts:98` vs `feldEigenschaften.ts:25`). Welche Seite wird
+   umbenannt — Baustein (z. B. „Ueberschrift") oder Feldtyp (z. B.
+   „Eingabezeile")?
+7. **Popup bleibt VORERST ein Reiter** — technischer Grund: Hauptflaeche
+   ist ein Raster, das Popup ein eigenes Fenster; Bearbeiten auf der
+   Flaeche haengt an C2/C3. Jetzt wird nur Beschriftung/Zugang besser.
+   Einverstanden, Konzeptfrage auf nach C2 vertagt?
+8. **Optik-Vorbild:** 1–2 Screenshots von Software, die dem Nutzer
+   gefaellt — ODER die Ansage „Fellnase-Demo als Richtung". Ohne Vorbild
+   startet U7 nicht (abschreiben statt gestalten).
+
+## U1 · Wortlaut-Putz in der Steuerung (braucht U0-Antworten 1/2/4)
+
+**Belegte Stellen:** Belehrungstexte `FeldListe.tsx:70-80`,
+`DatenquellenBereich.tsx:199-204`, `DataSourceForm.tsx:134/262/294`
+(inkl. „bei euch die 69" — ein installationsindividueller Wert als
+UI-Tatsache); Jargon-Labels „IDB-ID"/„Dateikuerzel"/„Haengt an"
+(`quellenArten.ts`, `DataSourceForm.tsx:291-307`); Dialogname in
+`Toolbar.tsx:147` und `Kommandozentrale.tsx`.
+
+**Arbeit:** Texte gemaess U0 entfernen/ersetzen; Dialog und
+Toolbar-Knopf umbenennen; Platzhalter neutral (kein Kundenwert); KEINE
+neuen Erklaertexte. Der Export-Referenzabzug bleibt byte-gleich.
+
+**Fertig, wenn:** kein roter Belehrungskasten mehr; kein
+installationsindividueller Wert in einem UI-Text; ein Begriff je Ding.
+
+**Nutzerprobe (Browser):** Steuerung oeffnen, Quelle anlegen — Texte
+weg bzw. neu, Verhalten unveraendert.
+
+## U2 · Loeschen und Browser-Kaesten vereinheitlichen (braucht U0-3)
+
+**Belegte Stellen:** drei Loeschwege, zwei Verhalten
+(`BlockHost.tsx:167-173` fragt; `useKeyboardShortcuts.ts:45` und
+`Inspector.tsx:254` nicht — `loescheBaustein.ts:32` prueft `frageNach`
+nur, wenn uebergeben) · Zaehler zaehlt alle Seiten inkl. Popups
+(`Editor.ts:155`, `StatusBar.tsx:18`), und „Alle N Bloecke loeschen?"
+(`Toolbar.tsx:36`) verschweigt, dass auch Popup-Seiten fallen ·
+window.alert/window.confirm als rohe Browser-Kaesten
+(`Toolbar.tsx:36/60/97/109/120`, `loescheBaustein.ts:15`,
+`persistence.ts:120`, `notfallkopie.ts:101/148`).
+
+**Arbeit:** Kreuzchen-Rueckfrage entfernen (EIN Verhalten; Undo ist das
+Netz) · „Alle Bloecke loeschen"-Text nennt die Popup-Seiten ehrlich ·
+Statuszeile zaehlt die AKTIVE Seite ODER schreibt „alle Seiten" dazu
+(kleinere Loesung waehlen) · window.alert/confirm durch EINEN
+app-eigenen, nicht blockierenden Meldungsweg ersetzen, wo gefahrlos;
+blockierend bleibt nur, was Datenverlust verhindert (Maske laden
+ueberschreibt alles). KEINE neuen Rueckfragen, KEINE Erfolgs-Toasts auf
+Verdacht.
+
+**Fertig, wenn:** Entf/Kreuzchen/Papierkorb identisch; kein nackter
+window.alert im Editor-Alltag; Texte ehrlich.
+
+**Nutzerprobe (Browser):** Baustein mit Inhalt per Kreuzchen loeschen —
+keine Frage, Undo holt ihn zurueck; fehlerhafte Maskendatei laden —
+app-eigene Meldung statt Browser-Kasten.
+
+## U3 · Doppelbauten zusammenlegen (Verhalten identisch, Code halbiert)
+
+**Belegte Paare:** SelectControl vs SchrittSelect
+(`QuellenListe.tsx:38-46` benennt die Zweiheit selbst) ·
+Schluesselregel-Zeile doppelt (`QuellenListe.tsx:145-179` /
+`AuswahlFolgeSektion.tsx:145-169`) · Loesch-Rueckfrage-Helfer doppelt
+(`DatenquellenBereich.tsx:64-85` / `RelationenBereich.tsx:64-76`) ·
+zwei fast gleiche Feld-Popups (`FieldPicker.tsx` /
+`FeldUebernahmePicker.tsx`) · pos/len-Parser VIERMAL (`splitFieldCode`
+`core/data/relations.ts:106` ist kanonisch; Kopien `ladeRelation.ts:80`,
+`softengine/data.ts:95` und `:131`) · POS_LEN-Regex doppelt
+(`dataSources.ts:129` vs `ladeRelation.ts:58`).
+
+**Arbeit:** je Paar EINE Komponente/Funktion, Aufrufer umziehen,
+Duplikat loeschen. Kleinputz dazu: `warnChecks` (`validator.ts:89`) samt
+seines einzigen Test-Aufrufs raus · `setzeHolendeQuellenZurueck`
+(`holendeQuellen.ts:75`) raus · POPUP_RAND-Kommentar im Waechter
+(`scripts/check-regeln.mjs:263`) berichtigen. `istOffenerSatz` BLEIBT
+(dokumentierte VAR-Bauanleitung, `datenquellen.test.ts:210-225`).
+
+**Fertig, wenn:** je Aufgabe eine Bauform; Verhalten, Export-Bytes und
+Referenzabzug unveraendert; 500er-Deckel ueberall eingehalten.
+
+**Nutzerprobe (Browser, Stichprobe):** Verknuepfung anlegen, „Auswahl
+folgen" einstellen, Feld uebernehmen — sieht aus und verhaelt sich wie
+vorher.
+
+## U4 · ENTWURF: Quelle anlegen, Feld waehlen, Relation anlegen (kein Code)
+
+Hier gilt die F1-Regel woertlich: KEIN Code, bevor der Nutzer den
+sichtbaren Entwurf bestaetigt hat. Der Entwurf beantwortet die
+F1-Fragen (Wellen-Kopf F) UND:
+
+- EINE Bedienform fuer „ein SE-Feld benennen" — heute sechs:
+  Handeingabe (`FeldListe.tsx:89-116`) · rohe Syntax
+  (`RelationForm.tsx:70-83`) · Dropdowns (`ParameterZeile.tsx:161-186`,
+  QuellenListe, AuswahlFolge) · unsichtbar fest (`DataSourceForm.tsx:78-84`)
+  · Kombi-String „BEL_0_11" (`DataSourceForm.tsx:291-307`) · Such-Popup
+  mit unerklaerlicher Sichtbarkeitsbedingung (`StepForm.tsx:203-206`).
+- Der gefuehrte Weg „neue Quelle" (Nutzer woertlich: „Wie hole ich
+  andere quellen? ich weiss es nicht mal"): Stolpersteine weg — leere
+  Pflicht-Feldzeile mit unsichtbarem Fehler (`DataSourceForm.tsx:85-91`),
+  „Beleg kommt aus" leer ohne zweite Quelle (`:107`), DTK-Import kann
+  NUR IDB-Quellen anlegen (`DtkImportForm.tsx:62-76`).
+- Relation anlegen OHNE rohe SoftEngine-Syntax zu tippen (die SE-Verben
+  bleiben sichtbar, Entscheidung 2026-07-15).
+- EIN Speicher-Verhalten fuer Formulare (heute drei: Speichern-Knopf im
+  Dialog, Sofort-Schreiben im Inspector, StepForm mit eigenem Speichern).
+- Schliessen ohne Datenverlust-Ueberraschung (X/Hintergrund vs Escape,
+  `Kommandozentrale.tsx:69-83`) — der Entwurf legt das Verhalten fest.
+
+**Ergebnis:** Klartext-/Wireframe-Entwurf im Chat; der Nutzer bestaetigt
+oder korrigiert. Erst DANN wird U5 zugeschnitten.
+
+## U5 · Umsetzung des bestaetigten Entwurfs (ein bis drei Etappen)
+
+Zuschnitt folgt aus U4 (z. B. 5a Quellen-Formular, 5b Relationen,
+5c Inspector-Angleich). Es gelten die F2-Bauregeln (alte UI restlos weg,
+keine zweite Terminologie, bestehende Masken exportieren byte-gleich,
+Migration nur mit eigenem Schutz).
+
+## U6 · Inspector-Kleinputz (unabhaengig, jederzeit baubar)
+
+**Belegte Stellen:** leere Panels ohne ein Wort bei Datum
+(`DatumBlock.ts:35`) und Popup (`popup/editorAngaben.ts`) — Zeile und
+Karte zeigen fuer denselben Zustand einen Satz
+(`zeile/editorAngaben.ts:16`) · Label „Farbe" fuer ein
+Bedeutungs-Konzept (`shared/statusVariant.ts:55`; die eigene
+Beschreibung sagt „Bedeutung") · Ankreuzfeld: bindbare Stelle
+deklariert, aber bewusst unerreichbar (`FormFeldBlock.ts:124-134` vs
+`:206-207`, `Inspector.tsx:201-203`) — Deklaration an die Zusage
+„Ankreuzfeld bleibt unbindbar" angleichen.
+
+**Arbeit:** zwei Hinweis-Saetze ergaenzen (Muster Zeile/Karte, KEIN
+Tutorial) · „Farbe" -> „Bedeutung" · Checkbox-Deklaration ehrlich
+machen. Export-Bytes unveraendert.
+
+**Nutzerprobe (Browser):** Datum anklicken — statt Leere ein Satz;
+Karten-/Spaltenregler heisst „Bedeutung".
+
+## U7 · Optik nach Vorbild — WARTET auf U0-8
+
+Erst wenn das Vorbild da ist (Screenshots oder „Fellnase-Richtung"):
+Steuerung, Inspector, Palette optisch daran ausrichten — abschreiben,
+nicht erfinden (Regel aus F3). Editor-Tokens (`src/index.css`) bleiben
+strikt von den Masken-Tokens getrennt. Der Etappen-Zuschnitt entsteht
+erst mit dem Vorbild.
+
 ---
 
 ## 5. Gesamtreihenfolge der Commits
@@ -2275,16 +2600,32 @@ Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
 
 | # | Etappe | Wo im sichtbaren Editor |
 |---|---|---|
-| 31 | F1 Entwurf | kein Code — der Nutzer bestaetigt den sichtbaren Entwurf |
-| 32 | F2 Relationsoberflaeche | Steuerung, vollstaendig |
-| 33 | F3 Designabgleich | ueberall sichtbar; Vorbild ist `designsprache/` |
+| 31 | F1 Entwurf | AUFGEGANGEN in Welle U (2026-08-12) |
+| 32 | F2 Relationsoberflaeche | AUFGEGANGEN in Welle U (2026-08-12) |
+| 33 | F3 Designabgleich | ueberall sichtbar; Vorbild ist `designsprache/` — bleibt eigenstaendig (Masken-Design, nicht Editor) |
 
 ### Block R — Zeilen per Relation (eingeschoben 2026-08-11) · SE-Echttest Pflicht
 
 | # | Etappe | Wo im sichtbaren Editor |
 |---|---|---|
 | 34 | R1 Lade-Art + Export | Steuerung/Datenquellen: Abschnitt „Woher kommen die Zeilen?" |
-| 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen |
+| 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen (SE-Kern BESTANDEN 2026-08-12) |
+| 36 | R3 Formularfeld als Geber | in SoftEngine: Beleg im Nachschlagefeld waehlen fuellt die Positionen |
+| 37 | R4 Beleg anlegen (WARTET auf Anlege-Protokoll) | Kette legt Beleg an, Maske zeigt ihn sofort |
+| 38 | R5 Zeilenfilter (WARTET auf FREISELEKT-Beleg) | weniger Daten je Refresh — die Debug-Flut faellt weg |
+
+### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Browserproben je Etappe
+
+| # | Etappe | Wo im sichtbaren Editor |
+|---|---|---|
+| U0 | Entscheidungsliste | kein Code — der Nutzer antwortet je Zeile |
+| U1 | Wortlaut-Putz | Steuerung: Belehrungstexte weg, neue Namen |
+| U2 | Loeschen/Meldungen | ein Loeschverhalten; app-eigene Meldungen statt Browser-Kaesten |
+| U3 | Doppelbauten | nichts sichtbar — gleiche Bedienung, halber Code |
+| U4 | Entwurf Quellen/Felder/Relationen | kein Code — der Nutzer bestaetigt den Entwurf |
+| U5 | Umsetzung Entwurf | Steuerung und Inspector, vollstaendig |
+| U6 | Inspector-Kleinputz | Datum/Popup erklaeren sich; „Farbe" heisst „Bedeutung" |
+| U7 | Optik nach Vorbild (WARTET auf Vorbild) | Steuerung/Inspector/Palette im neuen Gesicht |
 
 Nicht jeder Punkt muss gleich gross sein. Die Liste verhindert, dass ein
 Agent unter dem Etikett „Aufraeumen" fuenf unabhaengige Risiken in einen
