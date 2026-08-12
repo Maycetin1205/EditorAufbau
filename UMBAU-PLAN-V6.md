@@ -99,8 +99,13 @@ git log --oneline -8
   kleiner). · U9 — ein Baustein hat nur noch EINEN sichtbaren Loeschknopf (das
   Kreuzchen am Ding); der Papierkorb im Inspector-Kopf ist weg, der am
   Seiten-Reiter bleibt (einziger Weg, eine Seite zu loeschen — Begruendung im
-  Etappenkopf U9). Export-Markup und Referenzabzug beide Male unveraendert;
-  Einzelheiten in den Etappenkoepfen.
+  Etappenkopf U9). · N3 — die Kanban-Spalte traegt ihre Bedeutungsfarbe auf der
+  GANZEN Flaeche, Kopf ohne Trennlinie, Zaehler mit kraeftigem Rand; abgeschrieben
+  aus dem Mix, hebt die Sand-Entscheidung vom 2026-08-07 auf. Runtime-Bytes
+  absichtlich neu (398 Byte kleiner). **U10 ist NICHT gebaut** — die Ursache ist
+  aus dem Code nicht belegbar (Beleg im Etappenkopf U10); sie braucht EINE
+  Beobachtung des Nutzers im Browser. Export-Markup und Referenzabzug bei allen
+  drei gebauten Etappen unveraendert; Einzelheiten in den Etappenkoepfen.
   Davor: N2.1 (2026-08-12) — die Navi ist eine Leiste des
   Masken-RAHMENS. Neue Registry-Faehigkeit `maskenRand`
   (`core/blocks/maskenRand.ts`, Masse 56/224): der Baustein liegt am Rand der
@@ -419,7 +424,8 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U10, dann N3 -> N4 -> N5 per
+- **Naechste Etappe:** U10 (blockiert, s. o. — braucht die Beobachtung des
+  Nutzers), dann N4 -> N5 per
   Opus-Kopier-Auftrag (Wellen-Kopf U; seit
   2026-08-12 mehrere Etappen je Sitzung). Dazwischen angemeldet, weil aus der
   N2.1-Probe entstanden: **die Hauptseite umbenennen** (Kleinfix, braucht eine
@@ -3155,6 +3161,29 @@ Namens-Uebernahme) und fixt dann genau sie. Kein Umbau.
 
 **Nutzerprobe:** Formularfeld benennen mit „Vor Name" → Leerzeichen sitzt.
 
+**2026-08-13 NICHT gebaut — die Ursache ist aus dem Code nicht belegbar.**
+Nachgesucht und einzeln widerlegt, damit die naechste Sitzung nicht dieselbe
+Suche wiederholt:
+- KEIN Space-Handler, KEIN `preventDefault` auf der Leertaste. Der einzige
+  globale Tasten-Horcher (`state/useKeyboardShortcuts.ts:38-69`) kennt nur
+  Entf/Strg+Z/Strg+Y/Strg+D und steigt bei Eingabefeldern sofort aus.
+- Der Inline-Edit-Weg (`blocks/base/BasicBlock.ts:94-154`) hoert nur auf Enter
+  und Escape. Sein `trim()` beim Uebernehmen (`:127`) frisst NUR fuehrende und
+  abschliessende Leerzeichen — „Vor Name" ueberlebt es. (Ein Leerzeichen AM
+  ENDE geht damit belegt verloren; das ist aber nicht der gemeldete Fall.)
+- Die Inspector-Textfelder sind ein nacktes `<input>` ohne jede Filterung
+  (`ui/atoms/text-input.tsx`).
+- Einziger Kandidat aus dem Code waere `white-space: nowrap` am Platzhalter
+  (`blocks/formfeld/feldStil.ts:74`, sammelt Leerraum) — er FAELLT AUS: die
+  Karten-Ueberschrift (`kartenStil.ts:170`) und der Spaltentitel
+  (`KanbanSpalteBlock.ts` `.title`) tragen dieselbe Regel, und dort funktioniert
+  das Benennen mit Leerzeichen.
+**Was fehlt, ist EINE Beobachtung im laufenden Browser** (die gehoert dem
+Nutzer, Regel 9): Passiert es NUR am Formularfeld oder auch beim Umbenennen
+einer Kanban-Spalte und einer Karte? Und: kommt gar nichts an, oder steht am
+Ende ein Text ohne Leerzeichen? Mit dieser einen Antwort ist die Ursache
+eingekreist und der Fix klein.
+
 ---
 
 # Welle N — Ansichten und Navi (eingeschoben 2026-08-12, Nutzer-Auftrag)
@@ -3301,7 +3330,7 @@ UEBER den Inhalt · Baustein sitzt buendig in der Ecke · in SoftEngine ist
 IMMER genau EINE Ansicht sichtbar, und nichts scrollt, was im Editor
 nicht scrollt.
 
-## N3 · Kanban lebendig (Optik-Angleich an den Mix)
+## N3 · Kanban lebendig (GEBAUT 2026-08-13)
 
 Getoente Spaltenhuelle nach Bedeutung (dieselbe Bedeutungs-Zuordnung wie
 die Marke, `shared/statusVariant`) und gestalteter Leerzustand nach dem
@@ -3310,6 +3339,33 @@ nichts Neues zu bedienen). AENDERT die Masken-Optik: Runtime/CSS bewusst
 neu, SE-/Browserprobe des Nutzers. Aktions-Knopf auf der Karte und
 Zimmer-/Untergruppen sind NICHT Teil von N3 — eigene Entscheidungen,
 erst auf Nutzer-Wunsch.
+
+**Gebaut 2026-08-13.** Die Toenung sitzt jetzt auf der GANZEN Spalte
+(`.col background: var(--col-soft)`), der Kopf hat weder eigene Flaeche noch
+Trennlinie, der Zaehler steht auf Papier mit Rand im KRAEFTIGEN Ton, Titel und
+Zahl tragen die normale Textfarbe — Zeile fuer Zeile aus
+`designsprache/mix-fellnase-empfang.html:87-101`. Die Werte gehen 1:1 auf
+(`--sand`=`--se-panel-2`, `--himmel-zart`=`--se-blue-soft`,
+`--sonne-zart`=`--se-amber-soft`, `--salbei-zart`=`--se-green-soft`,
+`--papier`=`--se-panel`, `--espresso`=`--se-ink`); kein Wert ist erfunden.
+`--col-line` hat damit keinen Nutzer mehr und ist aus den v-Klassen raus (die
+`--se-X-line`-Tokens selbst bleiben stehen, die Tabelle kennt sie).
+**Das hebt die Entscheidung vom 2026-08-07 auf** (Flaeche fuer JEDE Spalte
+Sand, nur der Kopf getoent) — begruendet mit dem neueren Vorbild, das seine
+eigene Legende ausdruecklich als N3 fuehrt („getoente Spalten, getoente
+Zaehler").
+**Zwei Dinge bewusst NICHT gebaut:** (1) Der Leerzustand ist bereits das
+leer-Atom (`blocks/shared/leerZustand.ts`, aus `atome.css` abgeschrieben, mit
+Pfote) — im Mix steht dort ein TIERBILD, das waere erfundener Inhalt (welches
+Tier?) und der Leerzustand gehoert auch der Tabelle. (2) Das Vorbild hat eine
+UNGETOENTE Spalte (Sand); unser Status-Vokabular kennt keinen neutralen Wert,
+also ist ab jetzt jede Spalte getoent. Einen neutralen Wert einzufuehren waere
+eine Aenderung am GETEILTEN Vokabular (Karte + Tabelle lesen dasselbe) und
+gehoert nicht in eine Optik-Etappe — eigene Nutzer-Entscheidung.
+Runtime-Bytes ABSICHTLICH neu und 398 Byte kleiner (gelesen: die sechs
+CSS-Aenderungen plus gekuerzte Stil-Kommentare — die Begruendung steht im
+Klassenkopf, ausserhalb des `css`-Blocks). Referenzabzug brauchte KEINE
+Erneuerung (er schneidet das Buendel heraus).
 
 ## N4 · Kanban-Untergruppen („Zimmer") — Nutzer-Wunsch 2026-08-12
 

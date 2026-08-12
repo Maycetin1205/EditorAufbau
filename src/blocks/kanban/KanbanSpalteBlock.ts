@@ -9,15 +9,29 @@
 // Editor-Hilfselemente (data-ff-editor-helper wie den "+ Karte"-Knopf) —
 // dieselbe Logik läuft im Editor UND im Export (WYSIWYG, 1 Render-Quelle).
 // Die Bedeutung der Spalte kommt aus dem geteilten Status-Vokabular
-// (Technikwert != Anzeigename) und tönt seit 2026-08-07 nur noch den KOPF:
-// Fläche = --se-X-soft, Trennlinie + Zählerrahmen = --se-X-line, Titel +
-// Punkt + Zähler kräftig (--se-X). Die Spaltenfläche selbst ist einfach
-// Sand, wie in der Demo. Die v-Klassen setzen dafür lokale --col-*
-// Variablen, jede löst auf ein --se-Token auf.
+// (Technikwert != Anzeigename) und tönt seit N3 (2026-08-13) die GANZE
+// Spaltenfläche: Fläche = --se-X-soft, Punkt + Zählerrahmen kräftig
+// (--se-X), Titel und Zahl in normaler Textfarbe. Die v-Klassen setzen dafür
+// lokale --col-* Variablen, jede löst auf ein --se-Token auf.
+//
+// Das hebt die Entscheidung vom 2026-08-07 auf, die Fläche für JEDE Spalte
+// auf Sand zu stellen und nur den Kopf zu tönen. Grund ist ein neueres
+// Vorbild: der Mix ist seit 2026-08-12 angenommen und für N3 verbindlich
+// (designsprache/mix-fellnase-empfang.html:87-101 — `.spalte` trägt
+// `--ton-flaeche`, `.spalte-kopf` hat weder Fläche noch Trennlinie, der
+// Zähler steht auf Papier mit Rand im kräftigen Ton). Die Werte gehen 1:1
+// auf: --sand = --se-panel-2, --himmel-zart = --se-blue-soft, --sonne-zart =
+// --se-amber-soft, --salbei-zart = --se-green-soft, --papier = --se-panel,
+// --espresso = --se-ink.
+// Nebenbefund, NICHT gebaut (eigene Entscheidung): das Vorbild hat auch eine
+// UNGETÖNTE Spalte (Sand). Unser Status-Vokabular kennt keinen neutralen
+// Wert — jede Spalte hat eine Bedeutung, also ist ab jetzt jede getönt. Ein
+// neutraler Wert wäre eine Änderung am geteilten Vokabular (Karte + Tabelle
+// lesen dasselbe) und gehört nicht in eine Optik-Etappe.
 //
 // Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Farb-Literale,
-// keine Fallbacks. Verbindliches Vorbild ist die eingecheckte Demo
-// (designsprache/atome.css, .spalte + .spalte-kopf).
+// keine Fallbacks. Grundmaße weiterhin aus designsprache/atome.css
+// (.spalte + .spalte-kopf), die Tönung aus dem Mix.
 
 import { css, html, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'
@@ -106,16 +120,9 @@ export class KanbanSpalteBlock extends BasicBlock {
         flex-direction: column;
         min-height: 100%;
       }
-      /* P1.2: overflow:hidden schneidet die getoente Kopfzeile an den
-         runden Spaltenecken sauber ab (Empfang-Vorbild). */
-      /* Flaeche = SAND (Demo .spalte: background var(--sand), das ist unser
-         --se-panel-2), und KEIN Rahmen: die Demo zieht um eine Spalte keine
-         Kante, der Farbwechsel Creme -> Sand setzt sie ab. Bis 2026-08-07 lag
-         hier eine fast weisse, statusgetoente Schale MIT getoenter Kante
-         (--col-shell/--col-line) — zwei Absetzungen fuer denselben Zweck, und
-         keine davon stand in der Demo (Nutzer-Entscheidung 2026-08-07).
-         Die Rundung stimmt bereits: --se-r-lg ist 7px, die Demo rechnet
-         calc(--rundung + 2px) = 5 + 2. */
+      /* Flaeche = Toenung der Bedeutung, ueber die GANZE Spalte; kein Rahmen,
+         der Farbwechsel setzt sie ab. Rundung 7px = calc(--rundung + 2px) des
+         Vorbilds; overflow:hidden schneidet an den Ecken ab. S. Klassenkopf. */
       .col {
         box-sizing: border-box;
         display: flex;
@@ -123,24 +130,23 @@ export class KanbanSpalteBlock extends BasicBlock {
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
-        background: var(--se-panel-2);
+        background: var(--col-soft);
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
       }
-      /* --col-line traegt jetzt nur noch der KOPF (Trennlinie + Zaehlerrahmen);
-         die Spaltenschale --col-shell ist mit dem Rahmen entfallen. */
-      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); --col-line: var(--se-blue-line); }
-      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); --col-line: var(--se-green-line); }
-      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); --col-line: var(--se-amber-line); }
-      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); --col-line: var(--se-red-line); }
+      /* --col-strong: Punkt + Zaehlerrand · --col-soft: die Spaltenflaeche. */
+      .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); }
+      .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); }
+      .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); }
+      .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); }
+      /* Kopf ohne eigene Flaeche und ohne Trennlinie (Vorbild .spalte-kopf:
+         nur Abstaende); seine Unterkante ist der Abstand zur ersten Karte. */
       .head {
         flex: none;
         display: flex;
         align-items: center;
         gap: var(--se-gap-sm);
         padding: 10px 12px;
-        background: var(--col-soft);
-        border-bottom: var(--se-border) solid var(--col-line);
       }
       /* Quadratisch, nicht rund: derselbe Punkt wie an der Status-Marke
          (Fellnase Regel 5, 2026-08-06) — bis dahin war er eine Scheibe. */
@@ -156,8 +162,10 @@ export class KanbanSpalteBlock extends BasicBlock {
          auseinander, der Zaehler wird zum Kaestchen mit Luft ueber und unter
          der Zahl. Die Demo setzt die Werte am Element, nicht am Grundtext —
          deshalb stehen sie auch hier am Element. */
+      /* Titel und Zahl in normaler Textfarbe — die Bedeutung zeigt die
+         Flaeche (Vorbild: .spalte-titel ohne Farbe, .zaehler espresso). */
       .title {
-        color: var(--col-strong);
+        color: var(--se-ink);
         font-size: var(--se-fs);
         font-weight: 600;
         line-height: 1.3;
@@ -165,6 +173,7 @@ export class KanbanSpalteBlock extends BasicBlock {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      /* Zaehler: Papierflaeche, Rand im kraeftigen Ton (Vorbild .zaehler). */
       .count {
         margin-left: auto;
         min-width: 22px;
@@ -172,12 +181,12 @@ export class KanbanSpalteBlock extends BasicBlock {
         line-height: 1;
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
-        border: var(--se-border) solid var(--col-line);
+        border: var(--se-border) solid var(--col-strong);
         text-align: center;
         font-family: var(--se-mono);
         font-size: var(--se-fs-sm);
         font-weight: 600;
-        color: var(--col-strong);
+        color: var(--se-ink);
       }
       /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
          min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
