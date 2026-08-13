@@ -424,9 +424,12 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** U10 (blockiert, s. o. — braucht die Beobachtung des
-  Nutzers), dann N4 -> N5 per
-  Opus-Kopier-Auftrag (Wellen-Kopf U; seit
+- **Naechste Etappe:** N4 -> N5 per
+  Opus-Kopier-Auftrag. **U10 ist keine baubare Etappe mehr, bis die
+  Gesamtprobe da ist** — zweimal nachgesucht, die Ursache steht nicht im Code;
+  es fehlt EINE Browserbeobachtung, und Proben zwischendurch sind gestrichen
+  (Beleg im Etappenkopf U10). Nicht wieder als „naechste Etappe" einplanen
+  (Wellen-Kopf U; seit
   2026-08-12 mehrere Etappen je Sitzung). Dazwischen angemeldet, weil aus der
   N2.1-Probe entstanden: **die Hauptseite umbenennen** (Kleinfix, braucht eine
   Ablage fuer ihren Namen — s. Etappenkopf N2.1). U6, N1, N2 und N2.1 sind
@@ -2628,7 +2631,7 @@ Sitzung.
 Den Wellen-Kopf und den Etappentext liest du je Etappe DANN, wenn du bei
 ihr bist — nicht alle auf Vorrat.
 
-Erste Etappe: U8.
+Erste Etappe: U10.
 
 Der Einwurf dieses Auftrags ist das go — nicht fuer eine Etappe, sondern
 fuer so viele, wie in diese Sitzung SAUBER hineinpassen.
@@ -2659,7 +2662,7 @@ NICHT pruefen konntest.
 ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
 aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
 den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-U8 -> U9 -> U10 -> N3 -> N4 -> N5
+U10 -> N4 -> N5
 Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
 Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
 dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
@@ -3183,6 +3186,25 @@ Nutzer, Regel 9): Passiert es NUR am Formularfeld oder auch beim Umbenennen
 einer Kanban-Spalte und einer Karte? Und: kommt gar nichts an, oder steht am
 Ende ein Text ohne Leerzeichen? Mit dieser einen Antwort ist die Ursache
 eingekreist und der Fix klein.
+
+**2026-08-13, zweite Sitzung: WIEDER nicht gebaut — und ab jetzt nicht mehr
+als Etappe einplanen, bevor die Beobachtung da ist.** Nachgeprueft statt
+nachgelesen, das Ergebnis der Vorsitzung haelt: kein Space-Handler und kein
+`preventDefault` auf der Leertaste im ganzen `src` (Volltextsuche, null
+Treffer). Neu dazu, damit niemand ein drittes Mal sucht: die Inline-Edit-
+Stelle des Formularfelds ist der PLATZHALTER (`FormFeldBlock.ts:230-238`,
+Klasse `.ph`), nicht ein eigenes Label — und `.ph` traegt
+`white-space: nowrap; overflow: hidden; text-overflow: ellipsis`
+(`feldStil.ts:66-78`), also **exakt dieselbe Kombination** wie die
+Karten-Ueberschrift (`kartenStil.ts:170-172`) und der Spaltentitel
+(`KanbanSpalteBlock.ts:172-174`), wo dasselbe Benennen funktioniert. Eigen
+ist `.ph` nur `position: absolute` und die Editor-Ausnahme
+`pointer-events: auto` (`feldStil.ts:148`) — daraus eine Ursache abzuleiten
+waere Raten, und Raten verbietet der Etappentext oben.
+**Die Sperre ist doppelt:** der Fix braucht eine Browserbeobachtung (Regel 9,
+gehoert dem Nutzer), und der Nutzer hat am 2026-08-12 festgelegt, dass er
+NICHT zwischendurch prueft, sondern einmal am Ende. Die faellige Gesamtprobe
+liefert die Antwort nebenbei mit — bis dahin ist U10 keine baubare Etappe.
 
 ---
 
