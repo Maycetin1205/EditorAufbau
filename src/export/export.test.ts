@@ -18,10 +18,11 @@ import '../blocks/navi/NaviEintragBlock'
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
-// Registriert Kanban-Board und -Spalte (Fall „Text wenn leer" unten).
+// Registriert Kanban-Board und -Spalte (Veralten-Positivliste unten).
 import '../blocks/kanban/KanbanBlock'
 // Die Faelle des TABELLEN-Bausteins stehen seit 2026-08-07 in
-// tabelleExport.test.ts — diese Datei war ueber den 500-Zeilen-Deckel
+// tabelleExport.test.ts, die des KANBAN seit 2026-08-13 in
+// kanbanExport.test.ts — diese Datei war ueber den 500-Zeilen-Deckel
 // gewachsen (check:regeln), und der Schnitt liegt am Gegenstand.
 import type { BlockTree } from '../core/blocks/BlockData'
 import { RAND } from '../core/blocks/maskenRand'
@@ -449,41 +450,6 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
   })
 })
 
-describe('Kanban', () => {
-  const board = (props: Record<string, unknown>): BlockTree => ({
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['b'] },
-    b: {
-      id: 'b', type: 'kanban', parentId: 'root', childIds: ['sp'],
-      props: { width: 'fill', height: 'fill', ...props },
-    },
-    sp: {
-      id: 'sp', type: 'kanban-spalte', parentId: 'b', childIds: [],
-      props: { heading: 'Offen', variant: 'warning' },
-    },
-  })
-  const boardTag = (html: string): string => /<ff-kanban[\s>][^>]*/i.exec(html)?.[0] ?? ''
-
-  it('„Text wenn leer" reist nur mit, wenn er vom Standard abweicht', () => {
-    // Der Satz haengt am BOARD und wird zur Laufzeit an die leer ausgegangenen
-    // Spalten gereicht (kanban/seRuntime). Faellt das Attribut im Export weg,
-    // zeigt SoftEngine einen anderen Satz als der Editor angesagt hat
-    // (WYSIWYG-Bruch, Regel 1). Der Umlaut ist die Falle — roher Text
-    // zerbraeche an der ASCII-Regel.
-    const gesetzt = exportMask(board({ leerText: 'Niemand wartet gerade.' })).html
-    expect(boardTag(gesetzt)).toMatch(/\sleerText="Niemand wartet gerade\."/i)
-    expect(exportMask(board({ leerText: 'Heute für niemanden.' })).html)
-      .toMatch(/\sleerText="Heute f&#xFC;r niemanden\."/i)
-    expect(failedChecks(validateMaskHtml(gesetzt))).toEqual([])
-    // Der unangetastete Standardsatz bleibt daheim (Standardwert-Regel) —
-    // sonst waere jede bestehende Maske im Export anders und der Byte-Waechter
-    // (referenzabzug) haette bei diesem Paket angeschlagen.
-    expect(boardTag(exportMask(board({ leerText: 'Keine Datensätze.' })).html))
-      .not.toMatch(/leerText=/i)
-    // Die SPALTE traegt ihn nie: der Leerzustand ist ein Laufzeitwert
-    // (leerHinweis, attribute:false), kein Bauplan der einzelnen Spalte.
-    expect(/<ff-kanban-spalte[^>]*/i.exec(gesetzt)?.[0] ?? '').not.toMatch(/leer/i)
-  })
-})
 
 
 
