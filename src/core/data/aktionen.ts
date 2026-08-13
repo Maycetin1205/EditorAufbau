@@ -214,8 +214,11 @@ export function createStep(typeKey: StepTypeKey): ActionStep {
   return { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
 }
 
-// In Werkzeug-Parametern erlaubte Platzhalter.
-export const AKTIONS_PLATZHALTER = ['PINDEX', 'VALUE', 'NOW_DATE'] as const
+// In Werkzeug-Parametern erlaubte Platzhalter. Gleichzeitig die Liste, die
+// die Kommandozentrale als Kontext-Werte anbietet (ParameterZeile).
+// ZIMMER kam mit N4 dazu: die Kanban-Untergruppe, in die eine Karte gezogen
+// wurde — ohne ihn koennte eine Kette einen Zimmer-Zug nicht schreiben.
+export const AKTIONS_PLATZHALTER = ['PINDEX', 'VALUE', 'ZIMMER', 'NOW_DATE'] as const
 
 // Womit ein Schritt startet, wenn eine Relation gewaehlt wird.
 //

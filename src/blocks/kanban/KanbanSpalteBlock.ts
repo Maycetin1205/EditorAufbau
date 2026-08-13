@@ -1,9 +1,11 @@
 // KanbanSpalteBlock
 // Spezialisierter Container (4K.4): eine Kanban-Spalte mit Kopf (Titel per
-// Doppelklick + Kartenzähler) und Rumpf, der AUSSCHLIESSLICH Karten aufnimmt
-// (allowedChildTypes — durchgesetzt im Store + in der Drag-Vorschau, nie per
-// `if type===` in der UI). Sie erscheint NICHT in der Bibliothek
-// (showInPalette=false): Spalten entstehen über "+ Spalte" am Board.
+// Doppelklick + Kartenzähler) und Rumpf, der Karten aufnimmt — seit N4
+// (2026-08-13) wahlweise auch ZIMMER, also Untergruppen, in denen die Karten
+// dann liegen (allowedChildTypes — durchgesetzt im Store + in der
+// Drag-Vorschau, nie per `if type===` in der UI). Sie erscheint NICHT in der
+// Bibliothek (showInPalette=false): Spalten entstehen über "+ Spalte" am
+// Board, Zimmer über "+ Zimmer" an der Spalte.
 //
 // Der Zähler zählt die geslotteten Kinder selbst (slotchange) und ignoriert
 // Editor-Hilfselemente (data-ff-editor-helper wie den "+ Karte"-Knopf) —
@@ -47,6 +49,8 @@ import {
   statusVariantProperty,
   type StatusVariant,
 } from '../shared/statusVariant'
+import { kartenAbstandStil } from './kartenAbstand'
+import { KanbanZimmerBlock, ZIMMER_INHALT_EVENT } from './KanbanZimmerBlock'
 
 export class KanbanSpalteBlock extends BasicBlock {
   static readonly blockType = 'kanban-spalte'
@@ -59,7 +63,20 @@ export class KanbanSpalteBlock extends BasicBlock {
   // EINE Musterkarte (templateChild am Board) ist das Gestaltungsobjekt;
   // sie lässt sich zwischen Spalten ziehen (allowedChildTypes), aber nie
   // löschen und nie vermehren.
-  static readonly allowedChildTypes: string[] = [CardBlock.blockType]
+  //
+  // N4: dazu die ZIMMER (Untergruppen). Eine Spalte darf beides zugleich
+  // tragen — die Musterkarte bleibt liegen, wo der Bauer sie hingelegt hat,
+  // auch wenn daneben Zimmer stehen.
+  static readonly allowedChildTypes: string[] = [
+    CardBlock.blockType,
+    KanbanZimmerBlock.blockType,
+  ]
+  // N4: der "+"-Anstecker der Spalte legt ein Zimmer an — dieselbe Bauart wie
+  // "+ Spalte" am Board und "+ Eintrag" an der Navi. Zimmer entstehen NUR so
+  // (showInPalette=false): ohne diesen Knopf gaebe es keinen Weg, eine Spalte
+  // zu unterteilen, und ein Inspector-Schalter dafuer waere Bedienung fern
+  // vom Ding (Regel 7).
+  static readonly addChildButton = { label: 'Zimmer', childType: KanbanZimmerBlock.blockType }
   static readonly childDirection: FlowDirection = 'column'
   static readonly showInPalette = false
   static readonly containerHint = false
@@ -79,10 +96,15 @@ export class KanbanSpalteBlock extends BasicBlock {
   // klein egal); Ziehen schreibt den Titel der Zielspalte zurück. Bewusste
   // Konsequenz: der Titel muss exakt dem SoftEngine-Wert entsprechen —
   // Umbenennen per Doppelklick ändert damit auch, was geschrieben wird.
+  // zimmerField: Feldcode des Zimmer-Felds (Technikwert, unsichtbar) — sein
+  // Zeilenwert bestimmt im Export das ZIMMER innerhalb dieser Spalte, genau
+  // wie statusField am Board die Spalte bestimmt. OPTIONAL und ohne jede
+  // Wirkung, solange die Spalte keine Zimmer hat.
   static readonly defaultProps = {
     variant: 'info',
     heading: 'Neue Spalte',
     auffang: 'nein',
+    zimmerField: '',
   }
 
   // Inspector: nur die Bedeutung (-> Farbwelt der Spalte). Der Titel
@@ -98,6 +120,17 @@ export class KanbanSpalteBlock extends BasicBlock {
       'Eintr\u00E4ge ohne passenden Spaltentitel landen hier. Ohne Auffangspalte landen sie in der ersten Spalte.',
       { requiresDataSource: true, exclusiveAmongSiblings: true },
     ),
+    // N4: die zweite Sortierebene. Wortwahl bewusst nah an „Einsortieren
+    // nach" am Board — es IST dieselbe Bedienung, nur eine Ebene tiefer.
+    // Die Feldliste kommt aus der Quelle des BOARDS (der Inspector sucht sie
+    // mit dataSourceFor am Elternteil); an der Spalte selbst haengt nie eine
+    // eigene Quelle.
+    {
+      attributeName: 'zimmerField',
+      name: 'Unterteilen nach',
+      description: 'Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welches Zimmer dieser Spalte ein Eintrag kommt. Wirkt erst, wenn die Spalte Zimmer hat.',
+      kind: 'field',
+    },
   ]
 
   // Strukturelle Größen (padding, font-weight, 9px-Punkt, 22px-Zähler) als
@@ -105,6 +138,7 @@ export class KanbanSpalteBlock extends BasicBlock {
   static override styles = [
     BasicBlock.styles,
     leerStil,
+    kartenAbstandStil,
     css`
       /* Die Spalte fuellt die Board-Hoehe in BEIDEN Welten (P1.2-Fix eines
          P1.3-Fehlers): die Host-HOEHE bleibt auto — nur so greift im Export
@@ -206,16 +240,13 @@ export class KanbanSpalteBlock extends BasicBlock {
         min-height: 0;
         overflow-y: auto;
       }
-      /* Eine Karte bringt ihren 24px-Vorschub nur mit, wenn sie eine LASCHE hat
-         (kartenStil: der Platz gehoert der Lasche). Karten ohne Lasche — in der
-         MASKE also solche ohne Datum und Zeit — muessen in der Spalte trotzdem
-         auseinanderstehen wie in der Demo, und den Abstand gibt hier die Spalte.
-         Bewusst kein gap am Rumpf: das kaeme bei Karten MIT Lasche zu deren
-         eigenem Vorschub dazu, also 48px statt 24px. Im EDITOR zeigt jede Karte
-         ihre Lasche (Klick-Ziel), dort greift diese Regel nie — beide Welten
-         stehen deshalb gleich weit auseinander. */
-      ::slotted(:not([hat-reiter])) { margin-top: 24px; }
-      slot { display: contents; }
+      /* Der Abstand zwischen zwei gestapelten Karten steht seit N4 in
+         ./kartenAbstand — dieselbe Regel braucht auch der Zimmer-Rumpf, und
+         zwei Kopien waeren zwei Wahrheiten. Sie gilt hier unveraendert und
+         trifft ab N4 auch die Zimmer selbst: das Optik-Vorbild setzt sie
+         zwar enger (8px), aber eine tag-genaue Regel griffe nur im Export
+         (im Editor liegt jedes Kind in einem Wrapper) — Editor und Maske
+         stuenden dann verschieden da. Begruendung ausfuehrlich dort. */
     `,
   ]
 
@@ -234,17 +265,32 @@ export class KanbanSpalteBlock extends BasicBlock {
   // attribute:false: ein Laufzeitwert, der nie in den Export gehoert.
   @property({ attribute: false }) leerHinweis = ''
 
-  // Kartenzähler: aus den geslotteten Kindern abgeleitet, nie gepflegt.
+  // Kartenzähler: aus dem Inhalt abgeleitet, nie gepflegt.
   @state() private _count = 0
 
-  private onSlotChange(e: Event): void {
-    const slot = e.target as HTMLSlotElement
-    this._count = slot
-      .assignedElements()
-      // Editor-Hilfen zählen nicht; <template> ebenso wenig (im Export
-      // reist die Musterkarte als inertes template-Element mit, sie ist
-      // keine sichtbare Karte).
-      .filter((el) => !el.hasAttribute('data-ff-editor-helper') && el.tagName.toLowerCase() !== 'template')
+  constructor() {
+    super()
+    // N4: eine Karte liegt entweder direkt in der Spalte ODER in einem
+    // Zimmer. Legt die Laufzeit sie in ein Zimmer, feuert nur DESSEN
+    // slotchange — der bleibt in dessen Schattenbaum (composed: false) und
+    // erreicht diese Spalte nie. Deshalb meldet sich das Zimmer selbst
+    // (ZIMMER_INHALT_EVENT), und die Spalte zählt neu.
+    this.addEventListener(ZIMMER_INHALT_EVENT, () => this.zaehle())
+  }
+
+  // Gezählt werden KARTEN, egal wie tief sie liegen — nicht die geslotteten
+  // Kinder: mit Zimmern wären das die Zimmer, und der Zähler zeigte plötzlich
+  // die Zahl der Untergruppen statt der Einträge.
+  //
+  // querySelectorAll geht durch den LICHT-Baum dieser Spalte und findet
+  // beide Lagen. Es steigt bewusst NICHT in <template> hinein (eigenes
+  // Dokumentfragment) — im Export reist die Musterkarte genau so mit und ist
+  // keine sichtbare Karte. Im EDITOR liegt jede Karte in einem
+  // BlockHost-Wrapper; für querySelectorAll ist die Tiefe egal, beide Welten
+  // zählen deshalb dieselbe Zahl.
+  private zaehle(): void {
+    this._count = Array.from(this.querySelectorAll(CardBlock.tagName))
+      .filter((el) => !el.hasAttribute('data-ff-editor-helper'))
       .length
   }
 
@@ -261,7 +307,7 @@ export class KanbanSpalteBlock extends BasicBlock {
         <span class="count">${this._count}</span>
       </div>
       <div class="body">
-        <slot @slotchange=${this.onSlotChange}></slot>
+        <slot @slotchange=${this.zaehle}></slot>
         ${leerZustand(this.leerHinweis)}
       </div>
     </div>`

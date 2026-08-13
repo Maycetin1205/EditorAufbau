@@ -71,7 +71,9 @@ export class CardBlock extends BasicBlock {
   // über "+ Karte" an der Spalte. Die ERSTE Karte des Boards ist die
   // Musterkarte (templateChild am Board): aus ihr erzeugt die Laufzeit
   // die Datenkarten.
-  static readonly allowedParentTypes = ['kanban-spalte']
+  // Seit N4 auch im ZIMMER (Untergruppe einer Spalte) — dieselbe Karte, nur
+  // eine Ebene tiefer.
+  static readonly allowedParentTypes = ['kanban-spalte', 'kanban-zimmer']
   static readonly showInPalette = false
   // Karten haben KEINE einstellbare Breite — sie sind IMMER so breit wie
   // ihre Spalte (lockedWidth 'fill', dasselbe Muster wie die Spalte selbst:

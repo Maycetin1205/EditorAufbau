@@ -38,10 +38,12 @@ export const RELATION_VERBS: readonly RelationVerb[] = [
 //  DROP_PINDEX        Nummer der gezogenen Karte (Kanban-Drop)
 //  RELID              Relations-ID der Tabelle OHNE 'IDB'-Präfix
 //  VALUE              der zu schreibende / auslösende Wert
+//  ZIMMER             Titel der Kanban-Untergruppe, in die abgelegt wurde
+//                     (N4; leer, wenn die Spalte keine Zimmer hat)
 //  NOW_DATE           heutiges Datum (füllt der Konsument, z. B. seRuntime)
 export const RELATION_PLACEHOLDERS = [
   'FELD_POS', 'FELD_LEN', 'PINDEX', 'SELKEY', 'DROP_PINDEX',
-  'RELID', 'VALUE', 'NOW_DATE',
+  'RELID', 'VALUE', 'ZIMMER', 'NOW_DATE',
 ] as const
 
 // Werte, die ein Konsument zur Laufzeit liefert. Neben den Standardnamen sind

@@ -98,7 +98,10 @@ body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--s
           <ff-card heading="R&#xFC;ckruf" text="Zeile mit &#xDC;mlaut" chiptext="Pr&#xFC;fen" headingfield="40_20" timefield="10_5" avatarfield="30_10" style="align-self:stretch"></ff-card>
         </template>
       </ff-kanban-spalte>
-      <ff-kanban-spalte heading="Erledigt" style="flex-grow:1;flex-basis:0;min-width:0"></ff-kanban-spalte>
+      <ff-kanban-spalte heading="Erledigt" zimmerfield="50_10" style="flex-grow:1;flex-basis:0;min-width:0">
+        <ff-kanban-zimmer heading="Zimmer 1" style="align-self:stretch"></ff-kanban-zimmer>
+        <ff-kanban-zimmer heading="Zimmer 2" style="align-self:stretch"></ff-kanban-zimmer>
+      </ff-kanban-spalte>
       <ff-kanban-spalte heading="Auffang" auffang="ja" style="flex-grow:1;flex-basis:0;min-width:0"></ff-kanban-spalte>
     </ff-kanban>
     <ff-formfeld placeholder="Name" source="q-adressen" valuefield="10_30" data-ff-aktionen="{&quot;onChange&quot;:[{&quot;type&quot;:&quot;RELATION&quot;,&quot;resultKey&quot;:&quot;&quot;,&quot;relationId&quot;:&quot;rel-put&quot;,&quot;params&quot;:[{&quot;source&quot;:&quot;context&quot;,&quot;value&quot;:&quot;PINDEX&quot;},{&quot;source&quot;:&quot;fixed&quot;,&quot;value&quot;:&quot;0042&quot;},{&quot;source&quot;:&quot;context&quot;,&quot;value&quot;:&quot;VALUE&quot;}],&quot;extraParams&quot;:[]}]}" data-ff-block-id="feld" fuellt style="grid-column:7 / span 12;grid-row:24 / span 3;min-width:0;min-height:0"></ff-formfeld>

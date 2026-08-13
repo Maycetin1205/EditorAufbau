@@ -91,7 +91,16 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13 (U8, U9 …):** U8 — die
+- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13, zweite (N4 …):** N4 —
+  eine Kanban-Spalte kann UNTERGRUPPEN („Zimmer") tragen. Neuer Baustein
+  `blocks/kanban/KanbanZimmerBlock.ts`, angelegt ueber „+ Zimmer" an der
+  Spalte; zwei Sortierebenen nach genau demselben Muster (Board-Feld waehlt
+  die Spalte, Spalten-Feld `zimmerField` waehlt das Zimmer, beide vergleichen
+  gegen den Titel = Datenwert). Die Kette „Karte verschoben" bekommt
+  `{ZIMMER}` dazu. Einzelheiten und die drei vorab verlangten Festlegungen im
+  Etappenkopf N4. **U10 ist auch in dieser Sitzung NICHT gebaut** und ist bis
+  zur Gesamtprobe keine baubare Etappe (Belege im Etappenkopf U10).
+  Davor: U8 — die
   Auswahl trifft, was man anklickt: EIN Klick waehlt die Karte, ein weiterer
   auf denselben Baustein geht eine Ebene nach AUSSEN; ein Klick auf eine Stelle
   des Bausteins bleibt dem Feld-Picker/Inline-Edit vorbehalten. Die Karte sieht
@@ -3389,7 +3398,7 @@ CSS-Aenderungen plus gekuerzte Stil-Kommentare — die Begruendung steht im
 Klassenkopf, ausserhalb des `css`-Blocks). Referenzabzug brauchte KEINE
 Erneuerung (er schneidet das Buendel heraus).
 
-## N4 · Kanban-Untergruppen („Zimmer") — Nutzer-Wunsch 2026-08-12
+## N4 · Kanban-Untergruppen („Zimmer") — GEBAUT 2026-08-13
 
 Je SPALTE optional — der Nutzer entscheidet OB und WELCHE („ich will ja
 entscheiden welche zimmer, und OB ich welche will"): die Spalte bekommt
@@ -3405,6 +3414,37 @@ Parameterquelle bekommt (analog zum Ziel-Spalten-Wert) — ohne ihn kann
 ein Zimmer-Drop nichts schreiben, und die Untergruppen waeren reine
 Anzeige.
 Runtime-Buendel bewusst neu; Export-Testfall (Waechter-Pflicht).
+
+**Gebaut 2026-08-13.** Die drei Punkte, die der Etappentext vorab zu klaeren
+verlangte, sind so entschieden:
+- **Titel = Datenwert**, wie bei der Spalte (Entscheidung 2026-07-14) — kein
+  zweites Klarname-Feld. Sonst waere eine Ebene tiefer eine andere Bedienung
+  zu lernen als eine Ebene hoeher, und der Etappentext verlangt das Gegenteil.
+- **Die Kette bekommt den Ziel-Zimmer-Wert**: neuer Kontext-Platzhalter
+  `{ZIMMER}` neben `{VALUE}` (`core/data/aktionen.ts`, `relations.ts`,
+  gefuellt in `kanban/seRuntime.ts` beim Drop; leer bei einem Drop auf eine
+  Spalte ohne Zimmer). Kein eingebauter Schreibweg — die feste Zusage gilt.
+- **Kein Auffang-Zimmer und kein einstellbarer Frei-Satz** (Regel 10): ohne
+  Treffer landet die Karte im ERSTEN Zimmer, so wie eine Zeile ohne
+  Spaltentreffer in der ersten Spalte landet; der Satz „frei · hierher
+  ziehen" steht fest im Baustein.
+Bewusste Abweichung vom Optik-Vorbild, im Code begruendet
+(`blocks/kanban/kartenAbstand.ts`): die 8 px zwischen den Zimmern sind NICHT
+abgeschrieben. Der Editor legt jedes Kind in einen Wrapper, eine tag-genaue
+`::slotted`-Regel griffe deshalb nur im Export — Editor und Maske stuenden
+verschieden da (Regel 1). Zimmer erben den Kartenabstand (24 px), in beiden
+Welten gleich.
+Der Spaltenzaehler zaehlt weiter KARTEN, nicht Zimmer: er zaehlt jetzt den
+Licht-Baum statt der geslotteten Kinder, und das Zimmer meldet ihm jede
+Inhaltsaenderung (`slotchange` ueberquert keine Schattengrenze).
+Vorbereitend verhaltensneutral geschnitten: die Kanban-Export-Faelle zogen aus
+`export.test.ts` nach `kanbanExport.test.ts` (500-Zeilen-Deckel, eigener
+Commit nach Plan 3.1).
+Runtime-Bytes ABSICHTLICH neu (194 138 -> 197 142 = +3 004 Byte, der eine neue
+Baustein; nachgeprueft, dass kein Editor-Code mitkam), Referenzabzug
+ABSICHTLICH neu (vier Zeilen: die unterteilte Spalte mit ihren zwei Zimmern).
+**Nicht selbst pruefbar:** ob SoftEngine wirklich in die Zimmer einsortiert
+und ob ein Drop auf ein Zimmer die Kette mit dem richtigen Wert ausloest.
 
 ## N5 · Bild-Baustein (Upload) — Nutzer-Wunsch 2026-08-12
 

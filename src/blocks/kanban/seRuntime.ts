@@ -6,8 +6,15 @@
 // Daten-Push (bridge), Feld lesen und Zeilen (data) — wohnt in
 // src/softengine/ und wird hier nur benutzt.
 //
+// Seit N4 (2026-08-13) gibt es ZWEI Sortierebenen nach genau demselben
+// Muster: das Feld des BOARDS (statusField) waehlt die Spalte, das Feld der
+// SPALTE (zimmerField) waehlt darin das Zimmer. Beide vergleichen gegen den
+// Titel, beide sind optional, beide fallen ohne Treffer auf das erste
+// Element zurueck. Eine Spalte ohne Zimmer verhaelt sich unveraendert.
+//
 // KEIN eingebauter Schreibweg: ein Drop ist nur ein Auslöser — was
-// passiert, bestimmt allein die sichtbare Aktionskette „Karte verschoben".
+// passiert, bestimmt allein die sichtbare Aktionskette „Karte verschoben"
+// ({VALUE} = Spaltentitel, seit N4 zusaetzlich {ZIMMER} = Zimmertitel).
 // „Einsortieren nach" (statusField) ist OPTIONAL: ohne Feld landen alle
 // Zeilen in der Auffang- bzw. einer Auto-Spalte. (Entscheidungs-Historie:
 // docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md)
@@ -29,6 +36,7 @@ import { zeilenAmTag } from '../shared/tagFilter'
 import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
+import { KanbanZimmerBlock, ZIMMER_LEER_TEXT } from './KanbanZimmerBlock'
 
 // ---------- Pure Helfer (Node-testbar, kein DOM) ----------
 
@@ -62,6 +70,7 @@ const templates = new WeakMap<HTMLElement, HTMLElement>()
 // Tag-Namen aus den Block-Klassen (dieselbe Quelle wie die Registry —
 // keine duplizierten String-Literale).
 const SPALTE_TAG = KanbanSpalteBlock.tagName
+const ZIMMER_TAG = KanbanZimmerBlock.tagName
 const CARD_TAG = CardBlock.tagName
 // Bis 2026-07-27 baute die Laufzeit hier eine eigene Spalte „Nicht
 // zugeordnet", wenn eine Zeile in keine Spalte passte und keine
@@ -75,23 +84,48 @@ function columnsOf(board: HTMLElement): HTMLElement[] {
   )
 }
 
-function cardsOf(column: HTMLElement): HTMLElement[] {
-  return Array.from(column.children).filter(
+// Die Karten, die UNMITTELBAR in dieser Flaeche liegen (Spalte oder Zimmer).
+function cardsOf(flaeche: HTMLElement): HTMLElement[] {
+  return Array.from(flaeche.children).filter(
     (el): el is HTMLElement => el.tagName.toLowerCase() === CARD_TAG,
   )
 }
 
-// Den Leerzustand-Satz an die Spalten reichen: leer ausgegangene Spalten
-// bekommen ihn, befuellte bekommen ''. Nur die Laufzeit darf das setzen —
-// eine leere Spalte im Editor ist ein Bauplan, kein Leerzustand.
+// N4: die Zimmer einer Spalte, in Dokumentreihenfolge. Leere Liste = die
+// Spalte ist nicht unterteilt und verhaelt sich wie vor N4.
+function zimmerOf(column: HTMLElement): HTMLElement[] {
+  return Array.from(column.children).filter(
+    (el): el is HTMLElement => el.tagName.toLowerCase() === ZIMMER_TAG,
+  )
+}
+
+// Alle Flaechen einer Spalte, die Karten aufnehmen koennen: die Spalte selbst
+// und ihre Zimmer. Wird zum Ausraeumen gebraucht — eine Karte kann seit N4 in
+// beiden Lagen liegen, und wer nur die eine leert, laesst Leichen stehen.
+function ablagenOf(column: HTMLElement): HTMLElement[] {
+  return [column, ...zimmerOf(column)]
+}
+
+// Den Leerzustand-Satz an die leer ausgegangenen Flaechen reichen, befuellte
+// bekommen ''. Nur die Laufzeit darf das setzen — eine leere Spalte im Editor
+// ist ein Bauplan, kein Leerzustand.
 // Fehlendes Attribut = STANDARDSATZ, nicht leer: seit der Export
 // Standardwerte weglaesst (2026-08-06), traegt ein nie angefasstes Board kein
 // leertext-Attribut, soll aber den Satz zeigen, den der Editor ansagt.
+//
+// N4: eine unterteilte Spalte ist NIE selbst leer im Sinne dieses Satzes —
+// ihr Inhalt sind die Zimmer, und die sagen einzeln, ob sie frei sind. Sonst
+// staende „Keine Datensaetze." ueber lauter Zimmern, die genau das schon
+// sagen. Der Zimmer-Satz ist fest (s. ZIMMER_LEER_TEXT).
 function setzeLeerHinweise(board: HTMLElement, columns: readonly HTMLElement[]): void {
   const satz = board.getAttribute('leertext') ?? LEER_TEXT_STANDARD
+  const setze = (el: HTMLElement, text: string): void => {
+    (el as unknown as { leerHinweis: string }).leerHinweis = text
+  }
   for (const col of columns) {
-    (col as unknown as { leerHinweis: string }).leerHinweis =
-      cardsOf(col).length === 0 ? satz : ''
+    const zimmer = zimmerOf(col)
+    for (const z of zimmer) setze(z, cardsOf(z).length === 0 ? ZIMMER_LEER_TEXT : '')
+    setze(col, zimmer.length === 0 && cardsOf(col).length === 0 ? satz : '')
   }
 }
 
@@ -100,6 +134,27 @@ function setzeLeerHinweise(board: HTMLElement, columns: readonly HTMLElement[]):
 function spotsForTag(tagName: string) {
   const def = getAllBlockDefinitions().find((d) => d.tagName === tagName.toLowerCase())
   return def?.bindableSpots ?? []
+}
+
+// N4: das Zimmer, in das eine Zeile in DIESER Spalte gehoert — oder null,
+// wenn die Spalte gar nicht unterteilt ist (dann nimmt sie die Karte selbst).
+// Der Vergleich ist derselbe wie eine Ebene hoeher (columnIndexFor: exakter
+// Treffer gegen den Titel, getrimmt, Gross/klein egal), weil Zimmertitel und
+// Spaltentitel dieselbe Sorte Wert sind — der Datenwert selbst.
+function zielZimmer(column: HTMLElement, row: unknown): HTMLElement | null {
+  const zimmer = zimmerOf(column)
+  if (zimmer.length === 0) return null
+  const feld = column.getAttribute('zimmerfield') ?? ''
+  if (feld === '') return zimmer[0]
+  // Fehlendes Attribut = STANDARDTITEL, nicht leer — derselbe Grund wie bei
+  // den Spaltentiteln: der Export laesst Standardwerte weg, ein nie
+  // umbenanntes Zimmer traegt also gar kein heading und soll den Wert
+  // vergleichen, den es ANZEIGT.
+  const titel = zimmer.map(
+    (z) => z.getAttribute('heading') ?? KanbanZimmerBlock.defaultProps.heading,
+  )
+  const idx = columnIndexFor(getField(row, feld), titel)
+  return idx >= 0 ? zimmer[idx] : zimmer[0]
 }
 
 function hydrate(board: HTMLElement): void {
@@ -163,16 +218,27 @@ function hydrate(board: HTMLElement): void {
   const lies = macheFeldLeser(board)
 
   // Gestaltete Beispiel-Karten raus, Daten-Karten rein (idempotent).
-  for (const col of columns) cardsOf(col).forEach((card) => card.remove())
+  // N4: ausgeraeumt wird die Spalte UND jedes ihrer Zimmer.
+  for (const col of columns) {
+    for (const ablage of ablagenOf(col)) cardsOf(ablage).forEach((card) => card.remove())
+  }
   for (const row of rows) {
     const card = template.cloneNode(true) as HTMLElement
     const idx = statusField === ''
       ? -1
       : columnIndexFor(getField(row, statusField), columnValues)
     // Kein Treffer: gewählte Auffangspalte, sonst die erste Spalte.
-    const target = idx >= 0
+    const column = idx >= 0
       ? columns[idx]
       : catchIdx >= 0 ? columns[catchIdx] : columns[0]
+    // N4: hat die Spalte Zimmer, entscheidet ihr eigenes Feld, in welches.
+    // Dieselbe Mechanik eine Ebene tiefer — derselbe Vergleicher, derselbe
+    // Rueckfall: kein Treffer (oder kein Feld eingestellt) landet im ERSTEN
+    // Zimmer, so wie eine Zeile ohne Spaltentreffer in der ersten Spalte
+    // landet. Eine Auffang-Wahl gibt es hier bewusst nicht: sie waere ein
+    // zweites Bedienelement fuer einen Fall, den noch niemand hatte
+    // (Regel 10).
+    const target = zielZimmer(column, row) ?? column
     target.appendChild(card)
     // Gebundene Stellen mit den Zeilenwerten füllen — ungebundene behalten
     // den statischen Text der Vorlage. Property-Zuweisung NACH dem Einhängen
@@ -202,7 +268,10 @@ function hydrate(board: HTMLElement): void {
   // wieder angeheftet. Ist die gewaehlte Zeile verschwunden (anderer Tag,
   // geloescht), wird die Auswahl AUFGEHOBEN — sonst filterten Folger nach
   // einer Karte, die niemand mehr sieht (Regel 4).
-  const karten = columns.flatMap(cardsOf)
+  // N4: auch die Karten in den Zimmern — sonst verloere eine ausgewaehlte
+  // Zeile beim naechsten Push ihre Markierung, nur weil sie in einem Zimmer
+  // liegt.
+  const karten = columns.flatMap((col) => ablagenOf(col).flatMap(cardsOf))
   const treffer = auswahlWiederfinden(
     geberIdVon(board),
     karten,
@@ -228,26 +297,40 @@ const cardData = new WeakMap<HTMLElement, { row: unknown; pindex: string }>()
 let dragged: { card: HTMLElement; board: HTMLElement } | null = null
 const wiredBoards = new WeakSet<HTMLElement>()
 
-function columnOfEvent(board: HTMLElement, e: Event): HTMLElement | null {
+// Die erste Flaeche des gesuchten Typs auf dem Weg vom Ereignis nach oben.
+// N4 braucht zwei davon (Spalte fuer {VALUE}, Zimmer fuer {ZIMMER}) — darum
+// EINE Suche mit dem Tag als Argument statt zweier gleicher Schleifen.
+function flaecheOfEvent(board: HTMLElement, e: Event, tag: string): HTMLElement | null {
   for (const el of e.composedPath()) {
-    if (el instanceof HTMLElement && el.tagName.toLowerCase() === SPALTE_TAG && board.contains(el)) {
+    if (el instanceof HTMLElement && el.tagName.toLowerCase() === tag && board.contains(el)) {
       return el
     }
   }
   return null
 }
 
+function columnOfEvent(board: HTMLElement, e: Event): HTMLElement | null {
+  return flaecheOfEvent(board, e, SPALTE_TAG)
+}
+
 // Drop einer Daten-Karte auf eine Spalte: NUR die Aktionskette läuft.
 // Die Karte bleibt liegen — ein rein lokaler Zug wäre eine Täuschung
 // (er verschwände beim nächsten Daten-Push). WYSIWYG: was sich bewegt,
 // haben die Daten bestätigt.
-function handleDrop(board: HTMLElement, column: HTMLElement): void {
+function handleDrop(board: HTMLElement, column: HTMLElement, zimmer: HTMLElement | null): void {
   if (!dragged || dragged.board !== board) return
   const data = cardData.get(dragged.card)
   if (!data) return
   const targetValue = column.getAttribute('heading') ?? ''
-  runEvent(board, 'onCardDrop', { PINDEX: data.pindex, VALUE: targetValue })
-    .catch(meldeKettenFehler)
+  // N4: {ZIMMER} = Titel des Ziel-Zimmers, leer bei einem Drop auf eine
+  // Spalte ohne Zimmer. Ohne diesen Wert koennte eine Kette den Zug
+  // ueberhaupt nicht schreiben, und Zimmer waeren reine Anzeige.
+  const zimmerValue = zimmer?.getAttribute('heading') ?? ''
+  runEvent(board, 'onCardDrop', {
+    PINDEX: data.pindex,
+    VALUE: targetValue,
+    ZIMMER: zimmerValue,
+  }).catch(meldeKettenFehler)
 }
 
 function wireDrag(board: HTMLElement): void {
@@ -288,7 +371,10 @@ function wireDrag(board: HTMLElement): void {
     const column = columnOfEvent(board, e)
     if (!column) return
     e.preventDefault()
-    handleDrop(board, column)
+    // Das Zimmer liegt IN der Spalte — derselbe Pfad traegt beide. Ein Drop
+    // auf den freien Spaltenrand neben den Zimmern findet keins: dann bleibt
+    // {ZIMMER} leer, und die Kette entscheidet selbst, was sie damit tut.
+    handleDrop(board, column, flaecheOfEvent(board, e, ZIMMER_TAG))
     dragged = null
   })
 }

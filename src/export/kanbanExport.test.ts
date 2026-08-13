@@ -18,8 +18,10 @@
 // LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
 
 import { describe, expect, it } from 'vitest'
-// Registriert Kanban-Board und -Spalte.
+// Registriert Kanban-Board und -Spalte …
 import '../blocks/kanban/KanbanBlock'
+// … und das Zimmer (N4), das nur ueber die Spalte erreichbar ist.
+import '../blocks/kanban/KanbanZimmerBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { failedChecks, validateMaskHtml } from './validator'
@@ -57,5 +59,47 @@ describe('Kanban', () => {
     // Die SPALTE traegt ihn nie: der Leerzustand ist ein Laufzeitwert
     // (leerHinweis, attribute:false), kein Bauplan der einzelnen Spalte.
     expect(/<ff-kanban-spalte[^>]*/i.exec(gesetzt)?.[0] ?? '').not.toMatch(/leer/i)
+  })
+
+  it('N4: Zimmertitel und „Unterteilen nach" reisen mit, der Zimmer-Leersatz nicht', () => {
+    // Beide Werte entscheiden in SoftEngine ueber die Einsortierung
+    // (kanban/seRuntime, zielZimmer: das Feld der SPALTE wird gegen den TITEL
+    // des Zimmers verglichen). Faellt einer im Export weg, sortiert die Maske
+    // anders als der Editor zeigt — genau der Tabellen-Bug von 2026-07-24,
+    // nur eine Ebene tiefer.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['b'] },
+      b: {
+        id: 'b', type: 'kanban', parentId: 'root', childIds: ['sp'],
+        props: { width: 'fill', height: 'fill', statusField: '20_10' },
+      },
+      sp: {
+        id: 'sp', type: 'kanban-spalte', parentId: 'b', childIds: ['zi'],
+        props: { heading: 'In Arbeit', zimmerField: '60_10' },
+      },
+      zi: {
+        id: 'zi', type: 'kanban-zimmer', parentId: 'sp', childIds: [],
+        props: { heading: 'Zimmer Süd' },
+      },
+    }
+    const { html } = exportMask(tree)
+    expect(/<ff-kanban-spalte[^>]*/i.exec(html)?.[0] ?? '').toMatch(/\szimmerField="60_10"/i)
+    const zimmerTag = /<ff-kanban-zimmer[^>]*/i.exec(html)?.[0] ?? ''
+    // Der Umlaut ist die Falle — roher Text zerbraeche an der ASCII-Regel.
+    expect(zimmerTag).toMatch(/\sheading="Zimmer S&#xFC;d"/i)
+    // Der Satz eines freien Zimmers steht fest im Baustein und ist ein reiner
+    // Laufzeitwert (leerHinweis, attribute:false) — im Markup hat er nichts
+    // verloren, sonst gaebe es ihn zweimal.
+    expect(zimmerTag).not.toMatch(/leer/i)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('N4: eine nicht unterteilte Spalte traegt kein zimmerField', () => {
+    // Standardwert-Regel (2026-08-06): ein leeres „Unterteilen nach" ist der
+    // Normalfall. Reiste es trotzdem als Attribut mit, waere JEDE bestehende
+    // Maske im Export anders — der Byte-Waechter haette bei dieser Etappe
+    // ueber die ganze Datei angeschlagen statt nur ueber die neuen Zeilen.
+    const { html } = exportMask(board({}))
+    expect(/<ff-kanban-spalte[^>]*/i.exec(html)?.[0] ?? '').not.toMatch(/zimmerField/i)
   })
 })

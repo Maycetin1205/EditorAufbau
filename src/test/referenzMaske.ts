@@ -64,7 +64,21 @@ export function referenzMaske(): ReferenzMaske {
       parentId: 'sp1', childIds: [],
     },
     demo: { id: 'demo', type: 'card', props: { heading: 'Demo — fällt raus' }, parentId: 'sp1', childIds: [] },
-    sp2: { id: 'sp2', type: 'kanban-spalte', props: { heading: 'Erledigt' }, parentId: 'board', childIds: [] },
+    // N4: eine UNTERTEILTE Spalte — der Byte-Waechter sieht damit auch die
+    // zweite Sortierebene (Zimmertitel + „Unterteilen nach").
+    // `zkarte` liegt eine Ebene tiefer als bisher jede Karte und steht im
+    // Abzug BEWUSST nicht: unterhalb des Boards wird jede Karte ausser der
+    // Musterkarte ausgelassen (Musterkarten-Kontext in exportMask,
+    // Nutzer-Entscheidung 2026-07-10 „Demo wird gar nicht erst exportiert").
+    // Der Knoten haelt genau das fest — die Regel greift auch im Zimmer.
+    sp2: {
+      id: 'sp2', type: 'kanban-spalte',
+      props: { heading: 'Erledigt', zimmerField: '50_10' },
+      parentId: 'board', childIds: ['zi1', 'zi2'],
+    },
+    zi1: { id: 'zi1', type: 'kanban-zimmer', props: { heading: 'Zimmer 1' }, parentId: 'sp2', childIds: ['zkarte'] },
+    zkarte: { id: 'zkarte', type: 'card', props: { heading: 'Im Zimmer' }, parentId: 'zi1', childIds: [] },
+    zi2: { id: 'zi2', type: 'kanban-zimmer', props: { heading: 'Zimmer 2' }, parentId: 'sp2', childIds: [] },
     sp3: { id: 'sp3', type: 'kanban-spalte', props: { heading: 'Auffang', auffang: 'ja' }, parentId: 'board', childIds: [] },
     feld: {
       id: 'feld', type: 'formfeld',

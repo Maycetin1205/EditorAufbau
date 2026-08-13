@@ -79,6 +79,7 @@ export const PLATZHALTER_KLARTEXT: Record<string, string> = {
   DROP_PINDEX: 'Nummer des Ziel-Datensatzes beim Ablegen',
   RELID: 'Tabellen-ID der Datenquelle (ohne IDB-Präfix)',
   VALUE: 'Neuer Wert (z. B. Titel der Zielspalte)',
+  ZIMMER: 'Titel des Ziel-Zimmers beim Ablegen (leer ohne Zimmer)',
   NOW_DATE: 'Heutiges Datum',
 }
 
