@@ -15,6 +15,7 @@ import '../blocks/ansicht/AnsichtBlock'
 import '../blocks/navi/NaviBlock'
 import '../blocks/navi/NaviEintragBlock'
 // Side-Effect-Import: registriert die statischen Atome (Fahrplan 3).
+import '../blocks/bild/BildBlock'
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
@@ -301,7 +302,7 @@ describe('Runtime-Bündel', () => {
   })
 
   it('ist nicht veraltet: Bündel enthält die aktuellen Block-Tags', () => {
-    for (const tag of ['ff-ansicht', 'ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-kanban-zimmer', 'ff-navi', 'ff-navi-eintrag', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
+    for (const tag of ['ff-ansicht', 'ff-bild', 'ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-kanban-zimmer', 'ff-navi', 'ff-navi-eintrag', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner', 'ff-zeile']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
     // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,
@@ -447,6 +448,35 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     const { html } = exportMask(tree)
     expect(html).toMatch(/<ff-trenner[^>]*richtung="senkrecht"/)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  // N5: das Bild reist als eingebetteter Daten-URI — eine Maske bleibt EINE
+  // Datei. Der Fall haelt beides fest: dass der lange String unveraendert im
+  // Attribut landet UND dass er die SE-Dateiregeln nicht bricht (Base64 ist
+  // reines ASCII, aber der Validator ist die Stelle, die das zusagt).
+  it('Bild traegt seinen Daten-URI unveraendert im Markup', () => {
+    // Kleinstmoegliches echtes PNG (1x1, transparent) — dieselbe Form, die
+    // bildEinbetten erzeugt, nur eben klein genug zum Hinschreiben.
+    const uri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['bi'] },
+      bi: { id: 'bi', type: 'bild', props: { quelle: uri }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    expect(html).toContain(`quelle="${uri}"`)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Bild ohne gewaehlte Datei traegt kein quelle-Attribut', () => {
+    // Standardwert-Regel (2026-08-06). Ein leerer Daten-URI im Markup waere
+    // ein <img src=""> in der Maske — der Browser fragte damit die Maskendatei
+    // selbst noch einmal als Bild ab.
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['bi'] },
+      bi: { id: 'bi', type: 'bild', props: { quelle: '' }, parentId: 'root', childIds: [] },
+    }
+    expect(exportMask(tree).html).toMatch(/<ff-bild[^>]*><\/ff-bild>/)
+    expect(exportMask(tree).html).not.toMatch(/<ff-bild[^>]*quelle=/)
   })
 })
 

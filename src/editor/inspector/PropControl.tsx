@@ -18,6 +18,7 @@ import type { DataSource } from '../../core/data/dataSources'
 import { useDataSources } from '../../state/useDataSources'
 import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
+import { BildControl } from './controls/BildControl'
 import { ColorTileControl } from './controls/ColorTileControl'
 import { NumberControl } from './controls/NumberControl'
 import { SegmentControl } from './controls/SegmentControl'
@@ -110,6 +111,11 @@ export function PropControl({
       return <TextControl property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
     case 'textarea':
       return <TextareaControl property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
+    // Bild als eingebetteter Daten-URI (N5). KEINE Eingabe-Sitzung: das
+    // Waehlen ist EIN Schritt, kein Tippen — die Klammer, die viele
+    // Tastendruecke zu einem Undo-Eintrag macht, hat hier nichts zu klammern.
+    case 'bild':
+      return <BildControl property={property} value={String(value ?? '')} onChange={set} />
     case 'number':
       return <NumberControl label={property.name} property={property} value={value} onChange={set} {...sitzung} />
     case 'segment':

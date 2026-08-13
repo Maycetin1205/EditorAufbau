@@ -91,7 +91,12 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13, zweite (N4 …):** N4 —
+- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13, zweite (N4 + N5):** N5 —
+  ein BILD-Baustein in der Bibliothek (`blocks/bild/`). Der Bauer waehlt die
+  Datei im Inspector (neue Property-Art `kind: 'bild'`), sie wird still auf
+  1024 px verkleinert und reist als eingebetteter Daten-URI mit — eine Maske
+  bleibt EINE Datei. Genau eine Eigenschaft, kein Zuschnitt-Regler; Stufe 2
+  (Bilder aus SE-Feldern) bleibt ungebaut bis zum Beleg. · N4 —
   eine Kanban-Spalte kann UNTERGRUPPEN („Zimmer") tragen. Neuer Baustein
   `blocks/kanban/KanbanZimmerBlock.ts`, angelegt ueber „+ Zimmer" an der
   Spalte; zwei Sortierebenen nach genau demselben Muster (Board-Feld waehlt
@@ -433,15 +438,16 @@ git log --oneline -8
   Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
   Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
   ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe:** N4 -> N5 per
-  Opus-Kopier-Auftrag. **U10 ist keine baubare Etappe mehr, bis die
+- **Naechste Etappe: KEINE — jetzt ist die EINE Gesamtprobe des Nutzers
+  faellig** (Welle N ist mit N4/N5 fertig, Welle R ebenso). Danach braucht
+  **U4 (Entwurf Quelle/Feld/Relation)** den Nutzer selbst im Chat; erst sein
+  bestaetigter Entwurf macht U5 baubar. **U10 ist keine baubare Etappe, bis die
   Gesamtprobe da ist** — zweimal nachgesucht, die Ursache steht nicht im Code;
   es fehlt EINE Browserbeobachtung, und Proben zwischendurch sind gestrichen
-  (Beleg im Etappenkopf U10). Nicht wieder als „naechste Etappe" einplanen
-  (Wellen-Kopf U; seit
-  2026-08-12 mehrere Etappen je Sitzung). Dazwischen angemeldet, weil aus der
-  N2.1-Probe entstanden: **die Hauptseite umbenennen** (Kleinfix, braucht eine
-  Ablage fuer ihren Namen — s. Etappenkopf N2.1). U6, N1, N2 und N2.1 sind
+  (Beleg im Etappenkopf U10). Nicht wieder als „naechste Etappe" einplanen.
+  Weiter angemeldet, aus der N2.1-Probe entstanden: **die Hauptseite
+  umbenennen** (Kleinfix, braucht eine Ablage fuer ihren Namen — s.
+  Etappenkopf N2.1). U6, N1 bis N5 sind
   gebaut, Welle R ist fertig. A9 ist per
   Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
   **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
@@ -3446,7 +3452,7 @@ ABSICHTLICH neu (vier Zeilen: die unterteilte Spalte mit ihren zwei Zimmern).
 **Nicht selbst pruefbar:** ob SoftEngine wirklich in die Zimmer einsortiert
 und ob ein Drop auf ein Zimmer die Kette mit dem richtigen Wert ausloest.
 
-## N5 · Bild-Baustein (Upload) — Nutzer-Wunsch 2026-08-12
+## N5 · Bild-Baustein (Upload) — Stufe 1 GEBAUT 2026-08-13
 
 **Stufe 1, sofort machbar:** ein Bild-Baustein in der Palette. Der Nutzer
 laedt das Bild IM Editor hoch; es reist als eingebetteter Daten-URI in
@@ -3454,6 +3460,32 @@ der Export-Datei mit (eine Maske = EINE Datei — dieselbe Technik wie die
 Tierbilder). Der Editor verkleinert beim Upload auf eine vernuenftige
 Kante (Richtwert max. 1024 px, im Etappen-Commit begruendet), damit die
 Maskendatei nicht explodiert — still, ohne Warn-UI. Export-Testfall.
+
+**Stufe 1 gebaut 2026-08-13.** Baustein `blocks/bild/BildBlock.ts`, GENAU EINE
+Eigenschaft (das Bild) — kein Zuschnitt-Regler, kein Alternativtext, kein
+Rahmen (Regel 10; der Auftrag der Welle U beginnt mit „zig stellschrauben").
+Das Bild passt sich ganz in seine Zelle ein (`contain`), wird nie beschnitten
+und nie verzerrt. Verkleinert wird auf 1024 px laengste Kante, still und ohne
+Warn-UI (`editor/inspector/controls/bildEinbetten.ts`); PNG bleibt PNG
+(Transparenz fuer Logos), alles andere wird JPEG bei 0,85 — entschieden am
+MIME-Typ, nicht per Pixel-Durchlauf.
+**Gewaehlt wird im INSPECTOR, nicht per Doppelklick am Baustein** — bewusste
+Abweichung von Regel 7, begruendet im Kopf von `BildControl.tsx`: der
+Doppelklick auf einer Baustein-Stelle hat heute schon zwei Bedeutungen
+(Feld-Picker, Inline-Edit), und U8 hat genau dieses Zusammenspiel mit der
+Auswahl gerade erst geradegerueckt. Eine dritte Bedeutung ist eine eigene
+Nutzer-Entscheidung, kein Nebeneffekt eines neuen Bausteins.
+Neue Property-Art `kind: 'bild'` (`core/blocks/PropertyDescription.ts`), damit
+das generisch bleibt: wer als naechster ein Bild braucht, deklariert die Art
+und ist fertig. Das Einbetten liegt im Editor, nicht im Baustein — nachgeprueft
+am Buendel: weder `createImageBitmap` noch `toDataURL` reisen mit.
+Runtime-Bytes ABSICHTLICH neu (197 142 -> 199 294 = +2 152 Byte, der eine neue
+Baustein), Referenzabzug ABSICHTLICH neu (EINE Zeile: das `<ff-bild>` mit
+einem 1x1-PNG als Daten-URI — bewusst das kleinstmoegliche echte Bild, der
+Waechter soll den WEG bewachen, nicht 200 KB Base64 mitschleppen).
+**Nicht selbst pruefbar:** ob Dateidialog und Verkleinern im Browser laufen
+(ein Test dafuer waere eine neue Testgattung, Regel 9), wie das Bild aussieht,
+und ob SoftEngine einen langen Daten-URI im Attribut klaglos laedt.
 
 **Stufe 2, SPAETER und erst mit Beleg:** Bilder aus SoftEngine-FELDERN.
 Der Nutzer sagt, SoftEngine hat dafuer Felder, kennt die Form aber selbst

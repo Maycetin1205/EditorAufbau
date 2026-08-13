@@ -8,6 +8,7 @@
 // Formularfeld-Neubau): docs/decisions/2026-07-14-kahlschlag-bausteine.md.
 
 import './ansicht/AnsichtBlock'
+import './bild/BildBlock'
 import './button/ButtonBlock'
 import './card/CardBlock'
 import './datum/DatumBlock'

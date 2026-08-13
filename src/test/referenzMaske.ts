@@ -22,7 +22,7 @@ export interface ReferenzMaske {
 
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'txt', 'txt2', 'p1', 'a1', 'nav'] },
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'bild1', 'txt', 'txt2', 'p1', 'a1', 'nav'] },
     z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
     // Ohne Eigenschaften: DatumBlock.defaultProps ist leer. Bis 2026-07-28
     // stand hier ein `zeigt: 'datum'` aus einer alten Fassung — der Export
@@ -120,6 +120,18 @@ export function referenzMaske(): ReferenzMaske {
     tr1: {
       id: 'tr1', type: 'trenner',
       props: { rasterX: 0, rasterY: 34, rasterW: 24, rasterH: 1 },
+      parentId: 'root', childIds: [],
+    },
+    // N5: ein Bild mit eingebettetem Daten-URI. Bewusst das kleinstmoegliche
+    // echte PNG (1x1, transparent) — der Byte-Waechter soll den WEG des
+    // Daten-URI durch den Export bewachen, nicht 200 KB Base64 im Abzug
+    // mitschleppen. Die Form ist dieselbe, die bildEinbetten erzeugt.
+    bild1: {
+      id: 'bild1', type: 'bild',
+      props: {
+        quelle: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+        rasterX: 18, rasterY: 35, rasterW: 6, rasterH: 6,
+      },
       parentId: 'root', childIds: [],
     },
     txt: {

@@ -31,6 +31,12 @@ export type PropertyKind =
   // die fertige Maske braucht, ist der KLARNAME der Seite — er wandert wie
   // beim Feld-Control ueber klarnameProp in eine eigene Prop.
   | 'seite'
+  // bild speichert eine BILDDATEI als eingebetteten Daten-URI (N5). Der Wert
+  // ist der fertige `data:`-String — die Maske laedt nie etwas nach, und eine
+  // Maske bleibt EINE Datei. Das Waehlen und das stille Verkleinern macht das
+  // Inspector-Control (controls/BildControl); der Baustein bekommt nur das
+  // Ergebnis, damit kein Dateidialog im Runtime-Buendel landet.
+  | 'bild'
 
 export interface PropertySelectOption {
   value: string
