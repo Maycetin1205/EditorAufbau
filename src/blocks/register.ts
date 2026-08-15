@@ -4,8 +4,8 @@
 // Wer Blocks benutzt, importiert diese eine Datei.
 //
 // Neue Bausteine erst, wenn eine echte Maske sie erzwingt (Regel 10).
-// Warum es genau diese Bausteine sind (Kahlschlag der Anfangs-Bausteine,
-// Formularfeld-Neubau): docs/decisions/2026-07-14-kahlschlag-bausteine.md.
+// Warum es genau diese Bausteine sind: Kahlschlag der Anfangs-Bausteine +
+// Formularfeld-Neubau, Nutzer-Entscheidung 2026-07-14.
 
 import './button/ButtonBlock'
 import './card/CardBlock'

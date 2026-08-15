@@ -176,9 +176,10 @@ export function bindungMitQuelle(quelleId: string, code: string): string {
 // Defensiv wie die sanitize*-Funktionen: wirft nie. Alles Mehrdeutige —
 // mehrfacher Trenner, fuehrender/abschliessender Trenner, leere Haelfte — gilt
 // als NICHT qualifiziert und kommt als nackter Code zurueck. Der laeuft dann
-// ins Leere (Feld nicht gefunden -> Stelle bleibt leer) und der Preflight sagt
-// es im Klartext. Ein handgepfuschter Speicherstand darf den Editor nicht
-// anhalten.
+// ins Leere (Feld nicht gefunden -> Stelle bleibt leer). Der Preflight kennt
+// den Fall, blockt den Export aber seit 2026-08-10 nicht mehr — die Stelle
+// bleibt also auch in SoftEngine leer. Ein handgepfuschter Speicherstand darf
+// den Editor nicht anhalten.
 export function zerlegeBindung(wert: string): FeldZiel {
   const teile = wert.split(QUELLEN_TRENNER)
   if (teile.length !== 2) return { quelleId: '', code: wert }

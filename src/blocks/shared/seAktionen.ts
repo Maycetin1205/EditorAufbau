@@ -75,11 +75,13 @@ function seStartTool(nr: string, params: readonly string[]): void {
 
 // ---------- Popup-Schritte ----------
 
-// Schaltet das offen-Attribut des Popups mit dem Klarnamen `name` (die
-// Preflight erzwingt eindeutige Namen). Darstellung/Lebenszyklus bleiben
-// beim Popup-Baustein selbst — hier wird NUR geschaltet. Leerer Name oder
-// kein Treffer: nichts passiert (die Preflight verhindert das im Export;
-// defensiv bleibt es trotzdem still-harmlos).
+// Schaltet das offen-Attribut des Popups mit dem Klarnamen `name`.
+// Eindeutige Namen werden NICHT erzwungen — der Preflight meldet Doppelnamen,
+// blockt den Export aber seit 2026-08-10 nicht mehr. Die Schleife unten
+// schaltet deshalb ALLE gleichnamigen Popups zugleich.
+// Darstellung/Lebenszyklus bleiben beim Popup-Baustein selbst — hier wird NUR
+// geschaltet. Leerer Name oder kein Treffer: nichts passiert. Auch das wird
+// nirgends geprueft; still-harmlos ist hier die letzte Verteidigung.
 // Exportiert fuer den Wächter-Test (Node/jsdom, Muster seRuntime-Helfer).
 export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean): void {
   if (name.trim() === '') return

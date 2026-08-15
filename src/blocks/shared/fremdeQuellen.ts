@@ -112,8 +112,9 @@ export function macheFeldLeser(el: HTMLElement): FeldLeser {
   for (const q of weitere) {
     const source = findRuntimeDataSource(quellenListe, q.quelleId)
     // Quelle nicht in der Maske (geloescht, nie mitexportiert): auslassen.
-    // Die Stellen, die auf sie zeigen, bleiben leer — der Preflight hat das
-    // beim Export im Klartext gemeldet.
+    // Die Stellen, die auf sie zeigen, bleiben leer. Der Preflight kennt den
+    // Fall, blockt den Export aber seit 2026-08-10 nicht mehr — er faellt erst
+    // in SoftEngine auf.
     if (!source) continue
     const zeilen = rowsFor(sedata, source.name, source.tableId)
     const nachSchluessel = new Map<string, unknown>()

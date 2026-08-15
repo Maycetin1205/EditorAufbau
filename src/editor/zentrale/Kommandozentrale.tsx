@@ -48,8 +48,9 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  // Die VORHANDENE Export-Vorprüfung speist die Warn-Punkte in der Navigation
-  // — dieselben Meldungen, die sonst erst beim Export erscheinen. Die
+  // Die VORHANDENE Export-Vorprüfung speist die Warn-Punkte in der Navigation.
+  // Das ist ihr einziger verbliebener Zweck: beim Export erscheinen diese
+  // Meldungen seit 2026-08-10 nicht mehr, der Export blockt nie (Regel 4). Die
   // Aktions-/Relations-Laufzeit-Warnungen wandern mit den Ketten an den
   // Baustein (Schritt-Zeile im Inspector wird amber), nicht mehr hierher.
   const probleme = preflightMask(ed.tree, sources.list, relations.list)

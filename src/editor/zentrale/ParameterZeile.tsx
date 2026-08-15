@@ -203,8 +203,9 @@ function BindingValue({
           {geber.map((g) => (
             <option key={g.blockId} value={g.blockId}>{g.label}</option>
           ))}
-          {/* Geber geloescht: den Zustand benennen statt still leer (Regel 4);
-              der Preflight blockt den Export dazu im Klartext. */}
+          {/* Geber geloescht: den Zustand benennen statt still leer (Regel 4).
+              Hier ist es die EINZIGE Anzeige davon — der Export laeuft auch
+              mit dem toten Verweis durch. */}
           {binding.blockId && !gewaehlter && (
             <option value={binding.blockId}>(gelöschter Baustein)</option>
           )}

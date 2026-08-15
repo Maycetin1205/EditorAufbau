@@ -36,8 +36,9 @@ import type { DataSource } from '../core/data/dataSources'
 // Leerer Rueckgabewert = nicht aufloesbar (Quelle geloescht, Feld nicht mehr
 // im Woerterbuch). Dann bleibt die Stelle in der Maske leer, genau wie vor
 // 2026-08-06 — der getippte Text darf NICHT einspringen, er stuende an einer
-// Datenstelle. Ueber den Export kommt dieser Fall ohnehin kaum hinaus, die
-// Preflight blockt eine Bindung ins Leere mit Klartext.
+// Datenstelle. Dieser Fall kommt ueber den Export hinaus: der Preflight
+// meldet ihn zwar, blockt aber seit 2026-08-10 nicht mehr (Nutzer-Ansage).
+// Die Stelle bleibt dann auch in SoftEngine leer.
 export function feldKlarname(
   bindung: string,
   eigeneQuelleId: string,

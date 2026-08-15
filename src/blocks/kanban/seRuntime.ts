@@ -9,8 +9,8 @@
 // KEIN eingebauter Schreibweg: ein Drop ist nur ein Auslöser — was
 // passiert, bestimmt allein die sichtbare Aktionskette „Karte verschoben".
 // „Einsortieren nach" (statusField) ist OPTIONAL: ohne Feld landen alle
-// Zeilen in der Auffang- bzw. einer Auto-Spalte. (Entscheidungs-Historie:
-// docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md)
+// Zeilen in der Auffang- bzw. einer Auto-Spalte. (Beides Nutzer-Entscheidung
+// vom 2026-07-15.)
 //
 // Läuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle

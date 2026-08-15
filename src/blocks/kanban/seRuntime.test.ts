@@ -1,7 +1,9 @@
 // Unit-Tests für die puren Helfer der SoftEngine-Anbindung:
 // Feldcode-Auflösung (direkt + pos_len aus dem SATZ), Zeilen aus den
 // SEDATA-Formen der Referenzmaske, Spalten-Zuordnung mit Auffang.
-// Die DOM-Hydrierung selbst prüft e2e/kanban-data.spec.ts im echten Browser.
+// Die DOM-Hydrierung selbst ist NICHT abgedeckt: der Browser-Test dazu ist mit
+// Playwright entfallen (Nutzer-Entscheidung 2026-07-23), und neue Testarten
+// sind gesperrt. Sie wird von Hand im Browser und in SoftEngine geprueft.
 // LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
 // Schicht-Umzug 2026-07-15: die allgemeinen Helfer wohnen jetzt in
 // src/softengine/ — nur die Importpfade sind neu, jede Aussage unverändert.

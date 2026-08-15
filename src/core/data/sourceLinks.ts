@@ -85,8 +85,10 @@ export const QUELLEN_DEFAULTS: Record<string, BausteinQuelle[]> = {
 
 // Eine weitere Quelle ist BRAUCHBAR, wenn sie eine Quelle nennt und
 // mindestens ein vollstaendiges Schluesselpaar hat. Halbfertiges darf
-// existieren (der Bediener tippt ja gerade) — es wird nur nicht benutzt, und
-// der Preflight sagt es im Klartext statt still nichts zu tun (Regel 4).
+// existieren (der Bediener tippt ja gerade) — es wird nur nicht benutzt.
+// Angezeigt wird es nirgends: der Preflight kennt den Fall, blockt den Export
+// aber seit 2026-08-10 nicht mehr, und nur seine Meldung 'Datenquelle fehlt'
+// erreicht ueberhaupt noch die Steuerung.
 export function quelleBrauchbar(q: BausteinQuelle): boolean {
   return q.quelleId !== '' && vollstaendigePaare(q).length > 0
 }

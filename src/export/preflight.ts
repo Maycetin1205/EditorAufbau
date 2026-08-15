@@ -1,21 +1,24 @@
 // preflight
 // Semantische Export-Vorpruefung. Anders als validator.ts
 // (prueft nur die Dateiform: Marker/LF/ASCII/Grundgeruest) sieht die Preflight
-// den BAUM + die Vorlagen-Bibliothek und blockiert den Export bei kaputten
-// Referenzen, statt sie still zu ueberspringen. Grund (Nordstern): der Export
-// muss vollstaendig + korrekt sein — eine Maske mit geloeschter Datenquelle
-// laedt in SoftEngine stumm keine Daten (tote Maske), das darf nicht passieren.
+// den BAUM + die Vorlagen-Bibliothek und findet kaputte Referenzen.
 //
-// Rein (kein DOM), damit in Node testbar. Nutzt CheckResult aus validator.ts,
-// damit die Toolbar beide Pruefungen identisch behandelt (failedChecks + alert).
+// SIE BLOCKT DEN EXPORT NICHT (Nutzer-Ansage 2026-08-10). Bis dahin tat sie
+// das und hielt den Bauer wiederholt von Masken ab, die er bewusst so gebaut
+// hatte. Der Export laeuft seitdem immer durch — eine ins Leere zeigende
+// Bindung faellt erst in SoftEngine auf. Einziger Aufrufer im Produkt ist die
+// Kommandozentrale, und die liest davon genau EINE Meldung ('Datenquelle
+// fehlt') fuer den Warn-Punkt an „Datenquellen"; alles andere wird berechnet
+// und verworfen.
+//
+// Rein (kein DOM), damit in Node testbar. Nutzt CheckResult aus validator.ts.
 //
 // JEDE Meldung nennt den Baustein mit seinem KLARNAMEN (bausteinName, seit
 // 2026-08-06): der Bauer hat sein Feld „Kunde" genannt, und genau so muss die
 // Meldung es nennen. Vorher stand dort nur der Bausteintyp — bei fuenf
 // Formularfeldern in einer Maske war schlicht nicht zu erkennen, WELCHES
-// gemeint ist. Der Bediener konnte den Export also nicht entblocken, obwohl
-// die Meldung fachlich stimmte (Regel 3, Regel 4: kein stilles Scheitern —
-// eine unbrauchbare Meldung scheitert genauso).
+// gemeint ist — eine Meldung, die den Bauer nicht zur Stelle fuehrt, ist so
+// gut wie keine (Regel 3).
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { bausteinName } from '../core/blocks/bausteinName'

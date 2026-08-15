@@ -150,8 +150,9 @@ export function setzeAuswahlZurueck(): void {
 // ---------------------------------------------------------------------------
 // Laufzeit-Leser des Export-Attributs (HTML normalisiert Attribute klein).
 // Streng wie weitereAusAttribut in fremdeQuellen: nur Eintraege mit Geber und
-// mindestens einem VOLLSTAENDIGEN Feldpaar zaehlen — Halbfertiges hat der
-// Preflight beim Export bereits im Klartext gemeldet.
+// mindestens einem VOLLSTAENDIGEN Feldpaar zaehlen. Halbfertiges reist mit in
+// die Maske (der Export blockt seit 2026-08-10 nicht) — diese Strenge hier ist
+// also die einzige Stelle, die es noch abfaengt.
 const AUSWAHL_FOLGE_ATTR = AUSWAHL_FOLGE_PROP.toLowerCase()
 
 export function folgenAusAttribut(el: HTMLElement): AuswahlFolge[] {

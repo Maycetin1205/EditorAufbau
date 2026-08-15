@@ -245,9 +245,10 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   const ergebnis = holeEintraege(args)
   if (!ergebnis.ok) {
     // Die Lupe ist eine BEDIENERHANDLUNG: sie darf nie still nichts tun
-    // (Regel 4). Halb eingestellt blockt der Preflight schon beim Export, aber
-    // eine alte Maske kann es tragen — dann sagt die Maske im Klartext, was
-    // fehlt. Zwei Ursachen, zwei Meldungen: die eine heilt der Bauer im
+    // (Regel 4). Halb Eingestelltes meldet der Preflight zwar, blockt den
+    // Export aber seit 2026-08-10 nicht mehr — jede Maske kann es also tragen,
+    // und dann sagt die Maske selbst im Klartext, was fehlt. Das hier ist die
+    // letzte Instanz. Zwei Ursachen, zwei Meldungen: die eine heilt der Bauer im
     // Editor, die andere steckt in den Daten der Maske.
     meldeFehler(ergebnis.grund === 'unvollstaendig'
       ? 'Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).'

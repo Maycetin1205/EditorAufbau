@@ -104,9 +104,9 @@ export function traegtEigeneQuelle(node: BlockNode | undefined): boolean {
 
 // Die Stellen, die an DIESEM Baustein GERADE bindbar sind (BindableSpot.wenn).
 // Editor (Klick-Ziel, Bindungs-Picker, Klarname-Vorschau), Export (Attribut)
-// und Preflight (Blocker) fragen dieselbe Stelle — sonst liesse der Editor eine
-// Bindung anklicken, die der Export weglaesst, oder der Preflight blockte eine,
-// die nirgends zu sehen ist.
+// und Preflight fragen dieselbe Stelle — sonst liesse der Editor eine Bindung
+// anklicken, die der Export weglaesst, oder der Preflight meldete eine, die
+// nirgends zu sehen ist.
 export function bindbareStellenVon(node: BlockNode | undefined): readonly BindableSpot[] {
   if (!node) return []
   const stellen = getBlockDefinition(node.type)?.bindableSpots ?? []
@@ -165,10 +165,10 @@ export function istAuswahlGeber(node: BlockNode | undefined): boolean {
 // stehen dort, wo auch der Satz herkaeme (auswahlQuelleIdVon): beim
 // Nachschlage-Feld in der NACHSCHLAGE-Quelle, sonst in der eigenen.
 //
-// Inspector (Sektion), Export (Attribut) und Preflight (Blocker) fragen alle
+// Inspector (Sektion), Export (Attribut) und Preflight fragen alle
 // DIESE Stelle: was der Inspector nicht anbietet, darf der Export nicht
-// mitnehmen und der Preflight nicht verlangen — sonst blockte er wegen einer
-// Einstellung, die der Bauer nirgends sieht. Eine daheim gebliebene Folge in
+// mitnehmen und der Preflight nicht verlangen — sonst meldete er eine
+// Einstellung als kaputt, die der Bauer nirgends sieht. Eine daheim gebliebene Folge in
 // den Props bleibt liegen (unsichtbar ist nicht geloescht): haengt der Bauer
 // die Quelle wieder an, gilt sie wieder.
 //
@@ -186,7 +186,8 @@ export function darfAuswahlFolgen(node: BlockNode | undefined): boolean {
 // Alle Auswahl-GEBER der Maske in Baum-Reihenfolge. DIESELBE Wahrheit fuer
 // Inspector, Steuerung (Parameterquelle „Feld der gewaehlten Zeile"), Export
 // (data-ff-id) und Preflight: bietet der Editor einen Geber an, den der
-// Preflight nicht kennt, blockt der Export etwas gerade Eingestelltes.
+// Preflight nicht kennt, meldet der Preflight etwas gerade Eingestelltes
+// als Fehler.
 export function auswahlGeberImBaum(tree: BlockTree): BlockNode[] {
   const result: BlockNode[] = []
   const visit = (node: BlockNode | undefined): void => {

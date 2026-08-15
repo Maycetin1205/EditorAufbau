@@ -185,7 +185,10 @@ export interface RelationStep extends ActionStepBase {
 // Im EDITOR: stabile Knoten-id der Popup-Seite (übersteht Umbenennen).
 // Der Export übersetzt sie in den Klarnamen (Editor-ids reisen nie mit,
 // s. serializeBlockEvents); die Laufzeit adressiert das ff-popup über
-// sein name-Attribut — die Preflight erzwingt dafür eindeutige Namen.
+// sein name-Attribut. Eindeutige Namen werden NICHT erzwungen: der Preflight
+// meldet Doppelnamen, blockt den Export aber seit 2026-08-10 nicht mehr —
+// zwei gleichnamige Popups schaltet die Kette dann beide zugleich
+// (s. applyPopupStep in blocks/shared/seAktionen).
 // Öffnen/Schließen sind ZWEI Typen (je eine Diskriminante), damit
 // TypeScript sie in den Schritt-Weichen sauber ausschließen kann.
 export interface PopupOpenStep extends ActionStepBase {
@@ -383,8 +386,9 @@ function withoutEditorId(
   step: ActionStep,
   popupName: (id: string) => string,
   // step_result-Bindungen: Schritt-id (Editor) → Ketten-Position (Maske).
-  // Editor-ids reisen nie mit; unbekannte id → '-1' (die Preflight blockt
-  // das vorher, die Laufzeit löst -1 defensiv zu '' auf).
+  // Editor-ids reisen nie mit; unbekannte id → '-1'. Der Preflight meldet das
+  // zwar, blockt den Export aber seit 2026-08-10 nicht mehr — dass die Laufzeit
+  // -1 defensiv zu '' aufloest, ist die einzige verbliebene Verteidigung.
   stepPosition: (id: string) => string,
 ): RuntimeStep {
   const binding = (b: ActionParamBinding): ActionParamBinding =>
@@ -399,7 +403,8 @@ function withoutEditorId(
   }
   if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
     // Editor-ids reisen nie mit: der Schritt trägt in der Maske den
-    // KLARNAMEN des Popups (die Preflight erzwingt eindeutige Namen).
+    // KLARNAMEN des Popups (Doppelnamen werden nicht erzwungen ausgeschlossen,
+    // s. PopupOpenStep oben).
     return {
       type: step.type,
       resultKey: step.resultKey,

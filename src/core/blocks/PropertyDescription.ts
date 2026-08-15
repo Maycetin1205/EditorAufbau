@@ -44,8 +44,8 @@ export interface PropertyVisibilityCondition {
 // DIE eine Auswertung der Bedingung. Inspector, Export und Preflight muessen
 // dieselbe Antwort bekommen: eine Prop, die der Inspector versteckt, darf der
 // Export nicht mitnehmen (sonst laedt die Maske eine Tabelle, die kein
-// Baustein liest) und der Preflight nicht verlangen (sonst blockte er wegen
-// eines Feldes, das der Bauer nirgends sehen kann). Ohne Bedingung: immer.
+// Baustein liest) und der Preflight nicht verlangen (sonst meldete er ein
+// Feld als fehlend, das der Bauer nirgends sehen kann). Ohne Bedingung: immer.
 //
 // Seit den Raster-Varianten (2026-08-06) fragt auch rasterLayout hier: die
 // senkrechte Trennlinie ist schmal und hoch statt breit und flach. Jede
