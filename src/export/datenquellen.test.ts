@@ -438,6 +438,11 @@ describe('exportMask: Datenquellen', () => {
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
       { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0001', FELDER: '*' },
     ])
-    expect(html).not.toContain('ladeRelation')
+    // Auf die JSON-SCHREIBWEISE pruefen, nicht auf das blosse Wort: das
+    // Laufzeit-Buendel steckt mit in der Maske und traegt den Bezeichner
+    // `ladeRelation` selbst (unquotiert, s. relationLader). Gemeint ist hier
+    // allein der Eintrag in FF_DATA_SOURCES — genau die Form, die der
+    // Positiv-Fall oben erwartet.
+    expect(html).not.toContain('"ladeRelation":')
   })
 })

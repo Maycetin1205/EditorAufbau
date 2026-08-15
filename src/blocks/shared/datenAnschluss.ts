@@ -17,7 +17,7 @@ import { bootSe, hasSeData, onSeDaten, seGlobal } from '../../softengine/bridge'
 import { aufAuswahlHoeren, auswahlFuer } from './auswahl'
 import { aufTagHoeren } from './gewaehlterTag'
 import { starteRelationLader } from '../../softengine/relationLader'
-import { findRuntimeDataSource, type RuntimeDataSource } from '../../softengine/data'
+import { findRuntimeDataSource } from '../../softengine/data'
 
 export interface DatenAnschluss<T extends HTMLElement> {
   // Vom Baustein in connectedCallback rufen.
@@ -65,11 +65,17 @@ export function macheDatenAnschluss<T extends HTMLElement>(opts: {
         const g = seGlobal()
         if (g && Array.isArray(g.FF_DATA_SOURCES)) {
           for (const raw of g.FF_DATA_SOURCES) {
-            const ds = findRuntimeDataSource([raw], (raw as any)?.id)
+            // Enge Form-Angabe statt `any`: geprueft wird der Eintrag ohnehin
+            // erst in findRuntimeDataSource (isRecord + name/tableId muessen
+            // Strings sein) — eine unbekannte oder fehlende id findet dort
+            // einfach nichts.
+            const ds = findRuntimeDataSource([raw], (raw as { id: string })?.id)
             if (ds && ds.ladeRelation) {
               starteRelationLader(ds.id, ds.ladeRelation, {
                 gewaehlteZeile: auswahlFuer,
-                speiseZeilen: (quelleId, zeilen) => {
+                // Der Lader reicht die Quellen-id mit; hier zaehlt der NAME,
+                // weil SEDATA.Tabellen nach Namen abgelegt ist.
+                speiseZeilen: (_quelleId, zeilen) => {
                   if (!g.SEDATA) g.SEDATA = {}
                   if (!g.SEDATA.Tabellen) g.SEDATA.Tabellen = {}
                   // Wir legen sie genau wie geschobene IDB-Tabellen ab
