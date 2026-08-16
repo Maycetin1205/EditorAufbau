@@ -41,6 +41,7 @@ import type { RelationTemplate } from '../core/data/relations'
 import { WEITERE_QUELLEN_PROP } from '../core/data/sourceLinks'
 import { dataSourceStore } from '../state/DataSourceStore'
 import { relationStore } from '../state/RelationStore'
+import { seitenDerMaske } from '../state/pageOps'
 import {
   resolveChildDirection,
   ROOT_FLOW,
@@ -167,6 +168,19 @@ function nodeToHtml(
   const nurImEditor = new Set(
     def.customProperties.filter((p) => p.nurImEditor).map((p) => p.attributeName),
   )
+  // Klarname-Prop -> id-Prop, fuer alles, was auf eine SEITE zeigt (Registry:
+  // kind 'seite' + klarnameProp). Die ID ist die Wahrheit, der Name entsteht
+  // HIER — dasselbe Muster wie beim Popup-Schritt (popupName).
+  // Bis 2026-08-15 reiste stattdessen eine ABSCHRIFT mit: sie entstand einmal
+  // beim Auswaehlen der Seite im Inspector und wurde nie nachgezogen. Wer
+  // seine Ansicht danach umbenannte, hatte in der fertigen Maske einen
+  // Navi-Eintrag, der einen Namen suchte, den es nicht mehr gab — der Klick
+  // landete stumm auf der Hauptseite (navi/seRuntime: unbekannter Name =
+  // keine Ansicht = Hauptseite).
+  const seitenKlarname = new Map<string, string>()
+  for (const p of def.customProperties) {
+    if (p.kind === 'seite' && p.klarnameProp) seitenKlarname.set(p.klarnameProp, p.attributeName)
+  }
 
   // Attribute in fester Reihenfolge (Registry-Defaults) → deterministisch.
   // Layout-Props (width/height im Fluss, rasterX/Y/W/H auf dem Raster) werden
@@ -202,9 +216,14 @@ function nodeToHtml(
       // aktuellen Darstellung eines Eintrags nicht gehoeren, liest in der Maske
       // niemand (listeFuerExport — Nutzer-Meldung 2026-08-06 an einer Spalte,
       // die auf „Text" stand und noch ihre Bild-Bindungen mittrug).
-      const wert = key === def.listenBindung?.prop
-        ? listeFuerExport(node.props[key] ?? standard, def.listenBindung)
-        : (node.props[key] ?? standard)
+      // Zeigt diese Prop auf eine Seite, entsteht ihr Wert aus der id (s.
+      // seitenKlarname oben) — nicht aus der gespeicherten Abschrift.
+      const seitenIdProp = seitenKlarname.get(key)
+      const wert = seitenIdProp !== undefined
+        ? popupName(String(node.props[seitenIdProp] ?? ''))
+        : key === def.listenBindung?.prop
+          ? listeFuerExport(node.props[key] ?? standard, def.listenBindung)
+          : (node.props[key] ?? standard)
       const roh = vorschauStellen.has(key)
         ? vorschauRoh(node, vorschauStellen.get(key)!, sources, standard)
         : attributWert(wert)
@@ -313,14 +332,14 @@ export function exportMask(
   // der Preflight meldet Doppelnamen zwar, blockt den Export aber seit
   // 2026-08-10 nicht mehr. Zwei gleich benannte Seiten sind in der Maske
   // dann nicht mehr auseinanderzuhalten.
-  const popupNameById = new Map<string, string>()
-  for (const id of root?.childIds ?? []) {
-    const n = tree[id]
-    if (n && getBlockDefinition(n.type)?.pageBlock) {
-      popupNameById.set(n.id, typeof n.props.name === 'string' ? n.props.name : '')
-    }
-  }
-  const popupName = (id: string): string => popupNameById.get(id) ?? ''
+  // Gebaut aus der EINEN Seitenliste (pageOps/seitenDerMaske), damit
+  // Popup-Schritte und Navi-Eintraege dieselbe Antwort bekommen. Wichtig
+  // daran: die HAUPTSEITE zaehlt mit. Ein Navi-Eintrag darf auf sie zeigen
+  // (ein Popup-Schritt nie — sie ist kein Fenster), und ohne sie verloere so
+  // ein Eintrag im Export seine Beschriftung. Namenlose Seiten bekommen den
+  // Registry-Ersatznamen statt einer Leere.
+  const seitenNameById = new Map(seitenDerMaske(tree).map((s) => [s.id, s.name]))
+  const popupName = (id: string): string => seitenNameById.get(id) ?? ''
 
   const blocks = (root?.childIds ?? [])
     .map((id) => tree[id])

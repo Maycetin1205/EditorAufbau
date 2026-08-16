@@ -83,6 +83,28 @@ export function seitenDerMaske(tree: BlockTree): SeitenEintrag[] {
   return [{ id: ROOT_ID, name: 'Hauptseite', istHauptseite: true, istFlaeche: true }, ...seiten]
 }
 
+// Zeigt woanders im Baum ein KLARNAME auf diese Seite, zieht er beim
+// Umbenennen mit. Ein Navi-Eintrag haelt die Seiten-id (die Wahrheit) und
+// daneben ihren Klarnamen (die Beschriftung); ohne dieses Nachziehen
+// beschriftete er sich nach einem Umbenennen weiter mit dem alten Namen.
+// Registry-getrieben ueber kind 'seite' + klarnameProp, kein `if type===`.
+// Der EXPORT verlaesst sich NICHT darauf — er loest den Namen ohnehin aus der
+// id auf (exportMask, seitenKlarname). Hier geht es allein um das, was der
+// Bauer im Editor liest.
+export function klarnamenNachziehen(tree: BlockTree, seitenId: string, name: string): BlockTree {
+  let next = tree
+  for (const knotenId of Object.keys(tree)) {
+    for (const p of getBlockDefinition(next[knotenId].type)?.customProperties ?? []) {
+      if (p.kind !== 'seite' || !p.klarnameProp) continue
+      const aktuell = next[knotenId]
+      if (aktuell.props[p.attributeName] !== seitenId) continue
+      if (next === tree) next = { ...tree }
+      next[knotenId] = { ...aktuell, props: { ...aktuell.props, [p.klarnameProp]: name } }
+    }
+  }
+  return next
+}
+
 // Kinder im FLUSS eines Containers: Seiten-Bausteine (Popups) erscheinen
 // nie im Fluss ihres Elternteils — sie sind eigene Seiten (Reiter).
 export function kinderImFluss(tree: BlockTree, parentId: string): BlockNode[] {

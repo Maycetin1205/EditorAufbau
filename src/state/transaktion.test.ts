@@ -14,6 +14,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 // Side-Effect-Import: die echte Popup-Seite — ohne einen Baustein mit
 // pageBlock-Kennzeichen legt addSeite gar keine Seite an.
 import { PopupBlock } from '../blocks/popup/PopupBlock'
+// Ansicht + Navi: der Fall „Seite umbenennen zieht den Klarnamen mit" braucht
+// eine echte Flaechen-Seite und einen echten Eintrag mit kind 'seite'.
+import { AnsichtBlock } from '../blocks/ansicht/AnsichtBlock'
+import { NaviBlock } from '../blocks/navi/NaviBlock'
+import { NaviEintragBlock } from '../blocks/navi/NaviEintragBlock'
 import { ROOT_ID } from '../core/blocks/BlockData'
 import { Editor } from './Editor'
 import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
@@ -114,6 +119,31 @@ describe('Gesten-Token: oeffnet einmal, schliesst einmal (A7.2)', () => {
     expect(ed.canUndo).toBe(true)
     ed.undo()
     expect(ed.getNode(id)?.props.text).toBe(STANDARD)
+  })
+
+  // Ein Navi-Eintrag haelt die Seiten-id (die Wahrheit) und daneben ihren
+  // Klarnamen (die Beschriftung). Die Abschrift entstand bis 2026-08-15 EINMAL
+  // beim Auswaehlen und wurde nie nachgezogen: nach einem Umbenennen
+  // beschriftete sich der Eintrag weiter mit dem alten Namen. Sie zieht jetzt
+  // mit — und zwar im SELBEN Verlaufs-Schritt, sonst braeuchte Strg+Z zwei
+  // Zuege fuer eine Handlung.
+  it('Seite umbenennen zieht den Navi-Klarnamen mit — in EINEM Undo-Schritt', () => {
+    const ed = new Editor()
+    const seite = ed.addSeite(AnsichtBlock.blockType)!
+    const navi = ed.addBlock(NaviBlock.blockType, ROOT_ID)!
+    const eintrag = ed.addBlock(NaviEintragBlock.blockType, navi.id)!
+    ed.transaktion(() => {
+      ed.updateProperty(eintrag.id, 'seite', seite.id)
+      ed.updateProperty(eintrag.id, 'seitename', String(ed.getNode(seite.id)?.props.name))
+    })
+    const vorher = ed.getNode(eintrag.id)?.props.seitename
+
+    ed.updateProperty(seite.id, 'name', 'Terminkalender')
+    expect(ed.getNode(eintrag.id)?.props.seitename).toBe('Terminkalender')
+
+    ed.undo()
+    expect(ed.getNode(seite.id)?.props.name).not.toBe('Terminkalender')
+    expect(ed.getNode(eintrag.id)?.props.seitename).toBe(vorher)
   })
 
   it('eine nie geoeffnete Klammer schliesst keine fremde', () => {

@@ -48,6 +48,7 @@ import {
   aktiveSeitenWurzel,
   freierSeitenName,
   kinderImFluss,
+  klarnamenNachziehen,
   seitenDerMaske,
   type SeitenEintrag,
 } from './pageOps'
@@ -373,7 +374,13 @@ export class Editor extends Subject<Editor> {
     // Bausteins, springt er auf sie — im SELBEN History-Eintrag, damit Ctrl+Z
     // Einstellung und Groesse zusammen zurueckstellt (startgroesseNachziehen).
     next[id] = startgroesseNachziehen(def, node.props, next[id])
-    this._tree = next
+    // Beim Umbenennen einer SEITE ziehen die Klarnamen mit, die auf sie zeigen
+    // (Navi-Eintrag) — im SELBEN History-Eintrag, Ctrl+Z stellt beides
+    // zusammen zurueck. Warum es das braucht und warum der Export sich NICHT
+    // darauf verlaesst: pageOps/klarnamenNachziehen.
+    this._tree = attr === 'name' && def?.pageBlock && typeof value === 'string'
+      ? klarnamenNachziehen(next, id, value)
+      : next
     this.notify(this)
   }
 
