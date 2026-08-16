@@ -30,6 +30,17 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **Welle C ist abgeschlossen (Stand 2026-08-16).** GEBAUT: C1 (`9f42965`) ·
+  C2 (`8338708`, mit „Zeile entfaellt") · C3.1 Namensvertrag (`a16437b`,
+  doppelter Name wird hochgezaehlt statt abgelehnt) · C3.2 (`7b70f13`) ·
+  C3.3 abgespeckt, nur Fokus beim Oeffnen (`f15466a`) · C3.4 ohne die
+  Rueckfrage — Loeschknopf und Leerhinweis stehen (`a3f850d`). GESTRICHEN mit
+  Begruendung im jeweiligen Etappentext: die Loesch-Rueckfrage, die
+  Pixel-Umrechnungsformel + Goldfaelle, die 520-px-Zwangsbreite + die
+  Mindest-Spurbreite, und alles an C3.3 ausser dem Fokus. ZURUECKGESTELLT
+  (nicht gestrichen, Regel 10): Popup-Duplizieren (C3.1) und C4
+  („Verschieben nach …") — beide heute ueber die Oberflaeche unerreichbar.
+  Die Gesamtprobe des Nutzers steht aus.
 - **Neu 2026-08-12 abends: U8 + U9 eingereiht (Nutzer-Befunde mit
   Screenshots):** drei Klicks bis zur Kanban-Karte und die Karte sieht
   ausgewaehlt anders aus als unausgewaehlt (U8) · Loeschknoepfe doppelt und
@@ -1608,6 +1619,10 @@ Entscheidung (deren Umbau ohnehin nur nach eigenem Go kaeme).
 
 ## C1 · Popup verwendet `DialogRahmen`, Inhalt bleibt Flow
 
+**GEBAUT 2026-08-11** (Commit `9f42965`). Der Text bleibt als Vertrag stehen;
+gebaut ist er. Nicht gebaut und mit C3.3 dauerhaft gestrichen: `aria-modal`
+und `aria-labelledby` (Punkte 8 und 9 unten) — Begruendung im Kopf von C3.3.
+
 ### Warum getrennt
 
 Rahmenvereinheitlichung ist eine strukturell-visuelle Aenderung. Raster ist
@@ -1709,29 +1724,29 @@ der vollstaendige Schalter ist ein fachlich atomarer Commit.
 2. Sichtbare heutige Reihenfolge kommt aus `childIds`.
 3. Alte unsichtbare `rasterX/Y/W/H` nicht blind erhalten, da der Nutzer sie
    im Flow nie kontrollieren konnte und Umsortieren nur `childIds` aenderte.
-4. Popup-Istbreite und Mindestbreite unter 520 px werden bewusst auf 520 px
-   migriert. Der Rahmen bleibt auf kleinen Hosts im Viewport; die Surface
-   scrollt horizontal.
-5. Exakte reine Umrechnung mit `columns = 24`, `row = 12`, `gap = 8`,
-   `padding = 12`, heutigem Rahmen `border = 1.5` und
-   `gridContentWidth = 520 - 2 * border - 2 * padding = 493`:
-   - Start `x = 0`, `y = 0`;
-   - Pixelhoehe `px -> h = ceil((px + gap) / (row + gap))`, mindestens 1;
-   - Pixelbreite verwendet
-     `colWidth = (innerWidth - 23 * gap) / 24` und
-     `w = ceil((px + gap) / (colWidth + gap))`, geklemmt auf 1..24;
-   - `fill`-Breite wird 24;
-   - nur numerische alte Pixel-`width/height` laufen durch die Pixel-Formel;
-   - `auto` beziehungsweise zustandsabhaengige Varianten verwenden
-     `rasterSpecOf(...).startW/startH` **direkt als bereits vorhandene
-     Zellzahlen**, geklemmt an die gueltigen Grenzen;
-   - `fill`-Hoehe verwendet direkt `startH`, da eine unendliche Resthoehe in
-     einer frei wachsenden Surface undefiniert waere;
-   - unbekannter Fall ist ein sichtbarer Migrationsfehler, kein geratener
-     Fallback;
-   - `y_next = y + h`, niemals bloss `y + 1`.
-6. Bestehende Schema-1/2/3/4-Staende muessen beim direkten Upgrade auf 6
-   dasselbe Ergebnis liefern wie stufenweise gespeicherte Upgrades ueber 5.
+4. **GESTRICHEN (Nutzer-Entscheidung 2026-08-16).** Hier stand: Popup-Istbreite
+   und Mindestbreite unter 520 px werden auf 520 px migriert. **Popups behalten
+   ihre Breite** — ein Popup mit 480 bleibt 480. Grund: die Spalten sind `1fr`
+   und wachsen ohnehin mit, eine Zwangsbreite haette nur bestehende Fenster
+   verstellt. Nicht wieder vorschlagen. (Mit demselben Beschluss faellt die
+   Mindest-Spurbreite in „Editor und DnD" Punkt 7.)
+5. **GESTRICHEN (Nutzer-Entscheidung 2026-08-16).** Hier stand eine exakte
+   Pixel-Umrechnungs-Formel (`columns = 24`, `row = 12`, `gap = 8`,
+   `padding = 12`, `border = 1.5`, `gridContentWidth = 493`, `colWidth`,
+   `ceil`-Regeln, Sonderfaelle fuer `auto`/`fill`/benannte Masse). **Grund: die
+   Umrechnungs-Maschine gibt es laengst** — sie laeuft seit Schema 3
+   (`state/migrations.ts`, `migrationsBreite`/`migrationsHoehe`) und ist ueber
+   Popups bereits gelaufen, weil `rasterFlaechenIds` jeden pageBlock nimmt.
+   Eine zweite Formel danebenzustellen haette nur eine zweite Wahrheit erzeugt.
+   **Noetig ist genau zweierlei:**
+   - direkte Popup-Kinder in `childIds`-Reihenfolge untereinander stapeln;
+   - ihre Groesse kommt aus den Registry-Startgroessen.
+   **Kosten dieser Vereinfachung, bewusst in Kauf genommen:** einmal am
+   Anfasser ziehen. Nicht wieder vorschlagen.
+6. **GESTRICHEN (Nutzer-Entscheidung 2026-08-16)** — Anhaengsel von Punkt 5.
+   Hier stand: Schema-1/2/3/4-Staende muessen beim direkten Upgrade auf 6
+   dasselbe Ergebnis liefern wie stufenweise Upgrades ueber 5. Ohne eigene
+   Formel gibt es nichts zu vergleichen: es migriert dieselbe eine Maschine.
 7. Validierungsreihenfolge:
    - bei Schema < 6 werden die nie sichtbaren Rasterprops direkter
      Popup-Kinder vor der Validierung ausdruecklich als ersetzbar behandelt;
@@ -1744,13 +1759,24 @@ der vollstaendige Schalter ist ein fachlich atomarer Commit.
    ganzzahlig und endlich, `x/y >= 0`, `w/h >= 1`, `x + w <= 24`.
    Ungueltige Werte gehen in Quarantaene statt ausserhalb der Flaeche zu
    exportieren.
-9. Hauptseiten-Koordinaten und Props bleiben bytegleich. Nur direkte
-   **Nicht-Seiten-Kinder** der Root-Surface werden nach `y,x` stabil
-   normalisiert. `pageBlock`-IDs bleiben in ihren bisherigen Root-Slots und
-   in ihrer relativen Reihenfolge; Popup-Reiter/Exportreihenfolge aendern sich
-   dadurch nicht.
-10. Kinder innerhalb von Zeile, Gruppe oder anderen Flow-Containern bleiben
-   unberuehrt.
+9. Nur direkte **Nicht-Seiten-Kinder** der Root-Surface werden nach `y,x`
+   stabil normalisiert. `pageBlock`-IDs bleiben in ihren bisherigen Root-Slots
+   und in ihrer relativen Reihenfolge; Popup-Reiter/Exportreihenfolge aendern
+   sich dadurch nicht.
+   **„Bytegleich" gilt fuer die Hauptflaeche NICHT mehr** (aufgeloest
+   2026-08-16). Hier stand: „Hauptseiten-Koordinaten und Props bleiben
+   bytegleich." Das widersprach dem Zusatzauftrag oben („Zeile entfaellt"),
+   denn eine Zeile lag auch auf der HAUPTFLAECHE — in der Referenzmaske
+   (`src/test/referenzMaske.ts`) ueber die volle Breite, mit zwei Bausteinen
+   darin. Beides zugleich ging nicht. **Aufgeloest zugunsten der
+   Nutzer-Entscheidung: Zeile wird ueberall aufgeloest, auch auf der
+   Hauptflaeche**; ihre Kinder erben das Zellband der Zeile (nebeneinander, in
+   deren Hoehe), darunter verschiebt sich nichts. Der Referenzabzug ist damit
+   absichtlich neu — so gebaut in `8338708`, dort steht die Begruendung auch im
+   Code-Kommentar.
+10. Kinder innerhalb von Gruppe oder anderen Flow-Containern bleiben
+   unberuehrt. (Zeile ist hier ersatzlos gestrichen, s. Punkt 9 und den
+   Zusatzauftrag im Kopf von C2 — nicht wieder einbauen.)
 11. Schema-6-Staende sind beim erneuten Laden idempotent.
 
 ### Editor und DnD
@@ -1765,16 +1791,16 @@ der vollstaendige Schalter ist ein fachlich atomarer Commit.
    dieselbe Flaechenmechanik wie die Hauptseite.
 6. Es wird nicht faelschlich behauptet, Raster->Flow-Reparenting sei heute
    vorhanden. Der generische neue Bedienweg wird separat in C4 gebaut.
-7. Geometrie/CSS ist eindeutig:
-   - 520 px ist die nominelle aeussere Popup-Border-Box;
-   - bei 1.5-px-Rahmen und 12-px-Padding bleiben 493 px nominale
-     Grid-Contentbreite;
-   - `.rumpf` bleibt `width:100%`, Grid und einziger Scroll-Owner;
-   - gemeinsame Grid-CSS erhaelt einen Surface-Parameter fuer
-     Mindest-Trackbreite: Root `0`, Popup
-     `(493 - 23 * 8) / 24 = 12.875px`;
-   - `repeat(24, minmax(var(--raster-min-track), 1fr))` erzeugt bei kleinerem
-     Host echten `scrollWidth`, ohne die Root-CSS zu veraendern.
+7. Geometrie/CSS: `.rumpf` bleibt `width:100%`, Grid und einziger
+   Scroll-Owner.
+   **GESTRICHEN (Nutzer-Entscheidung 2026-08-16):** die feste Rechnung
+   520 px Border-Box / 493 px Contentbreite und der Surface-Parameter
+   **Mindest-Spurbreite `12.875px`** samt
+   `repeat(24, minmax(var(--raster-min-track), 1fr))`. Grund: dieselbe
+   Entscheidung wie Migration Punkt 4 — Popups behalten ihre Breite, die
+   Spalten sind `1fr` und wachsen mit; eine Mindest-Spur haette einen
+   waagerechten Scrollbalken erzwungen, den niemand verlangt hat. Nicht
+   wieder vorschlagen.
 
 ### Logische Reihenfolge
 
@@ -1813,10 +1839,13 @@ der vollstaendige Schalter ist ein fachlich atomarer Commit.
 
 ### Bestehende Tests
 
-- direkte Upgrades Schema 1/2/3/4/5 nach 6 sowie stufenweiser Vergleich;
 - Schema-5-Popup mit umsortierten und mehrzeiligen Kindern;
-- Golden-Faelle fuer Pixel-, `auto`-, `fill`- und benannte Breite/Hoehe;
 - Schema-6-Reload idempotent;
+- **GESTRICHEN (Nutzer-Entscheidung 2026-08-16):** „direkte Upgrades Schema
+  1/2/3/4/5 nach 6 sowie stufenweiser Vergleich" und „Golden-Faelle fuer
+  Pixel-, `auto`-, `fill`- und benannte Breite/Hoehe". Beide pruefen die in
+  Migration Punkt 5/6 gestrichene eigene Pixel-Formel; ohne sie migriert die
+  eine vorhandene Maschine, die diese Faelle seit Schema 3 abdeckt;
 - Root-Koordinaten/Props unberuehrt, Root-Lesereihenfolge bewusst
   nur fuer Nicht-Seiten-Kinder normalisiert; zwei Popups behalten Slots und
   Reiterreihenfolge;
@@ -1837,6 +1866,13 @@ Commits nach C2 umgesetzt werden.
 
 ### C3.1 Namen, Aktionen und Popup-Duplizieren
 
+**Der Namensvertrag ist GEBAUT (2026-08-16, Commit `a16437b`)** — eine zentrale
+Schreibfunktion (`state/pageOps.ts`, `schreibWert`): Seitennamen sind getrimmt,
+nie leer, nie doppelt. **Eine Abweichung vom Wortlaut unten, bewusst:** ein
+doppelter Name wird **hochgezaehlt** („Popup 2"), nicht abgelehnt — ein
+abgelehnter Tastendruck sieht aus wie eine kaputte Tastatur, und eine Warnung
+gibt es hier nicht (Warn-Anzeigen sind gestrichen, s. CLAUDE.md).
+
 - Eine zentrale Schreibfunktion trimmt Popup-Namen. Leer/Whitespace wird
   abgelehnt; Eindeutigkeit gilt nach `trim().toLocaleLowerCase('de-DE')`;
 - UI verhindert den ungueltigen Schreibvorgang, Preflight prueft denselben
@@ -1847,11 +1883,14 @@ Commits nach C2 umgesetzt werden.
 - Umbenennen aktualisiert weiterhin ueber stabile Popup-ID den Exportnamen;
 - Altbestand mit leerem/doppeltem Namen geht nicht still durch, sondern wird
   mit konkreter Seite gemeldet;
-- nach A5 wird `pageBlock`-Duplizieren hier wieder aktiviert: interne
-  Referenzen werden umgeschrieben, Name wird eindeutig und Kopie wird aktive
-  Seite. Alle Kinderpositionen bleiben exakt erhalten, weil Original und
-  Kopie getrennte Surfaces sind. „Freie Position" gilt nur fuer einen normalen
-  Block, der auf derselben Surface dupliziert wird.
+- **ZURUECKGESTELLT, nicht gestrichen (Nutzer-Entscheidung 2026-08-16):**
+  `pageBlock`-Duplizieren wieder freischalten (Referenzen umschreiben, Name
+  eindeutig, Kopie wird aktive Seite). **Grund: der Fall ist ueber die
+  Oberflaeche heute gar nicht erreichbar** — `state/duplizieren.ts:188` sperrt
+  Seiten bewusst, und ein Seiten-Baustein erscheint nie im Fluss, ist also
+  nicht anklickbar; Strg+D trifft ihn nie. Regel 10: gebaut wird es, wenn es
+  einmal wirklich vermisst wird. Der Riegel bleibt bis dahin, damit der Fall
+  auch nicht heimlich erreichbar wird.
 
 ### C3.2 Genau ein aktives Popup
 
@@ -1868,30 +1907,33 @@ Commits nach C2 umgesetzt werden.
 - Testfaelle: fehlend, doppelt in fremd/manipuliertem HTML, bereits aktiv,
   `OPEN A -> OPEN B` in einer Kette und A oeffnet B.
 
-### C3.3 Fokus und ehrliche Modalitaet
+### C3.3 Fokus beim Oeffnen
 
-- Oeffnen verschiebt Fokus zu einer sinnvollen ersten Stelle im Dialog;
-- Dialogtitel ist ueber `aria-labelledby` der zugaengliche Name;
-- Vorwaerts- und Rueckwaerts-Tab bleiben im Popup;
-- beim ersten Oeffnen aus der Hauptmaske wird ein **Basis-Oeffner ausserhalb
-  aller Popups** gespeichert;
-- beim Wechsel A -> B bleibt dieser Basis-Oeffner erhalten. Schliessen von B
-  fokussiert nicht ein inzwischen verborgenes Element aus A, sondern den
-  sichtbaren Basis-Oeffner;
-- existiert dieser nicht mehr, geht Fokus auf einen klaren Hauptmasken-
-  Fallback statt auf `body` ohne Orientierung;
-- Editor-Vorschau und Runtime werden getrennt behandelt;
-- erst mit funktionierender Fokusgrenze setzt der Popupmodus
-  `aria-modal=true`;
-- falls alte SoftEngine-Laufzeiten die Fokusgrenze verhindern, bleibt
-  `aria-modal` aus und die konkrete Grenze wird benannt.
+**Auf einen Punkt eingedampft (Nutzer-Entscheidung 2026-08-16); so GEBAUT
+am selben Tag, Commit `f15466a`:**
+
+- Oeffnen verschiebt den Fokus in die erste bedienbare Stelle des INHALTS,
+  sonst aufs Schliessen-Kreuz. Im Editor nie (`data-ff-editor`).
+
+**GESTRICHEN — Vorrat, kein gemeldeter Fall. Nicht wieder vorschlagen:**
+`aria-labelledby` als zugaenglicher Name · Vorwaerts-/Rueckwaerts-Tab bleiben
+im Popup (Fokusfalle) · der **Basis-Oeffner** ausserhalb aller Popups samt
+seiner Buchhaltung ueber den Wechsel A -> B und dem Hauptmasken-Fallback ·
+`aria-modal=true`. Grund: das sind Zusagen fuer Bedienfaelle, die niemand
+gemeldet hat, jede mit eigener Buchhaltung zur Laufzeit. Folge fuer C1: dessen
+Arbeit-Punkt 9 („kein `aria-modal`, solange die Fokusgrenze fehlt") gilt damit
+dauerhaft, nicht nur uebergangsweise.
 
 ### C3.4 Loeschen und Leerseiten
 
 - **Seitenreiter-/Auswahlrahmen-Loeschknopf**, Inspector und Delete-Taste
   benutzen denselben Loeschvertrag. Das Dialogkopf-X aus C1 schliesst/verlaesst
   nur und loescht niemals;
-- Popup mit Inhalt verlangt ueber jeden Weg dieselbe Bestaetigung;
+- **GESTRICHEN (Nutzer-Entscheidung 2026-08-16):** „Popup mit Inhalt verlangt
+  ueber jeden Weg dieselbe Bestaetigung." Grund: das widerspricht der
+  Nutzer-Ansage aus U2 — **Loeschen fragt nie nach** (`state/loescheBaustein.ts`,
+  der Parameter `frageNach` ist dort ersatzlos weg; Netz ist Strg+Z). Ein
+  Popup ist davon nicht ausgenommen. Nicht wieder vorschlagen;
 - bei eingehenden Popup-Aktionen ist Loeschen blockiert. Die Verwendungen
   werden aufgelistet und muessen zuerst entfernt oder umgebogen werden;
 - keine stille Kaskade und kein automatisches Entfernen ganzer Aktionsschritte;
@@ -1899,7 +1941,16 @@ Commits nach C2 umgesetzt werden.
 - Hauptseite zeigt Leerhinweis, auch wenn global nur Popup-Knoten existieren;
 - leeres Popup zeigt eigenen klaren Drop-Hinweis.
 
-## C4 · Ein echter generischer Reparenting-Weg
+## C4 · Ein echter generischer Reparenting-Weg — ZURUECKGESTELLT
+
+**ZURUECKGESTELLT, nicht gestrichen (Nutzer-Entscheidung 2026-08-16).** Die
+Aktion „Verschieben nach …" wird vorerst nicht gebaut. **Grund: derselbe wie
+beim Popup-Duplizieren in C3.1** — der Bedienweg ist heute gar nicht
+erreichbar, und die Etappe baut sieben neue Regeln (Zielliste, Flow->Raster,
+Raster->Flow, Root<->Popup, Seitenwechsel mit Auswahl, Undo als EIN Schritt)
+fuer einen Wunsch, den niemand geaeussert hat. Regel 10: gebaut wird es, wenn
+es einmal wirklich vermisst wird. Der Text unten bleibt als fertiger Bauplan
+stehen, damit er dann nicht neu erdacht werden muss.
 
 ### Belegtes Problem
 
@@ -1941,27 +1992,37 @@ nicht behauptet werden.
 ### Nutzer-Abnahmematrix fuer Welle C
 
 1. Altes Schema-5-Popup vor und nach Migration vergleichen.
-2. Popup mit bisherigen 240-/400-px-Werten, migrierten 520 px, grosser Breite
-   und Host kleiner als 544 px.
+2. Popup mit bisherigen 240-/400-px-Werten und mit grosser Breite: **jedes
+   behaelt seine Breite** (die 520-px-Zwangsmigration ist gestrichen,
+   s. Migration Punkt 4).
 3. Elemente einfuegen, verschieben, vergroessern, duplizieren, Undo/Redo.
-4. Zeile mit verschachteltem Datum bleibt Flow.
+4. **Hinfaellig:** hier stand „Zeile mit verschachteltem Datum bleibt Flow".
+   Den Baustein Zeile gibt es nicht mehr (s. Zusatzauftrag im Kopf von C2).
+   Zu pruefen ist stattdessen: die Kinder einer frueheren Zeile liegen nach
+   dem Laden NEBENEINANDER in einem Zellband, nichts darunter ist verrutscht.
 5. Palette-Drop weit oben erzeugt passende DOM-/Tab-Reihenfolge.
 6. DnD nach vertikalem und horizontalem Scroll; Kopf, Rahmen und Overlay
    zeigen keinen Geist und akzeptieren keinen Drop.
 7. Ueberlappung folgt der festgelegten stabilen Paint-Reihenfolge.
-8. Reparenting in beide Richtungen und zwischen Root/Popup.
+8. **Entfaellt vorerst** — Reparenting in beide Richtungen und zwischen
+   Root/Popup ist mit C4 zurueckgestellt.
 9. Tabelle beginnt geschlossen, erhaelt Daten, oeffnet und misst korrekt;
    Schliessen/Oeffnen dupliziert weder Listener noch Observer.
 10. Speichern, Reload, Maskendatei speichern und erneut oeffnen.
 11. Export in SoftEngine: Positionen entsprechen Editor.
 12. Tab folgt sichtbar oben-links nach unten-rechts.
 13. Zwei Popups in beiden Erstellreihenfolgen gegenseitig oeffnen.
-14. Fokus vorwaerts/rueckwaerts sowie nach Oeffnen, Wechsel und Schliessen.
-15. Leer-, Whitespace-, Gross-/Kleinschreibungs-Duplikat und fehlendes
-    Runtimeziel werden klar verhindert, ohne aktuelles Popup zu schliessen.
+14. Fokus **nach dem Oeffnen** sitzt in der ersten bedienbaren Stelle des
+    Inhalts. Tab-Grenze und Fokus nach Wechsel/Schliessen sind mit C3.3
+    gestrichen und werden nicht geprueft.
+15. Leerer Name, nur Leerzeichen und ein Name, den es schon gibt: der Name
+    landet getrimmt, nie leer, und ein doppelter wird **hochgezaehlt** (nicht
+    abgelehnt, s. C3.1). Ein fehlendes Runtimeziel laesst das aktuelle Popup
+    stehen.
 16. Dialogkopf-X und Seiten-Loeschknopf zeigen ihre verschiedenen Wirkungen.
-17. Loeschen ueber Seitenknopf, Inspector und Tastatur verhaelt sich gleich;
-    eingehende Aktionen blockieren es mit Verwendungsanzeige.
+17. Loeschen ueber Seitenknopf, Inspector und Tastatur verhaelt sich gleich —
+    **ohne Rueckfrage** (s. C3.4); eingehende Aktionen blockieren es mit
+    Verwendungsanzeige.
 18. Maske nur mit Popup und leere Hauptseite zeigt korrekten Leerzustand.
 
 ---
