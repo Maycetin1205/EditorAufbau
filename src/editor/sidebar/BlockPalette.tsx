@@ -3,6 +3,7 @@
 
 import { Component, Plus, Search, type Zeichen } from '@/ui/zeichen'
 import { createElement, useState } from 'react'
+import { ROOT_ID, ROOT_TYPE } from '../../core/blocks/BlockData'
 import { canContain, getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import type { BlockCategory, BlockDefinition } from '../../core/blocks/BlockDefinition'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
@@ -70,6 +71,15 @@ export function BlockPalette() {
     while (cur) {
       if (canContain(cur.type, type)) return cur.id
       cur = cur.parentId ? ed.getNode(cur.parentId) : null
+    }
+    // Ohne Ziel landet der Baustein auf der AKTIVEN Seite (addBlock ohne
+    // parentId). Nimmt die ihn nicht auf, die echte Wurzel aber schon, dann
+    // ausdruecklich dorthin: sonst taete der Bibliotheks-Klick STUMM nichts,
+    // sobald eine Ansicht offen ist (addBlock gibt null zurueck). Betrifft
+    // alles, was nur an die Wurzel darf — heute die Navi.
+    const aktiveSeite = ed.getNode(ed.rootId)
+    if (aktiveSeite && !canContain(aktiveSeite.type, type) && canContain(ROOT_TYPE, type)) {
+      return ROOT_ID
     }
     return undefined
   }

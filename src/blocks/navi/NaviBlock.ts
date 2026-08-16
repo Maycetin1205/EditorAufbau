@@ -36,6 +36,7 @@ import { css, html, type TemplateResult } from 'lit'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { ROOT_TYPE } from '../../core/blocks/BlockData'
 import { RAND } from '../../core/blocks/maskenRand'
 import { NaviEintragBlock } from './NaviEintragBlock'
 import { naviAktualisiert, verbindeNavi, trenneNavi, zeigeBreite } from './seRuntime'
@@ -56,6 +57,13 @@ export class NaviBlock extends BasicBlock {
   // Sie gehoert zum Maskenrahmen: Rand statt Zelle, und auf jeder Flaeche
   // dieselbe (N2.1). Wo das gelesen wird: core/blocks/maskenRand.
   static readonly maskenRand = true
+  // ... und genau deshalb NUR direkt an der Wurzel. Beide Enden der
+  // Rand-Mechanik setzen das voraus: der Editor holt Rand-Bausteine allein von
+  // dort (Canvas/CanvasNode), und die Laufzeit laesst beim Umschalten genau
+  // den Ast stehen, in dem die Navi liegt (navi/seRuntime). Lag sie IN einer
+  // Ansicht, verschwaende sie in der Maske mit dieser Ansicht — sichtbar
+  // wurde das erst in SoftEngine. Dieselbe Zusage wie bei Ansicht und Popup.
+  static readonly allowedParentTypes = [ROOT_TYPE]
   // Raster-Startgroesse: nur noch fuer die Einfuege-Vorschau der Bibliothek —
   // liegt der Baustein, bestimmt der Rand seine Groesse, nicht die Zelle.
   static readonly raster = { startW: 5, startH: 24, minW: 3, minH: 3 }
