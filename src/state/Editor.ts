@@ -36,10 +36,7 @@ import { loadFromStorage, persistState, SAVE_DEBOUNCE_MS } from './persistence'
 import { SpeicherPlaner } from './speicherPlaner'
 import { Subject } from './Subject'
 import { dupliziereTeilbaum } from './duplizieren'
-import {
-  collectSubtree,
-  createEmptyTree,
-} from './treeOps'
+import { collectSubtree, createEmptyTree } from './treeOps'
 import {
   isRemoveProtected as istMusterGeschuetzt,
   templateMarkFor as templateMarkInTree,
@@ -49,6 +46,7 @@ import {
   freierSeitenName,
   kinderImFluss,
   klarnamenNachziehen,
+  schreibWert,
   seitenDerMaske,
   type SeitenEintrag,
 } from './pageOps'
@@ -346,23 +344,27 @@ export class Editor extends Subject<Editor> {
   updateProperty(id: string, attr: string, value: unknown): void {
     const node = this._tree[id]
     if (!node) return
+    const def = getBlockDefinition(node.type)
+    // Was wirklich geschrieben wird — fuer Seitennamen gilt der Adress-Vertrag
+    // (pageOps/schreibWert), null heisst „nicht schreiben".
+    const wert = schreibWert(def, this.pages, id, attr, value)
+    if (wert === null) return
     // Gleicher Wert = kein Vorgang: weder Verlaufs-Schritt noch Neuzeichnen.
     // Sonst verbraucht z. B. ein Control, das beim Verlassen des Felds seinen
     // unveraenderten Wert nochmal meldet, einen der 50 Undo-Plaetze.
-    if (Object.is(node.props[attr], value)) return
+    if (Object.is(node.props[attr], wert)) return
     this.pushHistory()
     const next: BlockTree = {
       ...this._tree,
-      [id]: { ...node, props: { ...node.props, [attr]: value } },
+      [id]: { ...node, props: { ...node.props, [attr]: wert } },
     }
     // Exklusive Geschwister-Kennzeichen (V2/B2, exclusiveAmongSiblings in
     // der PropertyDescription, z. B. Auffangspalte): hoechstens EIN
     // Geschwister gleichen Typs darf 'ja' tragen. Wer auf 'ja' setzt,
     // raeumt die anderen im SELBEN History-Eintrag ab; Ctrl+Z stellt
     // beides zurueck. Registry-getrieben, kein `if type===`.
-    const def = getBlockDefinition(node.type)
     const prop = def?.customProperties.find((p) => p.attributeName === attr)
-    if (prop?.exclusiveAmongSiblings && value === 'ja' && node.parentId) {
+    if (prop?.exclusiveAmongSiblings && wert === 'ja' && node.parentId) {
       for (const sibId of this._tree[node.parentId]?.childIds ?? []) {
         const sib = next[sibId]
         if (sibId !== id && sib?.type === node.type && sib.props[attr] === 'ja') {
@@ -375,11 +377,9 @@ export class Editor extends Subject<Editor> {
     // Einstellung und Groesse zusammen zurueckstellt (startgroesseNachziehen).
     next[id] = startgroesseNachziehen(def, node.props, next[id])
     // Beim Umbenennen einer SEITE ziehen die Klarnamen mit, die auf sie zeigen
-    // (Navi-Eintrag) — im SELBEN History-Eintrag, Ctrl+Z stellt beides
-    // zusammen zurueck. Warum es das braucht und warum der Export sich NICHT
-    // darauf verlaesst: pageOps/klarnamenNachziehen.
-    this._tree = attr === 'name' && def?.pageBlock && typeof value === 'string'
-      ? klarnamenNachziehen(next, id, value)
+    // (Navi-Eintrag) — im SELBEN History-Eintrag: pageOps/klarnamenNachziehen.
+    this._tree = typeof wert === 'string' && def?.pageBlock === true && attr === 'name'
+      ? klarnamenNachziehen(next, id, wert)
       : next
     this.notify(this)
   }

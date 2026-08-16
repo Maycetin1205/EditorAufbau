@@ -146,6 +146,33 @@ describe('Gesten-Token: oeffnet einmal, schliesst einmal (A7.2)', () => {
     expect(ed.getNode(eintrag.id)?.props.seitename).toBe(vorher)
   })
 
+  // Der Name einer Seite ist ihre ADRESSE in der laufenden Maske: Popup-Schritt
+  // und Navi-Eintrag finden ihre Seite darueber. Zwei gleiche Namen treffen
+  // dieselbe Seite, ein leerer trifft keine — beides wird darum gar nicht erst
+  // geschrieben (pageOps/schreibWert, gerufen aus updateProperty).
+  it('Seitennamen bleiben eindeutig und nie leer', () => {
+    const ed = new Editor()
+    const a = ed.addSeite(AnsichtBlock.blockType)!
+    const b = ed.addSeite(AnsichtBlock.blockType)!
+    const nameA = String(ed.getNode(a.id)?.props.name)
+
+    // Den Namen der anderen Seite wuenschen: es wird hochgezaehlt statt
+    // doppelt vergeben — der Bauer wird nicht blockiert, die Maske bleibt
+    // adressierbar.
+    ed.updateProperty(b.id, 'name', nameA)
+    expect(ed.getNode(b.id)?.props.name).not.toBe(nameA)
+
+    // Gross-/Kleinschreibung schuetzt nicht: die Laufzeit vergleicht Namen.
+    ed.updateProperty(b.id, 'name', nameA.toLocaleLowerCase('de-DE'))
+    expect(String(ed.getNode(b.id)?.props.name).toLocaleLowerCase('de-DE'))
+      .not.toBe(nameA.toLocaleLowerCase('de-DE'))
+
+    // Leer bzw. nur Leerzeichen ist KEIN Vorgang — der alte Name bleibt stehen,
+    // statt dass die Seite unadressierbar wird.
+    ed.updateProperty(a.id, 'name', '   ')
+    expect(ed.getNode(a.id)?.props.name).toBe(nameA)
+  })
+
   it('eine nie geoeffnete Klammer schliesst keine fremde', () => {
     // Der Fall aus dem Editor: ein Anfasser wird nur ANGETIPPT, waehrend eine
     // andere Geste laeuft. Ein `end()` auf Verdacht beendete die fremde Geste

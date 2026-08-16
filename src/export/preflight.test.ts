@@ -109,13 +109,28 @@ describe('preflightMask', () => {
     expect(preflightMask(ohneSeite, [], []).some((r) =>
       r.detail.includes('gelöschte Popup-Seite'))).toBe(true)
 
-    // Zwei Popups mit demselben Namen → Preflight blockt (Laufzeit-Identität).
+    // Zwei Seiten mit demselben Namen → Preflight meldet es (Laufzeit-Identität:
+    // beide Adresswege — Popup-Schritt und Navi — finden ihre Seite über den
+    // Namen). Die Prüfung heißt seit 2026-08-15 „Seitenname doppelt" und gilt
+    // für ALLE Seiten, nicht nur für Fenster; geschrieben wird ein Doppelname
+    // ohnehin nicht mehr (Editor.updateProperty), das hier ist die Gegenprobe
+    // für Altbestand und von Hand bearbeitete Stände.
     const doppelt: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p1', 'p2'] },
       p1: popup('p1', 'Neue Behandlung'),
       p2: popup('p2', 'Neue Behandlung'),
     }
-    expect(preflightMask(doppelt, [], []).some((r) => r.name === 'Popup-Name doppelt')).toBe(true)
+    expect(preflightMask(doppelt, [], []).some((r) => r.name === 'Seitenname doppelt')).toBe(true)
+
+    // Gross-/Kleinschreibung schuetzt nicht davor: die Laufzeit vergleicht den
+    // Namen, und „Neue Behandlung" neben „neue behandlung" waere fuer den
+    // Bauer zwei Seiten, fuer die Maske aber ein mehrdeutiges Ziel.
+    const grossKlein: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p1', 'p2'] },
+      p1: popup('p1', 'Neue Behandlung'),
+      p2: popup('p2', 'neue behandlung'),
+    }
+    expect(preflightMask(grossKlein, [], []).some((r) => r.name === 'Seitenname doppelt')).toBe(true)
   })
 
   // --- Bindungen an eine WEITERE Datenquelle (2026-07-28) -----------------

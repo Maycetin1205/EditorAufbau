@@ -83,6 +83,50 @@ export function seitenDerMaske(tree: BlockTree): SeitenEintrag[] {
   return [{ id: ROOT_ID, name: 'Hauptseite', istHauptseite: true, istFlaeche: true }, ...seiten]
 }
 
+// Ein Seitenname, der die Maske adressierbar haelt: getrimmt und nicht
+// derselbe wie der einer ANDEREN Seite (verglichen ohne Gross-/Kleinschreibung,
+// de-DE). Kollidiert der Wunsch, wird hochgezaehlt — der Bauer bekommt
+// „Details 2" statt einer Ablehnung, die er sich nicht erklaeren kann.
+//
+// Warum das ueberhaupt zaehlt: In der laufenden Maske finden BEIDE Adresswege
+// ihre Seite ueber den NAMEN — der Popup-Schritt (applyPopupStep) und der
+// Navi-Eintrag (navi/seRuntime). Zwei gleiche Namen treffen darum dieselbe
+// Seite; applyPopupStep schaltet sogar BEIDE Fenster zugleich. Die Hauptseite
+// zaehlt mit, denn auch sie ist ein Ziel (ihr Name ist ihre Adresse).
+export function eindeutigerSeitenName(
+  seiten: readonly SeitenEintrag[],
+  eigeneId: string,
+  wunsch: string,
+): string {
+  const schluessel = (s: string): string => s.trim().toLocaleLowerCase('de-DE')
+  const belegt = new Set(
+    seiten.filter((s) => s.id !== eigeneId).map((s) => schluessel(s.name)),
+  )
+  const basis = wunsch.trim()
+  let name = basis
+  for (let n = 2; belegt.has(schluessel(name)); n++) name = `${basis} ${n}`
+  return name
+}
+
+// Der Wert, mit dem eine Prop wirklich geschrieben wird. Fuer alles ausser dem
+// NAMEN einer Seite ist das der Wunsch unveraendert; fuer ihn gilt der
+// Adress-Vertrag oben (getrimmt, nie leer, nie doppelt). `null` heisst: gar
+// nicht schreiben — ein leer getippter Seitenname laesst den alten stehen,
+// statt die Seite unadressierbar zu machen.
+// Steht hier und nicht im Store, weil es eine SEITEN-Regel ist; der Store ruft
+// sie nur an der einen Stelle auf, durch die jeder Schreibweg kommt.
+export function schreibWert(
+  def: { pageBlock?: boolean } | undefined,
+  seiten: readonly SeitenEintrag[],
+  id: string,
+  attr: string,
+  wunsch: unknown,
+): unknown {
+  if (attr !== 'name' || def?.pageBlock !== true) return wunsch
+  const name = eindeutigerSeitenName(seiten, id, typeof wunsch === 'string' ? wunsch : '')
+  return name === '' ? null : name
+}
+
 // Zeigt woanders im Baum ein KLARNAME auf diese Seite, zieht er beim
 // Umbenennen mit. Ein Navi-Eintrag haelt die Seiten-id (die Wahrheit) und
 // daneben ihren Klarnamen (die Beschriftung); ohne dieses Nachziehen

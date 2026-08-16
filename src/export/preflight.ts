@@ -33,7 +33,7 @@ import {
 } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { propertySichtbar } from '../core/blocks/PropertyDescription'
-import { istFlaechenSeite } from '../state/pageOps'
+import { istFlaechenSeite, seitenDerMaske } from '../state/pageOps'
 import {
   actionValueTargets,
   auswahlGeberImBaum,
@@ -369,17 +369,23 @@ export function preflightMask(
     .filter((n): n is BlockNode =>
       n !== undefined && getBlockDefinition(n.type)?.pageBlock === true && !istFlaechenSeite(n))
   const popupIds = popupSeiten.map((n) => n.id)
+  // Der Namens-Vertrag gilt fuer ALLE Seiten, nicht nur fuer Fenster: seit der
+  // Navi (N2) adressiert auch ein Seiten-Wechsel ueber den Klarnamen, und die
+  // Hauptseite ist dabei ein Ziel wie jedes andere. Zwei gleiche Namen treffen
+  // dieselbe Seite. Geschrieben wird das gar nicht erst (Editor.updateProperty
+  // ueber eindeutigerSeitenName) — hier steht die defensive Gegenprobe fuer
+  // Altbestand und von Hand bearbeitete Staende.
+  const schluessel = (s: string): string => s.trim().toLocaleLowerCase('de-DE')
   const nameZaehler = new Map<string, number>()
-  for (const seite of popupSeiten) {
-    const name = typeof seite.props.name === 'string' ? seite.props.name : ''
-    nameZaehler.set(name, (nameZaehler.get(name) ?? 0) + 1)
+  for (const seite of seitenDerMaske(tree)) {
+    nameZaehler.set(schluessel(seite.name), (nameZaehler.get(schluessel(seite.name)) ?? 0) + 1)
   }
   for (const [name, count] of nameZaehler) {
     if (count > 1) {
       results.push({
-        name: 'Popup-Name doppelt',
+        name: 'Seitenname doppelt',
         ok: false,
-        detail: `${count} Popup-Seiten heißen "${name}" — Namen müssen eindeutig sein (Doppelklick auf den Fenstertitel benennt um).`,
+        detail: `${count} Seiten heißen "${name}" — Namen müssen eindeutig sein, sonst trifft ein Knopf die falsche (Doppelklick auf den Reiter benennt um).`,
       })
     }
   }
