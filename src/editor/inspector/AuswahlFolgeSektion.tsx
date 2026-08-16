@@ -117,8 +117,9 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
         options={[
           { value: KEINER, label: '— keinem —' },
           ...kandidaten.map((n) => ({ value: n.id, ...anzeige(n) })),
-          // Geber geloescht: den Zustand benennen statt still leer (Regel 4);
-          // der Preflight blockt den Export dazu im Klartext. (Leere Geber-id
+          // Geber geloescht: den Zustand benennen statt still leer (Regel 4).
+          // Hier ist es die EINZIGE Anzeige davon — der Export laeuft auch mit
+          // dem toten Verweis durch. (Leere Geber-id
           // faellt auf „keinem" zurueck — Radix verbietet '' als Wert.)
           ...(folge && folge.geberId !== '' && !kandidaten.some((k) => k.id === folge.geberId)
             ? [{ value: folge.geberId, label: '(gelöschter Baustein)' }]

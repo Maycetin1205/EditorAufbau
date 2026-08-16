@@ -2,8 +2,9 @@
 // Layout-Baustein "Zeile": kann genau EINE Sache — Bausteine nebeneinander.
 // Keine Regler (null Inspector-Eigenschaften), Abstand fest aus dem Design
 // (--se-gap). Untereinander braucht keinen Baustein — das macht die
-// Maskenflaeche von selbst. (Herkunft als schlanker Ersatz des Allzweck-
-// "Bereichs": docs/decisions/2026-07-14-kahlschlag-bausteine.md)
+// Maskenflaeche von selbst. (Entstand als schlanker Ersatz des Allzweck-
+// "Bereichs" im Kahlschlag der Anfangs-Bausteine, Nutzer-Entscheidung
+// 2026-07-14.)
 //
 // "Nebeneinander" ist ein Registry-Wert, kein Code: childDirection 'row'
 // (dasselbe Konzept, mit dem das Kanban seine Spalten anordnet); Canvas und

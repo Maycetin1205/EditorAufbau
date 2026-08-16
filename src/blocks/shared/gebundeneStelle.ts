@@ -22,7 +22,8 @@ export type GebundeneStelle =
   // Quelle oder Feldcode fehlt — die Stelle ist gar nicht gebunden.
   | { art: 'ungebunden' }
   // Gebunden, aber die Quelle steckt nicht in der Maske (geloescht, nie
-  // mitexportiert). Der Preflight hat das beim Export im Klartext gemeldet.
+  // mitexportiert). Der Preflight kennt den Fall, blockt den Export aber seit
+  // 2026-08-10 nicht mehr — er erreicht also die laufende Maske.
   | { art: 'ohneQuelle' }
   // Quelle da, aber keine Zeile: die Auswahl-Regel (shared/auswahl) liefert
   // keine — nichts gewaehlt oder kein Partner in der eigenen Quelle.

@@ -71,7 +71,7 @@ export class KanbanBlock extends BasicBlock {
   // unsichtbar) — sein Zeilenwert bestimmt im Export die Spalte. OPTIONAL:
   // ohne Feld landen alle Zeilen in der Auffang- bzw. einer Auto-Spalte.
   // Was ein Drop tut, bestimmt allein die Aktionskette „Karte verschoben"
-  // (docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md).
+  // (Nutzer-Entscheidung 2026-07-15: kein eingebauter Schreibweg).
   // tagField: Feldcode des Datumsfelds, nach dem der Tageswaehler filtert
   // (Technikwert, unsichtbar). Leer = kein Tagesfilter, alle Saetze.
   // leerText: der Satz, den eine Spalte OHNE Karte in der Maske zeigt. Er

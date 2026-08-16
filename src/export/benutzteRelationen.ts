@@ -12,8 +12,15 @@ import type { RelationTemplate } from '../core/data/relations'
 
 // Sammelt benutzte Vorlagen — WELCHE ein Baustein benutzt, sagt relationIdsVon
 // (dieselbe Stelle, die auch die Verwendungs-Anzeige der Steuerung fragt).
-// Baum-, Ereignis- und Schritt-Reihenfolge sind deterministisch; unbekannte IDs
-// werden von der Preflight abgefangen.
+// Baum-, Ereignis- und Schritt-Reihenfolge sind deterministisch; eine ID ohne
+// Vorlage wird hier still uebersprungen (Zeile `if (!rel ...) continue`). Der
+// Export blockt deswegen nicht — seit 2026-08-10 blockt er nie (Nutzer-Ansage);
+// der Schritt geht dann ohne seine Vorlage hinaus und faellt in SoftEngine auf.
+//
+// Diese Berichtigung stammt aus der Parallel-Sitzung vom 2026-08-15. Sie stand
+// dort noch am alten Ort in exportMask.ts und ist beim Zusammenfuehren
+// hierher gezogen — der Satz davor behauptete, unbekannte IDs faenge „die
+// Preflight" ab, und das stimmt seit 2026-08-10 nicht mehr.
 export function collectRelations(
   tree: BlockTree,
   relations: readonly RelationTemplate[],

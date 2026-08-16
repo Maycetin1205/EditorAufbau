@@ -214,7 +214,9 @@ export function FieldPicker({
                     dafuer. Ohne sie faellt das Auswahlfeld stumm auf „nicht
                     gebunden" zurueck und BEHAUPTET damit, hier sei nichts
                     eingestellt — waehrend die Bindung in Wahrheit steht und
-                    die Preflight sie zu Recht blockiert (Regel 4). */}
+                    unveraendert mit exportiert wird (Regel 4). Der Export
+                    blockt sie nicht; hier ist die einzige Stelle, an der der
+                    Bauer davon erfaehrt. */}
                 {f.aktuell !== ''
                   && !gruppen.some((g) =>
                     g.fields.some((feld) => bindungMitQuelle(g.quelleId, feld.code) === f.aktuell))

@@ -217,8 +217,8 @@ export class FormFeldBlock extends BasicBlock {
   // 'change' ist laut DOM-Standard NICHT composed und endet an der
   // Schattengrenze — die Feld-Runtime (Kette „Wert geändert") lauscht aber
   // am Host. Deshalb wird das committete Ändern hier einmal am Host neu
-  // ausgelöst ('input' ist composed und braucht das nicht). Belegt durch
-  // e2e/formfeld-data.spec.ts — ohne diesen Schritt feuert die Kette nie.
+  // ausgelöst ('input' ist composed und braucht das nicht). Ohne diesen
+  // Schritt feuert die Kette nie — entbehrlich sieht sie nur aus.
   private onChange(): void {
     this.dispatchEvent(new Event('change'))
   }

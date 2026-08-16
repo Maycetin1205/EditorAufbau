@@ -309,7 +309,10 @@ export function exportMask(
 ): MaskExport {
   const root = tree[ROOT_ID]
   // Popup-Klarnamen je Seiten-id: Popup-Schritte reisen mit dem NAMEN
-  // der Seite (Editor-ids nie); die Preflight erzwingt eindeutige Namen.
+  // der Seite (Editor-ids nie). Eindeutige Namen werden NICHT erzwungen —
+  // der Preflight meldet Doppelnamen zwar, blockt den Export aber seit
+  // 2026-08-10 nicht mehr. Zwei gleich benannte Seiten sind in der Maske
+  // dann nicht mehr auseinanderzuhalten.
   const popupNameById = new Map<string, string>()
   for (const id of root?.childIds ?? []) {
     const n = tree[id]

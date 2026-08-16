@@ -16,8 +16,8 @@
 // passiert, bestimmt allein die sichtbare Aktionskette „Karte verschoben"
 // ({VALUE} = Spaltentitel, seit N4 zusaetzlich {ZIMMER} = Zimmertitel).
 // „Einsortieren nach" (statusField) ist OPTIONAL: ohne Feld landen alle
-// Zeilen in der Auffang- bzw. einer Auto-Spalte. (Entscheidungs-Historie:
-// docs/decisions/2026-07-15-kanban-schreibweg-und-schicht.md)
+// Zeilen in der Auffang- bzw. einer Auto-Spalte. (Beides Nutzer-Entscheidung
+// vom 2026-07-15.)
 //
 // Läuft NUR im Export: der BlockHost markiert Editor-Elemente mit
 // data-ff-editor, solche Boards melden sich hier nie an. Ohne Datenquelle

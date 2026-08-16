@@ -280,5 +280,12 @@ describe('exportMask: Datenquellen', () => {
     const quellenZeile = /window\.FF_DATA_SOURCES = .*/.exec(html)?.[0] ?? ''
     expect(quellenZeile).toContain('"id":"q"')
     expect(quellenZeile).not.toContain('ladeRelation')
+    // Zweites Netz aus der Parallel-Sitzung vom 2026-08-15: die JSON-
+    // SCHREIBWEISE im GANZEN Dokument. Beide Sitzungen haben denselben Fehler
+    // unabhaengig gefunden und verschieden geloest — kein Duplikat: die Zeile
+    // darueber prueft, dass die Einstellung nicht in IHRER Zeile steht, diese,
+    // dass sie nirgends sonst als JSON-Eintrag auftaucht. Der Bezeichner im
+    // Buendel ist unquotiert (s. relationLader) und wird davon nicht getroffen.
+    expect(html).not.toContain('"ladeRelation":')
   })
 })

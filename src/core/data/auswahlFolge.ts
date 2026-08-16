@@ -48,7 +48,9 @@ export const AUSWAHL_FOLGE_DEFAULTS: Record<string, AuswahlFolge[]> = {
 
 // Brauchbar = Geber genannt UND mindestens ein vollstaendiges Feldpaar.
 // Halbfertiges darf existieren (der Bediener tippt gerade) — die Laufzeit
-// ignoriert es, und der Preflight sagt es im Klartext (Regel 4).
+// ignoriert es. Angezeigt wird es nirgends: der Preflight kennt den Fall,
+// blockt den Export aber seit 2026-08-10 nicht mehr, und nur seine Meldung
+// 'Datenquelle fehlt' erreicht ueberhaupt noch die Steuerung.
 export function folgeBrauchbar(f: AuswahlFolge): boolean {
   return f.geberId !== '' && vollstaendigePaare(f).length > 0
 }

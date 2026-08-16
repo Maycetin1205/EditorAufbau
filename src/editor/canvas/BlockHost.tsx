@@ -172,7 +172,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
   const plusStil = amRand ? { bottom: 4, left: 4 } : { top: -9, right: 14 }
 
   // Musterkarte (templateChild in der Registry): KEIN sichtbares
-  // Etikett (docs/decisions/2026-07-16-karte-empfang-anatomie.md). Die
+  // Etikett (Nutzer-Entscheidung 2026-07-16). Die
   // Markierung steuert nur das Kreuzchen: die Musterkarte hat keins
   // (Löschschutz, s. onRemoveClick).
   const templateMark = editor.templateMarkFor(block.id)
@@ -399,8 +399,8 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
 
 // Editor-Hilfe "Plus-Knopf" (aus der Registry: addChildButton).
 // Ein kleiner Anstecker am Wrapper-Rand, bewusst NIE im Baustein selbst (er
-// stähle dem Baustein Platz — WYSIWYG-Bruch; Herkunft:
-// docs/decisions/2026-07-10-editor-hilfen.md), sichtbar NUR wenn die
+// stähle dem Baustein Platz — WYSIWYG-Bruch; Nutzer-Entscheidung
+// 2026-07-10), sichtbar NUR wenn die
 // Auswahl im Teilbaum des Containers liegt — ein unselektierter Baustein
 // sieht im Editor exakt aus wie im Export.
 //
