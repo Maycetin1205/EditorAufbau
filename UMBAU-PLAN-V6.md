@@ -91,8 +91,15 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappen — 2026-08-16, Auftrag „Popup fertig machen".**
-  Drop nur im Fenster: `PopupSeite` nimmt einen Drop nur noch ueber dem RUMPF
+- **Letzte fertige Etappen — 2026-08-16, Auftrag „Popup fertig machen"
+  (vier Etappen, vier Commits; die Gesamtprobe steht aus).**
+  Tastatur-Fokus beim Oeffnen (C3.3, abgespeckt): der PopupBlock merkt den
+  Wechsel von `offen` (jetzt eine Lit-Property) und holt die Tastatur in die
+  erste bedienbare Stelle des INHALTS, sonst aufs Schliessen-Kreuz — durch die
+  Schatten der Bausteine hindurch, sonst faende er das Eingabefeld eines
+  Formularfelds nie. Im Editor nie (data-ff-editor). NICHT gebaut und
+  gestrichen: Fokusfalle, `aria-modal`, Basis-Oeffner-Buchhaltung.
+  Davor: Drop nur im Fenster: `PopupSeite` nimmt einen Drop nur noch ueber dem RUMPF
   an (gemessen an dessen Kasten) — Abdunklung, Rahmen und Kopfzeile lehnen ab,
   statt den Baustein in die naechstgelegene Zelle zu klemmen. Dazu der
   Leerzustand fuers leere Popup: der Hinweis-Kasten wohnt jetzt in

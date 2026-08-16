@@ -18,7 +18,9 @@
 // (shared/DialogRahmen) — dieselbe Form wie das Nachschlage-Fenster, eine
 // Stelle für beide. Hier bleibt nur, was das Popup ausmacht: der
 // Seiten-Zustand (offen/zu), der editierbare Titel und der Rumpf — seit C2
-// (2026-08-16) eine echte Rasterflaeche wie die Maskenwurzel.
+// (2026-08-16) eine echte Rasterflaeche wie die Maskenwurzel. Seit C3.3
+// (2026-08-16) holt der Baustein beim Oeffnen ausserdem die Tastatur ins
+// Fenster (s. updated).
 //
 // Vertrag des Dialogkopf-X (C1): in der MASKE schließt es dieses Popup; im
 // EDITOR tut der Baustein nichts (er kennt den Editor nicht, Regel 2) und
@@ -30,12 +32,30 @@
 // Export-Popup (data-ff-editor erzwingt nur die Sichtbarkeit). Aussehen
 // ausschließlich aus Masken-Tokens; strukturelle Größen als Literale.
 
-import { css, html, unsafeCSS, type TemplateResult } from 'lit'
+import { css, html, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import { ROOT_TYPE } from '../../core/blocks/BlockData'
 import { rasterFlaecheCss } from '../../core/blocks/rasterLayout'
+
+// Was eine Tastatur von sich aus ansteuern kann.
+const FOKUSSIERBAR = 'input,select,textarea,button,a[href],[tabindex]:not([tabindex="-1"])'
+
+// Die ERSTE solche Stelle unter `wurzel`, in Dokumentreihenfolge und durch die
+// Schatten der Bausteine hindurch: das Eingabefeld eines Formularfelds liegt
+// nicht im Licht-DOM des Popups, sondern im Schatten des Bausteins — eine
+// flache Suche fände es nie und der Fokus bliebe draussen.
+function ersteFokusStelle(wurzel: ParentNode): HTMLElement | null {
+  for (const el of Array.from(wurzel.querySelectorAll('*'))) {
+    if (el instanceof HTMLElement && el.matches(FOKUSSIERBAR) && !el.hasAttribute('disabled')) {
+      return el
+    }
+    const tiefer = el.shadowRoot ? ersteFokusStelle(el.shadowRoot) : null
+    if (tiefer) return tiefer
+  }
+  return null
+}
 // Definiert das Element ff-dialog-rahmen (Side-Effect-Import). Das
 // Schließen-Ereignis steht unten als Literal im Template — Lit erlaubt im
 // @-Binding keinen dynamischen Namen; der Name ist DIALOG_SCHLIESSEN_EVENT
@@ -119,6 +139,10 @@ export class PopupBlock extends BasicBlock {
   @property() name = 'Popup'
   @property() breite: number | string = 520
   @property() hoehe: number | string = 380
+  // Der Seiten-Zustand. Geschaltet wird er von aussen als ATTRIBUT
+  // (blocks/shared/seAktionen), gelesen vom CSS oben — als Property deklariert,
+  // damit der Baustein den Wechsel MERKT und den Fokus ins Fenster holen kann.
+  @property({ type: Boolean, reflect: true }) offen = false
 
   // X = Schließen-Ereignis des DialogRahmens. In der Maske schließt es das
   // Popup; im Editor tut der Baustein nichts und lässt das Ereignis steigen
@@ -126,6 +150,34 @@ export class PopupBlock extends BasicBlock {
   private onClose(): void {
     if (this.hasAttribute('data-ff-editor')) return
     this.removeAttribute('offen')
+  }
+
+  // Beim ÖFFNEN springt die Tastatur ins Fenster (C3.3, 2026-08-16). Ohne das
+  // stand der Fokus nach „Popup öffnen" weiter auf dem Knopf DAHINTER: wer
+  // tippte, schrieb in die Maske hinter der Abdunklung, und wer Tab drückte,
+  // wanderte durch Felder, die er gar nicht sieht.
+  //
+  // Ziel ist die erste bedienbare Stelle im INHALT — dort will der Bediener
+  // hin. Gibt es keine (ein Popup, das nur etwas anzeigt), bleibt das
+  // Schließen-Kreuz des Rahmens; auch das ist im Fenster und nicht dahinter.
+  // MEHR NICHT: keine Fokusfalle, kein aria-modal (die Zusage „Tab bleibt
+  // drin" wäre gelogen, s. `ohne-modal` unten), kein Zurückspringen beim
+  // Schließen.
+  //
+  // Im EDITOR nie: dort zeigt der Seiten-Reiter das Popup (data-ff-editor,
+  // nicht `offen`) — ein Fokus-Sprung risse den Bauer aus seiner Arbeit.
+  protected override updated(geaendert: PropertyValues<this>): void {
+    super.updated(geaendert)
+    if (!geaendert.has('offen') || !this.offen) return
+    if (this.hasAttribute('data-ff-editor')) return
+    // Erst nach dem Rendern greifen (Muster nachschlagen.ts): vorher steht der
+    // Inhalt des Fensters noch nicht, und `display:none` lässt sich nicht
+    // fokussieren.
+    void this.updateComplete.then(() => {
+      if (!this.offen || !this.isConnected) return
+      const ziel = ersteFokusStelle(this) ?? (this.shadowRoot ? ersteFokusStelle(this.shadowRoot) : null)
+      ziel?.focus()
+    })
   }
 
   override render(): TemplateResult {
