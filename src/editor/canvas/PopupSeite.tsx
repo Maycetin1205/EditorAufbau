@@ -18,6 +18,7 @@ import { rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
 import { NodeList } from './CanvasNode'
+import { LeerHinweis } from './LeerHinweis'
 import { isNewBlockDrag } from './dnd'
 import { commitDrop, useDnd } from './dndState'
 import { rasterZiel } from './rasterDnd'
@@ -31,6 +32,15 @@ const POPUP_MIN_HOEHE = 160
 function popupZahl(v: unknown, fallback: number): number {
   const n = Number(v)
   return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+// Liegt der Zeiger über dem Rumpf? Gemessen an dessen sichtbarem Kasten —
+// das ist genau die Fläche, in der eine Zelle liegen kann. Abdunklung,
+// Fensterrahmen und Kopfzeile fallen damit heraus, ohne dass hier jemand
+// wissen muss, wie das Fenster aufgebaut ist.
+function imRumpf(gridEl: HTMLElement, x: number, y: number): boolean {
+  const r = gridEl.getBoundingClientRect()
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
 }
 
 export function PopupSeite({ popupId }: { popupId: string }) {
@@ -113,9 +123,20 @@ export function PopupSeite({ popupId }: { popupId: string }) {
         // (allowedParentTypes!) eine Vorschau, ed.moveNode/addBlock lehnten den
         // Drop danach still ab, und der Bediener sah seinen Baustein einfach
         // verschwinden; Regel 4: nichts scheitert still).
+        //
+        // Angenommen wird NUR über dem Rumpf. Der Zuhörer sitzt auf der ganzen
+        // Seitenfläche — ohne diese Grenze nahm auch die Abdunklung, der Rahmen
+        // und die Kopfzeile einen Drop an, und der Baustein landete in der
+        // nächstgelegenen Zelle statt dort, wo der Bediener ihn losliess
+        // (die Zelle wird aus dem Rumpf gerechnet und ausserhalb geklemmt).
+        // Ohne preventDefault meldet der Browser „hier nicht" und schickt gar
+        // kein drop-Ereignis.
         if (dnd.dragId === null && !isNewBlockDrag(e.dataTransfer)) return
         const gridEl = rumpf()
-        if (!gridEl) return
+        if (!gridEl || !imRumpf(gridEl, e.clientX, e.clientY)) {
+          dnd.setDropTarget(null)
+          return
+        }
         e.preventDefault()
         dnd.setDropTarget(rasterZiel(e, ed, dnd, node.id, gridEl))
       }}
@@ -155,6 +176,21 @@ export function PopupSeite({ popupId }: { popupId: string }) {
           />
         )}
       </BlockHost>
+      {/* Leerzustand des FENSTERS — dieselbe Auskunft wie auf der Maskenfläche
+          (Canvas), nur über der Fenstermitte statt über dem ganzen Blatt. Ein
+          frisch angelegtes Popup war bis 2026-08-16 eine wortlose Fläche: der
+          Hinweis im Canvas hängt an `flaeche` und blieb hier aus.
+          Bewusst NEBEN dem Popup-Element und nicht als Zelle darin: eine Zelle
+          ist 12 px hoch, der Kasten müsste eine geratene Zeilenzahl belegen
+          und schöbe im Zweifel einen Rollbalken in den leeren Rumpf. */}
+      {ed.childNodesOf(node.id).length === 0 && (
+        <div
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          style={{ zIndex: 20 }}
+        >
+          <LeerHinweis titel={`Leeres Fenster „${String(node.props.name ?? '')}"`} />
+        </div>
+      )}
       {selected && (
         <>
           <div

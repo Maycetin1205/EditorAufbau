@@ -13,7 +13,6 @@
 // (SeitenLeiste) und Popup-Seitenansicht (PopupSeite). Hier bleibt nur
 // die Fläche selbst.
 
-import { MousePointerClick } from '@/ui/zeichen'
 import { useCallback, useMemo, useState, type DragEvent } from 'react'
 import { ROOT_ID } from '../../core/blocks/BlockData'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
@@ -21,6 +20,7 @@ import { randPlatzLinks } from '../../core/blocks/maskenRand'
 import { rasterFlaecheStyle, rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { NodeList } from './CanvasNode'
+import { LeerHinweis } from './LeerHinweis'
 import { isNewBlockDrag } from './dnd'
 import { commitDrop, DndContext, gleichesZiel, type DndState, type DropTarget } from './dndState'
 import { rasterZiel } from './rasterDnd'
@@ -169,18 +169,14 @@ export function Canvas() {
               (ed.blockCount zählt jeden Knoten aller Seiten): sonst bliebe
               eine frisch angelegte, leere Ansicht eine wortlose Fläche —
               und auf der Hauptseite verschwand der Hinweis schon, sobald
-              irgendwo ein Popup lag. */}
+              irgendwo ein Popup lag. Das leere POPUP zeigt denselben Kasten,
+              aber in seinem Rumpf (PopupSeite) — dort gehört er hin, dort
+              landet der Drop. */}
           {flaeche && ed.childNodesOf(ed.rootId).length === 0 && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-8 py-6 text-center font-sans">
-                <MousePointerClick size={18} className="text-muted-foreground/60" />
-                <p className="text-[0.8125rem] font-medium text-foreground/80">
-                  {aktiveSeite?.istHauptseite ? 'Leere Maske' : `Leere Seite „${aktiveSeite?.name ?? ''}"`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Zieh einen Baustein aus der Bibliothek links hierher.
-                </p>
-              </div>
+              <LeerHinweis
+                titel={aktiveSeite?.istHauptseite ? 'Leere Maske' : `Leere Seite „${aktiveSeite?.name ?? ''}"`}
+              />
             </div>
           )}
           {!flaeche && <PopupSeite popupId={ed.activePageId} />}

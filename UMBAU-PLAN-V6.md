@@ -92,7 +92,13 @@ git log --oneline -8
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
 - **Letzte fertige Etappen — 2026-08-16, Auftrag „Popup fertig machen".**
-  C3.2 (genau ein aktives Popup): `applyPopupStep`
+  Drop nur im Fenster: `PopupSeite` nimmt einen Drop nur noch ueber dem RUMPF
+  an (gemessen an dessen Kasten) — Abdunklung, Rahmen und Kopfzeile lehnen ab,
+  statt den Baustein in die naechstgelegene Zelle zu klemmen. Dazu der
+  Leerzustand fuers leere Popup: der Hinweis-Kasten wohnt jetzt in
+  `editor/canvas/LeerHinweis.tsx` (zweiter echter Fall, Regel 10), Canvas und
+  PopupSeite platzieren ihn je selbst.
+  Davor: C3.2 (genau ein aktives Popup): `applyPopupStep`
   (`blocks/shared/seAktionen.ts`) loest ZUERST genau ein Ziel auf; bei keinem
   oder mehreren Treffern bleibt der Fenster-Stand unangetastet (vorher gingen
   bei Doppelnamen BEIDE auf). Erst danach fallen die uebrigen zu und das Ziel
