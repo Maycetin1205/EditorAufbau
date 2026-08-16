@@ -19,6 +19,7 @@ import { RASTER, parseRasterPos } from '../../core/blocks/rasterLayout'
 import type { Editor } from '../../state/Editor'
 import type { DndState } from './dndState'
 import { zelleAusZeiger } from './rasterDnd'
+import { flaecheVon } from './rasterFlaeche'
 
 // Zeigerweg (px), ab dem aus dem Klick ein Zug wird — trennt Auswahl vom Bewegen.
 const ZUG_SCHWELLE = 4
@@ -58,8 +59,9 @@ export function ziehePosition(
   if (e.button !== 0) return
   if (inTextBearbeitung(e)) return
   const wrapper = e.currentTarget
-  // Der Wrapper ist direktes Grid-Item; sein Elternteil IST die Rasterfläche.
-  const gridEl = wrapper.parentElement
+  // Der Wrapper ist direktes Grid-Item — WELCHES Element ihn layoutet, sagt
+  // `flaecheVon` (im Popup liegt das Gitter im Schatten des Bausteins).
+  const gridEl = flaecheVon(wrapper)
   if (!gridEl) return
   const startX = e.clientX
   const startY = e.clientY

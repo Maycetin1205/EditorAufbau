@@ -42,13 +42,14 @@ import { WEITERE_QUELLEN_PROP } from '../core/data/sourceLinks'
 import { dataSourceStore } from '../state/DataSourceStore'
 import { relationStore } from '../state/RelationStore'
 import { seitenDerMaske } from '../state/pageOps'
+import { istRasterFlaeche } from '../state/rasterOps'
 import {
   resolveChildDirection,
   ROOT_FLOW,
   type FlowDirection,
 } from '../core/blocks/flowLayout'
 import { randPlatzLinks } from '../core/blocks/maskenRand'
-import { rasterFlaecheStyle } from '../core/blocks/rasterLayout'
+import { rasterFlaecheCss } from '../core/blocks/rasterLayout'
 import schriftenCssRaw from '../design/masken-schriften.css?raw'
 import tokensCssRaw from '../design/masken-tokens.css?raw'
 import {
@@ -59,7 +60,7 @@ import {
 import { collectRelations } from './benutzteRelationen'
 import { baueSevariablen } from './sevariablen'
 import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
-import { styleAttr, styleToCss } from './knotenStil'
+import { styleAttr } from './knotenStil'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import {
   escapeHtmlAttr,
@@ -133,10 +134,11 @@ function nodeToHtml(
   // Vorlagen-Bibliothek: nur fuer die Klarnamen-Vorschau (bindungsVorschau).
   sources: readonly DataSource[],
   templateCtx?: TemplateCtx,
-  // true = dieser Knoten liegt auf der Raster-Ebene (direktes Wurzel-Kind der
-  // Hauptseite ODER Kind einer Ansicht — die hat keinen eigenen Kasten und
-  // gibt die Rasterebene durch). Die Rekursion in Container/Popups reicht
-  // false weiter (Fluss); die Popup-Innenfläche folgt in einer späteren Etappe.
+  // true = dieser Knoten liegt in einer ZELLE einer Flaeche. Flaechen sind die
+  // Maskenwurzel, die Ansichten und (seit C2) der Popup-Rumpf; wer eine ist,
+  // beantwortet `istRasterFlaeche` — dieselbe Stelle, die auch Store und
+  // Canvas fragen. Die Rekursion in normale Container reicht false weiter
+  // (Fluss).
   rasterEbene = false,
 ): string {
   const def = getBlockDefinition(node.type)
@@ -145,7 +147,7 @@ function nodeToHtml(
   const pad = '  '.repeat(depth)
   if (templateCtx && node.type === templateCtx.type) {
     if (node.id !== templateCtx.id) return '' // Demo-Karte: nie exportieren
-    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, popupName, sources, undefined)
+    const inner = nodeToHtml(tree, node, parentDirection, depth + 1, popupName, sources, undefined, rasterEbene)
     return `${pad}<template data-ff-template>\n${inner}\n${pad}</template>`
   }
 
@@ -294,11 +296,14 @@ function nodeToHtml(
   const children = node.childIds
     .map((id) => tree[id])
     .filter((c): c is BlockNode => Boolean(c))
-    // Die Kinder einer ANSICHT liegen auf DERSELBEN Rasterebene wie die der
-    // Hauptseite: die Ansicht selbst hat keinen eigenen Kasten
-    // (display:contents), ihre Kinder sind unmittelbar Zellen der
-    // Maskenwurzel. Ein Raster, eine Quelle. Alles andere reicht Fluss weiter.
-    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, sources, childCtx, def.flaechenSeite === true))
+    // Ist dieser Knoten eine FLAECHE, liegen seine Kinder in Zellen: die
+    // Ansicht gibt die Rasterebene der Maskenwurzel durch (sie hat keinen
+    // eigenen Kasten, display:contents), das Popup oeffnet mit seinem Rumpf
+    // eine EIGENE Flaeche (C2). Alles andere reicht Fluss weiter. Gefragt wird
+    // die eine Stelle, die auch `Editor.addBlock` und der Canvas fragen —
+    // wuerde der Export hier eigenstaendig raten, saessen die Bausteine in
+    // SoftEngine woanders als im Editor (Regel 1).
+    .map((c) => nodeToHtml(tree, c, childDirection, depth + 1, popupName, sources, childCtx, istRasterFlaeche(node)))
     .filter((html) => html !== '')
     .join('\n')
   return children === ''
@@ -443,7 +448,7 @@ export function exportMask(
     '/* Grundgeruest + Wurzel-Raster (identisch zum Editor-Canvas, rasterFlaecheStyle) */',
     'html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }',
     'body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--se-fs); line-height: var(--se-lh); color: var(--se-ink); }',
-    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; ${styleToCss(rasterFlaecheStyle())}; padding: ${wurzelPadding}; }`,
+    `.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto; ${rasterFlaecheCss()}; padding: ${wurzelPadding}; }`,
     '</style>',
     '</head>',
     '<body>',

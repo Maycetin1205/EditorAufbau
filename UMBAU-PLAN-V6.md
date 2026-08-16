@@ -91,7 +91,26 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe — Opus-Sitzung 2026-08-13, zweite (N4 + N5):** N5 —
+- **Letzte fertige Etappe — 2026-08-16: C2 (Popup-Inhalt wird Rasterflaeche).**
+  Der Popup-Rumpf ist ein CSS-Grid wie die Maskenwurzel, aus DERSELBEN Quelle
+  (`rasterFlaecheCss` in `core/blocks/rasterLayout`, die auch die `.ff-root`-
+  Regel des Exports schreibt). Drei Stellen zogen zusammen um: `.rumpf`
+  (PopupBlock), `PopupSeite` (Raster-NodeList, Zellziel, Geist im Rumpf) und
+  die Export-Rekursion, die jetzt zentral `istRasterFlaeche(node)` fragt statt
+  `flaechenSeite` zu pruefen. Schema 5 -> 6: Popup-Kinder werden EINMALIG
+  untereinander gestapelt (Registry-Startgroessen), Ansichten bleiben
+  unberuehrt. **Der Baustein „Zeile" ist gestrichen** (Nutzer-Entscheidung):
+  bestehende Zeilen loest `state/migrationenRoh.ts` auf den ROHDATEN auf, die
+  Kinder erben auf einer Flaeche das Zellband der Zeile (nebeneinander, in
+  deren Hoehe) — darunter verschiebt sich nichts. NICHT gebaut: die
+  Pixel-Formel und die 520-px-Mindestbreite aus C2 (beide vom Nutzer
+  abgewaehlt; ein Popup mit 480 bleibt 480). Referenzabzug ABSICHTLICH neu
+  (die zwei `ff-zeile` fallen weg, Popup-Kind bekommt Zellen-Style + `fuellt`),
+  Runtime-Bytes ABSICHTLICH neu (Popup-CSS dazu, `ff-zeile` raus — nachgeprueft,
+  dass kein Editor-Code mitkam). **Nicht selbst pruefbar:** ob sich in einem
+  480er Fenster mit 24 Spalten brauchbar bauen laesst, und ob SoftEngine die
+  Popup-Kinder auf dieselben Pixel setzt wie der Editor.
+  Davor: **Opus-Sitzung 2026-08-13, zweite (N4 + N5):** N5 —
   ein BILD-Baustein in der Bibliothek (`blocks/bild/`). Der Bauer waehlt die
   Datei im Inspector (neue Property-Art `kind: 'bild'`), sie wird still auf
   1024 px verkleinert und reist als eingebetteter Daten-URI mit — eine Maske

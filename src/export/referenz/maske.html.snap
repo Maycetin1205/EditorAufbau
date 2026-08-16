@@ -88,10 +88,8 @@ body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--s
 </head>
 <body>
   <div class="ff-root">
-    <ff-zeile fuellt style="grid-column:1 / span 24;grid-row:1 / span 3;min-width:0;min-height:0">
-      <ff-datum></ff-datum>
-      <ff-button label="Nachfa&#xDF; &#xF6;ffnen &#x2014; &#xE4;tsch" data-ff-aktionen="{&quot;onClick&quot;:[{&quot;type&quot;:&quot;POPUP_OPEN&quot;,&quot;resultKey&quot;:&quot;&quot;,&quot;popup&quot;:&quot;Neue Behandlung f&#xFC;r Bello&quot;},{&quot;type&quot;:&quot;START_TOOL&quot;,&quot;resultKey&quot;:&quot;&quot;,&quot;toolNr&quot;:&quot;42&quot;,&quot;toolParams&quot;:[&quot;{PINDEX}&quot;,&quot;fest &#xE4;&quot;]}]}"></ff-button>
-    </ff-zeile>
+    <ff-datum fuellt style="grid-column:1 / span 9;grid-row:1 / span 3;min-width:0;min-height:0"></ff-datum>
+    <ff-button label="Nachfa&#xDF; &#xF6;ffnen &#x2014; &#xE4;tsch" data-ff-aktionen="{&quot;onClick&quot;:[{&quot;type&quot;:&quot;POPUP_OPEN&quot;,&quot;resultKey&quot;:&quot;&quot;,&quot;popup&quot;:&quot;Neue Behandlung f&#xFC;r Bello&quot;},{&quot;type&quot;:&quot;START_TOOL&quot;,&quot;resultKey&quot;:&quot;&quot;,&quot;toolNr&quot;:&quot;42&quot;,&quot;toolParams&quot;:[&quot;{PINDEX}&quot;,&quot;fest &#xE4;&quot;]}]}" fuellt style="grid-column:10 / span 4;grid-row:1 / span 3;min-width:0;min-height:0"></ff-button>
     <ff-kanban source="q-termine" statusfield="20_10" data-ff-aktionen="{&quot;onCardDrop&quot;:[{&quot;type&quot;:&quot;RELATION&quot;,&quot;resultKey&quot;:&quot;&quot;,&quot;relationId&quot;:&quot;rel-put&quot;,&quot;params&quot;:[{&quot;source&quot;:&quot;context&quot;,&quot;value&quot;:&quot;PINDEX&quot;},{&quot;source&quot;:&quot;fixed&quot;,&quot;value&quot;:&quot;&quot;},{&quot;source&quot;:&quot;data_field&quot;,&quot;value&quot;:&quot;30_10&quot;,&quot;dataSourceId&quot;:&quot;q-termine&quot;}],&quot;extraParams&quot;:[{&quot;source&quot;:&quot;context&quot;,&quot;value&quot;:&quot;VALUE&quot;}]}]}" data-ff-id="board" fuellt style="grid-column:1 / span 24;grid-row:4 / span 20;min-width:0;min-height:0">
       <ff-kanban-spalte heading="Offen" style="flex-grow:1;flex-basis:0;min-width:0">
         <template data-ff-template>
@@ -111,9 +109,7 @@ body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--s
     <ff-text text="&#xDC;bersicht &#x2014; Sprechstunde &#xE0; la carte" fuellt style="grid-column:1 / span 12;grid-row:36 / span 2;min-width:0;min-height:0"></ff-text>
     <ff-text farbe="gedaempft" text="Kundenname" source="q-adressen" textfield="10_30" fuellt style="grid-column:13 / span 12;grid-row:36 / span 2;min-width:0;min-height:0"></ff-text>
     <ff-popup name="Neue Behandlung f&#xFC;r Bello" breite="480" hoehe="320">
-      <ff-zeile>
-        <ff-datum></ff-datum>
-      </ff-zeile>
+      <ff-datum fuellt style="grid-column:1 / span 9;grid-row:1 / span 2;min-width:0;min-height:0"></ff-datum>
     </ff-popup>
     <ff-ansicht name="Terminkalender" hidden>
       <ff-text text="Wochen&#xFC;bersicht" fuellt style="grid-column:3 / span 10;grid-row:2 / span 2;min-width:0;min-height:0"></ff-text>

@@ -1,10 +1,11 @@
 // CanvasNode
-// Rekursive Knoten-Darstellung der Arbeitsfläche. Zwei Welten (V1-Schnitt,
-// s. rasterLayout): OBERSTE EBENE (raster=true) liegt im CSS-Grid und wird per
-// POINTER bewegt (rasterMove) — KEIN HTML5-draggable, das den Pointer-Zug
-// verschlucken würde. INNERHALB von Containern (raster=false, Spalte/Karte/
-// Zeile) gilt weiter der Fluss mit HTML5-Drag: umsortieren, in Bereiche hinein/
-// heraus, Randzone = davor/dahinter, Einfüge-Linie als Vorschau — unverändert.
+// Rekursive Knoten-Darstellung der Arbeitsfläche. Zwei Welten (s.
+// rasterLayout): auf einer FLÄCHE (raster=true — Hauptseite, Ansicht,
+// Popup-Rumpf) liegt der Baustein im CSS-Grid und wird per POINTER bewegt
+// (rasterMove) — KEIN HTML5-draggable, das den Pointer-Zug verschlucken würde.
+// INNERHALB von Containern (raster=false, Spalte/Karte) gilt weiter der Fluss
+// mit HTML5-Drag: umsortieren, in Bereiche hinein/heraus, Randzone =
+// davor/dahinter, Einfüge-Linie als Vorschau — unverändert.
 
 import { Fragment, type DragEvent } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'

@@ -456,8 +456,8 @@ Nutzer-Entscheidung anfassen:**
 ## Wichtige Stellen
 
 - Store: `src/state/Editor.ts` (nur Zustand + öffentliche Methoden;
-  Fächer daneben: treeOps/history/persistence/migrations/templateRules/
-  pageOps/rasterOps/selectionOps/quellenOps). Die eine Editor-Instanz
+  Fächer daneben: treeOps/history/persistence/migrations + migrationenRoh/
+  templateRules/pageOps/rasterOps/selectionOps/quellenOps). Die eine Editor-Instanz
   entsteht in `src/app/providers.tsx` und reist über EditorProvider/
   EditorContext; die Bibliotheken (DataSourceStore/RelationStore) sind
   dagegen Modul-Singletons — zwei Bauarten, ehrlich benannt (Befund
@@ -471,6 +471,14 @@ Nutzer-Entscheidung anfassen:**
   „Fläche − Rand" — das Popup komponiert den `DialogRahmen`, `POPUP_RAND`
   ist gelöscht (bis dahin waren es zwei gleiche 24er, und wer eine änderte,
   änderte nur das halbe Fenster).
+  **Seit C2 (2026-08-16):** `istRasterFlaeche` (`state/rasterOps.ts`) ist die
+  EINE Frage „liegen die Kinder hier in Zellen?" — Store, Canvas UND Export
+  lesen sie, also auch der Popup-Rumpf, der bis dahin ein Fluss war.
+  `rasterFlaecheCss()` (`core/blocks/rasterLayout.ts`) ist die EINE Quelle des
+  Gitter-CSS für die Maskenwurzel (Export) und den Popup-Rumpf (Baustein).
+  **Der Baustein „Zeile" ist ersatzlos gestrichen** (Nutzer-Entscheidung):
+  Nebeneinander macht die Zelle. Bestehende Zeilen löst `migrationenRoh.ts`
+  beim Laden auf — nicht wieder einbauen.
 - Registry-Konzepte: `src/core/blocks/` · Bausteine: `src/blocks/` ·
   Aktions-/Quellen-Modell: `src/core/data/`
 - Export: `src/export/exportMask.ts` + `validator.ts` + `preflight.ts` ·

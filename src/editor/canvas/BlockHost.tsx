@@ -6,11 +6,11 @@
 // ZWEI Lagen, je nachdem wo der Block hängt (bis 2026-08-10 nannte dieser
 // Kopf nur die erste, obwohl die Datei seit dem Raster `rasterSpecOf`
 // importiert):
-//   - im Fluss seines Containers, mit natürlicher Größe — Popup-Inhalt,
-//     Zeile, Gruppe, Karte, Kanban;
-//   - auf der Rasterfläche der obersten Ebene, mit Zellen aus rasterLayout.
-// Welche der beiden gilt, entscheidet heute die Elternschaft. Eine zentrale
-// Abfrage dafür gibt es noch nicht — sie ist Etappe C2.
+//   - im Fluss seines Containers, mit natürlicher Größe — Karte, Kanban;
+//   - auf einer Rasterfläche, mit Zellen aus rasterLayout.
+// WELCHE der beiden gilt, entscheidet `istRasterFlaeche` (state/rasterOps) am
+// Elternteil — dieselbe Stelle für Store, Canvas und Export. Seit C2
+// (2026-08-16) zählt der Popup-Rumpf zu den Rasterflächen.
 //
 // Datenfluss:
 //   - props werden als DOM-Properties gesetzt (Lit-Setter greifen).

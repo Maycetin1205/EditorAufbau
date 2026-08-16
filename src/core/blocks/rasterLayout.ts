@@ -3,15 +3,11 @@
 // das Gegenstück zu flowLayout (Regel 1: Canvas UND Export leiten aus
 // DEMSELBEN Mapping ab, damit Editor und SoftEngine-Maske identisch sitzen).
 //
-// Geltungsbereich HEUTE: NUR die oberste Ebene der Maske (Kinder der Wurzel).
-// INNERHALB von Containern (Kanban-Board → Spalten → Karten, Karte, Zeile)
-// bleibt flowLayout unverändert bestehen.
-//
-// Bis 2026-08-10 stand hier „und die Popup-Innenfläche". Das war falsch und
-// beschrieb eine Absicht als Zustand: PopupSeite.tsx kennt kein Raster, und
-// PopupBlock rendert seine Kinder als schlichten `<slot>` im Fluss. Popup als
-// echte Rasterfläche ist Etappe C2 des Umbaus und noch nicht gebaut. Wer das
-// hier liest, bevor C2 fertig ist, darf sich NICHT darauf verlassen.
+// Geltungsbereich: jede FLÄCHE der Maske — die oberste Ebene (Kinder der
+// Wurzel), die Ansichten und seit C2 (2026-08-16) auch der Popup-Rumpf.
+// Welche Knoten das sind, beantwortet `istRasterFlaeche` (state/rasterOps) —
+// Store, Canvas und Export fragen dieselbe Stelle. INNERHALB von Containern
+// (Kanban-Board → Spalten → Karten, Karte) bleibt flowLayout bestehen.
 //
 // Modell: reines CSS-Grid mit fester Spaltenzahl. Der Block liegt an ganzen
 // Zellen — rasterX/rasterY = Position (0-basiert), rasterW/rasterH =
@@ -24,6 +20,7 @@
 //   rasterW, rasterH  ganze Zellen >= 1 (Breite/Höhe in Zellen)
 
 import { propertySichtbar, type PropertyVisibilityCondition } from './PropertyDescription'
+import { styleToCss } from './styleCss'
 
 // Feinwerte (kalibrierbar nach Sichtprobe — im Bericht nennen):
 //   spalten  = Anzahl der Rasterspalten.
@@ -171,6 +168,16 @@ export function rasterFlaecheStyle(): Record<string, string | number> {
     // (Für die Spalten braucht es kein justify: 1fr füllt die Breite bereits voll.)
     alignContent: 'start',
   }
+}
+
+// Dieselbe Rasterflaeche als CSS-TEXT — fuer die zwei Stellen, die kein
+// Style-Objekt setzen koennen, sondern ein Stylesheet schreiben: die
+// `.ff-root`-Regel des Exports und der Popup-Rumpf (PopupBlock, C2). Beide
+// bekommen damit Zeichen fuer Zeichen dasselbe Gitter wie der Editor-Canvas
+// (Regel 1) — zwei Schreibweisen derselben Zahlen wuerden auseinanderdriften,
+// und niemand saehe es, bis die Maske in SoftEngine anders aussieht.
+export function rasterFlaecheCss(): string {
+  return styleToCss(rasterFlaecheStyle())
 }
 
 // CSS des Grid-ITEMS (im Editor der CanvasNode-Wrapper, im Export das

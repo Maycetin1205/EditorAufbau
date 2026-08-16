@@ -18,15 +18,8 @@ import {
 } from '../core/blocks/flowLayout'
 import { istRandBaustein, randItemStyle } from '../core/blocks/maskenRand'
 import { parseRasterPos, rasterItemStyle } from '../core/blocks/rasterLayout'
+import { styleToCss } from '../core/blocks/styleCss'
 import { escapeHtmlAttr } from './serializer'
-
-// camelCase-Style-Objekt → CSS-Deklarationen (kebab-case). EINE Stelle für
-// das Block-style-Attribut UND die Wurzel-Grid-Regel (exportMask).
-export function styleToCss(style: Record<string, string | number>): string {
-  return Object.entries(style)
-    .map(([k, v]) => `${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}:${v}`)
-    .join(';')
-}
 
 // Layout-Style eines Blocks als HTML-style-Attribut — DIESELBE Quelle wie der
 // Canvas-Wrapper (WYSIWYG). Auf der Rasterebene (direkte Wurzel-Kinder)

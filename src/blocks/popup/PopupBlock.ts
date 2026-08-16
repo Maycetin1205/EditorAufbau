@@ -17,7 +17,8 @@
 // Abdunklung, Fenster, Kopf und X kommen aus dem geteilten DialogRahmen
 // (shared/DialogRahmen) — dieselbe Form wie das Nachschlage-Fenster, eine
 // Stelle für beide. Hier bleibt nur, was das Popup ausmacht: der
-// Seiten-Zustand (offen/zu), der editierbare Titel und der Rumpf im Fluss.
+// Seiten-Zustand (offen/zu), der editierbare Titel und der Rumpf — seit C2
+// (2026-08-16) eine echte Rasterflaeche wie die Maskenwurzel.
 //
 // Vertrag des Dialogkopf-X (C1): in der MASKE schließt es dieses Popup; im
 // EDITOR tut der Baustein nichts (er kennt den Editor nicht, Regel 2) und
@@ -29,11 +30,12 @@
 // Export-Popup (data-ff-editor erzwingt nur die Sichtbarkeit). Aussehen
 // ausschließlich aus Masken-Tokens; strukturelle Größen als Literale.
 
-import { css, html, type TemplateResult } from 'lit'
+import { css, html, unsafeCSS, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import { ROOT_TYPE } from '../../core/blocks/BlockData'
+import { rasterFlaecheCss } from '../../core/blocks/rasterLayout'
 // Definiert das Element ff-dialog-rahmen (Side-Effect-Import). Das
 // Schließen-Ereignis steht unten als Literal im Template — Lit erlaubt im
 // @-Binding keinen dynamischen Namen; der Name ist DIALOG_SCHLIESSEN_EVENT
@@ -91,20 +93,25 @@ export class PopupBlock extends BasicBlock {
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      /* Der Rumpf fließt wie die Hauptseite: Spalte, linksbündig. Er ist
-         der ALLEINIGE Scroll-Besitzer des Popup-Inhalts (der Rahmen steht
-         auf inhalt-fest); height:100% füllt den Inhaltsbereich des Rahmens,
-         damit overflow hier greift. */
+      /* Der Rumpf IST eine Rasterflaeche — dasselbe Gitter wie die
+         Maskenwurzel, aus DERSELBEN Quelle (rasterFlaecheCss, C2
+         2026-08-16). Bis dahin war er eine Flex-Spalte: im Popup lag alles
+         zwangsweise untereinander, und Nebeneinander ging nur ueber den
+         Baustein „Zeile" (mit diesem Umbau gestrichen).
+         Er ist der ALLEINIGE Scroll-Besitzer des Popup-Inhalts (der Rahmen
+         steht auf inhalt-fest); height:100% füllt den Inhaltsbereich des
+         Rahmens, damit overflow hier greift. */
       .rumpf {
         box-sizing: border-box;
         height: 100%;
         overflow: auto;
         padding: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+        ${unsafeCSS(rasterFlaecheCss())};
       }
+      /* display:contents am slot ist die Bedingung dafuer, dass die
+         geslotteten Bausteine UNMITTELBAR Zellen des Rumpfs werden — mit
+         einem eigenen Kasten dazwischen laege der ganze Inhalt in EINER
+         Zelle. */
       .rumpf slot { display: contents; }
     `,
   ]

@@ -31,24 +31,29 @@ import {
   DEMO_CLEANUP_BEFORE_SCHEMA,
   migrateFlatBlocks,
   migrateFlowToRaster,
-  migrateKanbanVorlage,
-  migrateKnopfAusTabelle,
+  migratePopupInhaltAufRaster,
   migrateRasterBreitenReparatur,
   migrateRasterHoehenReset,
   migrateRootKanbanToViewportFill,
   putzeAlteKartenDemos,
   weggefalleneProps,
 } from './migrations'
+import {
+  migrateKanbanVorlage,
+  migrateKnopfAusTabelle,
+  migrateZeileAufloesen,
+} from './migrationenRoh'
 import { topologieProbleme } from './topologie'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
 // Baut aus rohen (evtl. kaputten) Daten einen sauberen Baum: läuft von der
 // Wurzel über childIds, übernimmt nur Knoten mit bekanntem Typ, normalisiert
 // Props, repariert parentId und verwirft Waisen/Zyklen.
-// Davor laufen die zwei Reparaturen, die auf den ROHDATEN arbeiten müssen,
-// weil sie die Eltern-Kind-Kette selbst umhängen (migrations.ts):
-// migrateKanbanVorlage (Vorlagen-Kasten) und migrateKnopfAusTabelle (der
-// zurückgenommene Knöpfe-Platz in der Tabelle).
+// Davor laufen die drei Reparaturen, die auf den ROHDATEN arbeiten müssen,
+// weil sie die Eltern-Kind-Kette selbst umhängen (migrationenRoh.ts):
+// migrateKanbanVorlage (Vorlagen-Kasten), migrateKnopfAusTabelle (der
+// zurückgenommene Knöpfe-Platz in der Tabelle) und migrateZeileAufloesen
+// (der mit C2 gestrichene Baustein „Zeile").
 // onDropType: meldet jeden verworfenen UNBEKANNTEN Typ (z. B. die 2026-07-14
 // abgeschafften Bausteine Text/Bereich/Infobox/Chip/Eingabefeld in alten
 // Speicherständen) — Nutzer-Regel: Verluste beim Laden passieren NIE still.
@@ -71,7 +76,12 @@ export function sanitizeTree(
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   const onDropType = meldungen?.typVerworfen
-  for (const id of [...migrateKanbanVorlage(src), ...migrateKnopfAusTabelle(src)]) {
+  const rohEntfernt = [
+    ...migrateKanbanVorlage(src),
+    ...migrateKnopfAusTabelle(src),
+    ...migrateZeileAufloesen(src),
+  ]
+  for (const id of rohEntfernt) {
     meldungen?.absichtlichEntfernt?.(id)
   }
 
@@ -188,6 +198,10 @@ export function baumAusRohdaten(parsed: {
   // Migration) auf die neuen, engen Registry-Starthoehen zurueck — jetzt, wo
   // der Baustein seine Zelle fuellt, liegt der Rahmen damit eng am Inhalt.
   if (schemaVersion < 5) schemaAdvanced = migrateRasterHoehenReset(tree) || schemaAdvanced
+  // Schema 6 (C2): der Popup-Rumpf ist eine Rasterflaeche. Sein Inhalt lag bis
+  // hierher im Fluss und bekommt EINMALIG Zellen — untereinander in der
+  // sichtbaren Reihenfolge, mit den Registry-Startgroessen.
+  if (schemaVersion < 6) schemaAdvanced = migratePopupInhaltAufRaster(tree) || schemaAdvanced
 
   const selectedId =
     typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID

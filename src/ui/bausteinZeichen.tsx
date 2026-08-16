@@ -46,16 +46,9 @@ function rahmen(kinder: ReactElement[], { size = 16, className }: Props): ReactE
   )
 }
 
-export function ZeichenZeile(p: Props): ReactElement {
-  return rahmen([
-    <rect key="g" x="2.4" y="8" width="19.2" height="8" rx="2" {...U} fill={PAPIER} />,
-    <rect key="z" x="2.4" y="8" width="6.4" height="8" rx="2" fill={KORALLE_ZART} stroke="none" />,
-    <rect key="u" x="2.4" y="8" width="19.2" height="8" rx="2" {...U} />,
-    <line key="t1" x1="8.8" y1="8" x2="8.8" y2="16" {...U} />,
-    <line key="t2" x1="15.2" y1="8" x2="15.2" y2="16" {...U} />,
-    <rect key="p" x="4.2" y="10.6" width="2.8" height="2.8" fill={KORALLE} stroke="none" />,
-  ], p)
-}
+// Hier stand bis C2 (2026-08-16) `ZeichenZeile` — drei Faecher nebeneinander.
+// Der Baustein „Zeile" ist mit dem Popup-Raster entfallen (Nebeneinander macht
+// jetzt die Zelle), und ein Symbol ohne Baustein ist toter Code.
 
 export function ZeichenTrenner(p: Props): ReactElement {
   return rahmen([

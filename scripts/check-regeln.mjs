@@ -70,6 +70,12 @@ const TYP_AUSNAHMEN = [
     grund: 'Migrationen MUESSEN alte Typnamen kennen -- das ist ihre Aufgabe: ' +
       'gespeicherte Staende von frueher auf die heutige Form heben.',
   },
+  {
+    pfad: 'src/state/migrationenRoh.ts',
+    grund: 'Dieselbe Aufgabe wie nebenan, nur auf den Rohdaten (C2, 2026-08-16 ' +
+      'aus migrations.ts herausgeloest): sie haengen die Eltern-Kind-Kette um ' +
+      'und muessen dafuer die Typen kennen, die verschwinden.',
+  },
 ]
 
 for (const pfad of quellen) {

@@ -18,11 +18,13 @@ import {
   RASTER,
   rasterSpecOf,
 } from '../core/blocks/rasterLayout'
-import { istFlaechenSeite, istSeitenBaustein, kinderImFluss } from './pageOps'
+import { istSeitenBaustein, kinderImFluss } from './pageOps'
 import { collectSubtree } from './treeOps'
 
 // Rasterfläche = die oberste Ebene (Wurzel) oder eine Seite (Ansicht, Popup):
-// dort liegen die Blöcke im Raster, nicht im Fluss.
+// dort liegen die Blöcke im Raster, nicht im Fluss. DIE eine Stelle, die das
+// entscheidet — Store, Canvas UND Export fragen sie, damit ein Baustein in
+// SoftEngine dort sitzt, wo er im Editor lag (Regel 1).
 export function istRasterFlaeche(node: BlockNode): boolean {
   return node.id === ROOT_ID || istSeitenBaustein(node)
 }
@@ -48,18 +50,19 @@ export function freieZeileAuf(tree: BlockTree, parentId: string): number {
 // dieselbe Rechnung wie ein neuer Baustein aus der Bibliothek (freieZeileAuf in
 // addBlock); Spalte, Breite und Hoehe behaelt sie.
 //
-// NUR auf einer FLÄCHE: der Hauptseite (Wurzel) oder einer Ansicht — beide
-// zeigen dasselbe Raster, also gilt dort dieselbe Rechnung (N1, 2026-08-12).
-// Die Popup-Innenfläche ist heute Fluss, kein Raster (s. Kopf von
-// rasterLayout) — dort gibt es keine Position zu wählen; ihre Platzierung
-// entscheidet der Popup-Rastervertrag (Plan C3.1).
+// NUR auf einer RASTERFLÄCHE: Hauptseite (Wurzel), Ansicht oder Popup-Rumpf —
+// alle drei zeigen dasselbe Raster, also gilt dort dieselbe Rechnung. In einem
+// Container (Fluss) gibt es keine Position zu wählen, dort bleibt die Kopie
+// unverändert.
+// Bis C2 (2026-08-16) war das Popup ausgenommen, weil sein Inhalt im Fluss
+// lag — eine Kopie landete dort pixelgleich auf dem Original.
 export function freiePositionFuerKopie(
   tree: BlockTree,
   parentId: string,
   kopie: BlockNode,
 ): BlockNode {
   const eltern = tree[parentId]
-  if (parentId !== ROOT_ID && !(eltern && istFlaechenSeite(eltern))) return kopie
+  if (!eltern || !istRasterFlaeche(eltern)) return kopie
   const pos = parseRasterPos(kopie.props)
   const y = freieZeileAuf(tree, parentId)
   if (y === pos.y) return kopie

@@ -2,6 +2,11 @@
 // Verhaltensgleich herausgezogen aus Editor.ts.
 // Jede Migration ist eine dokumentierte Einbahnstraße: sie läuft beim Laden
 // und macht aus Altbestand den heutigen Vertrag — Verluste passieren nie still.
+//
+// Hier stehen die Migrationen, die den fertigen BAUM umformen — die
+// gestuften (Schema 1..6) und die zwei ungestuften Putzer. Die drei, die auf
+// den ROHDATEN laufen muessen, weil sie die Eltern-Kind-Kette umhaengen,
+// wohnen nebenan in migrationenRoh.
 
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
@@ -11,95 +16,10 @@ import {
   rasterSpecOf,
   stapeleUntereinander,
 } from '../core/blocks/rasterLayout'
+import { istSeitenBaustein, istFlaechenSeite } from './pageOps'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
-export const CURRENT_SCHEMA_VERSION = 5
-
-// Migration alter Stände: der Vorlagen-Kasten (kanban-vorlage) ist
-// abgeschafft — seine Karten wandern an den ANFANG der ersten Spalte des
-// Boards (die erste Karte des Boards ist jetzt die Musterkarte), der Kasten
-// selbst verschwindet. Ohne den Umzug würde sanitizeTree den unbekannten
-// Typ SAMT der gestalteten Musterkarte verwerfen. Board ohne Spalte
-// (degeneriert): die Karten entfallen mit dem Kasten.
-// Liefert die ids, die diese Migration ABSICHTLICH aus dem Baum genommen hat
-// (A4, 2026-08-10). Vorher gab sie nichts zurueck — und die Verlust-Kontrolle
-// (heute nur noch am DATEI-Weg, maskenDatei) konnte gewollte Aenderung nicht
-// von Beschaedigung unterscheiden: sie sah einen Knoten weniger als in den
-// Rohdaten und lehnte eine voellig gesunde alte Maskendatei ab. Absicht muss
-// benannt sein, sonst ist sie von Schaden nicht zu trennen (dieselbe Lehre
-// wie bei `putzeAlteKartenDemos`).
-export function migrateKanbanVorlage(
-  src: Record<string, { type?: unknown; childIds?: unknown }>,
-): string[] {
-  const entfernt: string[] = []
-  for (const [id, node] of Object.entries(src)) {
-    if (!node || typeof node !== 'object' || node.type !== 'kanban-vorlage') continue
-    const parent = Object.values(src).find(
-      (p) => p && typeof p === 'object' && Array.isArray(p.childIds) && p.childIds.includes(id),
-    )
-    if (!parent || !Array.isArray(parent.childIds)) continue
-    const spalte = parent.childIds
-      .map((cid) => (typeof cid === 'string' ? src[cid] : undefined))
-      .find((n) => n && typeof n === 'object' && n.type === 'kanban-spalte')
-    const cards = Array.isArray(node.childIds) ? node.childIds : []
-    if (spalte) {
-      spalte.childIds = [...cards, ...(Array.isArray(spalte.childIds) ? spalte.childIds : [])]
-    } else {
-      // Board ohne Spalte (degeneriert): die Karten entfallen MIT dem Kasten —
-      // es gibt keinen Ort, an den sie koennten. Auch das ist Absicht und wird
-      // darum genannt.
-      for (const cid of cards) if (typeof cid === 'string') entfernt.push(cid)
-    }
-    parent.childIds = parent.childIds.filter((cid) => cid !== id)
-    entfernt.push(id)
-  }
-  return entfernt
-}
-
-// Aufraeum-Migration 2026-08-06: KNOEPFE IN TABELLEN wieder heraus.
-//
-// Der Tabellen-Baustein nahm rund 40 Minuten lang Schaltflaechen als Kinder
-// auf (Knoepfe-Platz in einer Tafel-Kopfzeile, Commits 99b30ce + 9a5f954).
-// Die Faehigkeit ist zurueckgenommen, weil sie WYSIWYG brach — die
-// Begruendung steht im Kopf von TabelleBlock. Ohne diesen Griff bliebe ein in
-// dieser Zeit gesetzter Knopf als UNSICHTBARER Waise im Speicher liegen: der
-// Editor zeichnet ihn nicht mehr (die Tabelle ist kein Container), der Export
-// laesst ihn weg, und niemand kaeme mehr an ihn heran, um ihn zu loeschen.
-// Nutzer-Ansage 2026-08-06: „restlos aus dem code raus, also kein Rest von
-// ,button in tabelle' umbau."
-//
-// Bewusst OHNE Schema-Stufe, anders als die nummerierten Migrationen weiter
-// unten: die betroffenen Staende tragen bereits die aktuelle Schemaversion
-// (die Faehigkeit kam NACH Schema 5), eine Stufe wuerde sie also gar nicht
-// erwischen. Und CURRENT_SCHEMA_VERSION hochzusetzen haette eine boese
-// Nebenwirkung — loadFromStorage leitet daraus `putzeDemos` ab und wuerde den
-// Karten-Demotext-Putzer ueber jeden Stand laufen lassen, der heute auf 5
-// steht (genau der Datenverlust, der am 2026-08-06 abgestellt wurde).
-//
-// ACHTUNG beim Zurueckholen des Knoepfe-Platzes: diese Migration muss dann
-// MIT WEG, sonst frisst sie die neuen Knoepfe bei jedem Laden. Sie greift
-// eng — nur Kinder vom Typ 'button' unter einem Knoten vom Typ 'tabelle'.
-// Laeuft auf den ROHDATEN vor sanitizeTree (wie migrateKanbanVorlage): die
-// gestrichenen ids sind danach von der Wurzel aus unerreichbar und kommen
-// gar nicht erst in den Baum.
-// Liefert die entfernten Knopf-ids — Begruendung wie bei
-// `migrateKanbanVorlage` (A4).
-export function migrateKnopfAusTabelle(
-  src: Record<string, { type?: unknown; childIds?: unknown }>,
-): string[] {
-  const entfernt: string[] = []
-  for (const node of Object.values(src)) {
-    if (!node || typeof node !== 'object' || node.type !== 'tabelle') continue
-    if (!Array.isArray(node.childIds)) continue
-    node.childIds = node.childIds.filter((cid) => {
-      const kind = typeof cid === 'string' ? src[cid] : undefined
-      const istKnopf = Boolean(kind) && typeof kind === 'object' && kind.type === 'button'
-      if (istKnopf && typeof cid === 'string') entfernt.push(cid)
-      return !istKnopf
-    })
-  }
-  return entfernt
-}
+export const CURRENT_SCHEMA_VERSION = 6
 
 // Migration 2026-07-16 (Nutzer-Beschwerde): Karten trugen bis zum Paket
 // „Stellen starten leer" erfundene Demo-Werte ab Werk — in alten
@@ -360,6 +280,39 @@ export function migrateRasterBreitenReparatur(tree: BlockTree): boolean {
 // kann keine neue Ueberlappung erzeugen, darum ist KEIN Neu-Stapeln noetig und
 // bewusst gesetzte Positionen/Breiten bleiben unberuehrt (idempotent, gutartig
 // bei Mehrfachlauf). Breiten hat Schema 4 bereits geheilt.
+// Schema 6 (C2, 2026-08-16): der Popup-Rumpf wird eine Rasterflaeche. Bis
+// hierher lag sein Inhalt im Fluss — untereinander, Reihenfolge = `childIds`,
+// die Rasterprops der Kinder waren fuer den Bediener UNSICHTBAR und daher
+// beliebig (`Editor.addBlock` vergab sie laengst, gezeigt hat sie niemand).
+// Genau deshalb werden sie hier NICHT erhalten, sondern neu vergeben: die
+// Kinder werden in ihrer sichtbaren Reihenfolge untereinander gestapelt, jedes
+// mit seiner Registry-Startgroesse. Der Bediener sieht sein Popup danach so
+// wieder, wie er es verlassen hat, und kann ab sofort frei platzieren.
+//
+// NUR FENSTER-Seiten (Popup). Eine FLAECHEN-Seite (Ansicht) hat ihre Kinder
+// seit N1 im Raster der Maskenwurzel — sie hier neu zu stapeln, wuerde eine
+// bewusst gebaute Ansicht zerlegen.
+export function migratePopupInhaltAufRaster(tree: BlockTree): boolean {
+  let migriert = false
+  for (const knoten of Object.values(tree)) {
+    if (!istSeitenBaustein(knoten) || istFlaechenSeite(knoten)) continue
+    const kinder = knoten.childIds
+      .map((id) => tree[id])
+      .filter((n): n is BlockNode => Boolean(n))
+    if (kinder.length === 0) continue
+    const positionen = stapeleUntereinander(kinder.map((n) => {
+      const spec = rasterSpecOf(getBlockDefinition(n.type), n.props)
+      return { w: spec.startW, h: spec.startH }
+    }))
+    kinder.forEach((n, i) => {
+      const p = positionen[i]
+      n.props = { ...n.props, rasterX: p.x, rasterY: p.y, rasterW: p.w, rasterH: p.h }
+    })
+    migriert = true
+  }
+  return migriert
+}
+
 export function migrateRasterHoehenReset(tree: BlockTree): boolean {
   let migrated = false
   for (const flaecheId of rasterFlaechenIds(tree)) {

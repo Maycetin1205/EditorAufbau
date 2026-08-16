@@ -22,9 +22,10 @@ import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/button/ButtonBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/tabelle/TabelleBlock'
+import '../blocks/popup/PopupBlock'
 import { Editor } from './Editor'
 import { CURRENT_SCHEMA_VERSION, DEMO_CLEANUP_BEFORE_SCHEMA } from './migrations'
-import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
+import { registerTestBlocks, TEST_BLOCK, TEST_BOX } from '../test/testBlocks'
 
 registerTestBlocks()
 
@@ -320,5 +321,103 @@ describe('Migration (altes Flach-Format)', () => {
     expect(ed.getNode('alt1')?.parentId).toBe(ed.rootId)
     expect(ed.getNode('alt1')?.props.layout).toBeUndefined()
     expect(ed.getNode('alt2')).toBeUndefined()
+  })
+})
+
+// C2 (2026-08-16): der Popup-Rumpf wird eine Rasterflaeche, und der Baustein
+// „Zeile" entfaellt. Beide Migrationen zusammen entscheiden, ob der Bediener
+// seine Maske nach dem Schema-Sprung wiedererkennt.
+describe('Migration (C2: Popup-Raster, Zeile aufgeloest)', () => {
+  it('loest eine Zeile auf der Hauptflaeche auf — die Kinder erben ihr Zellband', () => {
+    const ed = load({
+      schemaVersion: 5,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z', 'tr'] },
+        z: { id: 'z', type: 'zeile', props: { rasterX: 2, rasterY: 4, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['ff', 'btn'] },
+        ff: { id: 'ff', type: 'formfeld', props: {}, parentId: 'z', childIds: [] },
+        btn: { id: 'btn', type: 'button', props: {}, parentId: 'z', childIds: [] },
+        tr: { id: 'tr', type: 'trenner', props: { rasterX: 0, rasterY: 7, rasterW: 24, rasterH: 1 }, parentId: 'root', childIds: [] },
+      },
+      selectedId: null,
+    })
+    // Die Zeile ist weg, ihre Kinder stehen an ihrer Stelle in der Reihenfolge.
+    expect(ed.getNode('z')).toBeUndefined()
+    expect(ed.getNode('root')?.childIds).toEqual(['ff', 'btn', 'tr'])
+    // Nebeneinander ab der Spalte der Zeile, je mit Registry-Startbreite
+    // (formfeld 6, button 4), in der Hoehe der Zeile.
+    expect(ed.getNode('ff')?.props).toMatchObject({ rasterX: 2, rasterY: 4, rasterW: 6, rasterH: 3 })
+    expect(ed.getNode('btn')?.props).toMatchObject({ rasterX: 8, rasterY: 4, rasterW: 4, rasterH: 3 })
+    // Was UNTER der Zeile lag, bleibt exakt stehen — die Aufloesung darf die
+    // uebrige Maske nicht verschieben.
+    expect(ed.getNode('tr')?.props).toMatchObject({ rasterX: 0, rasterY: 7, rasterH: 1 })
+  })
+
+  it('loest eine Zeile IM FLUSS auf, ohne Zellen zu erfinden', () => {
+    const ed = load({
+      schemaVersion: 5,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['box'] },
+        box: { id: 'box', type: TEST_BOX, props: { rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 4 }, parentId: 'root', childIds: ['a', 'z', 'b'] },
+        a: { id: 'a', type: TEST_BLOCK, props: {}, parentId: 'box', childIds: [] },
+        z: { id: 'z', type: 'zeile', props: { rasterH: 3 }, parentId: 'box', childIds: ['c'] },
+        c: { id: 'c', type: 'formfeld', props: {}, parentId: 'box', childIds: [] },
+        b: { id: 'b', type: TEST_BLOCK, props: {}, parentId: 'box', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('box')?.childIds).toEqual(['a', 'c', 'b'])
+    // Ein Container ist keine Flaeche: `c` liegt im Fluss und behaelt die
+    // neutralen Raster-Standardwerte. Haette die Migration ihm das Band der
+    // Zeile gegeben, stuende hier deren 3.
+    expect(ed.getNode('c')?.props.rasterH).toBe(1)
+  })
+
+  it('stapelt den Popup-Inhalt beim Sprung auf Schema 6 in Zellen', () => {
+    const ed = load({
+      schemaVersion: 5,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p'] },
+        p: { id: 'p', type: 'popup', props: { name: 'Details' }, parentId: 'root', childIds: ['ff', 'btn'] },
+        ff: { id: 'ff', type: 'formfeld', props: {}, parentId: 'p', childIds: [] },
+        btn: { id: 'btn', type: 'button', props: {}, parentId: 'p', childIds: [] },
+      },
+      selectedId: null,
+    })
+    // Untereinander in der sichtbaren Reihenfolge, Groessen aus der Registry
+    // (formfeld 6x2, button 4x2) — der Bediener sieht sein Popup wieder wie
+    // vorher und kann ab jetzt frei platzieren.
+    expect(ed.getNode('ff')?.props).toMatchObject({ rasterX: 0, rasterY: 0, rasterW: 6, rasterH: 2 })
+    expect(ed.getNode('btn')?.props).toMatchObject({ rasterX: 0, rasterY: 2, rasterW: 4, rasterH: 2 })
+  })
+
+  it('loest auch eine Zeile IM Popup auf', () => {
+    const ed = load({
+      schemaVersion: 5,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p'] },
+        p: { id: 'p', type: 'popup', props: { name: 'Details' }, parentId: 'root', childIds: ['z'] },
+        z: { id: 'z', type: 'zeile', props: {}, parentId: 'p', childIds: ['ff', 'btn'] },
+        ff: { id: 'ff', type: 'formfeld', props: {}, parentId: 'z', childIds: [] },
+        btn: { id: 'btn', type: 'button', props: {}, parentId: 'z', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('p')?.childIds).toEqual(['ff', 'btn'])
+    expect(ed.getNode('btn')?.props).toMatchObject({ rasterX: 0, rasterY: 2 })
+  })
+
+  it('laesst gesetzte Popup-Positionen in Ruhe (Schema 6 ist idempotent)', () => {
+    const ed = load({
+      schemaVersion: 6,
+      tree: {
+        root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p'] },
+        p: { id: 'p', type: 'popup', props: { name: 'Details' }, parentId: 'root', childIds: ['ff', 'btn'] },
+        ff: { id: 'ff', type: 'formfeld', props: { rasterX: 6, rasterY: 3, rasterW: 8, rasterH: 2 }, parentId: 'p', childIds: [] },
+        btn: { id: 'btn', type: 'button', props: { rasterX: 0, rasterY: 0, rasterW: 4, rasterH: 2 }, parentId: 'p', childIds: [] },
+      },
+      selectedId: null,
+    })
+    expect(ed.getNode('ff')?.props).toMatchObject({ rasterX: 6, rasterY: 3, rasterW: 8 })
+    expect(ed.getNode('btn')?.props).toMatchObject({ rasterX: 0, rasterY: 0, rasterW: 4 })
   })
 })

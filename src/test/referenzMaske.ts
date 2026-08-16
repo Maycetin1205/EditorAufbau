@@ -2,7 +2,8 @@
 // (5. Wächter, Nutzer-Go 2026-07-17). Eine repräsentative Maske aus den
 // ECHTEN Bausteinen, die möglichst viele Export-Wege gleichzeitig
 // beschreitet: Kanban mit Musterkarte/Bindungen/Auffangspalte + Demo-Karte
-// (fällt raus), Formularfeld mit eigener Quelle, Datum, Zeile, Popup-Seite,
+// (fällt raus), Formularfeld mit eigener Quelle, Datum, Popup-Seite mit
+// Rasterinhalt,
 // Ansicht-Seite (zweite Fläche), Aktionsketten (RELATION/START_TOOL/
 // POPUP_OPEN), zwei Quellen-Arten
 // (IDB + Adreßstamm), Relations-Vorlage, Umlaute in Titel/Texten/Namen.
@@ -22,15 +23,26 @@ export interface ReferenzMaske {
 
 export function referenzMaske(): ReferenzMaske {
   const tree: BlockTree = {
-    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['z1', 'board', 'feld', 'tab', 'tr1', 'bild1', 'txt', 'txt2', 'p1', 'a1', 'nav'] },
-    z1: { id: 'z1', type: 'zeile', props: { width: 'fill', rasterX: 0, rasterY: 0, rasterW: 24, rasterH: 3 }, parentId: 'root', childIds: ['datum1', 'knopf'] },
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['datum1', 'knopf', 'board', 'feld', 'tab', 'tr1', 'bild1', 'txt', 'txt2', 'p1', 'a1', 'nav'] },
+    // Zwei Bausteine NEBENEINANDER in derselben Zeilenspur (x 0 / x 9). Bis
+    // C2 (2026-08-16) lag hier eine „Zeile" ueber die volle Breite, die beide
+    // im Fluss trug; der Baustein ist mit dem Popup-Raster entfallen, und die
+    // Migration hat die zwei in ihr Zellband gesetzt. Der Byte-Waechter haelt
+    // damit weiter fest, dass zwei Bausteine in EINER Zeilenspur liegen
+    // koennen — nur eben ohne Rahmen darum.
     // Ohne Eigenschaften: DatumBlock.defaultProps ist leer. Bis 2026-07-28
     // stand hier ein `zeigt: 'datum'` aus einer alten Fassung — der Export
     // warf es still weg, weil er nur bekannte Props schreibt. Genau deshalb
     // faellt so etwas nie auf; die Testmaske soll den echten Stand zeigen.
-    datum1: { id: 'datum1', type: 'datum', props: {}, parentId: 'z1', childIds: [] },
+    datum1: {
+      id: 'datum1', type: 'datum',
+      props: { rasterX: 0, rasterY: 0, rasterW: 9, rasterH: 3 },
+      parentId: 'root', childIds: [],
+    },
     knopf: {
-      id: 'knopf', type: 'button', props: { label: 'Nachfaß öffnen — ätsch' }, parentId: 'z1', childIds: [],
+      id: 'knopf', type: 'button',
+      props: { label: 'Nachfaß öffnen — ätsch', rasterX: 9, rasterY: 0, rasterW: 4, rasterH: 3 },
+      parentId: 'root', childIds: [],
       events: {
         onClick: [
           { id: 's1', type: 'POPUP_OPEN', resultKey: '', popupId: 'p1' },
@@ -157,12 +169,19 @@ export function referenzMaske(): ReferenzMaske {
       },
       parentId: 'root', childIds: [],
     },
+    // Das Popup traegt bewusst KEINE 520 (Nutzer-Entscheidung: Popups behalten
+    // ihre Breite). Sein Inhalt liegt seit C2 in ZELLEN — der Abzug haelt fest,
+    // dass ein Popup-Kind `fuellt` und einen Zellen-Style bekommt, genau wie
+    // ein Kind der Hauptflaeche. Bis dahin stand hier eine „Zeile" im Fluss.
     p1: {
       id: 'p1', type: 'popup', props: { name: 'Neue Behandlung für Bello', breite: 480, hoehe: 320 },
-      parentId: 'root', childIds: ['pz1'],
+      parentId: 'root', childIds: ['pdatum'],
     },
-    pz1: { id: 'pz1', type: 'zeile', props: {}, parentId: 'p1', childIds: ['pdatum'] },
-    pdatum: { id: 'pdatum', type: 'datum', props: {}, parentId: 'pz1', childIds: [] },
+    pdatum: {
+      id: 'pdatum', type: 'datum',
+      props: { rasterX: 0, rasterY: 0, rasterW: 9, rasterH: 2 },
+      parentId: 'p1', childIds: [],
+    },
     // Die zweite FLÄCHE (N1, 2026-08-12): sie faellt im Abzug durch drei
     // Dinge auf, die je fuer sich still kaputtgehen koennten — `hidden` (ohne
     // das startet die Maske mit zwei Flaechen uebereinander), KEIN eigener

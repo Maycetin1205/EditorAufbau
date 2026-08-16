@@ -5,15 +5,23 @@
 // Editor-Anfasser für breite/hoehe am zentrierten Fenster. Das Fenster ist
 // zentriert, darum wächst es beim Ziehen um 2×delta (die Kante bleibt
 // unter dem Zeiger).
+//
+// Seit C2 (2026-08-16) ist der Popup-Rumpf eine RASTERFLÄCHE wie die
+// Hauptfläche: dieselbe Zell-Platzierung, derselbe Geist, dieselben
+// Anfasser — nur das Grid-Element liegt im Schatten des Bausteins und wird
+// darum über `flaecheIn` gesucht statt über einen React-Ref.
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { DIALOG_RAND, DIALOG_SCHLIESSEN_EVENT } from '../../blocks/shared/DialogRahmen'
-import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
 import { NodeList } from './CanvasNode'
-import { isNewBlockDrag, newBlockDragType } from './dnd'
+import { isNewBlockDrag } from './dnd'
 import { commitDrop, useDnd } from './dndState'
+import { rasterZiel } from './rasterDnd'
+import { flaecheIn } from './rasterFlaeche'
 import { zieheGroesse } from './zieheGroesse'
 
 // Mindest- und Standardgröße des Popup-Fensters (Anfasser, P-A).
@@ -83,33 +91,40 @@ export function PopupSeite({ popupId }: { popupId: string }) {
     })
   }
 
-  const standard = getBlockDefinition(node.type)?.defaultProps ?? {}
+  const def = getBlockDefinition(node.type)
+  const standard = def?.defaultProps ?? {}
+  // Das Gitter des Popup-Rumpfs. Es liegt im Schatten des Bausteins, ist also
+  // nicht per React-Ref zu haben — gefragt wird der Baustein selbst
+  // (flaecheIn). Zum Zeitpunkt eines dragover steht er längst im DOM.
+  const rumpf = (): HTMLElement | null =>
+    flaecheIn(def ? wrapRef.current?.querySelector(def.tagName) : null)
+  const geist = dnd.dropTarget?.kind === 'raster' && dnd.dropTarget.parentId === node.id
+    ? dnd.dropTarget
+    : null
 
   return (
     <div
       ref={wrapRef}
       style={{ position: 'absolute', inset: 0 }}
       onDragOver={(e) => {
-        // Freie Fläche der Popup-Seite: Drop ans Ende des Popup-Rumpfs.
+        // Popup-Rumpf = Rasterfläche: die Zielzelle unter dem Zeiger (rasterZiel
+        // prüft dabei auch, ob das Popup den gezogenen Typ überhaupt aufnimmt —
+        // ohne das zeigte die Fläche für eine Kanban-Karte oder -Spalte
+        // (allowedParentTypes!) eine Vorschau, ed.moveNode/addBlock lehnten den
+        // Drop danach still ab, und der Bediener sah seinen Baustein einfach
+        // verschwinden; Regel 4: nichts scheitert still).
         if (dnd.dragId === null && !isNewBlockDrag(e.dataTransfer)) return
-        // … aber nur, wenn das Popup den gezogenen Typ ueberhaupt aufnimmt
-        // (canContain, wie die Geschwister-Pfade Canvas.onGridDragOver und
-        // CanvasNode.onDragOver). Ohne die Pruefung zeigte die Flaeche fuer
-        // eine Kanban-Karte oder -Spalte (allowedParentTypes!) eine
-        // Einfuege-Vorschau und nahm den Drop an — ed.moveNode/addBlock lehnten
-        // ihn danach still ab, und der Bediener sah seinen Baustein einfach
-        // verschwinden (Regel 4: nichts scheitert still).
-        // Der Typ reist beim Palette-Drag im MIME-Namen mit; Daten sind
-        // waehrend dragover nicht lesbar.
-        const gezogenerTyp = dnd.dragId !== null
-          ? ed.getNode(dnd.dragId)?.type ?? null
-          : newBlockDragType(e.dataTransfer)
-        if (gezogenerTyp === null || !canContain(node.type, gezogenerTyp)) {
-          dnd.setDropTarget(null)
-          return
-        }
+        const gridEl = rumpf()
+        if (!gridEl) return
         e.preventDefault()
-        dnd.setDropTarget({ kind: 'flow', parentId: node.id, index: ed.childNodesOf(node.id).length })
+        dnd.setDropTarget(rasterZiel(e, ed, dnd, node.id, gridEl))
+      }}
+      onDragLeave={(e) => {
+        // Nur zurücksetzen, wenn der Zeiger die Fläche wirklich verlässt
+        // (gleiche Regel wie auf der Hauptfläche, Canvas).
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          dnd.setDropTarget(null)
+        }
       }}
       onDrop={(e) => {
         e.preventDefault()
@@ -121,7 +136,24 @@ export function PopupSeite({ popupId }: { popupId: string }) {
         selected={selected}
         onSelect={() => ed.selectBlock(node.id)}
       >
-        <NodeList parentId={node.id} direction="column" />
+        <NodeList parentId={node.id} direction="column" raster />
+        {/* „Geist": Vorschau der Zielzelle. Er gehört INS Gitter, wird also
+            wie die Bausteine in den Rumpf geslottet (BlockHost-Kind) — läge er
+            daneben, zeigte er auf die falschen Pixel. Reine Editor-Hilfe, nie
+            Teil des Baums. */}
+        {geist && (
+          <div
+            aria-hidden
+            data-ff-editor-helper
+            style={{
+              ...rasterItemStyle(geist),
+              pointerEvents: 'none',
+              background: 'hsl(var(--ring) / 0.16)',
+              border: '2px dashed hsl(var(--ring))',
+              borderRadius: 4,
+            }}
+          />
+        )}
       </BlockHost>
       {selected && (
         <>
