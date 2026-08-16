@@ -54,6 +54,51 @@ describe('applyPopupStep', () => {
     applyPopupStep(fakeRoot([popup]), 'Gibt es nicht', true)
     expect(popup.offen()).toBe(false)
   })
+
+  // C3.2 (2026-08-16): es ist immer hoechstens EINES offen.
+  it('schliesst beim Öffnen jedes andere Popup', () => {
+    const a = fakePopup('A')
+    const b = fakePopup('B')
+    const root = fakeRoot([a, b])
+
+    applyPopupStep(root, 'A', true)
+    expect(a.offen()).toBe(true)
+    // A oeffnet B: danach liegt B nicht HINTER A, sondern A ist zu. Vorher
+    // lagen beide uebereinander, und welches oben lag, entschied allein die
+    // Reihenfolge im HTML.
+    applyPopupStep(root, 'B', true)
+    expect(b.offen()).toBe(true)
+    expect(a.offen()).toBe(false)
+  })
+
+  it('schliesst die anderen NICHT, wenn das Ziel gar nicht existiert', () => {
+    const a = fakePopup('A')
+    const root = fakeRoot([a])
+    applyPopupStep(root, 'A', true)
+    applyPopupStep(root, 'Gibt es nicht', true)
+    // Ein Schritt ins Leere darf das offene Fenster nicht mitreissen: der
+    // Bediener haette sonst einen Knopf, der seine Arbeit zuklappt.
+    expect(a.offen()).toBe(true)
+  })
+
+  it('rührt bei DOPPELTEM Namen nichts an — kein Fenster ist gemeint', () => {
+    const doppelt1 = fakePopup('Gleich')
+    const doppelt2 = fakePopup('Gleich')
+    const offen = fakePopup('Offen')
+    const root = fakeRoot([doppelt1, doppelt2, offen])
+    applyPopupStep(root, 'Offen', true)
+
+    applyPopupStep(root, 'Gleich', true)
+    // Weder eines der beiden aufschalten (bis 2026-08-16 gingen BEIDE auf)
+    // noch das bereits offene zumachen: das Ziel ist unbestimmt.
+    expect(doppelt1.offen()).toBe(false)
+    expect(doppelt2.offen()).toBe(false)
+    expect(offen.offen()).toBe(true)
+
+    // Und Schliessen trifft ebenso wenig.
+    applyPopupStep(root, 'Gleich', false)
+    expect(offen.offen()).toBe(true)
+  })
 })
 
 describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)', () => {

@@ -91,7 +91,14 @@ git log --oneline -8
   („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
   niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
   N1–N5.
-- **Letzte fertige Etappe — 2026-08-16: C2 (Popup-Inhalt wird Rasterflaeche).**
+- **Letzte fertige Etappen — 2026-08-16, Auftrag „Popup fertig machen".**
+  C3.2 (genau ein aktives Popup): `applyPopupStep`
+  (`blocks/shared/seAktionen.ts`) loest ZUERST genau ein Ziel auf; bei keinem
+  oder mehreren Treffern bleibt der Fenster-Stand unangetastet (vorher gingen
+  bei Doppelnamen BEIDE auf). Erst danach fallen die uebrigen zu und das Ziel
+  geht auf — welches Fenster oben liegt, entscheidet nicht mehr die
+  HTML-Reihenfolge. Keine Laufzeitmeldung (Nutzer-Ansage: nichts tun).
+  Davor: **C2 (Popup-Inhalt wird Rasterflaeche).**
   Der Popup-Rumpf ist ein CSS-Grid wie die Maskenwurzel, aus DERSELBEN Quelle
   (`rasterFlaecheCss` in `core/blocks/rasterLayout`, die auch die `.ff-root`-
   Regel des Exports schreibt). Drei Stellen zogen zusammen um: `.rumpf`

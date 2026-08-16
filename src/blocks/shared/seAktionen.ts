@@ -76,25 +76,47 @@ function seStartTool(nr: string, params: readonly string[]): void {
 // ---------- Popup-Schritte ----------
 
 // Schaltet das offen-Attribut des Popups mit dem Klarnamen `name`.
-// Eindeutige Namen werden NICHT erzwungen — der Preflight meldet Doppelnamen,
-// blockt den Export aber seit 2026-08-10 nicht mehr. Die Schleife unten
-// schaltet deshalb ALLE gleichnamigen Popups zugleich.
+//
+// ES IST IMMER HOECHSTENS EINES OFFEN (C3.2, 2026-08-16). Bis dahin oeffnete
+// dieser Schritt sein Ziel, ohne ein anderes zu schliessen: eine Kette
+// „Popup A oeffnen" aus einem bereits offenen Popup B heraus legte zwei
+// Fenster uebereinander, und WELCHES oben lag, entschied allein die
+// Reihenfolge im HTML — der Bediener sah je nach Bauart der Maske ein anderes
+// Ergebnis. Beim Oeffnen fallen darum zuerst alle uebrigen zu.
+//
+// Zuerst wird GENAU EIN Ziel aufgeloest. Kein Treffer oder mehrere: es
+// passiert nichts, der aktuelle Fenster-Stand bleibt unangetastet. Mehrere
+// Treffer sind moeglich, weil eindeutige Namen im Export nicht erzwungen
+// werden (der Preflight meldet Doppelnamen, blockt aber seit 2026-08-10
+// nicht) — bis hierher schaltete die Schleife dann BEIDE zugleich auf, was
+// den Fall nur schlimmer machte. Ein unbestimmtes Ziel gar nicht anzufassen
+// ist die einzige Wahl, die nichts kaputtmacht: still-harmlos ist hier die
+// letzte Verteidigung.
+//
 // Darstellung/Lebenszyklus bleiben beim Popup-Baustein selbst — hier wird NUR
-// geschaltet. Leerer Name oder kein Treffer: nichts passiert. Auch das wird
-// nirgends geprueft; still-harmlos ist hier die letzte Verteidigung.
-// Exportiert fuer den Wächter-Test (Node/jsdom, Muster seRuntime-Helfer).
+// geschaltet. Exportiert fuer den Wächter-Test (Node/jsdom, Muster
+// seRuntime-Helfer).
 export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean): void {
   if (name.trim() === '') return
-  for (const el of Array.from(root.querySelectorAll(PopupBlock.tagName))) {
-    // Fehlendes Attribut = STANDARDNAME, nicht leer. Seit der Export
-    // Standardwerte weglaesst (2026-08-06), traegt ein nie umbenanntes Popup
-    // gar kein name-Attribut mehr — die Kette sucht aber nach dem Klarnamen
-    // „Popup" und faende es sonst NIE: der Knopf klickte ins Leere, still
-    // (Regel 4). Der Standard kommt aus der EINEN Quelle, den defaultProps.
-    if ((el.getAttribute('name') ?? PopupBlock.defaultProps.name) !== name) continue
-    if (oeffnen) el.setAttribute('offen', '')
-    else el.removeAttribute('offen')
+  const alle = Array.from(root.querySelectorAll(PopupBlock.tagName))
+  // Fehlendes Attribut = STANDARDNAME, nicht leer. Seit der Export
+  // Standardwerte weglaesst (2026-08-06), traegt ein nie umbenanntes Popup
+  // gar kein name-Attribut mehr — die Kette sucht aber nach dem Klarnamen
+  // „Popup" und faende es sonst NIE: der Knopf klickte ins Leere, still
+  // (Regel 4). Der Standard kommt aus der EINEN Quelle, den defaultProps.
+  const treffer = alle.filter(
+    (el) => (el.getAttribute('name') ?? PopupBlock.defaultProps.name) === name,
+  )
+  if (treffer.length !== 1) return
+  const ziel = treffer[0]
+  if (!oeffnen) {
+    ziel.removeAttribute('offen')
+    return
   }
+  for (const el of alle) {
+    if (el !== ziel) el.removeAttribute('offen')
+  }
+  ziel.setAttribute('offen', '')
 }
 
 // ---------- Ketten-Ausfuehrung ----------
