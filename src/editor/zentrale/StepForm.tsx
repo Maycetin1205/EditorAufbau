@@ -167,24 +167,36 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
       && relation.params.some((raw) => feldUebernahmeArt(raw) === 'len')
     : false
 
-  const currentUebernahmeCode = relation
-    ? relation.params
-        .map((_, index) => bindingFor(index))
-        .find((binding) => binding.source === 'data_field')?.value ?? ''
+  // Übernommen wird als fixed-Wert (feldUebernehmen) — der Haken im Picker
+  // entsteht also aus den POS/LEN-Parametern, nicht aus einer Feld-Bindung.
+  const uebernommenerWert = (art: 'pos' | 'len'): string | null => {
+    if (!relation) return null
+    const index = relation.params.findIndex((raw) => feldUebernahmeArt(raw) === art)
+    if (index < 0) return null
+    const binding = bindingFor(index)
+    return binding.source === 'fixed' && /^\d+$/.test(binding.value) ? binding.value : null
+  }
+  const uebernahmePos = uebernommenerWert('pos')
+  const uebernahmeLen = uebernommenerWert('len')
+  const currentUebernahmeCode = uebernahmePos !== null && uebernahmeLen !== null
+    ? `${uebernahmePos}_${uebernahmeLen}`
     : ''
 
   function candidate(): ActionStep {
     const id = step?.id ?? crypto.randomUUID()
+    // Das Formular zeigt toolParams/resultKey nicht an (Entscheidung: nur die
+    // Nummer) — geladene Werte darf Speichern trotzdem nicht wegwerfen.
     if (typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') {
-      return { id, type: typ, resultKey: '', popupId }
+      return { id, type: typ, resultKey: step?.type === typ ? step.resultKey : '', popupId }
     }
     if (typ === 'START_TOOL') {
+      const vorher = step?.type === 'START_TOOL' ? step : undefined
       return {
         id,
         type: 'START_TOOL',
-        resultKey: '',
+        resultKey: vorher?.resultKey ?? '',
         toolNr: toolNr.trim(),
-        toolParams: [],
+        toolParams: vorher ? [...vorher.toolParams] : [],
       }
     }
     const normalizedParams = relation

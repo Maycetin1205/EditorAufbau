@@ -32,9 +32,16 @@ export function FeldUebernahmePicker({
   const [quelle, setQuelle] = useState<UebernahmeQuelle | null>(null)
   const needle = suche.trim().toLocaleLowerCase('de')
 
+  // Das Suchfeld verspricht „Feld oder Quelle" — also zeigt die Quellenliste
+  // auch Quellen, bei denen erst ein FELD auf den Suchbegriff passt.
   const sichtbareQuellen = useMemo(
-    () => sources.filter((source) => needle === '' || source.sourceName.toLocaleLowerCase('de').includes(needle)),
-    [needle, sources],
+    () => sources.filter((source) =>
+      needle === ''
+      || source.sourceName.toLocaleLowerCase('de').includes(needle)
+      || fields.some((field) =>
+        field.sourceId === source.sourceId
+        && field.label.toLocaleLowerCase('de').includes(needle))),
+    [needle, sources, fields],
   )
   const sichtbareFelder = useMemo(
     () => fields.filter((field) => field.sourceId === quelle?.sourceId && (
