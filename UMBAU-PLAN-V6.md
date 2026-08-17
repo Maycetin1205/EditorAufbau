@@ -46,15 +46,22 @@ git log --oneline -8
   Bedienung des Editors, die Klappliste „woher kommt der Wert" mit ACHT
   Eintraegen, steckt im 340-px-Inspector und schneidet hart ab
   (`ParameterZeile.tsx:315` beschreibt das Problem selbst).
-- **D1 -> D2 -> D3 sind GEBAUT (2026-08-17)** — `d2e029f` / `b087e30` /
-  `556e6b4`. Das Nachschlage-Fenster zeigt jetzt den Tabellen-Baustein im
-  neuen `provided`-Modus; die handgebaute Zeilenliste ist weg. Browserprobe
-  und SE-Echttest durch den Nutzer stehen noch aus. Offen geblieben, bewusst:
-  der Dialog behauptet kein `aria-modal` mehr, weil es keine Fokusgrenze gibt
-  (eigenes Paket, gehoert in den `DialogRahmen` und damit auch ans Popup).
-- **Baubarkeit von D/E/U geprueft (2026-08-17), Ergebnis kurz:** sofort an
+- **Welle D ist KOMPLETT GEBAUT (2026-08-17)** — D1 `d2e029f` · D2 `b087e30`
+  · D3 `556e6b4` · dazu „Angezeigt wird optional" `6b7af0b` · D4 `82b5f92`.
+  Das Nachschlage-Fenster IST der Tabellen-Baustein (provided-Modus), und
+  die Lupe oeffnet im Editor dasselbe Fenster zum Spalten-Einstellen
+  (Eigenschaft `nachschlagSpalten` am Feld, leer = Automatik, Export
+  schreibt dann nichts). Die D4-Sperre ist hinfaellig: das U0-7-Overlay war
+  nicht noetig, der `DialogRahmen` + Shadow-DOM des Feldes reichen.
+  Browserprobe und SE-Echttest durch den Nutzer stehen aus. Bewusst offen:
+  kein `aria-modal` mehr ohne echte Fokusgrenze (eigenes Paket) · z-Ordnung
+  Feld-Auswahl (50) ueber Einstell-Fenster (40) ist ungeprueft · **eine
+  Nutzer-Entscheidung steht aus:** stirbt „Angezeigt wird" ganz (Feld zeigt
+  Spalte 1 des Fensters, nur noch „Gespeichert wird" in der Steuerung)?
+  Gefragt am 2026-08-17, noch keine Antwort — bis dahin gilt „optional".
+- **Baubarkeit von E/U geprueft (2026-08-17), Ergebnis kurz:** sofort an
   einen Chat gebbar sind **E3** (kleinste, braucht KEINE Migration) · **E1**
-  · **U7a** · **S5.3**. **GESPERRT: D4** (setzt das
+  · **U7a** · **S5.3**. **Hinfaellig: die alte D4-Sperre** (setzte das
   Overlay aus U0-7 voraus, das es nicht gibt — Sperrvermerk im Etappentext)
   und **U5** (leer, haengt an U4). **Warten auf den Nutzer:** U4 (Entwurfs-
   Sitzung, plus die zwei geerbten U0-Fragen Arten-Liste + Text-Baustein) ·
@@ -2318,7 +2325,7 @@ Tabellenkomponente im bereitgestellten Modus ersetzt.
 10. Normale Tabelle ausserhalb des Dialogs unveraendert.
 11. SoftEngine-Probe in WinUI und, soweit verfuegbar, WebUI.
 
-## D4 · Spalten waehlen — eingestellt am Ding (Beschluss 2026-08-12)
+## D4 · Spalten waehlen — eingestellt am Ding (GEBAUT 2026-08-17, `82b5f92`)
 
 **Laeuft NACH D3.** D3 baut die echte Tabelle ins Fenster, mit den heutigen
 zwei Spalten — bis dahin gibt es sichtbar nichts einzustellen. D4 macht die
