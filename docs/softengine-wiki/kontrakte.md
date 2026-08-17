@@ -57,6 +57,99 @@ Bei Widerspruch gewinnt `CLAUDE.md`.
   gebundene Stelle bleibt still leer.
 - Gilt in: `core/data/dataSources.ts` (`felderFor`), `export/sevariablen.ts`.
 
+## 4a. REFRESH — den Klartext zu einem Code-Feld bestellen
+
+Ein Code-Feld (Adressgruppe `4`, Land `DE`, Lieferadresse `10024`) liefert nur
+die Nummer. Der zugehörige TEXT kommt nur, wenn die Maske ihn EXTRA bestellt.
+
+Belegt in `docs/chef-maske/JsonBeleg.json` — ein eigener Block neben VAR,
+SEFILELOOP und ERPAPICALL:
+
+```json
+"REFRESH": [
+  { "ID": 300700, "ALIAS": "RefreshAdresseLand",
+    "PK": "ADR_1450_3", "PKLEN": 3, "TRENNER": " : ", "FILEID": "" },
+  { "ID": 300055, "ALIAS": "RefreshLieferadresse",
+    "PK": "BEL_747_8", "PKLEN": 8, "TRENNER": " : ", "FILEID": "" },
+  { "ID": 300033, "ALIAS": "AnsprechpartnerRefresh",
+    "PK": "BEL_197_8", "FORMAT": "R0", "PKLEN": 8, "TRENNER": " : ", "FILEID": "" }
+]
+```
+
+SoftEngine liefert daraufhin einen ZWEITEN Wert je Feld, mit `REFRESH_`
+davor — belegt in `docs/chef-maske/BeispielBeleg.html`:
+
+```js
+BelegInfo.BEL_552_2            // "01"
+BelegInfo.REFRESH_BEL_552_2    // der Text dazu
+```
+
+**Die ID ist `300000 + RefreshId` des Felds.** `RefreshId` steht in der
+Felddefinition der Installation (`RefreshArt: "3"` heißt: dieses Feld hat eine
+Auswahltabelle). Zweimal gegengeprüft am Vorlagen-Bestand des Nutzers
+(2026-08-17):
+
+| Feld | RefreshId | REFRESH-ID |
+|---|---|---|
+| `BEL_197_8` Ansprechpartner | 33 | 300033 |
+| `BEL_747_8` Lieferadresse | 55 | 300055 |
+| `ADR_1988_2` Adressgruppe | 708 | 300708 (abgeleitet, nicht getestet) |
+
+⚠ **Offen:** in JsonBeleg.json zeigen ALLE `PK` auf Felder des OFFENEN Satzes
+(`BEL_…`, `ADR_…`). Ob REFRESH auch für die Zeilen einer SEFILELOOP-LISTE
+liefert, ist NICHT belegt. Das entscheidet ein Echttest.
+
+Ein vierter Block `MASKE` kommt in derselben Datei vor und trägt
+`REFRESH_FELDER: "*"` — andere Mechanik, nicht abgelesen:
+
+```json
+"MASKE": [{ "ID": "1211S5OPT44", "BEREICH": "BEL",
+            "FELDER": "*", "REFRESH_FELDER": "*", "ALIAS": "Rabatt" }]
+```
+
+- Unser Export schreibt **keinen** REFRESH-Block. Deshalb kommen Code-Felder
+  ohne ihren Text an.
+
+## 4b. Feldpositionen der Installation (2026-08-17)
+
+Abgelesen an den Chef-Masken und am Vorlagen-Bestand des Nutzers. Alles
+installations-individuell — steht hier als NOTIZ, gehört nie in den Code
+(Regel 5).
+
+| Tabelle | Feld | Code | Anmerkung |
+|---|---|---|---|
+| ART | Warengruppe | `36_5` | in der FELDER-Liste der behandlung-Maske |
+| ADR | Adressgruppe | `1988_2` | RefreshId 708; NICHT in der ADR-Liste der Masken |
+| ADR | Adress-Typ | `3362_1` | `1` = Privat |
+| ADR | Suchbegriff/Matchcode | `1881_30` | darüber läuft die Namenssuche |
+| ADR | „Adressgruppe" 30 Zeichen | `769_30` | **leer geprüft 2026-08-17** — kein Name |
+| ADR | (veraltet) Adressgruppe | `1219_2` | RefreshId 56 |
+| BEL | Stat: Adressgruppe | `3521_2` | ohne Refresh |
+
+Warengruppen-Nummern der Installation (aus der behandlung-Maske): 1 Medikamente,
+2 Artikel, 3 Leistungen, 4 Impfstoffe, 5 Futtermittel, 6 Koffer/Stücklisten,
+7 Kleintier, 31 Allgemein, 32 Alpaka, 33 Kalb, 37 Labor. Verglichen wird
+getrimmt und ohne führende Nullen (`007` = `7`).
+
+Adressgruppen-Stamm (vom Nutzer in SoftEngine abgelesen): Nr `0_2`,
+Bezeichnung `180_60`. **Seine SEFILELOOP-Kennung ist unbekannt** — in keiner
+der 267 Vorlagen wird die Tabelle per SEFILELOOP geladen. Als Quelle im Editor
+damit nicht anlegbar.
+
+## 4c. GET_RELATION — Muster aus JsonBeleg.json
+
+Alle mit `PARAMETER` als Liste und `RUECKGABE_ALS_ARRAY: false`:
+
+| NR | Parameter | liefert |
+|---|---|---|
+| 43 | `BEL_516_3`, `3`, `30` | Name eines Bedieners |
+| 208 | `EINGABE_116_2`, `180`, `60` | Name einer Adressgruppe |
+| 230 | `CONCAT[BEL_2_1!BEL_1893_2]`, `180`, `60` | Belegart-Gruppe |
+| 516 | Datum, Zeit, `DATUM_0_10`, `ZEIT_0_5`, `0`, `1` | Alter in Tagen |
+
+Muster: `<Schlüssel>, <Position>, <Länge>` liest ein Feld des Zielsatzes.
+`CONCAT[a!b]` setzt einen Schlüssel aus zwei Feldern zusammen.
+
 ## 5. ⚠ Die REIHENFOLGE der SEFILELOOP-Einträge ist ein Kontrakt
 
 Belegt 2026-08-11 durch einen A/B-Echttest mit derselben Maske:
