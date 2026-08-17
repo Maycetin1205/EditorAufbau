@@ -21,7 +21,6 @@
 
 import type { BlockTree } from '../../core/blocks/BlockData'
 import { bausteinName } from '../../core/blocks/bausteinName'
-import { actionValueTargets } from '../../core/blocks/treeQuery'
 import type { ActionParamBinding, ActionStep } from '../../core/data/aktionen'
 import {
   quellenKennung,
@@ -193,15 +192,4 @@ export function ankerSchrittId(step: ActionStep): string {
     if (b.source === 'step_result' && b.value !== '') return b.value
   }
   return ''
-}
-
-// Alle Bausteine, deren Wert eine Kette lesen kann — als Klarnamen-Tabelle.
-// Nur fuer die Zusammenfassung; die Auswahl selbst baut StepForm.
-export function bausteinNamen(
-  tree: BlockTree,
-  quellen: readonly DataSource[],
-): Map<string, string> {
-  return new Map(
-    actionValueTargets(tree).map(({ node }) => [node.id, bausteinName(node, quellen)]),
-  )
 }

@@ -365,7 +365,7 @@ for (const h of hinweise) console.log('  hinweis: ' + h)
 if (fehler.length === 0) {
   console.log(
     `check-regeln: ok (${bausteine.length} Bausteine, ${quellen.length} Quelldateien` +
-    `, davon ${zeichenDateien.length} auch auf Zeichen geprueft)`
+    `, ${zeichenDateien.length} Dateien auf Zeichen geprueft)`
   )
   process.exit(0)
 }

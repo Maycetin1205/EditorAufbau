@@ -290,15 +290,6 @@ export function kopfsatzFor(source: DataSource): string {
   return (source.kopfsatzIndex ?? '').trim()
 }
 
-// Der Feld-Vorsatz, der für diese Quelle gilt — leer, wo die Art keinen führt.
-// Die Art-Abfrage gehört aus demselben Grund hierher wie bei kopfsatzFor:
-// wechselt der Bediener die Art einer bestehenden Quelle, bleibt der alte Wert
-// gespeichert und dürfte die Feldcodes nicht mehr beeinflussen.
-export function feldVorsatzFor(source: DataSource): string {
-  if (!artFuer(source.kind).feldVorsatzMoeglich) return ''
-  return (source.feldVorsatz ?? '').trim()
-}
-
 // Der VAR-Abschnitt der SEvariablen, abgeleitet aus den Kopfsätzen.
 //
 // WARUM abgeleitet und nicht eingestellt: ein KOPFSATZ_INDEX 'BEL_0_11' zeigt
