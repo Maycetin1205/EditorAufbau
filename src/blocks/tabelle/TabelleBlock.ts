@@ -8,8 +8,14 @@ import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
 import { chipStyles } from '../shared/statusVariant'
 import { beobachteRumpf, gemessenesMass } from './rumpfMessung'
+import {
+  leiteZeilenAb,
+  type BereitgestellteZeile,
+  type Datenbesitz,
+} from './datenBesitz'
 import type { Zeilenmass } from './seitengroesse'
 import { connectTable, disconnectTable } from './seRuntime'
+import { zeigtEchteDaten } from './suche'
 import {
   benenneSpalteUm,
   feldPickerAbbestellen,
@@ -105,6 +111,60 @@ export class TabelleBlock extends BasicBlock {
   private _fokusZeile: number | null = null
   private _fokusHolen = false
 
+  private _besitz: Datenbesitz = 'softengine'
+
+  get besitz(): Datenbesitz {
+    return this._besitz
+  }
+
+  set besitz(neu: Datenbesitz) {
+    if (neu === this._besitz) return
+    this._besitz = neu
+    this.setzeAbgeleitetesZurueck()
+    if (this.isConnected) {
+      if (neu === 'provided') disconnectTable(this)
+      else connectTable(this)
+    }
+    this.requestUpdate()
+  }
+
+  set bereitgestellteZeilen(zeilen: readonly BereitgestellteZeile[]) {
+    const abgeleitet = leiteZeilenAb(zeilen)
+    this.rohzeilen = abgeleitet.rohzeilen
+    this.datenzeilen = abgeleitet.datenzeilen
+    this.zusatzzeilen = abgeleitet.zusatzzeilen
+    this.datenGeliefert = true
+    this.auswahlIndex = -1
+    this.durchAuswahlGefiltert = false
+    this._seite = 0
+    this._mass = null
+    this._taktGemessen = 0
+    this.requestUpdate()
+  }
+
+  private setzeAbgeleitetesZurueck(): void {
+    this.rohzeilen = []
+    this.datenzeilen = []
+    this.zusatzzeilen = []
+    this.datenGeliefert = false
+    this.auswahlIndex = -1
+    this.durchAuswahlGefiltert = false
+    this._suchtext = ''
+    this._sortSpalte = -1
+    this._sortAuf = true
+    this._seite = 0
+    this._mass = null
+    this._taktGemessen = 0
+    this._fokusZeile = null
+    this._fokusHolen = false
+  }
+
+  private get hatQuelle(): boolean {
+    return this._besitz === 'provided'
+      ? true
+      : zeigtEchteDaten(this.hasAttribute('data-ff-editor'), this.source)
+  }
+
   private merkeZeilenFokus(): void {
     const roh = fokussierterRohIndex(this.shadowRoot)
     this._fokusHolen = roh !== undefined
@@ -180,7 +240,7 @@ export class TabelleBlock extends BasicBlock {
 
   override connectedCallback(): void {
     super.connectedCallback()
-    connectTable(this)
+    if (this._besitz === 'softengine') connectTable(this)
     this.beobachte()
   }
 
@@ -211,8 +271,7 @@ export class TabelleBlock extends BasicBlock {
 
     const ansicht = tabelleAnsicht({
       spalten,
-      imEditor: this.hasAttribute('data-ff-editor'),
-      source: this.source,
+      hatQuelle: this.hatQuelle,
       datenGeliefert: this.datenGeliefert,
       datenzeilen: this.datenzeilen,
       suchtext: this._suchtext,

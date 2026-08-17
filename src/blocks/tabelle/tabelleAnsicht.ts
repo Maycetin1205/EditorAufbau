@@ -8,13 +8,12 @@ import {
 } from './seitengroesse'
 import { sortiereIndizes } from './sortierung'
 import type { Spalte } from './spalten'
-import { passendeIndizes, zeigtEchteDaten, zeigtLeerzustand } from './suche'
+import { passendeIndizes, zeigtLeerzustand } from './suche'
 
 export interface AnsichtFrage {
   spalten: readonly Spalte[]
 
-  imEditor: boolean
-  source: string
+  hatQuelle: boolean
   datenGeliefert: boolean
   datenzeilen: readonly string[][]
   suchtext: string
@@ -60,7 +59,7 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
   const takt = zeilenHoeheFuer(frage.spalten)
   const zeilenHoehe = frage.gemessen?.zeilenHoehe ?? takt
 
-  const hatQuelle = zeigtEchteDaten(frage.imEditor, frage.source)
+  const hatQuelle = frage.hatQuelle
 
   const leer = zeigtLeerzustand(hatQuelle, frage.datenGeliefert, frage.datenzeilen.length)
 
