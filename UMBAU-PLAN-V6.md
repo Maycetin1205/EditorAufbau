@@ -46,9 +46,15 @@ git log --oneline -8
   Bedienung des Editors, die Klappliste „woher kommt der Wert" mit ACHT
   Eintraegen, steckt im 340-px-Inspector und schneidet hart ab
   (`ParameterZeile.tsx:315` beschreibt das Problem selbst).
+- **D1 -> D2 -> D3 sind GEBAUT (2026-08-17)** — `d2e029f` / `b087e30` /
+  `556e6b4`. Das Nachschlage-Fenster zeigt jetzt den Tabellen-Baustein im
+  neuen `provided`-Modus; die handgebaute Zeilenliste ist weg. Browserprobe
+  und SE-Echttest durch den Nutzer stehen noch aus. Offen geblieben, bewusst:
+  der Dialog behauptet kein `aria-modal` mehr, weil es keine Fokusgrenze gibt
+  (eigenes Paket, gehoert in den `DialogRahmen` und damit auch ans Popup).
 - **Baubarkeit von D/E/U geprueft (2026-08-17), Ergebnis kurz:** sofort an
   einen Chat gebbar sind **E3** (kleinste, braucht KEINE Migration) · **E1**
-  · **D1 -> D2 -> D3** · **U7a** · **S5.3**. **GESPERRT: D4** (setzt das
+  · **U7a** · **S5.3**. **GESPERRT: D4** (setzt das
   Overlay aus U0-7 voraus, das es nicht gibt — Sperrvermerk im Etappentext)
   und **U5** (leer, haengt an U4). **Warten auf den Nutzer:** U4 (Entwurfs-
   Sitzung, plus die zwei geerbten U0-Fragen Arten-Liste + Text-Baustein) ·
@@ -2152,7 +2158,7 @@ geteilt werden muss.
   Datenbesitz, Aktivierung oder Fokus.
 - Jeder noetige Schnitt ist ein eigener byte- und verhaltensneutraler Commit.
 
-## D1 · Allgemeiner Tabellenzeilen-Aktivierungsvertrag
+## D1 · Allgemeiner Tabellenzeilen-Aktivierungsvertrag (GEBAUT 2026-08-17, `d2e029f`)
 
 ### Ziel
 
@@ -2197,7 +2203,7 @@ allgemein aktiviert werden.
 - kein doppeltes Event;
 - Fokus ist sichtbar und nachvollziehbar.
 
-## D2 · Allgemeiner Modus fuer bereitgestellte Daten
+## D2 · Allgemeiner Modus fuer bereitgestellte Daten (GEBAUT 2026-08-17, `b087e30`)
 
 ### Ziel
 
@@ -2246,7 +2252,7 @@ besitzen oder Zeilen von einem umgebenden Verbraucher erhalten.
 - beide Richtungen `softengine -> provided -> softengine` bleiben atomar;
 - normale Tabelle hydriert weiterhin mehrfach korrekt.
 
-## D3 · Nachschlagen komponiert `ff-tabelle`
+## D3 · Nachschlagen komponiert `ff-tabelle` (GEBAUT 2026-08-17, `556e6b4`)
 
 ### Ziel
 
