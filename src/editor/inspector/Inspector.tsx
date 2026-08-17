@@ -27,7 +27,7 @@ import { Field } from '@/ui/molecules/field'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { cn } from '@/lib/utils'
 import { StepForm } from '../zentrale/StepForm'
-import { eigenerText } from '../../core/blocks/bausteinName'
+import { bausteinName } from '../../core/blocks/bausteinName'
 import { AktionenSektion } from './AktionenSektion'
 import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
 import { PropControl } from './PropControl'
@@ -62,8 +62,10 @@ function inspectorZeilen(props: PropertyDescription[]): InspectorZeile[] {
 export function Inspector() {
   const ed = useEditor()
   // Vorlagen-Änderungen müssen Feldlisten/Sichtbarkeit sofort
-  // nachziehen — dataSourceFor liest aus dem DataSourceStore.
-  useDataSources()
+  // nachziehen — dataSourceFor liest aus dem DataSourceStore. Seit
+  // 2026-08-17 wird die Liste zusätzlich GELESEN: der Kopf-Klarname löst
+  // damit den Alias eines gebundenen Felds auf (bausteinName).
+  const quellen = useDataSources()
   // (Die Relation-Vorlagen abonniert PropControl selbst — nur dort werden
   // sie gelesen.)
   // Eine Tipp-Sitzung in einem Text-/Zahlenfeld = EIN Undo-Schritt. Dieselbe
@@ -133,11 +135,12 @@ export function Inspector() {
     )
   }
 
-  // Sprechender Name im Kopf: der Eigentext des Bausteins (z. B. der
-  // Formularfeld-Platzhalter „Vorname"), sonst der Baustein-Typ. Ein noch
-  // unveränderter Default-Text zählt nicht als Eigenname (eigenerText mit
-  // defaultProps), damit ein frisches Feld weiter „Formularfeld" heißt.
-  const blockName = eigenerText(block.props, def.defaultProps) || (def.displayName ?? def.type)
+  // Sprechender Name im Kopf — DER eine Klarname (bausteinName): Eigentext,
+  // sonst der Alias des gebundenen Felds, sonst der Baustein-Typ. Bis
+  // 2026-08-17 stand hier eine eigene Abschrift, die die zweite Stufe nicht
+  // kannte; der Inspector-Kopf sagte „Formularfeld" ueber einem Feld, das auf
+  // der Flaeche sichtbar „Anreise" hiess.
+  const blockName = bausteinName(block, quellen.list)
 
   // Schritt speichern: dieselbe „ersetzen oder anhängen"-Regel wie zuvor in
   // der AktionenSektion — ein Bedienschritt = EIN Undo-Eintrag

@@ -62,7 +62,7 @@ export function DatenquellenBereich() {
   // wohnt in quellenOps (dort geprueft) — sie zaehlt seit 2026-07-30 auch die
   // WEITEREN Quellen mit, s. dort.
   const verwendungFor = (id: string): string[] =>
-    bausteineMitQuelle(ed.tree, id).map((n) => bausteinName(n))
+    bausteineMitQuelle(ed.tree, id).map((n) => bausteinName(n, store.list))
 
   // Eine Stammquelle OHNE Felder bestellt beim ERP nichts — sie sieht heil
   // aus und liefert nie einen Wert. Bei IDB ist dieselbe Lage harmlos

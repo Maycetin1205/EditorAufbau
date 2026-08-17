@@ -4,10 +4,12 @@
 // ruhige, feste Information statt blinkender Zustandsanzeigen.
 
 import { bausteinName } from '../../core/blocks/bausteinName'
+import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 
 export function StatusBar() {
   const ed = useEditor()
+  const quellen = useDataSources().list
   const selected = ed.selectedNode
   const page = ed.pages.find((p) => p.id === ed.activePageId)
 
@@ -31,7 +33,7 @@ export function StatusBar() {
                 bei fuenf Formularfeldern in einer Maske sagt „Formularfeld"
                 nichts darueber, welches gerade ausgewaehlt ist. */}
             <strong className="font-semibold text-foreground">
-              {bausteinName(selected)}
+              {bausteinName(selected, quellen)}
             </strong>
           </span>
         )}

@@ -58,25 +58,18 @@ import {
 } from './feldRuntime'
 import { feldStil } from './feldStil'
 import {
+  coerceFeldTyp,
+  MIT_PLATZHALTER,
+  PH_KLASSE,
+  type FeldTyp,
+} from './feldTypen'
+import {
   einzigenTrefferFinden,
   folgeBeimVerlassen,
   holeEintraege,
   oeffneNachschlagen,
   satzPasstZurAuswahl,
 } from './nachschlagen'
-
-// Feldtypen (Technikwerte) — der Bediener sieht nur die Klarnamen unten.
-const FELD_TYPEN = ['text', 'number', 'textarea', 'select', 'date', 'checkbox', 'nachschlagen'] as const
-type FeldTyp = (typeof FELD_TYPEN)[number]
-
-function coerceFeldTyp(v: unknown): FeldTyp {
-  return FELD_TYPEN.includes(v as FeldTyp) ? (v as FeldTyp) : 'text'
-}
-
-// Typen mit sichtbarem Platzhalter IM Feld. Beim Select liegt darunter eine
-// leere, deaktivierte Startoption: der Platzhalter beschreibt das Feld, ist
-// aber selbst nie ein auswählbarer Wert.
-const MIT_PLATZHALTER: readonly FeldTyp[] = ['text', 'number', 'textarea', 'select', 'nachschlagen']
 
 export class FormFeldBlock extends BasicBlock {
   static readonly blockType = 'formfeld'
@@ -471,15 +464,20 @@ export class FormFeldBlock extends BasicBlock {
     // ueber geschriebenem Text liegen. Beim Nachschlagen taugt `value` dafuer
     // nicht: das ist der unsichtbare Technikwert.
     const imFeld = wertBindbar ? this.value : (this.getippt ?? this.anzeige)
+    // „leer" trägt der Rahmen, nicht das Steuerelement: nur von dort erreicht
+    // die Regel den browsereigenen Datums-Hinweis UND den Platzhalter darüber
+    // (feldStil). Dieselbe Bedingung wie das Verstecken des Platzhalters —
+    // eine Frage, eine Antwort.
+    const leer = imFeld === ''
     return html`<div class="feld">
       <div
-        class="huelle"
+        class=${leer ? 'huelle leer' : 'huelle'}
         data-ff-spot=${wertBindbar ? 'value' : nothing}
         ?data-ff-bound=${wertBindbar && this.valueField !== ''}
       >
         ${this.controlTpl(typ)}
         ${MIT_PLATZHALTER.includes(typ)
-          ? this.textTpl(typ === 'select' ? 'ph ph-select' : 'ph', imFeld !== '')
+          ? this.textTpl(`ph ${PH_KLASSE[typ] ?? ''}`.trim(), !leer)
           : nothing}
       </div>
     </div>`

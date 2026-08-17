@@ -19,37 +19,20 @@
 // Rein und ohne Store-Zugriff, damit dieselbe Antwort im Test ohne Maske
 // nachvollziehbar ist.
 
-import type { BlockNode } from '../core/blocks/BlockData'
-import { bindingProp, zerlegeBindung, type BindableSpot } from '../core/blocks/BlockDefinition'
-import { bindbareStellenVon, QUELLE_PROP } from '../core/blocks/treeQuery'
-import type { DataSource } from '../core/data/dataSources'
+// `feldKlarname` wohnt seit 2026-08-17 in core/data/dataSources — der
+// Baustein-Klarname (core/blocks/bausteinName) braucht denselben Alias, und
+// eine core-Datei darf die Export-Schicht nicht importieren. Bewusst KEIN
+// Weiterreichen von hier: eine Durchreiche machte aus einer Quelle zwei
+// Adressen. Nicht aufloesbar (Quelle geloescht, Feld weg) heisst fuer den
+// EXPORT: die Stelle bleibt in der Maske leer, genau wie vor 2026-08-06 — der
+// getippte Text darf NICHT einspringen, er stuende an einer Datenstelle. Der
+// Preflight meldet den Fall, blockt aber seit 2026-08-10 nicht mehr
+// (Nutzer-Ansage); die Stelle bleibt dann auch in SoftEngine leer.
 
-// Klarname des gebundenen Felds.
-//
-// `bindung` ist der rohe Bindungswert der Stelle — entweder ein Feldcode der
-// EIGENEN Quelle ('10_30') oder 'quelleId::code' fuer eine weitere Quelle.
-// Die weitere Quelle wird ueber ihre id aufgeloest und NICHT ueber die
-// Reihenfolge: derselbe Feldcode bedeutet in zwei Quellen Verschiedenes, die
-// erste zu nehmen zeigte den falschen Klarnamen (dieselbe Regel wie im
-// Editor, useLitElement).
-//
-// Leerer Rueckgabewert = nicht aufloesbar (Quelle geloescht, Feld nicht mehr
-// im Woerterbuch). Dann bleibt die Stelle in der Maske leer, genau wie vor
-// 2026-08-06 — der getippte Text darf NICHT einspringen, er stuende an einer
-// Datenstelle. Dieser Fall kommt ueber den Export hinaus: der Preflight
-// meldet ihn zwar, blockt aber seit 2026-08-10 nicht mehr (Nutzer-Ansage).
-// Die Stelle bleibt dann auch in SoftEngine leer.
-export function feldKlarname(
-  bindung: string,
-  eigeneQuelleId: string,
-  sources: readonly DataSource[],
-): string {
-  const { quelleId, code } = zerlegeBindung(bindung)
-  const gesucht = quelleId === '' ? eigeneQuelleId : quelleId
-  if (gesucht === '' || code === '') return ''
-  const quelle = sources.find((s) => s.id === gesucht)
-  return quelle?.fields.find((f) => f.code === code)?.label ?? ''
-}
+import type { BlockNode } from '../core/blocks/BlockData'
+import { bindingProp, type BindableSpot } from '../core/blocks/BlockDefinition'
+import { bindbareStellenVon, QUELLE_PROP } from '../core/blocks/treeQuery'
+import { feldKlarname, type DataSource } from '../core/data/dataSources'
 
 // Die Stellen eines Knotens, deren Vorschau in eine ANDERE Prop geht, nach
 // dieser Ziel-Prop geschluesselt (Formularfeld: 'placeholder' → Wert-Stelle).

@@ -140,7 +140,9 @@ export function auswahlGeberOptionen(
     const quelle = sources.find((s) => s.id === auswahlQuelleIdVon(node))
     return {
       blockId: node.id,
-      label: quelle ? `${bausteinName(node)} (${quelle.name})` : bausteinName(node),
+      label: quelle
+        ? `${bausteinName(node, sources)} (${quelle.name})`
+        : bausteinName(node, sources),
       felder: quelle?.fields ?? [],
     }
   })

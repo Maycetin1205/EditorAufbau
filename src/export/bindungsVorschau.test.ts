@@ -9,8 +9,8 @@
 import { describe, expect, it } from 'vitest'
 import type { BlockNode } from '../core/blocks/BlockData'
 import type { BindableSpot } from '../core/blocks/BlockDefinition'
-import type { DataSource } from '../core/data/dataSources'
-import { feldKlarname, vorschauRoh } from './bindungsVorschau'
+import { feldKlarname, type DataSource } from '../core/data/dataSources'
+import { vorschauRoh } from './bindungsVorschau'
 
 const QUELLEN: DataSource[] = [
   {

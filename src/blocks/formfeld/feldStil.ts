@@ -95,6 +95,23 @@ export const feldStil = css`
     left: calc(var(--feld-pad-x) - 2px + var(--feld-rand));
     right: 25px; /* Platz für den Aufklapp-Pfeil */
   }
+  /* Datum (2026-08-17): Ein leeres <input type="date"> zeigt von sich aus
+     "tt.mm.jjjj". Unser Platzhalter liegt darueber — beide zusammen waeren
+     zwei Texte uebereinander. Deshalb weicht abwechselnd einer:
+       - RUHEND und leer: der browsereigene Hinweis wird unsichtbar, sichtbar
+         ist der Feldname ("Anreise") — genau wie beim Textfeld.
+       - IM FOKUS: das Feld gehoert dem Tippen. Der Name tritt zur Seite, die
+         Segmente kommen zurueck. Ohne das tippte der Bediener blind: der
+         Wert bleibt leer, bis das Datum VOLLSTAENDIG ist, der Name laege also
+         waehrend der ganzen Eingabe darueber.
+     opacity statt display/visibility: nur so bleibt das Feld gleich hoch und
+     die Segmente behalten ihre Breite (kein Sprung beim Fokus). Der
+     ::-webkit-datetime-edit-Teil ist Chromium/Edge — genau dort laeuft der
+     Editor und laeuft SoftEngine (WinUI wie WebUI). In einem anderen Browser
+     greift die Regel nicht: dann stuenden beide Texte uebereinander. Das ist
+     die bewusst in Kauf genommene Grenze (Nutzer-Ansage 2026-08-17). */
+  .huelle.leer input[type="date"]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
+  .huelle.leer:focus-within .ph-datum { display: none; }
   /* Ankreuzfeld: Kästchen + Beschriftung in EINER Zeile (Referenz
      .impf-chk) — bewusst ohne <label for>-Kopplung: im Editor ist die
      Beschriftung das Umbenennen-Ziel. Den Haken-Klick auf den Text

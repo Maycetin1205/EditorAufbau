@@ -43,7 +43,7 @@ import {
   uebernahmeIdbQuellen,
   uebernahmeQuellen,
 } from './feldUebernahme'
-import { eigenerText } from '../../core/blocks/bausteinName'
+import { bausteinName } from '../../core/blocks/bausteinName'
 import { istFensterSeite } from '../../state/pageOps'
 import {
   auswahlGeberOptionen,
@@ -80,8 +80,12 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   // eine Ansicht ist kein Popup (istFensterSeite).
   const popupSeiten = ed.pages.filter(istFensterSeite)
   const blockValues: BlockValueOption[] = actionValueTargets(ed.tree).map(({ node, spot }) => {
+    // DER eine Klarname (bausteinName) — bis 2026-08-17 stand hier eine
+    // eigene Abschrift derselben Regel, und die kannte den Alias eines
+    // gebundenen Felds nicht: in genau DIESER Klappliste standen dadurch
+    // zehnmal „Formularfeld" untereinander (Nutzer-Befund).
     const def = getBlockDefinition(node.type)
-    const name = eigenerText(node.props, def?.defaultProps) || def?.displayName || node.type
+    const name = bausteinName(node, dataSources.list)
     const mehrereStellen = (def?.actionValueSpots?.length ?? 0) > 1
     return {
       key: blockValueKey(node.id, spot.prop),

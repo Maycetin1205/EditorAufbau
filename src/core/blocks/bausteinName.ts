@@ -18,7 +18,10 @@
 // steht als Liste unten, nicht als `if type ===`.
 
 import type { BlockNode } from './BlockData'
+import { bindingProp } from './BlockDefinition'
 import { getBlockDefinition } from './blockRegistry'
+import { bindbareStellenVon, QUELLE_PROP } from './treeQuery'
+import { feldKlarname, type DataSource } from '../data/dataSources'
 
 // Der Anzeigename allein ist fuer mehrere gleichartige Bausteine nicht
 // eindeutig — ein kurzer Eigentext macht Listeneintraege sprechend.
@@ -47,15 +50,48 @@ export function eigenerText(
   return ''
 }
 
-// Sprechender Name eines Bausteins: der EIGENE Text, sobald es einen gibt
-// („Kunde"). Erst ohne Eigentext tritt der Typname ein („Formularfeld").
+// Der Alias des Felds, an das dieser Baustein GEBUNDEN ist — der Text, den
+// der Bauer auf der Flaeche im Feld stehen sieht, wenn dort keine Daten sind
+// (bindungsVorschau: an einer gebundenen Stelle zeigen Editor und Maske den
+// Feld-Klarnamen). Genommen wird die erste gerade bindbare Stelle, die
+// wirklich gebunden ist — in Registry-Reihenfolge, ohne Wissen ueber
+// Bausteintypen (Regel 2).
+function gebundenerAlias(node: BlockNode, quellen: readonly DataSource[]): string {
+  const eigeneQuelle = String(node.props[QUELLE_PROP] ?? '')
+  for (const stelle of bindbareStellenVon(node)) {
+    const bindung = String(node.props[bindingProp(stelle.prop)] ?? '')
+    if (bindung === '') continue
+    const alias = feldKlarname(bindung, eigeneQuelle, quellen)
+    if (alias !== '') return alias
+  }
+  return ''
+}
+
+// Sprechender Name eines Bausteins, in dieser Reihenfolge:
+//   1. der EIGENE Text („Kunde"), sobald es einen gibt
+//   2. der Alias des gebundenen Felds („Anreise")
+//   3. der Typname („Formularfeld")
 //
 // Bis 2026-08-10 stand der Typname immer davor („Formularfeld — Kunde").
 // Nutzer-Ansage an diesem Tag: ein Feld, das er „Kunde" genannt hat, heisst
 // in jeder Liste „Kunde" — der Typ steht schon im Symbol daneben und wird in
 // einer Maske mit fuenf Feldern zur Wiederholung, die den Namen wegdraengt.
-export function bausteinName(node: BlockNode): string {
+//
+// Stufe 2 kam 2026-08-17 dazu (Nutzer-Befund): ein an eine Datenquelle
+// gebundenes Feld traegt seinen getippten Text unveraendert als Standard
+// („Feldname") — der Alias ist NUR Vorschau und wird nie gespeichert. In der
+// Klappliste „Baustein" standen dadurch zehnmal „Formularfeld" untereinander,
+// obwohl auf der Flaeche zehn verschiedene Namen zu lesen waren. Die Liste
+// nennt jetzt, was der Bauer sieht.
+//
+// `quellen` ist bewusst PFLICHT und hat keinen Standardwert: mit einem
+// Standard haette jede vergessene Aufrufstelle still weiter „Formularfeld"
+// gezeigt — genau der Zustand, der hier reparieren wird (Regel 4).
+export function bausteinName(node: BlockNode, quellen: readonly DataSource[]): string {
   const def = getBlockDefinition(node.type)
   const text = eigenerText(node.props, def?.defaultProps)
-  return text === '' ? (def?.displayName ?? node.type) : text
+  if (text !== '') return text
+  const alias = gebundenerAlias(node, quellen)
+  if (alias !== '') return alias
+  return def?.displayName ?? node.type
 }

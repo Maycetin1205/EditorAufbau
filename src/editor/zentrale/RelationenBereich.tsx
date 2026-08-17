@@ -18,6 +18,7 @@ import {
   type RelationGroup,
   type RelationTemplate,
 } from '../../core/data/relations'
+import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
 import { SegmentControl } from '../inspector/controls/SegmentControl'
@@ -29,6 +30,7 @@ import { bestaetigeLoeschen, parameterBedeutung, RELATION_GRUPPEN, VERB_KURZ } f
 export function RelationenBereich() {
   const store = useRelations()
   const ed = useEditor()
+  const quellen = useDataSources().list
   const [suche, setSuche] = useState('')
   // „Alle" gestrichen (Nutzer 2026-07-22): nur noch Lesen | Schreiben, Start
   // auf Lesen — derselbe Umschalter wie im Schritt-Formular (SegmentControl).
@@ -64,7 +66,7 @@ export function RelationenBereich() {
   const verwendungFor = (id: string): string[] =>
     Object.values(ed.tree)
       .filter((n) => relationIdsVon(n).includes(id))
-      .map((n) => bausteinName(n))
+      .map((n) => bausteinName(n, quellen))
 
   function loeschen(r: RelationTemplate) {
     const ja = bestaetigeLoeschen(

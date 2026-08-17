@@ -30,7 +30,7 @@
 // { ID: 'BEL', FELDER: '1_1,…' } / { ID: 'IDBID0001', FELDER: '*' }; ART
 // analog in behandlung/).
 
-import { QUELLEN_TRENNER } from '../blocks/BlockDefinition'
+import { QUELLEN_TRENNER, zerlegeBindung } from '../blocks/BlockDefinition'
 import type { EintragProblem } from './ladeProblem'
 import { POS_LEN, pruefeLadeRelation, type LadeRelation } from './ladeRelation'
 import {
@@ -111,6 +111,36 @@ export interface DataSource {
   ladeRelation?: LadeRelation
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
   fields: readonly DataSourceField[]
+}
+
+// Klarname des Felds, an das eine Stelle gebunden ist.
+//
+// `bindung` ist der rohe Bindungswert der Stelle — entweder ein Feldcode der
+// EIGENEN Quelle ('10_30') oder 'quelleId::code' fuer eine weitere Quelle.
+// Die weitere Quelle wird ueber ihre id aufgeloest und NICHT ueber die
+// Reihenfolge: derselbe Feldcode bedeutet in zwei Quellen Verschiedenes, die
+// erste zu nehmen zeigte den falschen Klarnamen.
+//
+// Leerer Rueckgabewert = nicht aufloesbar (Quelle geloescht, Feld nicht mehr
+// im Woerterbuch). Was daraus folgt, entscheidet der Aufrufer: der Export
+// laesst die Stelle dann leer (bindungsVorschau), der Klarname eines
+// Bausteins faellt auf den Typnamen zurueck (bausteinName).
+//
+// Wohnt seit 2026-08-17 HIER und nicht mehr in export/bindungsVorschau: seit
+// auch der Baustein-Klarname den Alias braucht, haetten zwei Schichten
+// dieselbe Frage beantwortet — und eine core-Datei darf die Export-Schicht
+// nicht importieren. Es ist die Frage einer Datenquelle, also steht sie bei
+// den Datenquellen.
+export function feldKlarname(
+  bindung: string,
+  eigeneQuelleId: string,
+  sources: readonly DataSource[],
+): string {
+  const { quelleId, code } = zerlegeBindung(bindung)
+  const gesucht = quelleId === '' ? eigeneQuelleId : quelleId
+  if (gesucht === '' || code === '') return ''
+  const quelle = sources.find((s) => s.id === gesucht)
+  return quelle?.fields.find((f) => f.code === code)?.label ?? ''
 }
 
 // Kommt diese Quelle als EIN offener Satz (VAR) statt als Liste (SEFILELOOP)?

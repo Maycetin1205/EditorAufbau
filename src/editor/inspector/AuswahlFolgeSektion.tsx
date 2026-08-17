@@ -87,8 +87,8 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
   const anzeige = (n: BlockNode): { label: string; detail?: string } => {
     const q = quelleVon(n)
     return q
-      ? { label: `${bausteinName(n)} (${q.name})`, detail: quellenKennung(q) }
-      : { label: bausteinName(n) }
+      ? { label: `${bausteinName(n, bibliothek)} (${q.name})`, detail: quellenKennung(q) }
+      : { label: bausteinName(n, bibliothek) }
   }
 
   function setze(neu: AuswahlFolge[]): void {
