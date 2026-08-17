@@ -2,44 +2,35 @@
 // Property-Editor des selektierten Blocks. Liest die PropertyDescription des
 // Blocks und baut daraus einfache Controls. Nutzt die gemeinsame SidePanel-Hülle.
 //
-// Unteraufgabe (R3-Feinschliff 2026-07-21): das Schritt-Formular blättert das
-// Panel um, statt es als Modal/Overlay zu überlagern. („Daten anschließen"
-// tat das bis 2026-07-27 auch — die Ansicht ist ersatzlos entfallen, die
-// Datenquelle wird jetzt direkt hier im Panel gewählt, wie bei der Tabelle.)
-// Der Inspector hält dafür genau EINEN Zustand `unteraufgabe`;
-// ist er gesetzt, wechselt der Panel-Inhalt komplett zur Aufgabe (SidePanel
-// im Rückzeilen-Modus, 340 px unverändert). Escape blättert zurück — capture
-// + stopPropagation, exakt die Schichtung, die vorher FormularKarte/Modal
-// hatten. Ein Baustein-Wechsel schließt eine offene Unteraufgabe.
+// Das Panel hat KEINE Unteraufgabe mehr (2026-08-17). Von 2026-07-21 bis
+// dahin blätterte das Schritt-Formular es um: Rückzeile „← <Baustein>",
+// Escape blätterte zurück. Eine Relation hat bis zu zwölf Parameter — in
+// 340 px war das nicht auszufüllen, und der Baustein, um den es ging, war
+// dabei nicht mehr zu sehen. Das Formular lebt jetzt im breiten
+// KettenFenster; die AktionenSektion zeigt die Kette und öffnet es.
+// („Daten anschließen" war bis 2026-07-27 die zweite Unteraufgabe — ersatzlos
+// entfallen, die Datenquelle wird direkt hier im Panel gewählt.)
+// Ohne Unteraufgabe braucht dieses Panel auch keinen eigenen Escape-Horcher
+// mehr: das Fenster bringt seinen mit.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Copy, MousePointer2 } from '@/ui/zeichen'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { darfAuswahlFolgen, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
-import type { ActionStep } from '../../core/data/aktionen'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { Field } from '@/ui/molecules/field'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { cn } from '@/lib/utils'
-import { StepForm } from '../zentrale/StepForm'
 import { bausteinName } from '../../core/blocks/bausteinName'
 import { AktionenSektion } from './AktionenSektion'
 import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
 import { PropControl } from './PropControl'
 import { QuellenListe } from './QuellenListe'
-
-// Offene Unteraufgabe des Inspector-Panels (null = normale Property-Ansicht).
-// Seit dem Wegfall der Datenanschluss-Ansicht (2026-07-27) gibt es nur noch
-// EINE Unteraufgabe — das Schritt-Formular; deshalb kein Unterscheider mehr.
-interface Unteraufgabe {
-  eventKey: string
-  step?: ActionStep
-}
 
 // Benachbarte Properties mit gleichem inspectorRow teilen sich EINE
 // Inspector-Zeile (ein Label, Controls nebeneinander) — Registry-Daten,
@@ -77,32 +68,6 @@ export function Inspector() {
   }), [ed])
   const block = ed.selectedNode
 
-  // Panel-Umblättern (R3-Feinschliff): welche Unteraufgabe ist offen?
-  const [unteraufgabe, setUnteraufgabe] = useState<Unteraufgabe | null>(null)
-  // Die Unteraufgabe gehört zum gewählten Baustein — wechselt (oder
-  // verschwindet) die Auswahl, verwerfen wir sie noch WÄHREND des Renderns.
-  // Reacts Muster „State beim Auswahl-Wechsel anpassen" (kein setState im
-  // Effekt, keine Kaskaden), damit nie das Formular eines fremden Blocks bleibt.
-  const [aufgabenBlock, setAufgabenBlock] = useState(block?.id)
-  if (aufgabenBlock !== block?.id) {
-    setAufgabenBlock(block?.id)
-    setUnteraufgabe(null)
-  }
-
-  // Escape blättert zurück: capture + stopPropagation wie zuvor bei
-  // FormularKarte/Modal (Escape-Schichtung erhalten). Nur aktiv, solange eine
-  // Unteraufgabe offen ist — die normale Ansicht fängt kein Escape ab.
-  useEffect(() => {
-    if (!unteraufgabe) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        setUnteraufgabe(null)
-      }
-    }
-    document.addEventListener('keydown', onKeyDown, true)
-    return () => document.removeEventListener('keydown', onKeyDown, true)
-  }, [unteraufgabe])
 
   if (!block) {
     return (
@@ -142,35 +107,7 @@ export function Inspector() {
   // der Flaeche sichtbar „Anreise" hiess.
   const blockName = bausteinName(block, quellen.list)
 
-  // Schritt speichern: dieselbe „ersetzen oder anhängen"-Regel wie zuvor in
-  // der AktionenSektion — ein Bedienschritt = EIN Undo-Eintrag
-  // (updateBlockEvents). StepForm ruft danach onClose (= zurückblättern).
-  const speichereSchritt = (eventKey: string, bearbeitet: ActionStep | undefined, step: ActionStep) => {
-    const node = ed.tree[block.id]
-    if (!node) return
-    const kette = node.events?.[eventKey] ?? []
-    const next = bearbeitet
-      ? kette.map((s) => (s.id === step.id ? step : s))
-      : [...kette, step]
-    ed.updateBlockEvents(block.id, { ...(node.events ?? {}), [eventKey]: next })
-  }
 
-  // Panel umgeblättert: der Inhalt IST die Unteraufgabe (kein Modal, keine
-  // Abdunklung). Rückzeile „← <Baustein>" + Titel der Aufgabe, Formular
-  // unverändert darunter. Escape/„Fertig"/„←" blättern zurück.
-  if (unteraufgabe) {
-    const titel = unteraufgabe.step ? 'Schritt bearbeiten' : 'Neuer Schritt'
-    return (
-      <SidePanel title={titel} backLabel={blockName} onBack={() => setUnteraufgabe(null)}>
-        <StepForm
-          step={unteraufgabe.step}
-          kette={ed.tree[block.id]?.events?.[unteraufgabe.eventKey] ?? []}
-          onClose={() => setUnteraufgabe(null)}
-          onSave={(step) => speichereSchritt(unteraufgabe.eventKey, unteraufgabe.step, step)}
-        />
-      </SidePanel>
-    )
-  }
 
   // Datenquelle in Reichweite: steuert die Sichtbarkeit von
   // requiresDataSource-Controls und liefert die Feldliste für kind 'field'.
@@ -325,7 +262,6 @@ export function Inspector() {
             <AktionenSektion
               block={block}
               events={def.blockEvents}
-              onEditStep={(eventKey, step) => setUnteraufgabe({ eventKey, step })}
             />
           </div>
         )}

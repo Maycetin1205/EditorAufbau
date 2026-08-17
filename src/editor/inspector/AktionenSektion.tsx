@@ -1,94 +1,43 @@
 // AktionenSektion — Inspector-Abschnitt „Aktionen" (R3, 2026-07-21).
-// Die Ereignis-Ketten wohnen jetzt AM BAUSTEIN statt in der Steuerung:
-// erscheint nach Inhalt/Daten, aber NUR für Bausteine, die per Registry
-// Ereignisse deklarieren (blockEvents — kein `if typ===`). Je Ereignis eine
-// kompakte Schrittliste mit „+ Schritt", Bearbeiten/Löschen/Sortieren/
-// Duplizieren — Verhalten, Wortlaut und Undo-Kopplung sind exakt die der
-// früheren AktionenBereich-Detailspalte (nur ohne deren Master-Liste, weil
-// der Baustein hier schon feststeht). Ein Bedienschritt = EIN Undo-Eintrag
-// (editor.updateBlockEvents), Ctrl+Z gilt auch hier.
+// Die Ereignis-Ketten wohnen AM BAUSTEIN statt in der Steuerung: erscheint
+// nach Inhalt/Daten, aber NUR für Bausteine, die per Registry Ereignisse
+// deklarieren (blockEvents — kein `if typ===`).
 //
-// Das Anlegen/Bearbeiten eines Schritts blättert das Inspector-Panel um
-// (R3-Feinschliff 2026-07-21): diese Sektion meldet den Wunsch nur über
-// `onEditStep` — den Zustand und die UNVERÄNDERTE StepForm besitzt der
-// Inspector (Rückzeile „← <Baustein>", 340 px, Escape blättert zurück).
-// Sortieren/Löschen/Duplizieren bleiben hier (kein Umblättern nötig).
+// UMGEBAUT 2026-08-17: dieser Abschnitt ZEIGT die Kette, er bearbeitet sie
+// nicht mehr. Bis hierhin blätterte das Schritt-Formular das 340-px-Panel um
+// (R3-Feinschliff 2026-07-21) — eine Relation mit zwölf Parametern passte
+// dort nicht, und während man sie ausfüllte, war der Baustein, um den es
+// geht, nicht mehr zu sehen. Jetzt öffnet „Kette bearbeiten" das breite
+// KettenFenster; Sortieren, Duplizieren und Löschen sind mit dort hinein
+// umgezogen — ein Handgriff, ein Ort.
+//
+// Die Zeilen selbst zeichnet die geteilte SchrittListe — dieselbe wie im
+// Fenster, damit die Zeile „was tut dieser Schritt" nirgends auseinanderläuft.
+// Ein Bedienschritt = EIN Undo-Eintrag (editor.updateBlockEvents).
 
-import { ArrowDown, ArrowUp, Copy, Pencil, Plus, X } from '@/ui/zeichen'
+import { useState } from 'react'
+import { Plus } from '@/ui/zeichen'
+import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BlockEventSpec } from '../../core/blocks/BlockDefinition'
-import { actionValueTargets, auswahlGeberImBaum } from '../../core/blocks/treeQuery'
-import {
-  ergebnisSchritteVor,
-  stepTypeName,
-  type ActionStep,
-} from '../../core/data/aktionen'
-import { stepProblem } from '../../core/data/schrittPruefung'
-import { formatRelationSyntax } from '../../core/data/relations'
-import { istUngetaufteVorlage, relationAnzeige } from '../zentrale/relationAnzeige'
-import { ankerSchrittId, schrittZusammenfassung } from '../zentrale/schrittZusammenfassung'
-import { istFensterSeite } from '../../state/pageOps'
-import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
-import { useRelations } from '../../state/useRelations'
+import { KettenFenster } from '../zentrale/KettenFenster'
+import { SchrittListe } from '../zentrale/SchrittListe'
 
-interface AktionenSektionProps {
+export function AktionenSektion({
+  block,
+  events,
+}: {
   block: BlockNode
   events: readonly BlockEventSpec[]
-  // Schritt anlegen (step weggelassen) oder bearbeiten — der Inspector
-  // blättert daraufhin das Panel zur StepForm um.
-  onEditStep: (eventKey: string, step?: ActionStep) => void
-}
-
-export function AktionenSektion({ block, events, onEditStep }: AktionenSektionProps) {
+}) {
   const ed = useEditor()
-  const relations = useRelations()
-  const dataSources = useDataSources()
+  // Höchstens EIN Ketten-Fenster ist offen — dieselbe Linie wie beim Popup
+  // (C3.2): zwei übereinander wären zwei Wahrheiten über denselben Baustein.
+  const [offenesEreignis, setOffenesEreignis] = useState<BlockEventSpec | null>(null)
 
-  const kette = (eventKey: string): ActionStep[] => ed.tree[block.id]?.events?.[eventKey] ?? []
-
-  // Kette eines Ereignisses ersetzen (alle Mutationen laufen hierüber).
-  const setChain = (eventKey: string, steps: ActionStep[]): void => {
-    const node = ed.tree[block.id]
-    if (!node) return
-    ed.updateBlockEvents(block.id, { ...(node.events ?? {}), [eventKey]: steps })
-  }
-
-  const moveStep = (eventKey: string, steps: ActionStep[], from: number, to: number): void => {
-    const next = [...steps]
-    const [moved] = next.splice(from, 1)
-    next.splice(to, 0, moved)
-    setChain(eventKey, next)
-  }
-
-  const duplicateStep = (eventKey: string, steps: ActionStep[], at: number): void => {
-    const source = steps[at]
-    const copy: ActionStep = source.type === 'START_TOOL'
-      ? { ...source, toolParams: [...source.toolParams], id: crypto.randomUUID() }
-      : source.type === 'RELATION'
-        ? {
-            ...source,
-            params: source.params.map((binding) => ({ ...binding })),
-            extraParams: source.extraParams.map((binding) => ({ ...binding })),
-            id: crypto.randomUUID(),
-          }
-        : { ...source, id: crypto.randomUUID() }
-    const next = [...steps]
-    next.splice(at + 1, 0, copy)
-    setChain(eventKey, next)
-  }
-
-  // Nur FENSTER-Seiten: eine Ansicht kann kein Popup-Schritt öffnen.
-  const popupSeiten = ed.pages.filter(istFensterSeite)
-  const actionValueRefs = actionValueTargets(ed.tree).map(({ node, spot }) => ({
-    blockId: node.id,
-    prop: spot.prop,
-  }))
-  // Auswahl-Geber der Maske — sonst bliebe ein Parameter „Feld der gewählten
-  // Zeile" auf einem gelöschten Geber in dieser Liste unauffällig und
-  // schlüge erst beim Export zu.
-  const geberIds = auswahlGeberImBaum(ed.tree).map((n) => n.id)
+  const kette = (eventKey: string) => ed.tree[block.id]?.events?.[eventKey] ?? []
 
   return (
     <div className="flex flex-col gap-2">
@@ -96,134 +45,49 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
         const steps = kette(ev.key)
         return (
           <div key={ev.key} className="text-xs">
-            {/* Genau EINE Zeile je Ereignis: Name links, kleiner „+"-Knopf
-                rechts. Kein Leerzustand-Text, keine eigene Knopf-Zeile — ein
-                Ereignis ohne Schritte kostet null zusätzliche Höhe (Punkt 10,
-                Nutzer 2026-07-21). Schritte hängen als dichte Zeilen darunter. */}
+            {/* Genau EINE Zeile je Ereignis: Name links, Knopf rechts. Kein
+                Leerzustand-Text, keine eigene Knopf-Zeile — ein Ereignis ohne
+                Schritte kostet null zusätzliche Höhe (Punkt 10, Nutzer
+                2026-07-21). */}
             <div className="flex min-h-7 items-center justify-between gap-2">
-              <span className="text-[0.6875rem] font-semibold text-foreground">{ev.name}</span>
-              <IconButton
-                aria-label="Schritt hinzufügen"
-                title="Schritt hinzufügen"
-                onClick={() => onEditStep(ev.key)}
-              >
-                <Plus size={14} />
-              </IconButton>
+              <span className="text-[0.6875rem] font-semibold text-foreground">
+                {ev.name}
+                {steps.length > 0 && (
+                  <span className="ml-1.5 font-normal tabular-nums text-muted-foreground">
+                    {steps.length}
+                  </span>
+                )}
+              </span>
+              {steps.length === 0 ? (
+                <IconButton
+                  aria-label={`Schritt zu „${ev.name}" hinzufügen`}
+                  title="Schritt hinzufügen"
+                  onClick={() => setOffenesEreignis(ev)}
+                >
+                  <Plus size={14} />
+                </IconButton>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setOffenesEreignis(ev)}>
+                  Kette bearbeiten
+                </Button>
+              )}
             </div>
             {steps.length > 0 && (
-              <ol className="mt-0.5 divide-y divide-border/70">
-                {steps.map((s, i) => {
-                  // Die KLAMMER: ein Schritt, der sich auf das Ergebnis eines
-                  // frueheren beruft, ruecke ein — so ist auf einen Blick zu
-                  // sehen, welche Schreib-Schritte in den Satz gehen, den ein
-                  // „neuen Satz anlegen" davor erzeugt hat. Eingerueckt wird
-                  // nur, was WIRKLICH auf einen Schritt DIESER Kette zeigt.
-                  const anker = ankerSchrittId(s)
-                  const eingerueckt = anker !== '' && steps.some((x) => x.id === anker)
-                  const problem = stepProblem(
-                    s, relations.list, dataSources.list, popupSeiten.map((seite) => seite.id),
-                    ergebnisSchritteVor(steps, s.id, relations.list).map((g) => g.id),
-                    actionValueRefs,
-                    geberIds,
-                  )
-                  const relation = s.type === 'RELATION' ? relations.get(s.relationId) : undefined
-                  const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'
-                    ? popupSeiten.find((seite) => seite.id === s.popupId)?.name
-                    : undefined
-                  const was = s.type === 'RELATION' && relation
-                    ? (istUngetaufteVorlage(relation)
-                        ? relationAnzeige(relation)
-                        : relation.name)
-                    : stepTypeName(s.type)
-                  const zus = schrittZusammenfassung(
-                    s, was, relation, ed.tree, dataSources.list,
-                    (id) => steps.findIndex((x) => x.id === id) + 1,
-                  )
-                  // Zielfeld schlaegt Tabelle: ein Schreib-Schritt sagt, WAS
-                  // er beschreibt; ein Schritt ohne Zielfeld (neuen Satz
-                  // anlegen) sagt wenigstens, WO.
-                  const naeher = [
-                    zus.ziel !== '' ? zus.ziel : zus.tabelle,
-                    zus.herkunft,
-                  ].filter((t) => t !== '').join('  ←  ')
-                  return (
-                    <li
-                      key={s.id}
-                      className={`flex items-start gap-0.5 border-l-2 py-1.5 pr-1 transition-colors ${
-                        eingerueckt ? 'pl-4' : 'pl-1'
-                      } ${
-                        problem !== null
-                          ? 'border-amber-500 bg-amber-500/10'
-                          : 'border-transparent hover:bg-secondary/50'
-                      }`}
-                    >
-                      {/* w-5, nicht w-4: ab dem zehnten Schritt braucht „10."
-                          zwei Ziffern und den Punkt — in 16px stand der Punkt
-                          halb ausserhalb. */}
-                      <span className="w-5 shrink-0 text-right text-muted-foreground">{i + 1}.</span>
-                      {/* Nie die Syntax-Wurst als Zeilentext (Regel 3): Vorlagen
-                          zeigen Klarname bzw. „VERB · Nr."; die volle Syntax
-                          liegt im Tooltip (R3-Abschluss 2026-07-21). */}
-                      <span
-                        className="min-w-0 flex-1"
-                        title={problem ?? (relation ? formatRelationSyntax(relation) : undefined)}
-                      >
-                        <span className="block truncate">
-                          {zus.was}
-                          {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
-                          {popupName ? ` — ${popupName}` : ''}
-                          {problem !== null ? ' — unvollständig' : ''}
-                        </span>
-                        {/* Die Zeile, die elf gleichnamige Schritte
-                            unterscheidet: Zielfeld links, Herkunft rechts.
-                            Faellt weg, wo nichts aufloesbar ist — eine leere
-                            Zeile waere nur Hoehe. */}
-                        {naeher !== '' && (
-                          <span className="block truncate text-[0.6875rem] text-muted-foreground">
-                            {naeher}
-                          </span>
-                        )}
-                      </span>
-                      <IconButton
-                        aria-label={`Schritt ${i + 1} nach oben`}
-                        disabled={i === 0}
-                        onClick={() => moveStep(ev.key, steps, i, i - 1)}
-                      >
-                        <ArrowUp size={12} />
-                      </IconButton>
-                      <IconButton
-                        aria-label={`Schritt ${i + 1} nach unten`}
-                        disabled={i === steps.length - 1}
-                        onClick={() => moveStep(ev.key, steps, i, i + 1)}
-                      >
-                        <ArrowDown size={12} />
-                      </IconButton>
-                      <IconButton
-                        aria-label={`Schritt ${i + 1} bearbeiten`}
-                        onClick={() => onEditStep(ev.key, s)}
-                      >
-                        <Pencil size={12} />
-                      </IconButton>
-                      <IconButton
-                        aria-label={`Schritt ${i + 1} duplizieren`}
-                        onClick={() => duplicateStep(ev.key, steps, i)}
-                      >
-                        <Copy size={12} />
-                      </IconButton>
-                      <IconButton
-                        aria-label={`Schritt ${i + 1} löschen`}
-                        onClick={() => setChain(ev.key, steps.filter((x) => x.id !== s.id))}
-                      >
-                        <X size={12} />
-                      </IconButton>
-                    </li>
-                  )
-                })}
-              </ol>
+              <div className="mt-0.5">
+                <SchrittListe steps={steps} />
+              </div>
             )}
           </div>
         )
       })}
+      {offenesEreignis && (
+        <KettenFenster
+          block={block}
+          eventKey={offenesEreignis.key}
+          eventName={offenesEreignis.name}
+          onClose={() => setOffenesEreignis(null)}
+        />
+      )}
     </div>
   )
 }

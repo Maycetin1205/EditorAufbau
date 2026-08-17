@@ -6,10 +6,11 @@
 // toolParams bleibt im Modell fuer Altbestaende und die Laufzeit,
 // gespeichert wird leer.
 //
-// Das Formular liefert nur seinen INHALT: Titel, Zurueckblaettern und
-// Escape stellt der Inspector ueber die SidePanel-Rueckzeile (kein Modal,
-// kein Overlay). Es rechnet mit einer schmalen Spalte (rund 340 px) —
-// deshalb stehen die Parameter einzeilig.
+// Das Formular liefert nur seinen INHALT: Rahmen, Kopfzeile und Schliessen
+// stellt seit 2026-08-17 das KettenFenster. Bis dahin blaetterte es das
+// 340-px-Inspector-Panel um, und die Parameter standen einzeilig, WEIL dort
+// nichts anderes ging. Einzeilig bleiben sie — jetzt aber mit Platz: Herkunft
+// und Ziel teilen sich eine breite Zeile, statt sie sich zu nehmen.
 //
 // Die Teile daneben, jeder mit einer Aufgabe (Aufteilung 2026-07-24, weil
 // diese Datei ueber den 500-Zeilen-Deckel gewachsen war):
