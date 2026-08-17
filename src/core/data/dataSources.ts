@@ -52,6 +52,7 @@ export {
   type LadeRelation,
 } from './ladeRelation'
 export {
+  feldVorsatzFromInput,
   fieldCode,
   kennungAnzeige,
   kennungFromInput,
@@ -109,6 +110,12 @@ export interface DataSource {
   // Nur Arten mit relationLadenMoeglich führen sie (ladeRelationFor) — eine
   // holende Quelle bestellt bei SoftEngine nichts (exportMask).
   ladeRelation?: LadeRelation
+  // Der Vorsatz, den die Feldcodes dieser Quelle vor Position_Länge tragen
+  // ('LFA_' bei einer ERP-Abfrage) — nur bei Arten mit feldVorsatzMoeglich.
+  // Er steht ZUSÄTZLICH hier und nicht nur in den Codes selbst, damit das
+  // Formular ihn beim Bearbeiten wieder abziehen kann: sonst zeigten
+  // Position und Länge leer, obwohl das Feld richtig gebunden ist.
+  feldVorsatz?: string
   // Feld-Wörterbuch der Tabelle, in SATZ-Reihenfolge (deterministisch).
   fields: readonly DataSourceField[]
 }
@@ -283,6 +290,15 @@ export function kopfsatzFor(source: DataSource): string {
   return (source.kopfsatzIndex ?? '').trim()
 }
 
+// Der Feld-Vorsatz, der für diese Quelle gilt — leer, wo die Art keinen führt.
+// Die Art-Abfrage gehört aus demselben Grund hierher wie bei kopfsatzFor:
+// wechselt der Bediener die Art einer bestehenden Quelle, bleibt der alte Wert
+// gespeichert und dürfte die Feldcodes nicht mehr beeinflussen.
+export function feldVorsatzFor(source: DataSource): string {
+  if (!artFuer(source.kind).feldVorsatzMoeglich) return ''
+  return (source.feldVorsatz ?? '').trim()
+}
+
 // Der VAR-Abschnitt der SEvariablen, abgeleitet aus den Kopfsätzen.
 //
 // WARUM abgeleitet und nicht eingestellt: ein KOPFSATZ_INDEX 'BEL_0_11' zeigt
@@ -453,6 +469,9 @@ export function pruefeDatenquellen(
         ? { kopfsatzIndex: e.kopfsatzIndex }
         : {}),
       ...(e.lieferung === 'offenerSatz' ? { lieferung: 'offenerSatz' as const } : {}),
+      ...(typeof e.feldVorsatz === 'string' && e.feldVorsatz !== ''
+        ? { feldVorsatz: e.feldVorsatz }
+        : {}),
       ...(ladeRelation ? { ladeRelation } : {}),
       fields,
     })

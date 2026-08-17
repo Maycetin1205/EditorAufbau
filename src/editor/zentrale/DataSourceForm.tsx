@@ -36,6 +36,7 @@ import { TextInput } from '@/ui/atoms/text-input'
 import { Field } from '@/ui/molecules/field'
 import {
   artFuer,
+  feldVorsatzFromInput,
   kennungAnzeige,
   kennungFromInput,
   kopfsatzFromInput,
@@ -71,6 +72,9 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
   const [kennungEingabe, setKennungEingabe] = useState(kennungAnzeige(source?.idbId))
   const [kopfsatzEingabe, setKopfsatzEingabe] = useState(source?.kopfsatzIndex ?? '')
+  // Der Feld-Vorsatz der Quelle ('LFA_'). Er formt JEDEN Feldcode dieser
+  // Quelle, deshalb steht er oben bei der Herkunft und nicht in der Feldliste.
+  const [vorsatzEingabe, setVorsatzEingabe] = useState(source?.feldVorsatz ?? '')
   // Zeilen-Weg (Welle R): 'geschoben' = SoftEngine schickt beim Laden
   // (heutiger Weg); 'holen' = die Maske fragt selbst per Relation, sobald
   // ein Beleg angeklickt ist. Sichtbar sind NUR Relationsnummer und die
@@ -92,7 +96,10 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   }
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
-      ? source.fields.map(zeileFromField)
+      // Mit dem GESPEICHERTEN Vorsatz gelesen, nicht mit dem gerade getippten:
+      // sonst zeigten Position und Laenge leer, sobald der Bediener den
+      // Vorsatz im offenen Formular anfasst.
+      ? source.fields.map((f) => zeileFromField(f, source.feldVorsatz ?? ''))
       : [{ ...LEERE_ZEILE }],
   )
   // Fehler erst nach dem ersten Speichern-Versuch anzeigen (nicht beim Tippen).
@@ -110,6 +117,12 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   // Dritte Frage an die Art: kann sie ihre Zeilen per Relation holen
   // (Welle R)? Nur dann gibt es die Zeilen-Weg-Auswahl.
   const holenMoeglich = art.relationLadenMoeglich
+  // Vierte Frage an die Art: tragen ihre Feldcodes einen festen Vorsatz?
+  // Nur dann gibt es das Kaestchen (ERP-Abfrage: 'LFA_2_8' statt '2_8').
+  const vorsatzEingeben = art.feldVorsatzMoeglich
+  // Was beim Speichern vor jeden Feldcode kommt — und beim Pruefen unten
+  // dieselbe Rechnung, damit Fehleranzeige und Ergebnis nie auseinanderlaufen.
+  const vorsatz = vorsatzEingeben ? feldVorsatzFromInput(vorsatzEingabe) : ''
   const holtZeilen = holenMoeglich && zeilenWeg === 'holen'
   // Mögliche Geber: jede ANDERE Quelle der Bibliothek.
   const geberOptionen = store.list.filter((s) => s.id !== source?.id)
@@ -122,7 +135,9 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     setKind(neu)
     const neueArt = artFuer(neu)
     if (neueArt.standardFelder.length > 0 && !zeilen.some(zeileGefuellt)) {
-      setZeilen(neueArt.standardFelder.map(zeileFromField))
+      // Ohne Vorsatz gelesen: mitgebrachte Woerterbuecher gibt es nur bei
+      // Arten mit FESTER Tabellen-ID, und die fuehren keinen (quellenArten).
+      setZeilen(neueArt.standardFelder.map((f) => zeileFromField(f)))
     }
     if (neueArt.kopfsatzStandard !== '' && kopfsatzEingabe.trim() === '') {
       setKopfsatzEingabe(neueArt.kopfsatzStandard)
@@ -144,10 +159,10 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const zeilenFehler = zeilen.map((z) => {
     if (z.label.trim() === '') return 'Klarname fehlt.'
     if (FELDCODE.test(z.label.trim())) return 'Klarname darf kein Feldcode sein.'
-    if (zeilenCode(z) === '') return 'Position und Länge als Zahlen angeben.'
+    if (zeilenCode(z, vorsatz) === '') return 'Position und Länge als Zahlen angeben.'
     return ''
   })
-  const codes = zeilen.map(zeilenCode)
+  const codes = zeilen.map((z) => zeilenCode(z, vorsatz))
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
     ? 'Zwei Felder haben dieselbe Position + Länge.'
     : ''
@@ -181,6 +196,10 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       ...(kopfsatzEingeben && kopfsatzFromInput(kopfsatzEingabe) !== ''
         ? { kopfsatzIndex: kopfsatzFromInput(kopfsatzEingabe) }
         : {}),
+      // Gleiche Linie wie beim Kopfsatz: nur mitschreiben, wo die Art ihn
+      // fuehrt — sonst schleppte eine Quelle, die einmal ERP-Abfrage war,
+      // ihren Vorsatz unsichtbar weiter und formte fremde Feldcodes.
+      ...(vorsatz !== '' ? { feldVorsatz: vorsatz } : {}),
       // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
       // bleibt, neue Quellen bekommen '0_10'.
       ...(source
@@ -199,7 +218,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           }
         : {}),
       fields: zeilen.map((z) => ({
-        code: zeilenCode(z),
+        code: zeilenCode(z, vorsatz),
         label: z.label.trim(),
       })),
     }
@@ -242,6 +261,23 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
                 placeholder={`z. B. ${art.kennungBeispiel}`}
                 className="w-32"
                 onChange={(e) => setKennungEingabe(e.target.value)}
+              />
+            )}
+          </Field>
+        )}
+
+        {/* 2a. Feld-Vorsatz — nur bei Arten, deren Feldcodes einen tragen.
+            Er gehoert zur ABFRAGE, nicht zum einzelnen Feld: einmal hier,
+            danach formt er jeden Feldcode dieser Quelle. */}
+        {vorsatzEingeben && (
+          <Field label="Feld-Vorsatz">
+            {(f) => (
+              <TextInput
+                {...f}
+                value={vorsatzEingabe}
+                placeholder="z. B. LFA_"
+                className="w-32"
+                onChange={(e) => setVorsatzEingabe(e.target.value)}
               />
             )}
           </Field>

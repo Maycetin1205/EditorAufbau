@@ -196,6 +196,23 @@ export function rowsFor(seData: unknown, alias: string, idbId: string): unknown[
     }
   }
 
+  // ERP-Aufrufe (ERPAPICALL) kommen an EINER ANDEREN Stelle an als die
+  // geschobenen Dateien: SEDATA.Daten.ErpApiCall.<Alias>.Zeilen[] (belegt im
+  // Quelltext beider Chef-Masken, 2026-06-11). Ohne diesen Weg waere die
+  // Bestellung richtig und die Quelle trotzdem leer — der uebelste Fehler,
+  // weil in der Maskendatei alles korrekt aussieht.
+  // Drei Schreibweisen, weil unser Beleg nur EINE davon zeigt und der Rest
+  // der Datei dieselbe Nachsicht ueberall uebt (SEFileLoop/Tabellen).
+  for (const key of ['ErpApiCall', 'ERPAPICALL', 'erpapicall']) {
+    const api = daten[key]
+    if (!isRecord(api)) continue
+    for (const eintrag of Object.keys(api)) {
+      if (!sameAlias(eintrag, alias)) continue
+      const rows = rowsOfEntry(api[eintrag])
+      if (rows.length > 0) return rows
+    }
+  }
+
   const tab = daten.Tabellen
   if (isRecord(tab)) {
     const keys = [alias, alias.toUpperCase(), alias.toLowerCase(), idbId]

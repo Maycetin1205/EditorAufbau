@@ -18,11 +18,28 @@ import { artFuer, type DataSourceKind } from './quellenArten'
 
 // Position + Länge -> Feldcode: ('193', '30') -> '193_30'. Position darf 0
 // sein (Datensatz-Nummer '0_10'), Länge muss mindestens 1 sein.
-export function fieldCode(pos: string, len: string): string {
+//
+// `vorsatz` (2026-08-17) steht davor, wo die Art einen führt: bei einer
+// ERP-Abfrage heißen die Zeilen-Schlüssel 'LFA_2_8' statt '2_8'
+// (quellenArten.feldVorsatzMoeglich). Er gehört zur ABFRAGE, nicht zum
+// einzelnen Feld — deshalb kommt er von außen und wird hier nur davorgesetzt.
+// Ungültige Position/Länge bleiben ungültig, auch mit Vorsatz.
+export function fieldCode(pos: string, len: string, vorsatz = ''): string {
   const p = pos.trim()
   const l = len.trim()
   if (!/^\d+$/.test(p) || !/^\d+$/.test(l) || Number(l) < 1) return ''
-  return `${p}_${l}`
+  return `${feldVorsatzFromInput(vorsatz)}${p}_${l}`
+}
+
+// Eingegebener Feld-Vorsatz -> Technikwert. Erlaubt sind Buchstaben, Ziffern
+// und Unterstriche ('LFA_'); alles andere ergibt '' — dann baut fieldCode den
+// Code ohne Vorsatz, statt einen kaputten zu erzeugen. Ein FEHLENDER Vorsatz
+// ist gültig: nur die ERP-Abfrage führt bisher einen.
+const VORSATZ_FORM = /^[A-Za-z0-9_]+$/
+
+export function feldVorsatzFromInput(raw: string): string {
+  const t = raw.trim()
+  return t !== '' && VORSATZ_FORM.test(t) ? t : ''
 }
 
 // Eingegebene Kennung -> Technikwert, für jede Art, die keine feste hat.
@@ -40,8 +57,13 @@ export function fieldCode(pos: string, len: string): string {
 // Ungültige Eingaben ergeben '' (das Formular zeigt dann einen Fehler); ein
 // Feldcode wie '2_8' ist keine Kennung und fällt durch, weil eine Kennung
 // mit einem Buchstaben beginnt.
+//
+// Der PUNKT ist seit 2026-08-17 erlaubt: die Kennung einer ERP-Abfrage heißt
+// 'LIEFERADRESSE.GET' (belegt in beiden Chef-Masken). Ohne ihn ließ sich so
+// eine Quelle gar nicht erst anlegen — die Prüfung meldete „Kennung fehlt"
+// für einen Wert, den SoftEngine nachweislich kennt.
 const KENNUNG_IDB_KURZ = /^(?:IDB)?ID(\d{1,4})$/i
-const KENNUNG_FREI = /^[A-Za-z][A-Za-z0-9]*$/
+const KENNUNG_FREI = /^[A-Za-z][A-Za-z0-9.]*$/
 
 export function kennungFromInput(raw: string): string {
   const t = raw.trim()

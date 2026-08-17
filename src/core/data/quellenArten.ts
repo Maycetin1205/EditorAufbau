@@ -15,9 +15,18 @@
 // Voraussetzung ist aber nicht der Code, sondern der BELEG (Regel 5): die
 // SEvariablen-Form einer Art muss aus einer echten, laufenden Maske stammen.
 // Fuer die vier hier ist sie belegt (docs/chef-maske/: ADR/BEL/ART mit
-// expliziter FELDER-Liste, IDBID0001/0004 mit FELDER '*'). ERPAPICALL kommt
-// in derselben Maske vor, seine Form ist aber noch nicht abgelesen — darum
-// steht es hier NICHT. Geraten wird nichts.
+// expliziter FELDER-Liste, IDBID0001/0004 mit FELDER '*').
+//
+// ERPAPICALL stand hier bis 2026-08-17 NICHT, weil seine Form „noch nicht
+// abgelesen" war. Jetzt ist sie abgelesen — aus denselben zwei Masken:
+//   { ID: 'LIEFERADRESSE.GET', ALIAS: 'Haustiere',
+//     FELDER: 'LFA_2_8,LFA_10_8,LFA_400_30,…' }
+// in einem EIGENEN Block neben SEFILELOOP; der Kommentar im Quelltext der
+// empfang-Maske nennt dazu Antwortweg und Stand: „Kommen NICHT per
+// SEFILELOOP, sondern per ERPAPICALL LIEFERADRESSE.GET (ohne ADRNR = alle
+// Saetze; verifiziert 2026-06-11). Antwort: SEDATA.Daten.ErpApiCall.Haustiere
+// .Zeilen[] mit Schluesseln LFA_pos_len."
+// MEMTAB bleibt draussen: es kommt in KEINER echten Maske vor.
 
 // Technikwert; steht in DataSource.kind und so auch in der Maskendatei.
 // Handgeschrieben statt aus ARTEN abgeleitet, damit ein Tippfehler in der
@@ -29,6 +38,7 @@ export type DataSourceKind =
   | 'beleg'
   | 'belegposition'
   | 'datei'
+  | 'erpabfrage'
 
 // Ein Feld einer mitgebrachten Feldliste. Dieselbe Form wie DataSourceField —
 // hier absichtlich noch einmal beschrieben statt importiert: dataSources liest
@@ -104,6 +114,26 @@ export interface QuellenArt {
   // Maske vor — dort wird es nicht angeboten, statt zu raten (Regel 5). Wird
   // es irgendwo belegt, ist es eine Zeile hier.
   varMoeglich: boolean
+  // In WELCHEN Block der SEvariablen gehoert eine Quelle dieser Art?
+  //
+  // 'sefileloop' ist der Normalfall: SoftEngine schiebt die Zeilen einer
+  // Datei/Tabelle. 'erpapicall' ist der zweite belegte Weg (s. Dateikopf) —
+  // ein benannter ERP-Aufruf in einem EIGENEN Block, ohne INDEX_NR und ohne
+  // Kopfsatz. Stuende so ein Eintrag in der SEFILELOOP, waere er fuer
+  // SoftEngine eine Datei, die es nicht gibt.
+  //
+  // Nebenwirkung, die Absicht ist: der Reihenfolge-Kontrakt (Kopfsatz-Loops
+  // zuletzt, s. kopfsatzMoeglich) gilt nur INNERHALB der SEFILELOOP. Eine
+  // 'erpapicall'-Quelle faellt aus dieser Liste heraus und kann sie damit
+  // nicht zum Scheitern bringen.
+  bestellBlock: 'sefileloop' | 'erpapicall'
+  // Tragen die Feldcodes dieser Art einen festen Vorsatz vor Position_Laenge?
+  // Bei LIEFERADRESSE.GET heissen die Zeilen-Schluessel 'LFA_2_8' statt '2_8'
+  // — der Vorsatz gehoert zur ABFRAGE, nicht zum einzelnen Feld, und wird
+  // deshalb EINMAL an der Quelle eingegeben (DataSourceForm) und beim Bauen
+  // jedes Feldcodes davorgesetzt. Er steht NICHT im Code: welche Abfrage
+  // welchen Vorsatz hat, ist installations-/aufruf-abhaengig (Regel 5).
+  feldVorsatzMoeglich: boolean
   // Feld-Woerterbuch, das die Art SELBST mitbringt — leer, wo es keins gibt.
   // Erlaubt ist das nur bei Arten mit FESTER Tabellen-ID: dort sind die
   // Positionen SoftEngine-Standard und in jeder Installation dieselben (darum
@@ -130,6 +160,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kopfsatzStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
+    bestellBlock: 'sefileloop',
+    feldVorsatzMoeglich: false,
     standardFelder: [],
   },
   adressstamm: {
@@ -143,6 +175,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kopfsatzStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: true,
+    bestellBlock: 'sefileloop',
+    feldVorsatzMoeglich: false,
     standardFelder: [],
   },
   artikelstamm: {
@@ -156,6 +190,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kopfsatzStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
+    bestellBlock: 'sefileloop',
+    feldVorsatzMoeglich: false,
     standardFelder: [],
   },
   beleg: {
@@ -173,6 +209,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     // Kopfsatz der Belegpositionen zeigt ('BEL_0_11'), und in Rahmen00001
     // eroeffnet er die Liste genauso. Ohne ihn kann SoftEngine den Kopfsatz
     // nicht aufloesen und verwirft die Positionen stillschweigend.
+    bestellBlock: 'sefileloop',
+    feldVorsatzMoeglich: false,
     standardFelder: [
       { code: '0_11', label: 'Satzschlüssel' },
       { code: '2_1', label: 'Belegart' },
@@ -220,6 +258,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     // Reihenfolge = Satz-Reihenfolge. Jeder Klarname stammt aus dem Code der
     // echten Masken, die das Feld benutzen (Belegerfassung-Rahmen 00001 und
     // POS-Maske 01) — kein Name ist geraten.
+    bestellBlock: 'sefileloop',
+    feldVorsatzMoeglich: false,
     standardFelder: [
       // POS/01, GET_RELATION 4232: 2_1 -> Angebot/Auftrag/Lieferschein/…
       { code: '2_1', label: 'Belegart' },
@@ -260,6 +300,41 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kopfsatzStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
+    bestellBlock: 'sefileloop',
+    feldVorsatzMoeglich: false,
+    standardFelder: [],
+  },
+  // Ein benannter ERP-Aufruf statt einer Datei — der zweite belegte Weg, an
+  // Daten zu kommen (Form + Antwortweg im Dateikopf). Die Kennung ist der
+  // Name des Aufrufs ('LIEFERADRESSE.GET'); sie steht bewusst NICHT im Code,
+  // weil jede Installation eigene Aufrufe kennt (Regel 5, dieselbe Linie wie
+  // bei den Relations-Nummern und den Werkzeug-Nummern).
+  //
+  // Alles Uebrige ist an dieser Art NICHT belegt und wird darum auch nicht
+  // angeboten, statt es zu raten: kein Kopfsatz, kein offener Satz (VAR),
+  // keine Hol-Relation. Zum SCHREIBEN taugt sie ebenfalls nicht — die
+  // Aktionsketten schreiben ueber Relationen, nicht ueber ERP-Aufrufe.
+  //
+  // ⚠ Bestellt wird nur BEIM LADEN. Der Aufruf zur Laufzeit (per
+  // basisHTML_SND_MSG) fror im Echttest 2026-08-11 die WinUI-Maske ein und
+  // bleibt tabu, bis die ErpApiCall-Referenz der Installation vorliegt.
+  erpabfrage: {
+    id: 'erpabfrage',
+    name: 'ERP-Abfrage',
+    tabellenId: '',
+    felderEinzeln: true,
+    kennungLabel: 'Kennung',
+    kennungBeispiel: 'LIEFERADRESSE.GET',
+    kopfsatzMoeglich: false,
+    kopfsatzStandard: '',
+    relationLadenMoeglich: false,
+    varMoeglich: false,
+    bestellBlock: 'erpapicall',
+    feldVorsatzMoeglich: true,
+    // Kein mitgebrachtes Woerterbuch: erlaubt waere das nur bei einer FESTEN
+    // Tabellen-ID (s. standardFelder oben), und welche Felder ein Aufruf
+    // liefert, haengt am Aufruf. Die 13 bzw. 20 LFA-Codes der Chef-Masken
+    // sind Daten EINER Installation, kein Standard.
     standardFelder: [],
   },
 }

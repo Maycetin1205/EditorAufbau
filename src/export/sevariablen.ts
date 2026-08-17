@@ -12,6 +12,7 @@
 // Durchlaufs gereicht und rechnet nichts zweites nach.
 
 import {
+  artFuer,
   felderFor,
   kopfsatzFor,
   ladeRelationFor,
@@ -54,7 +55,29 @@ export function baueSevariablen(
   // einer holenden Quelle ihren Schluessel voll bekommt (holSchluesselJeGeber).
   holSchluessel: ReadonlyMap<string, string[]>,
 ): string {
-  const geordnet = loopReihenfolge(used.filter((s) => ladeRelationFor(s) === null))
+  // In WELCHEN Block eine Quelle gehoert, sagt ihre Art (bestellBlock) — hier
+  // steht kein `if kind === …` (Regel 2). Der ERPAPICALL-Block ist seit
+  // 2026-08-17 nicht mehr immer leer: ein benannter ERP-Aufruf
+  // ('LIEFERADRESSE.GET') liefert seine Zeilen ueber ihn statt ueber eine
+  // SEFILELOOP-Zeile. Stuende so ein Eintrag in der SEFILELOOP, waere er fuer
+  // SoftEngine eine Datei, die es nicht gibt.
+  const bestellbar = used.filter((s) => ladeRelationFor(s) === null)
+  const perApi = bestellbar.filter((s) => artFuer(s.kind).bestellBlock === 'erpapicall')
+  // Der Reihenfolge-Kontrakt (Kopfsatz-Loops zuletzt) formt nur die SEFILELOOP;
+  // die ERP-Aufrufe stehen gar nicht erst darin und koennen sie damit auch
+  // nicht scheitern lassen.
+  const geordnet = loopReihenfolge(
+    bestellbar.filter((s) => artFuer(s.kind).bestellBlock === 'sefileloop'),
+  )
+  // Form nach den zwei Chef-Masken: NUR ID, ALIAS und FELDER — kein INDEX_NR,
+  // kein Kopfsatz. Reihenfolge = Baum-/Anlege-Reihenfolge; dass sie bei
+  // ERPAPICALL eine Rolle spielte, ist nirgends belegt (der A/B-Echttest
+  // 2026-08-11 betraf die SEFILELOOP).
+  const erpapicall = perApi.map((s) => ({
+    ID: tableIdFor(s),
+    ALIAS: s.name,
+    FELDER: felderFor(s, benutzteFelder.get(s.id), holSchluessel.get(s.id) ?? []),
+  }))
   const sefileloop = geordnet.map((s) => {
     const kopfsatz = kopfsatzFor(s)
     return {
@@ -78,7 +101,7 @@ export function baueSevariablen(
     JSON.stringify({
       ...(varAbschnitt.length > 0 ? { VAR: varAbschnitt } : {}),
       SEFILELOOP: sefileloop,
-      ERPAPICALL: [],
+      ERPAPICALL: erpapicall,
     }, null, 2),
   ) + '\n'
 }

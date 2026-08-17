@@ -21,8 +21,19 @@ export interface FeldZeile {
 
 export const LEERE_ZEILE: FeldZeile = { label: '', pos: '', len: '', rawCode: '' }
 
-export function zeileFromField(f: DataSourceField): FeldZeile {
-  const pl = splitFieldCode(f.code)
+// `vorsatz` (2026-08-17) ist der Feld-Vorsatz der QUELLE ('LFA_' bei einer
+// ERP-Abfrage, s. quellenArten.feldVorsatzMoeglich). Er wird beim Lesen
+// abgezogen und beim Schreiben wieder davorgesetzt — der Bediener sieht in
+// beiden Faellen nur Position und Laenge.
+//
+// Faellt der Code nach dem Abziehen nicht als pos_len auseinander, greift der
+// rawCode-Weg wie bisher: der bisherige Technikwert bleibt erhalten, statt
+// dass ihn eine leere Eingabe still wegwirft.
+export function zeileFromField(f: DataSourceField, vorsatz = ''): FeldZeile {
+  const ohneVorsatz = vorsatz !== '' && f.code.startsWith(vorsatz)
+    ? f.code.slice(vorsatz.length)
+    : f.code
+  const pl = splitFieldCode(ohneVorsatz)
   return {
     label: f.label,
     pos: pl?.pos ?? '',
@@ -32,13 +43,18 @@ export function zeileFromField(f: DataSourceField): FeldZeile {
 }
 
 // Feldcode einer Zeile ('' = ungueltig): Eingaben gewinnen, sonst rawCode.
-export function zeilenCode(z: FeldZeile): string {
+//
+// Weil der Vorsatz hier beim SPEICHERN davorkommt, richtet ein spaeter
+// geaenderter Vorsatz alle Felder der Quelle in einem Rutsch neu aus — es gibt
+// keine halb umgestellte Feldliste, die erst in SoftEngine auffiele.
+export function zeilenCode(z: FeldZeile, vorsatz = ''): string {
   if (z.pos.trim() === '' && z.len.trim() === '' && z.rawCode !== '') return z.rawCode
-  return fieldCode(z.pos, z.len)
+  return fieldCode(z.pos, z.len, vorsatz)
 }
 
 // Traegt die Zeile ueberhaupt etwas? Eine frische Maske startet mit EINER
-// leeren Zeile — die zaehlt nicht als Inhalt.
+// leeren Zeile — die zaehlt nicht als Inhalt. Der Vorsatz spielt hier keine
+// Rolle: er aendert nur die Form des Codes, nie ob einer da ist.
 export function zeileGefuellt(z: FeldZeile): boolean {
   return z.label.trim() !== '' || zeilenCode(z) !== ''
 }

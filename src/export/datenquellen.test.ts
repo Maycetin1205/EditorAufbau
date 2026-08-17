@@ -288,4 +288,49 @@ describe('exportMask: Datenquellen', () => {
     // Buendel ist unquotiert (s. relationLader) und wird davon nicht getroffen.
     expect(html).not.toContain('"ladeRelation":')
   })
+
+  // --- ERP-Abfrage: eigener Block statt SEFILELOOP (2026-08-17) -----------
+  //
+  // Abgelesen an beiden Chef-Masken (docs/chef-maske/*/index.basis.SEvariablen
+  // .json): ein benannter ERP-Aufruf steht NICHT in der SEFILELOOP, sondern in
+  // einem eigenen ERPAPICALL-Block — und dort ohne INDEX_NR und ohne Kopfsatz.
+  // Landete er in der SEFILELOOP, waere er fuer SoftEngine eine Datei, die es
+  // nicht gibt; das faellt still aus (die Maske laedt, die Quelle bleibt leer).
+  //
+  // Der Fall prueft ausserdem, dass eine normale Quelle daneben unveraendert
+  // in der SEFILELOOP bleibt: die zwei Bloecke duerfen sich nicht mischen.
+  it('schreibt eine ERP-Abfrage in den ERPAPICALL-Block, nicht in die SEFILELOOP', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['lfa', 'idb'] },
+      lfa: {
+        id: 'lfa', type: TEST_DATA_BOX, props: { source: 'lieferadressen' },
+        parentId: 'root', childIds: [],
+      },
+      idb: {
+        id: 'idb', type: TEST_DATA_BOX, props: { source: 'termine' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [
+      {
+        id: 'lieferadressen', name: 'Haustiere', kind: 'erpabfrage' as const,
+        idbId: 'LIEFERADRESSE.GET', feldVorsatz: 'LFA_',
+        fields: [
+          { code: 'LFA_2_8', label: 'Adressnummer' },
+          { code: 'LFA_400_30', label: 'Name' },
+        ],
+      },
+      {
+        id: 'termine', name: 'Termine', kind: 'idb' as const, idbId: 'IDBID0021', fields: [],
+      },
+    ]
+
+    const sev = JSON.parse(exportMask(tree, 'Maske', sources).sevariablen)
+    expect(sev.ERPAPICALL).toEqual([
+      { ID: 'LIEFERADRESSE.GET', ALIAS: 'Haustiere', FELDER: 'LFA_2_8,LFA_400_30' },
+    ])
+    expect(sev.SEFILELOOP).toEqual([
+      { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0021', FELDER: '*' },
+    ])
+  })
 })
