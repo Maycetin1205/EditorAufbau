@@ -159,6 +159,13 @@ export class TabelleBlock extends BasicBlock {
     this._fokusHolen = false
   }
 
+  fokussiereSuche(): boolean {
+    const feld = this.shadowRoot?.querySelector<HTMLInputElement>('.suchzeile input')
+    if (!feld) return false
+    feld.focus()
+    return true
+  }
+
   private get hatQuelle(): boolean {
     return this._besitz === 'provided'
       ? true

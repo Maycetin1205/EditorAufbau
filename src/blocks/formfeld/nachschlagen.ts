@@ -8,7 +8,12 @@ import {
   DIALOG_SCHLIESSEN_EVENT,
   type DialogRahmen,
 } from '../shared/DialogRahmen'
-import { zeilePasst } from '../shared/textSuche'
+import { ART_TEXT } from '../tabelle/spaltenArten'
+import { TabelleBlock } from '../tabelle/TabelleBlock'
+import {
+  ZEILE_AKTIVIERT_EVENT,
+  type ZeileAktiviertDetail,
+} from '../tabelle/zeilenAktivierung'
 
 export function nachschlagFeldTpl(args: {
   wert: string
@@ -62,8 +67,6 @@ export interface NachschlagEinstellung {
   speicherFeld: string
 }
 
-const SEITENGROESSE = 10
-
 export function nachschlagEintraege(
   rows: readonly unknown[],
   anzeigeFeld: string,
@@ -83,10 +86,6 @@ export function nachschlagEintraege(
     eintraege.push({ anzeige, wert, satz: row })
   }
   return eintraege
-}
-
-export function nachschlagTreffer(eintraege: readonly Eintrag[], suchtext: string): Eintrag[] {
-  return eintraege.filter((eintrag) => zeilePasst([eintrag.anzeige, eintrag.wert], suchtext))
 }
 
 export function fensterEintraege(
@@ -140,33 +139,38 @@ export function folgeBeimVerlassen(
 }
 
 let offen: DialogRahmen | null = null
+let rueckFokus: HTMLElement | null = null
 
-function schliesse(): void {
+function lupeVon(el: HTMLElement): HTMLElement | null {
+  return el.shadowRoot?.querySelector<HTMLElement>('.lupe') ?? null
+}
+
+function schliesse(mitFokus = true): void {
+  const ziel = mitFokus ? rueckFokus : null
+  rueckFokus = null
   offen?.remove()
   offen = null
+  ziel?.focus()
 }
 
-function zelle(text: string, kopf = false): HTMLTableCellElement {
-  const element = document.createElement(kopf ? 'th' : 'td')
-  element.textContent = text
-  element.style.cssText = kopf
-    ? 'position:sticky;top:0;z-index:1;padding:6px 10px;text-align:left;'
-      + 'font-size:var(--se-fs-sm);font-weight:600;color:var(--se-muted);'
-      + 'border-bottom:var(--se-border) solid var(--se-line);background:var(--se-panel-2)'
-    : 'box-sizing:border-box;height:24px;padding:3px 10px;overflow:hidden;text-overflow:ellipsis;'
-      + 'white-space:nowrap;border-bottom:var(--se-border) solid var(--se-line-soft)'
-  return element
-}
+function macheTabelle(args: NachschlagenArgs, eintraege: readonly Eintrag[]): TabelleBlock {
+  const tabelle = document.createElement(TabelleBlock.tagName) as TabelleBlock
 
-function seitenKnopf(text: string, label: string): HTMLButtonElement {
-  const knopf = document.createElement('button')
-  knopf.type = 'button'
-  knopf.textContent = text
-  knopf.setAttribute('aria-label', label)
-  knopf.style.cssText = 'box-sizing:border-box;width:26px;height:24px;padding:0;'
-    + 'border:var(--se-border) solid var(--se-line);border-radius:var(--se-r-sm);'
-    + 'background:var(--se-panel);color:var(--se-ink);font:inherit;cursor:pointer'
-  return knopf
+  tabelle.besitz = 'provided'
+  tabelle.spalten = [
+    { titel: args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt', feld: '', art: ART_TEXT },
+    { titel: args.speicherTitel !== '' ? args.speicherTitel : 'Wert', feld: '', art: ART_TEXT },
+  ]
+  tabelle.suche = 'ja'
+  tabelle.leerText = 'Diese Quelle hat keine Sätze.'
+  tabelle.bereitgestellteZeilen = eintraege.map((e) => ({
+    rohzeile: e.satz,
+    zellen: [e.anzeige, e.wert],
+  }))
+  tabelle.toggleAttribute('fuellt', true)
+
+  tabelle.style.setProperty('--se-r-lg', '0px')
+  return tabelle
 }
 
 export function oeffneNachschlagen(args: NachschlagenArgs): void {
@@ -179,161 +183,38 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   }
   const eintraege = ergebnis.eintraege
 
-  schliesse()
+  schliesse(false)
 
   const dialog = document.createElement(DIALOG_RAHMEN_TAG) as DialogRahmen
   dialog.setAttribute('data-ff-nachschlagen', '')
   dialog.viewport = true
-  dialog.mitWerkzeug = true
   dialog.escapeSchliesst = true
+
+  dialog.ohneModal = true
+
+  dialog.inhaltFest = true
   dialog.titel = args.titel !== '' ? args.titel : 'Nachschlagen'
   dialog.breite = 520
   dialog.hoehe = 380
-  dialog.addEventListener(DIALOG_SCHLIESSEN_EVENT, schliesse)
+  dialog.addEventListener(DIALOG_SCHLIESSEN_EVENT, () => schliesse())
 
   dialog.addEventListener('click', (event) => event.stopPropagation())
 
-  const suche = document.createElement('input')
-  suche.slot = 'werkzeug'
-  suche.type = 'search'
-  suche.placeholder = 'suchen ...'
-  suche.setAttribute('aria-label', 'Nachschlagen durchsuchen')
-  suche.style.cssText = 'box-sizing:border-box;width:100%;padding:5px 8px;'
-    + 'font:inherit;color:inherit;background:var(--se-panel);'
-    + 'border:var(--se-border) solid var(--se-line);border-radius:var(--se-r-sm)'
-
-  const tabelle = document.createElement('table')
-  tabelle.style.cssText = 'width:100%;table-layout:fixed;border-collapse:collapse'
-  const spalten = document.createElement('colgroup')
-  const anzeigeSpalte = document.createElement('col')
-  anzeigeSpalte.style.width = '65%'
-  const wertSpalte = document.createElement('col')
-  wertSpalte.style.width = '35%'
-  spalten.append(anzeigeSpalte, wertSpalte)
-
-  const kopf = document.createElement('thead')
-  const kopfZeile = document.createElement('tr')
-  kopfZeile.append(
-    zelle(args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt', true),
-    zelle(args.speicherTitel !== '' ? args.speicherTitel : 'Wert', true),
-  )
-  kopf.appendChild(kopfZeile)
-
-  const rumpf = document.createElement('tbody')
-  tabelle.append(spalten, kopf, rumpf)
-
-  const tabellenBereich = document.createElement('div')
-  tabellenBereich.style.cssText = 'flex:1 1 auto;min-height:0;overflow:auto'
-  tabellenBereich.appendChild(tabelle)
-
-  const fuss = document.createElement('div')
-  fuss.style.cssText = 'box-sizing:border-box;flex:none;display:flex;align-items:center;'
-    + 'min-height:33px;padding:4px 10px;border-top:var(--se-border) solid var(--se-line);'
-    + 'background:var(--se-panel-2);font-size:var(--se-fs-sm)'
-  const zaehler = document.createElement('span')
-  zaehler.setAttribute('aria-live', 'polite')
-  zaehler.style.cssText = 'flex:1;color:var(--se-muted)'
-
-  const navigation = document.createElement('nav')
-  navigation.setAttribute('aria-label', 'Trefferseiten')
-  navigation.style.cssText = 'display:flex;align-items:center;gap:6px'
-  const zurueck = seitenKnopf('‹', 'Vorherige Seite')
-  const seitenstand = document.createElement('span')
-  seitenstand.style.cssText = 'min-width:48px;text-align:center;color:var(--se-muted)'
-  const weiter = seitenKnopf('›', 'Nächste Seite')
-  navigation.append(zurueck, seitenstand, weiter)
-  fuss.append(zaehler, navigation)
-
-  const inhalt = document.createElement('div')
-  inhalt.style.cssText = 'box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column'
-  inhalt.append(tabellenBereich, fuss)
-
-  let seite = 1
-  let seiten = 1
-
-  const zeichneTreffer = (): void => {
-    rumpf.replaceChildren()
-    const treffer = nachschlagTreffer(eintraege, suche.value)
-    seiten = Math.max(1, Math.ceil(treffer.length / SEITENGROESSE))
-    seite = Math.min(seite, seiten)
-    const start = (seite - 1) * SEITENGROESSE
-    const sichtbareTreffer = treffer.slice(start, start + SEITENGROESSE)
-
-    zaehler.textContent = treffer.length === 0
-      ? '0 von 0'
-      : `${start + 1}-${Math.min(start + SEITENGROESSE, treffer.length)} von ${treffer.length}`
-    seitenstand.textContent = `${seite} / ${seiten}`
-    zurueck.disabled = seite === 1
-    weiter.disabled = seite === seiten
-    zurueck.style.opacity = zurueck.disabled ? '0.4' : '1'
-    weiter.style.opacity = weiter.disabled ? '0.4' : '1'
-    zurueck.style.cursor = zurueck.disabled ? 'default' : 'pointer'
-    weiter.style.cursor = weiter.disabled ? 'default' : 'pointer'
-    tabellenBereich.scrollTop = 0
-
-    if (sichtbareTreffer.length === 0) {
-      const zeile = document.createElement('tr')
-      const leer = zelle(
-        eintraege.length === 0 ? 'Diese Quelle hat keine Sätze.' : 'Kein Satz passt zur Suche.',
-      )
-      leer.colSpan = 2
-      leer.style.color = 'var(--se-faint)'
-      leer.style.fontSize = 'var(--se-fs-sm)'
-      leer.style.padding = '16px 10px'
-      zeile.appendChild(leer)
-      rumpf.appendChild(zeile)
-      return
-    }
-
-    for (const trefferZeile of sichtbareTreffer) {
-      const zeile = document.createElement('tr')
-      zeile.tabIndex = 0
-      zeile.style.cursor = 'pointer'
-      const anzeige = zelle(trefferZeile.anzeige)
-      const wert = zelle(trefferZeile.wert)
-      wert.style.fontFamily = 'var(--se-mono)'
-      wert.style.color = 'var(--se-muted)'
-      zeile.append(anzeige, wert)
-
-      const uebernehmen = (): void => {
-        schliesse()
-        args.onUebernehmen(trefferZeile.anzeige, trefferZeile.wert, trefferZeile.satz)
-      }
-      zeile.addEventListener('click', uebernehmen)
-      zeile.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter') return
-        event.preventDefault()
-        uebernehmen()
-      })
-      zeile.addEventListener('mouseenter', () => {
-        zeile.style.background = 'var(--se-accent-soft)'
-      })
-      zeile.addEventListener('mouseleave', () => {
-        zeile.style.background = ''
-      })
-      rumpf.appendChild(zeile)
-    }
-  }
-
-  suche.addEventListener('input', () => {
-    seite = 1
-    zeichneTreffer()
+  const tabelle = macheTabelle(args, eintraege)
+  tabelle.addEventListener(ZEILE_AKTIVIERT_EVENT, (event) => {
+    const detail = (event as CustomEvent<ZeileAktiviertDetail>).detail
+    const eintrag = eintraege[detail.rohIndex]
+    if (!eintrag) return
+    schliesse()
+    args.onUebernehmen(eintrag.anzeige, eintrag.wert, eintrag.satz)
   })
-  zurueck.addEventListener('click', () => {
-    if (seite === 1) return
-    seite -= 1
-    zeichneTreffer()
-  })
-  weiter.addEventListener('click', () => {
-    if (seite === seiten) return
-    seite += 1
-    zeichneTreffer()
-  })
-  zeichneTreffer()
-  dialog.append(suche, inhalt)
+
+  dialog.appendChild(tabelle)
+  rueckFokus = lupeVon(args.el)
   document.body.appendChild(dialog)
   offen = dialog
-  void dialog.updateComplete.then(() => {
-    if (dialog.isConnected) suche.focus()
+
+  void Promise.all([dialog.updateComplete, tabelle.updateComplete]).then(() => {
+    if (dialog.isConnected) tabelle.fokussiereSuche()
   })
 }

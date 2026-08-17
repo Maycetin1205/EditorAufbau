@@ -5,7 +5,6 @@ import {
   fensterEintraege,
   folgeBeimVerlassen,
   nachschlagEintraege,
-  nachschlagTreffer,
   satzPasstZurAuswahl,
 } from './nachschlagen'
 
@@ -41,24 +40,6 @@ describe('nachschlagEintraege', () => {
   })
 })
 
-describe('nachschlagTreffer', () => {
-  const eintraege = nachschlagEintraege(ROHZEILEN, '10_30', '2_8')
-
-  it('sucht in BEIDEN Spalten — Name wie Nummer', () => {
-    expect(nachschlagTreffer(eintraege, 'berger')).toHaveLength(1)
-    expect(nachschlagTreffer(eintraege, '10031')).toHaveLength(1)
-  })
-
-  it('leere Suche zeigt alles, kein Treffer zeigt nichts', () => {
-    expect(nachschlagTreffer(eintraege, '')).toHaveLength(3)
-    expect(nachschlagTreffer(eintraege, 'gibtsnicht')).toHaveLength(0)
-  })
-
-  it('mehrere Woerter sind ein UND (dieselbe Regel wie die Tabellen-Suche)', () => {
-    expect(nachschlagTreffer(eintraege, 'berger 10024')).toHaveLength(1)
-    expect(nachschlagTreffer(eintraege, 'berger 10031')).toHaveLength(0)
-  })
-})
 
 const elementMit = (attrs: Record<string, string>): HTMLElement =>
   ({ getAttribute: (n: string) => attrs[n] ?? null }) as unknown as HTMLElement

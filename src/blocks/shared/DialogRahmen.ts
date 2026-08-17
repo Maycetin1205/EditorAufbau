@@ -90,14 +90,6 @@ export class DialogRahmen extends LitElement {
       background: var(--se-line-soft);
       color: var(--se-ink);
     }
-    .werkzeug {
-      display: none;
-      flex: none;
-      padding: 7px 10px;
-      border-bottom: var(--se-border) solid var(--se-line-soft);
-      background: var(--se-panel-2);
-    }
-    :host([mit-werkzeug]) .werkzeug { display: block; }
     .inhalt {
       flex: 1 1 auto;
       min-height: 0;
@@ -111,7 +103,6 @@ export class DialogRahmen extends LitElement {
   @property({ type: Number }) breite = 520
   @property({ type: Number }) hoehe = 380
   @property({ type: Boolean, reflect: true }) viewport = false
-  @property({ type: Boolean, reflect: true, attribute: 'mit-werkzeug' }) mitWerkzeug = false
   @property({ type: Boolean, attribute: 'escape-schliesst' }) escapeSchliesst = false
 
   @property({ type: Boolean, attribute: 'ohne-modal' }) ohneModal = false
@@ -180,7 +171,6 @@ export class DialogRahmen extends LitElement {
               @click=${this.schliesse}
             >✕</button>
           </header>
-          <div class="werkzeug"><slot name="werkzeug"></slot></div>
           <div class="inhalt"><slot></slot></div>
         </section>
       </div>
