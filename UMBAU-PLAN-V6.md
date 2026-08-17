@@ -30,6 +30,15 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **Baubarkeit von D/E/U geprueft (2026-08-17), Ergebnis kurz:** sofort an
+  einen Chat gebbar sind **E3** (kleinste, braucht KEINE Migration) · **E1**
+  · **D1 -> D2 -> D3** · **U7a** · **S5.3**. **GESPERRT: D4** (setzt das
+  Overlay aus U0-7 voraus, das es nicht gibt — Sperrvermerk im Etappentext)
+  und **U5** (leer, haengt an U4). **Warten auf den Nutzer:** U4 (Entwurfs-
+  Sitzung, plus die zwei geerbten U0-Fragen Arten-Liste + Text-Baustein) ·
+  U7b/c (eine Antwort: Koralle-Akzent in den Editor uebernehmen oder beim
+  eigenen bleiben) · U10 (nicht suchen lassen — zwei Sitzungen haben schon
+  vergeblich gesucht; der Nutzer beobachtet es bei der Gesamtprobe).
 - **Welle C ist abgeschlossen (Stand 2026-08-16).** GEBAUT: C1 (`9f42965`) ·
   C2 (`8338708`, mit „Zeile entfaellt") · C3.1 Namensvertrag (`a16437b`,
   doppelter Name wird hochgezaehlt statt abgelehnt) · C3.2 (`7b70f13`) ·
@@ -2093,8 +2102,26 @@ Drei neue Begriffe, nicht einer.
 - **Export-Bytes:** die Spalten reisen als Attribut am FELD mit, wie die
   heutigen zwei Einstellungen. Steht die Einstellung auf Standard, wird
   NICHTS geschrieben (Standardwert-Attribute schreibt der Export nicht) —
-  eine Altmaske exportiert damit byte-gleich. Das ist die Abnahmebedingung
-  von D4, nicht eine Hoffnung.
+  das MARKUP einer Altmaske bleibt damit unveraendert. Das ist die
+  Abnahmebedingung von D4, nicht eine Hoffnung. Die exportierte DATEI
+  aendert sich trotzdem, s. „Pflicht in JEDER D-Etappe" gleich unten.
+
+### Pflicht in JEDER D-Etappe (nachgetragen 2026-08-17)
+
+Stand in keiner der Etappen und fehlte damit ueberall:
+
+- **Der Export aendert sich in JEDER D-Etappe** — zwangslaeufig, ohne dass
+  jemand etwas am Markup anfasst. Das Laufzeit-Buendel steckt in jeder
+  Maskendatei (`export/exportMask.ts`, eingebettet als eine sehr lange
+  Zeile), und D baut am Tabellen-Baustein, der darin liegt. Wer „byte-gleich"
+  liest, meint IMMER nur das Markup, nie die Datei.
+- Daraus folgt fuer jede D-Etappe, ausnahmslos: `npm run build:runtime`
+  laufen lassen, den Referenzabzug mit `npx vitest run -u` erneuern, und den
+  Datei-Diff SELBST ansehen — ausser der Buendel-Zeile darf nichts drin
+  stehen, was die Etappe nicht will. Genau dafuer gibt es den Abzug.
+- **Und danach eine SoftEngine-Probe durch den Nutzer** (Regel 9: Browser-
+  und SE-Test macht der Nutzer). Der bauende Chat liefert dazu eine kurze
+  Klickanleitung und sagt, was er nicht pruefen konnte.
 
 ## D0 · Nur bei Bedarf verhaltensneutral schneiden
 
@@ -2274,6 +2301,17 @@ zwei Spalten — bis dahin gibt es sichtbar nichts einzustellen. D4 macht die
 Spalten waehlbar. Zwei Etappen, nicht eine: D3 baut unter der Haube um, D4
 wird sichtbar bedienbar; klemmt es, weiss der Nutzer sonst nicht, woran.
 
+**GESPERRT, so wie es hier steht (Pruefung 2026-08-17).** Nicht an einen
+Chat geben, bevor das geklaert ist — Punkt 2 unten setzt eine Overlay-
+Bearbeitung voraus, DIE ES NICHT GIBT: sie steckt ungebaut in U0-7, und
+Popups werden im Editor heute als SEITE bearbeitet (`Canvas.tsx` ->
+`PopupSeite`), nicht ueber der abgedunkelten Flaeche. D4 muesste den
+Mechanismus also miterfinden, ohne Bauanleitung. Dazu haengt das
+Nachschlage-Fenster zur Laufzeit am Dokument statt im Baustein-Rahmen —
+das Ereignis der Spalten-Einstellung kaeme dort nie an. Beides ist eine
+Entwurfsfrage, keine Fleissarbeit: erst U0-7 bauen (oder entscheiden, wie
+das Fenster im Editor verankert wird), dann D4 neu aufschreiben.
+
 **Arbeit:**
 
 1. Neue Feld-Eigenschaft: welche Felder der Quelle als SPALTEN erscheinen.
@@ -2295,8 +2333,11 @@ wird sichtbar bedienbar; klemmt es, weiss der Nutzer sonst nicht, woran.
 - Spalten waehlbar, Editor und laufende Maske zeigen dieselben;
 - „Angezeigt wird" und „Gespeichert wird" gibt es unveraendert weiter —
   sie sind NICHT durch Spalten ersetzt (s. Beschluss oben);
-- **eine Altmaske exportiert BYTE-GLEICH** (Standard-Einstellung schreibt
-  kein Attribut). Das ist die harte Grenze dieser Etappe, keine Hoffnung;
+- **das MARKUP einer Altmaske bleibt unveraendert** — kein neues Attribut,
+  kein geaenderter Wert (Standard-Einstellung schreibt kein Attribut). Das
+  ist die harte Grenze dieser Etappe, keine Hoffnung. Die DATEI aendert sich
+  trotzdem (Laufzeit-Buendel, s. „Pflicht in JEDER D-Etappe"); geprueft wird
+  am Diff des Referenzabzugs, nicht an der Dateigroesse;
 - der Referenzabzug bleibt gruen, solange die Referenzmaske keine
   Spalten stellt.
 
@@ -2342,7 +2383,24 @@ Der Regelwaechter muss vor der Migration beweisen:
 - keiner doppelt;
 - keiner fehlt;
 - jeder weiterhin in Exporttest, Positivliste und Referenzabzug vertreten;
-- zehn von elf erkannten Definitionen koennen nicht faelschlich gruen sein.
+- keine erkannte Definition kann faelschlich gruen sein: wird eine davon
+  entfernt oder umbenannt, muss der Waechter rot werden — an mehreren
+  erprobt, nicht an einer.
+
+Eine ANZAHL steht hier bewusst nicht mehr (die alte Fassung sprach von
+„elf" — es sind heute 15). Die Wahrheit ist die Import-Liste in
+`src/blocks/register.ts`; dagegen wird gegengeprueft, nicht gegen eine Zahl
+im Plan.
+
+**Was E1 NICHT abdeckt — ausdruecklich mitzupruefen:** der Waechter zaehlt
+TYPEN, nicht FELDER. Eine Faehigkeit wird heute an DREI Stellen gefuehrt:
+deklariert am Baustein (`core/blocks/BlockComponent.ts`), beschrieben in der
+Definition (`core/blocks/BlockDefinition.ts`) und von Hand hinueberkopiert
+(`blocks/base/BasicBlock.ts`, rund zwei Dutzend Kopierzeilen). Vergisst
+jemand eine Kopierzeile, verschluckt der Baustein die Faehigkeit STILL —
+alle Typen sind da, der Waechter bleibt gruen. E1 braucht dafuer eine eigene
+Probe, oder E2 raeumt den Drei-Stellen-Vertrag ab und der Satz zieht dorthin
+um. Ungeprueft stehen lassen darf man ihn nicht.
 
 ## E2 · Eine runtime-sichere Baustein-Definition
 
@@ -2426,6 +2484,12 @@ Baustein gar nicht besitzt und erst beim naechsten Reload verschwinden.
    nur aus optischen Gruenden entfernt, wenn TypeScript ihn fuer die
    React-Lit-Grenze benoetigt.
 6. Sanitizer und Schreibnaht verwenden dieselbe Property-Wahrheit.
+7. **KEINE Migration bauen** (nachgetragen 2026-08-17): der Lader wirft
+   unbekannte Eigenschaften schon heute weg — `normalizeProps` in
+   `state/treeOps.ts` uebernimmt nur Keys, die der Baustein als defaultProp
+   kennt. Altbestand mit verirrten Props ist damit bereits sauber, sobald er
+   einmal geladen wurde. Wer hier eine Migration schreibt, schreibt sie fuer
+   nichts. E3 sichert die SCHREIB-Seite, das Lesen ist erledigt.
 
 ### Fertig, wenn
 
