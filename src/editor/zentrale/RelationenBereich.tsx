@@ -25,7 +25,13 @@ export function RelationenBereich() {
   const quellen = useDataSources().list
   const [suche, setSuche] = useState('')
 
-  const [filter, setFilter] = useState<RelationGroup>('lesen')
+  // Start auf dem Reiter, der etwas zu zeigen hat; danach gewinnt der Klick.
+  // (Eine dauerhafte Umleitung auf den vollen Reiter machte den Klick auf
+  // den leeren wirkungslos — der Reiter war ein toter Knopf.)
+  const [filter, setFilter] = useState<RelationGroup>(() =>
+    store.list.some((r) => relationGroup(r) === 'lesen') || store.list.length === 0
+      ? 'lesen'
+      : 'schreiben')
   const [auswahlId, setAuswahlId] = useState<string | null>(store.list[0]?.id ?? null)
   const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu'>('lesen')
 
@@ -34,8 +40,7 @@ export function RelationenBereich() {
     lesen: trefferAlle.filter((r) => relationGroup(r) === 'lesen').length,
     schreiben: trefferAlle.filter((r) => relationGroup(r) === 'schreiben').length,
   }
-  const anderer: RelationGroup = filter === 'lesen' ? 'schreiben' : 'lesen'
-  const aktiverFilter: RelationGroup = zaehler[filter] === 0 && zaehler[anderer] > 0 ? anderer : filter
+  const aktiverFilter: RelationGroup = filter
   const sichtbareRelationen = trefferAlle.filter((r) => relationGroup(r) === aktiverFilter)
 
   const sucht = suche.trim().length > 0

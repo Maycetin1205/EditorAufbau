@@ -26,16 +26,20 @@ export function RelationAuswahl({
   onSuche: (value: string) => void
   onSelect: (id: string) => void
 }) {
+  // Start auf der Gruppe der gewählten Relation, sonst auf der nicht-leeren;
+  // danach gewinnt der Klick (s. RelationenBereich, gleiche Lehre).
   const [tab, setTab] = useState<RelationGroup>(() => {
     const gewaehlt = eintraege.find((entry) => entry.id === relationId)
-    return gewaehlt ? relationGroup(gewaehlt) : 'lesen'
+    if (gewaehlt) return relationGroup(gewaehlt)
+    return eintraege.some((entry) => relationGroup(entry) === 'lesen') || eintraege.length === 0
+      ? 'lesen'
+      : 'schreiben'
   })
 
   const lesen = eintraege.filter((entry) => relationGroup(entry) === 'lesen')
   const schreiben = eintraege.filter((entry) => relationGroup(entry) === 'schreiben')
   const zaehler: Record<RelationGroup, number> = { lesen: lesen.length, schreiben: schreiben.length }
-  const anderer: RelationGroup = tab === 'lesen' ? 'schreiben' : 'lesen'
-  const aktiv: RelationGroup = zaehler[tab] === 0 && zaehler[anderer] > 0 ? anderer : tab
+  const aktiv: RelationGroup = tab
   const sichtbar = aktiv === 'lesen' ? lesen : schreiben
 
   const sucht = suche.trim().length > 0
