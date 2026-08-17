@@ -94,11 +94,3 @@ export function sortiereIndizes(
       return d !== 0 ? d * richtung : a - b
     })
 }
-
-export function sortiereZeilen(
-  zeilen: readonly (readonly string[])[],
-  spalte: number,
-  aufsteigend: boolean,
-): string[][] {
-  return sortiereIndizes(zeilen, spalte, aufsteigend).map((i) => [...zeilen[i]])
-}

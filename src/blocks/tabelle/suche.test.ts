@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
   datensatzText,
-  filtereZeilen,
   passendeIndizes,
   zeigtEchteDaten,
   zeigtLeerzustand,
   zeilePasst,
 } from './suche'
+
+// Test-Helfer: die Werte-Form der Index-Suche (das Produkt arbeitet nur
+// mit den Indizes, s. tabelleAnsicht).
+const filtereZeilen = (
+  zeilen: readonly (readonly string[])[],
+  suchtext: string,
+): string[][] => passendeIndizes(zeilen, suchtext).map((i) => [...zeilen[i]])
 
 const zeilen = [
   ['Meier', 'Hund', '24.07.2026'],
@@ -77,10 +83,6 @@ describe('passendeIndizes (Zeilen-Identitaet fuer die Auswahl, 2026-08-05)', () 
     expect(passendeIndizes(zeilen, 'gibtsnicht')).toEqual([])
   })
 
-  it('filtereZeilen ist exakt die Werte-Form derselben Logik', () => {
-    expect(filtereZeilen(zeilen, 'meier'))
-      .toEqual(passendeIndizes(zeilen, 'meier').map((i) => zeilen[i]))
-  })
 })
 
 describe('datensatzText (Fusszeile)', () => {

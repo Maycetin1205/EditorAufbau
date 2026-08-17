@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { alsDatum, alsZahl, erkenneArt, sortiereIndizes, sortiereZeilen } from './sortierung'
+import { alsDatum, alsZahl, erkenneArt, sortiereIndizes } from './sortierung'
+
+// Test-Helfer: die Werte-Form der Index-Sortierung (das Produkt arbeitet
+// nur mit den Indizes, s. tabelleAnsicht).
+const sortiereZeilen = (
+  zeilen: readonly (readonly string[])[],
+  spalte: number,
+  aufsteigend: boolean,
+): string[][] => sortiereIndizes(zeilen, spalte, aufsteigend).map((i) => [...zeilen[i]])
 
 const spalte0 = (zeilen: string[][]): string[] => zeilen.map((z) => z[0])
 
@@ -98,8 +106,4 @@ describe('sortiereIndizes (Zeilen-Identitaet fuer die Auswahl, 2026-08-05)', () 
     expect(sortiereIndizes(zeilen, -1, true)).toEqual([0, 1, 2, 3])
   })
 
-  it('sortiereZeilen ist exakt die Werte-Form derselben Logik', () => {
-    expect(sortiereZeilen(zeilen, 0, true))
-      .toEqual(sortiereIndizes(zeilen, 0, true).map((i) => zeilen[i]))
-  })
 })

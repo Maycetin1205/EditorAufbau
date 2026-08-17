@@ -13,13 +13,6 @@ export function passendeIndizes(
   return raus
 }
 
-export function filtereZeilen(
-  zeilen: readonly (readonly string[])[],
-  suchtext: string,
-): string[][] {
-  return passendeIndizes(zeilen, suchtext).map((i) => [...zeilen[i]])
-}
-
 export function zeigtEchteDaten(imEditor: boolean, source: string): boolean {
   return !imEditor && source.trim() !== ''
 }

@@ -57,12 +57,6 @@ export const KNOTEN = {
     ["path", { d: "m12 8 4.74-2.85" }],
     ["path", { d: "M12 13.5V8" }],
   ],
-  Calendar: [
-    ["path", { d: "M8 2v4" }],
-    ["path", { d: "M16 2v4" }],
-    ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2" }],
-    ["path", { d: "M3 10h18" }],
-  ],
   Check: [
     ["path", { d: "M20 6 9 17l-5-5" }],
   ],
@@ -71,11 +65,6 @@ export const KNOTEN = {
   ],
   ChevronUp: [
     ["path", { d: "m18 15-6-6-6 6" }],
-  ],
-  Columns3: [
-    ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }],
-    ["path", { d: "M9 3v18" }],
-    ["path", { d: "M15 3v18" }],
   ],
   Component: [
     [
@@ -178,44 +167,13 @@ export const KNOTEN = {
     }
   ],
   ],
-  PanelTop: [
-    ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }],
-    ["path", { d: "M3 9h18" }],
-  ],
-  Pencil: [
-    [
-    "path",
-    {
-      d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
-    }
-  ],
-    ["path", { d: "m15 5 4 4" }],
-  ],
   Plus: [
     ["path", { d: "M5 12h14" }],
     ["path", { d: "M12 5v14" }],
   ],
-  RectangleEllipsis: [
-    ["rect", { width: "20", height: "12", x: "2", y: "6", rx: "2" }],
-    ["path", { d: "M12 12h.01" }],
-    ["path", { d: "M17 12h.01" }],
-    ["path", { d: "M7 12h.01" }],
-  ],
-  RectangleHorizontal: [
-    ["rect", { width: "20", height: "12", x: "2", y: "6", rx: "2" }],
-  ],
   Redo2: [
     ["path", { d: "m15 14 5-5-5-5" }],
     ["path", { d: "M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13" }],
-  ],
-  Rows2: [
-    ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }],
-    ["path", { d: "M3 12h18" }],
-  ],
-  Rows3: [
-    ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }],
-    ["path", { d: "M21 9H3" }],
-    ["path", { d: "M21 15H3" }],
   ],
   Save: [
     [
@@ -249,27 +207,6 @@ export const KNOTEN = {
     ["path", { d: "M8 10v4" }],
     ["path", { d: "M8 12H3" }],
   ],
-  SquareKanban: [
-    ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }],
-    ["path", { d: "M8 7v7" }],
-    ["path", { d: "M12 7v4" }],
-    ["path", { d: "M16 7v9" }],
-  ],
-  StickyNote: [
-    [
-    "path",
-    {
-      d: "M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"
-    }
-  ],
-    ["path", { d: "M15 3v5a1 1 0 0 0 1 1h5" }],
-  ],
-  Table: [
-    ["path", { d: "M12 3v18" }],
-    ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }],
-    ["path", { d: "M3 9h18" }],
-    ["path", { d: "M3 15h18" }],
-  ],
   Trash: [
     ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" }],
     ["path", { d: "M3 6h18" }],
@@ -291,11 +228,6 @@ export const KNOTEN = {
   ],
     ["path", { d: "M12 9v4" }],
     ["path", { d: "M12 17h.01" }],
-  ],
-  Type: [
-    ["path", { d: "M12 4v16" }],
-    ["path", { d: "M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" }],
-    ["path", { d: "M9 20h6" }],
   ],
   Undo2: [
     ["path", { d: "M9 14 4 9l5-5" }],
