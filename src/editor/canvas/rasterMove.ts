@@ -70,7 +70,13 @@ export function ziehePosition(
     aufraeumen()
     if (aktiv && letztes) {
       editor.moveNodeToCell(id, parentId, letztes.x, letztes.y)
+      // Der Klick unmittelbar nach dem Ziehen wird geschluckt. Folgt KEIN
+      // Klick (Maus ausserhalb losgelassen), raeumt der Timeout auf —
+      // sonst fraesse der once-Listener den naechsten Klick irgendwo.
       window.addEventListener('click', schluckeKlick, { capture: true, once: true })
+      setTimeout(() => {
+        window.removeEventListener('click', schluckeKlick, { capture: true })
+      }, 0)
     }
     dnd.reset()
   }
