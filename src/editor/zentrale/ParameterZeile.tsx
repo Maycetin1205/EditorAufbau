@@ -1,17 +1,29 @@
-// ParameterZeile — EINE Zeile eines Aktions-Parameters: Name | Quelle | Wert.
+// ParameterZeile — EINE Zeile eines Aktions-Parameters: Name | Herkunft | Ziel.
 //
 // Aus StepForm herausgeloest (2026-07-24), weil die Datei ueber den
 // 500-Zeilen-Deckel gewachsen war. Der Schnitt ist der natuerliche: hier die
 // EINZELNE Parameterzeile mit ihren Wert-Steuerungen, drueben das Formular,
 // das die Zeilen anordnet.
 //
-// Einzeilig, damit die Parameterliste in der schmalen Inspector-Spalte
-// (340 px) nicht doppelt so hoch wird wie noetig. Lange Technikwerte kuerzen
-// sich, der Tooltip zeigt sie ganz.
+// UMGESTELLT 2026-08-17 (Schritt 2 des Umbaus): jede Auswahl in dieser Zeile
+// laeuft ueber DAS eine Waehler-Bauteil (ui/molecules/waehler). Vorher waren
+// es NEUN eigene Auswahlfelder, und das wichtigste davon — die Klappliste
+// „woher kommt der Wert" mit acht Eintraegen — schnitt in der 340-px-Spalte
+// des Inspectors hart ab: sechs der acht Eintraege standen unlesbar da
+// (ein <select> kuerzt nicht mit Auslassungspunkten, es schneidet).
+// Der Waehler oeffnet als schwebendes Fenster mit Suchzeile; die Zeile selbst
+// zeigt nur noch den gewaehlten Klarnamen und kuerzt mit „…".
+//
+// „Weggelassen" (aus) ist dabei der Zustand, den man NICHT waehlt (das tut das
+// x an der Zeile) — er wird nur ANGEZEIGT, und die Zeile sagt jetzt auch, was
+// dann hinausgeht. Bis hierhin zeigte das Auswahlfeld irgendeinen fremden
+// Eintrag und der Platzhalter daneben behauptete, der Vorlagenwert werde
+// geschickt; geschickt wurde ein leerer String (dokumentierter Fehler A1).
 
 import { Link2, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
+import { WaehlerKnopf, type WaehlerEintrag } from '@/ui/molecules/waehler'
 import {
   ACTION_PARAM_SOURCES,
   AKTIONS_PLATZHALTER,
@@ -19,18 +31,23 @@ import {
   type ActionParamSource,
   type ErgebnisSchritt,
 } from '../../core/data/aktionen'
-import type { DataSource } from '../../core/data/dataSources'
+import { quellenKennung, type DataSource } from '../../core/data/dataSources'
 import type { FeldUebernahmeZiel } from './feldUebernahme'
 import { blockValueKey, type AuswahlGeberOption, type BlockValueOption } from './helfer'
-import { SchrittSelect } from '@/ui/atoms/schritt-select'
+import { PLATZHALTER_KLARTEXT } from './helfer'
 
 // Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
-// (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen).
-const CONTEXT_OPTIONS = AKTIONS_PLATZHALTER.map((value) => ({ value, label: value }))
+// (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen). Was er
+// BEDEUTET, steht seit dem Umbau als leise Marke daneben — derselbe Klartext,
+// den die Relations-Bibliothek schon fuehrt, keine zweite Wahrheit.
+const CONTEXT_EINTRAEGE: WaehlerEintrag[] = AKTIONS_PLATZHALTER.map((wert) => ({
+  wert,
+  name: wert,
+  kennung: PLATZHALTER_KLARTEXT[wert] ?? '',
+}))
 
 // Klarnamen der Parameterquellen — Editor-Tabelle (Muster optionColors):
-// kurz genug fuer die schmale Quelle-Spalte (Nutzer-Go 2026-07-22), und die
-// Namen bleiben aus dem Runtime-Buendel heraus (dort zaehlen nur die Keys).
+// die Namen bleiben aus dem Runtime-Buendel heraus (dort zaehlen nur die Keys).
 const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   fixed: 'Fest',
   context: 'Ereigniswert',
@@ -40,25 +57,13 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
-  // Nie im Auswahlfeld angeboten (nicht in ACTION_PARAM_SOURCES). Der Name
-  // steht hier, weil die Tabelle jede Quelle kennen muss.
-  //
-  // ACHTUNG (nachgelesen 2026-08-10): Hier stand, die Zeile eines
-  // abgeschalteten Parameters werde „gar nicht erst gezeichnet". Das stimmt
-  // nicht — ParameterZeile zeichnet IMMER. Ein Parameter auf 'aus' sieht
-  // deshalb heute so aus:
-  //   - das <select> hat keinen passenden <option> und zeigt irgendetwas
-  //     anderes an, meist den ersten Eintrag. Der Zustand ist unsichtbar.
-  //   - BindingValue faellt durch alle Zweige bis zum TextInput und zeigt den
-  //     grauen Platzhalter, also den VORLAGENWERT — mit der Aussage „ohne
-  //     eigene Eingabe wird das geschickt". Bei 'aus' wird ein LEERER String
-  //     geschickt. Der Platzhalter sagt an dieser Stelle das Gegenteil.
-  // Beides ist ein echter Bedienfehler und gehoert zu Etappe A1; hier wird nur
-  // der Kommentar geradegerueckt, damit ihn niemand fuer erledigt haelt.
+  // Nie im Auswahlfeld angeboten (nicht in ACTION_PARAM_SOURCES) — gesetzt
+  // wird der Zustand mit dem x an der Zeile. Der Name steht hier, weil die
+  // Zeile ihn ANZEIGEN muss, sobald er gilt.
   aus: 'Weggelassen',
 }
 
-// Die Wert-Steuerung EINES Parameters — welche es ist, bestimmt die Quelle.
+// Die Wert-Steuerung EINES Parameters — welche es ist, bestimmt die Herkunft.
 function BindingValue({
   binding,
   dataSources,
@@ -76,9 +81,16 @@ function BindingValue({
   platzhalter?: string
   onChange: (binding: ActionParamBinding) => void
 }) {
+  if (binding.source === 'aus') {
+    return (
+      <div className="flex h-8 items-center rounded-md border border-input bg-secondary/50 px-2.5 text-xs text-muted-foreground">
+        leer
+      </div>
+    )
+  }
   if (binding.source === 'previous_result') {
     return (
-      <div className="flex h-7 items-center rounded border border-input bg-secondary/50 px-2 text-xs text-muted-foreground">
+      <div className="flex h-8 items-center rounded-md border border-input bg-secondary/50 px-2.5 text-xs text-muted-foreground">
         Ergebnis des vorherigen Schritts
       </div>
     )
@@ -88,11 +100,12 @@ function BindingValue({
     // Namen-Vergeben, nur anklicken (Nutzer-Entscheidung 2026-07-17).
     //
     // Rechts: WELCHES Feld des Ergebnisses (2026-08-07). Ohne Wahl gilt das
-    // ganze Ergebnis — genau wie vorher. Die Felder kommen aus der Quelle des
-    // Ziel-Schritts; kennt er keine (der haeufige Fall — ein GET-Schritt
-    // braucht keine Datenquelle), wird der Feldcode getippt statt geraten.
+    // ganze Ergebnis. Die Felder kommen aus der Quelle des Ziel-Schritts;
+    // kennt er keine (der haeufige Fall — ein GET-Schritt braucht keine
+    // Datenquelle), wird der Feldcode getippt statt geraten.
     const ziel = schritte.find((s) => s.id === binding.value)
-    const felder = dataSources.find((q) => q.id === ziel?.quelleId)?.fields ?? []
+    const quelle = dataSources.find((q) => q.id === ziel?.quelleId)
+    const felder = quelle?.fields ?? []
     const feld = binding.ergebnisFeld ?? ''
     const setzeFeld = (wert: string) => {
       const naechste: ActionParamBinding = { ...binding }
@@ -102,38 +115,36 @@ function BindingValue({
     }
     return (
       <div className="grid grid-cols-2 gap-1">
-        <SchrittSelect
-          className="min-w-0"
-          aria-label="Ergebnis von Schritt"
-          value={binding.value}
-          onChange={(e) => {
+        <WaehlerKnopf
+          bezeichnung="Ergebnis von Schritt"
+          gruppen={[{
+            key: 'schritte',
+            eintraege: schritte.map((s) => ({ wert: s.id, name: `Schritt ${s.nr} — ${s.name}` })),
+          }]}
+          wert={binding.value}
+          platzhalter={schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
+          onWaehle={(id) => {
             // Anderer Schritt = andere Antwort: ein Feldcode der alten laese
             // in der neuen still nichts (dieselbe Linie wie der Quellwechsel
             // bei „Datenfeld").
-            const naechste: ActionParamBinding = { ...binding, value: e.target.value }
+            const naechste: ActionParamBinding = { ...binding, value: id }
             delete naechste.ergebnisFeld
             onChange(naechste)
           }}
-        >
-          <option value="">
-            {schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
-          </option>
-          {schritte.map((s) => (
-            <option key={s.id} value={s.id}>{`Schritt ${s.nr} — ${s.name}`}</option>
-          ))}
-        </SchrittSelect>
+        />
         {felder.length > 0 ? (
-          <SchrittSelect
-            className="min-w-0"
-            aria-label="Feld des Ergebnisses"
-            value={feld}
-            onChange={(e) => setzeFeld(e.target.value)}
-          >
-            <option value="">— ganzes Ergebnis —</option>
-            {felder.map((f) => (
-              <option key={f.code} value={f.code}>{f.label}</option>
-            ))}
-          </SchrittSelect>
+          <WaehlerKnopf
+            bezeichnung="Feld des Ergebnisses"
+            gruppen={[{
+              key: 'felder',
+              name: quelle?.name,
+              kennung: quelle ? quellenKennung(quelle) : undefined,
+              eintraege: felder.map((f) => ({ wert: f.code, name: f.label, kennung: f.code })),
+            }]}
+            wert={feld}
+            leerText="— ganzes Ergebnis —"
+            onWaehle={setzeFeld}
+          />
         ) : (
           <TextInput
             aria-label="Feld des Ergebnisses"
@@ -147,100 +158,108 @@ function BindingValue({
   }
   if (binding.source === 'context') {
     return (
-      <SchrittSelect
-        value={binding.value}
-        onChange={(e) => onChange({ ...binding, value: e.target.value })}
-      >
-        <option value="">— wählen —</option>
-        {CONTEXT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </SchrittSelect>
+      <WaehlerKnopf
+        bezeichnung="Ereigniswert"
+        gruppen={[{ key: 'platzhalter', eintraege: CONTEXT_EINTRAEGE }]}
+        wert={binding.value}
+        onWaehle={(wert) => onChange({ ...binding, value: wert })}
+      />
     )
   }
   if (binding.source === 'data_field') {
-    const selectedSource = dataSources.find((source) => source.id === binding.dataSourceId)
+    const gewaehlteQuelle = dataSources.find((s) => s.id === binding.dataSourceId)
     return (
       <div className="grid grid-cols-2 gap-1">
-        <SchrittSelect
-          className="min-w-0"
-          value={binding.dataSourceId ?? ''}
-          onChange={(e) => onChange({ ...binding, dataSourceId: e.target.value, value: '' })}
-        >
-          <option value="">— Quelle —</option>
-          {dataSources.map((source) => (
-            <option key={source.id} value={source.id}>{source.name}</option>
-          ))}
-        </SchrittSelect>
-        <SchrittSelect
-          className="min-w-0"
-          value={binding.value}
-          onChange={(e) => onChange({ ...binding, value: e.target.value })}
-        >
-          <option value="">— Feld —</option>
-          {selectedSource?.fields.map((field) => (
-            <option key={field.code} value={field.code}>{field.label}</option>
-          ))}
-        </SchrittSelect>
+        <WaehlerKnopf
+          bezeichnung="Datenquelle"
+          gruppen={[{
+            key: 'quellen',
+            eintraege: dataSources.map((s) => ({
+              wert: s.id,
+              name: s.name,
+              kennung: quellenKennung(s),
+            })),
+          }]}
+          wert={binding.dataSourceId ?? ''}
+          platzhalter="— Quelle —"
+          onWaehle={(id) => onChange({ ...binding, dataSourceId: id, value: '' })}
+        />
+        <WaehlerKnopf
+          bezeichnung="Feld der Datenquelle"
+          gruppen={[{
+            key: 'felder',
+            name: gewaehlteQuelle?.name,
+            kennung: gewaehlteQuelle ? quellenKennung(gewaehlteQuelle) : undefined,
+            eintraege: (gewaehlteQuelle?.fields ?? []).map((f) => ({
+              wert: f.code,
+              name: f.label,
+              kennung: f.code,
+            })),
+          }]}
+          wert={binding.value}
+          platzhalter="— Feld —"
+          onWaehle={(code) => onChange({ ...binding, value: code })}
+        />
       </div>
     )
   }
   if (binding.source === 'gewaehlte_zeile') {
-    // Zwei Auswahlfelder wie bei „Datenfeld": erst WER die Auswahl gibt,
-    // dann WELCHES Feld seiner Zeile. Die Felder kommen aus der Quelle des
-    // Gebers — die gewaehlte Zeile stammt von dort, andere Felder gaebe es
-    // in ihr gar nicht (Regel 7: nichts erfinden).
+    // Zwei Auswahlen wie bei „Datenfeld": erst WER die Auswahl gibt, dann
+    // WELCHES Feld seiner Zeile. Die Felder kommen aus der Quelle des Gebers —
+    // die gewaehlte Zeile stammt von dort, andere Felder gaebe es in ihr gar
+    // nicht (Regel 7: nichts erfinden).
     const gewaehlter = geber.find((g) => g.blockId === binding.blockId)
+    // Geber geloescht: den Zustand benennen statt still leer (Regel 4). Hier
+    // ist es die EINZIGE Anzeige davon — der Export laeuft auch mit dem toten
+    // Verweis durch.
+    const geberEintraege: WaehlerEintrag[] = geber.map((g) => ({ wert: g.blockId, name: g.label }))
+    if (binding.blockId && !gewaehlter) {
+      geberEintraege.push({ wert: binding.blockId, name: '(gelöschter Baustein)' })
+    }
     return (
       <div className="grid grid-cols-2 gap-1">
-        <SchrittSelect
-          className="min-w-0"
-          aria-label="Auswahl-Geber"
-          value={binding.blockId ?? ''}
-          onChange={(e) => onChange({ ...binding, blockId: e.target.value, value: '' })}
-        >
-          <option value="">— Baustein —</option>
-          {geber.map((g) => (
-            <option key={g.blockId} value={g.blockId}>{g.label}</option>
-          ))}
-          {/* Geber geloescht: den Zustand benennen statt still leer (Regel 4).
-              Hier ist es die EINZIGE Anzeige davon — der Export laeuft auch
-              mit dem toten Verweis durch. */}
-          {binding.blockId && !gewaehlter && (
-            <option value={binding.blockId}>(gelöschter Baustein)</option>
-          )}
-        </SchrittSelect>
-        <SchrittSelect
-          className="min-w-0"
-          aria-label="Feld der gewählten Zeile"
-          value={binding.value}
-          onChange={(e) => onChange({ ...binding, value: e.target.value })}
-        >
-          <option value="">— Feld —</option>
-          {gewaehlter?.felder.map((f) => (
-            <option key={f.code} value={f.code}>{f.label}</option>
-          ))}
-        </SchrittSelect>
+        <WaehlerKnopf
+          bezeichnung="Auswahl-Geber"
+          gruppen={[{ key: 'geber', eintraege: geberEintraege }]}
+          wert={binding.blockId ?? ''}
+          platzhalter="— Baustein —"
+          onWaehle={(id) => onChange({ ...binding, blockId: id, value: '' })}
+        />
+        <WaehlerKnopf
+          bezeichnung="Feld der gewählten Zeile"
+          gruppen={[{
+            key: 'felder',
+            eintraege: (gewaehlter?.felder ?? []).map((f) => ({
+              wert: f.code,
+              name: f.label,
+              kennung: f.code,
+            })),
+          }]}
+          wert={binding.value}
+          platzhalter="— Feld —"
+          onWaehle={(code) => onChange({ ...binding, value: code })}
+        />
       </div>
     )
   }
   if (binding.source === 'block_value') {
     const current = binding.blockId ? blockValueKey(binding.blockId, binding.value) : ''
     return (
-      <SchrittSelect
-        value={current}
-        onChange={(e) => {
-          const selected = blockValues.find((option) => option.key === e.target.value)
-          onChange(selected
-            ? { source: 'block_value', blockId: selected.blockId, value: selected.prop }
+      <WaehlerKnopf
+        bezeichnung="Baustein"
+        gruppen={[{
+          key: 'bausteine',
+          eintraege: blockValues.map((o) => ({ wert: o.key, name: o.label })),
+        }]}
+        wert={current}
+        platzhalter="— Baustein —"
+        onWaehle={(key) => {
+          const gewaehlt = blockValues.find((option) => option.key === key)
+          onChange(gewaehlt
+            ? { source: 'block_value', blockId: gewaehlt.blockId, value: gewaehlt.prop }
             : { source: 'block_value', blockId: '', value: '' })
         }}
-      >
-        <option value="">— Baustein —</option>
-        {blockValues.map((option) => (
-          <option key={option.key} value={option.key}>{option.label}</option>
-        ))}
-      </SchrittSelect>
+      />
     )
   }
   // Der Platzhalter zeigt grau, was OHNE eigene Eingabe gilt: den Wert aus der
@@ -309,35 +328,35 @@ export function ParameterZeile({
     onChange({ source, value })
   }
 
+  // Was hier NICHT waehlbar ist, bleibt trotzdem stehen (deaktiviert) — sonst
+  // suchte der Bediener eine Moeglichkeit, die es sehr wohl gibt, nur eben
+  // noch ohne Datenquelle/Geber/GET-Schritt in der Maske.
+  const herkunft: WaehlerEintrag[] = ACTION_PARAM_SOURCES.map((source) => ({
+    wert: source,
+    name: QUELLEN_NAMEN[source],
+    deaktiviert: (source === 'data_field' && dataSources.length === 0)
+      || (source === 'block_value' && blockValues.length === 0)
+      || (source === 'gewaehlte_zeile' && geber.length === 0)
+      || (source === 'step_result' && schritte.length === 0),
+  }))
+  // „Weggelassen" waehlt man nicht — es steht nur da, solange es gilt.
+  if (binding.source === 'aus') {
+    herkunft.push({ wert: 'aus', name: QUELLEN_NAMEN.aus, deaktiviert: true })
+  }
+
   return (
     <div className="flex items-center gap-1">
       <span className="w-14 shrink-0 truncate font-mono text-[0.6875rem]" title={label}>{label}</span>
-      {/* Teilt sich den Platz mit dem Wert, statt auf 96px festgenagelt zu
-          sein. Das Formular wohnt im Inspector (340px), die Zeile hatte damit
-          64px Textbreite fuer Namen wie „Ergebnis von Schritt" — sechs der
-          acht Eintraege standen abgeschnitten da, und ein <select> kuerzt
-          nicht mit Auslassungspunkten, es schneidet hart ab. min-w-0 flex-1
-          ist dieselbe Loesung wie bei den Schluesselregel-Zeilen der
-          QuellenListe, die im SELBEN Panel nebeneinanderstehen. */}
-      <SchrittSelect
-        className="min-w-0 flex-1"
-        value={binding.source}
-        onChange={(e) => setSource(e.target.value as ActionParamSource)}
-      >
-        {ACTION_PARAM_SOURCES.map((source) => (
-          <option
-            key={source}
-            value={source}
-            disabled={(source === 'data_field' && dataSources.length === 0)
-              || (source === 'block_value' && blockValues.length === 0)
-              // Ohne Auswahl-Geber in der Maske gaebe es nichts zu waehlen.
-              || (source === 'gewaehlte_zeile' && geber.length === 0)
-              || (source === 'step_result' && schritte.length === 0)}
-          >
-            {QUELLEN_NAMEN[source]}
-          </option>
-        ))}
-      </SchrittSelect>
+      {/* Herkunft und Ziel teilen sich den Platz. Beide kuerzen jetzt mit „…"
+          statt hart abzuschneiden — der Waehler ist ein Knopf, kein <select>. */}
+      <div className="min-w-0 flex-1">
+        <WaehlerKnopf
+          bezeichnung={`Herkunft für ${label}`}
+          gruppen={[{ key: 'herkunft', eintraege: herkunft }]}
+          wert={binding.source}
+          onWaehle={(source) => setSource(source as ActionParamSource)}
+        />
+      </div>
       <div
         className="min-w-0 flex-1"
         onKeyDown={(e) => {

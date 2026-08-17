@@ -37,6 +37,11 @@ export interface WaehlerEintrag {
   name: string
   // Leise Technik-Marke rechts ('2_8', 'ID0021', 'ADR'). Leer = keine.
   kennung?: string
+  // Gibt es, ist hier aber nicht waehlbar — z. B. „Datenfeld", solange die
+  // Maske gar keine Datenquelle hat. Er BLEIBT sichtbar: verschwaende er,
+  // suchte der Bediener eine Moeglichkeit, die es sehr wohl gibt, nur eben
+  // noch nicht hier (dieselbe Linie wie die alten disabled-Optionen).
+  deaktiviert?: boolean
 }
 
 export interface WaehlerGruppe {
@@ -144,9 +149,13 @@ export function WaehlerListe({ gruppen, wert, leerText, kopf, onWaehle }: Waehle
               <button
                 key={`${g.key}::${e.wert}`}
                 type="button"
+                disabled={e.deaktiviert}
                 onClick={() => onWaehle(e.wert)}
                 className={cn(
-                  'flex w-full items-baseline justify-between gap-3 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground',
+                  'flex w-full items-baseline justify-between gap-3 rounded-sm px-2 py-1.5 text-left text-xs',
+                  e.deaktiviert
+                    ? 'cursor-not-allowed text-muted-foreground opacity-60'
+                    : 'hover:bg-accent hover:text-accent-foreground',
                   gewaehlt && 'font-semibold',
                 )}
               >
