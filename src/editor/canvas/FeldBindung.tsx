@@ -107,6 +107,16 @@ export function useFeldBindung({
   const closeListenPicker = useCallback(() => setListenPicker(null), [])
   if (!selected && listenPicker !== null) setListenPicker(null)
 
+  // listenBindung.quelleProp: die Felder kommen NUR aus der Bibliotheks-
+  // Quelle, deren id in dieser Block-Eigenschaft steht (z. B. das
+  // Nachschlage-Feld) — nie aus den Quellen in Reichweite.
+  const quelleAusProp = listenBindung?.quelleProp === undefined
+    ? undefined
+    : bibliothek.find((s) => s.id === String(block.props[listenBindung.quelleProp ?? ''] ?? ''))
+  const listenPickerHatFelder = listenBindung?.quelleProp !== undefined
+    ? quelleAusProp !== undefined
+    : hatAngebot || listenBindung?.eintragsWahl !== undefined
+
   useEffect(() => {
     const el = containerRef.current
     if (!el || !listenBindung) return
@@ -179,10 +189,21 @@ export function useFeldBindung({
           onClose={closePicker}
         />
       )}
-      {selected && listenPicker && listenBindung && (hatAngebot || listenBindung.eintragsWahl) && (() => {
+      {selected && listenPicker && listenBindung && listenPickerHatFelder && (() => {
         const liste = listeLesen(block.props[listenBindung.prop], listenBindung)
         const eintrag = liste[listenPicker.index]
         if (!eintrag) return null
+
+        // quelleProp-Modus: eine Gruppe, nackte Feldcodes (quelleId '').
+        const proQuelle = quelleAusProp !== undefined
+        const listenGruppen: PickerGruppe[] = proQuelle
+          ? [{
+              quelleId: '',
+              name: quelleAusProp.name,
+              kennung: quellenKennung(quelleAusProp),
+              fields: quelleAusProp.fields,
+            }]
+          : gruppen
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
         const wahl = listenBindung.eintragsWahl
         const zuo = listenBindung.eintragsZuordnung
@@ -212,7 +233,7 @@ export function useFeldBindung({
         return (
           <FieldPicker
             spotLabel={titelJetzt}
-            gruppen={gruppen}
+            gruppen={listenGruppen}
             wahl={wahl && {
               label: wahl.label,
               optionen: wahl.optionen,
@@ -240,20 +261,24 @@ export function useFeldBindung({
             left={listenPicker.left}
             onPick={(roh) => {
               editor.transaktion(() => {
-                const wert = bibliotheksAngebot
+                // Im quelleProp-Modus ist roh schon der nackte Feldcode —
+                // NIE die Quelle des Traegers umstellen.
+                const wert = !proQuelle && bibliotheksAngebot
                   ? quelleSetzen(roh, block.id)
                   : roh
 
-                if (bibliotheksAngebot && wert === '') return
+                if (!proQuelle && bibliotheksAngebot && wert === '') return
                 const next = listeLesen(block.props[listenBindung.prop], listenBindung)
                 const ziel = next[listenPicker.index]
                 if (!ziel) return
 
                 ziel[listenBindung.titelKey] = wert === ''
                   ? listenStandardTitel(listenBindung, listenPicker.index)
-                  : (bibliotheksAngebot
-                      ? klarnameAusBibliothek(roh)
-                      : klarnameVon(wert, quellen)) || wert
+                  : (proQuelle
+                      ? (quelleAusProp.fields.find((f) => f.code === wert)?.label ?? '')
+                      : bibliotheksAngebot
+                        ? klarnameAusBibliothek(roh)
+                        : klarnameVon(wert, quellen)) || wert
                 ziel[listenBindung.feldKey] = wert
                 editor.updateProperty(block.id, listenBindung.prop, next)
               })

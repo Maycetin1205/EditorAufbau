@@ -24,13 +24,18 @@ import {
   type FeldTyp,
 } from './feldTypen'
 import {
+  automatikSpalten,
+  coerceNachschlagSpalten,
   einzigenTrefferFinden,
   folgeBeimVerlassen,
   holeEintraege,
+  NACHSCHLAG_SPALTEN_BINDUNG,
   nachschlagFeldTpl,
   oeffneNachschlagen,
   satzPasstZurAuswahl,
+  spaltenStellenTpl,
 } from './nachschlagen'
+import type { Spalte } from '../tabelle/spalten'
 
 export class FormFeldBlock extends BasicBlock {
   static readonly blockType = 'formfeld'
@@ -48,6 +53,8 @@ export class FormFeldBlock extends BasicBlock {
     quelleProp: 'nachschlagQuelle',
     wenn: { attributeName: 'fieldType', equals: 'nachschlagen' },
   }
+
+  static readonly listenBindung = NACHSCHLAG_SPALTEN_BINDUNG
 
   static readonly bindableSpots: BindableSpotsFor<typeof FormFeldBlock.defaultProps> = [
     {
@@ -79,6 +86,8 @@ export class FormFeldBlock extends BasicBlock {
     speicherFeld: '',
     speicherTitel: '',
 
+    nachschlagSpalten: [] as Spalte[],
+
     einzigerTreffer: 'nein',
   }
 
@@ -99,7 +108,16 @@ export class FormFeldBlock extends BasicBlock {
   @property() anzeigeTitel = ''
   @property() speicherFeld = ''
   @property() speicherTitel = ''
+  @property({
+    converter: {
+      fromAttribute: (v: string | null): Spalte[] => coerceNachschlagSpalten(v ?? ''),
+      toAttribute: (v: Spalte[]): string => JSON.stringify(v),
+    },
+  })
+  nachschlagSpalten: Spalte[] = []
   @property() einzigerTreffer = 'nein'
+
+  @state() private spaltenDialog = false
 
   @state() private anzeige = ''
 
@@ -181,7 +199,11 @@ export class FormFeldBlock extends BasicBlock {
   }
 
   private onLupe(): void {
-    if (this.hasAttribute('data-ff-editor')) return
+    if (this.hasAttribute('data-ff-editor')) {
+      // Editor-Weg: dasselbe Fenster, aber zum EINSTELLEN der Spalten.
+      this.spaltenDialog = true
+      return
+    }
     oeffneNachschlagen({
       el: this,
       quelleId: this.nachschlagQuelle,
@@ -189,12 +211,50 @@ export class FormFeldBlock extends BasicBlock {
       speicherFeld: this.speicherFeld,
       anzeigeTitel: this.anzeigeTitel,
       speicherTitel: this.speicherTitel,
+      spalten: this.nachschlagSpalten,
       titel: this.placeholder,
 
       onUebernehmen: (anzeige, wert, satz) => {
         this.uebernimmSatz(anzeige, wert, satz)
         this.dispatchEvent(new Event('change'))
       },
+    })
+  }
+
+  // Der Startpunkt im Einstell-Fenster: die gespeicherten Spalten, sonst
+  // der heutige Automatik-Stand als konkrete Zeilen.
+  private spaltenEffektiv(): Spalte[] {
+    const eigene = coerceNachschlagSpalten(this.nachschlagSpalten)
+    if (eigene.length > 0) return eigene
+    return automatikSpalten({
+      anzeigeFeld: this.anzeigeFeld,
+      speicherFeld: this.speicherFeld,
+      anzeigeTitel: this.anzeigeTitel,
+      speicherTitel: this.speicherTitel,
+    })
+  }
+
+  private spaltenDialogTpl(): TemplateResult {
+    return spaltenStellenTpl({
+      titel: this.placeholder,
+      spalten: this.spaltenEffektiv(),
+      onAendern: (spalten) => {
+        // Vom Baustein selbst gemeldet, damit der Editor sie als normale
+        // Eigenschafts-Aenderung speichert (Undo inklusive).
+        this.dispatchEvent(new CustomEvent('ff-prop-change', {
+          detail: { attr: 'nachschlagSpalten', value: spalten },
+          bubbles: true,
+          composed: true,
+        }))
+      },
+      onFeldWahl: (detail) => {
+        this.dispatchEvent(new CustomEvent('ff-listen-bind', {
+          detail: { prop: 'nachschlagSpalten', ...detail },
+          bubbles: true,
+          composed: true,
+        }))
+      },
+      onSchliessen: () => { this.spaltenDialog = false },
     })
   }
 
@@ -277,6 +337,9 @@ export class FormFeldBlock extends BasicBlock {
           ? this.textTpl(`ph ${PH_KLASSE[typ] ?? ''}`.trim(), !leer)
           : nothing}
       </div>
+      ${this.spaltenDialog && this.hasAttribute('data-ff-editor')
+        ? this.spaltenDialogTpl()
+        : nothing}
     </div>`
   }
 

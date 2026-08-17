@@ -1,4 +1,5 @@
 import { html, type TemplateResult } from 'lit'
+import type { ListenBindung } from '../../core/blocks/listenBindung'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { meldeFehler } from '../../softengine/meldung'
@@ -9,7 +10,7 @@ import {
   type DialogRahmen,
 } from '../shared/DialogRahmen'
 import { ART_TEXT } from '../tabelle/spaltenArten'
-import type { Spalte } from '../tabelle/spalten'
+import { coerceSpalten, STANDARD_TITEL, type Spalte } from '../tabelle/spalten'
 import { TabelleBlock } from '../tabelle/TabelleBlock'
 import {
   ZEILE_AKTIVIERT_EVENT,
@@ -43,6 +44,29 @@ export function nachschlagFeldTpl(args: {
   </div>`
 }
 
+// Die Spalten des Fensters wohnen am FELD und werden am Ding eingestellt
+// (Lupe im Editor). Leer = Automatik: eine Spalte (Wert) bzw. zwei
+// (Angezeigt + Wert), je nachdem ob ein eigenes Anzeigefeld gesetzt ist.
+export const NACHSCHLAG_SPALTEN_BINDUNG: ListenBindung = {
+  prop: 'nachschlagSpalten',
+  titelKey: 'titel',
+  feldKey: 'feld',
+  standardTitel: STANDARD_TITEL,
+  quelleProp: 'nachschlagQuelle',
+}
+
+export function coerceNachschlagSpalten(v: unknown): Spalte[] {
+  if (typeof v === 'string') {
+    try {
+      v = JSON.parse(v)
+    } catch {
+      return []
+    }
+  }
+  // Anders als die Tabelle darf das Feld LEER sein: leer heisst Automatik.
+  return Array.isArray(v) && v.length > 0 ? coerceSpalten(v) : []
+}
+
 export interface NachschlagenArgs {
   el: HTMLElement
   quelleId: string
@@ -50,6 +74,8 @@ export interface NachschlagenArgs {
   speicherFeld: string
   anzeigeTitel: string
   speicherTitel: string
+
+  spalten: readonly Spalte[]
   titel: string
   onUebernehmen: (anzeige: string, wert: string, satz: unknown) => void
 }
@@ -160,14 +186,26 @@ function schliesse(mitFokus = true): void {
   ziel?.focus()
 }
 
-function spaltenFuer(args: NachschlagenArgs): Spalte[] {
+type SpaltenQuelle = Pick<
+  NachschlagenArgs,
+  'anzeigeFeld' | 'speicherFeld' | 'anzeigeTitel' | 'speicherTitel'
+>
+
+// Die Automatik-Spalten. feld traegt die Codes, damit derselbe Stand auch
+// als Startpunkt im Einstell-Fenster dient; die Laufzeit-Zellen kommen bei
+// der Automatik trotzdem aus den fertigen Eintraegen (anzeige/wert).
+export function automatikSpalten(args: SpaltenQuelle): Spalte[] {
   const wertTitel = args.speicherTitel !== ''
     ? args.speicherTitel
     : (args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Wert')
-  const wertSpalte: Spalte = { titel: wertTitel, feld: '', art: ART_TEXT }
+  const wertSpalte: Spalte = { titel: wertTitel, feld: args.speicherFeld, art: ART_TEXT }
   if (nurEineSpalte(args.anzeigeFeld, args.speicherFeld)) return [wertSpalte]
   return [
-    { titel: args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt', feld: '', art: ART_TEXT },
+    {
+      titel: args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt',
+      feld: args.anzeigeFeld,
+      art: ART_TEXT,
+    },
     wertSpalte,
   ]
 }
@@ -175,14 +213,17 @@ function spaltenFuer(args: NachschlagenArgs): Spalte[] {
 function macheTabelle(args: NachschlagenArgs, eintraege: readonly Eintrag[]): TabelleBlock {
   const tabelle = document.createElement(TabelleBlock.tagName) as TabelleBlock
   const einspaltig = nurEineSpalte(args.anzeigeFeld, args.speicherFeld)
+  const eigene = coerceNachschlagSpalten([...args.spalten])
 
   tabelle.besitz = 'provided'
-  tabelle.spalten = spaltenFuer(args)
+  tabelle.spalten = eigene.length > 0 ? eigene : automatikSpalten(args)
   tabelle.suche = 'ja'
   tabelle.leerText = 'Diese Quelle hat keine Sätze.'
   tabelle.bereitgestellteZeilen = eintraege.map((e) => ({
     rohzeile: e.satz,
-    zellen: einspaltig ? [e.wert] : [e.anzeige, e.wert],
+    zellen: eigene.length > 0
+      ? eigene.map((s) => (s.feld === '' ? '' : getField(e.satz, s.feld)))
+      : (einspaltig ? [e.wert] : [e.anzeige, e.wert]),
   }))
   tabelle.toggleAttribute('fuellt', true)
 
@@ -234,4 +275,62 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   void Promise.all([dialog.updateComplete, tabelle.updateComplete]).then(() => {
     if (dialog.isConnected) tabelle.fokussiereSuche()
   })
+}
+
+export interface SpaltenStellenArgs {
+  titel: string
+
+  spalten: readonly Spalte[]
+
+  onAendern: (spalten: Spalte[]) => void
+
+  onFeldWahl: (detail: { index: number; top: number; left: number }) => void
+  onSchliessen: () => void
+}
+
+// Editor-Weg der Lupe: dasselbe Fenster wie zur Laufzeit, aber die Tabelle
+// laeuft im Editor-Modus (Striche statt Daten, Regel 7) und traegt ihre
+// eigene Spalten-Bedienung: +/- oben rechts, Doppelklick = umbenennen,
+// Klick auf den Titel = Feld waehlen. Lebt im Shadow-DOM des Feldes, damit
+// die Aenderungen als normale Ereignisse beim Editor ankommen (Undo).
+export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
+  const stop = (e: Event): void => e.stopPropagation()
+  return html`<ff-dialog-rahmen
+    viewport
+    escape-schliesst
+    ohne-modal
+    inhalt-fest
+    style="z-index:40"
+    .titel=${args.titel !== '' ? args.titel : 'Nachschlagen'}
+    .breite=${520}
+    .hoehe=${380}
+    @ff-dialog-schliessen=${(e: Event) => {
+      e.stopPropagation()
+      args.onSchliessen()
+    }}
+    @click=${stop}
+    @pointerdown=${stop}
+    @dblclick=${stop}
+  >
+    <ff-tabelle
+      data-ff-editor
+      fuellt
+      suche="ja"
+      style="--se-r-lg:0px"
+      .spalten=${[...args.spalten]}
+      .editable=${true}
+      @ff-prop-change=${(e: Event) => {
+        e.stopPropagation()
+        const detail = (e as CustomEvent<{ attr?: string; value?: unknown }>).detail
+        if (detail?.attr !== 'spalten') return
+        args.onAendern(coerceSpalten(detail.value))
+      }}
+      @ff-listen-bind=${(e: Event) => {
+        e.stopPropagation()
+        const d = (e as CustomEvent<{ index?: number; top?: number; left?: number }>).detail
+        if (typeof d?.index !== 'number') return
+        args.onFeldWahl({ index: d.index, top: d.top ?? 0, left: d.left ?? 0 })
+      }}
+    ></ff-tabelle>
+  </ff-dialog-rahmen>`
 }

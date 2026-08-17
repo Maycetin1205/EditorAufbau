@@ -7,6 +7,11 @@ export interface ListenBindung {
 
   standardTitel: string
 
+  // Gesetzt: die Feld-Auswahl liest NUR die Bibliotheks-Quelle, deren id in
+  // dieser Block-Eigenschaft steht (z. B. nachschlagQuelle) — nicht die
+  // Quellen in Reichweite. Eintraege speichern den nackten Feldcode.
+  quelleProp?: string
+
   eintragsWahl?: EintragsWahl
 
   eintragsZuordnung?: EintragsZuordnung

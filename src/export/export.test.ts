@@ -82,6 +82,29 @@ describe('exportMask', () => {
     expect(html).toContain('direction="row"')
   })
 
+  it('Nachschlage-Spalten reisen als Attribut am Feld — ohne Einstellung steht nichts da', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['mit', 'ohne'] },
+      mit: {
+        id: 'mit',
+        type: 'formfeld',
+        props: {
+          fieldType: 'nachschlagen',
+          nachschlagSpalten: [{ titel: 'Nr', feld: '0_2', art: 'text' }],
+        },
+        parentId: 'root',
+        childIds: [],
+      },
+      ohne: { id: 'ohne', type: 'formfeld', props: { fieldType: 'nachschlagen' }, parentId: 'root', childIds: [] },
+    }
+    const { html } = exportMask(tree)
+    const felder = [...html.matchAll(/<ff-formfeld[^>]*>/g)].map((m) => m[0])
+    expect(felder).toHaveLength(2)
+    const mitAttr = felder.filter((f) => f.includes('nachschlagspalten='))
+    expect(mitAttr).toHaveLength(1)
+    expect(mitAttr[0]).toContain('0_2')
+  })
+
   it('serialisiert den Baum als verschachtelte Custom Elements', () => {
     const { html } = exportMask(demoTree())
     expect(html).toContain('<ff-t-box direction="row"')
