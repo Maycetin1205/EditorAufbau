@@ -173,6 +173,7 @@ export function folgeBeimVerlassen(
 }
 
 let offen: DialogRahmen | null = null
+let offenFuer: HTMLElement | null = null
 let rueckFokus: HTMLElement | null = null
 
 function lupeVon(el: HTMLElement): HTMLElement | null {
@@ -184,7 +185,14 @@ function schliesse(mitFokus = true): void {
   rueckFokus = null
   offen?.remove()
   offen = null
+  offenFuer = null
   ziel?.focus()
+}
+
+// Stirbt das Feld (Maskenabbau), darf sein Fenster nicht als Waise am
+// document.body weiterleben — samt keydown-Listener des Dialograhmens.
+export function schliesseNachschlagenFuer(el: HTMLElement): void {
+  if (offenFuer === el) schliesse(false)
 }
 
 type SpaltenQuelle = Pick<
@@ -272,6 +280,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   rueckFokus = lupeVon(args.el)
   document.body.appendChild(dialog)
   offen = dialog
+  offenFuer = args.el
 
   void Promise.all([dialog.updateComplete, tabelle.updateComplete]).then(() => {
     if (dialog.isConnected) tabelle.fokussiereSuche()
@@ -285,7 +294,7 @@ export interface SpaltenStellenArgs {
 
   onAendern: (spalten: Spalte[]) => void
 
-  onFeldWahl: (detail: { index: number; top: number; left: number }) => void
+  onFeldWahl: (detail: { index: number; top: number; left: number; liste?: Spalte[] }) => void
   onSchliessen: () => void
 }
 
@@ -328,9 +337,19 @@ export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
       }}
       @ff-listen-bind=${(e: Event) => {
         e.stopPropagation()
-        const d = (e as CustomEvent<{ index?: number; top?: number; left?: number }>).detail
+        const d = (e as CustomEvent<{
+          index?: number
+          top?: number
+          left?: number
+          liste?: Spalte[]
+        }>).detail
         if (typeof d?.index !== 'number') return
-        args.onFeldWahl({ index: d.index, top: d.top ?? 0, left: d.left ?? 0 })
+        args.onFeldWahl({
+          index: d.index,
+          top: d.top ?? 0,
+          left: d.left ?? 0,
+          ...(Array.isArray(d.liste) ? { liste: d.liste } : {}),
+        })
       }}
     ></ff-tabelle>
   </ff-dialog-rahmen>`

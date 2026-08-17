@@ -111,6 +111,10 @@ export function oeffneFeldPicker(
   e: MouseEvent,
   prop: string,
   index: number,
+  // Der gerade ANGEZEIGTE Stand reist mit: der Editor braucht ihn als
+  // Rückfallebene, wenn die Eigenschaft selbst noch leer ist (Automatik-
+  // Spalten des Nachschlagens) — sonst zeigt der Index ins Leere.
+  liste?: () => Spalte[],
 ): void {
   e.stopPropagation()
   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -119,7 +123,13 @@ export function oeffneFeldPicker(
     wartenderPicker.delete(baustein)
     baustein.dispatchEvent(
       new CustomEvent('ff-listen-bind', {
-        detail: { prop, index, top: rect.bottom + 4, left: rect.left },
+        detail: {
+          prop,
+          index,
+          top: rect.bottom + 4,
+          left: rect.left,
+          ...(liste ? { liste: liste() } : {}),
+        },
         bubbles: true,
         composed: true,
       }),

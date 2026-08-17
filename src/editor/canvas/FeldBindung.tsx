@@ -103,6 +103,8 @@ export function useFeldBindung({
     index: number
     top: number
     left: number
+
+    liste?: unknown
   } | null>(null)
   const closeListenPicker = useCallback(() => setListenPicker(null), [])
   if (!selected && listenPicker !== null) setListenPicker(null)
@@ -126,6 +128,7 @@ export function useFeldBindung({
         index?: number
         top?: number
         left?: number
+        liste?: unknown
       }
 
       if (detail?.prop !== listenBindung.prop || typeof detail.index !== 'number') return
@@ -133,6 +136,7 @@ export function useFeldBindung({
         index: detail.index,
         top: Math.max(8, detail.top ?? 0),
         left: Math.max(8, Math.min(detail.left ?? 0, window.innerWidth - 248)),
+        ...(Array.isArray(detail.liste) ? { liste: detail.liste } : {}),
       })
     }
     el.addEventListener('ff-listen-bind', handler)
@@ -190,7 +194,14 @@ export function useFeldBindung({
         />
       )}
       {selected && listenPicker && listenBindung && listenPickerHatFelder && (() => {
-        const liste = listeLesen(block.props[listenBindung.prop], listenBindung)
+        // Solange die Eigenschaft leer ist (Automatik), gilt die vom
+        // Baustein mitgeschickte Anzeige-Liste — erst das Wählen eines
+        // Feldes schreibt sie als richtige Eigenschaft fest.
+        const listeJetzt = (): Record<string, unknown>[] => {
+          const ausProps = listeLesen(block.props[listenBindung.prop], listenBindung)
+          return ausProps.length > 0 ? ausProps : listeLesen(listenPicker.liste, listenBindung)
+        }
+        const liste = listeJetzt()
         const eintrag = liste[listenPicker.index]
         if (!eintrag) return null
 
@@ -209,7 +220,7 @@ export function useFeldBindung({
         const zuo = listenBindung.eintragsZuordnung
 
         const schreibeInEintrag = (key: string, wert: unknown): void => {
-          const next = listeLesen(block.props[listenBindung.prop], listenBindung)
+          const next = listeJetzt()
           const ziel = next[listenPicker.index]
           if (!ziel) return
           ziel[key] = wert
@@ -268,7 +279,7 @@ export function useFeldBindung({
                   : roh
 
                 if (!proQuelle && bibliotheksAngebot && wert === '') return
-                const next = listeLesen(block.props[listenBindung.prop], listenBindung)
+                const next = listeJetzt()
                 const ziel = next[listenPicker.index]
                 if (!ziel) return
 

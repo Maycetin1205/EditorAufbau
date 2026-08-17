@@ -67,6 +67,8 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
     description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',
     kind: 'field',
 
-    visibleWhen: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
+    // Dieselbe Bedingung wie am bindableSpot: das Ankreuzfeld bleibt
+    // unbindbar, bis der SE-Wert-Kontrakt (J/N? 1/0?) belegt ist.
+    visibleWhen: { attributeName: 'fieldType', keinesVon: ['checkbox', 'nachschlagen'] },
   },
 ]

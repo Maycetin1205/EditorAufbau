@@ -1,4 +1,4 @@
-import { html, nothing, type TemplateResult } from 'lit'
+import { html, nothing, type PropertyValues, type TemplateResult } from 'lit'
 import { property, state } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
@@ -33,6 +33,7 @@ import {
   nachschlagFeldTpl,
   oeffneNachschlagen,
   satzPasstZurAuswahl,
+  schliesseNachschlagenFuer,
   spaltenStellenTpl,
 } from './nachschlagen'
 import type { Spalte } from '../tabelle/spalten'
@@ -248,6 +249,8 @@ export class FormFeldBlock extends BasicBlock {
         }))
       },
       onFeldWahl: (detail) => {
+        // detail traegt die ANGEZEIGTE Liste mit (auch den Automatik-Stand):
+        // der Editor braucht sie, solange nachschlagSpalten selbst leer ist.
         this.dispatchEvent(new CustomEvent('ff-listen-bind', {
           detail: { prop: 'nachschlagSpalten', ...detail },
           bubbles: true,
@@ -256,6 +259,15 @@ export class FormFeldBlock extends BasicBlock {
       },
       onSchliessen: () => { this.spaltenDialog = false },
     })
+  }
+
+  protected override willUpdate(changed: PropertyValues): void {
+    super.willUpdate(changed)
+    // Der Einstell-Dialog gehoert zum Typ „nachschlagen" — beim Typwechsel
+    // bliebe er sonst offen (oder spraenge beim Rueckwechsel wieder auf).
+    if (changed.has('fieldType') && coerceFeldTyp(this.fieldType) !== 'nachschlagen') {
+      this.spaltenDialog = false
+    }
   }
 
   private leereNachschlagen(): void {
@@ -351,6 +363,7 @@ export class FormFeldBlock extends BasicBlock {
   override disconnectedCallback(): void {
     super.disconnectedCallback()
     disconnectField(this)
+    schliesseNachschlagenFuer(this)
   }
 }
 

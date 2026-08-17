@@ -319,7 +319,9 @@ export class TabelleBlock extends BasicBlock {
           benenneSpalteUm(e, i, () => this.spaltenListe(), (l) => this.aendere(l))
         },
         klickKopf: (e, i) => {
-          if (this.editable) oeffneFeldPicker(this, e, TabelleBlock.listenBindung.prop, i)
+          if (this.editable) {
+            oeffneFeldPicker(this, e, TabelleBlock.listenBindung.prop, i, () => this.spaltenListe())
+          }
           this.klickSortiere(i)
         },
         aktiviereZeile: (rohIndex, ansichtIndex) => this.aktiviereZeile(rohIndex, ansichtIndex),
