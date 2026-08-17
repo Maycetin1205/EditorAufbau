@@ -15,6 +15,7 @@
 // Die reinen Datenwege (Eintraege bauen, suchen) sind absichtlich eigene
 // Funktionen und getestet — das DOM darunter prueft der Nutzer im Browser.
 
+import { html, type TemplateResult } from 'lit'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { meldeFehler } from '../../softengine/meldung'
@@ -25,6 +26,43 @@ import {
   type DialogRahmen,
 } from '../shared/DialogRahmen'
 import { zeilePasst } from '../shared/textSuche'
+
+// Das FELD selbst (Eingabe + Lupe) — die Gestalt des Feldtyps „Nachschlagen".
+// Steht hier und nicht im FormFeldBlock, weil sie zur Sache gehoert: das
+// Fenster, die Uebernahme und die Lupe, die es oeffnet, sind EIN Thema
+// (herausgezogen 2026-08-17, als der Baustein ueber den 500-Zeilen-Deckel lief).
+//
+// Angezeigt wird der KLARWERT, gemerkt der Technikwert im `value` des
+// Bausteins (Regel 3); GESUCHT wird im Fenster. Tippen geht hier trotzdem, aus
+// genau einem Grund: LOESCHEN — Text raus, Feld verlassen, weg ist er, wie in
+// jedem anderen Feld (bis 2026-08-07 tat das ein ×-Knopf, Nutzer-Ansage: raus).
+// Halb Getipptes entscheidet folgeBeimVerlassen weiter unten.
+export function nachschlagFeldTpl(args: {
+  wert: string
+  onTippen: (wert: string) => void
+  onVerlassen: () => void
+  onLupe: () => void
+}): TemplateResult {
+  return html`<div class="nachschlag">
+    <input
+      class="ctrl"
+      type="text"
+      .value=${args.wert}
+      @input=${(e: Event) => args.onTippen((e.target as HTMLInputElement).value)}
+      @blur=${() => args.onVerlassen()}
+    />
+    <button
+      class="lupe"
+      type="button"
+      aria-label="Nachschlagen"
+      title="Nachschlagen"
+      @click=${() => args.onLupe()}
+    ><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+      <line x1="10.4" y1="10.4" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
+    </svg></button>
+  </div>`
+}
 
 export interface NachschlagenArgs {
   // Das Feld selbst. Aus seinen Attributen liest die Folge-Mechanik, WESSEN

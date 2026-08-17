@@ -7,18 +7,16 @@
 // Datum, Ankreuzfeld (Impfung).
 //
 // KEIN Label ueber dem Feld (Nutzer-Korrektur 2026-07-14): der Text steht
-// IM Feld — als Platzhalter (grau, verschwindet beim Tippen) bzw. beim
-// Ankreuzfeld als Beschriftung neben dem Kaestchen. EINE Text-Prop
-// (`placeholder`) fuer beides, per Doppelklick DIREKT im Feld aenderbar
-// (Inline-Edit, WYSIWYG). Der Platzhalter ist ein eigenes Element mit
-// Verschwinde-Logik (statt native placeholder-Attribut), damit derselbe
-// Text in Editor UND Maske identisch sitzt und im Editor editierbar ist;
-// die Maske blendet ihn beim Tippen bzw. nach einer Auswahl aus (input-/
-// change-Event — die Komponente lebt in beiden Welten, 1 Render-Quelle).
-// An einem GEBUNDENEN Feld traegt der Platzhalter nicht die getippte
-// Beschriftung, sondern den Feld-KLARNAMEN ("Tiername") — in der Maske
-// genauso wie im Editor: der Export loest ihn beim Exportieren auf und
-// schreibt ihn ins Markup (bindungsVorschau). Das Feld sieht leer aus wie
+// IM Feld — als Platzhalter bzw. beim Ankreuzfeld als Beschriftung neben dem
+// Kaestchen. EINE Text-Prop (`placeholder`) fuer beides, per Doppelklick
+// DIREKT im Feld aenderbar (Inline-Edit) — und der EINZIGE Benenn-Weg des
+// Bausteins: im Inspector steht der Feldname nicht. Ein eigenes Element statt
+// des nativen placeholder-Attributs, damit derselbe Text in Editor UND Maske
+// identisch sitzt und im Editor editierbar ist; welche Feldtypen ihn tragen,
+// sagt MIT_PLATZHALTER (./feldTypen), wo er sitzt und wann er weicht, sagt
+// ./feldStil. An einem GEBUNDENEN Feld traegt er nicht die getippte
+// Beschriftung, sondern den Feld-KLARNAMEN ("Tiername") — in Maske wie Editor
+// (der Export loest ihn auf, s. bindungsVorschau). Das Feld sieht leer aus wie
 // SoftEngine vor dem ersten Daten-Push und verraet trotzdem, wozu es gehoert.
 //
 // Die Datenanbindung ist registry-getrieben: das Feld deklariert Quelle,
@@ -67,6 +65,7 @@ import {
   einzigenTrefferFinden,
   folgeBeimVerlassen,
   holeEintraege,
+  nachschlagFeldTpl,
   oeffneNachschlagen,
   satzPasstZurAuswahl,
 } from './nachschlagen'
@@ -200,6 +199,12 @@ export class FormFeldBlock extends BasicBlock {
   // an keiner echten Maske belegt, und geraten wird nicht (Regel 5).
   @state() private angehakt = false
 
+  // Steht der Cursor IM Steuerelement (nicht irgendwo im Feld)? Nur das
+  // Datumsfeld braucht die Antwort — warum es ein Zustandsfeld ist und kein
+  // CSS-:focus-within, steht bei der Regel selbst (feldStil, Abschnitt Datum).
+  // @state und nicht @property: ein Laufzeitwert, der nie in den Export gehoert.
+  @state() private imSteuerelement = false
+
   private onInput(e: Event): void {
     const t = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     this.value = coerceFeldTyp(this.fieldType) === 'date'
@@ -264,32 +269,15 @@ export class FormFeldBlock extends BasicBlock {
             : eintraege.map((o) => html`<option value=${o}>${o}</option>`)}
         </select>`
       }
-      case 'nachschlagen': {
-        // Angezeigt wird der KLARWERT, gemerkt der Technikwert in `value`
-        // (Regel 3); GESUCHT wird im Fenster. Tippen geht hier trotzdem, aus
-        // genau einem Grund: LOESCHEN — Text raus, Feld verlassen, weg ist er,
-        // wie in jedem anderen Feld (bis 2026-08-07 tat das ein ×-Knopf,
-        // Nutzer-Ansage: raus). Halb Getipptes entscheidet ./nachschlagen.
-        return html`<div class="nachschlag">
-          <input
-            class="ctrl"
-            type="text"
-            .value=${this.getippt ?? this.anzeige}
-            @input=${(e: Event) => { this.getippt = (e.target as HTMLInputElement).value }}
-            @blur=${this.onNachschlagVerlassen}
-          />
-          <button
-            class="lupe"
-            type="button"
-            aria-label="Nachschlagen"
-            title="Nachschlagen"
-            @click=${this.onLupe}
-          ><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
-            <line x1="10.4" y1="10.4" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
-          </svg></button>
-        </div>`
-      }
+      case 'nachschlagen':
+        // Aussehen und Bedienung des Nachschlage-Felds wohnen bei der Sache
+        // selbst (./nachschlagen) — hier steht nur, WAS der Feldtyp zeigt.
+        return nachschlagFeldTpl({
+          wert: this.getippt ?? this.anzeige,
+          onTippen: (wert) => { this.getippt = wert },
+          onVerlassen: () => this.onNachschlagVerlassen(),
+          onLupe: () => this.onLupe(),
+        })
       default:
         // text / number / date teilen das eine Input-Element.
         return html`<input
@@ -298,6 +286,8 @@ export class FormFeldBlock extends BasicBlock {
           .value=${typ === 'date' ? dateValueToInput(this.value) : this.value}
           @input=${this.onInput}
           @change=${this.onChange}
+          @focus=${() => { this.imSteuerelement = true }}
+          @blur=${() => { this.imSteuerelement = false }}
         />`
     }
   }
@@ -469,9 +459,12 @@ export class FormFeldBlock extends BasicBlock {
     // (feldStil). Dieselbe Bedingung wie das Verstecken des Platzhalters —
     // eine Frage, eine Antwort.
     const leer = imFeld === ''
+    // „tippt" nimmt dem Datumsfeld-Namen den Platz, solange der Cursor im
+    // Steuerelement steht (s. feldStil). Im Editor kommt es nie dazu.
+    const huelleKlassen = `huelle${leer ? ' leer' : ''}${this.imSteuerelement ? ' tippt' : ''}`
     return html`<div class="feld">
       <div
-        class=${leer ? 'huelle leer' : 'huelle'}
+        class=${huelleKlassen}
         data-ff-spot=${wertBindbar ? 'value' : nothing}
         ?data-ff-bound=${wertBindbar && this.valueField !== ''}
       >
