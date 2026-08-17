@@ -101,16 +101,40 @@ const SEITENGROESSE = 10
 // Voellig leere Zeilen fallen weg (sie waeren eine anklickbare Leerzeile,
 // die nichts uebernimmt); HALB leere bleiben — eine Adresse ohne Namen ist
 // immer noch ein Satz, den der Bediener meinen kann.
+// GLEICHE EINTRAEGE STEHEN EINMAL, wenn Anzeige und Wert DASSELBE Feld sind
+// (2026-08-17, Nutzer-Befund): stellt der Bauer beides auf „Adressgruppe",
+// zeigte das Fenster eine Zeile je ADRESSE — bei 800 Adressen achthundertmal
+// dieselben fuenf Gruppen. Zwei Zeilen, die denselben Text zeigen UND denselben
+// Wert speichern, sind fuer den Bediener nicht zu unterscheiden: welche er
+// anklickt, aendert am Ergebnis nichts. Sie zusammenzufassen nimmt ihm also
+// nichts weg — es nimmt ihm 795 Zeilen ab.
+//
+// NUR in diesem Fall. Sind Anzeige und Wert VERSCHIEDENE Felder (der
+// Normalfall: Name zeigen, Kundennummer speichern), bedeuten zwei gleich
+// aussehende Zeilen zwei verschiedene Saetze — dort waere Zusammenfassen
+// Datenverlust.
+//
+// ⚠ Der mitgereichte SATZ ist dann der ERSTE mit diesem Wert. Fuer die
+// Auswahl-Folge zaehlt das Schluesselfeld, und das traegt in allen
+// zusammengefassten Zeilen denselben Wert — anders waere es nur, wenn jemand
+// auf ein ANDERES Feld paart als das angezeigte.
 export function nachschlagEintraege(
   rows: readonly unknown[],
   anzeigeFeld: string,
   speicherFeld: string,
 ): Eintrag[] {
   const eintraege: Eintrag[] = []
+  const gleichesFeld = anzeigeFeld.trim() !== '' && anzeigeFeld.trim() === speicherFeld.trim()
+  const gesehen = new Set<string>()
   for (const row of rows) {
     const anzeige = getField(row, anzeigeFeld).trim()
     const wert = getField(row, speicherFeld).trim()
-    if (anzeige !== '' || wert !== '') eintraege.push({ anzeige, wert, satz: row })
+    if (anzeige === '' && wert === '') continue
+    if (gleichesFeld) {
+      if (gesehen.has(wert)) continue
+      gesehen.add(wert)
+    }
+    eintraege.push({ anzeige, wert, satz: row })
   }
   return eintraege
 }
