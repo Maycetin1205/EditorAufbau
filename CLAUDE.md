@@ -346,10 +346,7 @@ Musterkarte (Erklärung jetzt an EINER Stelle, `state/loescheBaustein`). Dazu au
 der Fortsetzung: **eine nur in einer Aktionskette gelesene Datenquelle fehlte im
 Export** (keine SEFILELOOP, kein FF_DATA_SOURCES → Parameter ging leer hinaus).
 Nicht selbst prüfbar und daher offen: die Bedienprobe im Browser und der
-SE-Echttest (Regel 9). Nicht angefasst, weil es die Ausliefer-Form ändert und
-damit eine Nutzer-Entscheidung ist: dass ein Export-Klick ZWEI automatische
-Downloads auslöst (Chromium fragt dann nach Berechtigung; ein abgelehnter
-zweiter Download verschwindet still) — Abhilfe wäre eine ZIP.
+SE-Echttest (Regel 9).
 
 **Demo-Übernahme („Fellnase") — Vorbild ist ab jetzt die eingecheckte Demo
 (Nutzer-Entscheidung 2026-08-06).** Die drei Design-Commits (`b724521` Trenner
@@ -446,6 +443,13 @@ Nutzer-Entscheidung anfassen:**
   Der Export blockt weiterhin nie. `preflightMask` bleibt lediglich Code;
   der eine vorhandene gelbe Punkt in der Steuerung bleibt vorerst
   unangetastet (sein Entfernen wäre eine eigene kleine Entscheidung).
+- **Der Export-Klick bleibt, wie er ist (Nutzer-Ansage 2026-08-17, „das
+  bleibt wie es ist! muss nicht in den Plan").** Dass ein Klick ZWEI
+  automatische Downloads auslöst und Chromium beim zweiten nachfragt, nimmt
+  der Nutzer bewusst in Kauf. Keine ZIP, keine Anforder-Knöpfe, kein
+  eingefrorener Exportstand — **nicht wieder vorschlagen und nicht wieder
+  aufschreiben** (dieselbe Ansage steckt seit 2026-08-11 im Etappenkopf B1
+  des Umbau-Plans; hier stand sie trotzdem weiter als offene Entscheidung).
 - **Restlos entfernt — nicht wieder einbauen:** „Quelle speichern" samt
   Änderungs-Spur · „Neuen Satz anlegen"/CREATE_RECORD · Projektkarte/
   project-map · dashboard-Klickmodelle (alle Nutzer 2026-07-20) · der

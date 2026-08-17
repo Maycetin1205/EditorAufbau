@@ -730,8 +730,6 @@ zurueckgegeben, solange er sie nicht selbst aendert:
 - **`aus` bleibt ein gespeicherter Parameterzustand und liefert an seiner
   Syntaxposition einen leeren String.** Es wird nicht als normale sichtbare
   Quelle in jedes Auswahlfeld aufgenommen.
-- **Export wird einmal eingefroren und danach ueber zwei bewusste Knoepfe
-  angefordert.** Kein automatischer Doppeldownload und vorerst kein ZIP.
 - **Popup-Runtime hat genau ein aktives Popup.** Oeffnen eines Ziels schliesst
   andere Popups. Ein Modal-Stack wird nicht nebenbei erfunden.
 - **Popup-Namen sind nichtleer und eindeutig.**
