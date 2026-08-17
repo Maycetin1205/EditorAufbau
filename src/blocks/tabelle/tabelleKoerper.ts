@@ -12,6 +12,10 @@ export interface KoerperLage {
   cols: Readonly<Record<string, string>>
 
   editable: boolean
+
+  imEditor: boolean
+
+  auswahlSemantik: boolean
   zeigeSuche: boolean
   suchtext: string
 
@@ -37,7 +41,8 @@ export interface KoerperHandeln {
 
   dblklickKopf: (e: MouseEvent, index: number) => void
   klickKopf: (e: MouseEvent, index: number) => void
-  klickZeile: (rohIndex: number | null) => void
+
+  aktiviereZeile: (rohIndex: number | null, ansichtIndex: number) => void
 
   stop: (e: Event) => void
 }
@@ -51,7 +56,7 @@ function lineal(lage: KoerperLage): TemplateResult | typeof nothing {
         flex: '0 1 auto',
         height: `calc(var(--zeilen-hoehe) * ${lage.linealTakte})`,
       }
-  return html`<div class="lineal" style=${styleMap(stil)}>
+  return html`<div class="lineal" role="presentation" style=${styleMap(stil)}>
           ${lage.spalten.map(() => html`<div></div>`)}
         </div>`
 }
@@ -68,11 +73,12 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
           @input=${(e: Event) => tun.setzeSuchtext((e.target as HTMLInputElement).value)}
         />
       </div>` : ''}
-      <div class="koerper">
-      <div class="kopf" style=${styleMap(lage.cols)}>
+      <div class="koerper" role=${lage.leer ? nothing : 'table'} tabindex="-1">
+      <div class="kopf" role="row" style=${styleMap(lage.cols)}>
         ${lage.spalten.map(
           (s, i) => html`<div
             class=${spaltenArt(s.art).klasse}
+            role="columnheader"
             data-ff-editable
             @dblclick=${(e: MouseEvent) => tun.dblklickKopf(e, i)}
             @click=${(e: MouseEvent) => tun.klickKopf(e, i)}
@@ -83,12 +89,24 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
-        ${lage.zeilen.map(
-          (rohIndex) => html`<div
+        ${lage.zeilen.map((rohIndex, ansichtIndex) => {
+          const aktivierbar = rohIndex !== null && !lage.imEditor
+          return html`<div
             class="zeile${rohIndex !== null && lage.hatQuelle ? ' waehlbar' : ''}${
               rohIndex !== null && rohIndex === lage.auswahlIndex ? ' gewaehlt' : ''}"
+            role="row"
+            data-ff-roh=${rohIndex ?? nothing}
+            tabindex=${aktivierbar ? '0' : nothing}
+            aria-selected=${lage.auswahlSemantik && rohIndex !== null
+              ? String(rohIndex === lage.auswahlIndex)
+              : nothing}
             style=${styleMap(lage.cols)}
-            @click=${() => tun.klickZeile(rohIndex)}
+            @click=${() => tun.aktiviereZeile(rohIndex, ansichtIndex)}
+            @keydown=${(e: KeyboardEvent) => {
+              if (e.key !== 'Enter') return
+              e.preventDefault()
+              tun.aktiviereZeile(rohIndex, ansichtIndex)
+            }}
           >
             ${ ''}
             ${lage.spalten.map((s, i) => {
@@ -100,12 +118,12 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               const zusatz = rohIndex !== null
                 ? (lage.zusatzzeilen[rohIndex]?.[i] ?? {})
                 : {}
-              return html`<div class=${art.klasse}>${
+              return html`<div class=${art.klasse} role="cell">${
                 art.zelle(wert, s.zuordnung ?? [], zusatz)
               }</div>`
             })}
-          </div>`,
-        )}
+          </div>`
+        })}
         ${lineal(lage)}`}
       </div>
     `

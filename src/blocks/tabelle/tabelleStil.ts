@@ -109,6 +109,13 @@ export const tabelleStil = css`
 
       .koerper > .zeile.waehlbar { cursor: pointer; }
 
+      .koerper:focus { outline: none; }
+      .koerper > .zeile:focus {
+        outline: var(--se-border) solid var(--se-accent);
+        outline-offset: calc(-1 * var(--se-border));
+      }
+      .koerper > .zeile:focus:not(:focus-visible) { outline: none; }
+
       .zeile.gewaehlt,
       .koerper > .zeile.gewaehlt:hover {
         background: var(--se-amber-soft);

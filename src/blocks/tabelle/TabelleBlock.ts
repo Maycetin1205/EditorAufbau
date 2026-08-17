@@ -24,6 +24,11 @@ import { tabelleFuss } from './tabelleFuss'
 import { tabelleKoerper } from './tabelleKoerper'
 import { tabelleStil } from './tabelleStil'
 import {
+  fokussierterRohIndex,
+  sendeZeileAktiviert,
+  stelleZeilenFokusHer,
+} from './zeilenAktivierung'
+import {
   coerceSpalten,
   standardSpalten,
   tryCoerceSpalten,
@@ -97,6 +102,15 @@ export class TabelleBlock extends BasicBlock {
 
   private _taktGemessen = 0
 
+  private _fokusZeile: number | null = null
+  private _fokusHolen = false
+
+  private merkeZeilenFokus(): void {
+    const roh = fokussierterRohIndex(this.shadowRoot)
+    this._fokusHolen = roh !== undefined
+    this._fokusZeile = roh ?? null
+  }
+
   private messeRumpf(): void {
     const takt = this.zeilenHoehe
     this._taktGemessen = takt
@@ -114,15 +128,22 @@ export class TabelleBlock extends BasicBlock {
     return zeilenHoeheFuer(this.spaltenListe())
   }
 
-  private klickZeile(rohIndex: number | null): void {
+  private aktiviereZeile(rohIndex: number | null, ansichtIndex: number): void {
     if (rohIndex === null || this.hasAttribute('data-ff-editor')) return
+    const rohzeile = this.rohzeilen[rohIndex]
+    if (rohzeile === undefined) return
+    sendeZeileAktiviert(this, { rohzeile, rohIndex, ansichtIndex })
+    this.toggleAuswahl(rohzeile)
+  }
+
+  private toggleAuswahl(rohzeile: unknown): void {
     const geberId = geberIdVon(this)
-    const zeile = this.rohzeilen[rohIndex]
-    if (geberId === '' || zeile === undefined) return
-    waehleAuswahl(geberId, zeile)
+    if (geberId === '') return
+    waehleAuswahl(geberId, rohzeile)
   }
 
   private setzeSuchtext(text: string): void {
+    this.merkeZeilenFokus()
     this._suchtext = text
     this._seite = 0
     this.requestUpdate()
@@ -130,6 +151,7 @@ export class TabelleBlock extends BasicBlock {
 
   private klickSortiere(index: number): void {
     if (this.editable) return
+    this.merkeZeilenFokus()
     if (this._sortSpalte === index) {
       this._sortAuf = !this._sortAuf
     } else {
@@ -168,6 +190,9 @@ export class TabelleBlock extends BasicBlock {
 
   protected override updated(): void {
     if (this._taktGemessen !== this.zeilenHoehe) this.messeRumpf()
+    if (!this._fokusHolen) return
+    this._fokusHolen = false
+    stelleZeilenFokusHer(this.shadowRoot, this._fokusZeile)
   }
 
   override disconnectedCallback(): void {
@@ -205,6 +230,8 @@ export class TabelleBlock extends BasicBlock {
         spalten,
         cols: ansicht.cols,
         editable: this.editable,
+        imEditor: this.hasAttribute('data-ff-editor'),
+        auswahlSemantik: geberIdVon(this) !== '',
         zeigeSuche: this.suche === 'ja',
         suchtext: this._suchtext,
         sortSpalte: this._sortSpalte,
@@ -229,7 +256,7 @@ export class TabelleBlock extends BasicBlock {
           if (this.editable) oeffneFeldPicker(this, e, TabelleBlock.listenBindung.prop, i)
           this.klickSortiere(i)
         },
-        klickZeile: (rohIndex) => this.klickZeile(rohIndex),
+        aktiviereZeile: (rohIndex, ansichtIndex) => this.aktiviereZeile(rohIndex, ansichtIndex),
         stop,
       })}
       ${ ''}
@@ -243,6 +270,7 @@ export class TabelleBlock extends BasicBlock {
         seiten: ansicht.seiten,
       }, {
         blaettere: (zu) => {
+          this.merkeZeilenFokus()
           this._seite = zu
           this.requestUpdate()
         },
