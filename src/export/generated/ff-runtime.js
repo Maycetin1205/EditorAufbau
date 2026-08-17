@@ -643,8 +643,8 @@
   .lupe:hover { background: var(--se-accent-soft); color: var(--se-ink); }
   .lupe:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
 
-  :host([data-ff-editor]) .ctrl,
-  :host([data-ff-editor]) .lupe { pointer-events: none; }
+  :host([data-ff-editor]) .ctrl { pointer-events: none; }
+  /* Die Lupe bleibt im Editor bedienbar: sie oeffnet das Spalten-Stellen. */
   :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
   :host([data-ff-editor]) .huelle[data-ff-bound] .ctrl {
     border-style: dotted;
@@ -1029,6 +1029,7 @@
       type="button"
       aria-label="Nachschlagen"
       title="Nachschlagen"
+      @pointerdown=${e=>e.stopPropagation()}
       @click=${()=>e.onLupe()}
     ><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
       <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>

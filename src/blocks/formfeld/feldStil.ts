@@ -97,8 +97,8 @@ export const feldStil = css`
   .lupe:hover { background: var(--se-accent-soft); color: var(--se-ink); }
   .lupe:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
 
-  :host([data-ff-editor]) .ctrl,
-  :host([data-ff-editor]) .lupe { pointer-events: none; }
+  :host([data-ff-editor]) .ctrl { pointer-events: none; }
+  /* Die Lupe bleibt im Editor bedienbar: sie oeffnet das Spalten-Stellen. */
   :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
   :host([data-ff-editor]) .huelle[data-ff-bound] .ctrl {
     border-style: dotted;
