@@ -18,10 +18,9 @@
 // AuswahlFenster — hier steht nur noch, was DIESES Fenster zeigt.
 
 import { AuswahlFenster } from '@/ui/molecules/auswahl-fenster'
+import { WaehlerListe, type WaehlerGruppe } from '@/ui/molecules/waehler'
 import {
-  QUELLEN_TRENNER,
   bindungMitQuelle,
-  zerlegeBindung,
   type ZuordnungZeile,
 } from '../../core/blocks/BlockDefinition'
 import type { DataSourceField } from '../../core/data/dataSources'
@@ -122,30 +121,22 @@ export function FieldPicker({
   onPick,
   onClose,
 }: FieldPickerProps) {
-  // Der Haken sitzt am ZERLEGTEN Wert: bei einer Bindung an eine weitere
-  // Quelle muss er in DEREN Gruppe stehen, nicht beim gleichnamigen Feldcode
-  // der ersten Quelle. Im Bestand des Nutzers heisst „Tiername" in beiden
-  // Quellen anders codiert — ohne Zerlegen stuende der Haken irgendwo.
-  const jetzt = zerlegeBindung(current)
-
-  const eintrag = (quelleId: string, code: string, name: string) => {
-    const gewaehlt = code === jetzt.code && quelleId === jetzt.quelleId
-    return (
-      <button
-        key={`${quelleId}${QUELLEN_TRENNER}${code === '' ? '__keine__' : code}`}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onPick(bindungMitQuelle(quelleId, code))
-        }}
-        className={`flex w-full items-baseline gap-3 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground ${
-          gewaehlt ? 'font-semibold' : ''
-        }`}
-      >
-        <span>{gewaehlt ? '✓ ' : ''}{name}</span>
-      </button>
-    )
-  }
+  // Jede Quelle wird eine Gruppe des Waehlers. Der Eintragswert ist der
+  // FERTIGE Bindungswert (bindungMitQuelle) — dadurch trifft der Haken die
+  // richtige Gruppe, ohne dass hier noch etwas zerlegt werden muesste: im
+  // Bestand des Nutzers heisst „Tiername" in zwei Quellen verschieden codiert,
+  // und die erste zu nehmen setzte den Haken irgendwohin.
+  const waehlerGruppen: WaehlerGruppe[] = gruppen.map((g) => ({
+    key: g.quelleId === '' ? '__erste__' : g.quelleId,
+    name: g.name,
+    kennung: g.kennung,
+    hinweis: g.hinweis === undefined || g.hinweis === '' ? undefined : `über ${g.hinweis}`,
+    eintraege: g.fields.map((f) => ({
+      wert: bindungMitQuelle(g.quelleId, f.code),
+      name: f.label,
+      kennung: f.code,
+    })),
+  }))
 
   return (
     <AuswahlFenster
@@ -157,7 +148,7 @@ export function FieldPicker({
          mehr Platz: drei Felder je Zeile bzw. Beschriftung samt Auswahlliste
          passen nicht in die schmale Feldliste. Ohne beides bleibt es exakt so
          breit wie bisher. */
-      className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-64 w-60'}
+      className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-80 w-64'}
     >
       {/* Die zusätzliche Wahl steht OBEN und abgesetzt: sie gehört zur
           Stelle selbst, nicht zu einer der Quellen darunter. Ein Klick
@@ -228,7 +219,10 @@ export function FieldPicker({
                   >
                     {g.fields.map((feld) => (
                       <option
-                        key={`${g.quelleId}${QUELLEN_TRENNER}${feld.code}`}
+                        // Der fertige Bindungswert ist quellenweit eindeutig —
+                        // ein eigener Schluessel aus zwei Teilen waere eine
+                        // zweite Regel fuer dieselbe Eindeutigkeit.
+                        key={bindungMitQuelle(g.quelleId, feld.code)}
                         value={bindungMitQuelle(g.quelleId, feld.code)}
                       >
                         {feld.label}
@@ -333,28 +327,24 @@ export function FieldPicker({
           </button>
         </div>
       )}
-      {/* Eine Quelle: Kopfzeile wie bisher. Mehrere: neutrale Kopfzeile, und
-          jede Quelle bekommt ihre eigene Zwischenüberschrift. Die SE-Kennung
-          steht dezent daneben (Mono, gedämpft — Nutzer 2026-08-06). */}
-      <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
-        {gruppen.length === 1 ? `${spotLabel} · Feld aus ${gruppen[0].name}` : `${spotLabel} · Feld wählen`}
-        {gruppen.length === 1 && gruppen[0].kennung ? (
-          <span className="ml-1.5 font-mono font-normal normal-case opacity-70">{gruppen[0].kennung}</span>
-        ) : null}
-      </p>
-      {eintrag('', '', '— nicht gebunden —')}
-      {gruppen.map((g, i) => (
-        <div key={g.quelleId === '' ? '__erste__' : g.quelleId}>
-          {gruppen.length > 1 && (
-            <p className={`px-2 pb-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground ${i > 0 ? 'mt-1.5 border-t border-border pt-1.5' : 'pt-1.5'}`}>
-              {g.name}
-              {g.kennung ? <span className="ml-1.5 font-mono font-normal normal-case opacity-70">{g.kennung}</span> : null}
-              {g.hinweis ? <span className="font-normal normal-case"> · über {g.hinweis}</span> : null}
-            </p>
-          )}
-          {g.fields.map((f) => eintrag(g.quelleId, f.code, f.label))}
-        </div>
-      ))}
+      {/* Der Kopf sagt, WELCHE Stelle hier gebunden wird — mit einer Quelle
+          gleich samt Quellenname, weil dann keine Gruppenueberschrift folgt.
+          Er steht ueber der Suchzeile: er gehoert zum Fenster, nicht zur
+          Liste darunter. */}
+      <WaehlerListe
+        kopf={
+          <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {gruppen.length === 1 ? `${spotLabel} · Feld aus ${gruppen[0].name}` : `${spotLabel} · Feld wählen`}
+            {gruppen.length === 1 && gruppen[0].kennung ? (
+              <span className="ml-1.5 font-mono font-normal normal-case opacity-70">{gruppen[0].kennung}</span>
+            ) : null}
+          </p>
+        }
+        gruppen={gruppen.length === 1 ? [{ ...waehlerGruppen[0], name: undefined }] : waehlerGruppen}
+        wert={current}
+        leerText="— nicht gebunden —"
+        onWaehle={onPick}
+      />
     </AuswahlFenster>
   )
 }
