@@ -14,7 +14,7 @@
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
-import type { DataSource } from '../../core/data/dataSources'
+import { quellenKennung, type DataSource } from '../../core/data/dataSources'
 import { useDataSources } from '../../state/useDataSources'
 import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
@@ -25,11 +25,19 @@ import { SegmentControl } from './controls/SegmentControl'
 import { SelectControl } from './controls/SelectControl'
 import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
+import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import { allOptionsHaveColor } from './optionColors'
 
-// Radix-Select verbietet '' als Option-Wert — interner Platzhalter für
-// "kein Feld gewählt" (die Prop bleibt dabei der Leer-String).
-const KEIN_FELD = '__keins__'
+// Die vier Auswahlen, die auf einen BESTAND zeigen (Feld, Quelle, Seite,
+// Relation), laufen seit 2026-08-17 ueber DAS eine Waehler-Bauteil
+// (ui/molecules/waehler): Klarname sichtbar, Kennung leise daneben, Suchzeile
+// immer da. Vorher war jede davon ein eigenes SelectControl ohne Suche — vier
+// von den 45 gezaehlten Bedienwegen. SelectControl bleibt fuer die Arten mit
+// FESTER Optionsliste (select/segment), wo es nichts zu suchen gibt.
+//
+// Der frueher noetige Platzhalter KEIN_FELD ist damit weg: er stand nur da,
+// weil Radix-Select kein leeres Option-Wort erlaubt. Der Waehler speichert
+// den Leer-String direkt.
 
 // Eine Tipp-Sitzung in einem Text-/Zahlenfeld = EIN Undo-Schritt; der
 // Inspector reicht die Klammer durch (siehe controls/eingabeSitzung.ts).
@@ -152,16 +160,21 @@ export function PropControl({
     // Quelle mit in die SEvariablen.
     case 'quelle':
       return (
-        <SelectControl
+        <WaehlerKnopf
           label={property.name}
           description={property.description}
-          options={[
-            { value: KEIN_FELD, label: '— keine —' },
-            ...quellen.list.map((q) => ({ value: q.id, label: q.name })),
-          ]}
-          value={typeof value === 'string' && quellen.get(value) ? value : KEIN_FELD}
-          onChange={(v) => {
-            const neueId = v === KEIN_FELD ? '' : v
+          bezeichnung={`Quelle für ${property.name}`}
+          gruppen={[{
+            key: 'quellen',
+            eintraege: quellen.list.map((q) => ({
+              wert: q.id,
+              name: q.name,
+              kennung: quellenKennung(q),
+            })),
+          }]}
+          wert={typeof value === 'string' && quellen.get(value) ? value : ''}
+          leerText="— keine —"
+          onWaehle={(neueId) => {
             if (neueId === String(value ?? '')) return
             // EIN Bedienschritt = EIN Undo-Eintrag (Muster updateBlockEvents,
             // eingabeSitzung, zieheGroesse). Ohne die Klammer legte jeder
@@ -194,16 +207,23 @@ export function PropControl({
     // wird gespeichert — Muster DataSection/FieldPicker.
     case 'field':
       return (
-        <SelectControl
+        <WaehlerKnopf
           label={property.name}
           description={property.description}
-          options={[
-            { value: KEIN_FELD, label: '— keins —' },
-            ...(feldQuelle?.fields.map((f) => ({ value: f.code, label: f.label })) ?? []),
-          ]}
-          value={value === '' || value == null ? KEIN_FELD : String(value)}
-          onChange={(v) => {
-            const code = v === KEIN_FELD ? '' : v
+          bezeichnung={`Feld für ${property.name}`}
+          gruppen={[{
+            key: 'felder',
+            name: feldQuelle?.name,
+            kennung: feldQuelle ? quellenKennung(feldQuelle) : undefined,
+            eintraege: (feldQuelle?.fields ?? []).map((f) => ({
+              wert: f.code,
+              name: f.label,
+              kennung: f.code,
+            })),
+          }]}
+          wert={value == null ? '' : String(value)}
+          leerText="— keins —"
+          onWaehle={(code) => {
             // Feldcode und Klarname gehoeren zusammen — EIN Undo-Eintrag fuer
             // beide (s. Klammer beim 'quelle'-Control oben). Getrennt liesse ein
             // Strg+Z den neuen Code mit dem alten Klarnamen stehen.
@@ -234,16 +254,17 @@ export function PropControl({
     case 'seite': {
       const seiten = ed.pages.filter((s) => s.istFlaeche)
       return (
-        <SelectControl
+        <WaehlerKnopf
           label={property.name}
           description={property.description}
-          options={[
-            { value: KEIN_FELD, label: '— keine —' },
-            ...seiten.map((s) => ({ value: s.id, label: s.name })),
-          ]}
-          value={seiten.some((s) => s.id === value) ? String(value) : KEIN_FELD}
-          onChange={(v) => {
-            const id = v === KEIN_FELD ? '' : v
+          bezeichnung={`Seite für ${property.name}`}
+          gruppen={[{
+            key: 'seiten',
+            eintraege: seiten.map((s) => ({ wert: s.id, name: s.name })),
+          }]}
+          wert={seiten.some((s) => s.id === value) ? String(value) : ''}
+          leerText="— keine —"
+          onWaehle={(id) => {
             // id und Klarname gehoeren zusammen — EIN Undo-Eintrag fuer
             // beide (Muster: das Feld-Control unten).
             ed.transaktion(() => {
@@ -262,17 +283,21 @@ export function PropControl({
     // Gelöschte/unbekannte ids fallen auf '— keine —' zurück.
     case 'relation':
       return (
-        <SelectControl
+        <WaehlerKnopf
           label={property.name}
           description={property.description}
-          options={[
-            { value: KEIN_FELD, label: '— keine —' },
-            ...relations.list.map((r) => ({ value: r.id, label: r.name })),
-          ]}
-          value={
-            typeof value === 'string' && relations.get(value) ? value : KEIN_FELD
-          }
-          onChange={(v) => set(v === KEIN_FELD ? '' : v)}
+          bezeichnung={`Relation für ${property.name}`}
+          gruppen={[{
+            key: 'relationen',
+            eintraege: relations.list.map((r) => ({
+              wert: r.id,
+              name: r.name,
+              kennung: r.nr,
+            })),
+          }]}
+          wert={typeof value === 'string' && relations.get(value) ? value : ''}
+          leerText="— keine —"
+          onWaehle={set}
         />
       )
     default:
