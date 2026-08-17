@@ -95,9 +95,10 @@ export const feldStil = css`
     left: calc(var(--feld-pad-x) - 2px + var(--feld-rand));
     right: 25px; /* Platz für den Aufklapp-Pfeil */
   }
-  /* Datum (2026-08-17): Ein leeres <input type="date"> zeigt von sich aus
-     "tt.mm.jjjj". Unser Platzhalter liegt darueber — beide zusammen waeren
-     zwei Texte uebereinander. Deshalb weicht abwechselnd einer:
+  /* Datum und Uhrzeit (2026-08-17): Ein leeres <input type="date"> zeigt von
+     sich aus "tt.mm.jjjj", ein leeres <input type="time"> zeigt "--:--".
+     Unser Platzhalter liegt darueber — beide zusammen waeren zwei Texte
+     uebereinander. Deshalb weicht abwechselnd einer:
        - RUHEND und leer: der browsereigene Hinweis wird unsichtbar, sichtbar
          ist der Feldname ("Anreise") — genau wie beim Textfeld.
        - IM FOKUS: das Feld gehoert dem Tippen. Der Name tritt zur Seite, die
@@ -118,8 +119,9 @@ export const feldStil = css`
      Editor und laeuft SoftEngine (WinUI wie WebUI). In einem anderen Browser
      greift die Regel nicht: dann stuenden beide Texte uebereinander. Das ist
      die bewusst in Kauf genommene Grenze (Nutzer-Ansage 2026-08-17). */
-  .huelle.leer input[type="date"]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
-  .huelle.leer.tippt .ph-datum { display: none; }
+  .huelle.leer input[type="date"]:not(:focus)::-webkit-datetime-edit,
+  .huelle.leer input[type="time"]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
+  .huelle.leer.tippt .ph-nativ { display: none; }
   /* Ankreuzfeld: Kästchen + Beschriftung in EINER Zeile (Referenz
      .impf-chk) — bewusst ohne <label for>-Kopplung: im Editor ist die
      Beschriftung das Umbenennen-Ziel. Den Haken-Klick auf den Text

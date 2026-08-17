@@ -27,6 +27,10 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
       { value: 'textarea', label: 'Mehrzeilig' },
       { value: 'select', label: 'Auswahl' },
       { value: 'date', label: 'Datum' },
+      // Uhrzeit liefert „15:00" — genau die Form, in der SoftEngine Zeiten
+      // schreibt (Feld-Art 'Z', belegt im empfang-Log des Nutzers 2026-08-12).
+      // Anders als beim Datum wird deshalb NICHTS umgerechnet.
+      { value: 'time', label: 'Uhrzeit' },
       { value: 'checkbox', label: 'Ankreuzfeld' },
       { value: 'nachschlagen', label: 'Nachschlagen' },
     ],
