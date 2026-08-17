@@ -1,11 +1,3 @@
-// RelationenBereich — Master-Detail für die Relation-Vorlagen (Gerüst
-// 2026-07-15, ersetzt die frühere schmale RelationList). Links die
-// Vorlagen mit Verb+NR-Chip, rechts das Detail: die Parameter in genau
-// ihrer Reihenfolge MIT Klartext-Bedeutung, die SoftEngine-Syntaxzeile
-// und „Verwendung in dieser Maske". Bearbeiten inline (FormularKarte).
-// Löschen fragt nach, mit Warnung bei Benutzung (relationIdsVon: Properties
-// UND Aktionsketten, registry-getrieben, kein `if type===`).
-
 import { useState } from 'react'
 import { Plus, Search, Share2 } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
@@ -32,15 +24,11 @@ export function RelationenBereich() {
   const ed = useEditor()
   const quellen = useDataSources().list
   const [suche, setSuche] = useState('')
-  // „Alle" gestrichen (Nutzer 2026-07-22): nur noch Lesen | Schreiben, Start
-  // auf Lesen — derselbe Umschalter wie im Schritt-Formular (SegmentControl).
+
   const [filter, setFilter] = useState<RelationGroup>('lesen')
   const [auswahlId, setAuswahlId] = useState<string | null>(store.list[0]?.id ?? null)
   const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu'>('lesen')
 
-  // Die Suche findet in BEIDEN Gruppen (Nutzer 2026-07-22): erst alle
-  // Such-Treffer, dann je Gruppe zählen und — wenn der aktive Tab leer ist —
-  // zum Tab mit Treffern springen. Lesen/Schreiben bleiben getrennt.
   const trefferAlle = store.list.filter((relation) => relationMatchesSearch(relation, suche))
   const zaehler: Record<RelationGroup, number> = {
     lesen: trefferAlle.filter((r) => relationGroup(r) === 'lesen').length,
@@ -49,7 +37,7 @@ export function RelationenBereich() {
   const anderer: RelationGroup = filter === 'lesen' ? 'schreiben' : 'lesen'
   const aktiverFilter: RelationGroup = zaehler[filter] === 0 && zaehler[anderer] > 0 ? anderer : filter
   const sichtbareRelationen = trefferAlle.filter((r) => relationGroup(r) === aktiverFilter)
-  // Trefferzahl nur bei aktiver Suche an die Tabs (sonst nur Lesen | Schreiben).
+
   const sucht = suche.trim().length > 0
   const filterOptionen = RELATION_GRUPPEN.map((gruppe) => ({
     ...gruppe,
@@ -57,12 +45,6 @@ export function RelationenBereich() {
   }))
   const auswahl = sichtbareRelationen.find((r) => r.id === auswahlId) ?? sichtbareRelationen[0]
 
-  // Bausteine der Maske, die diese Vorlage benutzen (Klarnamen). WELCHE
-  // Relationen ein Baustein benutzt, sagt relationIdsVon — dieselbe Stelle, aus
-  // der der Export FF_RELATIONS sammelt. Bis 2026-08-06 sah es hier nur die
-  // Relation-Properties, nicht die Aktionsketten (den Hauptweg): eine von einem
-  // Button-Klick ausgefuehrte Relation galt als unbenutzt, und die
-  // Loesch-Rueckfrage kam ohne ihre BENUTZT-Warnung.
   const verwendungFor = (id: string): string[] =>
     Object.values(ed.tree)
       .filter((n) => relationIdsVon(n).includes(id))
@@ -82,7 +64,7 @@ export function RelationenBereich() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1">
-      {/* Master */}
+
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
         <div className="flex flex-col gap-2 border-b border-border p-2">
           <Button variant="outline" size="sm" className="w-full" onClick={() => setModus('neu')}>
@@ -141,7 +123,6 @@ export function RelationenBereich() {
         </div>
       </div>
 
-      {/* Detail */}
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
         {modus === 'neu' && <RelationForm onClose={() => setModus('lesen')} />}
         {modus === 'bearbeiten' && auswahl && (

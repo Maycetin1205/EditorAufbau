@@ -1,55 +1,14 @@
-// bindungsVorschau — der Klarname, den eine gebundene Stelle in der MASKE
-// zeigt, solange dort noch kein Wert steht.
-//
-// Der Editor zeigt an gebundenen Stellen den Feld-Klarnamen statt eines
-// erfundenen Beispielwerts (Regel 7, useLitElement). Die Maske zeigte dort
-// bis 2026-08-06 NICHTS: sie kennt nur Feldcodes, und der getippte Text
-// ("Feldname") waere an einer Datenstelle gelogen — also versteckte ein
-// CSS-Riegel den Platzhalter gebundener Felder ganz (SE-Echttest 2026-08-04).
-// Leer war ehrlich, aber der Bediener sah einem leeren Feld nicht mehr an,
-// wozu es gehoert.
-//
-// Jetzt loest der EXPORT den Klarnamen auf und schreibt ihn ins Markup: er
-// kennt die Vorlagen-Bibliothek, die Maske kennt sie nie. Der Weg ueber ein
-// mitgeschicktes Feld-Woerterbuch (window.FF_DATA_SOURCES) waere die
-// Alternative gewesen — dagegen sprach, dass dann die Felder ALLER benutzten
-// Quellen mitreisen, auch die nie gebundenen, und dass exportMask genau das
-// ausdruecklich nicht tut (Bindungen reisen als Feldcode-Attribute).
-//
-// Rein und ohne Store-Zugriff, damit dieselbe Antwort im Test ohne Maske
-// nachvollziehbar ist.
-
-// `feldKlarname` wohnt seit 2026-08-17 in core/data/dataSources — der
-// Baustein-Klarname (core/blocks/bausteinName) braucht denselben Alias, und
-// eine core-Datei darf die Export-Schicht nicht importieren. Bewusst KEIN
-// Weiterreichen von hier: eine Durchreiche machte aus einer Quelle zwei
-// Adressen. Nicht aufloesbar (Quelle geloescht, Feld weg) heisst fuer den
-// EXPORT: die Stelle bleibt in der Maske leer, genau wie vor 2026-08-06 — der
-// getippte Text darf NICHT einspringen, er stuende an einer Datenstelle. Der
-// Preflight meldet den Fall, blockt aber seit 2026-08-10 nicht mehr
-// (Nutzer-Ansage); die Stelle bleibt dann auch in SoftEngine leer.
-
 import type { BlockNode } from '../core/blocks/BlockData'
 import { bindingProp, type BindableSpot } from '../core/blocks/BlockDefinition'
 import { bindbareStellenVon, QUELLE_PROP } from '../core/blocks/treeQuery'
 import { feldKlarname, type DataSource } from '../core/data/dataSources'
 
-// Die Stellen eines Knotens, deren Vorschau in eine ANDERE Prop geht, nach
-// dieser Ziel-Prop geschluesselt (Formularfeld: 'placeholder' → Wert-Stelle).
-// Nur GERADE bindbare Stellen: am Nachschlage-Feld bleibt der getippte Text
-// stehen, dort gibt es keine Bindung, deren Klarnamen man zeigen koennte.
 export function vorschauStellenVon(node: BlockNode): Map<string, BindableSpot> {
   return new Map(bindbareStellenVon(node).flatMap((spot) => (spot.vorschauProp === undefined
     ? []
     : [[spot.vorschauProp, spot] as const])))
 }
 
-// Was an der Vorschau-Prop im Markup landet: UNGEBUNDEN der getippte Text
-// (beim Formularfeld die Beschriftung, die der Bauer ins Feld geschrieben
-// hat), GEBUNDEN der Feld-Klarname. Der Editor zeigt an derselben Stelle
-// dasselbe (useLitElement) — nur mit einem ↗ hinter Feldern einer weiteren
-// Quelle: die Markierung sagt dem BAUER, woher der Wert kommt, und hat in der
-// fertigen Maske nichts zu suchen.
 export function vorschauRoh(
   node: BlockNode,
   spot: BindableSpot,

@@ -1,9 +1,3 @@
-// EditorShell
-// Editor-Layout: schmale Top-Bar (Maskenname | Seiten-Reiter | Werkzeuge),
-// links Sidebar, mittig Canvas als Blatt auf ruhigem Grund, rechts
-// Inspector. R1 (2026-07-21): Seiten-Reiter wohnen in der Top-Bar, der
-// „MVP Editor"-Schriftzug ist Geschichte.
-
 import { useState } from 'react'
 import { Wand2 } from '@/ui/zeichen'
 import { useKeyboardShortcuts } from '../../state/useKeyboardShortcuts'
@@ -18,7 +12,7 @@ import { Toolbar, VerlaufKnoepfe } from './Toolbar'
 
 export function EditorShell() {
   useKeyboardShortcuts()
-  // Kommandozentrale: öffnet über den Toolbar-Knopf „Datencenter".
+
   const [datencenterOffen, setDatencenterOffen] = useState(false)
 
   return (
@@ -58,7 +52,6 @@ export function EditorShell() {
 
       <StatusBar />
 
-      {/* Meldungsspur: liegt ueber allem, gehoert zu keinem Bereich (U2). */}
       <Meldungen />
     </div>
   )

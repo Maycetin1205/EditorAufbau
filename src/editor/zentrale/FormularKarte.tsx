@@ -1,9 +1,3 @@
-// FormularKarte — Inline-Träger für Formulare im Detail-Bereich der
-// Steuerung. Ersetzt dort das Modal (Gerüst 2026-07-15, FormForge-Vorlage:
-// Bearbeiten inline statt Modal im Modal). Escape bricht NUR das Formular
-// ab — capture + stopPropagation, exakt die Schichtung, die vorher das
-// Modal hatte: die Steuerung darunter bleibt offen.
-
 import { useEffect, type ReactNode } from 'react'
 import { X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'

@@ -1,9 +1,3 @@
-// SelectControl
-// Inspector-Control für Werte mit fester Option-Liste.
-// Generische Props (label/value/options) — wird sowohl von den
-// PropertyDescription-Feldern (Inspector) als auch von der Layout-Sektion
-// benutzt. Komponiert Field-Molekül + shadcn/Radix-Select-Primitives.
-
 import type { PropertySelectOption } from '../../../core/blocks/PropertyDescription'
 import {
   Select,
@@ -14,10 +8,6 @@ import {
 } from '@/ui/atoms/select'
 import { Field } from '@/ui/molecules/field'
 
-// Optionaler Technik-Zusatz je Option (2026-08-06, Nutzer-Wunsch: „nicht
-// nur der Alias, auch die ID0001"): dezent in Mono und gedaempft HINTER dem
-// Klarnamen — der Klarname traegt, die Kennung informiert. Reine
-// Darstellungssache, darum HIER erweitert und nicht im Registry-Typ.
 type SelectOption = PropertySelectOption & { detail?: string }
 
 interface SelectControlProps {

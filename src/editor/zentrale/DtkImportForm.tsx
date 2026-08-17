@@ -1,21 +1,3 @@
-// DtkImportForm — „Aus SoftEngine-Datei…": zeigt die in einer .DTK
-// gefundenen IDB-Tabellen zum Ankreuzen und legt die angehakten als ganz
-// normale IDB-Datenquellen an (derselbe Weg wie von Hand: store.add).
-//
-// Warum es diesen Import gibt (Nutzer-Auftrag 2026-08-03): die Feldlisten
-// einer Installation von Hand einzutippen sind hunderte Positionen — der
-// SoftEngine-Export „IDB exportieren" enthält sie alle. Gelesen wird er
-// von core/data/dtkImport; HIER wohnt nur die Auswahl.
-//
-// Ehrlichkeit vor Komfort (Regel 4): die DTK ist eine Binärdatei mit
-// alten Seitenständen, nicht jedes Feld ist lesbar. Jede Zeile zeigt
-// darum „gelesen von Soll"; wo etwas fehlt, steht es DRAN und der
-// Bediener ergänzt es nach dem Import im normalen Bearbeiten-Formular.
-//
-// Schon vorhandene Kennungen werden übersprungen statt überschrieben —
-// eine bestehende Quelle kann in der Maske verwendet sein; sie still zu
-// ersetzen hieße, fremde Bindungen umzuhängen.
-
 import { useState } from 'react'
 import { Button } from '@/ui/atoms/button'
 import { kennungAnzeige } from '../../core/data/dataSources'
@@ -26,21 +8,18 @@ import { FormularKarte } from './FormularKarte'
 interface DtkImportFormProps {
   dateiName: string
   tabellen: DtkTabelle[]
-  // Grund, falls das Lesen der Datei GEWORFEN hat. Ohne ihn saehe eine
-  // kaputte Datei genauso aus wie eine heile ohne IDB-Tabellen.
+
   pannenGrund?: string
   onClose: () => void
 }
 
 export function DtkImportForm({ dateiName, tabellen, pannenGrund, onClose }: DtkImportFormProps) {
   const store = useDataSources()
-  // Kennungen, die es in der Bibliothek schon gibt (nur eigene Tabellen
-  // tragen eine — Stammtabellen-Quellen haben kein idbId und stören nicht).
+
   const vorhanden = new Set(
     store.list.map((s) => s.idbId).filter((k): k is string => typeof k === 'string'),
   )
-  // Vorausgewählt ist, was neu ist und Felder mitbringt; Leergelesenes
-  // darf der Bediener bewusst dazunehmen (Kennung + Name sind auch etwas wert).
+
   const [angehakt, setAngehakt] = useState<ReadonlySet<string>>(
     () =>
       new Set(
@@ -66,8 +45,7 @@ export function DtkImportForm({ dateiName, tabellen, pannenGrund, onClose }: Dtk
         name: t.name !== '' ? t.name : kennungAnzeige(t.kennung),
         kind: 'idb',
         idbId: t.kennung,
-        // Dasselbe Muster wie beim Anlegen von Hand (DataSourceForm):
-        // der Schreibweg-Technikwert bleibt unsichtbar und startet mit '0_10'.
+
         indexField: '0_10',
         fields: t.felder,
       })
@@ -75,7 +53,6 @@ export function DtkImportForm({ dateiName, tabellen, pannenGrund, onClose }: Dtk
     onClose()
   }
 
-  // Hinweistext je Tabelle — nur wo etwas zu sagen ist.
   function hinweis(t: DtkTabelle): string {
     if (vorhanden.has(t.kennung)) return 'schon in der Bibliothek — wird übersprungen'
     if (t.felder.length === 0) return 'keine Felder lesbar — nach dem Import von Hand eintragen'

@@ -1,18 +1,3 @@
-// Inspector
-// Property-Editor des selektierten Blocks. Liest die PropertyDescription des
-// Blocks und baut daraus einfache Controls. Nutzt die gemeinsame SidePanel-Hülle.
-//
-// Das Panel hat KEINE Unteraufgabe mehr (2026-08-17). Von 2026-07-21 bis
-// dahin blätterte das Schritt-Formular es um: Rückzeile „← <Baustein>",
-// Escape blätterte zurück. Eine Relation hat bis zu zwölf Parameter — in
-// 340 px war das nicht auszufüllen, und der Baustein, um den es ging, war
-// dabei nicht mehr zu sehen. Das Formular lebt jetzt im breiten
-// KettenFenster; die AktionenSektion zeigt die Kette und öffnet es.
-// („Daten anschließen" war bis 2026-07-27 die zweite Unteraufgabe — ersatzlos
-// entfallen, die Datenquelle wird direkt hier im Panel gewählt.)
-// Ohne Unteraufgabe braucht dieses Panel auch keinen eigenen Escape-Horcher
-// mehr: das Fenster bringt seinen mit.
-
 import { useMemo } from 'react'
 import { Copy, MousePointer2 } from '@/ui/zeichen'
 import { bindingProp } from '../../core/blocks/BlockDefinition'
@@ -32,9 +17,6 @@ import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
 import { PropControl } from './PropControl'
 import { QuellenListe } from './QuellenListe'
 
-// Benachbarte Properties mit gleichem inspectorRow teilen sich EINE
-// Inspector-Zeile (ein Label, Controls nebeneinander) — Registry-Daten,
-// Regel 2: der Inspector kennt keinen Baustein, nur die Beschreibung.
 interface InspectorZeile {
   row?: string
   props: PropertyDescription[]
@@ -52,29 +34,19 @@ function inspectorZeilen(props: PropertyDescription[]): InspectorZeile[] {
 
 export function Inspector() {
   const ed = useEditor()
-  // Vorlagen-Änderungen müssen Feldlisten/Sichtbarkeit sofort
-  // nachziehen — dataSourceFor liest aus dem DataSourceStore. Seit
-  // 2026-08-17 wird die Liste zusätzlich GELESEN: der Kopf-Klarname löst
-  // damit den Alias eines gebundenen Felds auf (bausteinName).
+
   const quellen = useDataSources()
-  // (Die Relation-Vorlagen abonniert PropControl selbst — nur dort werden
-  // sie gelesen.)
-  // Eine Tipp-Sitzung in einem Text-/Zahlenfeld = EIN Undo-Schritt. Dieselbe
-  // Transaktions-Klammer wie beim Ziehen; die Controls entscheiden selbst,
-  // wann sie sie oeffnen (siehe controls/eingabeSitzung.ts).
+
   const sitzung = useMemo(() => ({
     onBeginBearbeitung: () => ed.beginTransaction(),
     onEndeBearbeitung: () => ed.endTransaction(),
   }), [ed])
   const block = ed.selectedNode
 
-
   if (!block) {
     return (
       <SidePanel title="Inspector">
-        {/* Leer-Zustand als kleine gestrichelte Hinweis-Karte — gleicher Stil
-            wie der Canvas-Leerzustand, damit die Fuehrung im Editor eine
-            Sprache spricht (R2 2026-07-21). */}
+
         <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-card/70 px-6 py-6 text-center">
           <MousePointer2 size={18} className="text-muted-foreground/60" />
           <p className="text-[0.8125rem] font-medium text-foreground/80">Kein Block ausgewählt.</p>
@@ -87,8 +59,7 @@ export function Inspector() {
   }
 
   const def = getBlockDefinition(block.type)
-  // Hinweiszeile des Bausteins (blocks/<x>/editorAngaben.ts) — fehlt sie,
-  // zeigt das Panel keine.
+
   const hinweis = editorAngabenVon(block.type).hinweis
   if (!def) {
     return (
@@ -100,23 +71,10 @@ export function Inspector() {
     )
   }
 
-  // Sprechender Name im Kopf — DER eine Klarname (bausteinName): Eigentext,
-  // sonst der Alias des gebundenen Felds, sonst der Baustein-Typ. Bis
-  // 2026-08-17 stand hier eine eigene Abschrift, die die zweite Stufe nicht
-  // kannte; der Inspector-Kopf sagte „Formularfeld" ueber einem Feld, das auf
-  // der Flaeche sichtbar „Anreise" hiess.
   const blockName = bausteinName(block, quellen.list)
 
-
-
-  // Datenquelle in Reichweite: steuert die Sichtbarkeit von
-  // requiresDataSource-Controls und liefert die Feldliste für kind 'field'.
   const sourceInReach = ed.dataSourceFor(block.id)
 
-  // Ein Control je Property — gebaut wird es in PropControl (Regel 2: dort
-  // steht kein Bausteintyp, nur die Beschreibung). `kompakt` ist die Form
-  // INNERHALB einer geteilten Zeile (inspectorRow): ohne eigenes Label, weil
-  // das Zeilen-Label schon steht.
   const propControl = (property: PropertyDescription, kompakt = false) => (
     <PropControl
       key={property.attributeName}
@@ -128,64 +86,32 @@ export function Inspector() {
     />
   )
 
-  // Ein Wert, EIN Schalter (2026-07-27, Nutzer-Entscheidung): Stellen, die am
-  // Baustein selbst anklickbar sind (bindableSpots), tragen ihre Bindung in der
-  // Prop `<Stelle>Field`. Dafür gehört KEIN zweites Bedienelement in den
-  // Inspector — sonst setzen zwei Schalter denselben Wert und niemand weiß,
-  // welcher gilt (Regel 7: Bedienung am Ding, Inspector nur für Unzeigbares).
-  // Registry-getrieben über bindingProp = die EINE Namensstelle: greift
-  // automatisch für jeden künftigen Baustein, niemand muss daran denken.
-  // Bausteine ohne anklickbare Stelle (Kanban „Einsortieren nach") behalten
-  // ihr Control — dort gibt es nichts zum Anklicken.
   const amBausteinGebunden = new Set<string>(
     (def.bindableSpots ?? []).map((spot) => bindingProp(spot.prop)),
   )
-  // Klarname-Props (klarnameProp) haben KEIN eigenes Bedienelement: sie
-  // werden beim Feld-Wählen mitgeschrieben. Ein zweites Control dafür wären
-  // zwei Schalter für einen Wert (Regel 7).
+
   const klarnameProps = new Set<string>(
     def.customProperties.map((p) => p.klarnameProp).filter((n): n is string => n !== undefined),
   )
   const visibleProps = def.customProperties.filter((p) => {
     if (amBausteinGebunden.has(p.attributeName)) return false
     if (klarnameProps.has(p.attributeName)) return false
-    // propertySichtbar ist DIE eine Auswertung — Export und Preflight fragen
-    // dieselbe Stelle, sonst zeigt der eine ein Control, dessen Einstellung
-    // der andere als unsichtbar überspringt.
+
     return propertySichtbar(p.visibleWhen, block.props)
   })
-  // Daten-Controls gehören in die Sektion "Daten", nicht in
-  // die allgemeine Gruppe: alles, was nur mit Quelle in Reichweite sinnvoll ist.
+
   const dataProps = visibleProps.filter(
     (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'quelle' || p.kind === 'relation',
   )
   const generalProps = visibleProps.filter((p) => !dataProps.includes(p))
-  // Sektion zeigen, wenn der Block GERADE eine eigene Quelle tragen kann
-  // (Kanban immer, das Formularfeld nur außerhalb des Feldtyps „Nachschlagen"
-  // — traegtEigeneQuelle) ODER wenn seine Daten-Controls jetzt etwas anzeigen
-  // könnten: entweder liegt eine Quelle in Reichweite (z. B. Spalte unter einem
-  // Board mit Quelle), oder das Control bringt seine eigene Quelle mit
-  // (quelleProp — die Nachschlage-Liste wählt aus der ganzen Bibliothek).
-  // Kein Typ-Check, alles Registry-Daten.
+
   const showDataSection = traegtEigeneQuelle(block)
     || dataProps.some((p) => p.quelleProp !== undefined || sourceInReach !== undefined)
 
   return (
     <SidePanel
       title={blockName}
-      // Keine Technik-Unterzeile mehr (Typ-Code · ID) — Technikwerte sind
-      // unsichtbar (Regel 3, Nutzer-Entscheidung 2026-07-21). Der Klarname
-      // im Kopf sagt dem Bediener, welcher Baustein gewählt ist.
-      // Bedienung am Ding (Regel 7): Duplizieren steht bei der Auswahl, nicht
-      // in der globalen Top-Bar (R1-Feinschliff 2026-07-21).
-      //
-      // LÖSCHEN steht hier NICHT mehr (U9, 2026-08-12): derselbe Baustein hatte
-      // zwei sichtbare Löschknöpfe gleichzeitig — diesen und das Kreuzchen am
-      // Baustein selbst, beide mit demselben Aufruf. Geblieben ist der am Ding;
-      // die Entf-Taste tut weiterhin dasselbe. An der Musterkarte war dieser
-      // hier ohnehin ein Knopf, der nie etwas tat: ihr Kreuzchen ist wegen des
-      // Löschschutzes ausgeblendet, dieser blieb stehen und erklärte beim
-      // Drücken nur den Schutz.
+
       actions={(
         <IconButton
           aria-label="Duplizieren (Ctrl+D)"
@@ -196,14 +122,11 @@ export function Inspector() {
         </IconButton>
       )}
     >
-      {/* Keine Abschnitts-Überschriften mehr (Nutzer-Entscheidung 2026-07-21):
-          erst Inhalt (generalProps), dann Daten — die feste Ordnung bleibt,
-          zwischen den Gruppen höchstens eine feine Trennlinie, sonst nichts. */}
+
       <div className="flex flex-col">
         {generalProps.length > 0 && (
           <div className="flex flex-col gap-3">
-            {/* Zeilen-Gruppierung (inspectorRow): z. B. „Text-Stil" =
-                Größe | Gewicht | Ausrichtung in EINER kompakten Zeile. */}
+
             {inspectorZeilen(generalProps).map((zeile) =>
               zeile.row ? (
                 <Field key={`zeile:${zeile.row}`} label={zeile.row}>
@@ -219,9 +142,7 @@ export function Inspector() {
             )}
           </div>
         )}
-        {/* Datenquelle anhängen (Kap. 5.1) + Daten-Controls (Kap. 5.3) —
-            nur für Blöcke, die das per Registry deklarieren. Kein Typ-Check.
-            Feine Trennlinie NUR, wenn eine Inhalt-Gruppe darüber steht. */}
+
         {showDataSection && (
           <div
             className={cn(
@@ -229,29 +150,19 @@ export function Inspector() {
               generalProps.length > 0 && 'mt-4 border-t border-border pt-4',
             )}
           >
-            {/* Der Quellen-Wähler des Bausteins selbst — nur wo er GERADE eine
-                eigene Quelle trägt. Am Nachschlage-Feld bleibt dadurch genau
-                EIN Wähler übrig („Quelle", die Nachschlage-Liste): zwei
-                nebeneinander waren die Frage, welcher gilt, und die Antwort
-                war „nur einer, der andere tut still nichts". */}
+
             {traegtEigeneQuelle(block) && <QuellenListe block={block} />}
             {dataProps.map((p) => propControl(p))}
           </div>
         )}
-        {/* Auswahl folgen (2026-08-05): nur fuer Bausteine, die es per
-            Registry koennen UND gerade wirklich Zeilen haben, die eine
-            Auswahl einengen koennte (darfAuswahlFolgen; kein Typ-Check).
-            Die Sektion laesst sich selbst weg, wenn es keinen Geber gibt. */}
+
         {darfAuswahlFolgen(block) && (
           <AuswahlFolgeSektion
             block={block}
             mitTrenner={generalProps.length > 0 || showDataSection}
           />
         )}
-        {/* Aktionen (R3 2026-07-21): die Ereignis-Ketten des Bausteins wohnen
-            jetzt hier, nicht mehr im Datencenter. Nur für Bausteine, die per
-            Registry Ereignisse deklarieren (blockEvents) — kein Typ-Check.
-            Feine Trennlinie, wenn Inhalt/Daten darüber stehen. */}
+
         {def.blockEvents && def.blockEvents.length > 0 && (
           <div
             className={cn(
@@ -265,10 +176,7 @@ export function Inspector() {
             />
           </div>
         )}
-        {/* Hinweiszeile aus der Registry — deklariert vom Baustein selbst in
-            blocks/<x>/editorAngaben.ts: nur für Bausteine, deren Panel sonst
-            leer/fast leer aussieht — sagt in EINEM Satz, wo die Bedienung
-            stattdessen stattfindet (Regel 7). */}
+
         {hinweis && (
           <p
             className={cn(
@@ -280,9 +188,7 @@ export function Inspector() {
             {hinweis}
           </p>
         )}
-        {/* KEINE Layout-Sektion (Nutzer-Anweisung 2026-07-14):
-            Breite und Höhe zeigen sich am Block selbst — Zieh-Anfasser am
-            selektierten Block, Doppelklick auf den Anfasser = Standard. */}
+
       </div>
     </SidePanel>
   )

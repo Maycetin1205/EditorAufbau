@@ -1,23 +1,14 @@
-// SidePanel: Molekül — Hülle für die Seiten-Organe (Sidebar, Inspector):
-// schmaler Header (Titel + optionaler Untertitel) + scrollbarer Body.
-// War vorher zweimal kopiert (Sidebar-Markup + InspectorFrame).
-//
-// Rückzeilen-Modus (R3-Feinschliff 2026-07-21): setzt der Aufrufer `onBack`,
-// blättert das Panel zu einer Unteraufgabe um — über dem Titel eine schmale
-// klickbare Rückzeile „← <backLabel>". Kein Modal, keine Abdunklung, gleiche
-// 340-px-Hülle: der Inspector-Inhalt wechselt komplett zur Aufgabe.
-
 import { ArrowLeft } from '../zeichen'
 import type { ReactNode } from 'react'
 
 interface SidePanelProps {
   title: ReactNode
   description?: ReactNode
-  /** Knöpfe rechts im Panel-Kopf (z. B. Duplizieren/Löschen im Inspector). */
+
   actions?: ReactNode
-  /** Setzt den Rückzeilen-Modus: Klick/Enter blättert zur Herkunft zurück. */
+
   onBack?: () => void
-  /** Beschriftung der Rückzeile (nur mit onBack), z. B. der Baustein-Name. */
+
   backLabel?: ReactNode
   children: ReactNode
 }

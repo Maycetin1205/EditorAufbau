@@ -1,14 +1,3 @@
-// rasterDnd
-// Editor-seitige Drag-Helfer der RASTERFLÄCHE (E2 „Bewegen"): aus der
-// Zeigerposition die Zielzelle lesen und die Zellmaße des gerade Gezogenen
-// bestimmen. Reine Editor-Hilfe — misst das DOM über getComputedStyle, läuft
-// NIE in der Maske und hat keinen Export-Einfluss (Regel 1: die Platzierung
-// selbst liegt weiter in den Rasterprops, die Canvas UND Export teilen).
-//
-// Arbeitsteilung: die Zell-GEOMETRIE (Spaltenzahl, gap) kommt aus der EINEN
-// Quelle rasterLayout; hier lebt nur, was das DOM braucht — die
-// Zeiger→Zelle-Vermessung.
-
 import type { DragEvent } from 'react'
 import { canContain, getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { RASTER, rasterSpecOf } from '../../core/blocks/rasterLayout'
@@ -16,12 +5,6 @@ import type { useEditor } from '../../state/useEditor'
 import { newBlockDragType } from './dnd'
 import type { DndState, DropTarget } from './dndState'
 
-// Zielzelle (x,y) unter dem übergebenen Punkt (der Aufrufer hat den Greif-
-// Versatz bereits abgezogen). Spalten wachsen mit dem Fenster (1fr), Zeilen sind
-// fest (zeilePx) → in BEIDEN Achsen werden die tatsächlichen Track-Größen aus
-// getComputedStyle gemessen (das löst 1fr in px auf), kumulativ mit dem gap
-// durchlaufen; unterhalb der belegten Zeilen mit der nominalen Zeilenhöhe
-// extrapoliert.
 export function zelleAusZeiger(
   gridEl: HTMLElement,
   clientX: number,
@@ -34,14 +17,9 @@ export function zelleAusZeiger(
   const spaltenGap = parseFloat(stil.columnGap) || RASTER.gapPx
   const zeilenGap = parseFloat(stil.rowGap) || RASTER.gapPx
 
-  // Lokale Koordinaten im INHALT (nach Padding, inkl. Scroll der Fläche).
   const lx = clientX - rect.left - padL + gridEl.scrollLeft
   const ly = clientY - rect.top - padT + gridEl.scrollTop
 
-  // X: gemessene Spalten-Tracks (px je Spalte) aus getComputedStyle — die Spalten
-  // wachsen mit dem Fenster (1fr), darum KEIN fester Pitch (getComputedStyle löst
-  // 1fr in die tatsächliche Pixelbreite auf). Kumulativ mit dem Spalten-gap
-  // durchlaufen; rechts der letzten Spalte in die letzte Spalte klemmen.
   const spalten = stil.gridTemplateColumns
     .split(' ')
     .map((t) => parseFloat(t))
@@ -55,33 +33,24 @@ export function zelleAusZeiger(
   }
   x = Math.max(0, Math.min(RASTER.spalten - 1, x))
 
-  // Y: gemessene Zeilen-Tracks (px je belegter Zeile), kumulativ mit gap.
   const tracks = stil.gridTemplateRows
     .split(' ')
     .map((t) => parseFloat(t))
     .filter((n) => Number.isFinite(n))
   let y = 0
-  let kante = 0 // Oberkante der aktuellen Zeile
+  let kante = 0
   while (y < tracks.length) {
     if (ly < kante + tracks[y]) break
     kante += tracks[y] + zeilenGap
     y++
   }
   if (y >= tracks.length) {
-    // Unterhalb aller belegten Zeilen: mit nominaler Zeilenhöhe weiterzählen.
     const pitch = RASTER.zeilePx + zeilenGap
     y = tracks.length + (pitch > 0 ? Math.max(0, Math.floor((ly - kante) / pitch)) : 0)
   }
   return { x, y: Math.max(0, y) }
 }
 
-// Zellmaße des gerade Gezogenen für die Fläche parentId — oder null, wenn der
-// Drop dort nicht erlaubt ist (canContain) → kein Ziel/keine
-// Vorschau. HTML5-Drops auf die Rasterfläche sind immer „von woanders" (neu aus
-// der Bibliothek ODER ein Block aus einem Container): beide bekommen die
-// Registry-Startgröße, nie Vollbreite (der Block hatte außerhalb des Rasters
-// keine sinnvollen Zellmaße). Ein bereits auf der Fläche liegender Block wird
-// per POINTER bewegt (rasterMove) und läuft NICHT hierüber.
 export function gezogeneGroesse(
   ed: ReturnType<typeof useEditor>,
   dnd: DndState,
@@ -103,12 +72,6 @@ export function gezogeneGroesse(
   return { w: spec.startW, h: spec.startH }
 }
 
-// Aus einem dragover-Event die Raster-Zielzelle bestimmen (HTML5-Drops auf die
-// Rasterfläche = Bibliothek-Block oder Block aus einem Container): Größe
-// ermitteln, Zielzelle unter dem Zeiger lesen (die Ecke sitzt an der
-// Zeigerzelle) und in x klemmen, damit der Block in der Breite passt. null =
-// kein gültiges Ziel (Drop nicht erlaubt). Das POINTER-Bewegen eines
-// vorhandenen Rasterblocks läuft NICHT hierüber, sondern über rasterMove.
 export function rasterZiel(
   e: DragEvent,
   ed: ReturnType<typeof useEditor>,

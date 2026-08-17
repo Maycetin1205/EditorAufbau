@@ -1,15 +1,3 @@
-// tabelleAnsicht — WAS die Tabelle gerade zeigt, als reine Rechnung.
-//
-// Aus TabelleBlock herausgeloest (2026-08-07), weil die Baustein-Datei am
-// 500-Zeilen-Deckel stand (check:regeln) und der Grund dafuer hier lag: der
-// Kopf von render() rechnete auf zwei Dutzend Zeilen aus, welche Zeilen diese
-// Seite zeigt, ob echte Daten kommen, ob der Leerzustand gilt und wie breit die
-// Spalten sind. Das ist keine Baustein-Aufgabe — es ist Arithmetik.
-//
-// Form wie ./seitengroesse und ./suche: Werte rein, Werte raus. Kein DOM, kein
-// Lit, kein Zustand. Der Baustein reicht seine Eigenschaften herein und gibt das
-// Ergebnis an ./tabelleKoerper und ./tabelleFuss weiter; entschieden wird hier.
-
 import { spaltenArt, zeilenHoeheFuer } from './spaltenArten'
 import {
   linealTakte,
@@ -24,48 +12,39 @@ import { passendeIndizes, zeigtEchteDaten, zeigtLeerzustand } from './suche'
 
 export interface AnsichtFrage {
   spalten: readonly Spalte[]
-  // Zeichnet der EDITOR (data-ff-editor am Baustein) oder die Maske?
+
   imEditor: boolean
   source: string
   datenGeliefert: boolean
   datenzeilen: readonly string[][]
   suchtext: string
-  // -1 = unsortiert.
+
   sortSpalte: number
   sortAuf: boolean
-  // Auf welcher Seite der Bediener stehen WILL (kann veraltet sein).
+
   wunschSeite: number
-  // Das gemessene Zeilenmass (Anzahl + gezeichnete Hoehe, ./seitengroesse).
-  // null = (noch) nicht messbar; dann gelten die Rueckfaelle.
+
   gemessen: Zeilenmass | null
 }
 
 export interface TabelleAnsicht {
-  // Die Rasterbreiten — EINE Rechnung, drei Leser (Kopf, Zeilen, Lineal).
   cols: Record<string, string>
-  // Der Grundtakt (Spalten-Art) — die Hoehe des KOPFES.
+
   takt: number
-  // Der Takt plus dem verteilten Rest — die Hoehe einer ZEILE und eines
-  // Lineal-Taktes. Ohne Messung gleich `takt`.
+
   zeilenHoehe: number
   hatQuelle: boolean
   leer: boolean
-  // Wie viele Zeilen es insgesamt zu sehen gibt (nach Suche, vor Blaettern).
+
   gesamt: number
   seiten: number
   seite: number
-  // Was diese Seite zeichnet: Rohindex in datenzeilen, oder null fuer eine
-  // Platzhalter-Zeile im Editor.
+
   zeilen: readonly (number | null)[]
-  // Wie viele GANZE Zeilentakte das Lineal unter diesen Zeilen noch zeichnet
-  // (./seitengroesse). 0 = keins mehr, null = nicht messbar.
+
   linealTakte: number | null
 }
 
-// Die Zeilen, die der Bediener gerade sehen soll — als ROHINDIZES in
-// datenzeilen: ERST suchen, DANN sortieren. Indizes statt Werte, weil die
-// Auswahl-Markierung an der ZEILE kleben muss, egal wie gefiltert oder sortiert
-// wird. Beides sind eigene, getestete Stellen (./suche, ./sortierung).
 function sichtbareIndizes(frage: AnsichtFrage): number[] {
   const gefiltert = passendeIndizes(frage.datenzeilen, frage.suchtext)
   if (frage.sortSpalte < 0) return gefiltert
@@ -74,47 +53,19 @@ function sichtbareIndizes(frage: AnsichtFrage): number[] {
 }
 
 export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
-  // Breite nach ART, nie nach Inhalt — sonst springt eine Spalte beim
-  // Blaettern, weil die naechste Seite kuerzere Werte traegt.
   const cols = {
     gridTemplateColumns: frage.spalten.map((s) => spaltenArt(s.art).spur).join(' '),
   }
-  // Der Zeilentakt: die anspruchsvollste Spalten-Art bestimmt ihn
-  // (./spaltenArten). EINE Zahl, drei Leser — das Aussehen (als CSS-Variable),
-  // die Messung und die Seitenrechnung.
-  //
-  // GEZEICHNET wird seit S2.1 mit der verteilten Hoehe: der Takt plus dem
-  // Anteil am Rest, der sonst als leerer Streifen unter der letzten Zeile
-  // stehenbliebe (./seitengroesse, `zeilenmass`). Ohne Messung bleibt es beim
-  // rohen Takt — dort gibt es keinen Rest, den man verteilen koennte.
+
   const takt = zeilenHoeheFuer(frage.spalten)
   const zeilenHoehe = frage.gemessen?.zeilenHoehe ?? takt
-  // „Hat Quelle" heisst: es KOMMEN Daten — nicht, dass gerade welche da sind.
-  // Bis 2026-07-28 stand hier `datenzeilen.length > 0`, und damit fiel die
-  // LAUFENDE Maske auf die Editor-Platzhalter zurueck, sobald der Tagesfilter
-  // einen Tag ohne Saetze traf: vier Striche „—" und „— Datensaetze", als warte
-  // man noch auf Daten. Ein leerer Tag ist aber der Normalfall, und erfundene
-  // Striche in der echten Maske brechen Regel 7 (der Editor erfindet nie
-  // Daten — die Maske erst recht nicht).
-  //
-  // Unterschieden wird ueber `data-ff-editor`: der BlockHost setzt es an JEDEM
-  // Editor-Element, der Export nie — dieselbe Marke, an der auch datenAnschluss
-  // Editor-Elemente von der Daten-Mechanik fernhaelt. `editable` taugt dafuer
-  // NICHT: das ist im Editor nur am AUSGEWAEHLTEN Baustein true, ein nicht
-  // ausgewaehlter saehe sonst aus wie Laufzeit. Die Entscheidung selbst wohnt
-  // pruefbar in ./suche (zeigtEchteDaten).
+
   const hatQuelle = zeigtEchteDaten(frage.imEditor, frage.source)
-  // Leerzustand? Die Bedingungen wohnen pruefbar in ./suche.
+
   const leer = zeigtLeerzustand(hatQuelle, frage.datenGeliefert, frage.datenzeilen.length)
-  // Paginierung: die Rechnung wohnt in ./seitengroesse (rein + getestet).
-  // In der Maske wird NICHT aufgefuellt — ein Satz ist eine Zeile; den leeren
-  // Rest zeichnet das Lineal weiter. Im Editor stehen stattdessen
-  // Platzhalter-Zeilen mit „—" (Regel 7: hier kommt spaeter ein Wert hin),
-  // und zwar so viele, wie wirklich hineinpassen (platzhalterZeilen).
+
   const alleSichtbar = sichtbareIndizes(frage)
-  // Es gilt IMMER die Messung (S2.1: der Waehler mit den festen Zahlen ist weg).
-  // Ohne Messung (kein ResizeObserver, oder kein Raster mit vorgegebener Hoehe)
-  // laeuft die Tabelle wie bis 2026-08-06 mit dem Rueckfall.
+
   const proSeite = frage.gemessen?.passen ?? OHNE_MESSUNG
   const { seiten, seite, zeilen } = seitenAufteilung({
     sichtbar: alleSichtbar,
@@ -133,10 +84,7 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
     seiten,
     seite,
     zeilen,
-    // Das Lineal fuellt auf, was diese Seite an Zeilen schuldig bleibt — die
-    // LETZTE Seite zeigt selten volle Zeilen. Ein Takt ist seit S2.1 genau so
-    // hoch wie eine Zeile (beide `zeilenHoehe`), damit schliesst die Rechnung
-    // ohne Rest: Zeilen plus Takte fuellen den Rumpf genau aus.
+
     linealTakte: linealTakte(frage.gemessen?.passen ?? null, zeilen.length),
   }
 }

@@ -1,23 +1,3 @@
-// bausteinZeichen — die Symbole der Baustein-Bibliothek, grundauf neu
-// gezeichnet nach der eingecheckten Designsprache (designsprache/atome.css):
-// flach, kantig, Espresso-Umriss 1.8, Fuellungen aus den Zart-Toenen, EIN
-// lauter Ton (Koralle) als quadratischer Punkt-Akzent.
-//
-// Nutzer-Entscheidung 2026-08-11 („wir nehmen J", Musterbogen 3): die
-// lucide-Striche (ui/zeichen) lasen sich neben den Fellnase-Bausteinen als
-// fremde Sprache. NUR die Baustein-Symbole tragen darum Farbe und Flaeche;
-// die uebrigen Kleinzeichen der Oberflaeche (Undo, Suche, Pfeile …) bleiben
-// bewusst nuechterne Striche — sie sind Werkzeug, keine Ware.
-//
-// Die Farbwerte sind ABGESCHRIEBEN aus designsprache/atome.css (Vorbild statt
-// Beschreibung), nicht aus den Masken-Tokens gelesen: diese Symbole leben in
-// der Editor-UI, und ob deren Stylesheet die --se-Variablen kennt, soll ein
-// Symbol nicht entscheiden muessen. Feste Werte = sieht ueberall gleich aus.
-//
-// Wie ui/zeichen sind diese Komponenten EDITOR-Sache: sie erreichen das
-// Runtime-Buendel nie (editorAngaben laedt nur der Editor, bewacht von
-// check:runtime).
-
 import type { ReactElement } from 'react'
 
 const ESPRESSO = '#3d2b22'
@@ -27,15 +7,11 @@ const SAND = '#f3eada'
 const KORALLE = '#e85c3f'
 const KORALLE_ZART = '#fbe5dc'
 
-// Dieselbe Schnittstelle wie die nuechternen Zeichen (BausteinSymbol im Core):
-// eine Groesse, eine Klassenliste, fertig.
 interface Props {
   size?: number | string
   className?: string
 }
 
-// Der Umriss aller Motive — EIN Strichgewicht (1.8, aus der Tierzeichen-Regel
-// der Designsprache: duenn genug, dass in Kleingroessen nichts zulaeuft).
 const U = { stroke: ESPRESSO, strokeWidth: 1.8, fill: 'none', strokeLinejoin: 'round' } as const
 
 function rahmen(kinder: ReactElement[], { size = 16, className }: Props): ReactElement {
@@ -45,10 +21,6 @@ function rahmen(kinder: ReactElement[], { size = 16, className }: Props): ReactE
     </svg>
   )
 }
-
-// Hier stand bis C2 (2026-08-16) `ZeichenZeile` — drei Faecher nebeneinander.
-// Der Baustein „Zeile" ist mit dem Popup-Raster entfallen (Nebeneinander macht
-// jetzt die Zelle), und ein Symbol ohne Baustein ist toter Code.
 
 export function ZeichenTrenner(p: Props): ReactElement {
   return rahmen([
@@ -69,8 +41,6 @@ export function ZeichenPopup(p: Props): ReactElement {
   ], p)
 }
 
-// Navi: die dunkle Leiste links, drei Eintraege, der oberste ist dran —
-// dasselbe Bild, das der Baustein auf der Maske abgibt.
 export function ZeichenNavi(p: Props): ReactElement {
   return rahmen([
     <rect key="g" x="2.4" y="3.6" width="19.2" height="16.8" rx="2" {...U} fill={PAPIER} />,
@@ -143,8 +113,6 @@ export function ZeichenKanban(p: Props): ReactElement {
   ], p)
 }
 
-// Die Kanban-SPALTE: eine einzelne Bahn mit Karten — dasselbe Vokabular wie
-// das Brett daneben, nur allein.
 export function ZeichenKanbanSpalte(p: Props): ReactElement {
   return rahmen([
     <rect key="s" x="7.5" y="3.6" width="9" height="16.8" rx="1.6" {...U} fill={PAPIER} />,

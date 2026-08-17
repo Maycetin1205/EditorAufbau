@@ -1,31 +1,8 @@
-// tabelleStil — das Aussehen des Tabellen-Bausteins.
-//
-// Aus TabelleBlock herausgeloest (2026-07-25), weil die Datei mit der
-// Suchzeile ueber den 500-Zeilen-Deckel wuchs (check:regeln). Der Schnitt
-// ist der natuerliche: hier das AUSSEHEN, drueben das VERHALTEN.
-//
-// Farben ausschliesslich aus den Masken-Tokens (--se-*) — keine Hex-Werte,
-// keine Fallbacks. Sonst kann die Tabelle im Export anders aussehen als im
-// Editor, und genau das darf nie passieren (Regel 1, WYSIWYG).
-
 import { css } from 'lit'
 
 export const tabelleStil = css`
       :host { min-width: 0; height: 100%; }
-      /* --zeilen-hoehe ist der Takt der Tabelle. Die ZAHL steht nicht mehr
-         hier, sondern in ./seitengroesse (ZEILEN_HOEHE) — der Baustein setzt
-         sie beim Zeichnen als Variable. Grund (2026-08-06): seit die Tabelle
-         ihre Zeilenzahl aus der eigenen Hoehe RECHNET, brauchen Optik und
-         Rechnung denselben Wert. Zwei Stellen hiessen: beim naechsten
-         Feinschliff rechnet die Seitengroesse still falsch.
-         Vorgegeben (nicht aus Schrift + Innenabstand geschaetzt) bleibt er
-         weiterhin: ein geschaetzter Wert lief hier schon 4,25px je Zeile aus
-         dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
-      /* Der Tafel-Rahmen (Demo .tafel, Werte 1:1): Papierflaeche, EINE
-         1,5px-Kante, grosse Rundung, nichts Koerperhaftes. overflow:hidden
-         schneidet Suchzeile und Fusszeile an den runden Ecken sauber ab.
-         position:relative ist der Anker der frei schwebenden Editor-Hilfe
-         unten (.steuerung), sonst nichts. */
+
       .tabelle {
         position: relative;
         box-sizing: border-box;
@@ -40,8 +17,7 @@ export const tabelleStil = css`
         font-size: var(--se-fs);
         color: var(--se-ink);
       }
-      /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
-         drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
+
       .suchzeile {
         padding: 5px 8px;
         border-bottom: var(--se-border) solid var(--se-line);
@@ -49,12 +25,7 @@ export const tabelleStil = css`
       }
       .suchzeile input {
         box-sizing: border-box;
-        /* NICHT ueber die ganze Breite (Nutzer 2026-07-25): ein Suchfeld,
-           das die volle Tabellenbreite einnimmt, sieht aus wie ein
-           Eingabefeld der Maske statt wie eine Suche. Ausserdem braucht die
-           Editor-Steuerung (+/−) rechts daneben Platz, sonst liegt sie auf
-           dem Feld. Schmal genug, um als Suche gelesen zu werden, breit
-           genug fuer einen Suchbegriff. */
+
         width: 100%;
         max-width: 15rem;
         height: 24px;
@@ -70,16 +41,7 @@ export const tabelleStil = css`
         outline: none;
         border-color: var(--se-accent);
       }
-      /* Kopf und Zeilen tragen eine feste Hoehe — daraus entsteht der
-         gleichmaessige Takt, den man als sauberes Lineal wahrnimmt.
-         ZWEI Variablen, seit die Zeilen den Rest aufnehmen (S2.1, 2026-08-11):
-         die Zeilen sind um Rest/Anzahl hoeher als der Grundtakt (1 bis 4 px),
-         der KOPF bleibt beim Grundtakt. Das ist keine Kosmetik, sondern der
-         Riegel gegen eine Schleife: die Messung zieht die Kopfhoehe von der
-         Rumpfhoehe ab — waechst der Kopf mit, aendert sich der Platz, den die
-         Messung gerade verteilt hat, und die Tabelle zappelte zwischen zwei
-         Zeilenzahlen. Ohne Messung sind beide Werte gleich, dann sieht man
-         keinen Unterschied. */
+
       .kopf {
         display: grid;
         height: var(--takt);
@@ -90,15 +52,7 @@ export const tabelleStil = css`
         height: var(--zeilen-hoehe);
         box-sizing: border-box;
       }
-      /* Die Kopfzeile sitzt IM scrollenden Rumpf und klebt dort oben fest.
-         Grund (Nutzer-Meldung 2026-07-27, zweiter Anlauf): stand sie
-         ausserhalb, war sie um die Scrollleiste BREITER als die Zeilen
-         darunter — ihre Spaltentrenner liefen um 3,75px, 7,5px, 11,25px
-         aus der Flucht, wachsend nach rechts. Im selben Kasten koennen
-         Kopf, Zeilen und Lineal gar nicht mehr verschieden breit sein.
-         Der sichtbare Nebeneffekt ist erwuenscht: die Ueberschriften
-         bleiben beim Scrollen stehen.
-         Die Flaeche MUSS deckend sein, sonst scheinen Zeilen durch. */
+
       .kopf {
         position: sticky;
         top: 0;
@@ -109,48 +63,20 @@ export const tabelleStil = css`
         font-size: var(--se-fs-sm);
         font-weight: 600;
       }
-      /* Der Rumpf fuellt die Bausteinhoehe. Bleibt unter den Zeilen Platz
-         (die Tabelle ist im Raster hoeher als ihre Zeilen brauchen), lief
-         dort vorher eine leere weisse Flaeche — sah aus wie ein Fehler.
-         Jetzt zeichnet ein sich wiederholender Verlauf die Zeilenlinien
-         einfach weiter, im selben Takt wie echte Zeilen. Kein Inhalt wird
-         erfunden (Regel 7), nur das Lineal laeuft durch. */
+
       .koerper {
         flex: 1 1 auto;
         overflow: auto;
         display: flex;
         flex-direction: column;
       }
-      /* Zeilen behalten ihre feste Hoehe, auch als Flex-Kinder: ohne
-         flex:none wuerden sie zusammengedrueckt, sobald der Rumpf zu klein
-         wird — der Zeilentakt waere dahin. */
-      .koerper > .zeile { flex: none; }
-      /* Das LINEAL im Leerraum unter der letzten Zeile: ein eigenes Element
-         statt eines Hintergrunds auf dem Rumpf.
-         Grund (Nutzer-Meldung 2026-07-27, senkrechte Linien versetzt): der
-         Rumpf scrollt. Sobald Datensaetze drin sind, erscheint die
-         Scrollleiste und die Zeilen werden in der SCHMALEREN Restbreite
-         gezeichnet — ein Hintergrund auf dem Rumpf rechnet seine
-         Spaltenbreite aber weiter aus der vollen Breite samt
-         Scrollleisten-Streifen. Der Versatz wuchs nach rechts (bei 15px
-         Leiste und drei Spalten: 5px, 10px).
-         Als eigenes Kind hat das Lineal EXAKT die Breite der Zeilen — mit
-         und ohne Scrollleiste. Es kann sich gar nicht mehr verrechnen.
 
-         Das flex 1 1 auto darunter ist seit 2026-08-10 nur noch der RUECKFALL
-         fuer den nicht messbaren Fall (kein ResizeObserver, oder die Tabelle
-         steht im Fluss ohne vorgegebene Hoehe). Sobald gemessen werden kann,
-         setzt ./tabelleKoerper stattdessen flex 0 1 auto und eine feste Hoehe
-         aus ganzen Takten: sonst nimmt das Lineal auch den angebrochenen
-         Rest-Takt auf (2 bis 30 px) und malt seine Spaltentrenner hinein — das
-         las sich als leere, teils duennere letzte Zeile. */
+      .koerper > .zeile { flex: none; }
+
       .lineal {
         flex: 1 1 auto;
         min-height: 0;
-        /* ZWEI Lagen, sonst sieht der leere Rest kaputt aus: nur Querstriche
-           ohne Spaltentrenner wirkt wie eine abgebrochene Tabelle.
-           Waagerecht im Zeilentakt als Verlauf — das ist reine Wiederholung
-           und kann sich nicht verrechnen. */
+
         background-image:
           repeating-linear-gradient(
             to bottom,
@@ -160,59 +86,29 @@ export const tabelleStil = css`
             var(--se-line-soft) var(--zeilen-hoehe)
           );
         background-position: 0 0;
-        /* Senkrecht dagegen mit echten Zellen im GLEICHEN Raster wie Kopf und
-           Zeilen (der Baustein setzt es als style). Bis 2026-08-06 war auch das
-           ein Verlauf im Takt 100% geteilt durch Spaltenzahl — das stimmte nur, solange
-           alle Spalten gleich breit waren. Seit die Art die Breite bestimmt
-           (Zahl 90, Datum 100, Status 120), waeren die Striche aus der Flucht
-           gelaufen, wachsend nach rechts — genau der Fehler, den dieses
-           Element 2026-07-27 schon einmal beseitigt hat. */
+
         display: grid;
       }
-      /* Der Leerzustand (shared/leerZustand) fuellt den Rumpf und sitzt darin
-         mittig. Die Demo braucht das nicht — ihre Tafel ist nur so hoch wie
-         ihr Inhalt. Unsere steht im Raster mit vorgegebener Hoehe: ohne diese
-         zwei Angaben klebte die Meldung oben und darunter bliebe eine weisse
-         Flaeche — genau das Bild, gegen das schon das Lineal gebaut wurde. */
+
       .koerper > .leer--tafel {
         flex: 1 1 auto;
         align-content: center;
       }
       .lineal > div { border-right: 1px solid var(--se-line-soft); }
       .lineal > div:last-child { border-right: none; }
-      /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
+
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
         background: var(--se-panel);
         transition: background-color var(--se-move);
       }
-      /* Die Zeile unter dem Zeiger hinterlegt sich (2026-07-30). In einer
-         dichten Liste ist das kein Schmuck: es zeigt, WELCHE Zeile man
-         gleich anklickt — bei 32px Zeilenhoehe verrutscht man sonst leicht
-         um eine. Der Kopf ist ausgenommen, er ist keine Datenzeile.
-         Der Ton kommt aus der Demo (.tabelle tbody tr:hover -> --creme):
-         eine Spur heller als der Seitengrund der Maske, nicht die sandfarbene
-         Innenflaeche — bis 2026-08-06 stand hier --se-panel-2 und die Zeile
-         sprang beim Zeigen deutlich zu dunkel. */
+
       .koerper > .zeile:hover {
         background: var(--se-bg);
       }
-      /* Waehlbare Zeile (nur Laufzeit mit echten Daten, Klasse setzt der
-         Baustein): der Zeiger sagt „hier passiert etwas". */
+
       .koerper > .zeile.waehlbar { cursor: pointer; }
-      /* Die GEWAEHLTE Zeile (2026-08-05): getoente Akzentflaeche + kraeftiger
-         Balken an der linken Kante — kantig, eindeutig, dieselbe Handschrift
-         wie der Rest der Maske. inset-Schatten statt Rahmen, damit die
-         Spaltenbreiten keinen Pixel verrutschen. Der Text wird voll lesbar
-         (--se-ink statt --se-muted): die gewaehlte Zeile ist die, mit der
-         der Bediener gerade arbeitet.
-         Beide Werte stehen so in der Demo (.zeile--gewaehlt): Flaeche
-         --sonne-zart (= --se-amber-soft), Streifen --koralle. Bis 2026-08-06
-         war die Flaeche --se-accent-soft, also die getoente HAUSFARBE — damit
-         trug die gewaehlte Zeile zweimal denselben Ton und der Streifen
-         verlor seine Ansage. Der inset-Streifen ist kein Schatten (Regel 4):
-         er sitzt IN der Zeile, damit die Spaltenbreiten keinen Pixel
-         verrutschen. */
+
       .zeile.gewaehlt,
       .koerper > .zeile.gewaehlt:hover {
         background: var(--se-amber-soft);
@@ -221,11 +117,6 @@ export const tabelleStil = css`
       .zeile.gewaehlt > div { color: var(--se-ink); }
       .kopf > div,
       .zeile > div {
-        /* KEIN senkrechter Innenabstand: die Zeilenhoehe steht fest, der
-           Text wird ueber line-height darin zentriert. So bleibt die Hoehe
-           unabhaengig von der Schriftgroesse exakt im Takt — und die
-           Textkuerzung mit „…" funktioniert weiter (das braucht einen
-           Block, kein Flex). */
         padding: 0 10px;
         line-height: calc(var(--zeilen-hoehe) - 1px);
         min-width: 0;
@@ -234,48 +125,26 @@ export const tabelleStil = css`
         text-overflow: ellipsis;
         border-right: 1px solid var(--se-line-soft);
       }
-      /* Der Kopf ist um den verteilten Rest flacher als eine Zeile (s. oben),
-         also braucht sein Text die Kopfhoehe, nicht die Zeilenhoehe — sonst
-         saesse die Ueberschrift ein bis vier Pixel zu tief. Alles andere gilt
-         aus der Regel darueber. */
+
       .kopf > div { line-height: calc(var(--takt) - 1px); }
       .kopf > div:last-child,
       .zeile > div:last-child { border-right: none; }
       .kopf > div { cursor: pointer; user-select: none; }
       .sort-pfeil { font-size: 9px; color: var(--se-muted); }
-      /* Zellentext in vollem Espresso, wie in der Demo (.tabelle td erbt den
-         Grundton und daempft nichts). Bis 2026-08-06 stand hier --se-muted:
-         die Werte waren blasser als ihre eigenen Ueberschriften, und die
-         Tabelle las sich wie ausgegraut. Gedaempft bleibt allein, was WIRKLICH
-         Nebensache ist — Sortierpfeil und Fusszeile. */
+
       .zeile > div { color: var(--se-ink); }
 
-      /* ---- Spalten-Arten (./spaltenArten) ------------------------------
-         Zahl und Datum teilen sich eine Klasse, weil die Demo es genauso
-         macht: ihre Datumsspalten tragen die Klasse zelle-zahl. Rechtsbuendig mit
-         gleichbreiten Ziffern (font-variant-numeric: tabular-nums) — damit
-         stehen Tausender und Punkte untereinander. Der KOPF bekommt dieselbe
-         Klasse und dieselbe Ausrichtung (Demo: .zahl-kopf), sonst stuende
-         eine linksbuendige Ueberschrift ueber rechtsbuendigen Werten.
-         Ein Datum wird nur AUSGERICHTET, nie umgerechnet (Nutzer 2026-08-06):
-         was SoftEngine liefert, steht da. */
       .kopf > div.zahl,
       .zeile > div.zahl {
         text-align: right;
         font-variant-numeric: tabular-nums;
       }
-      /* Die Status-Zelle traegt eine Marke, keinen Text: als Flex-Kasten sitzt
-         sie senkrecht mittig in der Zeile. Die Textkuerzung mit „…" faellt
-         hier weg (die braeuchte einen Block) — noetig ist sie nicht, die Marke
-         bricht ohnehin nicht um und der Zellrand schneidet sie ab. */
+
       .zeile > div.status {
         display: flex;
         align-items: center;
       }
-      /* „Bild + Name" (Demo .zelle-patient): Bild links, daneben Name ueber
-         der kleineren Unterzeile. Wie die Status-Zelle ein Flex-Kasten und
-         damit ohne die Zeilen-line-height — die gilt fuer EINE Textzeile und
-         wuerde hier beide auseinandertreiben. */
+
       .zeile > div.bild {
         display: flex;
         align-items: center;
@@ -283,15 +152,11 @@ export const tabelleStil = css`
       .bild-name {
         display: flex;
         align-items: center;
-        /* 10px wie in der Demo (.zelle-patient gap). */
+
         gap: var(--se-gap);
         min-width: 0;
       }
-      /* 26px — das Tabellenmass der Demo (.tier--klein). Das Zeichen steht
-         FREI: keine Kachel, kein Kreis, kein Rahmen (Fellnase-Entscheidung
-         „ohne sie atmet es", vom Nutzer am 2026-08-06 fuer die Tabelle
-         bestaetigt). Auch keine leere Flaeche, wenn nichts gebunden ist — die
-         Zelle zeichnet das Zeichen dann gar nicht erst (./spaltenArten). */
+
       .bild-zeichen {
         display: grid;
         place-items: center;
@@ -303,14 +168,11 @@ export const tabelleStil = css`
         width: 100%;
         height: 100%;
         display: block;
-        /* Die Zeichen sind quadratisch aufgefuellt; contain haelt sie auch
-           dann unverzerrt, wenn die Flaeche einmal nicht quadratisch ist. */
+
         object-fit: contain;
       }
       .bild-text { min-width: 0; }
-      /* Name (Demo .zelle-name: 600 15px/1.25) und Unterzeile (.zelle-zusatz:
-         12,5px, gedaempft — hier --se-fs-sm = 12px, die dichte Stufe).
-         Beide einzeilig mit „…": eine umbrechende Zeile spraenge aus dem Takt. */
+
       .bild-titel,
       .bild-unter {
         white-space: nowrap;
@@ -327,11 +189,7 @@ export const tabelleStil = css`
         font-size: var(--se-fs-sm);
         line-height: 1.35;
       }
-      /* Fusszeile (Demo .tafel-fuss): OHNE eigene Flaeche — die Trennlinie
-         allein setzt sie ab, genau wie in der Demo („der Rahmen traegt schon
-         die Kante"). Bis 2026-08-06 lag hier --se-panel-2; der sandfarbene
-         Streifen machte aus der Fusszeile eine zweite Leiste unter der
-         Tabelle statt ihres unteren Randes. */
+
       .fusszeile {
         display: flex;
         align-items: center;
@@ -346,17 +204,7 @@ export const tabelleStil = css`
         align-items: center;
         gap: 6px;
       }
-      /* Feste Hoehe fuer die Blaetter-Knoepfe: die Fusszeilenhoehe geht von der
-         Rumpfhoehe ab und bestimmt damit mit, wie viele Zeilen passen. Eine vom
-         Browser geschaetzte Knopfhoehe waere eine Zahl, die im Editor und in
-         SoftEngine verschieden ausfallen kann — und dann zeigte der Editor eine
-         Zeile mehr oder weniger als die Maske (Regel 1: was zu sehen ist, IST
-         der Export).
-         Bis 2026-08-11 (S2.1) stand daneben ein <select> fuer „Zeilen pro
-         Seite", das der Editor immer und die Maske nur auf Wunsch zeigte —
-         dieselbe feste Hoehe galt deshalb fuer beide Elemente, sonst haette
-         schon sein Dasein die Zeilenzahl verschoben. Der Waehler ist weg, die
-         Fusszeile ist in beiden Welten dieselbe; die feste Hoehe bleibt. */
+
       .seiten-nav button {
         box-sizing: border-box;
         height: 22px;
@@ -373,14 +221,7 @@ export const tabelleStil = css`
         opacity: 0.3;
         cursor: default;
       }
-      /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im
-         Export. Sie SCHWEBT bewusst in der oberen rechten Ecke, statt in einer
-         Reihe mitzulaufen: eine Editor-Hilfe darf dem Baustein keinen Platz
-         stehlen, sonst sitzt der Inhalt im Editor anders als im Export
-         (WYSIWYG-Bruch, s. BlockHost). Genau daran ist am 2026-08-06 der
-         Knoepfe-Platz in einer Kopfzeile gescheitert — die „+"/„−" schoben
-         den Knopf im Editor nach links, im Export klebte er an der Kante.
-         Wer diese Ecke belegen will, muss die Steuerung zuerst umziehen. */
+
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
         position: absolute;

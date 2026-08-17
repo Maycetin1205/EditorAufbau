@@ -1,8 +1,3 @@
-// Tests der Schluesselregel und der weiteren Quellen am Baustein.
-// Die zwei Nutzer-Entscheidungen vom 2026-07-25 stehen hier als Test:
-// hoechstens drei Schluesselpaare, und eine unbrauchbare Regel verbindet
-// einfach nicht (statt zu raten).
-
 import { describe, expect, it } from 'vitest'
 import {
   MAX_SCHLUESSELPAARE,
@@ -24,8 +19,6 @@ describe('vollstaendigePaare', () => {
     expect(vollstaendigePaare(traeger)).toEqual([{ fromField: '2_8', toField: '10_8' }])
   })
 })
-
-// --- Mehrere Datenquellen an EINEM Baustein (Kurskorrektur 2026-07-28) -----
 
 const quelle = (id: string, felder: string[]): DataSource => ({
   id,
@@ -50,7 +43,7 @@ describe('quellenAufloesen', () => {
   it('liefert die erste Quelle auch ohne weitere', () => {
     const raus = quellenAufloesen('terminplaner', [], bibliothek)
     expect(raus.map((q) => q.source.id)).toEqual(['terminplaner'])
-    // Die erste traegt KEINE Schluesselregel — sie liefert die Zeilen.
+
     expect(raus[0].paare).toBeUndefined()
   })
 

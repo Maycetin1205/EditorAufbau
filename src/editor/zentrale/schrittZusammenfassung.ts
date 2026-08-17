@@ -1,27 +1,5 @@
-// schrittZusammenfassung — was EIN Schritt einer Aktionskette TUT, in einer
-// Zeile Klartext.
-//
-// Der Anlass (Nutzer-Befund 2026-08-17, mit Bildschirmfoto): eine Kette aus
-// elf Schritten stand elfmal als „Relation — Standard-Schreiben (PUT)" da.
-// Welcher Schritt welches Feld schreibt, war nur durch Aufmachen jedes
-// einzelnen zu erfahren. Der Vorlagenname ist bei allen derselbe —
-// unterschiedlich sind die PARAMETER.
-//
-// Zwei Angaben unterscheiden sie, und beide stehen im Schritt selbst:
-//   ZIEL     welches Feld beschrieben wird  ({FELD_POS} + {FELD_LEN})
-//   HERKUNFT woher der Wert kommt           ({VALUE})
-//
-// Nichts davon wird geraten. Gelesen wird das Platzhalter-Vokabular, das die
-// Relations-Bibliothek ohnehin fuehrt (RELATION_PLACEHOLDERS) — keine
-// Relationsnummer, kein Bausteintyp, kein Sondercode (Regel 2). Eine eigene
-// Vorlage mit denselben Platzhaltern wird genauso beschriftet.
-//
-// Laesst sich eine Angabe NICHT aufloesen, bleibt sie leer statt zu behaupten:
-// eine halbe Zeile ist ehrlich, eine erfundene ist es nicht (Regel 7).
-
 import type { BlockTree } from '../../core/blocks/BlockData'
 import { bausteinName } from '../../core/blocks/bausteinName'
-import { actionValueTargets } from '../../core/blocks/treeQuery'
 import type { ActionParamBinding, ActionStep } from '../../core/data/aktionen'
 import {
   quellenKennung,
@@ -36,26 +14,19 @@ import {
 import { feldUebernahmeArt } from './feldUebernahme'
 
 export interface SchrittZusammenfassung {
-  // Was der Schritt tut — der Vorlagen- bzw. Schritt-Name wie bisher.
   was: string
-  // Das beschriebene Feld in Klarnamen ('' = nicht aufloesbar).
+
   ziel: string
-  // Woher der Wert kommt, in Klarnamen ('' = keine Wert-Stelle/nicht gesetzt).
+
   herkunft: string
-  // Die Tabelle, in die geschrieben wird ('' = nicht aufloesbar). Sie traegt
-  // die Zeile bei Schritten OHNE Zielfeld — etwa „neuen Satz anlegen".
+
   tabelle: string
 }
 
-// Der feste Wert eines Parameters ('' = nicht fest gesetzt). Nur ein FESTER
-// Wert taugt zum Nachschlagen: alles andere entsteht erst zur Laufzeit.
 function festerWert(binding: ActionParamBinding | undefined): string {
   return binding?.source === 'fixed' ? binding.value.trim() : ''
 }
 
-// Die Quelle, in die dieser Schritt schreibt — abgelesen am {RELID}-Parameter.
-// Ihn fuellt die Feld-Uebernahme mit der Tabellen-ID ohne IDB-Vorsatz
-// ('ID0021'), also ist er der direkte Weg zurueck zur Quelle.
 function quelleAusRelId(
   relation: RelationTemplate,
   params: readonly ActionParamBinding[],
@@ -67,8 +38,6 @@ function quelleAusRelId(
   return quellen.find((q) => relIdFromIdbId(tableIdFor(q)) === wert)
 }
 
-// Der Feldcode, den dieser Schritt beschreibt — aus {FELD_POS} + {FELD_LEN}.
-// Nur wenn BEIDE fest sind: mit einer Haelfte liesse sich nichts nachschlagen.
 function feldcodeAusParams(
   relation: RelationTemplate,
   params: readonly ActionParamBinding[],
@@ -83,10 +52,6 @@ function feldcodeAusParams(
   return pos !== '' && len !== '' ? `${pos}_${len}` : ''
 }
 
-// Klarname eines Feldcodes. Erste Wahl ist die Quelle, die der Schritt selbst
-// nennt. Ohne sie wird die Bibliothek befragt — aber nur, wenn GENAU EINE
-// Quelle den Code kennt: derselbe Code bedeutet in zwei Tabellen
-// Verschiedenes, und die erste zu nehmen zeigte den falschen Namen.
 function klarnameFuerCode(
   code: string,
   quelle: DataSource | undefined,
@@ -102,9 +67,6 @@ function klarnameFuerCode(
     : ''
 }
 
-// Woher der Wert einer Bindung kommt, in Klarnamen. Dieselben Woerter wie im
-// Formular (ParameterZeile) — zwei Vokabulare fuer dasselbe waeren zwei
-// Wahrheiten.
 function herkunftText(
   binding: ActionParamBinding | undefined,
   tree: BlockTree,
@@ -148,9 +110,6 @@ function herkunftText(
   }
 }
 
-// Der Parameter, der den zu schreibenden WERT traegt. Erkannt am Platzhalter
-// {VALUE} — dem einzigen aus dem Vokabular, der „hier steht der Nutzwert"
-// bedeutet.
 function wertBinding(
   relation: RelationTemplate,
   params: readonly ActionParamBinding[],
@@ -165,7 +124,7 @@ export function schrittZusammenfassung(
   relation: RelationTemplate | undefined,
   tree: BlockTree,
   quellen: readonly DataSource[],
-  // Anzeige-Position eines Schritts in DERSELBEN Kette (0 = nicht gefunden).
+
   schrittNr: (id: string) => number,
 ): SchrittZusammenfassung {
   const leer: SchrittZusammenfassung = { was, ziel: '', herkunft: '', tabelle: '' }
@@ -176,32 +135,17 @@ export function schrittZusammenfassung(
   return {
     was,
     ziel: klarnameFuerCode(code, quelle, quellen)
-      // Kein Klarname, aber ein Code: den Code zeigen. Er sagt weniger als ein
-      // Name, aber mehr als nichts — und er unterscheidet die Zeilen.
+
       || (code !== '' && splitFieldCode(code) ? code : ''),
     herkunft: herkunftText(wertBinding(relation, step.params), tree, quellen, schrittNr),
     tabelle: quelle ? `${quelle.name} · ${quellenKennung(quelle)}` : '',
   }
 }
 
-// Der Schritt, auf dessen ERGEBNIS sich dieser beruft ('' = keiner). Damit
-// zeigt die Liste, welche Schreib-Schritte in den Satz gehen, den ein
-// „neuen Satz anlegen" davor erzeugt hat.
 export function ankerSchrittId(step: ActionStep): string {
   if (step.type !== 'RELATION') return ''
   for (const b of [...step.params, ...step.extraParams]) {
     if (b.source === 'step_result' && b.value !== '') return b.value
   }
   return ''
-}
-
-// Alle Bausteine, deren Wert eine Kette lesen kann — als Klarnamen-Tabelle.
-// Nur fuer die Zusammenfassung; die Auswahl selbst baut StepForm.
-export function bausteinNamen(
-  tree: BlockTree,
-  quellen: readonly DataSource[],
-): Map<string, string> {
-  return new Map(
-    actionValueTargets(tree).map(({ node }) => [node.id, bausteinName(node, quellen)]),
-  )
 }

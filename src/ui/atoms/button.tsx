@@ -1,7 +1,3 @@
-// Button (shadcn-Style).
-// Tailwind + cva fuer Varianten. Keine Radix-Slot-Abhaengigkeit hier, weil wir
-// kein 'asChild' brauchen. Wird nachgeruestet wenn gebraucht.
-
 import { cva, type VariantProps } from 'class-variance-authority'
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
@@ -21,15 +17,7 @@ const buttonVariants = cva(
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
-      // Alle Groessen tragen dieselbe HOEHE (h-steuer) und denselben Text —
-      // sie unterscheiden sich nur im seitlichen Platz. Vorher war es
-      // umgekehrt: `default` war 28,8 px hoch mit 12,6 px Text, `sm` 25,2 px
-      // mit 10,8 px, und welche ein Knopf bekam, entschied die Aufrufstelle.
-      // Ergebnis waren zwei Knopf-Aussehen im selben Editor (8-mal das eine,
-      // 23-mal das andere) und Knoepfe, die neben ihrem Eingabefeld
-      // ueberstanden.
-      //
-      // `lg` ist raus: die Groesse hat nie eine Aufrufstelle benutzt.
+
       size: {
         default: 'h-steuer px-3',
         sm: 'h-steuer px-2.5',

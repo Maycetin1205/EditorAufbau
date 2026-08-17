@@ -1,13 +1,3 @@
-// jaNeinProperty
-// Kleiner Ja/Nein-Select fuer boolesche Eigenschaften (z. B. Auffangspalte).
-// Bewusst als Select statt eigenem Boolean-Control: kein neues
-// Inspector-Infra (DRY); ein echtes Toggle kann folgen, wenn die Faelle es
-// rechtfertigen. Nutzer: die Kanban-Spalte (Herkunft: Kahlschlag der
-// Anfangs-Bausteine, Nutzer-Entscheidung 2026-07-14).
-//
-// Technikwert = 'ja' | 'nein' (String, nie Boolean): reist verlustfrei als
-// Export-Attribut und durch den Persistenz-Lader (normalizeProps).
-
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 
 export function jaNeinProperty(

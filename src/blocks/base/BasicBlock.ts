@@ -1,24 +1,3 @@
-// BasicBlock
-// Pflicht-Basisklasse fuer alle Block-Views (Notiz Woche 2: BasicComponentForGrid).
-// Konkrete Blocks erben von BasicBlock und implementieren das BlockComponent-Interface.
-//
-// Aufgaben dieser Klasse:
-//  - LitElement-Basis fuer alle Blocks (Web Component)
-//  - geteilte :host-Styles, damit jeder Block die Hostflaeche fuellt
-//  - Instanz-Getter `customProperties`, der auf das statische gleichnamige
-//    Feld der konkreten Klasse delegiert (Notiz-Vertrag erfuellt, aber Daten
-//    liegen statisch — keine Instanzierung noetig).
-//  - `editable` Reactive Property: BlockHost setzt true, sobald der Block
-//    selektiert ist; Bloecke koennen damit ihre Inline-Editing-Hooks
-//    aktivieren (Doppelklick auf Label/Text).
-//  - Inline-Edit-Helper `inlineEdit`: blendet contenteditable in das
-//    angeklickte Element ein und emittiert 'ff-prop-change' nach Commit.
-//  - statischer Helper `defineAndRegister`, der HMR-geschuetzt das Custom-Element
-//    registriert und den Registry-Eintrag aus den statischen Klassenfeldern
-//    materialisiert. KEIN `new` auf dem Konstruktor — `new` auf einem noch
-//    nicht registrierten Custom-Element ist laut Spec illegal und wuerde
-//    in HMR-Reloads brechen.
-
 import { css, LitElement, type CSSResultGroup } from 'lit'
 import { property } from 'lit/decorators.js'
 import type { BlockComponent, BlockComponentStatic } from '../../core/blocks/BlockComponent'
@@ -30,38 +9,10 @@ import { AUSWAHL_FOLGE_DEFAULTS } from '../../core/data/auswahlFolge'
 import { QUELLEN_DEFAULTS } from '../../core/data/sourceLinks'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
-  // Flow-Modell: der Block füllt KEINE feste Hostfläche mehr, sondern nimmt
-  // im Container-Fluss seine natürliche Größe ein.
-  //
-  // Daten-Markierung: gebundene Stellen (data-ff-bound, vom Block
-  // aus seiner Bindungs-Prop gerendert) bekommen eine gepunktete Linie in
-  // der Hausfarbe — aber NUR im Editor: data-ff-editor setzt ausschließlich
-  // der BlockHost (wie data-editable), im Export bleibt die Maske sauber.
-  // Die zweite Zeile unten (:host([hidden])) ist die eine, die das Umschalten
-  // der Ansichten in SoftEngine ueberhaupt erst wirksam macht — Befund N2.1-6
-  // aus dem Echttest: zwei Flaechen lagen uebereinander. Warum sie sein muss:
-  // die gleichnamige Regel [hidden]{display:none} steht im Stylesheet des
-  // BROWSERS und verliert damit gegen jede Autoren-Regel, also auch gegen
-  // :host{display:block} darueber. Wer das hidden-Attribut an einen Baustein
-  // schreibt (navi/seRuntime blendet damit die nicht gewaehlte Flaeche weg),
-  // aendert ohne sie gar nichts. Bis N2.1 trug nur die Ansicht selbst eine
-  // eigene Abschrift davon; die Bausteine der Hauptseite blieben stehen.
-  // Bewusst OHNE !important: ein GEOEFFNETES Popup traegt seine eigene
-  // display-Regel mit derselben Spezifitaet spaeter im Stapel und bleibt
-  // darum offen (so steht es im Vertrag in navi/seRuntime).
-  // Die Begruendung steht HIER und nicht im CSS: jeder Kommentar innerhalb des
-  // Stils reist Byte fuer Byte in JEDE exportierte Maske (Umlaute darin
-  // sechsfach, als \uXXXX).
   static override styles: CSSResultGroup = css`
     :host { display: block; }
-    :host([hidden]) { display: none; } /* s. Kommentar ueber dieser Klasse */
-    /* Rasterflaeche (Attribut 'fuellt' — im Editor von useLitElement gesetzt,
-       im Export vom Wurzel-Kind): der Baustein fuellt seine Zelle in der Hoehe
-       (die Breite fuellt display:block ohnehin). NUR auf der Maskenflaeche
-       gesetzt — in Containern (Fluss) fehlt das Attribut, der Baustein behaelt
-       seine Naturgroesse. Editor UND Export setzen es identisch (WYSIWYG,
-       Regel 1); je Baustein-CSS fuellt der sichtbare Inhalt (Knopf/Feld) dann
-       die Hostflaeche. */
+    :host([hidden]) { display: none; }
+
     :host([fuellt]) { height: 100%; box-sizing: border-box; }
     [data-ff-editable] { cursor: text; }
     :host(:not([data-editable])) [data-ff-editable] { cursor: inherit; }
@@ -75,9 +26,6 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
 
   static readonly customProperties: PropertyDescription[] = []
 
-  // Vom BlockHost auf das DOM-Property gesetzt. true wenn der Block selektiert
-  // ist und Inline-Edit zulaessig waere. Wir reflektieren als Attribut, damit
-  // :host([data-editable]) CSS greift.
   @property({ type: Boolean, reflect: true, attribute: 'data-editable' })
   editable = false
 
@@ -85,27 +33,16 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
     return (this.constructor as typeof BasicBlock).customProperties
   }
 
-  // Inline-Editing-Brueckenkopf:
-  //   1. Doppelklick auf ein Element mit data-ff-editable.
-  //   2. Element wird contenteditable, Cursor rein, Auswahl markiert.
-  //   3. Enter/Blur committed; Escape verwirft.
-  //   4. Commit emittiert 'ff-prop-change' { attr, value: string }.
-  // Bloecke binden den Listener via @dblclick=${(e) => this.inlineEdit(e, 'label')}.
   protected inlineEdit(event: MouseEvent, attr: string): void {
     if (!this.editable) return
     const target = event.currentTarget as HTMLElement | null
     if (!target) return
-    // Gebundene Stellen zeigen Daten, nicht Text — kein Inline-
-    // Edit. Das Event läuft weiter zum BlockHost, der den Feld-Picker öffnet.
+
     if (target.hasAttribute('data-ff-bound')) return
     event.stopPropagation()
     event.preventDefault()
     const original = target.textContent ?? ''
-    // Lit verwaltet die Kindknoten der Stelle (Marker-Kommentare + Text).
-    // Für den Verwerfen-Fall werden die Originalknoten samt Inhalt gesichert:
-    // ein nacktes `textContent = original` würde Lits Marker zerstören, und
-    // die Stelle bekäme danach NIE wieder ein Update (z. B. die Klarnamen-
-    // Vorschau nach einer Bindung).
+
     const originalNodes = Array.from(target.childNodes)
     const originalData = originalNodes.map((n) => n.textContent ?? '')
     target.setAttribute('contenteditable', 'plaintext-only')
@@ -165,21 +102,12 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       tagName: BlockClass.tagName,
       displayName: BlockClass.displayName,
       category: BlockClass.category,
-      // Universelle Flow-Props (width) UND Raster-Props (rasterX/Y/W/H) liegen
-      // unter den Block-Defaults, damit Persistenz sie kennt; Block-eigene
-      // Defaults gewinnen.
-      // Dazu (2026-07-28) die Liste WEITERER Datenquellen — aber nur fuer
-      // Bausteine, die ueberhaupt eine Datenquelle tragen. Generisch hier
-      // statt in jedem Baustein: ein neuer Baustein mit acceptsDataSource
-      // bekommt die Faehigkeit geschenkt und kann sie nicht vergessen
-      // (Regel 2). Leere Liste = kein Export-Attribut (exportMask), darum
-      // aendert das an bestehenden Masken kein einziges Byte.
+
       defaultProps: {
         ...FLOW_DEFAULTS,
         ...RASTER_DEFAULTS,
         ...(BlockClass.acceptsDataSource ? QUELLEN_DEFAULTS : null),
-        // Auswahl-Folge nur fuer Bausteine, die folgen KOENNEN — gleiche
-        // Bauart: leere Liste = kein Export-Attribut, kein Byte aendert sich.
+
         ...(BlockClass.kannAuswahlFolgen ? AUSWAHL_FOLGE_DEFAULTS : null),
         ...BlockClass.defaultProps,
       },

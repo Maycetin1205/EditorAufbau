@@ -1,14 +1,8 @@
-// Wächter für die Popup-Schritte der Ketten-Laufzeit: applyPopupStep
-// schaltet GENAU das Popup mit dem Klarnamen — mehr nicht. DOM-frei getestet
-// über einen Attrappen-Wurzelknoten (Node-Umgebung, Muster seRuntime.test).
-
 import { describe, expect, it } from 'vitest'
 import { applyPopupStep } from './seAktionen'
 import { resolveActionParam } from '../../softengine/relations'
 import type { ActionParamBinding } from '../../core/data/aktionen'
 
-// `name: null` = Popup OHNE name-Attribut (so exportiert der Export seit
-// 2026-08-06 ein nie umbenanntes Popup — Standardwerte reisen nicht mit).
 function fakePopup(name: string | null) {
   const attrs = new Map<string, string>(name === null ? [] : [['name', name]])
   return {
@@ -40,9 +34,6 @@ describe('applyPopupStep', () => {
   })
 
   it('ohne name-Attribut gilt der STANDARDNAME (sonst klickte der Knopf ins Leere)', () => {
-    // Ein nie umbenanntes Popup heisst „Popup" und traegt seit 2026-08-06 kein
-    // Attribut mehr. Die Kette sucht trotzdem nach dem Klarnamen — findet sie
-    // ihn nicht, passiert beim Klick NICHTS und niemand sieht warum (Regel 4).
     const unbenannt = fakePopup(null)
     applyPopupStep(fakeRoot([unbenannt]), 'Popup', true)
     expect(unbenannt.offen()).toBe(true)
@@ -55,7 +46,6 @@ describe('applyPopupStep', () => {
     expect(popup.offen()).toBe(false)
   })
 
-  // C3.2 (2026-08-16): es ist immer hoechstens EINES offen.
   it('schliesst beim Öffnen jedes andere Popup', () => {
     const a = fakePopup('A')
     const b = fakePopup('B')
@@ -63,9 +53,7 @@ describe('applyPopupStep', () => {
 
     applyPopupStep(root, 'A', true)
     expect(a.offen()).toBe(true)
-    // A oeffnet B: danach liegt B nicht HINTER A, sondern A ist zu. Vorher
-    // lagen beide uebereinander, und welches oben lag, entschied allein die
-    // Reihenfolge im HTML.
+
     applyPopupStep(root, 'B', true)
     expect(b.offen()).toBe(true)
     expect(a.offen()).toBe(false)
@@ -76,8 +64,7 @@ describe('applyPopupStep', () => {
     const root = fakeRoot([a])
     applyPopupStep(root, 'A', true)
     applyPopupStep(root, 'Gibt es nicht', true)
-    // Ein Schritt ins Leere darf das offene Fenster nicht mitreissen: der
-    // Bediener haette sonst einen Knopf, der seine Arbeit zuklappt.
+
     expect(a.offen()).toBe(true)
   })
 
@@ -89,13 +76,11 @@ describe('applyPopupStep', () => {
     applyPopupStep(root, 'Offen', true)
 
     applyPopupStep(root, 'Gleich', true)
-    // Weder eines der beiden aufschalten (bis 2026-08-16 gingen BEIDE auf)
-    // noch das bereits offene zumachen: das Ziel ist unbestimmt.
+
     expect(doppelt1.offen()).toBe(false)
     expect(doppelt2.offen()).toBe(false)
     expect(offen.offen()).toBe(true)
 
-    // Und Schliessen trifft ebenso wenig.
     applyPopupStep(root, 'Gleich', false)
     expect(offen.offen()).toBe(true)
   })
@@ -112,9 +97,6 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
     expect(resolveActionParam(b('x'), values, {})).toBe('')
   })
 
-  // A1 (2026-08-10): der abgeschaltete Parameter loest zu '' auf und BLEIBT
-  // an seiner Stelle. Weglassen wuerde alles dahinter um eins verschieben —
-  // PUT_RELATION liest die Parameter nach Position, nicht nach Namen.
   it('aus loest zu leer auf, die Nachbarn behalten Position und Wert', () => {
     const values = { context: { PINDEX: '271' }, previousResult: '' }
     const params: ActionParamBinding[] = [
@@ -126,9 +108,6 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
   })
 
   it('step_result mit gewaehltem Feld liest DIESES Feld aus der Rohantwort (2026-08-07)', () => {
-    // Der Ergebnis-Skalar traegt nur EINEN Wert (RESULT/PINDEX/…). Wer ein
-    // anderes Feld der Antwort braucht, waere ohne die Rohantwort verloren —
-    // sie reist deshalb an denselben Indizes mit.
     const antwort = { MSG: { DATA: { RESULT: '271', 'IDBID0001_78_30': 'Rex', '2_8': '10001' } } }
     const values = {
       context: {},
@@ -138,14 +117,12 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
     }
     const b = (ergebnisFeld?: string): ActionParamBinding =>
       ({ source: 'step_result', value: '0', ...(ergebnisFeld ? { ergebnisFeld } : {}) })
-    // OHNE Feld unveraendert das ganze Ergebnis — bestehende Masken aendern
-    // sich nicht.
+
     expect(resolveActionParam(b(), values, {})).toBe('271')
-    // MIT Feld: die Aufloesung ist DIESELBE wie ueberall sonst (getField),
-    // also auch durch den Tabellen-Praefix hindurch.
+
     expect(resolveActionParam(b('78_30'), values, {})).toBe('Rex')
     expect(resolveActionParam(b('2_8'), values, {})).toBe('10001')
-    // Feld gibt es nicht / keine Rohantwort (PUT-Schritt) -> leer, nie geraten.
+
     expect(resolveActionParam(b('99_4'), values, {})).toBe('')
     expect(resolveActionParam(b('78_30'), { ...values, stepRohErgebnisse: [undefined] }, {})).toBe('')
   })
@@ -163,10 +140,9 @@ describe('resolveActionParam: Zwischenspeicher + Erste-Zeile-Regel (2026-07-17)'
       },
     }
     const binding: ActionParamBinding = { source: 'data_field', value: '78_30', dataSourceId: 'q1' }
-    // Knopf-Klick: kein PINDEX im Ereignis → erste Zeile (wie feldRuntime).
-    // Vorher lief dieser Fall still auf '' (Befund 2026-07-17).
+
     expect(resolveActionParam(binding, { context: {}, previousResult: '' }, runtime)).toBe('Rex')
-    // Mit Ereignis-Index (Kanban-Karte) weiterhin die passende Zeile.
+
     expect(resolveActionParam(binding, { context: { PINDEX: '2' }, previousResult: '' }, runtime)).toBe('Minka')
   })
 
@@ -203,22 +179,21 @@ describe('resolveActionParam: „Feld der gewaehlten Zeile" (2026-08-06)', () =>
       gewaehlteZeile: (id: string) => (id === 'kunden' ? { '0_10': '271', '2_8': '10001' } : undefined),
     }
     expect(resolveActionParam(binding, values, {})).toBe('271')
-    // Der Satz-Index der gewaehlten Zeile ist damit als PUT-Parameter da —
-    // genau das ging vorher nicht (nur der Ausloeser trug {PINDEX}).
+
     expect(resolveActionParam({ ...binding, value: '2_8' }, values, {})).toBe('10001')
   })
 
   it('ohne Auswahl, ohne Geber und ohne Zulieferer bleibt es LEER (kein Raten)', () => {
     const ohneAuswahl = { context: {}, previousResult: '', gewaehlteZeile: () => undefined }
     expect(resolveActionParam(binding, ohneAuswahl, {})).toBe('')
-    // Anderer Geber angeklickt: dieser Parameter bleibt trotzdem leer.
+
     const anderer = {
       context: {},
       previousResult: '',
       gewaehlteZeile: (id: string) => (id === 'belege' ? { '0_10': '99' } : undefined),
     }
     expect(resolveActionParam(binding, anderer, {})).toBe('')
-    // Gar kein Zulieferer (Kette ausserhalb der Maske): ebenfalls leer.
+
     expect(resolveActionParam(binding, { context: {}, previousResult: '' }, {})).toBe('')
   })
 })

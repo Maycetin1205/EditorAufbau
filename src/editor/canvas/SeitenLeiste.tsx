@@ -1,20 +1,3 @@
-// SeitenLeiste
-// Seiten-Reiter — seit R1 (2026-07-21) als kompakte segmentierte Gruppe in
-// der Top-Bar der Shell (vorher schwebend über der Fläche). Reine
-// Editor-Hilfe: Hauptseite | Klarnamen der Seiten | ein „＋" je Seiten-Art.
-//
-// WELCHE Seiten-Arten es gibt, sagt die Registry (pageBlock) — bis N1
-// (2026-08-12) stand hier ein fester „＋ Popup"-Knopf, und der Store suchte
-// sich die Art selbst zusammen. Mit der Ansicht daneben legte das still die
-// falsche Seite an.
-//
-// Bedienung am Ding (Regel 7): Doppelklick auf den Reiter benennt die Seite
-// um, der Papierkorb am aktiven Reiter wirft sie weg. Beides gibt es hier,
-// weil eine Ansicht sonst NICHTS Anklickbares hätte — sie ist die
-// Maskenfläche selbst, kein Baustein (das Popup dagegen hat zusätzlich
-// seinen Fenstertitel und seinen Rahmen). Gelöscht wird ohne Rückfrage, Netz
-// ist Strg+Z (Entscheidung U2, 2026-08-12).
-
 import { Trash } from '@/ui/zeichen'
 import { Fragment, useState } from 'react'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
@@ -24,7 +7,7 @@ export function SeitenLeiste() {
   const ed = useEditor()
   const pages = ed.pages
   const aktiv = ed.activePageId
-  // Welche Seite gerade umbenannt wird (id) und der Text im Feld.
+
   const [umbenennen, setUmbenennen] = useState<{ id: string; text: string } | null>(null)
   const seitenArten = getAllBlockDefinitions().filter((def) => def.pageBlock)
 
@@ -59,8 +42,7 @@ export function SeitenLeiste() {
             <button
               type="button"
               onClick={() => ed.setActivePage(p.id)}
-              // Die Hauptseite hat keinen eigenen Baustein und darum keinen
-              // Namen zu vergeben — sie IST die Wurzel.
+
               onDoubleClick={() => {
                 if (!p.istHauptseite) setUmbenennen({ id: p.id, text: p.name })
               }}

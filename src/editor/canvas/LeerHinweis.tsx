@@ -1,15 +1,3 @@
-// LeerHinweis — der Kasten „hier ist noch nichts, zieh etwas her".
-//
-// Aus Canvas herausgeloest, als das leere POPUP der zweite echte Fall wurde
-// (2026-08-16, Regel 10: erst der zweite Fall erzwingt das Teilen). Eine
-// leere Flaeche ohne Hinweis ist eine wortlose Flaeche — der Bauer sieht
-// nicht, dass er hier etwas ablegen kann.
-//
-// Nur der KASTEN wohnt hier, nicht seine Platzierung: auf der Maskenflaeche
-// liegt er als Overlay ueber dem ganzen Blatt, im Popup als Zelle im Rumpf.
-// Beide Male ist er reine Editor-Hilfe (data-ff-editor-helper) und nie Teil
-// des Baums; `pointer-events-none` laesst Drops durch ihn hindurch.
-
 import { MousePointerClick } from '@/ui/zeichen'
 import type { ReactElement } from 'react'
 

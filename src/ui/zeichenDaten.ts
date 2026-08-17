@@ -1,37 +1,3 @@
-// zeichenDaten — die Zeichnungen der Editor-Symbole, als reine Daten.
-//
-// Getrennt von ./zeichen (der Mechanik), weil es zwei Dinge sind: dort steht
-// EINMAL, wie aus Knoten ein SVG wird, hier stehen die 46 Zeichnungen. Zusammen
-// standen sie bei 487 Zeilen — 13 unter dem Deckel, also haette das naechste
-// Symbol ihn gerissen.
-//
-// Woher die Daten kommen und warum sie ueberhaupt hier stehen: siehe ./zeichen.
-// EIN Symbol ergaenzen: Namen aufnehmen und das Knoten-Array aus
-// lucide-react/dist/esm/icons/<name>.mjs abschreiben (ohne dessen `key`-
-// Angaben, die braucht nur seine eigene Liste). Fuehrt lucide das Zeichen unter
-// einem anderen Namen, steht der als Kommentar dahinter — er landet in der
-// CSS-Klasse und wird in ./zeichen mitgegeben.
-//
-// Die Zeichnungen stammen aus lucide (https://lucide.dev), Fassung 1.27.0,
-// ISC-Lizenz:
-//
-//   Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as
-//   part of Feather (MIT). All other copyright (c) for Lucide are held by
-//   Lucide Contributors 2022.
-//
-//   Permission to use, copy, modify, and/or distribute this software for any
-//   purpose with or without fee is hereby granted, provided that the above
-//   copyright notice and this permission notice appear in all copies.
-//
-//   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-//   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-//   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-//   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-//   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-//   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-//   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-// Ein SVG-Kind: Tag plus Attribute, genau wie lucide es ablegt.
 export type Knoten = [string, Record<string, string | number>]
 
 export const KNOTEN = {

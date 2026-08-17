@@ -1,26 +1,5 @@
-// softengine/bridge — Anmeldung und Daten-Push
-//
-// Teil der gemeinsamen SoftEngine-Schicht (Umzug 2026-07-15 aus
-// blocks/kanban/seRuntime.ts, verhaltensgleich): der EINE Anschluss der
-// exportierten Maske an SoftEngine. SoftEngine SCHIEBT die Daten — die
-// Maske meldet sich per basisHTML_REGISTER an (Retry-Schleife 25ms x 400)
-// bzw. empfängt das message-Event und setzt SEDATA.Daten SELBST. Exakt
-// nach der verbindlichen Referenz behandlung-umbau
-// empfang/index.basis.source.html BLOCK 1/9 (regSE + __seConsume) + altem
-// Editor (runtime/boot.ts). Der Poll bleibt nur als Fallback für
-// Umgebungen, die SEDATA direkt stellen (Tests, alte Einbettungen).
-//
-// Der ABO-PUNKT ist die einzige strukturelle Änderung des Umzugs: statt
-// fest „hydriere alle Boards" zu rufen, klingelt die Brücke bei jedem
-// angenommenen Daten-Push alle angemeldeten Zuhörer (heute: die
-// Kanban-Boards; später melden sich Formularfelder/Tabelle einfach
-// zusätzlich an — am Empfang wird dafür nie wieder gebaut).
-//
-// Abhängigkeitsregel der Schicht: Bausteine importieren src/softengine/*,
-// diese Schicht kennt NIE einen Baustein.
-
 import { isRecord, messagePayload, payloadDaten } from './data'
-// meldung importiert selbst NICHTS — kein Kreis zurueck auf bridge.
+
 import { meldeFehler } from './meldung'
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- SEDATA/selib sind
@@ -35,8 +14,6 @@ export function hasSeData(): boolean {
   return isRecord(g.SEDATA) && isRecord(g.SEDATA.Daten)
 }
 
-// Schnittstelle initialisieren — exakt die Aufrufe der Referenzmaske; alle
-// optional, weil sie nur in SoftEngine existieren.
 function tryInitSe(): void {
   const g = seGlobal()
   try { g.selib?.Json?.InitializeERPConnection?.() } catch { /* nicht in SE */ }
@@ -49,22 +26,13 @@ function refreshDataBasis(): void {
   try { if (typeof g.InitialisiereDatenBasis === 'function') g.InitialisiereDatenBasis() } catch { /* s.o. */ }
 }
 
-// ---------- Abo-Punkt ----------
-
 const zuhoerer = new Set<() => void>()
 const antwortZuhoerer = new Set<(raw: unknown) => void>()
 
-// Zuhörer anmelden: wird bei JEDEM angenommenen Daten-Push (und den
-// SE-Einstiegspunkten Erstellen/initData/ReloadData) gerufen. Die Zuhörer
-// prüfen selbst, ob Daten da sind (hasSeData) — wie bisher hydrateAll.
 export function onSeDaten(cb: () => void): void {
   zuhoerer.add(cb)
 }
 
-// Rohantworten aus dem registrierten SoftEngine-Callback. Das offizielle
-// basisHTML-Interface hat an dieser Stelle BWMSG (BüroWARE/WinUI) und WWMSG
-// (WEBWARE) bereits identisch auf MSG.DATA reduziert. Konsumenten dürfen
-// deshalb nie selbst auf einen der beiden Transportnamen lauschen.
 export function onSeAntwort(cb: (raw: unknown) => void): () => void {
   antwortZuhoerer.add(cb)
   return () => { antwortZuhoerer.delete(cb) }
@@ -74,11 +42,6 @@ function klingeln(): void {
   zuhoerer.forEach((cb) => cb())
 }
 
-// Der Relation-Lader (Welle R) speist geholte Zeilen ein und klingelt danach
-// über DENSELBEN Abo-Punkt wie ein Daten-Push: ALLE Bausteintypen zeichnen
-// neu, keiner kennt den Lader. (Hätte der Lader nur „seinen" Anschluss
-// geklingelt, sähe eine Tabelle die Positionen und das Formularfeld daneben
-// nicht — genau der halbe Neuzeichnen-Fehler, den der Abo-Punkt verhindert.)
 export function meldeNeueDaten(): void {
   klingeln()
 }
@@ -89,18 +52,6 @@ function antwortKlingeln(raw: unknown): void {
   })
 }
 
-// ---------- SE-Push-Empfang ----------
-
-// Ein geschobenes SE-Paket annehmen: SEDATA.Daten SELBST setzen (exakt wie
-// __seConsume der Referenz), Datenbasis auffrischen, Zuhörer klingeln.
-// Jeder weitere Push aktualisiert erneut — das ist der Live-Weg von
-// SoftEngine (der Poll feuerte nur einmal).
-//
-// Bis 2026-08-17 hing hier eine versteckte Diagnose-Textarea (Strg+Alt+D) mit
-// dem rohen ERSTEN Paket. Auf Nutzer-Ansage restlos entfernt: sie schrieb bei
-// JEDEM Ereignis ihren ganzen Inhalt neu — samt dem kompletten Rohpaket, das
-// niemand ansah — und das mitten im Maskenstart. Nicht wieder einbauen; was
-// beim Scheitern wirklich gebraucht wird, sagt der Fehlerbalken (meldeFehler).
 function seConsume(raw: unknown): void {
   const daten = payloadDaten(raw)
   if (!daten) {
@@ -114,10 +65,6 @@ function seConsume(raw: unknown): void {
   klingeln()
 }
 
-// Bei SoftEngine anmelden: Retry-Schleife wie regSE der Referenz (25ms x
-// 400 = 10s), denn die Bridge-Funktion erscheint erst, wenn SE sein
-// Framework injiziert hat. basisHTML_SetConsoleLog wie die Referenz —
-// JS-Logs landen damit im SE-Protokoll.
 function registerSe(tries = 0): void {
   const g = seGlobal()
   if (typeof g.basisHTML_REGISTER === 'function') {
@@ -135,19 +82,12 @@ function registerSe(tries = 0): void {
   if (tries < 400) {
     setTimeout(() => { registerSe(tries + 1) }, 25)
   } else {
-    // Bis 2026-08-05 stand das NUR in der versteckten Diagnose: die Maske sah
-    // fertig aus, blieb aber fuer immer ohne Daten, und niemand erfuhr warum
-    // (Regel 4). Jetzt sagt es der Balken.
     meldeFehler('SoftEngine-Anschluss nicht gefunden — die Maske bleibt ohne Daten.')
   }
 }
 
 let booted = false
 
-// Einmal pro Maske: Schnittstelle starten, bei SE anmelden (Push),
-// message-Fallback verdrahten, Einstiegspunkte anbieten,
-// zusätzlich auf direkt gestelltes SEDATA warten (Poll, nur Fallback).
-// Idempotent — jeder Konsument darf rufen, gestartet wird einmal.
 export function bootSe(): void {
   if (booted) return
   booted = true
@@ -157,8 +97,7 @@ export function bootSe(): void {
   g.initData = g.Erstellen
   g.ReloadData = () => { klingeln() }
   registerSe()
-  // message-Fallback NUR ohne Register-Weg (Referenz: sonst käme jedes
-  // Paket doppelt an); capture wie Referenz + alter Editor.
+
   window.addEventListener('message', (evt) => {
     if (typeof seGlobal().basisHTML_REGISTER === 'function') return
     const payload = messagePayload(evt.data)

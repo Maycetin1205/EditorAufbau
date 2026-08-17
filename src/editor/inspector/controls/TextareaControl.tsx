@@ -1,7 +1,3 @@
-// TextareaControl
-// Inspector-Control für mehrzeilige Text-Properties (kind 'textarea').
-// Komponiert Field-Molekül + Textarea-Atom.
-
 import type { PropertyDescription } from '../../../core/blocks/PropertyDescription'
 import { useEingabeSitzung } from './eingabeSitzung'
 import { Textarea } from '@/ui/atoms/textarea'
@@ -11,7 +7,7 @@ interface TextareaControlProps {
   property: PropertyDescription
   value: string
   onChange: (value: string) => void
-  // Eine Eingabe-Sitzung klammern (Undo): siehe eingabeSitzung.ts.
+
   onBeginBearbeitung?: () => void
   onEndeBearbeitung?: () => void
 }

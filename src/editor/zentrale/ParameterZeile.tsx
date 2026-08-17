@@ -1,25 +1,3 @@
-// ParameterZeile — EINE Zeile eines Aktions-Parameters: Name | Herkunft | Ziel.
-//
-// Aus StepForm herausgeloest (2026-07-24), weil die Datei ueber den
-// 500-Zeilen-Deckel gewachsen war. Der Schnitt ist der natuerliche: hier die
-// EINZELNE Parameterzeile mit ihren Wert-Steuerungen, drueben das Formular,
-// das die Zeilen anordnet.
-//
-// UMGESTELLT 2026-08-17 (Schritt 2 des Umbaus): jede Auswahl in dieser Zeile
-// laeuft ueber DAS eine Waehler-Bauteil (ui/molecules/waehler). Vorher waren
-// es NEUN eigene Auswahlfelder, und das wichtigste davon — die Klappliste
-// „woher kommt der Wert" mit acht Eintraegen — schnitt in der 340-px-Spalte
-// des Inspectors hart ab: sechs der acht Eintraege standen unlesbar da
-// (ein <select> kuerzt nicht mit Auslassungspunkten, es schneidet).
-// Der Waehler oeffnet als schwebendes Fenster mit Suchzeile; die Zeile selbst
-// zeigt nur noch den gewaehlten Klarnamen und kuerzt mit „…".
-//
-// „Weggelassen" (aus) ist dabei der Zustand, den man NICHT waehlt (das tut das
-// x an der Zeile) — er wird nur ANGEZEIGT, und die Zeile sagt jetzt auch, was
-// dann hinausgeht. Bis hierhin zeigte das Auswahlfeld irgendeinen fremden
-// Eintrag und der Platzhalter daneben behauptete, der Vorlagenwert werde
-// geschickt; geschickt wurde ein leerer String (dokumentierter Fehler A1).
-
 import { Link2, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
@@ -36,18 +14,12 @@ import type { FeldUebernahmeZiel } from './feldUebernahme'
 import { blockValueKey, type AuswahlGeberOption, type BlockValueOption } from './helfer'
 import { PLATZHALTER_KLARTEXT } from './helfer'
 
-// Anzeige = der Platzhalter selbst, wie er in der Relations-Syntax steht
-// (Fachbegriff-Entscheidung 2026-07-15, keine erfundenen Klarnamen). Was er
-// BEDEUTET, steht seit dem Umbau als leise Marke daneben — derselbe Klartext,
-// den die Relations-Bibliothek schon fuehrt, keine zweite Wahrheit.
 const CONTEXT_EINTRAEGE: WaehlerEintrag[] = AKTIONS_PLATZHALTER.map((wert) => ({
   wert,
   name: wert,
   kennung: PLATZHALTER_KLARTEXT[wert] ?? '',
 }))
 
-// Klarnamen der Parameterquellen — Editor-Tabelle (Muster optionColors):
-// die Namen bleiben aus dem Runtime-Buendel heraus (dort zaehlen nur die Keys).
 const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   fixed: 'Fest',
   context: 'Ereigniswert',
@@ -57,13 +29,10 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
-  // Nie im Auswahlfeld angeboten (nicht in ACTION_PARAM_SOURCES) — gesetzt
-  // wird der Zustand mit dem x an der Zeile. Der Name steht hier, weil die
-  // Zeile ihn ANZEIGEN muss, sobald er gilt.
+
   aus: 'Weggelassen',
 }
 
-// Die Wert-Steuerung EINES Parameters — welche es ist, bestimmt die Herkunft.
 function BindingValue({
   binding,
   dataSources,
@@ -96,13 +65,6 @@ function BindingValue({
     )
   }
   if (binding.source === 'step_result') {
-    // Links: die GET-Schritte davor, per Position angeboten — kein
-    // Namen-Vergeben, nur anklicken (Nutzer-Entscheidung 2026-07-17).
-    //
-    // Rechts: WELCHES Feld des Ergebnisses (2026-08-07). Ohne Wahl gilt das
-    // ganze Ergebnis. Die Felder kommen aus der Quelle des Ziel-Schritts;
-    // kennt er keine (der haeufige Fall — ein GET-Schritt braucht keine
-    // Datenquelle), wird der Feldcode getippt statt geraten.
     const ziel = schritte.find((s) => s.id === binding.value)
     const quelle = dataSources.find((q) => q.id === ziel?.quelleId)
     const felder = quelle?.fields ?? []
@@ -124,9 +86,6 @@ function BindingValue({
           wert={binding.value}
           platzhalter={schritte.length === 0 ? '(kein GET-Schritt davor)' : '— wählen —'}
           onWaehle={(id) => {
-            // Anderer Schritt = andere Antwort: ein Feldcode der alten laese
-            // in der neuen still nichts (dieselbe Linie wie der Quellwechsel
-            // bei „Datenfeld").
             const naechste: ActionParamBinding = { ...binding, value: id }
             delete naechste.ergebnisFeld
             onChange(naechste)
@@ -204,14 +163,8 @@ function BindingValue({
     )
   }
   if (binding.source === 'gewaehlte_zeile') {
-    // Zwei Auswahlen wie bei „Datenfeld": erst WER die Auswahl gibt, dann
-    // WELCHES Feld seiner Zeile. Die Felder kommen aus der Quelle des Gebers —
-    // die gewaehlte Zeile stammt von dort, andere Felder gaebe es in ihr gar
-    // nicht (Regel 7: nichts erfinden).
     const gewaehlter = geber.find((g) => g.blockId === binding.blockId)
-    // Geber geloescht: den Zustand benennen statt still leer (Regel 4). Hier
-    // ist es die EINZIGE Anzeige davon — der Export laeuft auch mit dem toten
-    // Verweis durch.
+
     const geberEintraege: WaehlerEintrag[] = geber.map((g) => ({ wert: g.blockId, name: g.label }))
     if (binding.blockId && !gewaehlter) {
       geberEintraege.push({ wert: binding.blockId, name: '(gelöschter Baustein)' })
@@ -262,11 +215,7 @@ function BindingValue({
       />
     )
   }
-  // Der Platzhalter zeigt grau, was OHNE eigene Eingabe gilt: den Wert aus der
-  // Relations-Syntax. Frueher stand dieser Wert als echter Text im Feld — der
-  // Bauer sah zehn ausgefuellte Felder und musste raten, welche davon er
-  // selbst gesetzt hatte. Grau heisst: kommt aus der Vorlage, fasst du nichts
-  // an, wird genau das geschickt.
+
   return (
     <TextInput
       value={binding.value}
@@ -295,12 +244,9 @@ export function ParameterZeile({
   blockValues: readonly BlockValueOption[]
   geber: readonly AuswahlGeberOption[]
   schritte: readonly ErgebnisSchritt[]
-  // Was OHNE eigene Eingabe gilt, grau im Feld. Leer = kein Vorlagenwert.
+
   platzhalter?: string
-  // Das × am Zeilenende. ZWEI Bedeutungen, darum kommt die Beschriftung von
-  // aussen: ein Zusatzparameter verschwindet ganz, ein Vorlagen-Parameter
-  // KANN nicht verschwinden (seine Position gehoert zur SoftEngine-Syntax) —
-  // er faellt auf den Vorlagenwert zurueck. Fehlt der Eintrag, gibt es kein ×.
+
   entfernen?: { label: string; onClick: () => void }
   ausloeser?: FeldUebernahmeZiel
   onChange: (binding: ActionParamBinding) => void
@@ -312,25 +258,20 @@ export function ParameterZeile({
       onChange({ source, blockId: target.blockId, value: target.prop })
       return
     }
-    // Genau EIN Auswahl-Geber in der Maske: direkt vorwaehlen — dann bleibt
-    // nur noch das Feld zu klicken (dieselbe Abkuerzung wie oben).
+
     if (source === 'gewaehlte_zeile' && geber.length === 1) {
       onChange({ source, blockId: geber[0].blockId, value: '' })
       return
     }
     const value = source === 'context'
       ? 'VALUE'
-      // Genau EIN GET davor: direkt vorwählen — der häufigste Fall
-      // (GET Index holen → benutzen) kommt dann ohne zweiten Klick aus.
+
       : source === 'step_result' && schritte.length === 1
         ? schritte[0].id
         : ''
     onChange({ source, value })
   }
 
-  // Was hier NICHT waehlbar ist, bleibt trotzdem stehen (deaktiviert) — sonst
-  // suchte der Bediener eine Moeglichkeit, die es sehr wohl gibt, nur eben
-  // noch ohne Datenquelle/Geber/GET-Schritt in der Maske.
   const herkunft: WaehlerEintrag[] = ACTION_PARAM_SOURCES.map((source) => ({
     wert: source,
     name: QUELLEN_NAMEN[source],
@@ -339,7 +280,7 @@ export function ParameterZeile({
       || (source === 'gewaehlte_zeile' && geber.length === 0)
       || (source === 'step_result' && schritte.length === 0),
   }))
-  // „Weggelassen" waehlt man nicht — es steht nur da, solange es gilt.
+
   if (binding.source === 'aus') {
     herkunft.push({ wert: 'aus', name: QUELLEN_NAMEN.aus, deaktiviert: true })
   }
@@ -347,8 +288,7 @@ export function ParameterZeile({
   return (
     <div className="flex items-center gap-1">
       <span className="w-14 shrink-0 truncate font-mono text-[0.6875rem]" title={label}>{label}</span>
-      {/* Herkunft und Ziel teilen sich den Platz. Beide kuerzen jetzt mit „…"
-          statt hart abzuschneiden — der Waehler ist ein Knopf, kein <select>. */}
+
       <div className="min-w-0 flex-1">
         <WaehlerKnopf
           bezeichnung={`Herkunft für ${label}`}

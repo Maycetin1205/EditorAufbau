@@ -1,16 +1,5 @@
-// dnd
-// Gemeinsame Drag-and-Drop-Konstanten für Canvas + Palette.
-// Neue Blöcke aus der Bibliothek reisen als DataTransfer-Eintrag mit diesem
-// MIME-Typ (Wert = Block-Typ). Vorteil: Palette und Canvas brauchen keinen
-// geteilten State — der Browser trägt die Information.
-
 export const NEW_BLOCK_MIME = 'application/x-ff-new-block'
 
-// Während `dragover` dürfen Daten NICHT gelesen werden (Browser-Schutz),
-// die Typenliste schon. Damit die Drag-Vorschau erlaubte Kind-Typen prüfen
-// kann, reist der Block-Typ zusätzlich IM MIME-Namen mit.
-// (Browser normalisieren MIME-Namen zu Kleinbuchstaben — Block-Typen sind
-// per Konvention bereits klein.)
 const TYPED_PREFIX = `${NEW_BLOCK_MIME}--`
 
 export function setNewBlockDrag(dt: DataTransfer, type: string): void {

@@ -1,14 +1,3 @@
-// Tests des Fremd-Lesers: findet die Laufzeit zu einer Zeile die
-// zusammengehoerige Zeile der weiteren Quelle?
-//
-// Das ist der Fall des Nutzers am echten Bestand: Terminplaner-Zeile,
-// Adressnummer 41, dazu die Notiz aus Kundenhaustieren. Geht das schief,
-// zeigt die fertige Maske in SoftEngine still den falschen Wert oder gar
-// keinen — im Editor waere davon nichts zu sehen.
-//
-// Bauart wie feldRuntime.test.ts nebenan (Fake-Element mit getAttribute,
-// Globals im afterEach weg) — dieselbe Testart, keine neue.
-
 import { afterEach, describe, expect, it } from 'vitest'
 import { macheFeldLeser } from './fremdeQuellen'
 
@@ -69,8 +58,6 @@ describe('macheFeldLeser', () => {
   })
 
   it('KEIN Partner -> leerer Wert (die Zeile bleibt stehen)', () => {
-    // Nutzer-Festlegung 2026-07-25: verschwundene Zeilen waeren unsichtbarer
-    // Datenverlust. Der Leser liefert '' — er entfernt nichts.
     setzeDaten([{ '10_8': '99', '128_350': 'anderer Kunde' }])
     const lies = macheFeldLeser(el(EINE_VERBINDUNG))
     expect(lies({ '10_8': '41' }, 'tiere::128_350')).toBe('')

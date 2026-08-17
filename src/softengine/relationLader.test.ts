@@ -1,26 +1,12 @@
-// Laufzeit-Tests des Relation-Laders (Welle R): Ende-Erkennung, überholte
-// Antwort, Abwahl, Felder hinter dem Schnitt, Notbremse — die Fälle aus dem
-// Etappenkopf R2. Läuft in Node gegen die ECHTE GET-Warteschlange
-// (relations/executeRelation, seriell); SoftEngine wird nur an ihrer
-// belegten Schnittstelle nachgestellt: basisHTML_REGISTER fängt den
-// Callback, basisHTML_SND_MSG sammelt die Fragen, geantwortet wird mit
-// {"RESULT": …} über den Callback — exakt die Form der Echttests.
-
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getField, rowsFor, type RuntimeLadeRelation } from './data'
 import { geholteZeilenFuer, setzeGeholteZeilenZurueck } from './geholteZeilen'
 import { ladeZeilenPerRelation } from './relationLader'
 
-// ---------- SoftEngine-Attrappe (vor dem ersten bootSe) ----------
-
 const g = globalThis as unknown as Record<string, unknown>
 let seCallback: ((raw: unknown) => void) | undefined
 const anfragen: { nr: string; params: string[] }[] = []
 
-// bridge läuft sonst nur im Browser: window/document brauchen nur die
-// Handgriffe, die bootSe/meldung anfassen (das Node-globalThis selbst taugt
-// nicht — sein addEventListener lehnt das capture-Flag der bridge ab).
-// body bleibt leer -> meldeFehler ist ein No-op.
 g.window ??= { addEventListener: () => {} }
 g.document ??= {
   title: 'Relation-Lader-Test',
@@ -34,30 +20,22 @@ g.basisHTML_REGISTER = (cb: (raw: unknown) => void): void => {
 g.basisHTML_SND_MSG = (_verb: string, nachricht: { NR: string; PARAMS: string[] }): void => {
   anfragen.push({ nr: nachricht.NR, params: nachricht.PARAMS })
 }
-// hasSeData() muss wahr sein (in SoftEngine gibt es vor jedem Klick einen
-// Push) — sonst bliebe der 30s-Warte-Poll von bootSe offen.
+
 g.SEDATA = { Daten: {} }
 
-// Irgendein Paket ueber den REGISTER-Callback — so, wie SoftEngine es
-// schickt (roher JSON-String).
 function sende(paket: unknown): void {
   if (!seCallback) throw new Error('SoftEngine-Callback nie registriert (bootSe nicht gelaufen?)')
   seCallback(JSON.stringify(paket))
 }
 
-// Die belegte Antwortform der Hol-Relation: {"RESULT": …}.
 function antworte(wert: string): void {
   sende({ RESULT: wert })
 }
 
-// Mikrotask-Kette abarbeiten lassen: Antwort -> executeRelation-Auflösung ->
-// frage() -> Schleife -> nächste Frage sind mehrere await-Stufen.
 async function tick(): Promise<void> {
   for (let i = 0; i < 6; i += 1) await Promise.resolve()
 }
 
-// Eine 255er-Positionszeile wie aus dem breiten Schnitt: Artikelnummer ab
-// Position 11 (11_6), Text ab 18 (18_25) — die belegten Ende-Felder.
 function satz(artikel: string, text: string): string {
   return (' '.repeat(11) + artikel.padEnd(6).slice(0, 6) + ' ' + text).padEnd(255)
 }
@@ -73,8 +51,6 @@ const LADE: RuntimeLadeRelation = {
   zusatzFelder: [],
 }
 
-// Geber-Zeile (Beleg) mit direkten Feld-Properties, wie sie eine Tabelle
-// aus SEFILELOOP-Daten liefert.
 const BELEG = { '2_1': 'R', '3_8': '26200228', '0_1': '6', '1_1': '0' }
 
 beforeEach(() => {
@@ -88,14 +64,12 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     ladeZeilenPerRelation(quelle, LADE, BELEG)
     await tick()
 
-    // Frage 1: exakt die belegte PARAMS-Form [BELART, POS, LEN, BELNR,
-    // JAHR, ARCHIV, '', POSNR, '', '', '', ''] mit dem breiten Schnitt.
     expect(anfragen).toHaveLength(1)
     expect(anfragen[0].nr).toBe('69')
     expect(anfragen[0].params).toEqual([
       'R', '0', '255', '26200228', '6', '0', '', '1', '', '', '', '',
     ])
-    // Anzeige erst am Ende: nach der ersten Zeile ist noch nichts zu sehen.
+
     antworte(satz('4711', 'Wurmkur'))
     await tick()
     expect(geholteZeilenFuer('BelegPositionen')).toEqual([])
@@ -103,14 +77,10 @@ describe('relationLader (Welle R, Etappe R2)', () => {
 
     antworte(satz('4712', 'Futter'))
     await tick()
-    // Ende: SoftEngine antwortet hinter der letzten Position mit LEEREM
-    // RESULT — beide Ende-Felder leer. Ohne satzAntwort (relations) liefe
-    // genau diese Antwort in den 6s-Timeout.
+
     antworte('')
     await tick()
 
-    // Der NORMALE Datenweg (rowsFor) liefert die geholten Zeilen; getField
-    // schneidet die Spalten aus dem SATZ-Rohstring.
     const rows = rowsFor({ Daten: {} }, 'BelegPositionen', 'POS')
     expect(rows).toHaveLength(2)
     expect(getField(rows[0], '11_6')).toBe('4711')
@@ -138,12 +108,10 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     const quelle = { id: 'q-ueberholt', name: 'Wechsel' }
     ladeZeilenPerRelation(quelle, LADE, BELEG)
     await tick()
-    // Noch bevor der erste Beleg antwortet, klickt der Bediener den zweiten.
+
     ladeZeilenPerRelation(quelle, LADE, { ...BELEG, '3_8': '26200400' })
     await tick()
 
-    // Die Antwort auf Frage 1 gehört zum ALTEN Beleg: der alte Lauf steigt
-    // aus, die Warteschlange schiebt die Frage des neuen nach.
     antworte(satz('ALT', 'Position des alten Belegs'))
     await tick()
     expect(anfragen).toHaveLength(2)
@@ -166,7 +134,6 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     antworte(satz('4711', 'Wurmkur'))
     await tick()
 
-    // Die Zusatzfrage: gleicher Schlüssel, gleiche POSNR, Ausschnitt 280/12.
     expect(anfragen).toHaveLength(2)
     expect(anfragen[1].params).toEqual([
       'R', '280', '12', '26200228', '6', '0', '', '1', '', '', '', '',
@@ -178,17 +145,10 @@ describe('relationLader (Welle R, Etappe R2)', () => {
 
     const rows = rowsFor({ Daten: {} }, 'MitZusatz', 'POS')
     expect(rows).toHaveLength(1)
-    // Direkte Property an der Zeile — getField findet sie VOR dem
-    // SATZ-Ausschnitt (der hinter 255 ohnehin nichts hergäbe).
+
     expect(getField(rows[0], '280_12')).toBe('54321')
   })
 
-  // Nachbesserung 2026-08-12: weil eine LEERE Antwort hier „Ende der Liste"
-  // bedeutet, darf nur die belegte RESULT-Form als Antwort gelten. Bis dahin
-  // lief auch die Satz-Frage durch extractRelationResult und nahm jeden
-  // Schlüssel der RESULT_KEYS-Liste an (PINDEX, INDEX, KEY, ID, VALUE …) —
-  // ein Fremdpaket mit irgendeinem leeren ID-Feld hätte die Positionsliste
-  // still mittendrin abgeschnitten.
   it('ein Fremdpaket beendet die Liste NICHT, die echte Antwort zählt normal', async () => {
     const quelle = { id: 'q-fremd', name: 'MitFremdpaket' }
     ladeZeilenPerRelation(quelle, LADE, BELEG)
@@ -197,17 +157,15 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     await tick()
     expect(anfragen).toHaveLength(2)
 
-    // Kein RESULT, aber ein leeres ID-Feld: der alte Weg hätte darin eine
-    // leere Antwort gesehen und hier abgebrochen.
     sende({ MSGART: 'x', ID: '' })
     await tick()
-    // Frage 2 wartet weiter — nichts ist nachgerückt, nichts eingespeist.
+
     expect(anfragen).toHaveLength(2)
     expect(geholteZeilenFuer('MitFremdpaket')).toEqual([])
 
     antworte(satz('4712', 'Futter'))
     await tick()
-    // Und die LEERE RESULT-Antwort bleibt das Ende.
+
     antworte('')
     await tick()
 
@@ -218,7 +176,7 @@ describe('relationLader (Welle R, Etappe R2)', () => {
 
   it('ein halber Schlüssel fragt nicht, er leert (nie raten)', () => {
     const quelle = { id: 'q-halb', name: 'HalberSchluessel' }
-    ladeZeilenPerRelation(quelle, LADE, { '2_1': 'R' }) // Belegnummer fehlt
+    ladeZeilenPerRelation(quelle, LADE, { '2_1': 'R' })
     expect(anfragen).toHaveLength(0)
     expect(rowsFor({ Daten: {} }, 'HalberSchluessel', 'POS')).toEqual([])
   })
@@ -227,8 +185,7 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     const quelle = { id: 'q-deckel', name: 'OhneEnde' }
     ladeZeilenPerRelation(quelle, LADE, BELEG)
     await tick()
-    // Eine falsch eingestellte Relation antwortet IMMER mit Inhalt — der
-    // Lader darf trotzdem nicht ewig fragen.
+
     for (let i = 0; i < 999; i += 1) {
       antworte(satz(String(i + 1), 'endlos'))
       await tick()

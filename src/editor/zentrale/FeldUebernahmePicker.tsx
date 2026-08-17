@@ -1,12 +1,3 @@
-// FeldUebernahmePicker — „ein Feld aus einer Quelle in einen Schritt-Parameter
-// übernehmen": zuerst die Quelle, dann ihr Feld, beides mit Suche.
-//
-// Den Rahmen (Portal, feste Position, Schließ-Wege) stellt seit U3 das geteilte
-// AuswahlFenster. Zwei Eigenheiten bleiben als Schalter gesetzt und sind DORT
-// begründet: das Fenster klemmt sich in den Viewport (es öffnet im schmalen,
-// rechts angedockten Bereich) und es hält Escape auf (sonst schlösse derselbe
-// Tastendruck auch das Schritt-Formular darunter).
-
 import { useMemo, useState } from 'react'
 import { AuswahlFenster } from '@/ui/molecules/auswahl-fenster'
 import { TextInput } from '@/ui/atoms/text-input'

@@ -1,17 +1,3 @@
-// RelationAuswahl — Vorlagen-Suche + -Liste fuer den Relation-Schritt.
-//
-// Aus StepForm herausgeloest (2026-07-24): eigener Zustand (welcher Tab),
-// eigene Aufgabe (eine Vorlage finden und waehlen). Das Formular reicht nur
-// die gefilterten Eintraege herein.
-//
-// Lesen (GET) und Schreiben (PUT/PUTADD) stehen NIE gemischt (Nutzer
-// 2026-07-22): zwei Mini-Tabs statt gestapelter Abschnitte — derselbe
-// Umschalter (SegmentControl) wie im Inspector und im Steuerungs-Filter.
-//
-// Die volle Relations-Syntax ist NIE Anzeigetext (Regel 3): sichtbar ist der
-// Klarname bzw. „VERB · Nr." bei ungetauften Vorlagen; die Syntax lebt als
-// Hover-Tooltip und als Suchtreffer.
-
 import { useState } from 'react'
 import { Search } from '@/ui/zeichen'
 import { TextInput } from '@/ui/atoms/text-input'
@@ -40,21 +26,18 @@ export function RelationAuswahl({
   onSuche: (value: string) => void
   onSelect: (id: string) => void
 }) {
-  // Startwert = Gruppe der gewaehlten Vorlage (beim Bearbeiten), sonst „Lesen".
   const [tab, setTab] = useState<RelationGroup>(() => {
     const gewaehlt = eintraege.find((entry) => entry.id === relationId)
     return gewaehlt ? relationGroup(gewaehlt) : 'lesen'
   })
-  // Die Suche findet in BEIDEN Gruppen (Nutzer 2026-07-22): eintraege ist
-  // schon suchgefiltert; wir zaehlen je Gruppe und springen zum Tab mit
-  // Treffern, wenn der aktive leer ist — Lesen/Schreiben bleiben getrennt.
+
   const lesen = eintraege.filter((entry) => relationGroup(entry) === 'lesen')
   const schreiben = eintraege.filter((entry) => relationGroup(entry) === 'schreiben')
   const zaehler: Record<RelationGroup, number> = { lesen: lesen.length, schreiben: schreiben.length }
   const anderer: RelationGroup = tab === 'lesen' ? 'schreiben' : 'lesen'
   const aktiv: RelationGroup = zaehler[tab] === 0 && zaehler[anderer] > 0 ? anderer : tab
   const sichtbar = aktiv === 'lesen' ? lesen : schreiben
-  // Trefferzahl nur bei aktiver Suche an die Tabs (sonst nur Lesen | Schreiben).
+
   const sucht = suche.trim().length > 0
   const tabOptionen = RELATION_GRUPPEN.map((gruppe) => ({
     ...gruppe,
@@ -79,8 +62,7 @@ export function RelationAuswahl({
         options={tabOptionen}
         onChange={(value) => setTab(value as RelationGroup)}
       />
-      {/* Nur der aktive Tab; leere Gruppe zeigt „Keine Treffer"
-          (die Suche darüber bleibt aktiv). */}
+
       <div className="max-h-36 divide-y divide-border overflow-y-auto border-y border-border">
         {sichtbar.map((entry) => {
           const ungetauft = istUngetaufteVorlage(entry)

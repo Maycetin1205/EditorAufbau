@@ -1,9 +1,3 @@
-// Test-Setup (Vitest)
-// Die Tests laufen in Node ohne Browser. Der Editor-Store braucht nur
-// localStorage — hier ein kleiner In-Memory-Ersatz. KEIN jsdom nötig,
-// solange Tests keine Lit-Komponenten instanziieren (Store/Persistenz/
-// Token-Regel sind DOM-frei).
-
 const store = new Map<string, string>()
 
 const localStorageStub: Storage = {

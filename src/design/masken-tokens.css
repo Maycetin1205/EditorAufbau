@@ -1,160 +1,64 @@
-/* Masken-Design-Tokens (--se-*)
-   ================================================================
-   Die EINE Werteliste fuer das Aussehen aller Bloecke — im Editor
-   UND im SoftEngine-Export (Nordstern: 1 Render / WYSIWYG).
-
-   Zwei getrennte Token-Welten in diesem Projekt:
-     - Editor-UI (Sidebar/Inspector/Toolbar): shadcn-Variablen in index.css.
-     - Masken-Design (die Bloecke selbst):    DIESE Datei (--se-*).
-   Die Welten niemals mischen: Editor-Chrome sieht nie nach Maske aus,
-   Bloecke greifen nie auf shadcn-Variablen zu.
-
-   Regeln:
-     - Bloecke nutzen AUSSCHLIESSLICH var(--se-...) — keine Hex-Werte,
-       keine hsl()-Literale im Block-CSS. (CSS Custom Properties erben
-       durch Shadow DOM, deshalb funktioniert :root hier.)
-     - KEINE var()-Fallbacks in Bloecken: diese Datei ist Pflichtteil
-       jedes Exports (Kap. 3 Mini-Export bindet sie ein). Fallbacks
-       wuerden die Werte duplizieren (DRY-Bruch).
-
-   Design-Entscheidung (2026-08-06, Nutzer-Go): die Designsprache
-   "Fellnase" aus designsprache/musterbogen.html ist die Vorlage —
-   uebernommen wurden Palette, Rundungen, Kantenstaerke und Flachheit.
-   Ihre fuenf Regeln, soweit sie hier Werte sind:
-     1. EINE Rundung fuer alles (--se-r-md). Kantig, nicht weich.
-        Kleiner gerundet sind nur Kacheln und Marken (--se-r-sm).
-     2. EIN lauter Ton je Flaeche: Koralle (--se-accent). Rest bleibt leise.
-     3. Espresso statt Schwarz — nirgends #000, nirgends reines Weiss.
-     4. FLACH. Keine Schatten, keine Verlaeufe, nichts Koerperhaftes.
-        Tiefe entsteht ueber die 1,5px-Kante (--se-border) und Farbe.
-     5. Die Signatur (gekappte Ecke + quadratischer Punkt an der Marke)
-        ist FORM, kein Wert — sie lebt im Baustein, nicht hier.
-
-   Die SCHRIFTGROESSE bleibt bewusst dicht (Nutzer-Entscheidung 2026-08-06):
-   Fellnase setzt 15px, eine SoftEngine-Maske ist ein dichtes
-   Arbeitswerkzeug — 13.5px. Die ZEILENHOEHE dagegen ist seit 2026-08-07
-   die der Demo (--se-lh). Bis dahin stand hier, das Fehlen einer
-   Zeilenhoehe sei Absicht; das war es nicht — es galt einfach der
-   Browser-Standard (ungefaehr 1.2), und darum sass in der Maske alles
-   enger zusammen als im Vorbild. Uebernommen sind also Schriftarten,
-   Strichstaerken und Zeilenhoehe, nicht die Grundgroesse.
-   ================================================================ */
-
 :root {
-  /* Flaechen — warm statt klinisch (Fellnase: creme/papier/sand) */
-  --se-bg:        #fbf5ea;  /* Seitengrund der Maske */
-  --se-panel:     #fffdf8;  /* Karten / Felder / Dialoge */
-  --se-panel-2:   #f3eada;  /* ruhige Innenflaechen (Kopfzeilen, Spalten) */
 
-  /* Text — Espresso, nie Schwarz (Regel 3) */
-  --se-ink:       #3d2b22;  /* Haupttext und Umriss */
-  --se-muted:     #7a6558;  /* Nebentext (Besitzer, Untertitel) */
-  --se-faint:     #a99a8d;  /* Hinweise, Platzhalter, Hover-Kante */
+  --se-bg:        #fbf5ea;
+  --se-panel:     #fffdf8;
+  --se-panel-2:   #f3eada;
 
-  /* Linien */
-  --se-line:      #e9dec9;  /* sichtbare Rahmen */
-  --se-line-soft: #f1e8d6;  /* Zeilentrenner, Innenrahmen */
+  --se-ink:       #3d2b22;
+  --se-muted:     #7a6558;
+  --se-faint:     #a99a8d;
 
-  /* Abdunklung hinter Popups (Ink bei 45%). Bleibt, obwohl die Sprache
-     flach ist: ohne Schatten ist der Scrim das EINZIGE, was ein Popup
-     von der Maske darunter abhebt. */
+  --se-line:      #e9dec9;
+  --se-line-soft: #f1e8d6;
+
   --se-scrim:     rgba(61, 43, 34, 0.45);
 
-  /* Akzent — EINE Hausfarbe (Koralle), sparsam einsetzen (Regel 2) */
   --se-accent:      #e85c3f;
-  --se-accent-dark: #c74628; /* Hover/aktiv, Notfall-Vollton */
-  --se-accent-soft: #fbe5dc; /* getoente Flaechen, Auswahl-Schein */
+  --se-accent-dark: #c74628;
+  --se-accent-soft: #fbe5dc;
 
-  /* Statusfarben — feste Bedeutung, nie frei waehlbar
-     (Bediener waehlt "Status: Notfall", nie eine Farbe).
-     Fellnase-Nebentoene: je kraeftig (Titel/Punkt) und zart (Flaeche).
-     Notfall traegt die Hausfarbe — in dieser Sprache ist der laute Ton
-     dem Notfall vorbehalten, deshalb faellt Rot mit Koralle zusammen. */
-  --se-red:         #c74628; /* Notfall / Fehler */
+  --se-red:         #c74628;
   --se-red-soft:    #fef2ee;
-  --se-amber:       #e2a233; /* geplant / wartet (Sonne) */
+  --se-amber:       #e2a233;
   --se-amber-soft:  #faedd0;
-  --se-blue:        #5e93be; /* in Arbeit / Info (Himmel) */
+  --se-blue:        #5e93be;
   --se-blue-soft:   #e2edf5;
-  --se-violet:      #9784c1; /* Sonderzustand, z.B. OP (Flieder) */
+  --se-violet:      #9784c1;
   --se-violet-soft: #ece7f4;
-  --se-green:       #6e9b69; /* erledigt / Erfolg (Salbei) */
+  --se-green:       #6e9b69;
   --se-green-soft:  #e5eede;
 
-  /* Spalten-Farbwelten (P1.2, Empfang-Vorbild): eine Kanban-Spalte traegt
-     die GANZE Farbwelt ihres Status — kraeftig (--se-X) fuer Titel + Punkt,
-     Toenung (--se-X-soft) fuer den Spaltenkopf, dazu je Status eine
-     fast-weisse Spaltenflaeche (-shell) und eine getoente Rahmenlinie
-     (-line). Bedeutung bleibt fix, der Bediener waehlt nie eine Farbe. */
   --se-red-shell:   #fef7f4;  --se-red-line:   #f3d3c7;
   --se-amber-shell: #fdf8ec;  --se-amber-line: #eeddb9;
   --se-blue-shell:  #f5f9fc;  --se-blue-line:  #d2e2ee;
   --se-green-shell: #f7faf3;  --se-green-line: #d8e5cf;
 
-  /* Karten (Kanban/Listen) — Flaeche + Rahmen (4K.1) */
   --se-card-bg:     #fffdf8;
   --se-card-line:   #e9dec9;
 
-  /* Kantenstaerke — EIN Wert fuer alle Rahmen (Fellnase: 1,5px macht die
-     Arbeit, die vorher der Schatten tat). Zeilentrenner in Tabellen sind
-     die Ausnahme und bleiben haarfein (dort 1px direkt im Baustein). */
   --se-border: 1.5px;
 
-  /* Rundungen — EINE Rundung fuer alles (Regel 1), kantig
-       sm = Kacheln, Marken, Zaehler
-       md = DIE Rundung: Felder, Knoepfe, Karten
-       lg = grosse Container: Spalten, Tabellenrahmen, Popups */
   --se-r-sm:   3px;
   --se-r-md:   5px;
   --se-r-lg:   7px;
 
-  /* Schrift — Fellnase: Figtree als Werk-Schrift. Sie reist als
-     eingebettete Daten in der Maske mit (masken-schriften.css); die
-     Namen danach sind der Notnagel, falls das Einbetten je entfaellt.
-     Die Schmuck-Schrift ist bewusst NICHT eingebettet und faengt
-     direkt bei Georgia an (Begruendung: masken-schriften.css) — der
-     Serifen-Kontrast zum Fliesstext bleibt, das Gewicht nicht. */
   --se-font: "Figtree", "Segoe UI", Tahoma, sans-serif;
   --se-font-schmuck: Georgia, "Times New Roman", serif;
-  --se-mono: "IBM Plex Mono", Consolas, monospace; /* Zeiten, Nummern, Codes */
-  --se-fs:    13.5px; /* Grundgroesse (dicht, Werkzeug-Charakter) */
+  --se-mono: "IBM Plex Mono", Consolas, monospace;
+  --se-fs:    13.5px;
   --se-fs-sm: 12px;
-  --se-fs-xs: 10.5px; /* kleinste Stufe (4K.1) — derzeit von keinem Baustein
-                         benutzt, seit die Status-Marke auf das Demo-Mass
-                         gewachsen ist (2026-08-07) */
+  --se-fs-xs: 10.5px;
   --se-fs-lg: 15px;
 
-  /* Zeilenhoehe der Maske — der Demo-Wert (atome.css body: 400 15px/1.55).
-     Gesetzt wird sie an genau den zwei Stellen, die auch Schriftart und
-     -groesse der Maske bestimmen: der Editor-Maskenflaeche (Canvas.tsx) und
-     der Export-Huelle (exportMask.ts). Beide MUESSEN diesen Token nehmen,
-     sonst sieht der Editor anders aus als die Maske (Regel 1).
-     Bausteine setzen keine eigene Zeilenhoehe — ausser den paar Atomen, denen
-     die Demo selbst eine gibt (Marke 1.3, Kartenname 1.25, Lasche 1.2,
-     Leerzustand 1.4) und den quadratischen Symbolknoepfen (1). */
   --se-lh: 1.55;
 
-  /* Abstaende */
   --se-gap-sm: 6px;
   --se-gap:    10px;
   --se-gap-lg: 16px;
 
-  /* Bewegung — EINE Dauer fuer alle Bausteine (2026-07-30).
-     Kurz genug, dass nichts hinterherhinkt, lang genug, dass man es als
-     Reaktion wahrnimmt statt als Sprung. Fellnase bewegt mit 0.13s ease,
-     also derselben Groessenordnung — der Wert bleibt.
-
-     Hier standen bis 2026-08-06 drei Schatten-Stufen (--se-shadow-ruhe/
-     -hover/-popup, eingefuehrt 2026-07-30, weil die Maske "tot" wirkte).
-     Fellnase loest dasselbe Problem ohne Schatten: klare 1,5px-Kanten und
-     warme Farbe. Kein Baustein hat mehr einen Schatten; wer Tiefe braucht,
-     nimmt die Kante (--se-border) oder eine Toenung, nie eine Wolke. */
   --se-move: 130ms ease-out;
 }
 
-/* Wer im Betriebssystem „Bewegung reduzieren" eingestellt hat, bekommt
-   keine: Farben und Kanten wechseln weiterhin, nur ohne Uebergang. Eine
-   Stelle fuer alle Bausteine — sie erben die Dauer ueber diesen Wert. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --se-move: 0ms;

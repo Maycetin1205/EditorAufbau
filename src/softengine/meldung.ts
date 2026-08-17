@@ -1,20 +1,3 @@
-// meldung — der schmale Fehlerbalken der MASKE.
-//
-// Nutzer-Entscheidung 2026-07-27 (Architektur-Review): ein Lese- oder
-// Schreibversuch, der SoftEngine nie erreicht, darf nicht mehr wie ein
-// gelungener aussehen. Bis dahin lieferten alle Fehlerwege still einen
-// leeren String zurueck — ein verlorener PUT war von einem erfolgreichen
-// nicht zu unterscheiden, und der Bediener arbeitete ahnungslos weiter.
-//
-// Bewusst KEIN alert(): das blockiert die Arbeit und waere bei einer
-// wackeligen Verbindung unertraeglich. Stattdessen eine schmale Leiste am
-// oberen Rand — nicht zu uebersehen, aber im Weg steht sie nicht. Klick
-// schliesst sie, sonst geht sie von selbst.
-//
-// Laeuft NUR in der Maske: die Aktionsketten steigen im Editor schon vorher
-// aus (runEvent prueft data-ff-editor), darum kann der Balken beim Bauen
-// nicht aufpoppen. Ausserhalb eines Browsers (Node-Tests) passiert nichts.
-
 const ANZEIGE_MS = 8000
 
 let balken: HTMLElement | null = null
@@ -44,9 +27,6 @@ function schliesse(): void {
   balken = null
 }
 
-// Eine Zeile Klartext an den Bediener. Mehrere Fehler kurz nacheinander
-// teilen sich EINEN Balken (der neueste Text gewinnt) — sonst waechst bei
-// einer abgerissenen Verbindung eine Mauer aus Leisten.
 export function meldeFehler(text: string): void {
   if (typeof document === 'undefined' || !document.body) return
   if (!balken) {

@@ -1,45 +1,9 @@
-// FeldListe — das Feld-Woerterbuch einer Datenquelle pflegen.
-//
-// Herausgeloest aus DataSourceForm (2026-07-30, Nutzer-Auftrag „den Bereich
-// Datenquelle komplett neu aufbauen"): das Woerterbuch ist der aufwendigste
-// Teil des Formulars und hat jetzt drei Wege statt einem.
-//
-// Warum das noetig war: eine Stammquelle bestellt ihre Felder EINZELN beim
-// ERP. Der Adressstamm der echten Maske hat zehn — das waren zehn Klarnamen
-// plus zwanzig nachzuschlagende Zahlen, von Hand. Ein Zahlendreher faellt
-// erst in der laufenden Maske auf, als leeres Feld ohne Erklaerung.
-//
-// EIN Weg: Zeile fuer Zeile — Klarname, Position, Laenge.
-//
-// Am 2026-07-30 standen hier einen halben Tag lang zwei Abkuerzungen, beide
-// auf Nutzer-Ansage wieder entfernt:
-//   - „Vorlage" setzte erprobte Feldlisten fuer ADR/ART/BEL ein. In Wahrheit
-//     waren das 30 Feldpositionen EINER Installation, festgeschrieben im
-//     Code — woanders falsch und trotzdem richtig aussehend (Regel 5:
-//     solche Werte sind Daten, nie Code).
-//   - „Liste einfuegen" nahm den FELDER-Text einer laufenden Maske entgegen
-//     und baute die Zeilen daraus. Entfernt auf ausdrueckliche Ansage
-//     („ergibt keinen sinn, restlos erstmal weg aus dem code"). Wer sie
-//     zurueckholen will, braucht dafuer eine neue Entscheidung des Nutzers —
-//     nicht wieder auf Verdacht einbauen.
-//
-// Der Editor erfindet keine Namen (Regel 7): eine Zeile ohne Klarname bleibt
-// ohne Klarname und wird als unvollstaendig gemeldet.
-//
-// Ueber der Liste standen bis U1 (2026-08-12) zwei Belehrungen — ein roter
-// Kasten „Ohne Felder liefert SoftEngine … nichts" fuer Stammquellen und ein
-// Erklaerabsatz „… ohnehin alle Felder" fuer IDB. Beide auf Nutzer-Ansage raus
-// (U0-2): der Editor soll funktionieren, nicht erziehen. Mit ihnen fiel der
-// Prop `kind` weg — er diente ALLEIN dieser Unterscheidung. Nicht wieder
-// einbauen.
-
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { TextInput } from '@/ui/atoms/text-input'
 import { LEERE_ZEILE, type FeldZeile } from './feldZeile'
 
-// Spaltenraster: Klarname | Position | Länge | Entfernen.
 const SPALTEN = 'grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2'
 
 interface FeldListeProps {

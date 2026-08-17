@@ -1,10 +1,3 @@
-// Tests des Tagesfilters + der Datums-Uebersetzung.
-//
-// Der teuerste denkbare Fehler dieser Baustelle ist ein Filter, der IMMER
-// leer liefert, weil SoftEngine '27.07.2026' schickt und das Datumsfeld
-// '2026-07-27' vergleicht. Genau das faellt im Browser nicht auf (die
-// Maske sieht nur „keine Termine" aus) — darum steht es hier.
-
 import { describe, expect, it } from 'vitest'
 import { heuteSchluessel, tagPlus, tagSchluessel } from './datumSchluessel'
 import { aufTagHoeren, gewaehlterTag, setzeGewaehltenTag } from './gewaehlterTag'
@@ -12,7 +5,6 @@ import { zeilenAmTag } from './tagFilter'
 
 const DATUM = '183_10'
 
-// Zeilen in der Form, die die SE-Schicht liefert (Schluessel = Feldcode).
 const zeilen = [
   { [DATUM]: '27.07.2026', name: 'heute deutsch' },
   { [DATUM]: '2026-07-27', name: 'heute ISO' },
@@ -46,7 +38,6 @@ describe('tagSchluessel (deutsche und ISO-Schreibweise versoehnen)', () => {
 
 describe('heuteSchluessel / tagPlus', () => {
   it('nimmt die Ortszeit, nicht UTC (sonst abends der falsche Tag)', () => {
-    // 23:30 Ortszeit am 27.07. — nach UTC waere das in Berlin schon der 28.
     expect(heuteSchluessel(new Date(2026, 6, 27, 23, 30))).toBe('2026-07-27')
   })
 
@@ -93,8 +84,7 @@ describe('gewaehlterTag', () => {
     setzeGewaehltenTag('27.07.2026')
     expect(gewaehlterTag()).toBe('2026-07-27')
     expect(gemeldet).toBe(1)
-    // Derselbe Tag noch einmal: keine Meldung, sonst zeichnete jeder
-    // Tastendruck im Datumsfeld die ganze Maske neu.
+
     setzeGewaehltenTag('2026-07-27')
     expect(gemeldet).toBe(1)
   })

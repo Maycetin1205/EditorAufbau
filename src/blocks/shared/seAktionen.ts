@@ -1,28 +1,3 @@
-// seAktionen
-// Ausfuehrung der Aktionsketten in der EXPORTIERTEN SoftEngine-Maske.
-// Die Ketten reisen als data-ff-aktionen-Attribut am Element (exportMask);
-// hier werden sie gelesen (parseBlockEvents) und Schritt fuer Schritt
-// ausgefuehrt. Z2 kennt nur den Schritt-Typ START_TOOL („Werkzeug
-// starten"); Z3 ergaenzt Relation ausfuehren / Wert setzen / Daten neu
-// laden samt Antwort-Warteschlange.
-//
-// Laeuft NUR im Export: Editor-Elemente tragen data-ff-editor (BlockHost)
-// und werden abgewiesen — im Editor existiert die Ausfuehrung nicht
-// (Muster connectBoard in seRuntime).
-//
-// „Werkzeug starten" EXAKT nach der verbindlichen Referenz behandlung-umbau
-// empfang/index.basis.source.html Z. 861-882 (seStartTool): primaer
-// sendBWLinkIntern('0,START_TOOL,<nr>[,<params URL-kodiert>]'), Fallback
-// basisHTML_SND_MSG('START_TOOL', { NR: nr, PARAMS: params }) — beide nur,
-// wenn SoftEngine die Bridge gestellt hat (ausserhalb passiert nichts).
-//
-// Doppel-Ausloesung: je Element+Ereignis laeuft immer nur EINE Kette
-// (Sperre, Muster __FF_CHAIN_LOCK des alten Editors). Bewusst KEIN
-// Zeit-Debounce wie opts.debounce der Referenz — eine Kette darf zwei
-// verschiedene Werkzeuge nacheinander starten; erweist sich Doppel-Klick
-// im SE-Echttest als Problem, wird der Debounce nachgezogen (Beleg statt
-// Verdacht).
-
 import { parseBlockEvents } from '../../core/data/aktionen'
 import { auswahlFuer } from './auswahl'
 import { PopupBlock } from '../popup/PopupBlock'
@@ -39,10 +14,6 @@ import {
   resolveActionParam,
 } from '../../softengine/relations'
 
-// ---------- Pure Helfer (Node-testbar, kein DOM) ----------
-
-// BW-Link fuer START_TOOL — exakt die Form der Referenz (Z. 873-874):
-// '0,START_TOOL,<nr>' + optional ',<params URL-kodiert>'.
 export function buildStartToolLink(nr: string, params: readonly string[]): string {
   let link = '0,START_TOOL,' + nr
   if (params.length > 0) {
@@ -51,10 +22,6 @@ export function buildStartToolLink(nr: string, params: readonly string[]): strin
   return link
 }
 
-// ---------- SoftEngine-Anbindung (nur im Export aktiv) ----------
-
-// Werkzeug starten — Transport exakt nach Referenz-seStartTool. Ohne
-// Bridge (Vorschau, Tests ohne Stub) passiert nichts.
 function seStartTool(nr: string, params: readonly string[]): void {
   if (nr.trim() === '') return
   const g = seGlobal()
@@ -73,37 +40,10 @@ function seStartTool(nr: string, params: readonly string[]): void {
   } catch { /* nicht in SE */ }
 }
 
-// ---------- Popup-Schritte ----------
-
-// Schaltet das offen-Attribut des Popups mit dem Klarnamen `name`.
-//
-// ES IST IMMER HOECHSTENS EINES OFFEN (C3.2, 2026-08-16). Bis dahin oeffnete
-// dieser Schritt sein Ziel, ohne ein anderes zu schliessen: eine Kette
-// „Popup A oeffnen" aus einem bereits offenen Popup B heraus legte zwei
-// Fenster uebereinander, und WELCHES oben lag, entschied allein die
-// Reihenfolge im HTML — der Bediener sah je nach Bauart der Maske ein anderes
-// Ergebnis. Beim Oeffnen fallen darum zuerst alle uebrigen zu.
-//
-// Zuerst wird GENAU EIN Ziel aufgeloest. Kein Treffer oder mehrere: es
-// passiert nichts, der aktuelle Fenster-Stand bleibt unangetastet. Mehrere
-// Treffer sind moeglich, weil eindeutige Namen im Export nicht erzwungen
-// werden (der Preflight meldet Doppelnamen, blockt aber seit 2026-08-10
-// nicht) — bis hierher schaltete die Schleife dann BEIDE zugleich auf, was
-// den Fall nur schlimmer machte. Ein unbestimmtes Ziel gar nicht anzufassen
-// ist die einzige Wahl, die nichts kaputtmacht: still-harmlos ist hier die
-// letzte Verteidigung.
-//
-// Darstellung/Lebenszyklus bleiben beim Popup-Baustein selbst — hier wird NUR
-// geschaltet. Exportiert fuer den Wächter-Test (Node/jsdom, Muster
-// seRuntime-Helfer).
 export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean): void {
   if (name.trim() === '') return
   const alle = Array.from(root.querySelectorAll(PopupBlock.tagName))
-  // Fehlendes Attribut = STANDARDNAME, nicht leer. Seit der Export
-  // Standardwerte weglaesst (2026-08-06), traegt ein nie umbenanntes Popup
-  // gar kein name-Attribut mehr — die Kette sucht aber nach dem Klarnamen
-  // „Popup" und faende es sonst NIE: der Knopf klickte ins Leere, still
-  // (Regel 4). Der Standard kommt aus der EINEN Quelle, den defaultProps.
+
   const treffer = alle.filter(
     (el) => (el.getAttribute('name') ?? PopupBlock.defaultProps.name) === name,
   )
@@ -119,24 +59,13 @@ export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean)
   ziel.setAttribute('offen', '')
 }
 
-// ---------- Ketten-Ausfuehrung ----------
-
-// Laufende Ketten je Element (Sperre gegen erneutes Ausloesen desselben
-// Ereignisses, solange die Kette laeuft).
 const laufend = new WeakMap<HTMLElement, Set<string>>()
 
-// Eine Kette wird immer nebenlaeufig gestartet (der Ausloeser wartet nie auf
-// sie). Ohne dieses Auffangnetz verschwand jeder Fehler darin spurlos: der
-// Bediener klickte, nichts geschah, und nichts sagte ihm warum (Regel 4 —
-// nichts scheitert still). An JEDEN nebenlaeufigen runEvent-Aufruf haengen.
 export function meldeKettenFehler(fehler: unknown): void {
   const text = fehler instanceof Error ? fehler.message : String(fehler)
   meldeFehler('Aktionskette fehlgeschlagen: ' + text)
 }
 
-// Fuehrt die Kette eines Ereignisses aus. `context` liefert die Werte der
-// Platzhalter ({PINDEX}/{VALUE}; {NOW_DATE} fuellt diese Funktion selbst).
-// Kein Attribut / keine Kette am Ereignis -> nichts passiert.
 export async function runEvent(
   el: HTMLElement,
   eventKey: string,
@@ -154,24 +83,14 @@ export async function runEvent(
   if (locks.has(eventKey)) return
   locks.add(eventKey)
   try {
-    // Der ZWISCHENSPEICHER (benannte Schritt-Ergebnisse via resultKey,
-    // Nutzer-Kernanforderung) steckt ab Tag 1 im MODELL; hier ausgefuehrt
-    // wird er erst mit „Relation ausfuehren" (seGetNewIndex-Muster) —
-    // „Werkzeug starten" liefert kein Ergebnis.
     const values: Record<string, string | undefined> = {
       ...context,
       NOW_DATE: formatNowDate(new Date()),
     }
     let previousResult = ''
-    // Ergebnis je Schritt in Ketten-Reihenfolge — dieselben Positionen, die
-    // der Export in step_result-Bindungen schreibt (serializeBlockEvents).
-    // Jeder Schritt bekommt GENAU einen Eintrag, auch ergebnislose ('').
+
     const stepResults: string[] = []
-    // Die ROHEN Antworten derselben Schritte, an denselben Indizes
-    // (2026-08-07): ein Parameter darf ein bestimmtes FELD des Ergebnisses
-    // meinen, und das steht nur in der Antwort selbst. Beide Listen wachsen
-    // deshalb IMMER im Gleichschritt — sonst zeigte ein Index auf den
-    // falschen Schritt.
+
     const rohErgebnisse: unknown[] = []
     const ohneErgebnis = (): void => {
       stepResults.push('')
@@ -193,9 +112,7 @@ export async function runEvent(
         ohneErgebnis()
         continue
       }
-      // Die Auswahl reicht die Baustein-Schicht herein (auswahlFuer); die
-      // SE-Schicht kennt sie nicht selbst — sonst muesste src/softengine/
-      // einen Baustein importieren (Schicht-Regel).
+
       const runtimeValues = {
         context: values,
         previousResult,
@@ -209,10 +126,7 @@ export async function runEvent(
       const result = antwort.wert
       stepResults.push(result)
       rohErgebnisse.push(antwort.roh)
-      // NUR GET liefert ein Ergebnis — PUT/PUTADD überschreiben den
-      // Zwischenspeicher NICHT mehr (Nutzer-Befund 2026-07-17: in der Kette
-      // GET → PUT → PUT bekam nur der erste PUT den Index, danach war der
-      // „vorherige Schritt" leer).
+
       if (relation.verb === 'GET_RELATION') previousResult = result
       if (step.resultKey !== '') values[step.resultKey] = result
     }
@@ -221,9 +135,6 @@ export async function runEvent(
   }
 }
 
-// Einfaches Klick-Ereignis eines Blocks verdrahten (Schaltflaeche 'onClick').
-// Nur im Export (data-ff-editor-Wächter) und nur, wenn Ketten mitreisen —
-// ein Block ohne Aktionen bekommt keinen Listener.
 const verdrahtet = new WeakSet<HTMLElement>()
 
 export function connectClickAktionen(el: HTMLElement, eventKey: string): void {

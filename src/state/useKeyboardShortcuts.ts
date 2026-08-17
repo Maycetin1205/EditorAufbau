@@ -1,25 +1,7 @@
-// useKeyboardShortcuts
-// Bindet globale Tastatur-Shortcuts an Editor-Befehle.
-// Ausschliesslich Delete = Block loeschen. Backspace bleibt immer fuer
-// Textbearbeitung reserviert und loescht niemals einen Baustein.
-// Ctrl/Cmd+Z = Undo. Ctrl/Cmd+Shift+Z oder Ctrl+Y = Redo.
-// Ctrl/Cmd+D = Duplicate.
-
 import { useEffect } from 'react'
 import { useEditorInstance } from './EditorContext'
 import { loescheBaustein } from './loescheBaustein'
 
-// Tippt der Bediener gerade in einem Eingabefeld?
-//
-// Geprueft wird der ganze `composedPath()`, nicht `event.target` (A6,
-// 2026-08-11): kommt der Tastendruck aus dem Shadow DOM eines Bausteins, zeigt
-// `target` auf den HOST (das Custom Element) und nie auf das Feld darin. Delete,
-// Strg+Z und Strg+D trafen damit den EDITOR, waehrend der Bediener im Text
-// eines Bausteins schrieb — ein markiertes Wort loeschen konnte den ganzen
-// Baustein loeschen. Muster: `inTextBearbeitung` in canvas/rasterMove.ts.
-//
-// Ausserhalb des Shadow DOM aendert sich nichts: der Pfad ENTHAELT das Ziel,
-// die Pruefung ist also eine Erweiterung der alten, keine andere.
 function inEingabefeld(e: KeyboardEvent): boolean {
   for (const ziel of e.composedPath()) {
     if (!(ziel instanceof HTMLElement)) continue
@@ -31,8 +13,6 @@ function inEingabefeld(e: KeyboardEvent): boolean {
 }
 
 export function useKeyboardShortcuts() {
-  // Instanz aus dem Versorger statt Weltvariable —
-  // die Instanz ist app-lebenslang stabil, der Effekt läuft weiter einmal.
   const editor = useEditorInstance()
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

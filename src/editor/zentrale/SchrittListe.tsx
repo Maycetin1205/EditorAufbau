@@ -1,23 +1,3 @@
-// SchrittListe — die Schritte EINER Aktionskette, untereinander.
-//
-// Volle Breite, eine Zeile je Schritt (Nutzer-Vorgabe 2026-08-17). Die erste
-// Fassung stellte sie in eine 22-rem-Spalte neben das Formular; dort stand
-// von jeder Zeile die Haelfte. Jetzt traegt die Zeile alles nebeneinander:
-// Nummer, was der Schritt tut, die eigene Notiz, die Knoepfe — und der
-// angeklickte Schritt klappt DARUNTER auf, statt in eine zweite Spalte
-// auszuwandern. Damit bleibt beim Ausfuellen sichtbar, was drumherum
-// passiert.
-//
-// Jede Zeile traegt zwei Angaben (s. ./schrittZusammenfassung):
-//   Zeile 1  was der Schritt IST   (Vorlagenname bzw. Schritt-Art)
-//   Zeile 2  was er TUT            (Zielfeld  <-  Herkunft des Werts)
-// Zeile 2 faellt weg, wo nichts aufloesbar ist — eine leere Zeile waere nur
-// Hoehe (Regel 7: nichts erfinden).
-//
-// Eingerueckt steht, was sich auf das Ergebnis eines frueheren Schritts
-// beruft: so ist zu sehen, welche Schreib-Schritte in den Satz gehen, den ein
-// „neuen Satz anlegen" davor erzeugt hat.
-
 import type { ReactNode } from 'react'
 import { ArrowDown, ArrowUp, Copy, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -35,14 +15,13 @@ import { ankerSchrittId, schrittZusammenfassung } from './schrittZusammenfassung
 
 interface SchrittListeProps {
   steps: readonly ActionStep[]
-  // Der aufgeklappte Schritt.
+
   aktivId?: string
-  // Zeile angeklickt. Fehlt der Rueckkanal, sind die Zeilen nicht anklickbar.
+
   onWaehle?: (step: ActionStep) => void
-  // Die Umbau-Knoepfe (hoch/runter/duplizieren/loeschen) und die Notiz. Ohne
-  // `onAendern` ist die Liste reine Anzeige.
+
   onAendern?: (steps: ActionStep[]) => void
-  // Was unter der aufgeklappten Zeile steht (das Schritt-Formular).
+
   aufgeklappt?: ReactNode
 }
 
@@ -58,9 +37,7 @@ export function SchrittListe({
     blockId: node.id,
     prop: spot.prop,
   }))
-  // Auswahl-Geber der Maske — sonst bliebe ein Parameter „Feld der gewählten
-  // Zeile" auf einem gelöschten Geber unauffällig und schlüge erst beim
-  // Export zu.
+
   const geberIds = auswahlGeberImBaum(ed.tree).map((n) => n.id)
 
   const verschiebe = (from: number, to: number): void => {
@@ -71,8 +48,6 @@ export function SchrittListe({
     onAendern(next)
   }
 
-  // Die eigene Beschriftung EINES Schritts. Leer heisst weg — ein leerer
-  // String in jeder Maskendatei waere Ballast.
   const setzeNotiz = (at: number, text: string): void => {
     if (!onAendern) return
     const next = steps.map((s, i) => {
@@ -123,9 +98,7 @@ export function SchrittListe({
           s, was, relation, ed.tree, dataSources.list,
           (id) => steps.findIndex((x) => x.id === id) + 1,
         )
-        // Zielfeld schlaegt Tabelle: ein Schreib-Schritt sagt, WAS er
-        // beschreibt; ein Schritt ohne Zielfeld (neuen Satz anlegen) sagt
-        // wenigstens, WO.
+
         const naeher = [zus.ziel !== '' ? zus.ziel : zus.tabelle, zus.herkunft]
           .filter((t) => t !== '')
           .join('  ←  ')
@@ -145,8 +118,7 @@ export function SchrittListe({
                     : 'border-transparent hover:bg-secondary/50'
               }`}
             >
-              {/* w-6, nicht w-4: ab dem zehnten Schritt braucht „10." zwei
-                  Ziffern und den Punkt. */}
+
               <span className="w-6 shrink-0 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
                 {i + 1}.
               </span>
@@ -169,8 +141,7 @@ export function SchrittListe({
                   </span>
                 )}
               </button>
-              {/* Die eigene Beschriftung. Sie steht IN der Zeile, nicht in
-                  einer eigenen Spalte daneben: sie gehoert zum Schritt. */}
+
               {onAendern ? (
                 <TextInput
                   aria-label={`Notiz zu Schritt ${i + 1}`}
@@ -217,8 +188,7 @@ export function SchrittListe({
                 </span>
               )}
             </div>
-            {/* Aufgeklappt: das Formular steht UNTER seiner Zeile, in voller
-                Breite, die Liste bleibt drumherum stehen. */}
+
             {s.id === aktivId && aufgeklappt !== undefined && (
               <div className="border-t border-border bg-secondary/20 px-3 py-3">
                 {aufgeklappt}

@@ -1,7 +1,3 @@
-// IconButton: quadratischer Icon-only Button.
-// Nur ein duenner Wrapper um <Button size="icon"> mit optionalem aria-label-Hinweis,
-// damit Icon-only-Buttons im Editor barrierefrei bleiben.
-
 import { forwardRef, type ReactNode } from 'react'
 import { Button, type ButtonProps } from '@/ui/atoms/button'
 

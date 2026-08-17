@@ -1,46 +1,3 @@
-// CardBlock
-// Molekuel: Karte mit ACHT Stellen — seit 2026-08-06 gebaut wie die KARTE DER
-// DEMO (designsprache/musterbogen.html, .karte), Wert fuer Wert abgeschrieben
-// auf Nutzer-Auftrag („der Nutzer will exakt die Demo-Karte"). Aufbau von oben
-// nach unten:
-//
-//   Lasche oben links   Datum + Zeit (die Karteikarten-Signatur der Sprache)
-//   Kopf                Bild links, daneben Titel ueber der Unterzeile
-//   Fliesstext          die Textzeile, hoechstens zwei Zeilen
-//   Fusszeile           links Titel 2, rechts die Status-Marke
-//
-// Vorher (bis 2026-08-06, Empfang-Vorbild): Zeit und Datum sassen oben RECHTS,
-// Titel und Titel 2 flossen in EINER Zeile zusammen, und die Marke stand allein
-// unten links. Keine Stelle ist bei dem Umbau weggefallen oder dazugekommen —
-// sie sitzen nur woanders, gespeicherte Karten verlieren also nichts. Die
-// Zuordnung der zwei uebrigen Stellen (Datum, Titel 2) ist eine
-// Nutzer-Entscheidung: Datum teilt sich die Lasche mit der Zeit, Titel 2 wird
-// der linke Fussplatz — in der Demo steht dort der Tierhalter, also ein Name.
-//
-// Karten sind NORMALE Bloecke im Baum — keine eigene Drag-Sonderlogik.
-//
-// Leer-Regel: In der MASKE verschwinden Stellen ohne Inhalt restlos — samt
-// ihrer Zeile, wenn alles darin leer ist. Im EDITOR bleibt jede Stelle ein
-// Klick-Ziel (Strich bzw. gestrichelte Bildflaeche): ganz weglassen geht
-// nicht, eine leere Stelle waere 0px hoch und liesse sich nie anklicken.
-// Seit U8 (2026-08-12) an JEDER Karte gleich — die Auswahl aendert das Gesicht
-// der Karte nicht mehr (Begruendung in ./kartenStil). Das WIE steht dort.
-//
-// Alle Text-Stellen werden per Doppelklick direkt auf dem Block bearbeitet
-// (Inline-Edit, WYSIWYG) und sind bindbare Stellen; der Avatar
-// ist eine reine Daten-Stelle (kein Text, nur Bindung — Wert -> Zeichen ueber
-// shared/tierIcon, seit 2026-08-06 die zehn Bilder des Nutzers statt der
-// sechs Silhouetten aus der Empfang-Referenz). Einziges Inspector-Feld
-// ist die Chip-Art (Bedeutung -> Farbe, Regel "Technikwert != Anzeigename").
-// Status-Vokabular + Chip-Aussehen kommen aus dem geteilten Modul
-// shared/statusVariant. Der Chip ist bewusst KEIN eigenes Element im
-// Licht-DOM: dessen Inline-Edit-Event wuerde an der Schattengrenze zur
-// Karte umadressiert und die falsche Prop beschreiben. KEINE Aktions-
-// Knoepfe.
-//
-// Aussehen AUSSCHLIESSLICH aus Masken-Tokens (--se-*), keine Literale,
-// keine Fallbacks — das WIE wohnt in ./kartenStil.
-
 import { html, nothing, type PropertyValues, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
@@ -57,7 +14,6 @@ import {
 import { tierIcon } from '../shared/tierIcon'
 import { kartenStil } from './kartenStil'
 
-// Text-Stellen der Karte (der Avatar ist gesondert: kein Inline-Edit).
 type TextSpotProp = 'heading' | 'heading2' | 'time' | 'date' | 'meta' | 'text'
 
 export class CardBlock extends BasicBlock {
@@ -65,27 +21,13 @@ export class CardBlock extends BasicBlock {
   static readonly tagName = 'ff-card'
   static readonly displayName = 'Karte'
   static readonly category: BlockCategory = 'anzeige'
-  // Karten leben in Kanban-Spalten (Gegenrichtung zu allowedChildTypes;
-  // Literal, weil ein Import von KanbanSpalteBlock einen Zyklus ergäbe)
-  // und stehen nicht in der Bibliothek — sie entstehen mit dem Board bzw.
-  // über "+ Karte" an der Spalte. Die ERSTE Karte des Boards ist die
-  // Musterkarte (templateChild am Board): aus ihr erzeugt die Laufzeit
-  // die Datenkarten.
-  // Seit N4 auch im ZIMMER (Untergruppe einer Spalte) — dieselbe Karte, nur
-  // eine Ebene tiefer.
+
   static readonly allowedParentTypes = ['kanban-spalte', 'kanban-zimmer']
   static readonly showInPalette = false
-  // Karten haben KEINE einstellbare Breite — sie sind IMMER so breit wie
-  // ihre Spalte (lockedWidth 'fill', dasselbe Muster wie die Spalte selbst:
-  // die width-Prop des Knotens wird ignoriert, kein Breiten-Anfasser).
-  // Bereits verschmälerte Bestandskarten springen damit von selbst zurück
-  // auf volle Spaltenbreite.
+
   static readonly lockedWidth: FlowWidth = 'fill'
   static readonly resizableWidth = false
-  // Regel 7 (Nutzer-Entscheidung 2026-07-16): der Editor erfindet nie Daten —
-  // alle Stellen starten LEER. Ohne Feldzuweisung zeigt die Maske nichts;
-  // im Editor markiert ein Strich (CSS ::before) die leere Stelle als
-  // Klick-Ziel für Inline-Edit und Feld-Picker.
+
   static readonly defaultProps = {
     chipVariant: 'info',
     heading: '',
@@ -96,9 +38,7 @@ export class CardBlock extends BasicBlock {
     meta: '',
     text: '',
     chipText: '',
-    // Bindungen der Stellen: Feldcode der Datenquelle in
-    // Reichweite (Technikwert, unsichtbar) — '' = ungebunden, die Stelle
-    // zeigt ihren statischen Text.
+
     headingField: '',
     heading2Field: '',
     timeField: '',
@@ -109,10 +49,6 @@ export class CardBlock extends BasicBlock {
     chipTextField: '',
   }
 
-  // Bindbare Stellen: Klick auf die Stelle bindet
-  // sie an ein Feld der Datenquelle in Reichweite (Kanban). Klarnamen für
-  // den Feld-Picker; die Bindung liegt in `<prop>Field` (siehe defaultProps,
-  // typgeprüft über die Bindungs-Konvention, A5).
   static readonly bindableSpots: BindableSpotsFor<typeof CardBlock.defaultProps> = [
     { prop: 'time', label: 'Zeit' },
     { prop: 'date', label: 'Datum' },
@@ -124,8 +60,6 @@ export class CardBlock extends BasicBlock {
     { prop: 'chipText', label: 'Chip' },
   ]
 
-  // Einziges Inspector-Feld: die Chip-Art (Bedeutung -> Farbe). Titel/Text/
-  // Chip-Text laufen ueber Inline-Edit, nicht ueber den Inspector.
   static override readonly customProperties: PropertyDescription[] = [
     statusVariantProperty(
       'chipVariant',
@@ -133,9 +67,6 @@ export class CardBlock extends BasicBlock {
     ),
   ]
 
-  // chipStyles ist die GETEILTE Marke (../shared/statusVariant) — dieselbe,
-  // die Tabelle und Kanban-Spalte tragen. Das Aussehen der Karte selbst
-  // wohnt in ./kartenStil (Werte aus der Demo, s. Kopfkommentar).
   static override styles = [BasicBlock.styles, chipStyles, kartenStil]
 
   @property() chipVariant: StatusVariant = 'info'
@@ -156,10 +87,6 @@ export class CardBlock extends BasicBlock {
   @property() textField = ''
   @property() chipTextField = ''
 
-  // Eine Text-Stelle: traegt data-ff-spot (Klick-Ziel für den Feld-Picker
-  // des Editors) und data-ff-bound, wenn sie gebunden ist (Daten-Markierung
-  // — sichtbar nur im Editor, siehe BasicBlock-CSS; im Export bleibt sie
-  // unsichtbar).
   private stelle(prop: TextSpotProp, klass: string): TemplateResult {
     return html`<span
       class=${klass}
@@ -170,13 +97,6 @@ export class CardBlock extends BasicBlock {
     >${this[prop]}</span>`
   }
 
-  // Hat diese Karte eine Lasche? Die Antwort brauchen ZWEI Stellen: das
-  // Template hier und der Platz ueber der Karte (kartenStil: die Lasche ragt
-  // nach oben heraus). Darum steht sie an einer Stelle — und wird als Attribut
-  // `hat-reiter` nach aussen getragen, weil ihre Bedingung im Inneren der Karte
-  // entsteht und von aussen sonst nicht sichtbar waere. Das Attribut ist ein
-  // Laufzeitwert: der Export schreibt Attribute aus dem Baustein-Modell, nicht
-  // aus dem lebenden Baum — es landet nie in einer Datei.
   private hatReiter(): boolean {
     return this.hasAttribute('data-ff-editor') || this.date.trim() !== '' || this.time.trim() !== ''
   }
@@ -188,14 +108,10 @@ export class CardBlock extends BasicBlock {
 
   override render(): TemplateResult {
     const v = coerceStatusVariant(this.chipVariant)
-    // Leer-Regel: die Maske rendert leere Stellen (und komplett leere
-    // Zeilen) gar nicht; der Editor zeigt jede Stelle als Klick-Ziel.
-    // data-ff-editor setzt ausschließlich der BlockHost, VOR dem Einhängen —
-    // zur Render-Zeit ist das Attribut stabil.
+
     const editor = this.hasAttribute('data-ff-editor')
     const zeigt = (wert: string) => editor || wert.trim() !== ''
-    // Die vier Baugruppen der Demo-Karte. Jede faellt weg, wenn NICHTS darin
-    // steht — in der Maske; im Editor steht immer alles (Klick-Ziele).
+
     const reiter = this.hatReiter()
     const kopf = zeigt(this.avatar) || zeigt(this.heading) || zeigt(this.meta)
     const fuss = zeigt(this.heading2) || zeigt(this.chipText)

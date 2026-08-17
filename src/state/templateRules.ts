@@ -1,16 +1,8 @@
-// templateRules — Musterkarten-Regeln (Markierung + Löschschutz).
-// Verhaltensgleich herausgezogen aus Editor.ts:
-// reine Funktionen über den Baum; Export (<template>) und Laufzeit
-// (seRuntime) nutzen DIESELBE Definition (treeQuery). Registry-getrieben,
-// kein `if type===`.
-
 import type { BlockNode, BlockTree } from '../core/blocks/BlockData'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
 import { firstDescendantOfType } from '../core/blocks/treeQuery'
 import { collectSubtree } from './treeOps'
 
-// Der Block, dessen templateChild-Deklaration diesen Knoten zur
-// Musterkarte macht (undefined = keine Musterkarte).
 export function owningTemplateBoardId(tree: BlockTree, id: string): string | undefined {
   const node = tree[id]
   if (!node) return undefined
@@ -25,9 +17,6 @@ export function owningTemplateBoardId(tree: BlockTree, id: string): string | und
   return undefined
 }
 
-// Musterkarten-Markierung (templateChild in der Registry): liefert
-// das Label, wenn der Block die ERSTE Nachfahren-Karte des deklarierten
-// Typs unter dem nächsten passenden Vorfahren ist.
 export function templateMarkFor(tree: BlockTree, id: string): string | undefined {
   const boardId = owningTemplateBoardId(tree, id)
   return boardId
@@ -35,8 +24,6 @@ export function templateMarkFor(tree: BlockTree, id: string): string | undefined
     : undefined
 }
 
-// Löschschutz: true, wenn der Teilbaum eine Musterkarte enthält, deren
-// Board NICHT mit gelöscht wird (das ganze Board löschen bleibt erlaubt).
 export function isRemoveProtected(tree: BlockTree, id: string): boolean {
   const remove = new Set(collectSubtree(tree, id))
   for (const nid of remove) {

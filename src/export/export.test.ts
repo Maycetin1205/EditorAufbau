@@ -1,31 +1,17 @@
-// Export-Tests
-// Prüfen die Export-Grundsätze maschinell: Determinismus (gleicher Baum →
-// identische Datei), SE-Regeln (Marker/ASCII/LF via Validator), Breite als
-// Flex-Item-Style aus derselben flowLayout-Quelle, und dass das eingebettete
-// Runtime-Bündel nach dem ASCII-Escaping noch gültiges JavaScript ist.
-// LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
-
 import { describe, expect, it } from 'vitest'
-// Side-Effect-Importe der Seiten-Bausteine: ihre FAELLE stehen seit
-// 2026-08-15 in seitenExport.test.ts (s. u.), registriert bleiben sie hier,
-// weil die Veralten-Positivliste am Dateiende alle Tags nennt.
+
 import '../blocks/popup/PopupBlock'
 import '../blocks/ansicht/AnsichtBlock'
 import '../blocks/navi/NaviBlock'
 import '../blocks/navi/NaviEintragBlock'
-// Side-Effect-Import: registriert die statischen Atome (Fahrplan 3).
+
 import '../blocks/bild/BildBlock'
 import '../blocks/text/TextBlock'
 import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
-// Registriert Kanban-Board und -Spalte (Veralten-Positivliste unten).
+
 import '../blocks/kanban/KanbanBlock'
-// Die Faelle des TABELLEN-Bausteins stehen seit 2026-08-07 in
-// tabelleExport.test.ts, die des KANBAN seit 2026-08-13 in
-// kanbanExport.test.ts, die der SEITEN (Popup, Ansicht, Navi) seit
-// 2026-08-15 in seitenExport.test.ts — diese Datei war jedes Mal ueber den
-// 500-Zeilen-Deckel gewachsen (check:regeln), und der Schnitt liegt am
-// Gegenstand.
+
 import type { BlockTree } from '../core/blocks/BlockData'
 import type { DataSource } from '../core/data/dataSources'
 import { exportMask } from './exportMask'
@@ -39,10 +25,10 @@ registerTestBlocks()
 function demoTree(): BlockTree {
   return {
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1', 'c1'] },
-    // Wurzel-Kinder liegen auf dem Raster (Position/Größe als Zellen).
+
     t1: { id: 't1', type: TEST_BLOCK, props: { text: 'Übersicht — Empfang', width: 'auto', rasterX: 0, rasterY: 0, rasterW: 12, rasterH: 2 }, parentId: 'root', childIds: [] },
     c1: { id: 'c1', type: TEST_BOX, props: { direction: 'row', width: 'fill', rasterX: 0, rasterY: 2, rasterW: 24, rasterH: 4 }, parentId: 'root', childIds: ['t2'] },
-    // t2 liegt IM Container c1 → weiterhin Fluss (flowItemStyle).
+
     t2: { id: 't2', type: TEST_BLOCK, props: { text: 'Spalte', width: 240 }, parentId: 'c1', childIds: [] },
   }
 }
@@ -68,32 +54,24 @@ describe('exportMask', () => {
   })
 
   it('Standard reist nicht: unangetastete Eigenschaften stehen NICHT im Markup', () => {
-    // Der Testblock hat text:'Standard' als Registry-Standard, der Testbereich
-    // direction:'column'. Wer sie nie anfasst, soll sie auch nicht im Export
-    // tragen — sonst steht in jeder Maske Zeile fuer Zeile, was ohnehin gilt,
-    // und ein Export-Diff zeigt nicht mehr, was der Bauer eingestellt hat.
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t', 'b'] },
       t: { id: 't', type: TEST_BLOCK, props: { text: 'Standard' }, parentId: 'root', childIds: [] },
       b: { id: 'b', type: TEST_BOX, props: { direction: 'column' }, parentId: 'root', childIds: [] },
     }
     const { html } = exportMask(tree)
-    // Nur die BEIDEN Element-Anfaenge pruefen, nicht das ganze Dokument: im
-    // eingebetteten Runtime-Buendel steht `text=` als Minifikat-Zuweisung.
+
     const tagVon = (name: string): string => new RegExp(`<${name}[^>]*`).exec(html)?.[0] ?? ''
     expect(tagVon('ff-t-block')).not.toContain('text=')
     expect(tagVon('ff-t-box')).not.toContain('direction=')
-    // Das Element selbst bleibt natuerlich stehen — nur nackt.
+
     expect(html).toMatch(/<ff-t-block[^>]*><\/ff-t-block>/)
-    // Und Pflicht-/Layout-Attribute sind davon unberuehrt.
+
     expect(html).toContain('grid-column:')
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
   it('Nicht-Standard reist: jede abweichende Eigenschaft steht im Markup', () => {
-    // Gegenprobe zum Fall darueber — Wert um EIN Zeichen verschieden, und das
-    // Attribut muss da sein. Sonst zeigte die Maske etwas anderes als der
-    // Editor (WYSIWYG-Bruch, Regel 1).
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t', 'b'] },
       t: { id: 't', type: TEST_BLOCK, props: { text: 'Standard ' }, parentId: 'root', childIds: [] },
@@ -107,33 +85,29 @@ describe('exportMask', () => {
   it('serialisiert den Baum als verschachtelte Custom Elements', () => {
     const { html } = exportMask(demoTree())
     expect(html).toContain('<ff-t-box direction="row"')
-    expect(html).toMatch(/<ff-t-box[^>]*>\n\s+<ff-t-block/) // Kind IM Container
+    expect(html).toMatch(/<ff-t-box[^>]*>\n\s+<ff-t-block/)
     expect(html).toContain('text="Spalte"')
   })
 
   it('Fluss-Breite in Containern wirkt als Flex-Item-Style; Wurzel-Kinder als Grid-Item', () => {
     const { html } = exportMask(demoTree())
-    // Fluss INNERHALB eines Containers (t2 fest 240px in der Zeile c1) — die
-    // flowLayout-Quelle gilt dort unverändert.
+
     expect(html).toContain('style="width:240px;flex-shrink:0"')
-    // Raster-Ebene (direkte Wurzel-Kinder): Platz + Größe als grid-column/row
-    // aus der rasterLayout-Quelle (dieselbe wie der Canvas).
-    expect(html).toContain('grid-column:1 / span 12') // t1 (x0/w12)
-    expect(html).toContain('grid-row:3 / span 4')      // c1 (y2/h4)
+
+    expect(html).toContain('grid-column:1 / span 12')
+    expect(html).toContain('grid-row:3 / span 4')
   })
 
   it('exportiert eine Vollbildhülle; die Wurzel ist die Rasterfläche (Grid)', () => {
     const { html } = exportMask(demoTree())
     expect(html).toContain('html, body { width: 100%; height: 100%;')
     expect(html).toContain('.ff-root { box-sizing: border-box; width: 100%; height: 100%; overflow: auto;')
-    // Wurzel = CSS-Grid mit fester Spaltenzahl (rasterFlaecheStyle) statt Flex.
+
     expect(html).toContain('display:grid')
     expect(html).toContain('grid-template-columns:repeat(24, 1fr)')
   })
 
   it('fill-Höhe wirkt in einer Spalte als flex-grow (Fluss lebt in Containern weiter)', () => {
-    // Der Fluss lebt INNERHALB von Containern: ein height:fill-Kind in einer
-    // Spalte nimmt die verbleibende Höhe (flowItemHeightStyle, unverändert).
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['box'] },
       box: { id: 'box', type: TEST_BOX, props: { direction: 'column', width: 'fill' }, parentId: 'root', childIds: ['kind'] },
@@ -146,7 +120,7 @@ describe('exportMask', () => {
   it('hält die ASCII-Regel: Umlaute werden zu Entities', () => {
     const { html } = exportMask(demoTree())
     expect(html).not.toMatch(/[Ü—]/)
-    expect(html).toContain('&#xDC;bersicht') // Ü
+    expect(html).toContain('&#xDC;bersicht')
   })
 
   it('SEvariablen-JSON ist das leere, gültige Gerüst', () => {
@@ -154,35 +128,23 @@ describe('exportMask', () => {
     expect(JSON.parse(sevariablen)).toEqual({ SEFILELOOP: [], ERPAPICALL: [] })
   })
 
-
   it('ohne Rand-Baustein bleibt die Wurzel-Regel unveraendert (N2.1)', () => {
     const { html } = exportMask(demoTree())
-    // Eine Maske ohne Navi darf sich durch N2.1 um kein Byte aendern.
+
     expect(html).toContain('padding: 16px;')
   })
-
 })
-
-// Die Verteidigung (Validator: Marker/LF/ASCII/Interface/Buendel) und die
-// Zeichen-Regeln des Serializers stehen seit 2026-08-06 in validator.test.ts —
-// diese Datei war ueber den 500-Zeilen-Deckel gewachsen (check:regeln).
 
 describe('Runtime-Bündel', () => {
   it('ist nach dem ASCII-Escaping weiterhin gültiges JavaScript', () => {
     const { html } = exportMask(demoTree())
     const script = /<script>\n([\s\S]*?)\n<\/script>/.exec(html)
     expect(script).not.toBeNull()
-    // Kompilieren (nicht ausführen) — wirft bei Syntaxfehlern.
+
     expect(() => new Function(script![1])).not.toThrow()
   })
 
   it('traegt die Regel, die das Umschalten der Ansichten erst wirksam macht (N2.1)', () => {
-    // Diese EINE Zeile (BasicBlock) entscheidet, ob das hidden-Attribut in
-    // SoftEngine etwas tut: die gleichnamige Browser-Regel verliert gegen
-    // jedes :host aus einem Baustein. Ohne sie schreibt navi/seRuntime das
-    // Attribut, und die Flaechen liegen uebereinander — genau der
-    // Nutzer-Echttest vom 2026-08-12. Geprueft wird das BUENDEL, weil der
-    // Referenzabzug es herausschneidet und im Browser niemand von uns nachsieht.
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — die hidden-Regel fehlt')
       .toContain(':host([hidden]) { display: none; }')
   })
@@ -191,46 +153,19 @@ describe('Runtime-Bündel', () => {
     for (const tag of ['ff-ansicht', 'ff-bild', 'ff-button', 'ff-card', 'ff-datum', 'ff-formfeld', 'ff-kanban', 'ff-kanban-spalte', 'ff-kanban-zimmer', 'ff-navi', 'ff-navi-eintrag', 'ff-popup', 'ff-tabelle', 'ff-text', 'ff-trenner']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} fehlt`).toContain(tag)
     }
-    // Kahlschlag 2026-07-14 (Nutzer-Entscheidung): Bereich, Infobox,
-    // Status-Chip und Eingabefeld sind KOMPLETT entfernt — ein Bündel, das
-    // sie noch trägt, ist veraltet. (Der alte ff-text fiel damals mit; als
-    // statisches Atom ist ff-text am 2026-07-21 NEU gebaut worden — er steht
-    // deshalb jetzt oben in der Positivliste, nicht mehr hier.)
+
     for (const tag of ['ff-container', 'ff-infobox', 'ff-badge', 'ff-formfield']) {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — ${tag} ist abgeschafft`).not.toContain(tag)
     }
-    // P1.1: der Vorlagen-Kasten ist abgeschafft — ein Bündel, das ihn noch
-    // trägt, ist veraltet.
+
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — ff-kanban-vorlage ist abgeschafft').not.toContain('ff-kanban-vorlage')
-    // Die Auffangspalte bleibt waehlbar — sie ist der EINE Weg, Zeilen ohne
-    // Treffer bewusst zu lenken.
+
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — Auffang-Kennzeichen fehlt').toContain('auffang')
-    // Umgekehrt zur Vorfassung (Nutzer-Entscheidung 2026-07-27): die
-    // Laufzeit erfindet KEINE Spalte "Nicht zugeordnet" mehr. Ohne
-    // Auffangspalte landen Zeilen ohne Treffer in der ERSTEN Spalte. Ein
-    // Bündel, das das Kennzeichen noch trägt, ist veraltet.
+
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — "Nicht zugeordnet" ist abgeschafft').not.toContain('data-ff-nicht-zugeordnet')
-    // Der eigene Datenanschluss-Dialog ist abgeschafft (2026-07-27): alle
-    // Bausteine waehlen ihre Quelle im Inspector. Ein Buendel, das die
-    // Wegbeschreibung noch traegt, ist veraltet.
+
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — bindingRoute ist abgeschafft').not.toContain('bindingRoute')
-    // Hier stand bis 2026-08-06 `height: 112px`, die Mindesthoehe der Karte.
-    // Sie ist mit dem Wert selbst gefallen: die Karte ist jetzt die Demo-Karte
-    // und waechst mit ihrem Inhalt. Der Marker war ohnehin genau die Sorte,
-    // die der Absatz unten verbietet.
-    // KEINE Marker auf Baustein-CSS (Nutzer-Entscheidung 2026-08-04). Hier
-    // standen zwei wortwörtliche CSS-Suchen (Platzhalter des gebundenen Felds,
-    // Zeilenhöhe des leeren Textes). Sie sind wieder weg: ein Leerzeichen
-    // anders im CSS färbt sie rot, obwohl die Maske stimmt — und umgekehrt
-    // beweist der gefundene Text NICHT, dass es richtig aussieht. Optik prüft
-    // allein der SE-Echttest des Nutzers. Neue CSS-Marker deshalb nicht
-    // einführen; die Tags-Positivliste oben bleibt (sie prüft Existenz, nicht
-    // Aussehen).
-    // Der SE-Anschluss selbst: die Anmeldefunktion und die zwei Fehlerbalken,
-    // die beim Scheitern das Einzige sind, was der Bediener zu sehen bekommt.
-    // Hier standen bis 2026-08-17 drei Marker der versteckten Diagnose
-    // ('body.REGMSG', 'Empfangene Pakete', 'nach 10s kein Interface') — die ist
-    // auf Nutzer-Ansage restlos entfernt.
+
     for (const marker of [
       'basisHTML_REGISTER',
       'SoftEngine-Anschluss nicht gefunden',
@@ -239,7 +174,7 @@ describe('Runtime-Bündel', () => {
       expect(runtimeJsRaw, `npm run build:runtime ausführen — Marker ${marker} fehlt`)
         .toContain(marker)
     }
-    // Und sie bleibt entfernt: ein Buendel mit der Textarea ist veraltet.
+
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — Diagnose-Textarea ist abgeschafft')
       .not.toContain('ff-se-diagnose')
   })
@@ -247,9 +182,6 @@ describe('Runtime-Bündel', () => {
 
 describe('Atome (statische Bausteine, Fahrplan 3)', () => {
   it('Text: Stil (Größe/Gewicht/Ausrichtung) + Inhalt reisen als Attribute; Sonderzeichen werden escaped', () => {
-    // Freier Stil statt Größen-Stufen (Nutzer 2026-07-21): Pixelzahl,
-    // Gewicht und Ausrichtung reisen als Technikwert-Attribute, der Inhalt
-    // wird escaped.
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
       t: {
@@ -266,16 +198,12 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(html).toContain('groesse="17"')
     expect(html).toContain('gewicht="fett"')
     expect(html).toContain('ausrichtung="mitte"')
-    // & -> &amp;, < -> &lt;, > -> &gt;, " -> &quot;, ä -> &#xE4; (serializer).
+
     expect(html).toContain('text="A &amp; B &lt; C &gt; &quot;D&quot; &#xE4;"')
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
   it('Text: die Farbe reist als Technikwert-Attribut mit (Token, kein Hex)', () => {
-    // Die Farbe ist eine Maskeneinstellung: faellt das Attribut weg, zeigt die
-    // exportierte Maske eine andere Farbe als der Editor (WYSIWYG-Bruch).
-    // Im Markup steht der TECHNIKWERT — den Token loest der Baustein selbst
-    // auf (FARBEN), damit im Export nirgends eine Farbe fest verdrahtet ist.
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
       t: {
@@ -291,9 +219,6 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
   })
 
   it('Text: Datenbindung (Quelle + Feld) reist als Attribut mit', () => {
-    // 2026-08-04: der Text ist bindbar. Ohne diese zwei Attribute zeigte die
-    // exportierte Maske stur den getippten Text, waehrend der Editor den
-    // Feld-Klarnamen anbietet — WYSIWYG-Bruch (Regel 1).
     const sources: DataSource[] = [{
       id: 'q-termine', name: 'Terminplaner', kind: 'idb', idbId: 'IDBID0004',
       indexField: '0_10', fields: [{ code: '40_20', label: 'Titel' }],
@@ -309,10 +234,7 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     const { html, sevariablen } = exportMask(tree, 'Maske', sources)
     expect(html).toMatch(/<ff-text[^>]*\ssource="q-termine"/)
     expect(html).toMatch(/<ff-text[^>]*\stextfield="40_20"/)
-    // Die Quelle des Textes muss in der SEFILELOOP stehen — sonst schiebt
-    // SoftEngine ihre Daten nie, und die Stelle bliebe leer. Und sie bestellt
-    // seit S5.1 genau das gebundene Feld plus die Datensatz-Nummer (Herleitung
-    // samt Sicherheitsventil: ./felderBestellung.test.ts).
+
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
       { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0004', FELDER: '0_10,40_20' },
     ])
@@ -320,11 +242,6 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  // Die Richtung ist die EINZIGE Eigenschaft der Trennlinie (2026-08-05).
-  // Waagerecht ist ihr Standard und reist deshalb NICHT mit (Standardwert-Regel
-  // in exportMask) — senkrecht schon. Beide Faelle stehen hier, weil genau
-  // dieses Paar den Round-Trip beweist: was der Bauer eingestellt hat, steht im
-  // Markup; was er nie angefasst hat, blaeht die Maske nicht auf.
   it('Trennlinie waagerecht (Standard) exportiert als leeres Element ohne Attribute', () => {
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tr'] },
@@ -332,9 +249,7 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     }
     const { html } = exportMask(tree)
     expect(html).toMatch(/<ff-trenner[^>]*><\/ff-trenner>/)
-    // Gegenprobe am ELEMENT, nicht am ganzen Dokument: das eingebettete
-    // Runtime-Buendel enthaelt „richtung" ohnehin (Bausteincode, dazu die
-    // Text-Ausrichtung) — eine Volltextsuche traefe das mit.
+
     expect(html).not.toMatch(/<ff-trenner[^>]*richtung=/)
   })
 
@@ -348,13 +263,7 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  // N5: das Bild reist als eingebetteter Daten-URI — eine Maske bleibt EINE
-  // Datei. Der Fall haelt beides fest: dass der lange String unveraendert im
-  // Attribut landet UND dass er die SE-Dateiregeln nicht bricht (Base64 ist
-  // reines ASCII, aber der Validator ist die Stelle, die das zusagt).
   it('Bild traegt seinen Daten-URI unveraendert im Markup', () => {
-    // Kleinstmoegliches echtes PNG (1x1, transparent) — dieselbe Form, die
-    // bildEinbetten erzeugt, nur eben klein genug zum Hinschreiben.
     const uri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['bi'] },
@@ -366,9 +275,6 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
   })
 
   it('Bild ohne gewaehlte Datei traegt kein quelle-Attribut', () => {
-    // Standardwert-Regel (2026-08-06). Ein leerer Daten-URI im Markup waere
-    // ein <img src=""> in der Maske — der Browser fragte damit die Maskendatei
-    // selbst noch einmal als Bild ab.
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['bi'] },
       bi: { id: 'bi', type: 'bild', props: { quelle: '' }, parentId: 'root', childIds: [] },
@@ -377,7 +283,4 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(exportMask(tree).html).not.toMatch(/<ff-bild[^>]*quelle=/)
   })
 })
-
-
-
 

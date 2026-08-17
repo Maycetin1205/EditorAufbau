@@ -11,9 +11,8 @@ describe('eigenerText', () => {
   })
 
   it('behandelt einen unveränderten Default-Text NICHT als Eigennamen', () => {
-    // Frisches Formularfeld: Platzhalter noch = Default „Feldname".
     expect(eigenerText({ placeholder: 'Feldname' }, { placeholder: 'Feldname' })).toBe('')
-    // Umbenannt → wieder ein Eigenname.
+
     expect(eigenerText({ placeholder: 'Vorname' }, { placeholder: 'Feldname' })).toBe('Vorname')
   })
 

@@ -1,36 +1,11 @@
-// DialogRahmen — der Rahmen eines Fensters IN der laufenden Maske:
-// Abdunklung, zentriertes Fenster, Kopfzeile mit Titel und Schliessen-Kreuz,
-// optionale Werkzeugzeile darunter, scrollender Inhalt.
-//
-// Warum ein eigener Baustein-loser Rahmen: das Nachschlage-Fenster ist kein
-// Baustein — der Bauer zieht es nicht auf die Flaeche, es entsteht erst,
-// wenn der Bediener die Lupe klickt. Ein Baustein waere hier falsch (er
-// muesste im Baum liegen, exportiert und positioniert werden).
-//
-// Seit C1 (2026-08-11) komponiert auch der PopupBlock diesen Rahmen — die
-// frueher fast gleiche Abschrift dort ist weg. Zwei Konsumenten, zwei
-// Betriebsarten: das Nachschlagen erzeugt den Rahmen programmatisch
-// (viewport, escape-schliesst, modal), das Popup rendert ihn in seinem
-// Schatten (ohne-modal bis zur Fokusbegrenzung C3.3, inhalt-fest weil sein
-// Rumpf selbst rollt). Wer am Fenster-Aussehen baut, baut fuer BEIDE.
-//
-// Aussehen ausschliesslich aus Masken-Tokens (--se-*), wie in jedem
-// Baustein; strukturelle Groessen als Literale.
-
 import { css, html, LitElement, nothing, type PropertyValues, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 
 export const DIALOG_RAHMEN_TAG = 'ff-dialog-rahmen'
 export const DIALOG_SCHLIESSEN_EVENT = 'ff-dialog-schliessen'
 
-// „Flaeche minus Rand" — das Fenster darf nie bis an die Kante der Maske
-// stossen. Seit C1 die EINE Konstante dafuer: der PopupBlock (max-width/
-// height hier im CSS) und der Editor-Anfasser der Popup-Seite (PopupSeite,
-// sichtbare Kante) rechnen beide mit ihr. Bis dahin gab es daneben ein
-// gleiches POPUP_RAND — wer nur eins aenderte, aenderte das halbe Fenster.
 export const DIALOG_RAND = 24
 
-// Groessen koennen als Attribut-Strings ankommen — defensiv wandeln.
 function pixel(wert: unknown, ersatz: number): number {
   const zahl = Number(wert)
   return Number.isFinite(zahl) && zahl > 0 ? zahl : ersatz
@@ -46,9 +21,7 @@ export class DialogRahmen extends LitElement {
       font-size: var(--se-fs);
       color: var(--se-ink);
     }
-    /* Ueber der GANZEN Maske statt nur im Elternkasten: das Nachschlage-
-       Fenster haengt an einem Formularfeld, das irgendwo in einer Karte
-       sitzt — ohne fixed waere es in deren Ausschnitt eingesperrt. */
+
     :host([viewport]) {
       position: fixed;
       z-index: 2147483646;
@@ -90,8 +63,7 @@ export class DialogRahmen extends LitElement {
       min-width: 0;
       overflow: hidden;
       color: var(--se-ink);
-      /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
-         nie im Fliesstext — sonst verliert sie ihre Wirkung. */
+
       font-family: var(--se-font-schmuck);
       font-size: var(--se-fs-lg);
       font-weight: 600;
@@ -131,9 +103,7 @@ export class DialogRahmen extends LitElement {
       min-height: 0;
       overflow: auto;
     }
-    /* inhalt-fest (Popupmodus, C1): der Rumpf des Konsumenten ist ALLEINIGER
-       Scroll-Besitzer — rollte .inhalt zusaetzlich, gaebe es zwei
-       ineinander liegende Rollbalken fuer denselben Inhalt. */
+
     :host([inhalt-fest]) .inhalt { overflow: hidden; }
   `
 
@@ -143,17 +113,12 @@ export class DialogRahmen extends LitElement {
   @property({ type: Boolean, reflect: true }) viewport = false
   @property({ type: Boolean, reflect: true, attribute: 'mit-werkzeug' }) mitWerkzeug = false
   @property({ type: Boolean, attribute: 'escape-schliesst' }) escapeSchliesst = false
-  // Popupmodus (C1): solange die Fokusbegrenzung (C3.3) fehlt, darf das
-  // Popup nicht aria-modal=true exportieren — die Zusage „Fokus bleibt im
-  // Fenster" waere gelogen. Das Nachschlagen bleibt beim bisherigen true.
+
   @property({ type: Boolean, attribute: 'ohne-modal' }) ohneModal = false
   @property({ type: Boolean, reflect: true, attribute: 'inhalt-fest' }) inhaltFest = false
 
   private escapeRegistriert = false
 
-  // Escape in der capture-Phase und mit stopPropagation: dieselbe Schichtung
-  // wie im Editor-Panel — das oberste offene Fenster verbraucht die Taste,
-  // damit sie nicht zugleich eine Ebene darunter etwas schliesst.
   private readonly aufTaste = (event: KeyboardEvent): void => {
     if (event.key !== 'Escape') return
     event.stopPropagation()

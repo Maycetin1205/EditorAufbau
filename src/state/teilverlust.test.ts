@@ -1,23 +1,9 @@
-// Teilverlust beim Laden — wer prueft wie streng?
-//
-// Bis zum 2026-08-12 sperrte der BROWSER-Weg jeden Stand mit Teilverlust
-// (Quarantaene A3/A4, Sperransicht, Schreib-Riegel). Auf Nutzer-Ansage
-// 2026-08-12 ist das restlos entfernt: der Browser-Weg laedt NACHSICHTIG
-// (bereinigen, oeffnen, weiterarbeiten). Die strenge Verlust-Pruefung lebt
-// weiter am DATEI-Weg (ladeKette.pruefeBaumStand, Aufrufer maskenDatei) —
-// eine Datei ist nur ein Kandidat, ihre Ablehnung kostet keine Sitzung.
-//
-// Hier stehen BEIDE Zusagen nebeneinander, damit keine still kippt.
-
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-// Echte Bausteine, weil der Eltern-Kind-VERTRAG der Registry geprueft wird —
-// den koennen Test-Bausteine nicht glaubhaft nachstellen: die Karte darf nur
-// in eine Kanban-Spalte.
+
 import '../blocks/card/CardBlock'
 import '../blocks/kanban/KanbanBlock'
 import '../blocks/popup/PopupBlock'
-// Die Tabelle wird gebraucht, weil S2.1 zwei ihrer Eigenschaften gestrichen
-// hat und ein Altbestand damit trotzdem laden muss.
+
 import '../blocks/tabelle/TabelleBlock'
 import { DataSourceStore } from './DataSourceStore'
 import { Editor } from './Editor'
@@ -31,13 +17,11 @@ const QUELLEN_KEY = 'aufbau_editor_datenquellen_v1'
 
 beforeEach(() => { localStorage.clear() })
 
-// Einen Baum ueber den echten Browser-Weg laden.
 function lade(tree: Record<string, unknown>): Editor {
   localStorage.setItem(KEY, JSON.stringify({ schemaVersion: 5, tree, selectedId: null }))
   return new Editor()
 }
 
-// Denselben Baum als DATEI-Kandidat pruefen.
 function pruefe(tree: Record<string, unknown>) {
   return pruefeBaumStand({ schemaVersion: 5, tree })
 }
@@ -60,7 +44,7 @@ describe('Der Browser-Weg laedt nachsichtig (Nutzer-Ansage 2026-08-12)', () => {
       const ed = lade(MIT_WAISE)
       expect(ed.getNode('a')).toBeDefined()
       expect(ed.getNode('waise')).toBeUndefined()
-      // Weiterarbeiten schreibt wieder — kein Riegel mehr.
+
       ed.addBlock(TEST_BLOCK)
       vi.runAllTimers()
       expect(localStorage.getItem(KEY)).not.toBeNull()
@@ -76,9 +60,6 @@ describe('Der Browser-Weg laedt nachsichtig (Nutzer-Ansage 2026-08-12)', () => {
     expect(ed.getNode('a')?.props).not.toHaveProperty('gibtEsNicht')
   })
 
-  // S2.1 (2026-08-11): der Zeilen-Waehler der Tabelle ist gestrichen. Ein
-  // Stand mit gesetztem Waehler ist gesund und laedt; die Werte sind danach
-  // wirklich weg, nicht heimlich mitgeschleppt.
   it('eine Tabelle mit dem alten Zeilen-Waehler laedt', () => {
     const ed = lade({
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
@@ -118,7 +99,6 @@ describe('Der Datei-Weg prueft weiter streng (pruefeBaumStand)', () => {
     }
   })
 
-  // Die Gegenproben zur Strenge: was ABSICHTLICH wegfaellt, ist kein Verlust.
   it('eine abgeschaffte Eigenschaft (S2.1) ist kein Verlust', () => {
     const stand = pruefe({
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },

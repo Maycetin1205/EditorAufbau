@@ -1,18 +1,3 @@
-// Canvas
-// Sichtbare Arbeitsfläche. Rendert den Block-Baum REKURSIV im Fluss und
-// trägt die komplette Drag-and-Drop-Platzierung:
-//   - vorhandene Blöcke ziehen: umsortieren, in Bereiche hinein, heraus —
-//     auf jeder Verschachtelungsebene, mit Einfüge-Linie als Vorschau.
-//   - neue Blöcke aus der Bibliothek ziehen (MIME-Typ, siehe dnd.ts).
-//   - Bereiche als Ziel: Randzone = davor/dahinter einsortieren,
-//     Mitte = hinein ans Ende. Ein Bereich kann nie in sich selbst fallen.
-// Klick auf leere Stelle = Auswahl aufheben.
-//
-// die Handgriffe wohnen in eigenen Dateien daneben —
-// Knoten-Rekursion (CanvasNode), Dnd-Zustand (dndState), Seiten-Reiter
-// (SeitenLeiste) und Popup-Seitenansicht (PopupSeite). Hier bleibt nur
-// die Fläche selbst.
-
 import { useCallback, useMemo, useState, type DragEvent } from 'react'
 import { ROOT_ID } from '../../core/blocks/BlockData'
 import { ROOT_FLOW } from '../../core/blocks/flowLayout'
@@ -31,12 +16,6 @@ export function Canvas() {
   const [dragId, setDragId] = useState<string | null>(null)
   const [dropTarget, merkeDropTarget] = useState<DropTarget | null>(null)
 
-  // Das Ziel nur bei ECHTEM Wechsel neu setzen. Die Melder (rasterMove,
-  // rasterDnd, CanvasNode) bauen bei JEDEM Zeigerereignis ein frisches
-  // Ziel-Objekt; ohne diesen Vergleich rechnet React jedes davon als Aenderung
-  // und zeichnet die ganze Flaeche neu — beim Ziehen 60 bis 120 Mal je
-  // Sekunde, obwohl der Geist meist ueber derselben Zelle steht. Gibt der
-  // Aktualisierer denselben Stand zurueck, hoert React von selbst auf.
   const setDropTarget = useCallback((ziel: DropTarget | null) => {
     merkeDropTarget((vorher) => (gleichesZiel(vorher, ziel) ? vorher : ziel))
   }, [])
@@ -52,32 +31,15 @@ export function Canvas() {
     },
   }), [dragId, dropTarget, setDropTarget])
 
-  // Rasterfläche: die Zielzelle unter dem Zeiger bestimmen (Bibliothek-Drag oder
-  // Block aus einem Container) — das ersetzt die frühere Einfüge-Linie „ans Ende
-  // der Wurzel". null = kein gültiges Ziel (Typ passt nicht). Das POINTER-Bewegen
-  // vorhandener Rasterblöcke läuft NICHT hierüber (rasterMove).
   const onGridDragOver = (e: DragEvent) => {
     if (dragId === null && !isNewBlockDrag(e.dataTransfer)) return
     e.preventDefault()
     setDropTarget(rasterZiel(e, ed, dnd, ed.rootId, e.currentTarget as HTMLElement))
   }
 
-  // Aktive Seite in zwei Sorten (Registry, kein `if type===`):
-  // FLÄCHE (Hauptseite oder Ansicht) = das Raster hier; FENSTER (Popup) = das
-  // eine Popup-Element über der abgedunkelten Maskenfläche. Eine Ansicht
-  // arbeitet damit Zug um Zug wie die Hauptseite — dieselbe Rasterfläche,
-  // dieselben Drop-Wege; sie unterscheiden sich nur darin, welche Wurzel
-  // ed.rootId gerade meldet.
   const aktiveSeite = ed.pages.find((p) => p.id === ed.activePageId)
   const flaeche = aktiveSeite?.istFlaeche ?? true
 
-  // Platz fuer die Randleiste des Maskenrahmens (N2.1): liegt eine in der
-  // Maske, haelt die Flaeche ihre schmale Breite links frei — sonst laege sie
-  // ueber den Bausteinen. DIESELBE Quelle rechnet der Export (exportMask).
-  // Ein Klick auf einen Navi-Eintrag wechselt hier BEWUSST keine Seite mehr
-  // (Nutzer-Befund N2.1-4: die Navi war dadurch nicht einzustellen). Im Editor
-  // waehlt er den Baustein; die Seite wechselt die Seiten-Leiste. Zuhoerer ist
-  // nur noch die Maske selbst (blocks/navi/seRuntime).
   const randLinks = randPlatzLinks(ed.tree)
 
   return (
@@ -85,19 +47,9 @@ export function Canvas() {
       <div className="flex h-full w-full flex-col">
         <div
           onClick={() => ed.selectBlock(null)}
-          // Das „Blatt": die Maske liegt sichtbar AUF dem Grund — Kante +
-          // dreistufiger Schatten geben die Tiefe, der Inhalt selbst bleibt
-          // unverändert Masken-Welt (--se-bg).
-          //
-          // Der Schatten ist bewusst kräftig (Nutzer 2026-07-25: „muss wow
-          // sein, wenn ein Kunde die Masken sieht"): eine harte Nahkante,
-          // ein mittlerer Absatz und ein weiter, warmer Wurf. Warm getönt
-          // (nicht neutralschwarz), sonst wirkt er schmutzig auf dem
-          // papierfarbenen Tisch.
+
           className="relative min-h-0 w-full flex-1 overflow-hidden rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(40,30,20,0.10),0_6px_14px_-6px_rgba(40,30,20,0.16),0_26px_50px_-24px_rgba(40,30,20,0.38)]"
-          // Blatt = Masken-Welt: Schrift/Größe/Zeilenhöhe/Farbe wie der
-          // Export-body (WYSIWYG) — die Editor-Schrift (Inter) bleibt draußen.
-          // Dieselben Tokens wie dort, Wert für Wert: exportMask.ts.
+
           style={{
             minHeight: 400,
             fontFamily: 'var(--se-font)',
@@ -107,10 +59,7 @@ export function Canvas() {
           }}
         >
           <div
-            // Wurzel = Rasterfläche (CSS-Grid): dieselben Werte benutzt der
-            // Export (rasterFlaecheStyle) — WYSIWYG. Außen-Padding weiter aus
-            // ROOT_FLOW. Hintergrund = Masken-Grundfarbe (--se-bg), NICHT
-            // Editor-Chrome: die Fläche zeigt die Maske, wie sie exportiert wird.
+
             className="h-full min-h-0 overflow-auto"
             style={{
               ...rasterFlaecheStyle(),
@@ -125,25 +74,17 @@ export function Canvas() {
               commitDrop(e, ed, dnd)
             }}
             onDragLeave={(e) => {
-              // Nur zurücksetzen, wenn der Zeiger die Fläche wirklich verlässt.
               if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
                 setDropTarget(null)
               }
             }}
           >
             {flaeche && <NodeList parentId={ed.rootId} direction="column" raster />}
-            {/* Der RAHMEN der Maske steht auf jeder Flaeche (N2.1, Befund 1:
-                die Navi war auf der zweiten Ansicht weg — in der Maske stand
-                sie dort, im Editor nicht: WYSIWYG-Bruch). Er wohnt auf der
-                Hauptseite; ist eine ANSICHT offen, wird er zusaetzlich von
-                dort geholt. Registry-getrieben (maskenRand), kein Wissen
-                ueber die Navi. */}
+
             {flaeche && ed.rootId !== ROOT_ID && (
               <NodeList parentId={ROOT_ID} direction="column" raster nurRand />
             )}
-            {/* „Geist" (E2/E3): halbtransparente Vorschau der Zielzelle beim
-                Bewegen (rasterMove) UND beim Einfügen aus der Bibliothek — rastet
-                auf ganze Zellen. Reine Editor-Hilfe, nie Teil des Baums. */}
+
             {flaeche && dropTarget?.kind === 'raster' && dropTarget.parentId === ed.rootId && (
               <div
                 aria-hidden
@@ -163,15 +104,7 @@ export function Canvas() {
               />
             )}
           </div>
-          {/* Leerzustand (R1): sagt, was zu tun ist — reine Editor-Hilfe,
-              nie Teil des Baums; pointer-events-none lässt Drops durch.
-              Gefragt wird nach der OFFENEN Seite, nicht nach der ganzen Maske
-              (ed.blockCount zählt jeden Knoten aller Seiten): sonst bliebe
-              eine frisch angelegte, leere Ansicht eine wortlose Fläche —
-              und auf der Hauptseite verschwand der Hinweis schon, sobald
-              irgendwo ein Popup lag. Das leere POPUP zeigt denselben Kasten,
-              aber in seinem Rumpf (PopupSeite) — dort gehört er hin, dort
-              landet der Drop. */}
+
           {flaeche && ed.childNodesOf(ed.rootId).length === 0 && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
               <LeerHinweis
@@ -186,7 +119,5 @@ export function Canvas() {
   )
 }
 
-// Außen-Vertrag: diese Namen waren immer von hier
-// importierbar — sie wohnen jetzt in dndState, bleiben aber re-exportiert.
 export type { DropTarget }
 export { DndContext }

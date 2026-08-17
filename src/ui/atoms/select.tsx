@@ -1,7 +1,3 @@
-// Select: shadcn/Radix-Select-Primitives.
-// Ersetzt das fruehere native <select>. Exportiert die Standard-Bausteine;
-// die Label+Options-Convenience baut der Aufrufer (z.B. SelectControl) daraus.
-
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronUp } from '../zeichen'
 import { forwardRef } from 'react'

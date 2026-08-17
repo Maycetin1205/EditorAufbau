@@ -1,9 +1,4 @@
-// Aktionsketten am Baustein je Ereignis. Die Ketten sind reine Daten im
-// Block-Baum; die konkrete Ausfuehrung gehoert in die Export-Runtime.
-
 import type { RelationTemplate } from './relations'
-
-// ---------- Schritt-Typen ----------
 
 export type StepTypeKey = 'START_TOOL' | 'RELATION' | 'POPUP_OPEN' | 'POPUP_CLOSE'
 
@@ -13,10 +8,10 @@ export interface StepTypeSpec {
 }
 
 export const STEP_TYPES: readonly StepTypeSpec[] = [
-  // Anzeige-Name = SE-Fachbegriff selbst (Nutzer-Entscheidung 2026-07-15).
+
   { key: 'START_TOOL', name: 'START_TOOL' },
   { key: 'RELATION', name: 'Relation' },
-  // Popup-Schritte sind KEINE SE-Fachbegriffe — sie bekommen Klarnamen.
+
   { key: 'POPUP_OPEN', name: 'Popup öffnen' },
   { key: 'POPUP_CLOSE', name: 'Popup schließen' },
 ]
@@ -25,30 +20,8 @@ export function stepTypeName(typeKey: string): string {
   return STEP_TYPES.find((t) => t.key === typeKey)?.name ?? typeKey
 }
 
-// ---------- Parameterquellen fuer Relationsschritte ----------
-
-// Gemeinsame Export-/Laufzeit-Kennung fuer auslesbare Bausteine. Nur
-// Registry-freigegebene Bausteine tragen sie im exportierten HTML.
 export const ACTION_VALUE_ID_ATTR = 'data-ff-block-id'
 
-// Erlaubte Parameterquellen (Technikwerte) — die Laufzeit prüft beim Lesen
-// der Kette nur diese Keys. Die Klarnamen dazu sind reine Editor-Sache
-// (QUELLEN_NAMEN im StepForm, Kurz-Klarnamen per Nutzer-Go 2026-07-22) und
-// reisen damit NICHT mehr im Runtime-Bündel mit.
-// step_result = Zwischenspeicher (Nutzer-Befund + -Vorschlag 2026-07-17):
-// das Ergebnis eines FRÜHEREN GET-Schritts der Kette, per Auswahl
-// „Schritt N" — kein Namen-Vergeben. Referenz-Beleg: SE-Log „Termin
-// anlegen" (GET 640 → PUTs auf den Index; ZWEI GET-Ergebnisse
-// gleichzeitig in Gebrauch). SE-Echttest 2026-07-22: die Stelle aus
-// Schritt 1 kam im echten PUT an (…!L!271!…).
-// gewaehlte_zeile = „Feld der gewaehlten Zeile" (2026-08-06): wie data_field,
-// liest aber nicht die erste Zeile einer Quelle, sondern die Zeile, die der
-// Bediener in einem Auswahl-Geber (Tabelle/Kanban) ANGEKLICKT hat. Damit ist
-// auch deren Satz-Index (z. B. 0_10) als PUT-Parameter erreichbar — bis dahin
-// gab es dafuer keinen Weg: {PINDEX} traegt nur, wer das Ereignis ausloest,
-// und ein Knopf daneben weiss von der Auswahl nichts. Der Geber steht in
-// `blockId` (dieselbe Baum-id wie block_value und wie folgtAuswahl.geberId),
-// der Feldcode in `value`.
 export const ACTION_PARAM_SOURCES = [
   'fixed',
   'context',
@@ -60,74 +33,27 @@ export const ACTION_PARAM_SOURCES = [
   'se_variable',
 ] as const
 
-// 'aus' = dieser Parameter bleibt FUER DIESE AKTION leer (Nutzer-Entscheidung
-// 2026-08-06). Bewusst NICHT in ACTION_PARAM_SOURCES: die Liste ist das
-// Quelle-Auswahlfeld, und „aus" waehlt man nicht dort, sondern mit dem x an
-// der Zeile — danach ist die Zeile weg, ein Auswahlfeld gaebe es nicht mehr.
-// Der Parameter verschwindet nur aus dem FORMULAR; in der Syntax behaelt er
-// seine Position und geht als leerer String raus. Er ersatzlos zu streichen
-// wuerde alle Parameter dahinter verschieben und den Aufruf zerlegen.
-//
-// Darum ZWEI Listen, und der Unterschied ist genau einer: was man WAEHLEN kann
-// (oben, das Auswahlfeld) und was gespeichert GUELTIG ist (hier, der Lader).
-// Bis 2026-08-10 pruefte der Lader gegen die Auswahl-Liste — er lehnte damit
-// einen Zustand ab, den das Formular selbst schreibt, und riss ueber
-// `sanitizeBlockEvents` die GANZE Kette mit. Betroffen waren ALLE DREI Wege
-// durch dieselbe Pruefung: Neuladen im Browser (Kette lautlos weg), Oeffnen
-// einer Maskendatei (als „beschaedigt" abgelehnt) und `parseBlockEvents` in
-// der laufenden Maske — dort fiel die Kette in SoftEngine aus, ohne dass
-// irgendwo etwas zu sehen war. Die zweite Liste wird AUS der ersten gebaut,
-// damit eine neue Quellenart nicht in nur einer von beiden landen kann.
 export const GESPEICHERTE_PARAM_QUELLEN = [...ACTION_PARAM_SOURCES, 'aus'] as const
 
 export type ActionParamSource = (typeof GESPEICHERTE_PARAM_QUELLEN)[number]
 
 export interface ActionParamBinding {
   source: ActionParamSource
-  // fixed: Wert, context: PINDEX/VALUE/NOW_DATE, data_field: Feldcode,
-  // block_value: freigegebene Prop eines Bausteins,
-  // gewaehlte_zeile: Feldcode in der gewaehlten Zeile des Gebers,
-  // se_variable: Variablenname. previous_result braucht keinen Wert.
-  // step_result: im EDITOR die stabile Schritt-id (übersteht Umsortieren,
-  // Muster popupId), in der MASKE die Position in der Kette (Editor-ids
-  // reisen nie mit — serializeBlockEvents übersetzt).
+
   value: string
-  // Nur data_field: stabile ID der Datenquellen-Vorlage. Der Feldcode allein
-  // ist zwischen verschiedenen Tabellen nicht eindeutig.
+
   dataSourceId?: string
-  // block_value: stabile ID des Bausteins, dessen Prop gelesen wird
-  // (`value` = die Registry-freigegebene Prop).
-  // gewaehlte_zeile: stabile ID des Auswahl-GEBERS, dessen angeklickte Zeile
-  // gelesen wird (`value` = Feldcode). Beide Male dieselbe Sache — „welcher
-  // Baustein in dieser Maske" —, darum dasselbe Feld statt eines zweiten.
+
   blockId?: string
-  // NUR step_result (2026-08-07): WELCHES Feld des Schritt-Ergebnisses gemeint
-  // ist (Feldcode, Technikwert). Fehlt es, gilt das GANZE Ergebnis — also
-  // exakt das Verhalten von vorher, damit keine bestehende Maske sich aendert.
-  //
-  // Warum das ueberhaupt geht: die Laufzeit hebt seit demselben Tag die ROHE
-  // GET-Antwort je Schritt auf (seAktionen/softengine relations). Der
-  // Ergebnis-Skalar allein traegt nur EINEN Wert; ein Feld daraus zu lesen
-  // waere ohne die Rohantwort nicht moeglich.
+
   ergebnisFeld?: string
 }
 
-// GET-Schritte VOR einer Position — die Auswahl „Ergebnis von Schritt N"
-// (StepForm) und die Gültigkeitsprüfung (stepProblem-Aufrufer) lesen
-// dieselbe Liste. Nur echte GET-Vorlagen liefern ein Ergebnis; Schritte
-// mit gelöschter Vorlage werden nicht angeboten (die blockt stepProblem).
 export interface ErgebnisSchritt {
   id: string
-  nr: number // 1-basierte Anzeige-Position in der Kette
+  nr: number
   name: string
-  // Die Datenquelle, auf die sich DIESER Schritt beruft — die erste seiner
-  // Parameter-Bindungen mit der Quelle „Datenfeld". Daraus stellt die
-  // Steuerung die Felder des Ergebnisses zur Wahl.
-  //
-  // Fehlt sie, ist das kein Fehler, sondern der haeufige Fall: ein GET-Schritt
-  // braucht keine Datenquelle (seine Parameter sind meist feste Werte aus der
-  // Feld-Uebernahme). Dann bleibt der Feldcode frei eingebbar — geraten wird
-  // nichts (Regel 7).
+
   quelleId?: string
 }
 
@@ -158,15 +84,9 @@ export function ergebnisSchritteVor(
 interface ActionStepBase {
   id: string
   type: StepTypeKey
-  // Optionaler Name fuer das Ergebnis eines Schritts. START_TOOL liefert
-  // heute keines; RELATION nutzt ihn spaeter fuer GET-Ergebnisse.
+
   resultKey: string
-  // Eigene Beschriftung des Bauers, frei getippt (2026-08-17). Sie
-  // unterscheidet Schritte, die die Maschine nicht unterscheiden kann —
-  // „Kunde anlegen", „gehoert zum Tier", „pruefen".
-  //
-  // Sie reist NIE in die Maske: withoutEditorId baut den Laufzeit-Schritt
-  // Feld fuer Feld auf, ein Zusatzfeld kommt dort gar nicht erst durch.
+
   notiz?: string
 }
 
@@ -178,26 +98,14 @@ export interface StartToolStep extends ActionStepBase {
 
 export interface RelationStep extends ActionStepBase {
   type: 'RELATION'
-  // Stabile ID aus dem RelationStore; Syntax wird niemals in den Schritt
-  // kopiert und bleibt damit an genau einer Stelle gepflegt.
+
   relationId: string
-  // Jede Syntaxposition genau einmal und in derselben Reihenfolge. Auch feste
-  // und leere Parameter bleiben sichtbar und koennen bei Bedarf eine andere
-  // Wertquelle erhalten.
+
   params: ActionParamBinding[]
-  // Nur fuer Vorlagen mit abschliessendem ... relevant.
+
   extraParams: ActionParamBinding[]
 }
 
-// Im EDITOR: stabile Knoten-id der Popup-Seite (übersteht Umbenennen).
-// Der Export übersetzt sie in den Klarnamen (Editor-ids reisen nie mit,
-// s. serializeBlockEvents); die Laufzeit adressiert das ff-popup über
-// sein name-Attribut. Eindeutige Namen werden NICHT erzwungen: der Preflight
-// meldet Doppelnamen, blockt den Export aber seit 2026-08-10 nicht mehr —
-// zwei gleichnamige Popups schaltet die Kette dann beide zugleich
-// (s. applyPopupStep in blocks/shared/seAktionen).
-// Öffnen/Schließen sind ZWEI Typen (je eine Diskriminante), damit
-// TypeScript sie in den Schritt-Weichen sauber ausschließen kann.
 export interface PopupOpenStep extends ActionStepBase {
   type: 'POPUP_OPEN'
   popupId: string
@@ -224,27 +132,8 @@ export function createStep(typeKey: StepTypeKey): ActionStep {
   return { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
 }
 
-// In Werkzeug-Parametern erlaubte Platzhalter. Gleichzeitig die Liste, die
-// die Kommandozentrale als Kontext-Werte anbietet (ParameterZeile).
-// ZIMMER kam mit N4 dazu: die Kanban-Untergruppe, in die eine Karte gezogen
-// wurde — ohne ihn koennte eine Kette einen Zimmer-Zug nicht schreiben.
 export const AKTIONS_PLATZHALTER = ['PINDEX', 'VALUE', 'ZIMMER', 'NOW_DATE'] as const
 
-// Womit ein Schritt startet, wenn eine Relation gewaehlt wird.
-//
-// ALLES LEER, ausser einem bekannten {KONTEXT}-Wert (PINDEX/VALUE/NOW_DATE) —
-// den ordnet der Editor zu, weil er ihn selbst liefert.
-//
-// Bis 2026-08-06 wanderte hier jeder Syntaxwert, der nicht in geschweiften
-// Klammern stand, als FESTER WERT ins Feld. Die Syntaxzeile einer Vorlage
-// listet aber die Parameter-NAMEN (STSPALTE, TEXT, EPREIS, LANGTEXT …), nicht
-// deren Inhalte. Ergebnis in SoftEngine, vom Nutzer belegt: die Maske schickte
-// PUT_RELATION[82!0!L!…!STSPALTE!!TEXT!!EPREIS!PEH!EK!…] — jeder Feldname als
-// sein eigener Wert. Der Aufruf sah gefuellt aus und trug Unsinn.
-//
-// Die Syntaxwerte sind damit nicht weg: sie stehen im Formular GRAU als
-// Platzhalter an ihrer Zeile, damit der Bauer sieht, welcher Parameter an
-// welcher Stelle erwartet wird. Sie sind nur nicht mehr der Inhalt.
 export function defaultRelationParams(
   relation: Pick<RelationTemplate, 'params'>,
 ): ActionParamBinding[] {
@@ -256,12 +145,6 @@ export function defaultRelationParams(
   })
 }
 
-// ---------- Strukturelle Pruefung ----------
-
-// Popup-Schritt unterwegs: im gespeicherten Baum trägt er die popupId
-// (Editor), im data-ff-aktionen-Attribut der Maske stattdessen `popup`
-// (Klarname — Editor-ids reisen nie mit). stepFields akzeptiert beide
-// Darstellungen; wer welche braucht, prüft selbst (Laufzeit: popup).
 interface RuntimePopupFields {
   resultKey: string
   popupId?: string
@@ -296,10 +179,7 @@ function bindingFields(raw: unknown): ActionParamBinding | null {
     value: raw.value,
     ...(typeof raw.dataSourceId === 'string' ? { dataSourceId: raw.dataSourceId } : {}),
     ...(typeof raw.blockId === 'string' ? { blockId: raw.blockId } : {}),
-    // Das Ergebnis-Feld gehoert ALLEIN zu step_result: an jeder anderen
-    // Quelle liest es niemand, und ein liegen gebliebener Wert saehe im
-    // Export eingestellt aus (dieselbe Linie wie die geputzte Spaltenliste
-    // der Tabelle, listeFuerExport).
+
     ...(raw.source === 'step_result' && typeof raw.ergebnisFeld === 'string'
       ? { ergebnisFeld: raw.ergebnisFeld }
       : {}),
@@ -343,9 +223,7 @@ function stepFields(raw: unknown): RuntimeStep | null {
         params.push(binding)
       }
     }
-    // Kurzzeitig im Browser gespeicherte Vorab-Version mit `bindings` wird
-    // als leere Positionsliste geladen; das Formular setzt beim Bearbeiten
-    // die Vorlagen-Defaults ein. Keine kaputte Kette wegen unseres Umbaus.
+
     const extraParams: ActionParamBinding[] = []
     for (const value of raw.extraParams) {
       const binding = bindingFields(value)
@@ -383,9 +261,7 @@ export function sanitizeBlockEvents(
         break
       }
       seenIds.add(id)
-      // Die Notiz haengt wie die id am EDITOR-Schritt, nicht am Laufzeit-Feld
-      // (stepFields liefert genau das, was die Maske kennt). Leer heisst weg:
-      // ein leerer String in jeder Maskendatei waere Ballast.
+
       const notiz = isRecord(entry) && typeof entry.notiz === 'string' ? entry.notiz.trim() : ''
       steps.push({ id, ...fields, ...(notiz !== '' ? { notiz } : {}) } as ActionStep)
     }
@@ -394,15 +270,10 @@ export function sanitizeBlockEvents(
   return Object.keys(out).length > 0 ? out : undefined
 }
 
-// ---------- Export-Transport ----------
-
 function withoutEditorId(
   step: ActionStep,
   popupName: (id: string) => string,
-  // step_result-Bindungen: Schritt-id (Editor) → Ketten-Position (Maske).
-  // Editor-ids reisen nie mit; unbekannte id → '-1'. Der Preflight meldet das
-  // zwar, blockt den Export aber seit 2026-08-10 nicht mehr — dass die Laufzeit
-  // -1 defensiv zu '' aufloest, ist die einzige verbliebene Verteidigung.
+
   stepPosition: (id: string) => string,
 ): RuntimeStep {
   const binding = (b: ActionParamBinding): ActionParamBinding =>
@@ -416,9 +287,6 @@ function withoutEditorId(
     }
   }
   if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
-    // Editor-ids reisen nie mit: der Schritt trägt in der Maske den
-    // KLARNAMEN des Popups (Doppelnamen werden nicht erzwungen ausgeschlossen,
-    // s. PopupOpenStep oben).
     return {
       type: step.type,
       resultKey: step.resultKey,
@@ -437,8 +305,7 @@ function withoutEditorId(
 export function serializeBlockEvents(
   events: BlockEventsMap | undefined,
   eventOrder: readonly string[],
-  // Übersetzt die popupId eines Popup-Schritts in den Klarnamen der Seite
-  // (Export-Aufrufer reicht den Baum-Blick herein). Ohne Auflösung → ''.
+
   popupName: (id: string) => string = () => '',
 ): string | null {
   if (!events) return null
@@ -446,8 +313,7 @@ export function serializeBlockEvents(
   for (const key of eventOrder) {
     const steps = events[key]
     if (!steps?.length) continue
-    // Position je Schritt-id DIESER Kette (0-basiert) — die Laufzeit führt
-    // eine Ergebnis-Liste in exakt derselben Reihenfolge (runEvent).
+
     const position = new Map(steps.map((s, i) => [s.id, String(i)]))
     out[key] = steps.map((step) =>
       withoutEditorId(step, popupName, (id) => position.get(id) ?? '-1'))

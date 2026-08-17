@@ -1,42 +1,4 @@
-/* Editor-Schrift: Inter (variabel, selbst gehostet via @fontsource) —
-   NUR fürs Editor-Chrome. Die Masken-Welt nagelt ihre Schrift überall
-   selbst fest (--se-font), zusätzlich pinnt Canvas.tsx das Blatt. */
 @import '@fontsource-variable/inter';
-
-/* Tailwind-Basis + shadcn-CSS-Variablen. Wird in main.tsx importiert.
-
-   ============================================================
-   Farbrichtung „warmes Papier" (Nutzer-Entscheidungen 2026-07-25)
-   ============================================================
-   Drei Vorgaben des Nutzers, in dieser Reihenfolge entstanden:
-     1. die shadcn-Werkseinstellung „wirkt generisch"
-     2. es „sieht leblos und tot aus" — es muss WOW sein, wenn ein
-        Kunde die fertigen Masken sieht
-     3. „nicht zu dunkel, typisch KI, das waere Muell" — also
-        ausdruecklich KEIN dunkles Chrome
-
-   Warum es vorher leblos wirkte: reine KALTE Graustufen (Blau-Grau,
-   Farbton 214-220). Kaltes Grau liest sich als Wartezimmer, egal
-   wie sauber die Abstufungen sind. Der Ausweg ohne dunkles Chrome
-   ist Waerme: dieselbe Helligkeit, aber Neutraltoene mit einem
-   Stich ins Papierfarbene (Farbton ~38). Das wirkt gefertigt statt
-   steril — und bleibt hell.
-
-   Die drei Hebel fuer „wow" bei einer HELLEN Oberflaeche:
-   - WAERME statt Kaelte in allen Neutraltoenen (Farbton 30-40,
-     wenig Saettigung). Papier, nicht Beton.
-   - TIEFE: --canvas-bg ist deutlich dunkler und waermer als das
-     Chrome, damit die weisse Maske als Blatt darauf liegt. Der
-     Blattschatten (Canvas.tsx) traegt das sichtbar.
-   - EIN Akzent mit Charakter: tiefes Indigo. Bewusst nicht das
-     shadcn-Blau (zu bekannt), bewusst nicht Gruen (Gruen gehoert
-     der Maskenwelt — die zwei Welten duerfen nie verschwimmen),
-     bewusst gesaettigt statt gedeckt: Indigo auf warmem Papier ist
-     die Kombination von Tinte auf Buetten, sie wirkt wertig ohne
-     zu schreien.
-
-   Die Masken-Tokens in design/masken-tokens.css sind davon NICHT
-   beruehrt. Der Export laedt diese Datei nie. */
 
 @tailwind base;
 @tailwind components;
@@ -44,42 +6,34 @@
 
 @layer base {
   :root {
-    /* Flaechen — warme Neutraltoene (Farbton 38 = Papier, nicht Beton) */
+
     --background: 40 20% 95%;
     --card: 40 40% 99%;
     --popover: 40 40% 99%;
     --secondary: 40 16% 90%;
     --muted: 40 15% 91%;
 
-    /* Text — warmes Fast-Schwarz statt Blau-Schwarz */
     --foreground: 30 14% 13%;
     --card-foreground: 30 14% 13%;
     --popover-foreground: 30 14% 13%;
     --secondary-foreground: 30 14% 13%;
-    /* 36 % statt 40 %: bei 40 % lag der Nebentext bei Kontrast 4,59 —
-       knapp ueber der Lesbarkeitsgrenze 4,5. Knapp ist kein Ergebnis. */
+
     --muted-foreground: 32 10% 36%;
 
-    /* Akzent — die EINE Hausfarbe des Editors: Indigo (Tinte auf Buetten) */
     --primary: 246 52% 44%;
     --primary-foreground: 0 0% 100%;
     --accent: 246 45% 93%;
     --accent-foreground: 246 55% 34%;
     --ring: 246 60% 56%;
 
-    /* Gefahr (Loeschen) — warmes Rot, klar von Indigo unterscheidbar */
     --destructive: 4 66% 47%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Linien — sichtbar, warm getoent */
     --border: 38 14% 82%;
     --input: 38 14% 79%;
 
-    /* EIN kleiner Radius (4px, fast kantig) statt Bubbles. */
     --radius: 0.25rem;
-    /* Der „Tisch", auf dem die Maske als Blatt liegt: deutlich dunkler
-       UND waermer als das Chrome. Ohne diesen Abstand traegt der
-       Blattschatten nicht, und alles verschwimmt zu einer Flaeche. */
+
     --canvas-bg: 36 20% 82%;
   }
 
@@ -87,34 +41,6 @@
     border-color: hsl(var(--border));
   }
 
-  /* ============================================================
-     Editor 10 % kompakter — als GROESSE, nicht als Stauchung
-     ============================================================
-     Der Nutzer will den Editor rund 10 % kleiner (Wunsch 2026-07-24,
-     bestaetigt 2026-07-25: „90 % war gut"). Bis dahin stand hier
-     `zoom: 0.9` auf dem body — die fertig gezeichnete Oberflaeche
-     wurde nachtraeglich zusammengestaucht. Das hat drei Nachteile,
-     die der Nutzer als „zu gross / unsauber umgesetzt" gemerkt hat:
-
-       1. Gestauchte Kanten und Schrift landen auf halben Pixeln und
-          werden unscharf. Echte 90-%-Groessen rasten sauber ein.
-       2. `zoom` verschiebt die Rechnung von Mauskoordinaten. Der
-          Editor hat neun Dateien mit Pixel-Mathematik (Raster ziehen,
-          Groesse ziehen, Feld-Picker platzieren) — jede davon musste
-          mit dem Faktor leben.
-       3. Es brauchte einen zweiten Hack, um sich selbst zu heilen:
-          die App-Huelle wurde auf 1/0.9 aufgeblasen, damit nach dem
-          Stauchen wieder exakt das Fenster gefuellt war.
-
-     Richtig ist, die MASSEINHEIT zu verkleinern: 90 % Grundschrift.
-     Tailwind rechnet Abstaende, Hoehen und Schriftgroessen in rem —
-     alles wird damit echt 10 % kleiner und bei 100 % Browser-Zoom
-     gestochen gezeichnet. Beide Hacks fallen ersatzlos weg.
-
-     Damit nichts halb mitschrumpft, wurden die 38 fest eingebauten
-     Pixel-Groessen des Editor-UI auf rem umgerechnet (2026-07-25).
-     Die Masken-Welt (src/blocks, src/design) blieb unangetastet —
-     sie MUSS im Export originalgross bleiben (WYSIWYG). */
   html {
     font-size: 90%;
   }
