@@ -86,6 +86,8 @@ interface ActionStepBase {
   type: StepTypeKey
 
   resultKey: string
+
+  notiz?: string
 }
 
 export interface StartToolStep extends ActionStepBase {
@@ -259,7 +261,9 @@ export function sanitizeBlockEvents(
         break
       }
       seenIds.add(id)
-      steps.push({ id, ...fields } as ActionStep)
+
+      const notiz = isRecord(entry) && typeof entry.notiz === 'string' ? entry.notiz.trim() : ''
+      steps.push({ id, ...fields, ...(notiz !== '' ? { notiz } : {}) } as ActionStep)
     }
     if (!broken && steps.length > 0) out[key] = steps
   }
