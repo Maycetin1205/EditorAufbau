@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { AuswahlFenster } from '@/ui/molecules/auswahl-fenster'
 import { WaehlerListe, type WaehlerGruppe } from '@/ui/molecules/waehler'
 import {
@@ -77,6 +78,11 @@ export function FieldPicker({
   onPick,
   onClose,
 }: FieldPickerProps) {
+  // Schließt das Fenster ohne blur (Escape, Außenklick), bliebe die offene
+  // Tipp-Klammer sonst stehen — und Undo wäre für den Rest der Sitzung stumm.
+  const sitzung = zuordnung?.sitzung
+  useEffect(() => (sitzung ? () => { sitzung.beenden() } : undefined), [sitzung])
+
   const waehlerGruppen: WaehlerGruppe[] = gruppen.map((g) => ({
     key: g.quelleId === '' ? '__erste__' : g.quelleId,
     name: g.name,
@@ -95,7 +101,8 @@ export function FieldPicker({
       oben={top}
       links={left}
       onClose={onClose}
-
+      imBildHalten
+      escapeAbfangen
       className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-80 w-64'}
     >
 
