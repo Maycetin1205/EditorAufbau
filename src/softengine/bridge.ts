@@ -1,4 +1,4 @@
-// softengine/bridge — Anmeldung, Daten-Push, Diagnose
+// softengine/bridge — Anmeldung und Daten-Push
 //
 // Teil der gemeinsamen SoftEngine-Schicht (Umzug 2026-07-15 aus
 // blocks/kanban/seRuntime.ts, verhaltensgleich): der EINE Anschluss der
@@ -89,94 +89,27 @@ function antwortKlingeln(raw: unknown): void {
   })
 }
 
-// ---------- Diagnose ----------
-
-// Diagnose-Ausgabe: das ERSTE angenommene SE-Paket wird roh in eine
-// versteckte Textarea gelegt — Strg+Alt+D blendet sie ein, der Bediener
-// kann den Inhalt ohne Konsole kopieren. Reines Diagnose-Werkzeug,
-// unsichtbar, darf die Maske nie stören.
-const diagnoseStatus = new Map<string, string>()
-let diagnoseRaw = ''
-let empfangenePakete = 0
-
-function diagnoseTextarea(): HTMLTextAreaElement | null {
-  try {
-    let ta = document.getElementById('ff-se-diagnose') as HTMLTextAreaElement | null
-    if (!ta && document.body) {
-      ta = document.createElement('textarea')
-      ta.id = 'ff-se-diagnose'
-      ta.readOnly = true
-      ta.style.cssText = 'display:none;position:fixed;left:8px;right:8px;bottom:8px;'
-        + 'height:40vh;z-index:99999;font:11px monospace;'
-      document.body.appendChild(ta)
-    }
-    return ta
-  } catch {
-    return null
-  }
-}
-
-function renderDiagnose(): void {
-  const ta = diagnoseTextarea()
-  if (!ta) return
-  const status = Array.from(diagnoseStatus, ([key, value]) => `${key}: ${value}`).join('\n')
-  ta.value = status + (diagnoseRaw === '' ? '' : `\n\nERSTES PAKET\n${diagnoseRaw}`)
-}
-
-function diagnoseSet(key: string, value: string): void {
-  diagnoseStatus.set(key, value)
-  renderDiagnose()
-}
-
-function refreshDiagnoseEnvironment(): void {
-  const g = seGlobal()
-  diagnoseStatus.set(
-    'basisHTML_REGISTER',
-    typeof g.basisHTML_REGISTER === 'function' ? 'vorhanden' : 'fehlt',
-  )
-  diagnoseStatus.set(
-    'basisHTML_SND_MSG',
-    typeof g.basisHTML_SND_MSG === 'function' ? 'vorhanden' : 'fehlt',
-  )
-  diagnoseStatus.set('body.pid', document.body?.getAttribute('pid') ? 'gesetzt' : 'fehlt')
-  diagnoseStatus.set('body.REGMSG', document.body?.getAttribute('REGMSG') ? 'gesetzt' : 'fehlt')
-  diagnoseStatus.set('Empfangene Pakete', String(empfangenePakete))
-  diagnoseStatus.set('SEDATA.Daten', hasSeData() ? 'vorhanden' : 'fehlt')
-  renderDiagnose()
-}
-
-// Das erste Paket bleibt unter den Statuszeilen kopierbar. Anders als zuvor
-// existiert die Diagnose aber schon VOR dem ersten Paket: genau dann wird sie
-// in WEBWARE gebraucht.
-function dumpDiagnose(raw: unknown): void {
-  if (diagnoseRaw !== '') return
-  try {
-    diagnoseRaw = typeof raw === 'string' ? raw : (JSON.stringify(raw) ?? '')
-    renderDiagnose()
-  } catch { /* Diagnose darf nie stören */ }
-}
-
 // ---------- SE-Push-Empfang ----------
 
 // Ein geschobenes SE-Paket annehmen: SEDATA.Daten SELBST setzen (exakt wie
 // __seConsume der Referenz), Datenbasis auffrischen, Zuhörer klingeln.
 // Jeder weitere Push aktualisiert erneut — das ist der Live-Weg von
 // SoftEngine (der Poll feuerte nur einmal).
+//
+// Bis 2026-08-17 hing hier eine versteckte Diagnose-Textarea (Strg+Alt+D) mit
+// dem rohen ERSTEN Paket. Auf Nutzer-Ansage restlos entfernt: sie schrieb bei
+// JEDEM Ereignis ihren ganzen Inhalt neu — samt dem kompletten Rohpaket, das
+// niemand ansah — und das mitten im Maskenstart. Nicht wieder einbauen; was
+// beim Scheitern wirklich gebraucht wird, sagt der Fehlerbalken (meldeFehler).
 function seConsume(raw: unknown): void {
-  empfangenePakete += 1
-  dumpDiagnose(raw)
-  diagnoseSet('Empfangene Pakete', String(empfangenePakete))
   const daten = payloadDaten(raw)
   if (!daten) {
-    diagnoseSet('Letztes Paket', 'Antwort ohne Daten')
     antwortKlingeln(raw)
     return
   }
   const g = seGlobal()
   if (!isRecord(g.SEDATA)) g.SEDATA = {}
   g.SEDATA.Daten = daten
-  diagnoseSet('Letztes Paket', 'Daten-Push angenommen')
-  diagnoseSet('SEDATA.Daten', 'vorhanden')
   refreshDataBasis()
   klingeln()
 }
@@ -188,43 +121,36 @@ function seConsume(raw: unknown): void {
 function registerSe(tries = 0): void {
   const g = seGlobal()
   if (typeof g.basisHTML_REGISTER === 'function') {
-    refreshDiagnoseEnvironment()
     try { g.basisHTML_SetConsoleLog?.(true, true) } catch { /* optional */ }
     try {
       g.basisHTML_REGISTER((data: unknown) => { seConsume(data) }, document.title, '1.0')
-      diagnoseSet('Registrierung', 'ausgeführt')
     } catch (error) {
-      diagnoseSet('Registrierung', `Fehler: ${error instanceof Error ? error.message : String(error)}`)
+      meldeFehler(
+        'SoftEngine-Anmeldung fehlgeschlagen: '
+        + (error instanceof Error ? error.message : String(error)),
+      )
     }
     return
   }
   if (tries < 400) {
-    if (tries === 0) diagnoseSet('Registrierung', 'wartet auf Interface')
     setTimeout(() => { registerSe(tries + 1) }, 25)
   } else {
-    refreshDiagnoseEnvironment()
-    diagnoseSet('Registrierung', 'nach 10s kein Interface')
     // Bis 2026-08-05 stand das NUR in der versteckten Diagnose: die Maske sah
     // fertig aus, blieb aber fuer immer ohne Daten, und niemand erfuhr warum
     // (Regel 4). Jetzt sagt es der Balken.
-    meldeFehler(
-      'SoftEngine-Anschluss nicht gefunden — die Maske bleibt ohne Daten (Strg+Alt+D für Details).',
-    )
+    meldeFehler('SoftEngine-Anschluss nicht gefunden — die Maske bleibt ohne Daten.')
   }
 }
 
 let booted = false
 
 // Einmal pro Maske: Schnittstelle starten, bei SE anmelden (Push),
-// message-Fallback + Diagnose-Taste verdrahten, Einstiegspunkte anbieten,
+// message-Fallback verdrahten, Einstiegspunkte anbieten,
 // zusätzlich auf direkt gestelltes SEDATA warten (Poll, nur Fallback).
 // Idempotent — jeder Konsument darf rufen, gestartet wird einmal.
 export function bootSe(): void {
   if (booted) return
   booted = true
-  diagnoseSet('Runtime', 'gestartet')
-  diagnoseSet('Registrierung', 'noch nicht ausgeführt')
-  refreshDiagnoseEnvironment()
   tryInitSe()
   const g = seGlobal()
   g.Erstellen = () => { refreshDataBasis(); klingeln() }
@@ -238,29 +164,16 @@ export function bootSe(): void {
     const payload = messagePayload(evt.data)
     if (payload !== undefined) seConsume(payload)
   }, true)
-  // Strg+Alt+D: Diagnose-Textarea ein-/ausblenden. Sie existiert bereits
-  // ohne Datenpaket, damit ein fehlender WEBWARE-Anschluss sichtbar wird.
-  document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'd') {
-      refreshDiagnoseEnvironment()
-      const ta = document.getElementById('ff-se-diagnose')
-      if (ta) ta.style.display = ta.style.display === 'none' ? 'block' : 'none'
-    }
-  })
   let tries = 0
   const poll = setInterval(() => {
     tries += 1
     if (hasSeData()) {
       clearInterval(poll)
-      diagnoseSet('SEDATA.Daten', 'vorhanden')
       refreshDataBasis()
       klingeln()
     } else if (tries > 100) {
       clearInterval(poll)
-      diagnoseSet('Daten-Wartezeit', 'nach 30s ohne Daten')
-      meldeFehler(
-        'Keine Daten von SoftEngine empfangen — die Maske zeigt nichts an (Strg+Alt+D für Details).',
-      )
+      meldeFehler('Keine Daten von SoftEngine empfangen — die Maske zeigt nichts an.')
     }
   }, 300)
 }

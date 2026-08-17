@@ -2110,15 +2110,19 @@ Drei neue Begriffe, nicht einer.
 
 Stand in keiner der Etappen und fehlte damit ueberall:
 
-- **Der Export aendert sich in JEDER D-Etappe** — zwangslaeufig, ohne dass
-  jemand etwas am Markup anfasst. Das Laufzeit-Buendel steckt in jeder
-  Maskendatei (`export/exportMask.ts`, eingebettet als eine sehr lange
-  Zeile), und D baut am Tabellen-Baustein, der darin liegt. Wer „byte-gleich"
-  liest, meint IMMER nur das Markup, nie die Datei.
-- Daraus folgt fuer jede D-Etappe, ausnahmslos: `npm run build:runtime`
-  laufen lassen, den Referenzabzug mit `npx vitest run -u` erneuern, und den
-  Datei-Diff SELBST ansehen — ausser der Buendel-Zeile darf nichts drin
-  stehen, was die Etappe nicht will. Genau dafuer gibt es den Abzug.
+- **Die exportierte DATEI aendert sich in JEDER D-Etappe** — zwangslaeufig,
+  ohne dass jemand etwas am Markup anfasst. Das Laufzeit-Buendel steckt in
+  jeder Maskendatei (`export/exportMask.ts`), und D baut am Tabellen-Baustein,
+  der darin liegt. Wer „byte-gleich" liest, meint IMMER nur das Markup, nie
+  die Datei.
+- **Der Referenzabzug aendert sich davon NICHT** (am Code nachgesehen
+  2026-08-17, `referenzabzug.test.ts` `ohneBuendel`): das Buendel wird vor
+  dem Vergleich HERAUSGESCHNITTEN, der Abzug zeigt genau das Markup. Also:
+  `npm run build:runtime` gehoert in jede D-Etappe, `npx vitest run -u`
+  aber NUR, wenn die Etappe das Markup absichtlich aendert — und dann wird
+  der Diff GELESEN, nicht durchgewunken. Bleibt der Abzug bei einer reinen
+  Laufzeit-Aenderung gruen, ist das der Beweis, dass das Markup steht, kein
+  Versehen. (Das Buendel selbst bewachen `check:runtime` und `export.test.ts`.)
 - **Und danach eine SoftEngine-Probe durch den Nutzer** (Regel 9: Browser-
   und SE-Test macht der Nutzer). Der bauende Chat liefert dazu eine kurze
   Klickanleitung und sagt, was er nicht pruefen konnte.

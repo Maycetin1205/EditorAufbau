@@ -226,10 +226,22 @@ describe('Runtime-Bündel', () => {
     // allein der SE-Echttest des Nutzers. Neue CSS-Marker deshalb nicht
     // einführen; die Tags-Positivliste oben bleibt (sie prüft Existenz, nicht
     // Aussehen).
-    for (const marker of ['body.REGMSG', 'Empfangene Pakete', 'nach 10s kein Interface']) {
-      expect(runtimeJsRaw, `npm run build:runtime ausführen — Diagnose ${marker} fehlt`)
+    // Der SE-Anschluss selbst: die Anmeldefunktion und die zwei Fehlerbalken,
+    // die beim Scheitern das Einzige sind, was der Bediener zu sehen bekommt.
+    // Hier standen bis 2026-08-17 drei Marker der versteckten Diagnose
+    // ('body.REGMSG', 'Empfangene Pakete', 'nach 10s kein Interface') — die ist
+    // auf Nutzer-Ansage restlos entfernt.
+    for (const marker of [
+      'basisHTML_REGISTER',
+      'SoftEngine-Anschluss nicht gefunden',
+      'Keine Daten von SoftEngine empfangen',
+    ]) {
+      expect(runtimeJsRaw, `npm run build:runtime ausführen — Marker ${marker} fehlt`)
         .toContain(marker)
     }
+    // Und sie bleibt entfernt: ein Buendel mit der Textarea ist veraltet.
+    expect(runtimeJsRaw, 'npm run build:runtime ausführen — Diagnose-Textarea ist abgeschafft')
+      .not.toContain('ff-se-diagnose')
   })
 })
 
