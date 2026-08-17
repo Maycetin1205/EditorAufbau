@@ -87,17 +87,19 @@ export function WaehlerListe({ gruppen, wert, leerText, kopf, onWaehle }: Waehle
 
   const gefiltert = useMemo(() => {
     const s = suche.trim().toLowerCase()
-    if (s === '') return gruppen
-    return gruppen
-      .map((g) => ({
-        ...g,
-        eintraege: g.eintraege.filter(
-          (e) => passt(e.name, s) || passt(e.kennung ?? '', s),
-        ),
-      }))
-      // Eine Gruppe ohne Treffer verschwindet ganz — ein leerer Quellenkopf
-      // waere eine Ueberschrift ueber nichts.
-      .filter((g) => g.eintraege.length > 0)
+    const treffer = s === ''
+      ? gruppen
+      : gruppen.map((g) => ({
+          ...g,
+          eintraege: g.eintraege.filter(
+            (e) => passt(e.name, s) || passt(e.kennung ?? '', s),
+          ),
+        }))
+    // Eine Gruppe ohne Eintraege verschwindet ganz — ein leerer Quellenkopf
+    // waere eine Ueberschrift ueber nichts. Das gilt auch OHNE Suchtext:
+    // sonst zaehlt `leer` unten eine leere Gruppe als Inhalt, und das Fenster
+    // bleibt weiss statt zu sagen, dass es nichts zu waehlen gibt.
+    return treffer.filter((g) => g.eintraege.length > 0)
   }, [gruppen, suche])
 
   const leer = gefiltert.length === 0
