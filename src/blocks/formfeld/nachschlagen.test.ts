@@ -1,8 +1,3 @@
-// Tests der puren Nachschlage-Logik (Eintraege bauen, suchen) — das Fenster
-// selbst ist DOM und liegt beim Nutzer (Klickanleitung); die Datenwege hier.
-// Gattung wie feldRuntime.test: Node, keine neue Testart.
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
-
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setzeAuswahlZurueck, waehleAuswahl } from '../shared/auswahl'
 import {
@@ -29,9 +24,6 @@ describe('nachschlagEintraege', () => {
   })
 
   it('traegt die ROHZEILE mit — das Feld gibt den ganzen Satz als Auswahl ab', () => {
-    // 2026-08-06: das Nachschlage-Feld ist Auswahl-Geber. Folger holen sich
-    // BELIEBIGE Schluesselfelder aus dem uebernommenen Satz, nicht nur die zwei
-    // Spalten, die das Fenster zeigt — ohne die Rohzeile waere davon nichts da.
     const e = nachschlagEintraege(ROHZEILEN, '10_30', '2_8')
     expect(e[0].satz).toBe(ROHZEILEN[0])
   })
@@ -43,11 +35,6 @@ describe('nachschlagEintraege', () => {
   })
 
   it('liest auch pos_len aus dem SATZ-Rohstring (getField-Weg)', () => {
-    // Positionen zaehlen ABSOLUT im Rohstring — wie in der Referenzmaske
-    // (behandlung Z. 598: raw wird NICHT getrimmt, nur der Ausschnitt).
-    // Bis R2 stand hier die Gegen-Erwartung („ab dem ersten
-    // Nicht-Leerzeichen"): sie schrieb die Abweichung fest, die bei den
-    // per Relation geholten Positionszeilen jede Spalte verschob.
     const satz = { SATZ: '  10077  Vogler' }
     const e = nachschlagEintraege([satz], '9_6', '2_5')
     expect(e).toEqual([{ anzeige: 'Vogler', wert: '10077', satz }])
@@ -73,10 +60,6 @@ describe('nachschlagTreffer', () => {
   })
 })
 
-// Das FENSTER folgt einer Auswahl (2026-08-06). Der Fall des Nutzers:
-// Kunde-Feld (Geber) + Haustier-Feld, das ihm folgt — die Lupe zeigt nur die
-// Haustiere des gewaehlten Kunden. Element wie in shared/auswahl.test.ts als
-// Attribut-Traeger nachgestellt: purer Datenweg, kein DOM.
 const elementMit = (attrs: Record<string, string>): HTMLElement =>
   ({ getAttribute: (n: string) => attrs[n] ?? null }) as unknown as HTMLElement
 
@@ -87,7 +70,6 @@ const folgerFeld = elementMit({
   }]),
 })
 
-// Haustiere; '2_8' = Adressnummer des Halters.
 const HAUSTIERE = [
   { '2_8': '10024', '18_30': 'Rex' },
   { '2_8': '10031', '18_30': 'Minka' },
@@ -120,9 +102,6 @@ describe('fensterEintraege (das Fenster folgt der Auswahl)', () => {
   })
 })
 
-// „Einzigen Treffer uebernehmen" (Nutzer-Entscheidung 2026-08-05). Hier die
-// Kern-Bedingung; dass sie an denselben Anlaessen wie das Leeren geprueft wird,
-// steht im Baustein (pruefeEigenenWert) und liegt in der Klickpruefung.
 describe('einzigenTrefferFinden', () => {
   const einer = nachschlagEintraege([HAUSTIERE[1]], '18_30', '2_8')
   const zwei = nachschlagEintraege(HAUSTIERE, '18_30', '2_8')
@@ -140,10 +119,6 @@ describe('einzigenTrefferFinden', () => {
   })
 
   it('Feld schon gefuellt: NIE still ersetzen', () => {
-    // Zwei Gruende in einem: ein bestaetigter Wert darf nicht heimlich durch
-    // einen anderen getauscht werden, und weil ins gefuellte Feld nichts
-    // geschrieben wird, kann derselbe Anlass beliebig oft laufen, ohne sich
-    // aufzuschaukeln.
     expect(einzigenTrefferFinden(einer, false)).toBeNull()
   })
 })
@@ -155,8 +130,6 @@ describe('satzPasstZurAuswahl (Geber-Wechsel leert das Feld)', () => {
   })
 
   it('anderer Kunde gewaehlt: der uebernommene Satz passt NICHT mehr', () => {
-    // Genau hier leert sich das Feld — ein Haustier, das zu niemandem mehr
-    // gehoert, waere ein falscher Wert, der richtig aussieht.
     waehleAuswahl('kunde', { '110_10': '10031' })
     expect(satzPasstZurAuswahl(folgerFeld, HAUSTIERE[0])).toBe(false)
   })
@@ -164,8 +137,7 @@ describe('satzPasstZurAuswahl (Geber-Wechsel leert das Feld)', () => {
   it('ohne aktive Auswahl passt er weiter — bestaetigtes verschwindet nicht von allein', () => {
     expect(satzPasstZurAuswahl(folgerFeld, HAUSTIERE[0])).toBe(true)
     waehleAuswahl('kunde', { '110_10': '10024' })
-    // Wieder rausgeklickt (Toggle): das Fenster zeigt dann alles, der
-    // uebernommene Satz bleibt gueltig.
+
     waehleAuswahl('kunde', { '110_10': '10024' })
     expect(satzPasstZurAuswahl(folgerFeld, HAUSTIERE[0])).toBe(true)
   })
@@ -179,23 +151,17 @@ describe('satzPasstZurAuswahl (Geber-Wechsel leert das Feld)', () => {
 describe('folgeBeimVerlassen (2026-08-07, das × ist raus)', () => {
   it('leer getippt = loeschen — die Bedienerhandlung, die vorher das × war', () => {
     expect(folgeBeimVerlassen('', 'Berger, Anna', '10024')).toBe('leeren')
-    // Auch wenn nur der Technikwert dasteht (Satz ohne Anzeigefeld).
+
     expect(folgeBeimVerlassen('', '10024', '10024')).toBe('leeren')
   })
 
   it('war schon leer = nichts — sonst faellt beim Durchtabben eine Kette an', () => {
-    // Der Fall ist haeufig: der Bediener klickt durch die Maske, ohne etwas
-    // anzufassen. Loeste das eine Kette „Wert geaendert" aus, schriebe die
-    // Maske ungefragt einen leeren Wert nach SoftEngine.
     expect(folgeBeimVerlassen('', '', '')).toBe('nichts')
   })
 
   it('halb getippt = zurueck auf den bestaetigten Text', () => {
-    // „Berg" ueber dem Technikwert 10024 waere eine Luege: die Maske zeigte
-    // etwas anderes, als sie schreibt (Regel 3).
     expect(folgeBeimVerlassen('Berg', 'Berger, Anna', '10024')).toBe('zurueck')
-    // Auch etwas Getipptes in ein LEERES Feld ist halb — das Feld nimmt seinen
-    // Wert nur aus dem Fenster.
+
     expect(folgeBeimVerlassen('Berger', '', '')).toBe('zurueck')
   })
 
@@ -204,8 +170,6 @@ describe('folgeBeimVerlassen (2026-08-07, das × ist raus)', () => {
   })
 
   it('vergleicht zeichengenau — ein Leerzeichen loescht nicht', () => {
-    // Zwei Gruende (s. Kopf der Funktion): ein bestaetigter Anzeigewert darf
-    // aus Leerzeichen bestehen, und Wegnehmen soll man wollen muessen.
     expect(folgeBeimVerlassen(' ', 'Berger, Anna', '10024')).toBe('zurueck')
     expect(folgeBeimVerlassen('   ', '   ', '10024')).toBe('nichts')
   })

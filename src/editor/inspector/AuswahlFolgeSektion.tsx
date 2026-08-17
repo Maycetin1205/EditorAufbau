@@ -1,32 +1,3 @@
-// AuswahlFolgeSektion — Inspector-Sektion „Auswahl folgen".
-//
-// Der Fall (Nutzer 2026-08-05): Tabelle 1 zeigt Kunden, Tabelle 2 Belege.
-// HIER, an Tabelle 2, stellt der Bauer ein: „folgt der Auswahl von
-// Tabelle 1" plus die Feldpaare, an denen man die zusammengehoerigen
-// Zeilen erkennt (Adressnummer = Adressnummer). In der laufenden Maske
-// filtert Tabelle 2 dann nach der angeklickten Kundenzeile — ohne Auswahl
-// zeigt sie alles, nichts passiert automatisch.
-//
-// Bedienmuster und Bauteile sind DIESELBEN wie in der QuellenListe daneben —
-// zwei Verknuepfungs-Formulare, die verschieden aussehen, waeren fuer den
-// Bediener zwei Sprachen fuer dieselbe Sache. Seit U3 (2026-08-12) ist das
-// nicht mehr nur Absicht, sondern derselbe Code: die „Feld = Feld"-Zeilen
-// stehen in SchluesselPaarZeilen, die Wahl darueber im SelectControl.
-//
-// Der Bediener sieht ausschliesslich Klarnamen (Baustein-Name + Quellen-
-// Name, Feld-Klarnamen); die Technikwerte (Baum-id, Feldcodes) arbeiten
-// unsichtbar (Regel 3). Kein Speichern-Knopf: jede Aenderung geht sofort
-// in den Baum. Wer Geber ist, leitet istAuswahlGeber aus Registry + Zustand
-// her — kein Bausteintyp-Wissen hier (Regel 2). Angeboten wird damit auch das
-// Nachschlage-Feld (es greift im Fenster einen Satz heraus), und NICHT
-// angeboten wird eine Tabelle ohne Datenquelle: ihr zu folgen sah eingestellt
-// aus und filterte nie.
-//
-// Am Nachschlage-Feld heisst „folgen" etwas anderes, ohne dass diese Sektion
-// davon wissen muss: dort engt die Auswahl das FENSTER ein (die Lupe zeigt nur
-// die Haustiere des gewaehlten Kunden), nicht einen angezeigten Wert. Die
-// Einstellung ist dieselbe — Geber plus Feldpaare.
-
 import { cn } from '@/lib/utils'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { auswahlQuelleIdVon, istAuswahlGeber } from '../../core/blocks/treeQuery'
@@ -43,13 +14,11 @@ import { bausteinName } from '../../core/blocks/bausteinName'
 import { SelectControl } from './controls/SelectControl'
 import { SchluesselPaarZeilen } from './SchluesselPaarZeilen'
 
-// Radix-Select verbietet '' als Option-Wert — Platzhalter wie in QuellenListe.
 const KEINER = '__keiner__'
 
 interface AuswahlFolgeSektionProps {
   block: BlockNode
-  // true = ueber der Sektion steht schon Inhalt -> feine Trennlinie davor
-  // (dieselbe Optik wie die Nachbarsektionen im Inspector).
+
   mitTrenner: boolean
 }
 
@@ -57,33 +26,20 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
   const ed = useEditor()
   const bibliothek = useDataSources().list
 
-  // Die Oberflaeche fuehrt genau EINE Folge (eine Stufe, ein Geber).
   const folge: AuswahlFolge | undefined = auswahlFolgenAus(block.props[AUSWAHL_FOLGE_PROP])[0]
 
-  // Geber-Kandidaten: alle Auswahl-Geber im Baum ausser diesem Baustein.
   const kandidaten = Object.values(ed.tree).filter(
     (n) => n.id !== block.id && istAuswahlGeber(n),
   )
-  // Nichts anzubieten und nichts eingestellt: Sektion ganz weglassen —
-  // ein leeres Formular ohne waehlbaren Geber waere nur Raetselraten.
+
   if (kandidaten.length === 0 && !folge) return null
 
-  // BEIDE Seiten von „Feld = Feld" fragen DIESELBE Herleitung
-  // (auswahlQuelleIdVon): links die Quelle, aus der der Satz des GEBERS stammt,
-  // rechts die Quelle, deren Zeilen DIESER Baustein einengt. Meist ist das
-  // schlicht die Datenquelle des jeweiligen Bausteins — beim Nachschlage-Feld
-  // aber seine Nachschlage-Quelle, auf beiden Seiten: aus ihr stammt der Satz,
-  // den es abgibt, und ihre Zeilen zeigt sein Fenster. Mit den Feldcodes der
-  // falschen Tabelle liefe die Folge in der Maske still ins Leere.
   const quelleVon = (n: BlockNode | undefined) =>
     bibliothek.find((s) => s.id === auswahlQuelleIdVon(n))
   const eigeneQuelle = quelleVon(block)
   const geberNode = folge ? ed.tree[folge.geberId] : undefined
   const geberQuelle = quelleVon(geberNode)
 
-  // Klarname eines Kandidaten: Baustein-Name plus Quellen-Name zur
-  // Unterscheidung — zwei Tabellen heissen sonst beide nur „Tabelle".
-  // Die SE-Kennung dazu als dezente Technik-Marke (detail, 2026-08-06).
   const anzeige = (n: BlockNode): { label: string; detail?: string } => {
     const q = quelleVon(n)
     return q
@@ -117,10 +73,7 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
         options={[
           { value: KEINER, label: '— keinem —' },
           ...kandidaten.map((n) => ({ value: n.id, ...anzeige(n) })),
-          // Geber geloescht: den Zustand benennen statt still leer (Regel 4).
-          // Hier ist es die EINZIGE Anzeige davon — der Export laeuft auch mit
-          // dem toten Verweis durch. (Leere Geber-id
-          // faellt auf „keinem" zurueck — Radix verbietet '' als Wert.)
+
           ...(folge && folge.geberId !== '' && !kandidaten.some((k) => k.id === folge.geberId)
             ? [{ value: folge.geberId, label: '(gelöschter Baustein)' }]
             : []),
@@ -139,7 +92,7 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
             entfernenBezeichnung={(at) => `Feldpaar ${at + 1} entfernen`}
             onAendern={(keyPairs) => setze([{ ...folge, keyPairs }])}
           />
-          {/* Klartext statt stillem Nichtstun (Regel 4). */}
+
           {(!geberQuelle || !eigeneQuelle) && (
             <p className="text-xs text-muted-foreground">
               Beide Bausteine brauchen zuerst eine Datenquelle — sonst gibt es

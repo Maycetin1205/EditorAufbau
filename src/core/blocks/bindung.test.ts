@@ -1,11 +1,3 @@
-// Tests der qualifizierten Bindung ('quelle::feldcode').
-//
-// Der Wert entscheidet, AUS WELCHER Quelle eine Stelle ihren Wert holt. Wird
-// er falsch zerlegt, zeigt die Maske stumm den Wert eines gleich codierten
-// Felds aus der anderen Tabelle — im Bestand des Nutzers gibt es genau das
-// („Tiername" ist 78_30 im Terminplaner, 18_30 in Kundenhaustieren).
-// Darum steht hier vor allem, was NICHT als Quellenangabe durchgeht.
-
 import { describe, expect, it } from 'vitest'
 import { bindungMitQuelle, zerlegeBindung } from './BlockDefinition'
 
@@ -35,8 +27,6 @@ describe('zerlegeBindung', () => {
   })
 
   it('faellt bei Mehrdeutigem auf „nackter Code" zurueck, statt zu raten', () => {
-    // Alle vier Formen sind kaputt. Sie duerfen NICHT als Quellenangabe
-    // durchgehen: eine geratene Quelle laese still die falsche Tabelle.
     for (const kaputt of ['a::b::c', '::x', 'x::', '::']) {
       expect(zerlegeBindung(kaputt)).toEqual({ quelleId: '', code: kaputt })
     }

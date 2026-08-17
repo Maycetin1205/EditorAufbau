@@ -1,52 +1,24 @@
-// Spalten-Modell der Tabelle
-// Aus TabelleBlock herausgeloest am 2026-07-24, weil die Baustein-Datei ueber
-// den 500-Zeilen-Deckel gewachsen war (check:regeln). Der Schnitt ist der
-// natuerliche: hier das DATENMODELL einer Spalte (Titel + Feldcode) samt der
-// defensiven Wandlung alter Staende — drueben die Darstellung.
-//
-// Eine Spalte hat einen Titel (Klarname, sichtbar) und ein Feld (Feldcode der
-// Datenquelle, Technikwert, unsichtbar — Regel 3). Das Feld sagt, WELCHEN Wert
-// die Spalte je Datenzeile zeigt.
-//
-// Dazu die ART (2026-08-06): WIE die Spalte ihre Werte zeigt — Text, Zahl,
-// Datum oder Status. Auch das ein Technikwert; was er bedeutet und wie breit
-// die Spalte damit wird, steht in ./spaltenArten, nicht hier.
-
 import { ART_TEXT, type Zuordnung } from './spaltenArten'
 
 export interface Spalte {
   titel: string
   feld: string
   art: string
-  // Nur die Status-Art liest sie: Datenwert -> Klarname -> Bedeutung.
-  // OPTIONAL, anders als die Art: die ist ein einzelner Wert mit sinnvollem
-  // Standard und steht darum immer da, die Zuordnung ist bei drei von vier
-  // Arten leer. Eine leere Liste in jeder Spalte mitzuschreiben blaehte jede
-  // exportierte Maske auf, ohne etwas zu sagen.
+
   zuordnung?: Zuordnung[]
-  // Weitere Feldbindungen dieser Spalte (2026-08-06): Schluessel -> Feldcode.
-  // WELCHE Schluessel es gibt, sagt die ART (./spaltenArten, zusatzFelder) —
-  // „Bild + Name" nennt hier ihr Bild- und ihr Unterzeilenfeld. Optional aus
-  // demselben Grund wie die Zuordnung: bei vier von fuenf Arten leer.
+
   felder?: Record<string, string>
 }
 
 export const SPALTEN_MIN = 1
 export const SPALTEN_MAX = 8
 
-// Titel einer noch unbenannten Spalte. Die Vorlage steht auch im
-// Registry-Eintrag `listenBindung` — daran erkennt der Editor, dass der
-// Bediener den Titel NICHT selbst getippt hat und ihn beim Feld-Binden
-// durch den Klarnamen ersetzen darf. Eine Stelle, zwei Leser.
 export const STANDARD_TITEL = 'Spalte {n}'
 
 export function standardTitelFuer(index: number): string {
   return STANDARD_TITEL.replace('{n}', String(index + 1))
 }
 
-// Eine frische, noch unbenannte Spalte. EINE Stelle fuer den Neubau, damit
-// eine spaeter hinzukommende Eigenschaft nicht an drei Orten nachgetragen
-// werden muss (genau daran fehlte 2026-08-06 die Art).
 export function neueSpalte(index: number): Spalte {
   return { titel: standardTitelFuer(index), feld: '', art: ART_TEXT }
 }
@@ -55,11 +27,6 @@ export function standardSpalten(): Spalte[] {
   return [0, 1, 2].map((i) => neueSpalte(i))
 }
 
-// Eine unbekannte Struktur defensiv auf eine Zuordnungsliste abbilden. Jede
-// Zeile braucht mindestens einen Datenwert — eine Zeile ohne ihn koennte nie
-// treffen und stuende nur im Weg. Fehlender Klarname/Bedeutung sind dagegen
-// erlaubt: die Zelle faellt dann auf den Rohwert bzw. auf 'info' zurueck
-// (coerceStatusVariant), statt die halbfertige Zeile zu verwerfen.
 function alsZuordnung(v: unknown): Zuordnung[] {
   if (!Array.isArray(v)) return []
   return v
@@ -72,10 +39,6 @@ function alsZuordnung(v: unknown): Zuordnung[] {
     .filter((z) => z.wert.trim() !== '')
 }
 
-// Die Zusatz-Feldbindungen defensiv lesen: nur Zeichenketten zaehlen, alles
-// andere faellt weg. WELCHE Schluessel sinnvoll sind, weiss hier niemand — das
-// sagt die Art (./spaltenArten); ein Schluessel einer spaeter entfernten Art
-// stoert nicht, er wird schlicht von niemandem gelesen.
 function alsFelder(v: unknown): Record<string, string> {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
   const raus: Record<string, string> = {}
@@ -85,9 +48,6 @@ function alsFelder(v: unknown): Record<string, string> {
   return raus
 }
 
-// Eine unbekannte Struktur defensiv auf eine Spalte abbilden (nie werfen).
-// Eine fehlende Art heisst Text — so verhielten sich ALLE Spalten bis
-// 2026-08-06, gespeicherte Staende von davor bleiben damit unveraendert.
 function alsSpalte(x: unknown, index: number): Spalte {
   if (x && typeof x === 'object') {
     const o = x as Record<string, unknown>
@@ -97,21 +57,17 @@ function alsSpalte(x: unknown, index: number): Spalte {
       titel: typeof o.titel === 'string' ? o.titel : standardTitelFuer(index),
       feld: typeof o.feld === 'string' ? o.feld : '',
       art: typeof o.art === 'string' ? o.art : ART_TEXT,
-      // Der Schluessel bleibt WEG, wenn nichts zugeordnet ist — nicht als
-      // leere Liste stehen. Sonst traegt jede Spalte jeder Maske ein
-      // `"zuordnung":[]` mit sich herum.
+
       ...(zuordnung.length > 0 ? { zuordnung } : {}),
-      // Dasselbe fuer die Zusatzfelder: ungebunden heisst „Schluessel nicht da".
+
       ...(Object.keys(felder).length > 0 ? { felder } : {}),
     }
   }
-  // Alte Erstfassung: reine Titel-Strings.
+
   if (typeof x === 'string') return { ...neueSpalte(index), titel: x }
   return neueSpalte(index)
 }
 
-// Robust gegen alte Staende (Titel-Strings, Spalten-ZAHL) und kaputte Werte;
-// immer 1..MAX Spalten mit {titel,feld}.
 export function coerceSpalten(v: unknown): Spalte[] {
   let arr: Spalte[]
   if (Array.isArray(v)) {
@@ -127,7 +83,6 @@ export function coerceSpalten(v: unknown): Spalte[] {
   return arr
 }
 
-// Nur fuer den Attribut-Wandler (haelt fromAttribute knapp + faengt JSON-Fehler).
 export function tryCoerceSpalten(v: string): Spalte[] {
   try {
     return coerceSpalten(JSON.parse(v))

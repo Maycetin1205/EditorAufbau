@@ -1,10 +1,3 @@
-// ButtonBlock
-// Lit Web Component fuer den Button-Block.
-// Konkrete Block-Klasse, erbt von BasicBlock (Notiz Woche 2: KanbanBoard
-// extends BasicComponentForGrid). Properties via Lit @property() (reaktiv).
-// customProperties() liefert die Inspector-Felder (Polymorphie zur Basisklasse).
-// Render ist echter Lit-`html`-Template — kein unsafeHTML, keine HTML-Strings.
-
 import { css, html, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { BasicBlock } from '../base/BasicBlock'
@@ -18,21 +11,15 @@ export class ButtonBlock extends BasicBlock {
   static readonly displayName = 'Schaltfläche'
   static readonly category: BlockCategory = 'eingabe'
   static readonly defaultProps = { label: 'Klick mich' }
-  // Kein Breite-Anfasser: ein Button ist so breit wie seine Beschriftung.
+
   static readonly resizableWidth = false
-  // Ereignis der Schaltfläche (Kommandozentrale Z1): „Klick" — Technikwert
-  // onClick wie im alten Editor; Aktionsketten hängen ab Z2 daran.
+
   static readonly blockEvents = [{ key: 'onClick', name: 'Klick' }]
-  // Raster-Startgröße auf der Maskenfläche (kalibriert im Browser 2026-07-23):
-  // kompakter Knopf, Zelle eng am Inhalt.
+
   static readonly raster = { startW: 4, startH: 2, minW: 2, minH: 2 }
 
-  // Keine Inspector-Felder: die Beschriftung wird per Doppelklick direkt auf dem
-  // Button bearbeitet (WYSIWYG, siehe render + BasicBlock.inlineEdit).
   static override readonly customProperties: PropertyDescription[] = []
 
-  // Aussehen kommt AUSSCHLIESSLICH aus den Masken-Tokens (--se-*),
-  // siehe src/design/masken-tokens.css. Keine Literale, keine Fallbacks.
   static override styles = [
     BasicBlock.styles,
     css`
@@ -47,27 +34,16 @@ export class ButtonBlock extends BasicBlock {
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
-        /* Zeilenhoehe wie in der Demo (.knopf 1.2) und AUSDRUECKLICH: bei
-           Knoepfen und Eingabefeldern bringt der Browser eine eigene mit, die
-           einen geerbten Wert schlaegt. Ohne diese Zeile haengt die Knopfhoehe
-           also am Browser statt am Vorbild — sichtbar wird das erst, wenn ein
-           anderer Browser anders rechnet. */
+
         line-height: 1.2;
-        /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
-           eine eigene 120ms-Angabe — zwei Bausteine mit knapp
-           unterschiedlichem Takt wirken unruhig. */
+
         transition: background-color var(--se-move), border-color var(--se-move);
       }
       button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
-      /* Der Knopf muss beim Druecken sichtbar antworten — ohne Rueckmeldung
-         weiss der Bediener nicht, ob er getroffen hat. Flach geloest
-         (Fellnase Regel 4, "die Kante macht die Arbeit"): die Kante springt
-         auf Espresso. Bis 2026-08-06 sank der Knopf stattdessen um 1px. */
+
       button:active { background: var(--se-accent-dark); border-color: var(--se-ink); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
-      /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
-         groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt
-         er naturgross. */
+
       :host([fuellt]) button { width: 100%; height: 100%; }
     `,
   ]
@@ -81,9 +57,6 @@ export class ButtonBlock extends BasicBlock {
     >${this.label}</button>`
   }
 
-  // Z2: in der EXPORTIERTEN Maske führt der Klick die Aktionskette aus
-  // (data-ff-aktionen-Attribut). Editor-Buttons tragen data-ff-editor und
-  // verdrahten nie — Muster connectBoard des Kanbans.
   override connectedCallback(): void {
     super.connectedCallback()
     connectClickAktionen(this, 'onClick')

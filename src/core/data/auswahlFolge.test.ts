@@ -1,5 +1,3 @@
-// Tests der Auswahl-Folge (defensiver Leser + Brauchbarkeits-Regel).
-
 import { describe, expect, it } from 'vitest'
 import { auswahlFolgenAus, folgeBrauchbar } from './auswahlFolge'
 

@@ -1,12 +1,3 @@
-// register
-// Zentrale Side-Effect-Imports aller Built-in-Block-Typen.
-// Jeder Import triggert HMR-geschütztes customElements.define + registerBlockType.
-// Wer Blocks benutzt, importiert diese eine Datei.
-//
-// Neue Bausteine erst, wenn eine echte Maske sie erzwingt (Regel 10).
-// Warum es genau diese Bausteine sind: Kahlschlag der Anfangs-Bausteine +
-// Formularfeld-Neubau, Nutzer-Entscheidung 2026-07-14.
-
 import './ansicht/AnsichtBlock'
 import './bild/BildBlock'
 import './button/ButtonBlock'

@@ -59,9 +59,6 @@ describe('Feld uebernehmen V2', () => {
 
     const result = feldUebernehmen(params, echteRelation, source, '253_30', 'feld')
 
-    // VART/PINDEX/IDBID/QUELLDATEN sind die NAMEN der Parameter, nicht ihre
-    // Werte -- sie bleiben leer (Nutzer-Entscheidung 2026-08-06). Genau diese
-    // Syntax schickte vorher jeden Namen als Inhalt nach SoftEngine.
     expect(result.params).toEqual([
       { source: 'fixed', value: '253' },
       { source: 'fixed', value: '30' },

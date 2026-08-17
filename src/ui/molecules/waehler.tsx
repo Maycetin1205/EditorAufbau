@@ -1,29 +1,3 @@
-// Waehler — DAS eine Bauteil fuer „welches Feld?", „welche Quelle?",
-// „welche Seite?", „welche Relation?", „welcher Baustein?".
-//
-// Warum es das gibt (gezaehlt 2026-08-17, Nutzer-Auftrag „komplett umbauen"):
-// dieselben vier Fragen wurden im Editor auf 45 verschiedene Arten gestellt —
-// ein Feld waehlte man an neun Stellen, eine Quelle an sieben, und ein
-// Suchfeld gab es in genau EINEM der neun Feld-Waehler. Bei 21 Feldern scrollt
-// man, bei 280 sucht man; die uebrigen acht liessen einen scrollen.
-//
-// Zwei Teile, damit beide Bauformen dasselbe zeigen:
-//   WaehlerKnopf  — der Ausloeser in einer Formularzeile: aktueller Klarname,
-//                   dahinter leise die Kennung, ein Pfeilchen. Oeffnet die
-//                   Liste als schwebendes Fenster.
-//   WaehlerListe  — der Inhalt: Suchzeile + Gruppen + Eintraege. Steht auch
-//                   allein, wo schon ein Fenster da ist (der Feld-Picker an
-//                   der angeklickten Stelle bringt seinen eigenen Rahmen und
-//                   eigene Koepfe mit).
-//
-// Regel 3 in Reinform: sichtbar ist der KLARNAME, die Kennung/der Feldcode
-// steht als leise Marke daneben, gespeichert wird allein der Technikwert.
-//
-// Die Suche ist IMMER da — auch bei drei Eintraegen. Ein Bedienelement, das
-// mal so und mal anders aussieht, ist genau die Uneinheitlichkeit, gegen die
-// dieses Bauteil gebaut wurde. Sie filtert Klarname UND Kennung: wer den
-// Feldcode kennt, tippt ihn.
-
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, Search } from '@/ui/zeichen'
 import { cn } from '@/lib/utils'
@@ -31,33 +5,25 @@ import { AuswahlFenster } from './auswahl-fenster'
 import { Field } from './field'
 
 export interface WaehlerEintrag {
-  // Technikwert — was gespeichert wird.
   wert: string
-  // Klarname — was der Bediener liest.
+
   name: string
-  // Leise Technik-Marke rechts ('2_8', 'ID0021', 'ADR'). Leer = keine.
+
   kennung?: string
-  // Gibt es, ist hier aber nicht waehlbar — z. B. „Datenfeld", solange die
-  // Maske gar keine Datenquelle hat. Er BLEIBT sichtbar: verschwaende er,
-  // suchte der Bediener eine Moeglichkeit, die es sehr wohl gibt, nur eben
-  // noch nicht hier (dieselbe Linie wie die alten disabled-Optionen).
+
   deaktiviert?: boolean
 }
 
 export interface WaehlerGruppe {
   key: string
-  // Gruppenkopf; fehlt er, stehen die Eintraege ohne Ueberschrift da (der
-  // haeufige Fall: eine einzige Quelle).
+
   name?: string
   kennung?: string
-  // Zusatz im Gruppenkopf, z. B. worueber eine weitere Quelle verknuepft ist.
+
   hinweis?: string
   eintraege: readonly WaehlerEintrag[]
 }
 
-// Fenstergroesse: dieselbe Breite wie der bisherige Feld-Picker (w-60), damit
-// sich am gewohnten Bild nichts verschiebt; die Hoehe traegt jetzt die
-// Suchzeile mit.
 const FENSTER_KLASSE = 'max-h-80 w-64'
 
 function passt(text: string, suche: string): boolean {
@@ -66,12 +32,11 @@ function passt(text: string, suche: string): boolean {
 
 interface WaehlerListeProps {
   gruppen: readonly WaehlerGruppe[]
-  // Aktueller Technikwert ('' = nichts gewaehlt).
+
   wert: string
-  // Beschriftung des Eintrags, der die Wahl aufhebt. Fehlt er, gibt es ihn
-  // nicht — manche Stellen MUESSEN eine Wahl haben.
+
   leerText?: string
-  // Was ueber der Suchzeile steht (Feld-Picker: seine Wahl-/Zuordnungs-Koepfe).
+
   kopf?: ReactNode
   onWaehle: (wert: string) => void
 }
@@ -80,9 +45,6 @@ export function WaehlerListe({ gruppen, wert, leerText, kopf, onWaehle }: Waehle
   const [suche, setSuche] = useState('')
   const sucheRef = useRef<HTMLInputElement | null>(null)
 
-  // Beim Aufmachen springt die Tastatur in die Suche — dieselbe Linie wie beim
-  // Popup (C3.3): wer ein Fenster oeffnet, will darin arbeiten, nicht erst
-  // hineinklicken.
   useEffect(() => { sucheRef.current?.focus() }, [])
 
   const gefiltert = useMemo(() => {
@@ -95,10 +57,7 @@ export function WaehlerListe({ gruppen, wert, leerText, kopf, onWaehle }: Waehle
             (e) => passt(e.name, s) || passt(e.kennung ?? '', s),
           ),
         }))
-    // Eine Gruppe ohne Eintraege verschwindet ganz — ein leerer Quellenkopf
-    // waere eine Ueberschrift ueber nichts. Das gilt auch OHNE Suchtext:
-    // sonst zaehlt `leer` unten eine leere Gruppe als Inhalt, und das Fenster
-    // bleibt weiss statt zu sagen, dass es nichts zu waehlen gibt.
+
     return treffer.filter((g) => g.eintraege.length > 0)
   }, [gruppen, suche])
 
@@ -173,9 +132,6 @@ export function WaehlerListe({ gruppen, wert, leerText, kopf, onWaehle }: Waehle
         </div>
       ))}
 
-      {/* Nichts gefunden: den Zustand benennen statt eine leere Flaeche zeigen
-          (Regel 4). Bei GAR keinen Eintraegen steht derselbe Platz — sonst
-          saehe „die Quelle hat keine Felder" aus wie „das Fenster ist kaputt". */}
       {leer && (
         <p className="px-2 py-2 text-xs text-muted-foreground">
           {suche.trim() === '' ? 'Nichts zur Auswahl.' : 'Kein Treffer.'}
@@ -186,16 +142,14 @@ export function WaehlerListe({ gruppen, wert, leerText, kopf, onWaehle }: Waehle
 }
 
 interface WaehlerKnopfProps {
-  // Beschriftung der Formularzeile. Fehlt sie, steht der Knopf allein (in
-  // einer Parameterzeile, die ihre Beschriftung schon links traegt).
   label?: string
   description?: string
-  // Klarname des Fensters fuer Hilfstechnik.
+
   bezeichnung: string
   gruppen: readonly WaehlerGruppe[]
   wert: string
   leerText?: string
-  // Was im Knopf steht, solange nichts gewaehlt ist.
+
   platzhalter?: string
   className?: string
   onWaehle: (wert: string) => void
@@ -215,10 +169,6 @@ export function WaehlerKnopf({
   const [offen, setOffen] = useState<{ top: number; left: number } | null>(null)
   const knopfRef = useRef<HTMLButtonElement | null>(null)
 
-  // Der GEWAEHLTE Eintrag ueber alle Gruppen. Nicht gefunden heisst: die Quelle
-  // ist weg oder das Feld geloescht — dann steht der Technikwert selbst da.
-  // Ihn zu verschweigen waere die stille Luege, gegen die Regel 4 steht: der
-  // Export nimmt die Bindung unveraendert mit.
   const treffer = gruppen.flatMap((g) => g.eintraege).find((e) => e.wert === wert)
   const unbekannt = wert !== '' && treffer === undefined
 

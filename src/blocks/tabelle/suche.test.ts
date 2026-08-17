@@ -1,7 +1,3 @@
-// Tests der Tabellen-Inhaltssuche.
-// Der Bediener tippt und erwartet Windows-Verhalten: Gross/Klein egal,
-// mehrere Woerter sind ein UND, leere Eingabe blendet nie etwas aus.
-
 import { describe, expect, it } from 'vitest'
 import {
   datensatzText,
@@ -33,9 +29,8 @@ describe('zeilePasst', () => {
   })
 
   it('verbindet mehrere Woerter mit UND — auch ueber Spalten hinweg', () => {
-    // "meier" steht in Spalte 1, "2026" in Spalte 3.
     expect(zeilePasst(zeilen[0], 'meier 2026')).toBe(true)
-    // "meier" ja, "katze" nein -> faellt raus.
+
     expect(zeilePasst(zeilen[0], 'meier katze')).toBe(false)
   })
 
@@ -120,10 +115,10 @@ describe('datensatzText (Fusszeile)', () => {
       .toBe('12 Datensätze · durch Auswahl gefiltert')
     expect(t({ gesamt: 0, sichtbar: 0, auswahlAktiv: true }))
       .toBe('Keine Datensätze · durch Auswahl gefiltert')
-    // Auch in Kombination mit der Suche bleibt der Zusatz dran.
+
     expect(t({ gesamt: 12, sichtbar: 3, suchtAktiv: true, auswahlAktiv: true }))
       .toBe('3 von 12 Datensätzen · durch Auswahl gefiltert')
-    // Ohne Quelle bleibt der Strich ein Strich — nichts wird angehaengt.
+
     expect(t({ hatQuelle: false, auswahlAktiv: true })).toBe('— Datensätze')
   })
 })
@@ -135,32 +130,20 @@ describe('zeigtLeerzustand (2026-08-07)', () => {
   })
 
   it('vor dem ersten SoftEngine-Push NICHT — sonst luegt die Maske beim Laden', () => {
-    // Die Anmeldung darf bis zu 10 Sekunden dauern (Retry 25 ms x 400). Stuende
-    // in dieser Zeit „Keine Eintraege" da, behauptete die Maske etwas ueber
-    // Daten, nach denen noch niemand gefragt hat (Regel 4).
     expect(zeigtLeerzustand(true, false, 0)).toBe(false)
   })
 
   it('im Editor nie — dort stehen die Platzhalter-Striche', () => {
-    // Sonst naehme der Leerzustand dem Bauer die Sicht auf sein Layout.
     expect(zeigtLeerzustand(false, true, 0)).toBe(false)
   })
 })
 
 describe('zeigtEchteDaten (Leerzustand — B1, 2026-07-28)', () => {
-  // Der Fehler, den diese Faelle festnageln: bis 2026-07-28 entschied die
-  // Tabelle ueber `datenzeilen.length > 0`. Ein Tag ohne Saetze sah damit in
-  // der ECHTEN Maske aus wie der leere Editor — vier Striche „—" und
-  // „— Datensaetze", als wuerde noch geladen. Erfundene Werte in der Maske
-  // sind genau das, was Regel 7 verbietet.
-
   it('Laufzeit mit Quelle zeigt echte Daten — AUCH wenn gerade keine Zeile passt', () => {
     expect(zeigtEchteDaten(false, 'q-termine')).toBe(true)
   })
 
   it('Editor zeigt Platzhalter — auch mit angehaengter Quelle', () => {
-    // Im Editor darf nie ein echter Wert stehen, sonst waere die Vorschau
-    // eine Behauptung ueber Daten, die der Editor gar nicht hat.
     expect(zeigtEchteDaten(true, 'q-termine')).toBe(false)
   })
 
@@ -171,9 +154,6 @@ describe('zeigtEchteDaten (Leerzustand — B1, 2026-07-28)', () => {
   })
 
   it('zusammen mit der Fusszeile: leerer Tag sagt „Keine Datensaetze", nicht „—"', () => {
-    // Das ist der Fall des Bedieners: Quelle dran, Tagesfilter auf einen Tag
-    // ohne Termine. Vorher unerreichbar — der Zweig war getestet, aber der
-    // Baustein kam nie dort an.
     const hatQuelle = zeigtEchteDaten(false, 'q-termine')
     expect(datensatzText({ hatQuelle, sichtbar: 0, gesamt: 0, suchtAktiv: false }))
       .toBe('Keine Datensätze')

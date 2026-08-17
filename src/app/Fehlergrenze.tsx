@@ -1,17 +1,3 @@
-// Fehlergrenze — das letzte Netz der EDITOR-Oberflaeche.
-//
-// Ohne sie riss ein Darstellungsfehler in irgendeiner Ecke die ganze
-// Oberflaeche weg: React haengt den kompletten Baum ab, der Bediener sieht
-// eine weisse Seite und weiss weder was passiert ist noch wie er
-// weiterkommt (Regel 4 — nichts scheitert still).
-//
-// Bewusst eine Klassen-Komponente: getDerivedStateFromError/componentDidCatch
-// gibt es in React nur so.
-//
-// Das hier ist EDITOR-Welt (index.css/shadcn), nicht Masken-Welt: keine
-// --se-*-Tokens. Der Fehlerbalken der Maske ist etwas anderes
-// (src/softengine/meldung.ts) und bleibt es.
-
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/ui/atoms/button'
 
@@ -31,8 +17,6 @@ export class Fehlergrenze extends Component<FehlergrenzeProps, FehlergrenzeState
   }
 
   override componentDidCatch(fehler: Error, info: ErrorInfo): void {
-    // Fuer die Fehlersuche: der Stapel steht nur hier, nicht im Text fuer
-    // den Bediener.
     console.error('Editor abgestuerzt:', fehler, info.componentStack)
   }
 

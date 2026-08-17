@@ -1,13 +1,3 @@
-// rasterOps — WO ein Baustein liegt: Bewegen (im Fluss wie an die Zelle),
-// Größe, Einfügen an der Zelle.
-// Verhaltensgleich herausgezogen aus Editor.ts:
-// kein Zustand, kein DOM — alle Funktionen bekommen alles hereingereicht und
-// geben den NEUEN Baum zurück (null = nichts zu tun). Wer den Baum übernimmt
-// und wer meldet, bleibt allein Sache des Stores.
-// Auch der Fluss-Umzug (verschiebeInContainer) wohnt hier: seine ganze
-// Verwicklung IST die Rasterfläche — landet der Baustein auf einer, braucht er
-// eine freie Zeile. `istRasterFlaeche` steht ohnehin nur hier.
-
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { createBlockSubtree } from '../core/blocks/blockFactory'
 import { canContain, getBlockDefinition } from '../core/blocks/blockRegistry'
@@ -21,21 +11,10 @@ import {
 import { istSeitenBaustein, kinderImFluss } from './pageOps'
 import { collectSubtree } from './treeOps'
 
-// Rasterfläche = die oberste Ebene (Wurzel) oder eine Seite (Ansicht, Popup):
-// dort liegen die Blöcke im Raster, nicht im Fluss. DIE eine Stelle, die das
-// entscheidet — Store, Canvas UND Export fragen sie, damit ein Baustein in
-// SoftEngine dort sitzt, wo er im Editor lag (Regel 1).
 export function istRasterFlaeche(node: BlockNode): boolean {
   return node.id === ROOT_ID || istSeitenBaustein(node)
 }
 
-// Freie Zeile ganz unten auf einer Rasterfläche — sonst lägen alle neuen
-// Blöcke aufeinander in Zeile 0.
-//
-// Bausteine des Masken-RAHMENS zählen NICHT mit (maskenRand, N2.1): sie liegen
-// am Rand der Fläche, nicht in Zellen. Ihre Rasterprops stehen nur noch für die
-// Einfüge-Vorschau da — würden sie hier mitgerechnet, schöbe eine Navi jeden
-// neuen Baustein um ihre alte Zellhöhe nach unten, ins Leere.
 export function freieZeileAuf(tree: BlockTree, parentId: string): number {
   return naechsteFreieZeile(
     kinderImFluss(tree, parentId)
@@ -44,18 +23,6 @@ export function freieZeileAuf(tree: BlockTree, parentId: string): number {
   )
 }
 
-// Wohin eine KOPIE gelegt wird (A5, 2026-08-11). Pixelgleich auf dem Original
-// sieht Duplizieren aus wie „nichts passiert" — sichtbar wechselt nur der
-// Inspector still auf die Kopie. Sie bekommt darum die freie Zeile ganz unten,
-// dieselbe Rechnung wie ein neuer Baustein aus der Bibliothek (freieZeileAuf in
-// addBlock); Spalte, Breite und Hoehe behaelt sie.
-//
-// NUR auf einer RASTERFLÄCHE: Hauptseite (Wurzel), Ansicht oder Popup-Rumpf —
-// alle drei zeigen dasselbe Raster, also gilt dort dieselbe Rechnung. In einem
-// Container (Fluss) gibt es keine Position zu wählen, dort bleibt die Kopie
-// unverändert.
-// Bis C2 (2026-08-16) war das Popup ausgenommen, weil sein Inhalt im Fluss
-// lag — eine Kopie landete dort pixelgleich auf dem Original.
 export function freiePositionFuerKopie(
   tree: BlockTree,
   parentId: string,
@@ -72,14 +39,6 @@ export function freiePositionFuerKopie(
   }
 }
 
-// Zustandsabhängige Startgröße nachziehen (2026-08-06): manche Bausteine
-// haben je nach Einstellung eine ANDERE sinnvolle Rastergröße — die senkrecht
-// gestellte Trennlinie ist schmal und hoch, wo die waagerechte breit und flach
-// ist. Wechselt eine Einstellung die Variante (rasterSpecOf), bekommt der
-// Baustein deren Startgröße; sonst bleibt seine — auch eine gezogene — Größe
-// unangetastet. Ohne das bliebe die umgestellte Trennlinie 24 Zellen breit und
-// 1 hoch: ein senkrechter Strich in einem flachen Vollbreite-Kasten.
-// Registry-getrieben (raster.varianten), kein `if type===` (Regel 2).
 export function startgroesseNachziehen(
   def: Parameters<typeof rasterSpecOf>[0],
   vorherProps: Record<string, unknown>,
@@ -94,14 +53,6 @@ export function startgroesseNachziehen(
   }
 }
 
-// Verschiebt einen Block auf eine feste Zelle (E2 „Bewegen", Nutzer-
-// Entscheidung B 2026-07-23 „Bausteine bleiben stehen"): NUR der gezogene
-// Umzug im FLUSS: Knoten in einen Container an eine Einfüge-Position. `index`
-// bezieht sich auf die Kinderliste des Zielcontainers (inkl. des gezogenen
-// Knotens, falls gleicher Container) — die Korrektur passiert hier.
-// Landet der Block neu auf einer Rasterfläche, bekommt er eine freie Zeile ganz
-// unten (keine Überlappung mit den vorhandenen Blöcken); seine Breite/Höhe
-// behält er. Freies Verschieben auf der Fläche selbst macht `zelleneinzug`.
 export function verschiebeInContainer(
   tree: BlockTree,
   id: string,
@@ -111,9 +62,9 @@ export function verschiebeInContainer(
   const node = tree[id]
   const newParent = tree[newParentId]
   if (!node || !newParent || id === ROOT_ID) return null
-  // Niemals in den eigenen Teilbaum einhängen (Zyklus).
+
   if (collectSubtree(tree, id).includes(newParentId)) return null
-  // Ziel muss den Typ aufnehmen (allowedChildTypes).
+
   if (!canContain(newParent.type, node.type)) return null
   const oldParentId = node.parentId
   if (!oldParentId) return null
@@ -144,10 +95,6 @@ export function verschiebeInContainer(
   return next
 }
 
-// Block wandert — KEIN Ausweichen, die Nachbarn bleiben EXAKT stehen. Legt man
-// zwei übereinander, überlappen sie bewusst. Kommt der Block von einer ANDEREN
-// Fläche / aus einem Container, bekommt er die Registry-Startgröße (nie
-// Vollbreite); auf DERSELBEN Fläche behält er seine Größe.
 export function zelleneinzug(
   tree: BlockTree,
   id: string,
@@ -160,7 +107,7 @@ export function zelleneinzug(
   if (!node || !parent || id === ROOT_ID) return null
   if (!istRasterFlaeche(parent)) return null
   if (!canContain(parent.type, node.type)) return null
-  // Niemals in den eigenen Teilbaum einhängen (Zyklus).
+
   if (collectSubtree(tree, id).includes(parentId)) return null
   const gleicheFlaeche = node.parentId === parentId
   const cur = parseRasterPos(node.props)
@@ -169,7 +116,7 @@ export function zelleneinzug(
   const h = gleicheFlaeche ? cur.h : spec.startH
   const nx = Math.max(0, Math.min(x, RASTER.spalten - w))
   const ny = Math.max(0, y)
-  // Nichts zu tun: gleiche Fläche, gleiche Zelle, gleiche Größe (reiner Klick).
+
   if (gleicheFlaeche && nx === cur.x && ny === cur.y && w === cur.w && h === cur.h) return null
   const next: BlockTree = { ...tree }
   if (!gleicheFlaeche && node.parentId && next[node.parentId]) {
@@ -187,11 +134,6 @@ export function zelleneinzug(
   return next
 }
 
-// Größe auf der Rasterfläche ändern (Anfasser rechts/unten) — die NACHBARN
-// bleiben stehen (Nutzer-Entscheidung B: nichts weicht aus, ein wachsender
-// Block überlappt bewusst). Breite nie über den rechten Rand hinaus; Höhe darf
-// beliebig wachsen. Mindestens EINE Zelle.
-// `achse` 'x' = Breite (rasterW), 'y' = Höhe (rasterH).
 export function zellenGroesse(
   tree: BlockTree,
   id: string,
@@ -212,9 +154,6 @@ export function zellenGroesse(
   }
 }
 
-// Neuer Block aus der Bibliothek an eine feste Zelle (E3 „Einfügen an der
-// Zelle"): Startgröße aus der Registry an der Drop-Zelle, vorhandene Bausteine
-// bleiben stehen. Verweigert Typen, die die Fläche nicht aufnimmt.
 export function neuerBlockAnZelle(
   tree: BlockTree,
   type: string,

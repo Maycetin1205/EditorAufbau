@@ -1,12 +1,5 @@
-// Preflight-Tests
-// Semantische Export-VORPRUEFUNG (preflightMask): sieht den Baum + die
-// Bibliotheken und blockt kaputte Referenzen, BEVOR der Export entsteht.
-// Die Byte-Seite (Serialisierung, Escaping, Validator) prueft export.test.ts;
-// eigene Datei seit 2026-07-27 (500-Zeilen-Deckel: eine Datei, eine Aufgabe).
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
-
 import { describe, expect, it } from 'vitest'
-// Side-Effect-Imports: registrieren die echten Bausteine der Faelle.
+
 import '../blocks/popup/PopupBlock'
 import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/tabelle/TabelleBlock'
@@ -20,8 +13,6 @@ registerTestBlocks()
 
 describe('preflightMask', () => {
   it('blockt Bindungen ohne Quelle und auf geloeschte Felder (S1b)', () => {
-    // Echtes Formularfeld (acceptsDataSource + bindbare Stelle "Wert"):
-    // ein Baum, ein Feld, die Bindungs-Props variieren je Fall.
     const feld = (props: Record<string, string>): BlockTree => ({
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['feld'] },
       feld: {
@@ -36,26 +27,21 @@ describe('preflightMask', () => {
       id: 'q1', name: 'Termine', kind: 'idb' as const,
       idbId: 'IDBID0001', indexField: '0_10', fields: [{ code: '2_8', label: 'Kunde' }],
     }]
-    // Gebunden und die Quelle kennt das Feld → sauber, keine Meldung.
+
     expect(preflightMask(feld({ source: 'q1', valueField: '2_8' }), sources, [])).toEqual([])
-    // Die Quelle kennt den Feldcode nicht (mehr) → blocken, sonst bliebe die
-    // Stelle in SoftEngine still leer (der Anlass fuer S1b).
+
     expect(preflightMask(feld({ source: 'q1', valueField: '99_9' }), sources, [])
       .some((r) => r.name === 'Gebundenes Feld fehlt')).toBe(true)
-    // Gebunden, aber nirgends eine Quelle gewaehlt → eigene Meldung.
+
     expect(preflightMask(feld({ valueField: '2_8' }), sources, [])
       .some((r) => r.name === 'Bindung ohne Datenquelle')).toBe(true)
-    // Quelle gewaehlt, aber geloescht: DAS meldet schon S1a — S1b schweigt,
-    // damit derselbe Fehler nicht doppelt vor dem Bediener steht.
+
     const kaputt = preflightMask(feld({ source: 'weg', valueField: '2_8' }), sources, [])
     expect(kaputt.some((r) => r.name === 'Datenquelle fehlt')).toBe(true)
     expect(kaputt.some((r) => r.name === 'Gebundenes Feld fehlt')).toBe(false)
   })
 
   it('nennt den Baustein mit seinem Klarnamen, nicht nur mit dem Typ (2026-08-06)', () => {
-    // Zwei Formularfelder, beide kaputt gebunden. Stand vorher in beiden
-    // Meldungen nur "Formularfeld", war nicht zu erkennen, WELCHES gemeint
-    // ist — der Bediener konnte den Export nicht entblocken.
     const feld = (id: string, name: string) => ({
       id, type: 'formfeld', parentId: 'root', childIds: [],
       props: {
@@ -69,9 +55,7 @@ describe('preflightMask', () => {
       b: feld('b', 'Haustier'),
     }
     const texte = preflightMask(tree, [], []).map((r) => r.detail)
-    // Der EIGENE Name allein, ohne Typ davor (Nutzer-Ansage 2026-08-10, s.
-    // bausteinName): entscheidend ist, dass die zwei Meldungen die beiden
-    // Felder auseinanderhalten — „Formularfeld" vor jedem Namen tat das nie.
+
     expect(texte.some((t) => t.includes('Kunde'))).toBe(true)
     expect(texte.some((t) => t.includes('Haustier'))).toBe(true)
   })
@@ -94,14 +78,13 @@ describe('preflightMask', () => {
       p1: popup('p1', 'Neue Behandlung'),
     }
     const { html } = exportMask(tree)
-    // Im Ketten-Attribut steht der KLARNAME der Seite, nie die Editor-id.
+
     const attr = /data-ff-aktionen="([^"]*)"/.exec(html)?.[1] ?? ''
     expect(attr).toContain('&quot;popup&quot;:&quot;Neue Behandlung&quot;')
     expect(attr).not.toContain('popupId')
     expect(attr).not.toContain('p1')
     expect(preflightMask(tree, [], [])).toEqual([])
 
-    // Schritt zeigt auf eine gelöschte Popup-Seite → Preflight blockt.
     const ohneSeite: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a'] },
       a: knopf,
@@ -109,12 +92,6 @@ describe('preflightMask', () => {
     expect(preflightMask(ohneSeite, [], []).some((r) =>
       r.detail.includes('gelöschte Popup-Seite'))).toBe(true)
 
-    // Zwei Seiten mit demselben Namen → Preflight meldet es (Laufzeit-Identität:
-    // beide Adresswege — Popup-Schritt und Navi — finden ihre Seite über den
-    // Namen). Die Prüfung heißt seit 2026-08-15 „Seitenname doppelt" und gilt
-    // für ALLE Seiten, nicht nur für Fenster; geschrieben wird ein Doppelname
-    // ohnehin nicht mehr (Editor.updateProperty), das hier ist die Gegenprobe
-    // für Altbestand und von Hand bearbeitete Stände.
     const doppelt: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p1', 'p2'] },
       p1: popup('p1', 'Neue Behandlung'),
@@ -122,9 +99,6 @@ describe('preflightMask', () => {
     }
     expect(preflightMask(doppelt, [], []).some((r) => r.name === 'Seitenname doppelt')).toBe(true)
 
-    // Gross-/Kleinschreibung schuetzt nicht davor: die Laufzeit vergleicht den
-    // Namen, und „Neue Behandlung" neben „neue behandlung" waere fuer den
-    // Bauer zwei Seiten, fuer die Maske aber ein mehrdeutiges Ziel.
     const grossKlein: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['p1', 'p2'] },
       p1: popup('p1', 'Neue Behandlung'),
@@ -133,15 +107,6 @@ describe('preflightMask', () => {
     expect(preflightMask(grossKlein, [], []).some((r) => r.name === 'Seitenname doppelt')).toBe(true)
   })
 
-  // --- Bindungen an eine WEITERE Datenquelle (2026-07-28) -----------------
-  //
-  // Ab jetzt kann eine Stelle sagen, aus welcher Quelle ihr Feld kommt. Drei
-  // neue Arten, wie das schiefgehen kann — alle drei blieben in SoftEngine
-  // still leer, also blockt der Export mit Klartext (Regel 4).
-  //
-  // Geprueft wird an einer TABELLENSPALTE. Das ist Absicht: Listen-Bindungen
-  // wurden bis heute gar nicht geprueft — ausgerechnet der Fall des Nutzers
-  // waere ungeprueft geblieben.
   it('prueft Tabellenspalten und die Angabe der Quelle', () => {
     const tabelle = (spalten: { titel: string; feld: string }[], weitereQuellen: unknown[] = []): BlockTree => ({
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
@@ -166,43 +131,30 @@ describe('preflightMask', () => {
     ]
     const namen = (t: BlockTree) => preflightMask(t, sources, []).map((r) => r.name)
 
-    // Sauber: eigene Spalte + Fremdspalte mit vollstaendiger Verbindung.
     expect(namen(tabelle(
       [{ titel: 'Tiername', feld: '78_30' }, { titel: 'Notiz', feld: 'tiere::128_350' }],
       verbindung,
     ))).toEqual([])
 
-    // Spalte der EIGENEN Quelle mit unbekanntem Feldcode — bis 2026-07-28
-    // fiel das durch, weil Listen gar nicht geprueft wurden.
     expect(namen(tabelle([{ titel: 'Weg', feld: '99_9' }])))
       .toContain('Gebundenes Feld fehlt')
 
-    // Fremdspalte, aber die Verbindung fehlt am Baustein: die Laufzeit faende
-    // die Partnerzeile nicht.
     expect(namen(tabelle([{ titel: 'Notiz', feld: 'tiere::128_350' }])))
       .toContain('Verbindung fehlt')
 
-    // Halbfertige Verbindung zaehlt wie keine.
     expect(namen(tabelle(
       [{ titel: 'Notiz', feld: 'tiere::128_350' }],
       [{ quelleId: 'tiere', keyPairs: [{ fromField: '10_8', toField: '' }] }],
     ))).toContain('Verbindung fehlt')
 
-    // Genannte Quelle gibt es gar nicht (mehr) — andere Ursache, andere Meldung.
     expect(namen(tabelle([{ titel: 'X', feld: 'gibtsnicht::1_2' }])))
       .toContain('Datenquelle unbekannt')
 
-    // Verbindung steht, aber das Feld gibt es in der Fremdquelle nicht.
     expect(namen(tabelle([{ titel: 'X', feld: 'tiere::99_9' }], verbindung)))
       .toContain('Gebundenes Feld fehlt')
   })
 
   it('warnt bei einer Status-Spalte ohne Zuordnung — ohne den Export zu blocken', () => {
-    // Die Status-Zuordnung ist FREIWILLIG (Nutzer-Entscheidung 2026-08-06):
-    // ohne sie zeigt die Marke den Datenwert grau. Blocken waere falsch — das
-    // erklaerte eine erlaubte Maske fuer unbaubar. Schweigen aber auch
-    // (Regel 4): der Rohwert ist ein Technikwert, und wer ihn in der fertigen
-    // SoftEngine-Maske entdeckt, hat die Zuordnung meist nur vergessen.
     const sources = [{
       id: 'termine', name: 'Terminplaner', kind: 'idb' as const, idbId: 'IDBID0001',
       indexField: '0_10', fields: [{ code: '78_30', label: 'Zustand' }],
@@ -215,32 +167,24 @@ describe('preflightMask', () => {
       },
     })
 
-    // Status-Spalte OHNE Zuordnung: genau eine Meldung, und sie ist eine
-    // Warnung — failedChecks (das, woran der Export abbricht) bleibt leer.
     const ohne = preflightMask(tabelle([{ titel: 'Zustand', feld: '78_30', art: 'status' }]), sources, [])
     expect(ohne.map((r) => r.name)).toEqual(['Status-Zuordnung fehlt'])
     expect(ohne[0].warnung).toBe(true)
     expect(failedChecks(ohne)).toEqual([])
-    // Die Meldung nennt die Spalte beim Klarnamen und sagt, was passieren wird.
+
     expect(ohne[0].detail).toContain('Zustand')
     expect(ohne[0].detail).toContain('Grau')
 
-    // MIT Zuordnung: still.
     expect(preflightMask(tabelle([{
       titel: 'Zustand', feld: '78_30', art: 'status',
       zuordnung: [{ wert: 'W', name: 'Wartet', bedeutung: 'warning' }],
     }]), sources, [])).toEqual([])
 
-    // Und eine TEXT-Spalte ohne Zuordnung ist kein Thema — die Warnung haengt
-    // an der Darstellung, nicht an der Spalte an sich.
     expect(preflightMask(tabelle([{ titel: 'Zustand', feld: '78_30', art: 'text' }]), sources, []))
       .toEqual([])
   })
 
   it('meldet eine geloeschte Quelle EINMAL, nicht zusaetzlich je gebundener Stelle', () => {
-    // Die Karte im Kanban hat keine eigene source-Prop — sie erbt die des
-    // Boards. Ist dessen Quelle geloescht, ist die Ursache EINE; „Bindung
-    // ohne Datenquelle" waere hier eine falsche Faehrte.
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
       tab: {

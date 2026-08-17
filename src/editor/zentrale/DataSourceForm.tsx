@@ -1,35 +1,3 @@
-// DataSourceForm
-// Anlegen/Bearbeiten einer Datenquellen-Vorlage.
-//
-// Drei Fragen nacheinander, jede fragt nur, was die vorige offen laesst:
-//
-//   1. WAS fuer eine Quelle?  — Auswahlliste
-//   2. WOHER genau?           — nur was die Art wirklich braucht
-//   3. WELCHE Felder?         — FeldListe (Zeile fuer Zeile)
-//
-// WAS eine Art ausmacht, steht nicht hier, sondern in der Arten-Tabelle
-// (core/data/quellenArten): dieses Formular fragt generisch „hat die Art
-// eine feste Kennung?" und stellt danach seine zweite Frage — es kennt
-// keine Art namentlich.
-//
-// Der Bediener gibt Klarnamen + Positionen/Laengen ein; der Technikwert
-// ('IDBID0004', Feldcode 'pos_len') entsteht unsichtbar (Regel 3).
-// KEIN eigenes Formularfeld fuer die Datensatz-Nummer (Nutzer-Entscheidung
-// 2026-07-15): Felder pflegt allein die Feld-Liste. Der Schreibweg-
-// Technikwert indexField bleibt unsichtbar — Bestand behaelt seinen Wert,
-// neue Quellen bekommen das Terminplaner-Muster '0_10'.
-//
-// Beim Bearbeiten bleibt die id der Vorlage stabil (angehaengte Bloecke
-// behalten ihre Quelle) — das erledigt dataSourceStore.update.
-//
-// KEINE Erklaertexte in diesem Formular (U1, 2026-08-12, Nutzer-Ansage U0-2).
-// Weg sind die Beschreibung „bei euch die 69" an der Relationsnummer und der
-// Absatz unter „Gehoert zu" — die 69 ist die Relationsnummer DIESER
-// Installation und stand hier als allgemeine Wahrheit (Regel 5: solche Werte
-// sind Daten, nie Text im Code). Fehlermeldungen sagen, was falsch ist, und
-// unterrichten nicht. Ein Beispiel gehoert in den Platzhalter, nicht in einen
-// Absatz. Nicht wieder einbauen.
-
 import { useState } from 'react'
 import { Button } from '@/ui/atoms/button'
 import { TextInput } from '@/ui/atoms/text-input'
@@ -61,7 +29,6 @@ import { FormularKarte } from './FormularKarte'
 const FELDCODE = /^\d+_\d+$/
 
 interface DataSourceFormProps {
-  // Vorhandene Vorlage = Bearbeiten; undefined = Anlegen.
   source?: DataSource
   onClose: () => void
 }
@@ -72,17 +39,9 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const [kind, setKind] = useState<DataSourceKind>(source?.kind ?? 'idb')
   const [kennungEingabe, setKennungEingabe] = useState(kennungAnzeige(source?.idbId))
   const [kopfsatzEingabe, setKopfsatzEingabe] = useState(source?.kopfsatzIndex ?? '')
-  // Der Feld-Vorsatz der Quelle ('LFA_'). Er formt JEDEN Feldcode dieser
-  // Quelle, deshalb steht er oben bei der Herkunft und nicht in der Feldliste.
+
   const [vorsatzEingabe, setVorsatzEingabe] = useState(source?.feldVorsatz ?? '')
-  // Zeilen-Weg (Welle R): 'geschoben' = SoftEngine schickt beim Laden
-  // (heutiger Weg); 'holen' = die Maske fragt selbst per Relation, sobald
-  // ein Beleg angeklickt ist. Sichtbar sind NUR Relationsnummer und die
-  // Quelle, aus der der Beleg kommt. Die Feld-Zuordnungen (Belegart 2_1,
-  // Nummer 3_8, Jahr 0_1, Archiv 1_1) und die Ende-Felder (11_6+18_25) sind
-  // SoftEngine-Standard und damit Technikwerte — sie reisen unsichtbar mit
-  // (Regel 3; Nutzer-Ansage 2026-08-11: keine Eingaben, die niemand
-  // versteht). Bestand behaelt seine gespeicherten Werte.
+
   const lade = source?.ladeRelation
   const [zeilenWeg, setZeilenWeg] = useState<'geschoben' | 'holen'>(lade ? 'holen' : 'geschoben')
   const [relationNr, setRelationNr] = useState(lade?.nr ?? LADE_RELATION_STANDARD.nr)
@@ -96,47 +55,31 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   }
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
-      // Mit dem GESPEICHERTEN Vorsatz gelesen, nicht mit dem gerade getippten:
-      // sonst zeigten Position und Laenge leer, sobald der Bediener den
-      // Vorsatz im offenen Formular anfasst.
+
       ? source.fields.map((f) => zeileFromField(f, source.feldVorsatz ?? ''))
       : [{ ...LEERE_ZEILE }],
   )
-  // Fehler erst nach dem ersten Speichern-Versuch anzeigen (nicht beim Tippen).
+
   const [zeigeFehler, setZeigeFehler] = useState(false)
 
-  // Hat die gewählte Art eine feste SoftEngine-Kennung, oder muss der
-  // Bediener sie eingeben? Das ist die EINZIGE Frage, die dieses Formular
-  // an die Art stellt — sie kommt aus der Arten-Tabelle, nicht aus einer
-  // Aufzählung hier. Wie die Kennung dann heißt, sagt ebenfalls die Art.
   const art = artFuer(kind)
   const kennungEingeben = art.tabellenId === ''
-  // Zweite Frage an die Art: hängt so eine Datei unter einem anderen Satz?
-  // Nur dann gibt es das Kopfsatz-Feld (Belegpositionen unter dem Beleg).
+
   const kopfsatzEingeben = art.kopfsatzMoeglich
-  // Dritte Frage an die Art: kann sie ihre Zeilen per Relation holen
-  // (Welle R)? Nur dann gibt es die Zeilen-Weg-Auswahl.
+
   const holenMoeglich = art.relationLadenMoeglich
-  // Vierte Frage an die Art: tragen ihre Feldcodes einen festen Vorsatz?
-  // Nur dann gibt es das Kaestchen (ERP-Abfrage: 'LFA_2_8' statt '2_8').
+
   const vorsatzEingeben = art.feldVorsatzMoeglich
-  // Was beim Speichern vor jeden Feldcode kommt — und beim Pruefen unten
-  // dieselbe Rechnung, damit Fehleranzeige und Ergebnis nie auseinanderlaufen.
+
   const vorsatz = vorsatzEingeben ? feldVorsatzFromInput(vorsatzEingabe) : ''
   const holtZeilen = holenMoeglich && zeilenWeg === 'holen'
-  // Mögliche Geber: jede ANDERE Quelle der Bibliothek.
+
   const geberOptionen = store.list.filter((s) => s.id !== source?.id)
 
-  // Art gewechselt: die neue bringt ihre Vorgaben mit (Belegpositionen tragen
-  // Feldliste UND Kopfsatz bei sich, s. quellenArten). Eingesetzt wird nur in
-  // LEERE Felder — getippte Zeilen oder ein eingetragener Kopfsatz dürfen von
-  // einem Klick nie weggeräumt werden.
   function waehleArt(neu: DataSourceKind): void {
     setKind(neu)
     const neueArt = artFuer(neu)
     if (neueArt.standardFelder.length > 0 && !zeilen.some(zeileGefuellt)) {
-      // Ohne Vorsatz gelesen: mitgebrachte Woerterbuecher gibt es nur bei
-      // Arten mit FESTER Tabellen-ID, und die fuehren keinen (quellenArten).
       setZeilen(neueArt.standardFelder.map((f) => zeileFromField(f)))
     }
     if (neueArt.kopfsatzStandard !== '' && kopfsatzEingabe.trim() === '') {
@@ -144,14 +87,12 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     }
   }
 
-  // ---------- Validierung (Fehlertexte '' = gültig) ----------
   const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
   const kennungFehler =
     kennungEingeben && kennungFromInput(kennungEingabe) === ''
       ? `${art.kennungLabel} fehlt (z. B. ${art.kennungBeispiel}).`
       : ''
-  // Der Kopfsatz ist FREIWILLIG (nicht jede Datei hängt an einer anderen) —
-  // geprüft wird nur, was eingetippt wurde. Leer ist gültig.
+
   const kopfsatzFehler =
     kopfsatzEingeben && kopfsatzEingabe.trim() !== '' && kopfsatzFromInput(kopfsatzEingabe) === ''
       ? 'Ungültig — Beispiel: BEL_0_11.'
@@ -166,9 +107,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
     ? 'Zwei Felder haben dieselbe Position + Länge.'
     : ''
-  // Hol-Weg: geprüft wird nur, wenn er aktiv ist — und nur die zwei
-  // sichtbaren Eingaben. Die unsichtbaren Feld-Zuordnungen sind Standard
-  // und immer gültig.
+
   const relationNrFehler = holtZeilen && relationNrFromInput(relationNr) === ''
     ? 'Relationsnummer fehlt — nur Ziffern.'
     : ''
@@ -190,24 +129,17 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       name: name.trim(),
       kind,
       ...(kennungEingeben ? { idbId: kennungFromInput(kennungEingabe) } : {}),
-      // Nur mitschreiben, wenn die Art ihn führt UND etwas Gültiges drinsteht:
-      // sonst schleppte eine Quelle, die einmal „Andere Datei" war, ihren
-      // Kopfsatz unsichtbar weiter.
+
       ...(kopfsatzEingeben && kopfsatzFromInput(kopfsatzEingabe) !== ''
         ? { kopfsatzIndex: kopfsatzFromInput(kopfsatzEingabe) }
         : {}),
-      // Gleiche Linie wie beim Kopfsatz: nur mitschreiben, wo die Art ihn
-      // fuehrt — sonst schleppte eine Quelle, die einmal ERP-Abfrage war,
-      // ihren Vorsatz unsichtbar weiter und formte fremde Feldcodes.
+
       ...(vorsatz !== '' ? { feldVorsatz: vorsatz } : {}),
-      // Unsichtbarer Schreibweg-Technikwert (s. Kopf-Kommentar): Bestand
-      // bleibt, neue Quellen bekommen '0_10'.
+
       ...(source
         ? (source.indexField ? { indexField: source.indexField } : {})
         : { indexField: '0_10' }),
-      // Die Hol-Relation nur, wenn der Weg aktiv ist — beim Zurückschalten
-      // auf „geschoben" verschwindet sie aus der Vorlage (kein unsichtbares
-      // Weiterschleppen; dasselbe Muster wie der Kopfsatz oben).
+
       ...(holtZeilen
         ? {
             ladeRelation: {
@@ -241,7 +173,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           )}
         </Field>
 
-        {/* 1. Art — Auswahlliste; die Namen kommen aus der Arten-Tabelle. */}
         <SelectControl
           label="Art"
           value={kind}
@@ -249,9 +180,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           onChange={(v) => waehleArt(v as DataSourceKind)}
         />
 
-        {/* 2. Herkunft — nur wo die Art keine feste Kennung hat. Bei den
-            Stammtabellen steht sie fest; danach zu fragen war vorher eine
-            sinnlose Eingabe. Gezeigt wird sie im Detail der Liste. */}
         {kennungEingeben && (
           <Field label={art.kennungLabel} error={zeigeFehler ? kennungFehler : ''}>
             {(f) => (
@@ -266,9 +194,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </Field>
         )}
 
-        {/* 2a. Feld-Vorsatz — nur bei Arten, deren Feldcodes einen tragen.
-            Er gehoert zur ABFRAGE, nicht zum einzelnen Feld: einmal hier,
-            danach formt er jeden Feldcode dieser Quelle. */}
         {vorsatzEingeben && (
           <Field label="Feld-Vorsatz">
             {(f) => (
@@ -283,11 +208,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </Field>
         )}
 
-        {/* 2c. Zeilen-Weg (Welle R) — nur bei Arten, die per Relation holen
-            können. Beim Holen entfällt der Kopfsatz sichtbar (2b unten):
-            eine holende Quelle bestellt bei SoftEngine nichts, an dem er
-            hinge; ein eingetragener Wert bleibt gespeichert und kommt beim
-            Zurückschalten wieder. */}
         {holenMoeglich && (
           <SelectControl
             label="Woher kommen die Zeilen?"
@@ -329,8 +249,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </>
         )}
 
-        {/* 2b. Kopfsatz — nur bei Arten, die unter einem anderen Satz hängen.
-            Freiwillig: manche Dateien kommen ohne. */}
         {kopfsatzEingeben && !holtZeilen && (
           <Field
             label="Gehört zu"
@@ -348,7 +266,6 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           </Field>
         )}
 
-        {/* 3. Felder */}
         <FeldListe
           zeilen={zeilen}
           setZeilen={setZeilen}

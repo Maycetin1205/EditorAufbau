@@ -1,8 +1,3 @@
-// RelationForm — eine Relation hat genau zwei Eingaben: Anzeigename und
-// vollständige SoftEngine-Syntax. Verb, NR, Parameter und ein abschließendes
-// ... werden ausschließlich aus der Syntax abgeleitet; dadurch können die
-// sichtbaren Felder nie voneinander abweichen.
-
 import { useState } from 'react'
 import { Button } from '@/ui/atoms/button'
 import { TextInput } from '@/ui/atoms/text-input'

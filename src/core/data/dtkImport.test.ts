@@ -1,20 +1,8 @@
-// Tests des DTK-Lesers.
-//
-// Die echte Kundendatei (3 MB, installations-individuelle Felddaten) wird
-// NICHT eingecheckt — die Bausteine hier bauen die am echten Export
-// vermessenen Satzformen im Kleinen nach: @DSATZ-Zeilen, 3,POS-Stammsätze
-// (fixbreit, mit Feldnummer und Kennungs-Wiederholung), Kopfsätze,
-// Verzeichnis-Einträge und die 30-Byte-Fortsetzungsköpfe der 2048er-Seiten.
-
 import { describe, expect, it } from 'vitest'
 import { dtkTextAusBytes, parseDtk, parseDtkBytes } from './dtkImport'
 
 const sp = (n: number) => ' '.repeat(n)
 
-// Ein 3,POS-Feldstammsatz, wie er (geheilt) in der Datei liegt. Nur die
-// fürs Lesen tragenden Spalten sind nachgebaut; die Breiten entsprechen
-// dem vermessenen Original (Feldnummer rechtsbündig in 10, Kennung nach
-// 57 Leerzeichen wiederholt, Klarname hinter einem langen Leerlauf).
 function posSatz(
   id: string,
   nummer: number,
@@ -35,14 +23,11 @@ function posSatz(
   )
 }
 
-// Verzeichnis-Eintrag: gleicher Schlüssel, aber statt der wiederholten
-// Kennung folgt Binärkram — zählt fürs Soll, liefert aber kein Feld.
 function verzeichnis(id: string, nummer: number): string {
   const nr = String(nummer)
   return `3,POS,${id},${sp(10 - nr.length)}${nr}${sp(57)}ÿl ÿ${sp(8)}\r\n`
 }
 
-// Tabellen-Kopfsatz mit Klarname vor dem ersten Zeitstempel.
 function kopfsatz(id: string, name: string): string {
   return (
     `0,${id}${sp(70)}${id}${sp(60)}VET${sp(100)}` +
@@ -133,7 +118,7 @@ describe('parseDtk — Palimpsest: alte Seitenstände neben aktuellen', () => {
       'IDBID0002_30_30,,30,30,Sekundärtierart,L\r\n' +
       'IDBID0002_60_1,,60,1,Ohrmarke,ANJ\r\n' +
       posSatz('ID0002', 1, 'Tierart', '', 30, 'L') +
-      posSatz('ID0002', 2, 'StallID', '', 38, 'L') + // Altstand von Feld 2
+      posSatz('ID0002', 2, 'StallID', '', 38, 'L') +
       verzeichnis('ID0002', 3)
     const [t] = parseDtk(text)
     expect(t.felder.map((f) => f.code)).toEqual(['0_30', '30_30', '60_1'])
@@ -143,7 +128,7 @@ describe('parseDtk — Palimpsest: alte Seitenstände neben aktuellen', () => {
   it('Stammsätze widersprechen dem Satzlayout → das Layout ist der Altstand (Fall ID0003)', () => {
     const text =
       'IDBID0003_0_30,,0,30,Wert,L\r\n' +
-      'IDBID0003_30_255,,30,255,Parameter,L\r\n' + // gibt es nicht mehr
+      'IDBID0003_30_255,,30,255,Parameter,L\r\n' +
       posSatz('ID0003', 1, 'Wert', '', 30, 'L') +
       posSatz('ID0003', 2, 'Stallbezeichnung', 76, 30, 'L') +
       posSatz('ID0003', 3, 'Flag 1', 106, 1, 'ANJ')
@@ -165,7 +150,7 @@ describe('parseDtk — Tabellen-Klarnamen', () => {
 
 describe('dtkTextAusBytes — Fortsetzungsköpfe der 2048er-Seiten', () => {
   const alsBytes = (s: string) => Uint8Array.from([...s].map((c) => c.charCodeAt(0)))
-  // 30 Bytes: 0xFA + 9 beliebige + Typ + 5 beliebige + 5x 0xFF + 3 beliebige + 6x 0xFF
+
   const kopf =
     'ú' + 'x'.repeat(9) + 'V' + 'x'.repeat(5) + 'ÿ'.repeat(5) + 'xxx' + 'ÿ'.repeat(6)
 

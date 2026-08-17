@@ -1,9 +1,3 @@
-// EditorProvider
-// Trägt die EINE Editor-Instanz der App über React-Context — ersetzt die
-// frühere Weltvariable (`export const editor`). Die Instanz entsteht genau
-// einmal im App-Einstieg (src/app/providers.tsx); Komponenten holen sie
-// ausschließlich über useEditor()/useEditorInstance() (EditorContext.ts).
-
 import type { ReactNode } from 'react'
 import type { Editor } from './Editor'
 import { EditorContext } from './EditorContext'

@@ -1,21 +1,3 @@
-// SchrittListe — die Schritte EINER Aktionskette als Liste.
-//
-// Herausgeloest 2026-08-17, weil sie ab jetzt an ZWEI Orten steht: schmal im
-// Inspector (nur ansehen, „Kette bearbeiten" fuehrt weiter) und breit im
-// Ketten-Fenster (ansehen UND umbauen). Zwei Abschriften waeren zwei
-// Wahrheiten — und die Zeile, die sagt, was ein Schritt tut, ist genau die,
-// die nirgends auseinanderlaufen darf.
-//
-// Jede Zeile traegt zwei Angaben (s. ./schrittZusammenfassung):
-//   Zeile 1  was der Schritt IST   (Vorlagenname bzw. Schritt-Art)
-//   Zeile 2  was er TUT            (Zielfeld  <-  Herkunft des Werts)
-// Zeile 2 faellt weg, wo nichts aufloesbar ist — eine leere Zeile waere nur
-// Hoehe (Regel 7: nichts erfinden).
-//
-// Eingerueckt steht, was sich auf das Ergebnis eines frueheren Schritts
-// beruft: so ist zu sehen, welche Schreib-Schritte in den Satz gehen, den ein
-// „neuen Satz anlegen" davor erzeugt hat.
-
 import { ArrowDown, ArrowUp, Copy, Pencil, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
 import { actionValueTargets, auswahlGeberImBaum } from '../../core/blocks/treeQuery'
@@ -31,12 +13,11 @@ import { ankerSchrittId, schrittZusammenfassung } from './schrittZusammenfassung
 
 interface SchrittListeProps {
   steps: readonly ActionStep[]
-  // Hervorgehobener Schritt (im Fenster der gerade bearbeitete).
+
   aktivId?: string
-  // Zeile angeklickt. Fehlt der Rueckkanal, sind die Zeilen nicht anklickbar.
+
   onWaehle?: (step: ActionStep) => void
-  // Die Umbau-Knoepfe (hoch/runter/duplizieren/loeschen). Ohne `onAendern`
-  // gibt es sie nicht — der Inspector zeigt die Kette nur an.
+
   onAendern?: (steps: ActionStep[]) => void
 }
 
@@ -50,9 +31,7 @@ export function SchrittListe({ steps, aktivId, onWaehle, onAendern }: SchrittLis
     blockId: node.id,
     prop: spot.prop,
   }))
-  // Auswahl-Geber der Maske — sonst bliebe ein Parameter „Feld der gewählten
-  // Zeile" auf einem gelöschten Geber unauffällig und schlüge erst beim
-  // Export zu.
+
   const geberIds = auswahlGeberImBaum(ed.tree).map((n) => n.id)
 
   const verschiebe = (from: number, to: number): void => {
@@ -101,9 +80,7 @@ export function SchrittListe({ steps, aktivId, onWaehle, onAendern }: SchrittLis
           s, was, relation, ed.tree, dataSources.list,
           (id) => steps.findIndex((x) => x.id === id) + 1,
         )
-        // Zielfeld schlaegt Tabelle: ein Schreib-Schritt sagt, WAS er
-        // beschreibt; ein Schritt ohne Zielfeld (neuen Satz anlegen) sagt
-        // wenigstens, WO.
+
         const naeher = [zus.ziel !== '' ? zus.ziel : zus.tabelle, zus.herkunft]
           .filter((t) => t !== '')
           .join('  ←  ')
@@ -123,8 +100,7 @@ export function SchrittListe({ steps, aktivId, onWaehle, onAendern }: SchrittLis
                   : 'border-transparent hover:bg-secondary/50'
             }`}
           >
-            {/* w-5, nicht w-4: ab dem zehnten Schritt braucht „10." zwei
-                Ziffern und den Punkt — in 16px stand der Punkt halb aussen. */}
+
             <span className="w-5 shrink-0 pt-0.5 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
               {i + 1}.
             </span>

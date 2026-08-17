@@ -1,25 +1,3 @@
-// Kommandozentrale (Z1; Gerüst-Neuschnitt 2026-07-15 nach der abgenommenen
-// Demo-Vorlage): das schlanke Verwaltungsfenster für die maskenweite,
-// selten angefasste Pflege. Zwei Bereiche — Datenquellen | Relationen —
-// als Master-Detail, Bearbeiten inline im Detail (kein Modal im Modal).
-// Die Ereignis-Ketten sind seit R3 (2026-07-21) an den Baustein umgezogen
-// (Inspector-Abschnitt „Aktionen"); der frühere Bereich „Aktionen" entfiel
-// dabei restlos. Der Bereich „Verknüpfungen" (2026-07-25 bis 2026-07-30)
-// ist ebenso restlos entfernt — der Nutzer hat die allgemeine Verknüpfung
-// verworfen, die Schlüsselregel lebt am Baustein (QuellenListe im
-// Inspector, Regel 7).
-//
-// Öffnet über den Toolbar-Knopf „Datencenter". Optik: Editor-UI
-// (shadcn-Tokens) — bewusst KEINE Übernahme des alten Editors.
-//
-// Der Name: bis U1 (2026-08-12) hieß das Fenster „Steuerung"; „Datencenter"
-// ist das Wort des Nutzers (U0-1). Die Datei heißt weiterhin
-// Kommandozentrale — ein Datei-Umbenennen wäre ein eigenes Thema.
-//
-// Escape schließt — im BUBBLE-Lauf: ein offenes Inline-Formular
-// (FormularKarte: capture + stopPropagation) fängt sein Escape vorher ab,
-// die Zentrale bleibt dann offen. Klick auf den Schleier schließt ebenfalls.
-
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Database, Link2, X } from '@/ui/zeichen'
@@ -52,11 +30,6 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  // Die VORHANDENE Export-Vorprüfung speist die Warn-Punkte in der Navigation.
-  // Das ist ihr einziger verbliebener Zweck: beim Export erscheinen diese
-  // Meldungen seit 2026-08-10 nicht mehr, der Export blockt nie (Regel 4). Die
-  // Aktions-/Relations-Laufzeit-Warnungen wandern mit den Ketten an den
-  // Baustein (Schritt-Zeile im Inspector wird amber), nicht mehr hierher.
   const probleme = preflightMask(ed.tree, sources.list, relations.list)
   const warnt: Record<Bereich, boolean> = {
     datenquellen: probleme.some((p) => p.name === 'Datenquelle fehlt'),

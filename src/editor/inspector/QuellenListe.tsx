@@ -1,22 +1,3 @@
-// QuellenListe — die Datenquellen EINES Bausteins als Liste.
-//
-// Nutzer-Kurskorrektur 2026-07-28: „allgemeine Verknuepfung ergibt keinen
-// Sinn". Vorher sollte die Regel „Terminplaner und Kundenhaustiere gehoeren
-// ueber die Adressnummer zusammen" als eigener Eintrag in der Kommandozentrale
-// liegen. Sie liegt jetzt dort, wo sie wirkt: am Baustein (Regel 7).
-//
-// Wie viele Quellen es sind, steht nicht fest — „koennte auch sein, dass ich
-// nur eins haben will, und vielleicht sogar einen dritten". Darum eine Liste
-// mit „+ Datenquelle" statt eines festen Paares und ohne Obergrenze.
-//
-// Eintrag 1 liefert die ZEILEN (die bestehende `source`-Prop). Ab Eintrag 2
-// kommt die Frage dazu, woran man die zusammengehoerige Zeile erkennt — und
-// die bezieht sich IMMER auf Eintrag 1, nie auf Eintrag 2 (eine Stufe).
-//
-// Der Bediener sieht ausschliesslich Klarnamen (Quellenname, Feldbezeichnung);
-// die Technikwerte (Quellen-ids, Feldcodes) arbeiten unsichtbar darunter
-// (Regel 3). Kein Speichern-Knopf: jede Aenderung geht sofort in den Baum.
-
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -33,21 +14,6 @@ import { useEditor } from '../../state/useEditor'
 import { SelectControl } from './controls/SelectControl'
 import { SchluesselPaarZeilen } from './SchluesselPaarZeilen'
 
-// Zwei Auswahl-Bauteile, je nach Platz (Angleichung 2026-07-30 — vorher ein
-// selbstgebautes nacktes <select>, das anders aussah als die
-// Eigenschaftsfelder darueber im selben Panel):
-//   - Quellen-Auswahl je Eintrag (EIN beschriftetes Feld pro Zeile) →
-//     dasselbe Radix-SelectControl wie die Nachbarfelder.
-//   - Schluesselregel-Zeilen („Feld = Feld", drei Dinge nebeneinander) →
-//     SchrittSelect: kompakt, ohne das Label/Beschreibungs-Gepaeck des
-//     Field-Molekuels, mit eigenem Aufklapp-Pfeil (der Browser-Pfeil laege
-//     sonst auf dem Text, Nutzer-Korrektur 2026-07-22). Diese Zeilen wohnen
-//     seit U3 in SchluesselPaarZeilen — die AuswahlFolgeSektion stellt
-//     dieselbe Frage und hatte sie zweitgebaut.
-//
-// Radix-Select verbietet '' als Option-Wert — interner Platzhalter fuer
-// „keine Quelle" (die Prop bleibt dabei der Leer-String; dasselbe Muster
-// wie in der frueheren DataSection).
 const KEINE = '__keine__'
 
 interface QuellenListeProps {
@@ -61,9 +27,6 @@ export function QuellenListe({ block }: QuellenListeProps) {
   const erste = typeof block.props.source === 'string' ? block.props.source : ''
   const weitere = weitereQuellenAus(block.props[WEITERE_QUELLEN_PROP])
 
-  // Gewaehlte Quelle geloescht? Dann steht hier eine id ohne Option — die
-  // Auswahl bliebe leer und der Baustein zoege still keine Daten mehr.
-  // Stattdessen wird der Zustand benannt (Regel 4).
   const fehlt = (id: string) => id !== '' && !bibliothek.some((s) => s.id === id)
   const felderVon = (id: string) => bibliothek.find((s) => s.id === id)?.fields ?? []
 
@@ -75,9 +38,6 @@ export function QuellenListe({ block }: QuellenListeProps) {
     setzeWeitere(weitere.map((q, i) => (i === index ? { ...q, ...teil } : q)))
   }
 
-  // Optionen einer Quellen-Auswahl: schon belegte Quellen fallen raus —
-  // dieselbe Quelle zweimal am selben Baustein ergaebe zwei gleichnamige
-  // Gruppen im Feld-Picker, zwischen denen niemand unterscheiden kann.
   function optionen(eigene: string) {
     const belegt = new Set([erste, ...weitere.map((q) => q.quelleId)])
     belegt.delete(eigene)
@@ -90,9 +50,7 @@ export function QuellenListe({ block }: QuellenListeProps) {
       value={wert === '' ? KEINE : wert}
       options={[
         { value: KEINE, label: '— keine —' },
-        // Die SE-Kennung dezent hinter dem Klarnamen (Nutzer 2026-08-06):
-        // der Bediener erkennt „Kunden" — und weiss trotzdem, dass ID0001
-        // gemeint ist.
+
         ...optionen(wert).map((s) => ({
           value: s.id,
           label: s.name,
@@ -110,7 +68,6 @@ export function QuellenListe({ block }: QuellenListeProps) {
         Datenquellen
       </span>
 
-      {/* Eintrag 1 — liefert die Zeilen. */}
       {quellenAuswahl(erste, 'Datenquelle 1', (v) => ed.updateProperty(block.id, 'source', v))}
       {fehlt(erste) && (
         <p className="text-xs text-destructive">
@@ -119,7 +76,6 @@ export function QuellenListe({ block }: QuellenListeProps) {
         </p>
       )}
 
-      {/* Eintrag 2..n — je mit ihrer Schluesselregel zu Eintrag 1. */}
       {weitere.map((q, i) => (
         <div key={i} className="flex flex-col gap-1.5 rounded-md border border-border p-2">
           <div className="flex items-end gap-2">
@@ -143,7 +99,7 @@ export function QuellenListe({ block }: QuellenListeProps) {
             entfernenBezeichnung={(at) => `Zeile ${at + 1} entfernen`}
             onAendern={(keyPairs) => aendere(i, { keyPairs })}
           />
-          {/* Klartext statt stillem Nichtstun (Regel 4). */}
+
           {!quelleBrauchbar(q) && (
             <p className="text-xs text-muted-foreground">
               Noch nicht benutzbar: es fehlt eine Datenquelle oder ein Feldpaar,
@@ -153,8 +109,6 @@ export function QuellenListe({ block }: QuellenListeProps) {
         </div>
       ))}
 
-      {/* Eine weitere Quelle hat nur Sinn, wenn Eintrag 1 steht — sie haengt
-          ueber ihre Schluesselregel an ihm. */}
       {erste !== '' && (
         <Button
           variant="outline"

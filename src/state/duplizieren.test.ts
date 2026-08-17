@@ -1,17 +1,5 @@
-// Duplizieren — Tests der Kopie, die auf SICH SELBST zeigt (A5, 2026-08-11).
-//
-// Bis 2026-08-11 gab es zu `duplicateBlock` KEINEN einzigen Test — und genau
-// darum fiel nicht auf, dass die Kopie ihre Verweise (Feld eines Bausteins,
-// Auswahl-Geber) unveraendert auf das ORIGINAL behielt.
-//
-// Eigene Datei aus demselben Grund wie speicherPanne.test.ts: der Schnitt liegt
-// am Thema, und persistence.test.ts (429 Zeilen) waere mit diesen Faellen ueber
-// den 500-Zeilen-Deckel gewachsen (check:regeln).
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
-
 import { beforeEach, describe, expect, it } from 'vitest'
-// Side-Effect-Import: der echte Popup-Baustein — nur er traegt das
-// pageBlock-Kennzeichen, um das der Sperr-Fall unten geht.
+
 import { PopupBlock } from '../blocks/popup/PopupBlock'
 import { ROOT_ID, type BlockNode } from '../core/blocks/BlockData'
 import { type ActionStep, type RelationStep } from '../core/data/aktionen'
@@ -27,11 +15,8 @@ import {
 
 registerTestBlocks()
 
-// Der Riegel lebt im Modul und ueberlebt den einzelnen Test (s.
-// persistence.test.ts) — jeder Fall faengt unverriegelt und ohne Altbestand an.
 beforeEach(() => { localStorage.clear() })
 
-// Ein Knopf, dessen Klick-Kette EINEN Baustein ausliest.
 function kette(blockId: string): ActionStep[] {
   return [{
     id: 'schritt-1',
@@ -47,7 +32,6 @@ function ersterSchritt(node: BlockNode | undefined): RelationStep {
   return node?.events?.onClick[0] as RelationStep
 }
 
-// Kopie eines Elternteils finden: dasselbe Elternteil, gleicher Typ, andere id.
 function kopieVon(ed: Editor, original: BlockNode): BlockNode {
   const parent = ed.getNode(original.parentId ?? ROOT_ID)
   const treffer = (parent?.childIds ?? [])
@@ -71,11 +55,10 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
     const kinder = boxKopie.childIds.map((id) => ed.getNode(id)!)
     const feldKopie = kinder.find((n) => n.type === TEST_BLOCK)!
     const knopfKopie = kinder.find((n) => n.type === TEST_EVENT_BLOCK)
-    // Der Kern des Fundes: vorher stand hier feld.id — die Kopie las das Feld
-    // des Originals, und niemand konnte das sehen.
+
     expect(ersterSchritt(knopfKopie).params[0].blockId).toBe(feldKopie.id)
     expect(feldKopie.id).not.toBe(feld.id)
-    // Das Original bleibt unberuehrt.
+
     expect(ersterSchritt(ed.getNode(knopf.id)).params[0].blockId).toBe(feld.id)
   })
 
@@ -116,8 +99,7 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
     ed.duplicateBlock(box.id)
 
     const knopfKopie = ed.getNode(kopieVon(ed, box).childIds[0])
-    // Beide Ziele liegen ausserhalb des kopierten Teilbaums: der kopierte Knopf
-    // soll denselben Baustein lesen und dasselbe Popup oeffnen wie das Original.
+
     expect(ersterSchritt(knopfKopie).params[0].blockId).toBe(aussen.id)
     const popupSchritt = knopfKopie?.events?.onClick[1]
     expect(popupSchritt).toMatchObject({ type: 'POPUP_OPEN', popupId: popup.id })
@@ -131,9 +113,8 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
     expect(ed.duplicateBlock(popup.id)).toBeNull()
 
     expect(ed.blockCount).toBe(vorher)
-    expect(ed.pages).toHaveLength(2) // Hauptseite + das eine Popup
-    // Kein Verlaufs-Eintrag fuer den abgelehnten Versuch: das eine Strg+Z
-    // nimmt das Anlegen der Seite zurueck, nicht einen Leer-Schritt.
+    expect(ed.pages).toHaveLength(2)
+
     ed.undo()
     expect(ed.pages).toHaveLength(1)
   })
@@ -142,7 +123,7 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
     const ed = new Editor()
     const erster = ed.addBlock(TEST_BLOCK, ROOT_ID)!
     const kopie = ed.duplicateBlock(erster.id)!
-    // Frei = unterhalb des Originals, nicht auf ihm; Spalte und Groesse bleiben.
+
     expect(Number(kopie.props.rasterY))
       .toBeGreaterThanOrEqual(Number(erster.props.rasterY) + Number(erster.props.rasterH))
     expect(kopie.props.rasterX).toBe(erster.props.rasterX)
@@ -151,8 +132,6 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
   })
 
   it('in einem Container bleibt die Kopie im Fluss hinter dem Original', () => {
-    // Gegenprobe zum Fall darueber: im Fluss gibt es keine Rasterposition zu
-    // waehlen — die Reihenfolge IST die Lage.
     const ed = new Editor()
     const box = ed.addBlock(TEST_BOX, ROOT_ID)!
     const erstes = ed.addBlock(TEST_BLOCK, box.id)!
@@ -170,7 +149,7 @@ describe('duplicateBlock schreibt die Verweise der Kopie um (A5)', () => {
     const vorher = ed.blockCount
 
     ed.duplicateBlock(box.id)
-    expect(ed.blockCount).toBe(vorher + 3) // Kasten + zwei Kinder
+    expect(ed.blockCount).toBe(vorher + 3)
 
     ed.undo()
     expect(ed.blockCount).toBe(vorher)

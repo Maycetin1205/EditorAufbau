@@ -1,12 +1,3 @@
-// knotenStil — Layout eines Knotens als CSS.
-//
-// Aus exportMask herausgeloest (2026-08-06, 500-Zeilen-Deckel): dort entstehen
-// Markup und Reihenfolge, hier die Umrechnung Fluss/Raster → CSS. Kein
-// Verhalten geaendert, die Funktionen sind woertlich dieselben.
-//
-// WYSIWYG: DIESELBEN flowLayout-/rasterLayout-Quellen, die der Editor-Canvas
-// benutzt — der exportierte Baustein steht auf denselben Pixeln wie im Editor.
-
 import type { BlockNode } from '../core/blocks/BlockData'
 import {
   flowItemHeightStyle,
@@ -21,13 +12,6 @@ import { parseRasterPos, rasterItemStyle } from '../core/blocks/rasterLayout'
 import { styleToCss } from '../core/blocks/styleCss'
 import { escapeHtmlAttr } from './serializer'
 
-// Layout-Style eines Blocks als HTML-style-Attribut — DIESELBE Quelle wie der
-// Canvas-Wrapper (WYSIWYG). Auf der Rasterebene (direkte Wurzel-Kinder)
-// bestimmt die Zelle Platz+Größe (rasterItemStyle) — außer bei einem Baustein
-// des Masken-RAHMENS (maskenRand, N2.1): der liegt am Rand der Fläche, nicht
-// in einer Zelle (randItemStyle). Popup-Overlays (pageBlock) positionieren
-// sich selbst über position:absolute (kein Layout-Style); INNERHALB von
-// Containern gilt weiter der Fluss (flowItemStyle).
 export function styleAttr(
   node: BlockNode,
   parentDirection: FlowDirection,
@@ -45,7 +29,7 @@ export function styleAttr(
   } else {
     style = {
       ...flowItemStyle(parseFlowWidth(node.props.width), parentDirection, lockedWidth),
-      // Feste Höhe — DIESELBE Quelle wie der Canvas-Wrapper.
+
       ...flowItemHeightStyle(parseFlowHeight(node.props.height), parentDirection),
     }
   }

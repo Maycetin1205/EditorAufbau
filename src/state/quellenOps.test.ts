@@ -1,17 +1,6 @@
-// Tests von bausteineMitQuelle — „wer benutzt diese Datenquelle?"
-//
-// Anlass (2026-07-30): die Steuerung zaehlte nur die ERSTE Quelle eines
-// Bausteins. Seit v0.3.0 kann eine Quelle auch als WEITERE haengen; sie galt
-// dadurch als „nicht verwendet", und die Loeschen-Rueckfrage liess ihre
-// Warnung weg — man riss eine Verknuepfung ein, ohne gewarnt zu werden.
-// Zweiter Anlass (2026-08-06), dieselbe Fehlerart: die Nachschlage-Quelle eines
-// Formularfelds und die Quelle eines Aktions-Parameters zaehlten ebenfalls nicht.
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
-
 import { describe, expect, it } from 'vitest'
 import type { BlockTree } from '../core/blocks/BlockData'
-// Side-Effect-Import: das ECHTE Formularfeld — es traegt die Prop
-// `nachschlagQuelle` (kind 'quelle'), um die es in den Tests unten geht.
+
 import '../blocks/formfeld/FormFeldBlock'
 import {
   registerTestBlocks,
@@ -23,7 +12,6 @@ import { bausteineMitQuelle } from './quellenOps'
 
 registerTestBlocks()
 
-// Ein Baum mit einem Quellen-Traeger; `props` bestimmt den Testfall.
 function baumMit(props: Record<string, unknown>): BlockTree {
   return {
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['b'] },
@@ -56,16 +44,13 @@ describe('bausteineMitQuelle', () => {
   it('uebergeht Bausteine, die gar keine Quelle tragen koennen', () => {
     const baum: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
-      // TEST_BLOCK hat kein acceptsDataSource — eine source-Prop an ihm ist
-      // bedeutungslos und darf nicht als Verwendung zaehlen.
+
       t: { id: 't', type: TEST_BLOCK, props: { source: 'q1' }, parentId: 'root', childIds: [] },
     }
     expect(bausteineMitQuelle(baum, 'q1')).toEqual([])
   })
 
   it('liefert bei leerer Quellen-id nichts, statt alles ohne Quelle zu treffen', () => {
-    // Sonst zaehlte jeder Baustein mit `source: ''` als Benutzer der
-    // „leeren" Quelle — und die Steuerung zeigte Unsinn.
     expect(bausteineMitQuelle(baumMit({ source: '' }), '')).toEqual([])
   })
 
@@ -74,10 +59,6 @@ describe('bausteineMitQuelle', () => {
       .toHaveLength(1)
   })
 
-  // Weg 3 (2026-08-06): eine Quelle als PROPERTY. Beim Nachschlage-Feld ist
-  // acceptsDataSource ausdruecklich AUS — es traegt keine eigene Quelle, seine
-  // Liste steht in `nachschlagQuelle`. Sie galt dadurch als unbenutzt: wer sie
-  // loeschte, nahm dem Fenster ohne Warnung seine Liste.
   it('findet die Nachschlage-Quelle eines Formularfelds', () => {
     const baum: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['f'] },
@@ -93,8 +74,6 @@ describe('bausteineMitQuelle', () => {
   })
 
   it('uebergeht die Nachschlage-Quelle, wenn das Feld wieder auf Text steht', () => {
-    // Zustandsabhaengig wie im Export: unsichtbar ist nicht geloescht, aber
-    // gelesen wird sie in diesem Zustand auch nicht.
     const baum: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['f'] },
       f: {
@@ -108,7 +87,6 @@ describe('bausteineMitQuelle', () => {
     expect(bausteineMitQuelle(baum, 'q1')).toEqual([])
   })
 
-  // Weg 4 (2026-08-06): ein Schritt-Parameter „Feld einer Datenquelle".
   it('findet die Quelle eines Aktions-Parameters (data_field)', () => {
     const baum: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['e'] },

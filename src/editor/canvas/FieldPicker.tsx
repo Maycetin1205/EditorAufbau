@@ -1,22 +1,3 @@
-// FieldPicker
-// "Stelle anklicken → Feld wählen". Kleines
-// Auswahlfeld direkt an der angeklickten Stelle — zeigt AUSSCHLIESSLICH
-// Klarnamen aus dem Feld-Wörterbuch (nie Feldcodes, keine erfundenen
-// Beispielwerte); der Feldcode (Technikwert) wird unsichtbar in die
-// Bindungs-Prop geschrieben. "— nicht gebunden —" löst die Bindung wieder.
-//
-// Seit 2026-07-28 kann ein Baustein mehrere Datenquellen tragen. Der Picker
-// zeigt sie deshalb als GRUPPEN: erste Quelle oben, danach die weiteren in
-// Reihenfolge. Bei den weiteren steht dabei, WORÜBER verknüpft ist — der
-// Bediener soll sehen, warum diese Quelle hier angeboten wird. Gibt es nur
-// eine Quelle, sieht der Picker aus wie vorher (eine Gruppe, eine Kopfzeile).
-//
-// Reine Editor-Hilfe (Editor-UI-Tokens/Tailwind, KEIN Masken-Design):
-// lebt im BlockHost über der Maske und erscheint nie im Export.
-//
-// Den Rahmen (Portal, feste Position, Schließ-Wege) stellt seit U3 das geteilte
-// AuswahlFenster — hier steht nur noch, was DIESES Fenster zeigt.
-
 import { AuswahlFenster } from '@/ui/molecules/auswahl-fenster'
 import { WaehlerListe, type WaehlerGruppe } from '@/ui/molecules/waehler'
 import {
@@ -26,26 +7,17 @@ import {
 import type { DataSourceField } from '../../core/data/dataSources'
 import type { Eingabesitzung } from '../inspector/controls/eingabeSitzung'
 
-// Eine Quelle als Abschnitt im Picker.
 export interface PickerGruppe {
-  // Technikwert; '' = erste Quelle des Bausteins (Bindung bleibt unqualifiziert).
   quelleId: string
-  // Klarname der Quelle — was der Bediener liest (Regel 3).
+
   name: string
-  // SE-Kennung in Bediener-Form ('ID0001', 'ADR', 'POS') als dezente
-  // Technik-Marke NEBEN dem Klarnamen (Nutzer-Wunsch 2026-08-06: „nicht
-  // nur der Alias"). Leer = keine Marke.
+
   kennung?: string
-  // Bei weiteren Quellen: worüber verknüpft ist, in Klarnamen
-  // ('Adressnummer'). Bei der ersten Quelle leer.
+
   hinweis?: string
   fields: readonly DataSourceField[]
 }
 
-// Eine zusätzliche WAHL über der Feldliste (Registry: ListenBindung.
-// eintragsWahl — bei der Tabelle die Darstellung einer Spalte). Der Picker
-// zeichnet sie generisch: er kennt nur Beschriftung, Optionen und den
-// aktuellen Wert, nie deren Bedeutung.
 export interface PickerWahl {
   label: string
   optionen: readonly { wert: string; name: string }[]
@@ -53,22 +25,14 @@ export interface PickerWahl {
   onWaehle: (wert: string) => void
 }
 
-// Ein ZUSAETZLICHES Feld der gewaehlten Wahl (Registry: EintragsWahlOption.
-// felder — bei der Tabelle Bild und Unterzeile der Art „Bild + Name"). Auch das
-// zeichnet der Picker generisch: er kennt Beschriftung, aktuelle Bindung und
-// einen Rueckkanal, nie deren Bedeutung.
 export interface PickerFeld {
   key: string
   label: string
-  // Aktuell gebunden, ROH wie gespeichert ('' = nicht gebunden).
+
   aktuell: string
   onWaehle: (wert: string) => void
 }
 
-// Eine ZUORDNUNGSTABELLE unter der Wahl (Registry: ListenBindung.
-// eintragsZuordnung — bei der Tabelle: welcher Status-Datenwert was bedeutet).
-// Auch sie zeichnet der Picker generisch: drei Beschriftungen, eine Liste
-// waehlbarer Bedeutungen, die Zeilen selbst und ein Rueckkanal.
 export interface PickerZuordnung {
   label: string
   wertLabel: string
@@ -76,35 +40,27 @@ export interface PickerZuordnung {
   bedeutungLabel: string
   bedeutungen: readonly { wert: string; name: string }[]
   zeilen: readonly ZuordnungZeile[]
-  // Die GANZE Liste zurueck — der Picker rechnet nicht mit Indizes im Store.
+
   onAendern: (zeilen: ZuordnungZeile[]) => void
-  // Eine Tipp-Sitzung = EIN Undo-Schritt (s. controls/eingabeSitzung). Ohne
-  // sie waere jeder Buchstabe in „Datenwert" und „Klarname" ein eigener
-  // Verlaufs-Schritt und ein Klarname von 12 Zeichen spuelte den halben
-  // Verlauf weg (Deckel 50).
+
   sitzung: Eingabesitzung
 }
 
 interface FieldPickerProps {
-  // Klarname der Stelle (aus bindableSpots, z. B. 'Titel').
   spotLabel: string
   gruppen: readonly PickerGruppe[]
-  // Optional, s. PickerWahl. Fehlt sie, sieht der Picker aus wie bisher.
+
   wahl?: PickerWahl
-  // Optional, s. PickerFeld. Leer, wenn die gewaehlte Wahl keine hat.
+
   felder?: readonly PickerFeld[]
-  // Optional, s. PickerZuordnung. Der Aufrufer laesst sie weg, wenn die
-  // aktuelle Wahl gar keine Zuordnung kennt.
+
   zuordnung?: PickerZuordnung
-  // Aktuell gebundener Wert, ROH wie gespeichert ('' = ungebunden,
-  // 'quelle::code' = Feld einer weiteren Quelle).
+
   current: string
-  // Position in VIEWPORT-Koordinaten: der Picker haengt per Portal als
-  // fixiertes Overlay am body — kein Scroll-/Overflow-Container (z. B.
-  // der Kanban-Spaltenrumpf) kann ihn einfangen oder abschneiden.
+
   top: number
   left: number
-  // Der fertige Wert, wie er gespeichert wird ('' = nicht gebunden).
+
   onPick: (wert: string) => void
   onClose: () => void
 }
@@ -121,11 +77,6 @@ export function FieldPicker({
   onPick,
   onClose,
 }: FieldPickerProps) {
-  // Jede Quelle wird eine Gruppe des Waehlers. Der Eintragswert ist der
-  // FERTIGE Bindungswert (bindungMitQuelle) — dadurch trifft der Haken die
-  // richtige Gruppe, ohne dass hier noch etwas zerlegt werden muesste: im
-  // Bestand des Nutzers heisst „Tiername" in zwei Quellen verschieden codiert,
-  // und die erste zu nehmen setzte den Haken irgendwohin.
   const waehlerGruppen: WaehlerGruppe[] = gruppen.map((g) => ({
     key: g.quelleId === '' ? '__erste__' : g.quelleId,
     name: g.name,
@@ -144,17 +95,10 @@ export function FieldPicker({
       oben={top}
       links={left}
       onClose={onClose}
-      /* Mit Zuordnungstabelle oder zusaetzlichen Feldern braucht das Fenster
-         mehr Platz: drei Felder je Zeile bzw. Beschriftung samt Auswahlliste
-         passen nicht in die schmale Feldliste. Ohne beides bleibt es exakt so
-         breit wie bisher. */
+
       className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-80 w-64'}
     >
-      {/* Die zusätzliche Wahl steht OBEN und abgesetzt: sie gehört zur
-          Stelle selbst, nicht zu einer der Quellen darunter. Ein Klick
-          darauf schließt den Picker NICHT — Darstellung und Feld sind zwei
-          Handgriffe an derselben Spalte, und wer beides ändern will, soll
-          nicht zweimal aufmachen müssen. */}
+
       {wahl && (
         <div className="mb-1 border-b border-border pb-1">
           <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -181,12 +125,7 @@ export function FieldPicker({
           </div>
         </div>
       )}
-      {/* Die zusaetzlichen Felder der gewaehlten Wahl. Als Auswahlliste statt
-          als Knopfliste wie unten: es sind ZWEI Stellen nebeneinander, und je
-          eine volle Feldliste haette das Fenster unbedienbar lang gemacht.
-          Steht die Stelle auf einer Wahl ohne Zusatzfelder, fehlt der Block
-          ganz — ein leerer Kasten „Bild" an einer Textspalte waere ein Feld,
-          das nichts tut. */}
+
       {felder && felder.length > 0 && (
         <div className="mb-1 border-b border-border pb-1">
           {felder.map((f) => (
@@ -200,14 +139,7 @@ export function FieldPicker({
                 className="min-w-0 flex-1 rounded-sm border border-border bg-background px-1 py-1 text-xs"
               >
                 <option value="">— nicht gebunden —</option>
-                {/* Gebunden an etwas, das die Listen unten nicht enthalten
-                    (Quelle abgehaengt, Feld geloescht): eine eigene Option
-                    dafuer. Ohne sie faellt das Auswahlfeld stumm auf „nicht
-                    gebunden" zurueck und BEHAUPTET damit, hier sei nichts
-                    eingestellt — waehrend die Bindung in Wahrheit steht und
-                    unveraendert mit exportiert wird (Regel 4). Der Export
-                    blockt sie nicht; hier ist die einzige Stelle, an der der
-                    Bauer davon erfaehrt. */}
+
                 {f.aktuell !== ''
                   && !gruppen.some((g) =>
                     g.fields.some((feld) => bindungMitQuelle(g.quelleId, feld.code) === f.aktuell))
@@ -219,9 +151,7 @@ export function FieldPicker({
                   >
                     {g.fields.map((feld) => (
                       <option
-                        // Der fertige Bindungswert ist quellenweit eindeutig —
-                        // ein eigener Schluessel aus zwei Teilen waere eine
-                        // zweite Regel fuer dieselbe Eindeutigkeit.
+
                         key={bindungMitQuelle(g.quelleId, feld.code)}
                         value={bindungMitQuelle(g.quelleId, feld.code)}
                       >
@@ -235,11 +165,7 @@ export function FieldPicker({
           ))}
         </div>
       )}
-      {/* Die Zuordnungstabelle sitzt unter der Wahl und ueber den Feldern:
-          sie gehört zur gewählten Darstellung, nicht zur Datenquelle. Sie ist
-          FREIWILLIG — eine leere Tabelle ist kein Fehlerzustand, sondern
-          heißt „zeig den Rohwert". Deshalb steht hier auch kein Zwang, nur
-          ein Hinweis, was ohne Zuordnung passiert. */}
+
       {zuordnung && (
         <div className="mb-1 border-b border-border pb-1">
           <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -251,9 +177,6 @@ export function FieldPicker({
             </p>
           )}
           {zuordnung.zeilen.map((z, i) => {
-            // Immer die GANZE Liste zurueckgeben: der Picker haelt keinen
-            // eigenen Zustand, jede Aenderung geht sofort in den Store und
-            // kommt von dort als neue `zeilen` zurueck.
             const ersetze = (teil: Partial<ZuordnungZeile>) => {
               const next = zuordnung.zeilen.map((z2) => ({ ...z2 }))
               next[i] = { ...next[i], ...teil }
@@ -314,8 +237,7 @@ export function FieldPicker({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              // Die erste Bedeutung als Vorbelegung: ein leeres Select waere
-              // ein Wert, den die Liste gar nicht kennt.
+
               zuordnung.onAendern([
                 ...zuordnung.zeilen.map((z2) => ({ ...z2 })),
                 { wert: '', name: '', bedeutung: zuordnung.bedeutungen[0]?.wert ?? '' },
@@ -327,10 +249,7 @@ export function FieldPicker({
           </button>
         </div>
       )}
-      {/* Der Kopf sagt, WELCHE Stelle hier gebunden wird — mit einer Quelle
-          gleich samt Quellenname, weil dann keine Gruppenueberschrift folgt.
-          Er steht ueber der Suchzeile: er gehoert zum Fenster, nicht zur
-          Liste darunter. */}
+
       <WaehlerListe
         kopf={
           <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">

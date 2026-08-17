@@ -1,10 +1,3 @@
-// treeQuery
-// Reine Baum-Abfragen ohne Store-Bindung. Die Musterkarte hat EINE
-// Definition im ganzen System: die ERSTE Nachfahren-Instanz des
-// templateChild-Typs in Baumreihenfolge (DFS). Dieselbe Definition nutzen
-// der Editor (Muster-Markierung + Löschschutz), der Export (<template>-
-// Verpackung) und die Laufzeit (seRuntime klont das template-Element).
-
 import { ROOT_ID, type BlockNode, type BlockTree } from './BlockData'
 import type { ActionValueSpot, BindableSpot } from './BlockDefinition'
 import { getBlockDefinition } from './blockRegistry'
@@ -15,9 +8,6 @@ export interface ActionValueTarget {
   spot: ActionValueSpot
 }
 
-// Alle explizit freigegebenen Bausteinwerte in Baum-Reihenfolge. Hauptseite
-// und Popup-Seiten liegen beide unter ROOT_ID. Editor und Preflight benutzen
-// dadurch dieselbe Wahrheit.
 export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
   const result: ActionValueTarget[] = []
   const visit = (node: BlockNode | undefined): void => {
@@ -30,19 +20,8 @@ export function actionValueTargets(tree: BlockTree): ActionValueTarget[] {
   return result
 }
 
-// Prop-Name der normalen Datenquelle eines Bausteins (acceptsDataSource).
 export const QUELLE_PROP = 'source'
 
-// Welche Datenquellen liest DIESER Baustein in seinen AKTIONSKETTEN? Als ids,
-// in deterministischer Reihenfolge (Ereignis-, dann Schritt-, dann
-// Parameter-Reihenfolge). `dataSourceId` steht allein an Parametern der Quelle
-// 'data_field' („Feld einer Datenquelle").
-//
-// Das ist ein Weg fuer sich: der Parameter-Waehler bietet die GANZE Bibliothek
-// an, nicht nur Quellen in Reichweite — eine so benutzte Quelle haengt an
-// keinem Baustein. Sowohl der Export (sie muss in SEFILELOOP und
-// FF_DATA_SOURCES) als auch die Verwendungs-Anzeige (BENUTZT-Warnung beim
-// Loeschen) fragen deshalb hier.
 export function quellenIdsInKettenVon(node: BlockNode): string[] {
   const ids: string[] = []
   for (const event of getBlockDefinition(node.type)?.blockEvents ?? []) {
@@ -58,17 +37,6 @@ export function quellenIdsInKettenVon(node: BlockNode): string[] {
   return ids
 }
 
-// Welche Relation-Vorlagen benutzt DIESER Baustein? Als ids, in
-// deterministischer Reihenfolge: erst die registry-getriebenen
-// Relation-Properties (Registry-Reihenfolge), dann die Aktionsketten
-// (Ereignis-Reihenfolge, darin Schritt-Reihenfolge).
-//
-// BEIDE Wege zaehlen — die Ketten sind sogar der Hauptweg (ein Button-Klick
-// fuehrt eine Relation aus). Der Export sammelte laengst beides, die
-// Verwendungs-Anzeige der Steuerung bis 2026-08-06 nur die Properties: eine nur
-// in einer Kette benutzte Relation stand dort als „von keinem Baustein
-// verwendet", und die Loesch-Rueckfrage liess ihre BENUTZT-Warnung weg. Jetzt
-// fragen beide dieselbe Stelle.
 export function relationIdsVon(node: BlockNode): string[] {
   const def = getBlockDefinition(node.type)
   const ids: string[] = []
@@ -85,16 +53,6 @@ export function relationIdsVon(node: BlockNode): string[] {
   return ids
 }
 
-// Traegt dieser Baustein GERADE eine eigene Datenquelle? Registry-Faehigkeit
-// (acceptsDataSource), notfalls zustandsabhaengig: das Formularfeld traegt als
-// Nachschlage-Feld keine — dort kommt der Wert aus dem Fenster der
-// Nachschlage-Quelle, und ein zweiter Quellen-Waehler daneben taete nichts.
-//
-// Inspector (Sektion „Daten"), Export (SEFILELOOP + Attribute), Preflight
-// (Blocker) und quellenOps (Reichweite) fragen alle DIESE Stelle: was der
-// Inspector nicht anbietet, darf der Export nicht mitnehmen und der Preflight
-// nicht verlangen. Eine liegen gebliebene Quelle bleibt in den Props stehen —
-// unsichtbar ist nicht geloescht.
 export function traegtEigeneQuelle(node: BlockNode | undefined): boolean {
   if (!node) return false
   const kann = getBlockDefinition(node.type)?.acceptsDataSource
@@ -102,34 +60,12 @@ export function traegtEigeneQuelle(node: BlockNode | undefined): boolean {
   return kann === true || propertySichtbar(kann.wenn, node.props)
 }
 
-// Die Stellen, die an DIESEM Baustein GERADE bindbar sind (BindableSpot.wenn).
-// Editor (Klick-Ziel, Bindungs-Picker, Klarname-Vorschau), Export (Attribut)
-// und Preflight fragen dieselbe Stelle — sonst liesse der Editor eine Bindung
-// anklicken, die der Export weglaesst, oder der Preflight meldete eine, die
-// nirgends zu sehen ist.
 export function bindbareStellenVon(node: BlockNode | undefined): readonly BindableSpot[] {
   if (!node) return []
   const stellen = getBlockDefinition(node.type)?.bindableSpots ?? []
   return stellen.filter((s) => propertySichtbar(s.wenn, node.props))
 }
 
-// Die Quelle, um die es bei der AUSWAHL an diesem Baustein geht — als
-// Vorlagen-id ('' = keine). Sie beantwortet BEIDE Seiten derselben Frage:
-//   - als GEBER: aus ihr stammt der herausgegriffene Satz (die Felder LINKS
-//     im Feldpaar, fromField);
-//   - als FOLGER: ihre Zeilen engt die Auswahl ein (die Felder RECHTS,
-//     toField).
-// Meist ist das die normale Datenquelle des Bausteins. Das Nachschlage-Feld
-// nennt in seiner SatzWahl eine andere Prop (Regel 2, kein Bausteintyp-Wissen
-// hier): sein Fenster zeigt die Zeilen der NACHSCHLAGE-Quelle — aus ihr stammt
-// der uebernommene Satz, und genau sie filtert eine Folge ein. Dass beide
-// Richtungen dieselbe Quelle nennen, ist kein Zufall: man waehlt aus den
-// Zeilen, die man zeigt.
-//
-// Zustandsabhaengig wie die SatzWahl selbst: steht das Feld wieder auf „Text",
-// spielt seine Nachschlage-Quelle keine Rolle mehr — dann gilt die eigene
-// Datenquelle. Wer Feldpaare anbietet oder prueft, MUSS diese Quelle nehmen:
-// die Felder der falschen Tabelle waeren still wertlos.
 export function auswahlQuelleIdVon(node: BlockNode | undefined): string {
   if (!node) return ''
   const wahl = getBlockDefinition(node.type)?.satzWahl
@@ -140,15 +76,6 @@ export function auswahlQuelleIdVon(node: BlockNode | undefined): string {
   return typeof wert === 'string' ? wert : ''
 }
 
-// Ist dieser Baustein ein Auswahl-GEBER? HERGELEITET, nicht angemeldet
-// (2026-08-06): Geber ist, wer (1) den Bediener einen Satz herausgreifen laesst
-// (Registry: satzWahl, notfalls zustandsabhaengig) UND (2) dafuer wirklich eine
-// Datenquelle traegt. Beides muss stimmen, sonst gaebe es nichts abzugeben:
-// eine Tabelle ohne Quelle zeigt nur Platzhalter, und ein Formularfeld vom Typ
-// Text hat gar kein Fenster, aus dem der Bediener waehlen koennte.
-//
-// Kein Bausteintyp-Wissen hier (Regel 2) — Trenner und Knopf fallen von selbst
-// raus, weil sie keine SatzWahl deklarieren.
 export function istAuswahlGeber(node: BlockNode | undefined): boolean {
   if (!node) return false
   const wahl = getBlockDefinition(node.type)?.satzWahl
@@ -157,37 +84,12 @@ export function istAuswahlGeber(node: BlockNode | undefined): boolean {
   return auswahlQuelleIdVon(node) !== ''
 }
 
-// Darf dieser Baustein GERADE einer Auswahl folgen? DIESELBE Herleitung wie
-// beim Geber, nur andersherum: folgen darf, wer (1) es laut Registry kann
-// (kannAuswahlFolgen) UND (2) wirklich Zeilen hat, die eine Auswahl einengen
-// koennte. Ohne Quelle gibt es nichts zu filtern — eine eingestellte Folge
-// saehe fertig aus und tat in der Maske stumm nie etwas (Regel 4). Die Zeilen
-// stehen dort, wo auch der Satz herkaeme (auswahlQuelleIdVon): beim
-// Nachschlage-Feld in der NACHSCHLAGE-Quelle, sonst in der eigenen.
-//
-// Inspector (Sektion), Export (Attribut) und Preflight fragen alle
-// DIESE Stelle: was der Inspector nicht anbietet, darf der Export nicht
-// mitnehmen und der Preflight nicht verlangen — sonst meldete er eine
-// Einstellung als kaputt, die der Bauer nirgends sieht. Eine daheim gebliebene Folge in
-// den Props bleibt liegen (unsichtbar ist nicht geloescht): haengt der Bauer
-// die Quelle wieder an, gilt sie wieder.
-//
-// Bis 2026-08-06 trug kannAuswahlFolgen dafuer eine Zustands-Bedingung: das
-// Formularfeld durfte als Nachschlage-Feld gar nicht folgen. Das war die
-// Vorstufe — inzwischen folgt dort das FENSTER (es zeigt nur die Zeilen zur
-// Auswahl des Gebers), und die Bedingung ist ersatzlos weg. Was blieb, ist
-// diese Herleitung.
 export function darfAuswahlFolgen(node: BlockNode | undefined): boolean {
   if (!node) return false
   if (getBlockDefinition(node.type)?.kannAuswahlFolgen !== true) return false
   return auswahlQuelleIdVon(node) !== ''
 }
 
-// Alle Auswahl-GEBER der Maske in Baum-Reihenfolge. DIESELBE Wahrheit fuer
-// Inspector, Steuerung (Parameterquelle „Feld der gewaehlten Zeile"), Export
-// (data-ff-id) und Preflight: bietet der Editor einen Geber an, den der
-// Preflight nicht kennt, meldet der Preflight etwas gerade Eingestelltes
-// als Fehler.
 export function auswahlGeberImBaum(tree: BlockTree): BlockNode[] {
   const result: BlockNode[] = []
   const visit = (node: BlockNode | undefined): void => {

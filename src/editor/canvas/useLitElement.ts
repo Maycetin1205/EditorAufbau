@@ -1,13 +1,3 @@
-// useLitElement
-// Die EINE React↔Lit-Übergabestelle (wörtlich aus
-// BlockHost.tsx gezogen). Erzeugen, Props setzen und Aufräumen des Custom
-// Elements passieren ausschließlich hier:
-//   - Erzeugen: Element zum Block-Typ, mit Editor-Kennung (data-ff-editor)
-//     und Rückkanal 'ff-prop-change' → Editor-Store.
-//   - Props: als DOM-Properties (Lit-Setter greifen), inkl. Bindungs-
-//     Vorschau (Klarname statt statischem Text) und editable-Flag.
-//   - Aufräumen: Listener ab, Element raus — bei Typwechsel und Unmount.
-
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { BlockNode } from '../../core/blocks/BlockData'
@@ -20,13 +10,6 @@ import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
 
-// Markierung eines Felds, das NICHT aus der ersten Quelle kommt. Bewusst nur
-// ein Zeichen und NICHT der ausgeschriebene Quellenname: „Notiz
-// (Kundenhaustiere)" waere im Editor deutlich breiter als der spaetere echte
-// Wert — die Karte saehe hier anders aus als in SoftEngine, und „was du
-// siehst, IST der Export" ist der Nordstern. Welche Quelle es ist, zeigt der
-// Picker beim Klick. EINE Konstante, damit sich die Markierung in einem Zug
-// aendern laesst, falls sie zu unauffaellig ist.
 const FREMD_ZEICHEN = ' ↗'
 
 interface PropChangeDetail {
@@ -36,17 +19,14 @@ interface PropChangeDetail {
 
 interface LitElementArgs {
   editor: Editor
-  // Aktueller Knoten in einer Ref, damit einmal registrierte Event-Listener
-  // immer mit dem aktuellen Stand laufen (der BlockHost pflegt sie).
+
   blockRef: RefObject<BlockNode>
   block: BlockNode
   selected: boolean | undefined
   bindableSpots: readonly BindableSpot[]
-  // Alle Quellen in Reichweite, erste zuerst (Editor.quellenFor).
+
   quellen: readonly QuelleInReichweite[]
-  // true = der Block sitzt auf einer Rasterflaeche (oberste Ebene / Popup-
-  // Rumpf): das Element bekommt das Attribut 'fuellt', damit sein Baustein-CSS
-  // die Zelle fuellt (DIESELBE Marke setzt der Export am Wurzel-Kind, WYSIWYG).
+
   raster: boolean
 }
 
@@ -60,8 +40,7 @@ export function useLitElement({
   raster,
 }: LitElementArgs) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  // Ref = Schreibziel für DOM-Properties; State = Render-Trigger fürs Portal
-  // (das Portal-Ziel muss beim Rendern bekannt sein, eine Ref reicht dafür nicht).
+
   const elementRef = useRef<HTMLElement | null>(null)
   const [element, setElement] = useState<HTMLElement | null>(null)
 
@@ -74,19 +53,12 @@ export function useLitElement({
     const container = containerRef.current
     if (!container) return
     const el = document.createElement(def.tagName)
-    // Editor-Kennung: schaltet editor-exklusives Block-CSS frei
-    // (Daten-Markierung gebundener Stellen). Der Export setzt sie nie.
+
     el.setAttribute('data-ff-editor', '')
     container.appendChild(el)
     elementRef.current = el
     setElement(el)
 
-    // Inline-Doppelklick-Edit: Block emittiert 'ff-prop-change' { attr, value },
-    // der Host schreibt das in den Store. Der Baustein bleibt editor-blind.
-    // 'ff-prop-change' ist bubbles+composed; in verschachtelten Bereichen
-    // erreicht das Event eines Kindes auch die Listener der Eltern-Hosts.
-    // Nur das eigene Element behandeln, sonst schreibt der Bereich die
-    // Prop des Kindes zusätzlich auf sich selbst.
     const onPropChange = (e: Event) => {
       if (e.target !== el) return
       const ce = e as CustomEvent<PropChangeDetail>
@@ -113,31 +85,17 @@ export function useLitElement({
     for (const [key, value] of Object.entries(block.props)) {
       elAny[key] = value
     }
-    // Bindungs-Vorschau: gebundene Stellen
-    // zeigen den KLARNAMEN ihres Felds statt des statischen Texts — keine
-    // erfundenen Beispielwerte. Nur die ANZEIGE (DOM-Properties), der Baum
-    // bleibt unberührt. Ist die Bindung nicht auflösbar (keine Quelle in
-    // Reichweite / Feld nicht im Wörterbuch), zeigt die Stelle ihren
-    // statischen Text ohne Markierung; die Bindung selbst bleibt gespeichert
-    // und lebt wieder auf, sobald die Quelle zurückkommt.
+
     for (const spot of bindableSpots) {
       const wert = block.props[bindingProp(spot.prop)]
       if (typeof wert !== 'string' || wert === '') continue
-      // Gegen die GENANNTE Quelle aufloesen, nicht gegen die erste: im
-      // Bestand des Nutzers gibt es denselben Feldcode in zwei Quellen mit
-      // verschiedener Bedeutung — die erste zu nehmen zeigte den falschen
-      // Klarnamen (Regel 7: der Editor raet nie).
+
       const { quelleId, code } = zerlegeBindung(wert)
       const quelle = quelleId === ''
         ? quellen[0]?.source
         : quellen.find((q) => q.source.id === quelleId)?.source
       const field = quelle?.fields.find((f) => f.code === code)
       if (field) {
-        // WOHIN die Vorschau geht, sagt die Registry (vorschauProp): das
-        // Formularfeld schickt sie in seinen Platzhalter statt in den Wert.
-        // Früher stand das hier in einer Tabelle mit dem Bausteintyp im
-        // Schlüssel — Sondercode je Typ (Regel 2), den auch nur der Editor
-        // kannte; der Export zeigte in der Maske deshalb etwas anderes.
         elAny[spot.vorschauProp ?? spot.prop] = field.label
           + (quelleId === '' ? '' : FREMD_ZEICHEN)
       } else {
@@ -145,9 +103,7 @@ export function useLitElement({
       }
     }
     elAny.editable = !!selected
-    // Rasterflaeche: 'fuellt' schaltet das Fuell-CSS des Bausteins frei
-    // (:host([fuellt]) — der sichtbare Inhalt fuellt die Zelle). In Containern
-    // (raster=false) bleibt es aus, der Baustein behaelt seine Naturgroesse.
+
     el.toggleAttribute('fuellt', !!raster)
   }, [element, block.type, block.props, selected, bindableSpots, quellen, raster])
 

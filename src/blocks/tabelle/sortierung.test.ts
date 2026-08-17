@@ -1,7 +1,3 @@
-// Tests der Tabellen-Sortierung.
-// Anlass: die erste Fassung sortierte per String-Vergleich -> „10" vor „9".
-// Diese Faelle sind genau die, die der Bediener in der Maske sofort sieht.
-
 import { describe, expect, it } from 'vitest'
 import { alsDatum, alsZahl, erkenneArt, sortiereIndizes, sortiereZeilen } from './sortierung'
 
@@ -13,7 +9,7 @@ describe('Werte erkennen', () => {
     expect(alsZahl('10')).toBe(10)
     expect(alsZahl('-12')).toBe(-12)
     expect(alsZahl('3,5')).toBe(3.5)
-    expect(alsZahl('1.234')).toBe(1234) // Tausenderpunkt
+    expect(alsZahl('1.234')).toBe(1234)
     expect(alsZahl('1.234,56')).toBe(1234.56)
   })
 
@@ -39,8 +35,8 @@ describe('Werte erkennen', () => {
   it('erkennt die Spaltenart aus allen Werten', () => {
     expect(erkenneArt(['9', '10', '3'])).toBe('zahl')
     expect(erkenneArt(['24.07.2026', '01.01.2020'])).toBe('datum')
-    expect(erkenneArt(['9', 'Meier'])).toBe('text') // eine Textzelle kippt die Spalte
-    expect(erkenneArt(['9', '', '10'])).toBe('zahl') // Leerzellen zaehlen nicht mit
+    expect(erkenneArt(['9', 'Meier'])).toBe('text')
+    expect(erkenneArt(['9', '', '10'])).toBe('zahl')
     expect(erkenneArt(['', ''])).toBe('text')
   })
 })
@@ -60,8 +56,6 @@ describe('Zeilen sortieren', () => {
   })
 
   it('sortiert Text deutsch und natuerlich', () => {
-    // Deutsch: „Ä" zaehlt wie „A" (also entscheidet der zweite Buchstabe:
-    // apfel vor Ärger), Gross/Klein egal, „Pos 2" vor „Pos 10".
     const zeilen = [['Zeta'], ['Ärger'], ['apfel'], ['Pos 10'], ['Pos 2']]
     expect(spalte0(sortiereZeilen(zeilen, 0, true))).toEqual([
       'apfel', 'Ärger', 'Pos 2', 'Pos 10', 'Zeta',

@@ -1,9 +1,3 @@
-// Toolbar
-// Werkzeugleiste im Header. Loest die wenigen MVP-Editor-Befehle aus.
-// R1 (2026-07-21): Exportieren = der EINE Primärknopf; „Alle Blöcke
-// löschen" raus aus der Reihe in ein „…"-Menü (Zerstörerisches steht nie
-// gleichrangig neben dem Hauptweg, Bestätigung bleibt).
-
 import {
   Download,
   FolderOpen,
@@ -28,15 +22,9 @@ import { useEditor } from '../../state/useEditor'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 
-// onDatencenter: öffnet die Kommandozentrale — Zustand hält die Shell.
 export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
   const ed = useEditor()
 
-  // Die Rueckfrage BLEIBT blockierend (U2, 2026-08-12): sie raeumt in einem
-  // Klick die ganze Maske, nicht nur die offene Seite — `Editor.clear()`
-  // ersetzt den GANZEN Baum, Popup-Seiten fallen also mit. Genau das
-  // verschwieg der Text bis dahin; die Zahl zaehlte sie schon immer mit
-  // (`Editor.blockCount` = alle Knoten des Baums).
   const handleClear = () => {
     if (ed.blockCount === 0) return
     const popups = ed.pages.filter((p) => !p.istHauptseite).length
@@ -49,20 +37,6 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
     ed.clear()
   }
 
-  // Mini-Export: Baum → Maske (HTML + SEvariablen-JSON).
-  //
-  // Die SEMANTISCHE Vorpruefung (preflightMask: gelöschte Datenquellen,
-  // gebundene Felder, Auswahl-Folgen, Kopfsatz) ist am 2026-08-10 auf
-  // Nutzer-Ansage aus dem Export-Weg entfernt. Grund des Nutzers: sie hielt
-  // ihn wiederholt vom Exportieren ab, in Faellen, die er bewusst so gebaut
-  // hatte. Der Export laeuft ab jetzt immer, auch wenn eine Bindung ins Leere
-  // zeigt — die Folge sieht der Nutzer dann in SoftEngine, nicht vorher.
-  // Die Funktion selbst steht unberuehrt in export/preflight.ts und ist
-  // getestet; sie wird hier nur nicht mehr aufgerufen.
-  //
-  // GEBLIEBEN ist die DATEIFORM-Pruefung (validateMaskHtml: SE-Marker, LF,
-  // reines ASCII). Sie hat nichts mit Datenquellen zu tun: schlaegt sie an,
-  // wuerde SoftEngine die Datei gar nicht erst laden.
   const handleExport = () => {
     const sources = dataSourceStore.list
     const relations = relationStore.list
@@ -75,18 +49,11 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
       )
       return
     }
-    // SE-Namenskonvention (2026-07-11): eine Maske = ein Ordner mit
-    // index.basis.source.html + index.basis.SEvariablen.json — belegt durch
-    // ALLE 124 Referenzmasken + behandlung-umbau. Kein Umbenennen von Hand.
+
     downloadFile('index.basis.source.html', html, 'text/html')
     downloadFile('index.basis.SEvariablen.json', sevariablen, 'application/json')
   }
 
-  // Maske als DATEI sichern (2026-07-28). Nicht zu verwechseln mit dem
-  // Export: der erzeugt die fertige SoftEngine-Maske und ist eine
-  // Einbahnstrasse. Diese Datei ist der BAUPLAN und laesst sich wieder laden.
-  // Dateiname mit Datum, damit Sicherungen sich von selbst sortieren und
-  // einander nicht ueberschreiben.
   const handleSpeichern = () => {
     const text = packeMaske({
       tree: ed.tree,
@@ -97,10 +64,6 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
     downloadFile(`aufbau-maske-${heute}.json`, text, 'application/json')
   }
 
-  // Feste Reihenfolge: lesen -> GANZ pruefen -> Rueckfrage -> vollstaendig
-  // ersetzen -> erst DANN warnen. Andernfalls
-  // saehe der Bediener „Beim Laden entfernt: …", obwohl er gleich darauf
-  // abbricht und gar nichts geladen wurde.
   const handleDateiGewaehlt = async (datei: File) => {
     let text: string
     try {
@@ -111,10 +74,6 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
     }
     const ergebnis = packeMaskeAus(text)
     if (!ergebnis.ok) {
-      // Seit A3 nennt die Ablehnung nicht nur „beschädigt", sondern die
-      // gefundenen Stellen. Sie stehen unter dem Grund, hoechstens zehn —
-      // eine Meldung mit hundert Zeilen liest niemand, und die Zahl der
-      // restlichen steht dabei.
       const liste = ergebnis.probleme.slice(0, 10)
         .map((p) => `• ${p.bereich}${p.stelle === '' ? '' : ` (${p.stelle})`}: ${p.grund}`)
       const rest = ergebnis.probleme.length - liste.length
@@ -125,17 +84,13 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
       ].join('\n'))
       return
     }
-    // Laden ist der einzige Knopf, der mit einem Klick ALLES ueberschreibt —
-    // und es gibt danach kein Undo (die Historie wird geleert, s.
-    // Editor.ersetzeMaske). Diese Rueckfrage ist das einzige Netz; ihr Text
-    // passt bewusst zu OK/Abbrechen und verspricht keine Speicheraktion.
+
     if (!window.confirm(
       'Haben Sie den bisherigen Stand gespeichert?\n\n'
       + 'Mit OK wird die offene Maske unwiderruflich ersetzt — das lässt sich '
       + 'nicht rückgängig machen.',
     )) return
 
-    // Die Reihenfolge (Bibliotheken, dann Baum) wohnt in maskeUebernehmen.
     uebernehmeMaske(ed, ergebnis.inhalt)
     meldeVerworfeneTypen(ergebnis.verworfen)
   }
@@ -174,8 +129,6 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
   )
 }
 
-// Verlauf (Rückgängig/Wiederholen) — wohnt seit dem R1-Feinschliff LINKS
-// neben dem Logo (Figma-Muster), nicht mehr im Aktionen-Cluster rechts.
 export function VerlaufKnoepfe() {
   const ed = useEditor()
   return (
@@ -200,9 +153,6 @@ export function VerlaufKnoepfe() {
   )
 }
 
-// „…"-Menü: Sammelplatz für seltene/zerstörerische Befehle. Bewusst von
-// Hand gebaut (kein Radix-Menu im Projekt) — schließt bei Klick daneben
-// und bei Escape.
 function MoreMenu({
   onClearAll,
   clearDisabled,
@@ -247,10 +197,7 @@ function MoreMenu({
       >
         <MoreHorizontal size={15} />
       </IconButton>
-      {/* Verstecktes Datei-Feld: der Menue-Eintrag klickt es an. Der Wert wird
-          nach JEDEM Versuch geleert (finally) — sonst loest die Auswahl
-          DERSELBEN Datei kein zweites 'change' aus, und der Bediener klickt
-          ins Leere, ohne zu verstehen warum. */}
+
       <input
         ref={dateiRef}
         type="file"

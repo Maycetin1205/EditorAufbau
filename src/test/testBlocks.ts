@@ -1,8 +1,3 @@
-// Test-Blöcke
-// Registriert leichte Block-Definitionen direkt in der Registry — OHNE
-// Lit/DOM. Damit testen Store-Tests die echte Logik (Factory, normalize,
-// sanitize), ohne dass Web Components definiert werden müssen.
-
 import { registerBlockType } from '../core/blocks/blockRegistry'
 import { FLOW_DEFAULTS } from '../core/blocks/flowLayout'
 
@@ -10,16 +5,15 @@ let registered = false
 
 export const TEST_BLOCK = 't-block'
 export const TEST_BOX = 't-box'
-// Container, der NUR t-block aufnimmt (allowedChildTypes).
+
 export const TEST_STRICT_BOX = 't-strict-box'
-// Block, der mit Beispieldaten-Teilbaum eingefügt wird (defaultChildren).
+
 export const TEST_BOARD = 't-board'
-// Container mit Datenquellen-Fähigkeit (acceptsDataSource,/5.2).
+
 export const TEST_DATA_BOX = 't-daten-box'
-// Block mit Ereignissen (blockEvents, Z1/Z2) — für Aktionsketten-Tests.
+
 export const TEST_EVENT_BLOCK = 't-event-block'
-// Block mit exklusivem Geschwister-Kennzeichen (exclusiveAmongSiblings,
-// V2/B2 — z. B. Auffangspalte): höchstens ein Geschwister trägt 'ja'.
+
 export const TEST_FLAG_BLOCK = 't-flag-block'
 
 export function registerTestBlocks(): void {

@@ -1,8 +1,3 @@
-// EditorContext
-// Der Context + Zugriffs-Hook für die eine Editor-Instanz der App.
-// Bewusst getrennt von der Provider-KOMPONENTE (EditorProvider.tsx):
-// eine Datei = nur Komponenten ODER nur Helfer (Fast-Refresh-Regel).
-
 import { createContext, useContext } from 'react'
 import type { Editor } from './Editor'
 

@@ -1,18 +1,3 @@
-// KettenFenster — die Aktionskette EINES Ereignisses in voller Breite.
-//
-// Warum es das gibt (Nutzer-Auftrag 2026-08-17): das Schritt-Formular
-// blaetterte bis hierhin das 340-px-Inspector-Panel um. Eine Relation hat bis
-// zu zwoelf Parameter, jeder mit Herkunft UND Ziel — das passt dort nicht,
-// und waehrend man es ausfuellte, war der Baustein, um den es geht, nicht
-// mehr zu sehen. Jetzt: links die Kette, rechts der angeklickte Schritt, der
-// Baustein bleibt hinter dem Fenster stehen.
-//
-// Die Kette bleibt AM BAUSTEIN (Regel 7) — der Inspector zeigt sie weiter und
-// oeffnet nur dieses Fenster. Umgezogen ist das BEARBEITEN, nicht der Besitz.
-//
-// Rahmen wie die Kommandozentrale: Portal, Schleier, Escape schliesst — ein
-// offenes Inline-Formular faengt sein Escape vorher ab (FormularKarte).
-
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, X } from '@/ui/zeichen'
@@ -35,12 +20,9 @@ interface KettenFensterProps {
 export function KettenFenster({ block, eventKey, eventName, onClose }: KettenFensterProps) {
   const ed = useEditor()
   const quellen = useDataSources()
-  // Welcher Schritt rechts steht: die id (nicht der Schritt selbst), damit die
-  // rechte Seite nach jeder Aenderung den FRISCHEN Stand aus dem Baum liest.
-  // Mit einer Kopie stuende dort der Stand von vor dem Speichern.
+
   const [offeneId, setOffeneId] = useState<string | null>(null)
-  // Ein NEUER Schritt hat noch keine id — dieser Schalter unterscheidet
-  // „nichts offen" von „neu anlegen".
+
   const [neu, setNeu] = useState(false)
 
   const kette = ed.tree[block.id]?.events?.[eventKey] ?? []
@@ -54,15 +36,12 @@ export function KettenFenster({ block, eventKey, eventName, onClose }: KettenFen
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  // Kette ersetzen — alle Umbauten laufen hierueber, ein Bedienschritt = EIN
-  // Undo-Eintrag (updateBlockEvents).
   const setzeKette = (steps: ActionStep[]): void => {
     const node = ed.tree[block.id]
     if (!node) return
     ed.updateBlockEvents(block.id, { ...(node.events ?? {}), [eventKey]: steps })
   }
 
-  // Schritt speichern: dieselbe „ersetzen oder anhaengen"-Regel wie bisher.
   const speichere = (step: ActionStep): void => {
     setzeKette(offen ? kette.map((s) => (s.id === step.id ? step : s)) : [...kette, step])
     setNeu(false)
@@ -126,14 +105,11 @@ export function KettenFenster({ block, eventKey, eventName, onClose }: KettenFen
             </div>
           </div>
 
-          {/* Breit, aber nicht endlos: eine Parameterzeile ueber 900 px waere
-              wieder schlecht zu lesen — nur andersherum als in 340 px. */}
           <div className="min-w-0 flex-1 overflow-y-auto p-4">
             <div className="max-w-3xl">
             {zeigeFormular ? (
               <StepForm
-                // Beim Wechsel auf einen anderen Schritt baut das Formular neu
-                // auf — sonst stuenden die Eingaben des vorherigen darin.
+
                 key={offen?.id ?? 'neu'}
                 step={offen}
                 kette={kette}
@@ -144,8 +120,7 @@ export function KettenFenster({ block, eventKey, eventName, onClose }: KettenFen
                 onSave={speichere}
               />
             ) : (
-              /* Kein Schritt gewaehlt: den Zustand benennen statt eine leere
-                 Flaeche zeigen (Regel 4). */
+
               <p className="text-xs text-muted-foreground">
                 {kette.length === 0
                   ? 'Noch kein Schritt.'

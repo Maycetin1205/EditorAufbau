@@ -1,22 +1,5 @@
-// Migrations-Tests — die Uebernahme alter Speicherstaende (state/migrations.ts).
-// Jede Migration ist eine Einbahnstrasse: sie laeuft beim Laden und macht aus
-// Altbestand den heutigen Vertrag. Getestet wird sie ueber den ECHTEN Lade-Weg
-// (Editor aus dem Browser-Speicher), nicht gegen die Funktion allein — nur so
-// faellt auf, wenn eine Migration am falschen Punkt der Kette haengt.
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
-//
-// Aus persistence.test.ts herausgeloest (2026-08-06), als die Aufraeum-Migration
-// "Knopf aus Tabelle" die Datei ueber den 500-Zeilen-Deckel schob
-// (check:regeln). Der Schnitt liegt am Thema: hier die MIGRATIONEN, drueben der
-// Lade-Weg selbst (sanitize, Notfallkopie, Aktionsketten, Popup-Seiten).
-// Die Faelle sind unveraendert uebernommen — reine Verschiebung.
-
 import { beforeEach, describe, expect, it } from 'vitest'
-// Side-Effect-Importe: die ECHTEN Bausteine, die die Migrationen anfassen.
-// Kanban (kanban, kanban-spalte, card) fuer P1.1 und die Karten-Demowerte;
-// die Atome mit Registry-Startbreiten fuer die Raster-Reparatur (Schema 4:
-// formfeld startW 6, button startW 4, trenner startW 24); die Tabelle fuer
-// die Aufraeum-Migration "Knopf aus Tabelle".
+
 import '../blocks/kanban/KanbanBlock'
 import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/button/ButtonBlock'
@@ -31,7 +14,6 @@ registerTestBlocks()
 
 const KEY = 'aufbau_editor_mvp_v1'
 
-// Ueber den echten Weg laden: Stand in den Browser-Speicher, Editor bauen.
 function load(state: unknown): Editor {
   localStorage.setItem(KEY, JSON.stringify(state))
   return new Editor()
@@ -55,8 +37,7 @@ describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
     })
     expect(ed.getNode('kasten')).toBeUndefined()
     expect(ed.getNode('board')?.childIds).toEqual(['s1', 's2'])
-    // Musterkarte VOR den Bestandskarten — die ERSTE Karte des Boards
-    // bleibt damit die gestaltete Vorlage (templateChild/seRuntime).
+
     expect(ed.getNode('s1')?.childIds).toEqual(['muster', 'alt'])
     expect(ed.getNode('muster')?.props.heading).toBe('Meine Musterkarte')
     expect(ed.getNode('muster')?.parentId).toBe('s1')
@@ -80,10 +61,6 @@ describe('Migration (P1.1: Vorlagen-Kasten abgeschafft)', () => {
 
 describe('Aufräum-Migration (2026-08-06: Knopf aus Tabelle)', () => {
   it('entfernt einen Knopf, der IN einer Tabelle liegt — restlos, nicht nur unsichtbar', () => {
-    // Der Knöpfe-Platz in der Tabelle gab es rund 40 Minuten lang; er ist
-    // zurückgenommen (WYSIWYG-Bruch, s. Kopf von TabelleBlock). Ein damals
-    // gesetzter Knopf wäre danach ein UNSICHTBARER Waise: nicht gezeichnet,
-    // nicht exportiert, nicht mehr löschbar. Nutzer-Ansage: restlos raus.
     const ed = load({
       tree: {
         root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
@@ -94,14 +71,11 @@ describe('Aufräum-Migration (2026-08-06: Knopf aus Tabelle)', () => {
     })
     expect(ed.getNode('knopf')).toBeUndefined()
     expect(ed.getNode('tab')?.childIds).toEqual([])
-    // Die Tabelle selbst bleibt unangetastet.
+
     expect(ed.getNode('tab')?.type).toBe('tabelle')
   })
 
   it('lässt Knöpfe AUSSERHALB der Tabelle in Ruhe', () => {
-    // Die Migration greift eng: nur Kinder vom Typ 'button' unter einem
-    // Knoten vom Typ 'tabelle'. Ein Knopf auf der Maskenfläche ist ein ganz
-    // normaler Baustein und darf nie mitgerissen werden.
     const ed = load({
       tree: {
         root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab', 'frei'] },
@@ -156,16 +130,6 @@ describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => 
     expect(echt?.text).toBe('Vom Nutzer getippt')
   })
 
-  // Gegenstueck zum Datei-Weg (maskenDatei.test: „eine Karte mit dem echten
-  // Wert Heute ueberlebt Speichern und Laden"). Im BROWSER-Speicher lief der
-  // Putzer bis 2026-08-06 auch fuer aktuelle Staende: „Heute" im Chip und
-  // „09:15" im Zeitfeld waren nach jedem Reload still weg.
-  //
-  // A2 (2026-08-10): die Versionen stehen hier als ZAHLEN, nicht als
-  // CURRENT_SCHEMA_VERSION. Mit der Konstante haette der Fall „genau an der
-  // Grenze" beim naechsten Versionssprung stillschweigend auf 6 gezeigt — der
-  // Test waere gruen geblieben und haette dabei aufgehoert, die Grenze zu
-  // pruefen. Genau die Sorte gruener Test, die nichts mehr haelt.
   const mitKarte = (schemaVersion: number) => load({
     schemaVersion,
     tree: {
@@ -190,7 +154,6 @@ describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => 
     expect(props?.heading).toBe('')
   })
 
-  // Schema 5: „Heute" ist ein echter Wert des Bedieners und bleibt.
   it('Schema 5 bleibt unberuehrt — „Heute" ist dort echt', () => {
     const props = mitKarte(5).getNode('getippt')?.props
     expect(props?.chipText).toBe('Heute')
@@ -198,23 +161,12 @@ describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => 
     expect(props?.heading).toBe('Rückruf Fr. Wagner')
   })
 
-  // Schema 6 ist NEUER als diese App. Bis A3 hiess das: laden, aber nicht
-  // putzen; A3/A4 sperrten stattdessen; die Sperre ist am 2026-08-12 auf
-  // Nutzer-Ansage restlos entfernt. Es gilt wieder: laden, nicht putzen.
-  //
-  // Der Fall bleibt hier stehen, weil er die A2-Zusage weiter bewacht: waere
-  // die Putzer-Grenze mit der Schemaversion mitgewandert, wuerde ein Stand mit
-  // Version 6 nach einem kuenftigen Sprung auf 7 wieder GEPUTZT — und dann
-  // muesste dieser Fall rot werden.
   it('Schema 6 laedt nachsichtig und wird NICHT geputzt', () => {
     const props = mitKarte(6).getNode('getippt')?.props
     expect(props?.chipText).toBe('Heute')
     expect(props?.heading).toBe('Rückruf Fr. Wagner')
   })
 
-  // Stolperdraht fuer den Tag, an dem jemand CURRENT_SCHEMA_VERSION hochsetzt:
-  // die Putzer-Grenze ist eine historische Zahl und darf NICHT mitwandern.
-  // Wandert sie mit, laeuft der Putzer wieder ueber echte Eingaben.
   it('die Putzer-Grenze wandert nicht mit der Schemaversion mit', () => {
     expect(DEMO_CLEANUP_BEFORE_SCHEMA).toBe(5)
     expect(CURRENT_SCHEMA_VERSION).toBeGreaterThanOrEqual(DEMO_CLEANUP_BEFORE_SCHEMA)
@@ -260,9 +212,6 @@ describe('Migration (Schema 2: Root-Kanban nutzt die Maskenfläche)', () => {
 })
 
 describe('Migration (Schema 4: Reparatur der Riesen-Rahmen)', () => {
-  // Die erste (kaputte) Raster-Migration setzte JEDEN Block auf Vollbreite
-  // (rasterX=0, rasterW=24). Bei Nutzern mit Speicherstand auf Schema 3 heilt
-  // erst diese Folge-Migration die schmalen Bausteine wieder.
   it('gibt schmalen Bausteinen die Startbreite zurück, Vollbreite bleibt, überlappungsfrei neu gestapelt', () => {
     const ed = load({
       schemaVersion: 3,
@@ -274,16 +223,15 @@ describe('Migration (Schema 4: Reparatur der Riesen-Rahmen)', () => {
       },
       selectedId: null,
     })
-    // Schmale Bausteine bekommen ihre Registry-Startbreite zurück …
+
     expect(ed.getNode('ff')?.props.rasterW).toBe(6)
     expect(ed.getNode('btn')?.props.rasterW).toBe(4)
-    // … der zu Recht volle Trenner (Startbreite 24) bleibt Vollbreite.
+
     expect(ed.getNode('tr')?.props.rasterW).toBe(24)
-    // Höhe: Schema 5 kappt die zu grosse Alt-Höhe auf die kalibrierte
-    // Registry-Starthöhe (formfeld 2); der Vollbreiten-Trenner bleibt 1 hoch.
+
     expect(ed.getNode('ff')?.props.rasterH).toBe(2)
     expect(ed.getNode('tr')?.props.rasterH).toBe(1)
-    // Überlappungsfrei untereinander gestapelt (x=0, y fortlaufend nach Höhe).
+
     expect(ed.getNode('ff')?.props.rasterX).toBe(0)
     expect(ed.getNode('ff')?.props.rasterY).toBe(0)
     expect(ed.getNode('btn')?.props.rasterY).toBe(3)
@@ -295,7 +243,7 @@ describe('Migration (Schema 4: Reparatur der Riesen-Rahmen)', () => {
       schemaVersion: 3,
       tree: {
         root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['a', 'b'] },
-        // Schon schmal + frei platziert: kein Fehler-Muster → nichts anfassen.
+
         a: { id: 'a', type: 'formfeld', props: { rasterX: 2, rasterY: 1, rasterW: 6, rasterH: 3 }, parentId: 'root', childIds: [] },
         b: { id: 'b', type: 'button', props: { rasterX: 8, rasterY: 1, rasterW: 4, rasterH: 3 }, parentId: 'root', childIds: [] },
       },
@@ -324,9 +272,6 @@ describe('Migration (altes Flach-Format)', () => {
   })
 })
 
-// C2 (2026-08-16): der Popup-Rumpf wird eine Rasterflaeche, und der Baustein
-// „Zeile" entfaellt. Beide Migrationen zusammen entscheiden, ob der Bediener
-// seine Maske nach dem Schema-Sprung wiedererkennt.
 describe('Migration (C2: Popup-Raster, Zeile aufgeloest)', () => {
   it('loest eine Zeile auf der Hauptflaeche auf — die Kinder erben ihr Zellband', () => {
     const ed = load({
@@ -340,15 +285,13 @@ describe('Migration (C2: Popup-Raster, Zeile aufgeloest)', () => {
       },
       selectedId: null,
     })
-    // Die Zeile ist weg, ihre Kinder stehen an ihrer Stelle in der Reihenfolge.
+
     expect(ed.getNode('z')).toBeUndefined()
     expect(ed.getNode('root')?.childIds).toEqual(['ff', 'btn', 'tr'])
-    // Nebeneinander ab der Spalte der Zeile, je mit Registry-Startbreite
-    // (formfeld 6, button 4), in der Hoehe der Zeile.
+
     expect(ed.getNode('ff')?.props).toMatchObject({ rasterX: 2, rasterY: 4, rasterW: 6, rasterH: 3 })
     expect(ed.getNode('btn')?.props).toMatchObject({ rasterX: 8, rasterY: 4, rasterW: 4, rasterH: 3 })
-    // Was UNTER der Zeile lag, bleibt exakt stehen — die Aufloesung darf die
-    // uebrige Maske nicht verschieben.
+
     expect(ed.getNode('tr')?.props).toMatchObject({ rasterX: 0, rasterY: 7, rasterH: 1 })
   })
 
@@ -366,9 +309,7 @@ describe('Migration (C2: Popup-Raster, Zeile aufgeloest)', () => {
       selectedId: null,
     })
     expect(ed.getNode('box')?.childIds).toEqual(['a', 'c', 'b'])
-    // Ein Container ist keine Flaeche: `c` liegt im Fluss und behaelt die
-    // neutralen Raster-Standardwerte. Haette die Migration ihm das Band der
-    // Zeile gegeben, stuende hier deren 3.
+
     expect(ed.getNode('c')?.props.rasterH).toBe(1)
   })
 
@@ -383,9 +324,7 @@ describe('Migration (C2: Popup-Raster, Zeile aufgeloest)', () => {
       },
       selectedId: null,
     })
-    // Untereinander in der sichtbaren Reihenfolge, Groessen aus der Registry
-    // (formfeld 6x2, button 4x2) — der Bediener sieht sein Popup wieder wie
-    // vorher und kann ab jetzt frei platzieren.
+
     expect(ed.getNode('ff')?.props).toMatchObject({ rasterX: 0, rasterY: 0, rasterW: 6, rasterH: 2 })
     expect(ed.getNode('btn')?.props).toMatchObject({ rasterX: 0, rasterY: 2, rasterW: 4, rasterH: 2 })
   })

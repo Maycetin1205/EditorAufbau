@@ -13,8 +13,7 @@ import {
   type RelationStep,
   type StartToolStep,
 } from './aktionen'
-// Die Vollstaendigkeits-Pruefung wohnt seit 2026-08-06 nebenan
-// (schrittPruefung) — dieselbe Funktion, nur eine Datei weiter.
+
 import { stepProblem } from './schrittPruefung'
 
 const relation: RelationTemplate = {
@@ -77,10 +76,6 @@ describe('Aktionsmodell', () => {
     }, ['onClick'])).toBeUndefined()
   })
 
-  // A1 (2026-08-10): 'aus' steht absichtlich NICHT im Auswahlfeld
-  // (ACTION_PARAM_SOURCES), ist als gespeicherter Zustand aber gueltig. Der
-  // Lader pruefte gegen die falsche der zwei Listen und verwarf deshalb die
-  // GANZE Kette — an einem Zustand, den das Formular selbst schreibt.
   it('nimmt einen abgeschalteten Parameter (aus) an, in Syntax wie Zusatz', () => {
     const kette = [{
       id: 'r1', type: 'RELATION', resultKey: '', relationId: 'rel-1',
@@ -92,15 +87,12 @@ describe('Aktionsmodell', () => {
       extraParams: [{ source: 'aus', value: '' }],
     }]
     expect(sanitizeBlockEvents({ onClick: kette }, ['onClick'])).toEqual({ onClick: kette })
-    // Erfundene Quellen bleiben verworfen — die Liste ist nicht aufgeweicht.
+
     expect(sanitizeBlockEvents({
       onClick: [{ ...kette[0], params: [{ source: 'ausgedacht', value: '' }] }],
     }, ['onClick'])).toBeUndefined()
   })
 
-  // Derselbe Lader bedient die MASKE: parseBlockEvents laeuft in SoftEngine
-  // ueber dasselbe stepFields. Vor A1 verschwand eine Kette mit 'aus' dort
-  // genauso — nur ohne jede Meldung, weil in der Maske niemand hinsieht.
   it('transportiert einen abgeschalteten Parameter bis in die Maske', () => {
     const rel: RelationStep = {
       id: 'r1', type: 'RELATION', resultKey: '', relationId: relation.id,
@@ -115,10 +107,6 @@ describe('Aktionsmodell', () => {
     expect(geladen.onClick?.[0]).toMatchObject({ params: rel.params })
   })
 
-  // Nutzer-Entscheidung 2026-08-06: die Syntaxzeile listet die Parameter-NAMEN,
-  // nicht deren Inhalte. Sie als Startwert zu uebernehmen schickte in
-  // SoftEngine jeden Feldnamen als seinen eigenen Wert (belegter Fall, s.
-  // defaultRelationParams). Nur ein bekannter {KONTEXT}-Wert wird zugeordnet.
   it('startet jede Syntaxposition leer, nur bekannte {KONTEXT}-Werte zugeordnet', () => {
     expect(defaultRelationParams(relation)).toEqual([
       { source: 'fixed', value: '' },
@@ -190,8 +178,7 @@ describe('Schritt-Ergebnis (Zwischenspeicher, 2026-07-17)', () => {
     expect(ergebnisSchritteVor(chain, 'pB', vorlagen))
       .toEqual([{ id: 'gA', nr: 1, name: 'Neuer Index' }])
     expect(ergebnisSchritteVor(chain, 'gA', vorlagen)).toEqual([])
-    // Neuer Schritt (ans Ende) sieht beide GETs — zwei Zwischenspeicher
-    // gleichzeitig (SE-Log „Termin anlegen": Termin- UND Haustier-Index).
+
     expect(ergebnisSchritteVor(chain, undefined, vorlagen).map((s) => s.nr)).toEqual([1, 3])
   })
 
@@ -210,14 +197,9 @@ describe('Schritt-Ergebnis (Zwischenspeicher, 2026-07-17)', () => {
   })
 
   it('Ergebnis-Feld reist mit — und nur an der Quelle, die es liest (2026-08-07)', () => {
-    // F4: ein Parameter darf ein bestimmtes FELD des Schritt-Ergebnisses
-    // meinen statt des ganzen Ergebnisses. Faellt der Feldcode im Export weg,
-    // schickt die Maske still den Ergebnis-Skalar — ein anderer Wert als der,
-    // den der Bauer gewaehlt hat (WYSIWYG-Bruch, Regel 1).
     const put = kettenPut('pB', 'gA')
     put.params[1] = { source: 'step_result', value: 'gA', ergebnisFeld: '78_30' }
-    // Ein liegen gebliebenes Feld an einer ANDEREN Quelle liest niemand — es
-    // saehe im Export nur eingestellt aus (Muster: geputzte Spaltenliste).
+
     put.params[2] = { source: 'fixed', value: 'A', ergebnisFeld: '2_8' }
     const gelesen = (kette: ActionStep[]): readonly ActionParamBinding[] => {
       const schritt = parseBlockEvents(serializeBlockEvents({ onClick: kette }, ['onClick'])).onClick[1]
@@ -225,20 +207,17 @@ describe('Schritt-Ergebnis (Zwischenspeicher, 2026-07-17)', () => {
     }
     expect(gelesen([kettenGet('gA'), put])).toEqual([
       { source: 'fixed', value: 'fest' },
-      // Die Editor-id ist zur Ketten-Position geworden, das Feld steht.
+
       { source: 'step_result', value: '0', ergebnisFeld: '78_30' },
-      // Und das Feld an der festen Quelle ist unterwegs weggefallen.
+
       { source: 'fixed', value: 'A' },
     ])
-    // OHNE Feld bleibt alles wie vorher: kein Schluessel, kein Byte mehr.
+
     expect(gelesen([kettenGet('gA'), kettenPut('pB', 'gA')])[1])
       .toEqual({ source: 'step_result', value: '0' })
   })
 
   it('stepProblem: ein leer getipptes Ergebnis-Feld ist ein unvollstaendiger Parameter', () => {
-    // Kennt die Steuerung die Quelle des Ziel-Schritts nicht, wird der
-    // Feldcode frei getippt. Nur Leerzeichen darin liesse den Parameter still
-    // leer hinausgehen (Regel 4) — deshalb blockt die Pruefung.
     const put = kettenPut('pB', 'gA')
     put.params[1] = { source: 'step_result', value: 'gA', ergebnisFeld: '  ' }
     expect(stepProblem(put, [relation], undefined, undefined, ['gA'])).toContain('Parameter 2')
@@ -251,9 +230,9 @@ describe('Schritt-Ergebnis (Zwischenspeicher, 2026-07-17)', () => {
     expect(stepProblem(put, [relation], undefined, undefined, ['gA'])).toBeNull()
     expect(stepProblem(put, [relation], undefined, undefined, []))
       .toContain('GET-Schritt davor')
-    // Ohne Ketten-Wissen (Laufzeit-fern) keine falsche Meldung.
+
     expect(stepProblem(put, [relation])).toBeNull()
-    // Leere Auswahl bleibt ein normaler unvollständiger Parameter.
+
     expect(stepProblem(kettenPut('pB', ''), [relation])).toContain('Parameter 2')
   })
 })
@@ -270,10 +249,10 @@ describe('Popup-Schritte (P-B)', () => {
     expect(raw).toBe(JSON.stringify({
       onClick: [{ type: 'POPUP_OPEN', resultKey: '', popup: 'Neue Behandlung' }],
     }))
-    // Laufzeit-Weg: das Attribut wird zurückgelesen.
+
     const parsed = parseBlockEvents(raw)
     expect(parsed.onClick[0]).toMatchObject({ type: 'POPUP_OPEN', popup: 'Neue Behandlung' })
-    // Persistenz-Weg: der gespeicherte Schritt (popupId) bleibt erhalten.
+
     const sanitized = sanitizeBlockEvents(events, ['onClick'])
     expect(sanitized?.onClick[0]).toMatchObject({ type: 'POPUP_OPEN', popupId: 'seite-1' })
   })
@@ -289,7 +268,7 @@ describe('Popup-Schritte (P-B)', () => {
     expect(stepProblem(offen, undefined, undefined, ['andere-seite']))
       .toContain('gelöschte Popup-Seite')
     expect(stepProblem(offen, undefined, undefined, ['seite-1'])).toBeNull()
-    // Ohne Seitenwissen (Laufzeit-fern) keine falsche Meldung.
+
     expect(stepProblem(offen)).toBeNull()
   })
 })

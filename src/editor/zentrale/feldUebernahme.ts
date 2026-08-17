@@ -1,12 +1,3 @@
-// feldUebernahme — „Feld übernehmen" am Schreib-Schritt (Fahrplan 3b).
-// Reine Editor-Hilfe: aus einem gewählten Datenquellen-Feld werden die
-// festen PUT-Parameter Position/Länge/Tabelle abgeleitet und in die
-// Bindungen eingesetzt (entschärft die „Dreier-Regel-Falle"). Kein
-// Laufzeit-/Export-Eingriff — diese Datei wird NICHT vom Runtime-Bündel
-// importiert (nur StepForm nutzt sie). Position/Länge stecken im Feldcode
-// (splitFieldCode), die Tabelle in der Quelle (tableIdFor → relIdFromIdbId).
-// Nur IDB-Quellen (Stamm-PUT ist im SE-Kontrakt nicht belegt, Regel 5).
-
 import type { ActionParamBinding } from '../../core/data/aktionen'
 import { defaultRelationParams } from '../../core/data/aktionen'
 import { tableIdFor, type DataSource } from '../../core/data/dataSources'
@@ -41,8 +32,6 @@ export interface FeldUebernahmeResult {
 export type FeldUebernahmeParameterArt = 'pos' | 'len' | 'relid'
 export type FeldUebernahmeZiel = 'feld' | 'idb'
 
-// V2 erkennt je Syntaxzeile genau einen bekannten Zielnamen. Die optionale
-// Klammer ist Teil der Ganz-String-Regel: "POSx" und "{POS}x" bleiben fremd.
 export function feldUebernahmeArt(raw: string): FeldUebernahmeParameterArt | null {
   const match = /^(?:([A-Za-z_]+)|\{([A-Za-z_]+)\})$/.exec(raw)
   const name = (match?.[1] ?? match?.[2])?.toUpperCase()

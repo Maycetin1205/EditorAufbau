@@ -1,20 +1,3 @@
-// Nachschlagen (die Lupe am Formularfeld)
-//
-// Der Bediener klickt die Lupe, ein Fenster zeigt die Saetze einer zweiten
-// Datenquelle mit Suchzeile und Blaettern; ein Klick uebernimmt einen Satz.
-// Das Feld ZEIGT danach den Klarwert („Berger, Anna") und MERKT sich den
-// Technikwert („10024") — Regel 3 in Reinform.
-//
-// Wofuer es da ist: eine Klappliste mit 8.000 Adressen ist unbenutzbar. Das
-// Nachschlagen ist die Form fuer grosse Bestaende — suchen statt scrollen.
-//
-// Kein Baustein: das Fenster entsteht erst beim Klick, es liegt nie im Baum
-// und wird nie exportiert. Exportiert wird nur das FELD samt seiner
-// Einstellungen; das Fenster baut die Laufzeit daraus.
-//
-// Die reinen Datenwege (Eintraege bauen, suchen) sind absichtlich eigene
-// Funktionen und getestet — das DOM darunter prueft der Nutzer im Browser.
-
 import { html, type TemplateResult } from 'lit'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
@@ -27,16 +10,6 @@ import {
 } from '../shared/DialogRahmen'
 import { zeilePasst } from '../shared/textSuche'
 
-// Das FELD selbst (Eingabe + Lupe) — die Gestalt des Feldtyps „Nachschlagen".
-// Steht hier und nicht im FormFeldBlock, weil sie zur Sache gehoert: das
-// Fenster, die Uebernahme und die Lupe, die es oeffnet, sind EIN Thema
-// (herausgezogen 2026-08-17, als der Baustein ueber den 500-Zeilen-Deckel lief).
-//
-// Angezeigt wird der KLARWERT, gemerkt der Technikwert im `value` des
-// Bausteins (Regel 3); GESUCHT wird im Fenster. Tippen geht hier trotzdem, aus
-// genau einem Grund: LOESCHEN — Text raus, Feld verlassen, weg ist er, wie in
-// jedem anderen Feld (bis 2026-08-07 tat das ein ×-Knopf, Nutzer-Ansage: raus).
-// Halb Getipptes entscheidet folgeBeimVerlassen weiter unten.
 export function nachschlagFeldTpl(args: {
   wert: string
   onTippen: (wert: string) => void
@@ -65,8 +38,6 @@ export function nachschlagFeldTpl(args: {
 }
 
 export interface NachschlagenArgs {
-  // Das Feld selbst. Aus seinen Attributen liest die Folge-Mechanik, WESSEN
-  // Auswahl das Fenster einengt — dieselbe Stelle, aus der die Tabelle es liest.
   el: HTMLElement
   quelleId: string
   anzeigeFeld: string
@@ -80,14 +51,10 @@ export interface NachschlagenArgs {
 export interface Eintrag {
   anzeige: string
   wert: string
-  // Die ROHZEILE hinter dem Eintrag. Das Fenster zeigt nur zwei Spalten, das
-  // Feld gibt aber den ganzen SATZ als Auswahl ab (Geber) — Folger holen sich
-  // daraus beliebige Schluesselfelder, nicht nur die zwei sichtbaren.
+
   satz: unknown
 }
 
-// Was die Einstellungen eines Nachschlage-Felds ausmacht. Beide Wege — die
-// Lupe und die stille Uebernahme — brauchen genau das.
 export interface NachschlagEinstellung {
   el: HTMLElement
   quelleId: string
@@ -97,10 +64,6 @@ export interface NachschlagEinstellung {
 
 const SEITENGROESSE = 10
 
-// Aus den Rohzeilen der Quelle die zwei sichtbaren Spalten bauen.
-// Voellig leere Zeilen fallen weg (sie waeren eine anklickbare Leerzeile,
-// die nichts uebernimmt); HALB leere bleiben — eine Adresse ohne Namen ist
-// immer noch ein Satz, den der Bediener meinen kann.
 export function nachschlagEintraege(
   rows: readonly unknown[],
   anzeigeFeld: string,
@@ -115,31 +78,10 @@ export function nachschlagEintraege(
   return eintraege
 }
 
-// Suche ueber BEIDE Spalten — dieselbe Regel wie die Tabellen-Suchzeile
-// (shared/textSuche), damit derselbe Kunde hier und dort gefunden wird.
 export function nachschlagTreffer(eintraege: readonly Eintrag[], suchtext: string): Eintrag[] {
   return eintraege.filter((eintrag) => zeilePasst([eintrag.anzeige, eintrag.wert], suchtext))
 }
 
-// Die Eintraege, die das Fenster ZEIGT — der ganze Datenweg der Lupe in einer
-// Zeile: erst die Folge-Filterung, dann die zwei sichtbaren Spalten.
-//
-// FOLGE (2026-08-06): steht am Feld eine Auswahl-Folge, zeigt die Lupe nur die
-// Zeilen, deren Schluesselfelder zur gewaehlten Zeile des Gebers passen. Der
-// Fall des Nutzers: ein Kunde-Feld und ein Haustier-Feld, das ihm folgt — die
-// Lupe zeigt dann nur die Haustiere DIESES Kunden statt aller 8.000.
-// Ohne Auswahl beim Geber bleiben alle Zeilen stehen, genau wie bei der
-// folgenden Tabelle.
-//
-// Von SELBST passiert dabei normalerweise nichts — der Bediener uebernimmt mit
-// einem Klick, und nur er (Standard, Nutzer 2026-08-05). Die eine bewusste
-// Ausnahme schaltet der Bauer je Feld frei („Einzigen Treffer uebernehmen",
-// s. einzigenTrefferFinden unten): bleibt genau ein Satz uebrig, gibt es nichts mehr
-// zu waehlen, und die Lupe waere eine Handbewegung ohne Wahl.
-//
-// Gefiltert wird mit der GETEILTEN Mechanik (shared/auswahl), nie mit einer
-// zweiten Filter-Logik daneben: sonst zeigte dieses Fenster die Haustiere eines
-// anderen Kunden als die Tabelle daneben.
 export function fensterEintraege(
   el: HTMLElement,
   rows: unknown[],
@@ -149,17 +91,10 @@ export function fensterEintraege(
   return nachschlagEintraege(zeilenNachAuswahl(el, rows).rows, anzeigeFeld, speicherFeld)
 }
 
-// Die Einstellungen sind halb fertig, oder die Quelle steht nicht in der
-// Maske. WAS dann geschieht, entscheidet der Aufrufer: die Lupe sagt es im
-// Klartext (Bedienerhandlung, Regel 4), der stille Weg tut einfach nichts.
 export type EintraegeErgebnis =
   | { ok: true; eintraege: Eintrag[] }
   | { ok: false; grund: 'unvollstaendig' | 'quelleFehlt' }
 
-// Die Eintraege des Fensters beschaffen: Quelle finden, Zeilen holen, filtern,
-// Spalten bauen. EINE Stelle fuer die Lupe UND die stille Uebernahme — zwei
-// Abschriften koennten verschieden urteilen, und dann uebernaehme das Feld von
-// selbst einen anderen Satz als den, den die Lupe zeigt.
 export function holeEintraege(e: NachschlagEinstellung): EintraegeErgebnis {
   if (e.quelleId === '' || e.anzeigeFeld === '' || e.speicherFeld === '') {
     return { ok: false, grund: 'unvollstaendig' }
@@ -170,15 +105,6 @@ export function holeEintraege(e: NachschlagEinstellung): EintraegeErgebnis {
   return { ok: true, eintraege: fensterEintraege(e.el, rows, e.anzeigeFeld, e.speicherFeld) }
 }
 
-// „Es gibt nichts mehr zu waehlen": genau EIN Eintrag ist uebrig und das Feld
-// ist noch leer — dann ist DAS der Satz, den der Bediener meinen kann.
-// Nutzer-Entscheidung 2026-08-05, nur mit der Einstellung am Feld
-// (`einzigerTreffer` — die Einstellung ist das Substantiv, dies hier das Verb).
-//
-// Die Bedingung „Feld leer" ist nicht Bequemlichkeit, sondern der Riegel gegen
-// zwei Fehler: ein bestaetigter Wert darf nie still durch einen anderen
-// ersetzt werden, und ins gefuellte Feld nichts zu schreiben heisst, dass
-// derselbe Anlass beliebig oft laufen kann, ohne sich aufzuschaukeln.
 export function einzigenTrefferFinden(
   eintraege: readonly Eintrag[],
   feldLeer: boolean,
@@ -186,65 +112,26 @@ export function einzigenTrefferFinden(
   return feldLeer && eintraege.length === 1 ? eintraege[0] : null
 }
 
-// Passt der schon uebernommene Satz noch zur Auswahl des Gebers?
-//
-// Der Bediener waehlt einen Kunden, uebernimmt dessen Haustier — und wechselt
-// dann den Kunden. Das Haustier gehoert jetzt zu niemandem mehr: ein falscher
-// Wert, der richtig aussieht. Der Baustein leert sich daraufhin (FormFeldBlock).
-//
-// Geprueft wird mit DERSELBEN Schluessel-Logik wie die Fenster-Filterung, nur
-// angewandt auf den EINEN gemerkten Satz — kein zweites Vergleichen daneben,
-// das anders urteilen koennte als das Fenster.
-//
-// Ohne aktive Auswahl beim Geber (nichts gewaehlt, wieder rausgeklickt) passt
-// er weiter: dann zeigt das Fenster ohnehin alles, und ein Wert, den der
-// Bediener selbst bestaetigt hat, verschwindet nicht von allein.
 export function satzPasstZurAuswahl(el: HTMLElement, satz: unknown): boolean {
   const { rows, gefiltert } = zeilenNachAuswahl(el, [satz])
   return !gefiltert || rows.length > 0
 }
 
-// Was passiert, wenn der Bediener das Nachschlage-Feld VERLAESST?
-//
-// Vorgeschichte (2026-08-07): im Feld sass ein ×-Knopf zum Loeschen. Er ist
-// raus — geloescht wird wie in jedem anderen Feld, mit der Tastatur. Damit
-// wird das Feld tippbar, und ein tippbares Feld kann etwas HALBES enthalten:
-// „Berg" statt „Berger, Anna". Stehen liesse das einen frei getippten Text
-// ueber einem alten Technikwert — die Maske zeigte „Berg", geschrieben wuerde
-// weiter 10024. Genau die Luege, gegen die Regel 3 gebaut ist.
-//
-// Drei Ausgaenge, und nur diese drei:
-//   'leeren'  Das Feld ist leer. Anzeige, Technikwert, gemerkter Satz und die
-//             abgegebene Auswahl gehen mit — und weil es eine BEDIENER-
-//             handlung ist, feuert 'change' und die Kette „Wert geaendert"
-//             laeuft mit leerem Wert.
-//   'zurueck' Etwas Halbes steht drin: zurueck auf den zuletzt bestaetigten
-//             Text. Kein 'change' — es hat sich nichts geaendert.
-//   'nichts'  Durchgeklickt, nichts angefasst.
-//
-// Verglichen wird ZEICHENGENAU (kein trim), aus zwei Gruenden: ein
-// bestaetigter Anzeigewert darf selbst aus Leerzeichen bestehen, und ein
-// versehentlich stehen gebliebenes Leerzeichen ist „halb getippt", nicht
-// „geleert" — den Wert wegzunehmen soll man wollen muessen.
 export type VerlassenFolge = 'nichts' | 'leeren' | 'zurueck'
 
 export function folgeBeimVerlassen(
-  // Was gerade IM Feld steht.
+
   getippt: string,
-  // Was zuletzt bestaetigt wurde: der angezeigte Klarwert und der Technikwert.
+
   bestaetigteAnzeige: string,
   bestaetigterWert: string,
 ): VerlassenFolge {
   if (getippt === '') {
-    // War schon leer? Dann ist Durchklicken keine Bedienerhandlung — sonst
-    // fiele bei jedem Tabben durch ein leeres Feld eine Kette an.
     return bestaetigteAnzeige === '' && bestaetigterWert === '' ? 'nichts' : 'leeren'
   }
   return getippt === bestaetigteAnzeige ? 'nichts' : 'zurueck'
 }
 
-// Es ist immer hoechstens EIN Fenster offen: ein zweites ueber dem ersten
-// waere nicht mehr zuzuordnen (welches Feld fuellt es?).
 let offen: DialogRahmen | null = null
 
 function schliesse(): void {
@@ -276,18 +163,8 @@ function seitenKnopf(text: string, label: string): HTMLButtonElement {
 }
 
 export function oeffneNachschlagen(args: NachschlagenArgs): void {
-  // Die Eintraege stehen fest, sobald das Fenster aufgeht: die Auswahl des
-  // Gebers kann sich waehrend des Suchens nicht aendern (der Bediener steht
-  // hier drin), und ein Daten-Push mitten in der Liste liesse ihn suchen,
-  // waehrend sich die Zeilen unter dem Finger verschieben.
   const ergebnis = holeEintraege(args)
   if (!ergebnis.ok) {
-    // Die Lupe ist eine BEDIENERHANDLUNG: sie darf nie still nichts tun
-    // (Regel 4). Halb Eingestelltes meldet der Preflight zwar, blockt den
-    // Export aber seit 2026-08-10 nicht mehr — jede Maske kann es also tragen,
-    // und dann sagt die Maske selbst im Klartext, was fehlt. Das hier ist die
-    // letzte Instanz. Zwei Ursachen, zwei Meldungen: die eine heilt der Bauer im
-    // Editor, die andere steckt in den Daten der Maske.
     meldeFehler(ergebnis.grund === 'unvollstaendig'
       ? 'Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).'
       : 'Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.')
@@ -306,8 +183,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   dialog.breite = 520
   dialog.hoehe = 380
   dialog.addEventListener(DIALOG_SCHLIESSEN_EVENT, schliesse)
-  // Klicks im Fenster gehoeren dem Fenster: ohne das zaehlte ein Klick auf
-  // eine Trefferzeile zugleich als Klick auf den Baustein darunter.
+
   dialog.addEventListener('click', (event) => event.stopPropagation())
 
   const suche = document.createElement('input')
@@ -328,8 +204,6 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   wertSpalte.style.width = '35%'
   spalten.append(anzeigeSpalte, wertSpalte)
 
-  // Die Spaltenkoepfe tragen die KLARNAMEN der gewaehlten Felder (Regel 3) —
-  // ohne sie stuende hier „10_30" statt „Name".
   const kopf = document.createElement('thead')
   const kopfZeile = document.createElement('tr')
   kopfZeile.append(
@@ -391,9 +265,6 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
     tabellenBereich.scrollTop = 0
 
     if (sichtbareTreffer.length === 0) {
-      // Zwei verschiedene Leermeldungen: „die Quelle ist leer" ist ein
-      // anderes Problem als „deine Suche trifft nichts", und der Bediener
-      // muss wissen, welches er hat.
       const zeile = document.createElement('tr')
       const leer = zelle(
         eintraege.length === 0 ? 'Diese Quelle hat keine Sätze.' : 'Kein Satz passt zur Suche.',
@@ -438,8 +309,6 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   }
 
   suche.addEventListener('input', () => {
-    // Jede neue Suche faengt auf Seite 1 an — sonst stuende man nach dem
-    // Tippen auf Seite 4 einer Trefferliste, die nur noch zwei Seiten hat.
     seite = 1
     zeichneTreffer()
   })

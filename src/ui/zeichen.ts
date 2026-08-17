@@ -1,46 +1,12 @@
-// zeichen — die Symbole der Editor-Oberflaeche.
-//
-// Warum es diese Datei gibt (Welle P, 2026-08-11): 33 Stellen holten ihre
-// Symbole ueber den Sammel-Eingang `from 'lucide-react'`. Der Dev-Server muss
-// dafuer das ganze Paket vorbuendeln — gemessen 1 139 089 Byte JS plus 2,24 MB
-// Quellkarte, und 1616 ms von 2303 ms der gesamten Vorbuendelung (70 %), fuer
-// 46 von 2007 Symbolen. Ein gezielter Einzel-Import ist kein oeffentlicher Weg
-// (Fassung 1.27.0 hat kein `exports`-Feld; geprueft in Etappe S4), und
-// `optimizeDeps` hat keinen Schalter, der einen Sammel-Eingang eindampft.
-//
-// Darum stehen die Zeichnungen jetzt im Projekt (./zeichenDaten): 46 Eintraege,
-// 112 SVG-Knoten, 26 KB statt 1,14 MB. Das ist keine neue Abhaengigkeit und
-// kein Griff in den Innenbau eines Pakets, sondern eine Abschrift der
-// Zeichnungen samt Lizenz (dort). Das Paket bleibt in package.json, bis jemand
-// es ausbaut — dieser Commit tut es nicht.
-//
-// GLEICHE OPTIK ist zugesagt und nachrechenbar: `zeichenFabrik` setzt genau die
-// Attribute, die lucides eigener `Icon` setzt (24x24, viewBox 0 0 24 24, fill
-// none, stroke currentColor, Strichbreite 2, runde Enden und Ecken) und dieselbe
-// Klassenliste `lucide lucide-<name>` — seine `mergeClasses` entdoppelt die
-// beiden gleichen Namen, die es dort erzeugt, das Ergebnis ist genau dieses.
-//
-// Die Symbole sind EDITOR-Sache. Sie erreichen das Runtime-Buendel nie
-// (dieselbe Regel wie core/blocks/editorAngaben, bewacht von check:runtime).
-
 import { createElement, forwardRef, type ReactElement, type SVGProps } from 'react'
 import { KNOTEN, type Knoten } from './zeichenDaten'
 
-// Was ein Symbol annimmt. `size` setzt Breite UND Hoehe (so wie bisher), alles
-// andere sind die ueblichen SVG-Angaben. Traegt die Rolle, die der Rest des
-// Editors bisher als `LucideProps` kannte.
 export interface ZeichenProps extends Omit<SVGProps<SVGSVGElement>, 'ref'> {
   size?: number | string
 }
 
-// Der Typ eines Symbols — bisher `LucideIcon`. Er steht in einer oeffentlichen
-// Schnittstelle (core/blocks/editorAngaben, `symbol?: Zeichen`), darum ein
-// eigener Name statt eines Alias auf ein fremdes Paket.
 export type Zeichen = ReturnType<typeof zeichenFabrik>
 
-// Dieselben Grundattribute wie lucides `defaultAttributes`. Sie stehen hier
-// EINMAL — ein zweiter Satz waere der Weg zu Symbolen, die sich um ein halbes
-// Pixel unterscheiden.
 const GRUND = {
   xmlns: 'http://www.w3.org/2000/svg',
   viewBox: '0 0 24 24',
@@ -61,13 +27,9 @@ function zeichenFabrik(name: string, knoten: readonly Knoten[]) {
           width: size,
           height: size,
           strokeWidth,
-          // Die Klassen bleiben, obwohl sie niemand gestaltet (geprueft
-          // 2026-08-11: kein `.lucide` in irgendeinem Stylesheet) — dieser
-          // Umbau soll am DOM nichts veraendern.
+
           className: ['lucide', `lucide-${name}`, className].filter(Boolean).join(' '),
-          // Ein Symbol ohne eigene Beschriftung ist Dekoration: es bleibt fuer
-          // Vorleseprogramme unsichtbar, solange der Aufrufer nichts anderes
-          // sagt — `rest` steht danach und gewinnt.
+
           'aria-hidden': 'true',
           ...rest,
         },

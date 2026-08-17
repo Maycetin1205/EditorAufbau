@@ -1,21 +1,9 @@
-// SegmentControl
-// Inspector-Control für kind 'segment': die Options-Liste als kompakte
-// Segmentgruppe statt Dropdown (ein Klick, alle Werte sichtbar — dieselbe
-// Optik wie die Seiten-Reiter in der Top-Bar). Options-Werte mit Icon in
-// der Editor-Tabelle segmentIcons zeigen das Icon, der Klarname bleibt
-// Tooltip + zugänglicher Name; sonst steht der Klarname als Text.
-//
-// `label` gesetzt -> eigenständige Zeile (Field-Hülle). Ohne `label` rendert
-// nur die Gruppe — für geteilte Inspector-Zeilen (inspectorRow), in denen
-// das Zeilen-Label schon steht.
-
 import type { PropertySelectOption } from '../../../core/blocks/PropertyDescription'
 import { Field } from '@/ui/molecules/field'
 import { cn } from '@/lib/utils'
 import { segmentIcon } from '../segmentIcons'
 
 interface SegmentControlProps {
-  /** Zugänglicher Name der Gruppe (Property-Klarname), auch ohne label. */
   name: string
   label?: string
   description?: string
@@ -63,8 +51,7 @@ function Segmente({ name, description, value, options, onChange, id }: SegmentCo
 
 export function SegmentControl({ label, ...rest }: SegmentControlProps) {
   if (!label) return <Segmente {...rest} />
-  // Mit Field-Hülle liegt die Beschreibung schon als Label-Tooltip an —
-  // kein zweiter title auf der Gruppe.
+
   return (
     <Field label={label} description={rest.description}>
       {(field) => <Segmente {...rest} description={undefined} id={field.id} />}

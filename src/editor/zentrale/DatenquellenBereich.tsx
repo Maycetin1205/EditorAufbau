@@ -1,11 +1,3 @@
-// DatenquellenBereich — Master-Detail für die Datenquellen-Bibliothek
-// (Gerüst 2026-07-15, ersetzt die frühere schmale DataSourceList).
-// Links die Vorlagen mit Art-Etikett und Verwendungs-Zähler, rechts das
-// Detail: Felder, „Verwendung in dieser Maske". Bearbeiten
-// läuft inline im Detail (FormularKarte) — kein Modal im Modal.
-// Löschen fragt nach, mit deutlicher Warnung, wenn die
-// Quelle in der Maske benutzt wird (Registry-getrieben, kein `if type===`).
-
 import { useRef, useState } from 'react'
 import { FileUp, Plus, TriangleAlert } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
@@ -28,10 +20,9 @@ export function DatenquellenBereich() {
   const store = useDataSources()
   const ed = useEditor()
   const [auswahlId, setAuswahlId] = useState<string | null>(store.list[0]?.id ?? null)
-  // 'lesen' = Detail ansehen; 'bearbeiten'/'neu'/'import' = Formular inline im Detail.
+
   const [modus, setModus] = useState<'lesen' | 'bearbeiten' | 'neu' | 'import'>('lesen')
-  // Ergebnis des zuletzt hochgeladenen SoftEngine-Exports (.DTK) — der
-  // Bediener lädt die Datei hoch, gelesen wird sie in core/data/dtkImport.
+
   const [importStand, setImportStand] = useState<{
     dateiName: string
     tabellen: DtkTabelle[]
@@ -40,10 +31,6 @@ export function DatenquellenBereich() {
   const dateiRef = useRef<HTMLInputElement>(null)
 
   async function dtkGewaehlt(datei: File) {
-    // Unlesbar = leere Tabellenliste: der Import-Dialog sagt es dem
-    // Bediener in Klartext, statt still nichts zu tun. Der GRUND der Panne
-    // reist mit — ohne ihn saehe eine kaputte Datei genauso aus wie eine
-    // heile ohne IDB-Tabellen, und niemand wuesste, welcher Fall vorliegt.
     let tabellen: DtkTabelle[]
     let pannenGrund: string | undefined
     try {
@@ -58,25 +45,12 @@ export function DatenquellenBereich() {
 
   const auswahl = store.list.find((s) => s.id === auswahlId) ?? store.list[0]
 
-  // Klarnamen der Bausteine, die diese Quelle benutzen. Die Baumsuche selbst
-  // wohnt in quellenOps (dort geprueft) — sie zaehlt seit 2026-07-30 auch die
-  // WEITEREN Quellen mit, s. dort.
   const verwendungFor = (id: string): string[] =>
     bausteineMitQuelle(ed.tree, id).map((n) => bausteinName(n, store.list))
 
-  // Eine Stammquelle OHNE Felder bestellt beim ERP nichts — sie sieht heil
-  // aus und liefert nie einen Wert. Bei IDB ist dieselbe Lage harmlos
-  // (SoftEngine schickt dort ohnehin alles), darum nur hier.
-  //
-  // Seit U1 (2026-08-12) traegt das nur noch das Dreieck in der Liste. Der
-  // rote Erklaerkasten im Detail ist auf Nutzer-Ansage weg (U0-2, gleiche
-  // Linie wie „keine Warn-Anzeigen") — nicht wieder einbauen.
   const unvollstaendig = (s: DataSource): boolean =>
     artFuer(s.kind).felderEinzeln && s.fields.length === 0
 
-  // Die SoftEngine-Kennung einer Quelle, egal woher sie kommt — die EINE
-  // Anzeige-Logik wohnt seit 2026-08-06 in dataSources (quellenKennung),
-  // weil Dropdowns und Feld-Picker sie jetzt ebenfalls zeigen.
   const kennung = (s: DataSource): string => quellenKennung(s)
 
   function loeschen(s: DataSource) {
@@ -93,7 +67,7 @@ export function DatenquellenBereich() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1">
-      {/* Master: die Vorlagen-Liste */}
+
       <div className="flex w-64 shrink-0 flex-col border-r border-border">
         <div className="flex flex-col gap-1 border-b border-border p-2">
           <Button
@@ -112,9 +86,7 @@ export function DatenquellenBereich() {
           >
             <FileUp size={14} /> Aus SoftEngine-Datei…
           </Button>
-          {/* Verstecktes Datei-Feld (Muster: Toolbar). Der Wert wird nach
-              JEDEM Versuch geleert — sonst löst dieselbe Datei kein zweites
-              'change' aus und der Bediener klickt ins Leere. */}
+
           <input
             ref={dateiRef}
             type="file"
@@ -156,8 +128,7 @@ export function DatenquellenBereich() {
                   </span>
                 </div>
                 <div className="mt-0.5 pl-[1.125rem] text-[0.625rem] text-muted-foreground">
-                  {/* Kennung zuerst und in Mono — dieselbe dezente
-                      Technik-Marke wie in Dropdowns und Feld-Picker. */}
+
                   {kennung(s) !== '' && (
                     <span className="font-mono">{kennung(s)} · </span>
                   )}
@@ -174,7 +145,6 @@ export function DatenquellenBereich() {
         </div>
       </div>
 
-      {/* Detail */}
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
         {modus === 'neu' && (
           <DataSourceForm onClose={() => setModus('lesen')} />

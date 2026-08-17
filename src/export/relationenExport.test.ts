@@ -1,14 +1,5 @@
-// Export-Tests: Relationsvorlagen aus Aktionsschritten
-//
-// Am 2026-08-06 aus export.test.ts herausgeloest — die Datei war mit der
-// senkrechten Trennlinie ueber den 500-Zeilen-Deckel gewachsen (check:regeln).
-// Geschnitten wurde nach Thema, wie zuvor bei auswahlExport, nachschlagenExport
-// und validator: hier steht, was auf dem Weg vom Aktionsschritt in die
-// FF_RELATIONS der Maske passiert — die Bausteine selbst pruefen die anderen.
-// LEITPLANKE: Tests niemals loeschen/abschwaechen, um "gruen" zu werden.
-
 import { describe, expect, it } from 'vitest'
-// Side-Effect-Import: registriert das Formularfeld (Parameter aus Baustein-Wert).
+
 import '../blocks/formfeld/FormFeldBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
@@ -74,9 +65,6 @@ describe('exportMask: Relationen', () => {
     expect(html).toContain('&quot;blockId&quot;:&quot;feld-tiername&quot;')
     expect(preflightMask(tree, [], relations)).toEqual([])
 
-    // Der geloeschte Baustein: der Schritt zeigt auf eine ID, die es nicht mehr
-    // gibt — der Preflight muss das blocken, statt eine Maske mit stillem
-    // Leerwert auszuliefern (Regel 4).
     const ohneFeld: BlockTree = {
       root: { ...tree.root, childIds: ['button'] },
       button: tree.button,

@@ -1,8 +1,3 @@
-// blockRegistry
-// Zentrale Map: Typ-Name -> BlockDefinition (Tag, Defaults, Inspector-Felder).
-// Jede Block-View-Datei registriert sich selbst am Datei-Ende (Plugin-Pattern).
-// Sidebar/Factory/Inspector lesen aus dieser Registry.
-
 import type { BlockDefinition } from './BlockDefinition'
 
 const registry = new Map<string, BlockDefinition>()
@@ -22,12 +17,6 @@ export function getAllBlockDefinitions(): BlockDefinition[] {
   return Array.from(registry.values())
 }
 
-// Erlaubte-Kind-Typen-Regel an EINER Stelle: Store, Drag-Vorschau
-// und Palette fragen alle hier. Unbekannte Elterntypen (z. B. die implizite
-// Wurzel) beschränken nichts; Nicht-Container nehmen nie Kinder auf.
-// S3 ergänzt die Gegenrichtung: deklariert das KIND erlaubte Eltern-Typen
-// (Karte -> nur Kanban-Spalte), zählt auch die Wurzel nicht als Ziel —
-// eine Karte lässt sich nicht mehr aus dem Kanban herausziehen.
 export function canContain(parentType: string, childType: string): boolean {
   const child = registry.get(childType)
   if (child?.allowedParentTypes && !child.allowedParentTypes.includes(parentType)) {

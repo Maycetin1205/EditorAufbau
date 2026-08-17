@@ -1,24 +1,3 @@
-// StepForm — ein Schritt im Ablauf: Baustein -> Ereignis -> Aktion.
-//
-// START_TOOL und RELATION teilen nur die Huelle; ihre Felder bleiben durch
-// das typisierte Kernmodell strikt getrennt. START_TOOL traegt nur die
-// Nummer — KEINE Parameter im Formular (Nutzer-Entscheidung 2026-07-15);
-// toolParams bleibt im Modell fuer Altbestaende und die Laufzeit,
-// gespeichert wird leer.
-//
-// Das Formular liefert nur seinen INHALT: Rahmen, Kopfzeile und Schliessen
-// stellt seit 2026-08-17 das KettenFenster. Bis dahin blaetterte es das
-// 340-px-Inspector-Panel um, und die Parameter standen einzeilig, WEIL dort
-// nichts anderes ging. Einzeilig bleiben sie — jetzt aber mit Platz: Herkunft
-// und Ziel teilen sich eine breite Zeile, statt sie sich zu nehmen.
-//
-// Die Teile daneben, jeder mit einer Aufgabe (Aufteilung 2026-07-24, weil
-// diese Datei ueber den 500-Zeilen-Deckel gewachsen war):
-//   - ParameterZeile  eine Parameterzeile samt Wert-Steuerung
-//   - RelationAuswahl Vorlagen-Suche + -Liste mit Lesen/Schreiben-Tabs
-//   - SchrittSelect   das kompakte Auswahlfeld (seit 2026-07-30 in
-//                     ui/atoms — die QuellenListe ist der zweite Benutzer)
-
 import { useState } from 'react'
 import { Plus } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
@@ -61,30 +40,22 @@ import { SelectControl } from '../inspector/controls/SelectControl'
 
 interface StepFormProps {
   step?: ActionStep
-  // Die AKTUELLE Kette des Ereignisses — für die Auswahl „Ergebnis von
-  // Schritt N" (nur GET-Schritte VOR diesem Schritt sind wählbar).
+
   kette: readonly ActionStep[]
   onSave: (step: ActionStep) => void
   onClose: () => void
 }
 
-
 export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const relations = useRelations()
   const dataSources = useDataSources()
   const ed = useEditor()
-  // Wählbare GET-Ergebnisse: nur Schritte VOR diesem (neuer Schritt = Ende).
+
   const ergebnisSchritte = ergebnisSchritteVor(kette, step?.id, relations.list)
   const ergebnisIds = ergebnisSchritte.map((s) => s.id)
-  // Popup-Seiten der Maske: Auswahl per Klarname, gespeichert wird
-  // die stabile Seiten-id (übersteht Umbenennen). Nur FENSTER-Seiten —
-  // eine Ansicht ist kein Popup (istFensterSeite).
+
   const popupSeiten = ed.pages.filter(istFensterSeite)
   const blockValues: BlockValueOption[] = actionValueTargets(ed.tree).map(({ node, spot }) => {
-    // DER eine Klarname (bausteinName) — bis 2026-08-17 stand hier eine
-    // eigene Abschrift derselben Regel, und die kannte den Alias eines
-    // gebundenen Felds nicht: in genau DIESER Klappliste standen dadurch
-    // zehnmal „Formularfeld" untereinander (Nutzer-Befund).
     const def = getBlockDefinition(node.type)
     const name = bausteinName(node, dataSources.list)
     const mehrereStellen = (def?.actionValueSpots?.length ?? 0) > 1
@@ -96,9 +67,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     }
   })
   const actionValueRefs = blockValues.map(({ blockId, prop }) => ({ blockId, prop }))
-  // Auswahl-Geber der Maske (Registry auswahlGeber) für die Parameterquelle
-  // „Feld der gewählten Zeile". Gibt es keinen, ist die Quelle nicht wählbar
-  // (ParameterZeile) — ein Formular ohne wählbaren Geber wäre Rätselraten.
+
   const geber = auswahlGeberOptionen(auswahlGeberImBaum(ed.tree), dataSources.list)
   const geberIds = geber.map((g) => g.blockId)
   const [typ, setTyp] = useState<StepTypeKey>(step?.type ?? 'START_TOOL')
@@ -134,18 +103,8 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const bindingFor = (index: number): ActionParamBinding =>
     relationParams[index] ?? defaultParams[index] ?? { source: 'fixed', value: '' }
 
-  // WAS IM FELD STEHT vs. WAS GESCHICKT WIRD (Nutzer-Ansage 2026-08-06).
-  //
-  // Im Feld steht NUR, was der Bauer selbst gesetzt hat. Der Wert aus der
-  // Syntaxzeile steht grau als Platzhalter dahinter -- er sagt, WELCHER
-  // Parameter hier erwartet wird, und wird NICHT geschickt. Vorher wanderte
-  // er als echter Wert mit: SoftEngine bekam die Feldnamen als Inhalte
-  // (defaultRelationParams, dort steht der belegte Fall).
-  //
-  // Leer bleibt damit leer -- auch im Export. Kein Rueckfall auf die Vorlage.
   const platzhalterFor = (raw: string): string => (raw === '' ? '(leer)' : raw)
-  // Nummern der weggelassenen Parameter (0-basiert) -- fuer die Zeile unter
-  // der Liste, die sie benennt und zurueckholt.
+
   const ausgelassen = relation
     ? relation.params.map((_, index) => index).filter((i) => bindingFor(i).source === 'aus')
     : []
@@ -156,8 +115,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const setBinding = (index: number, binding: ActionParamBinding) => {
     setUebernahmeBestaetigung('')
     setRelationParams((current) => {
-      // Die Liste muss so lang sein wie die Syntax der Vorlage — sonst blockt
-      // stepProblem mit „nicht alle Syntaxparameter uebernommen".
       const next = relation ? defaultRelationParams(relation) : [...current]
       current.forEach((value, at) => { if (at < next.length) next[at] = value })
       next[index] = binding
@@ -175,8 +132,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
     if (!selected.allowExtraParams) setExtraParams([])
   }
 
-  // Auslöser sitzt an der Positions-Zeile (Nutzer-Entscheidung 2026-07-22):
-  // der Picker öffnet direkt unter dem angeklickten „Feld wählen"-Link.
   function oeffneUebernahmePicker(ziel: FeldUebernahmeZiel, anchor: HTMLElement) {
     const rect = anchor.getBoundingClientRect()
     setPickerPosition({ top: rect.bottom + 4, left: rect.left })
@@ -244,9 +199,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
       relationId,
       params: normalizedParams,
       extraParams: extraParams.map((binding) => ({ ...binding, value: binding.value.trim() })),
-      // Das freie Feld „Ergebnisname" ist entfernt (Nutzer 2026-07-22 —
-      // „Ergebnis von Schritt" ersetzt es); ein vorhandener Alt-Name bleibt
-      // beim Bearbeiten erhalten, die Laufzeit liest ihn unverändert.
+
       resultKey: step?.resultKey ?? '',
     }
   }
@@ -326,9 +279,6 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
             <>
               <div className="flex flex-col gap-2">
                 {relation.params.map((raw, index) => {
-                  // Mit dem x abgeschaltet: die Zeile ist WEG. Zurueckholen
-                  // geht ueber die Zeile unter der Liste -- ein Parameter, der
-                  // sich nicht wiederholen laesst, waere eine Falle.
                   if (bindingFor(index).source === 'aus') return null
                   const parameterArt = feldUebernahmeArt(raw)
                   const ausloeser = parameterArt === 'relid'

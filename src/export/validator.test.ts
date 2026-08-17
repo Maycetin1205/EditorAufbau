@@ -1,13 +1,3 @@
-// Verteidigung des Exports: der Validator (Marker, LF-only, ASCII,
-// SoftEngine-Interface, eingebettetes Runtime-Buendel) und die Zeichen-Regeln
-// des Serializers.
-//
-// Am 2026-08-06 aus export.test.ts herausgeloest — die Datei war ueber den
-// 500-Zeilen-Deckel gewachsen (check:regeln). Der Schnitt ist der natuerliche:
-// drueben die Abbildung Baum -> Markup, hier die maschinelle PRUEFUNG des
-// Ergebnisses. Die Faelle sind unveraendert uebernommen.
-// LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
-
 import { describe, expect, it } from 'vitest'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
@@ -17,8 +7,6 @@ import { registerTestBlocks, TEST_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
 
-// Kleinste gueltige Maske: ein Baustein auf der Rasterflaeche. Mehr braucht
-// die Verteidigung nicht — geprueft wird die Huelle, nicht der Inhalt.
 function kleineMaske(): BlockTree {
   return {
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t1'] },
@@ -67,13 +55,10 @@ describe('validateMaskHtml (Verteidigung)', () => {
 
 describe('serializer (ASCII-Regel)', () => {
   it('escaped Umlaute wie bisher, aber Emoji als GANZEN Codepoint (kein Surrogat-Bruch)', () => {
-    // Umlaute: byte-identisch zur alten Fassung — Regressionsschutz, damit der
-    // Referenzabzug vom Emoji-Fix NICHT beruehrt wird.
     expect(escapeHtmlText('Grüße')).toBe('Gr&#xFC;&#xDF;e')
-    // Emoji (U+1F600): frueher zwei ungueltige Surrogat-Haelften
-    // (&#xD83D;&#xDE00;), jetzt EIN gueltiger Codepoint.
+
     expect(escapeHtmlText('Status 😀')).toBe('Status &#x1F600;')
-    // Keine isolierte Surrogat-Referenz (D800..DFFF) mehr im Ergebnis.
+
     expect(escapeHtmlText('😀')).not.toMatch(/&#xD[89A-F][0-9A-F][0-9A-F];/i)
   })
 })

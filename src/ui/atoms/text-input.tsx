@@ -1,7 +1,3 @@
-// TextInput: Atom — reines einzeiliges Eingabefeld.
-// Label/Beschreibung/Fehlertext kommen vom Field-Molekül. Fehlerzustand wird
-// über aria-invalid eingefärbt (das setzt Field).
-
 import { forwardRef, type InputHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 

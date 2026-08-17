@@ -1,34 +1,3 @@
-/* Masken-Schriften (eingebettet)
-   ================================================================
-   EINE Schrift: Figtree, die Werk-Schrift der Designsprache
-   "Fellnase" (--se-font). SIL Open Font License, Latin-Teilsatz mit
-   Umlauten, variabel 300-800.
-
-   WARUM als Daten-URI und nicht per Link: die exportierte Maske ist
-   EINE HTML-Datei, die in SoftEngine laeuft. Ein Verweis auf eine
-   Schriftdatei braeche den Export-Kontrakt (zwei Dateien, nichts
-   daneben) und waere ein Netzzugriff, den die Maske nicht hat. Ohne
-   Einbettung faellt SoftEngine auf Segoe UI zurueck.
-
-   PREIS: rund 28 KB pro exportierter Maske. Das ist die eine Stelle,
-   an der die Uebernahme der Designsprache Gewicht kostet; sie steht
-   bewusst in EINER eigenen Datei, damit man sie an EINEM Ort wieder
-   herausnehmen kann.
-
-   WARUM NUR EINE: die Schmuck-Schrift Fraunces lag hier von
-   2026-08-05 bis 2026-08-05 daneben und wog allein 88 KB -- gut drei
-   Viertel des Gewichts fuer eine Schrift, die an genau ZWEI Stellen
-   erscheint (Kopf von Popup und Nachschlagefenster). Figtree traegt
-   dagegen jeden Buchstaben der Maske. Der Schmuck-Token bleibt und
-   zeigt auf Georgia: die Koepfe behalten ihren Serifen-Kontrast zum
-   Figtree-Fliesstext, kostenlos. Nutzer-Entscheidung 2026-08-05
-   ("was technisch sauberer ist").
-
-   Diese Datei wird NICHT von Hand bearbeitet -- sie ist der Abzug aus
-   designsprache/schriften.css (Quelle: fonts.google.com, Figtree v9
-   variabel 300-800).
-   ================================================================ */
-
 @font-face {
   font-family: 'Figtree';
   font-style: normal;

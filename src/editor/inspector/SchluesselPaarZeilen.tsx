@@ -1,21 +1,3 @@
-// SchluesselPaarZeilen — „Woran erkennt man die zusammengehörige Zeile?":
-// die Feldpaare „Feld = Feld" samt Entfernen und „Feld dazu".
-//
-// Zwei Sektionen stellen dieselbe Frage und hatten sie bis U3 (2026-08-12) je
-// eigen gebaut: die QuellenListe (weitere Datenquelle ↔ Datenquelle 1) und die
-// AuswahlFolgeSektion (dieser Baustein ↔ Auswahl-Geber). Beide Fassungen waren
-// Zeile für Zeile dieselbe — inklusive Deckel, Entfernen-Knopf und dem
-// „Feld dazu" darunter. Wer eine reparierte, reparierte die halbe Bedienung.
-//
-// Der Bediener sieht ausschließlich Klarnamen (Feldbezeichnungen); die
-// Feldcodes arbeiten unsichtbar darunter (Regel 3). Kein eigener Zustand: jede
-// Änderung geht als GANZE Liste zurück an den Aufrufer und von dort sofort in
-// den Baum.
-//
-// Die Bezeichnungen kommen als Funktionen herein, weil sie je Sektion etwas
-// anderes benennen („Feld 1 der ersten Datenquelle" vs. „Feld 1 beim
-// Auswahl-Geber"). Für Hilfstechnik ist genau das der Unterschied, der zählt.
-
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -24,11 +6,9 @@ import type { DataSourceField } from '../../core/data/dataSources'
 import { MAX_SCHLUESSELPAARE, type SchluesselPaar } from '../../core/data/sourceLinks'
 
 interface SchluesselPaarZeilenProps {
-  // Die Frage über den Zeilen, in der Zahl der jeweiligen Sektion.
   frage: string
   paare: readonly SchluesselPaar[]
-  // Felder der linken (fromField) und der rechten (toField) Seite. Leer =
-  // die zugehörige Quelle steht noch nicht — dann bleibt nur „— Feld —".
+
   linkeFelder: readonly DataSourceField[]
   rechteFelder: readonly DataSourceField[]
   linkeBezeichnung: (at: number) => string

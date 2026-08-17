@@ -1,7 +1,3 @@
-// Tests des gemeinsamen Auswahl-Zustands (Zeile anklicken -> Folger filtern).
-// Pur in Node: das Element wird als Attribut-Traeger nachgestellt (dasselbe
-// Muster wie die uebrigen seRuntime-Helfer-Tests, kein DOM noetig).
-
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   einzigenTrefferFinden,
@@ -39,8 +35,7 @@ describe('waehleAuswahl (Toggle, Nutzer 2026-08-05: „rausklicken")', () => {
 
   it('dieselbe Zeile noch einmal = abgewaehlt — auch als NEUES Objekt gleichen Inhalts', () => {
     waehleAuswahl('t1', zeile)
-    // Nach einem SE-Push sind die Zeilen NEUE Objekte: die Identitaet ist
-    // der Inhalt (JSON-Abdruck), nie die Referenz.
+
     waehleAuswahl('t1', { '2_8': '10001', name: 'Meier' })
     expect(auswahlFuer('t1')).toBeUndefined()
   })
@@ -69,7 +64,7 @@ describe('waehleAuswahl (Toggle, Nutzer 2026-08-05: „rausklicken")', () => {
     aufAuswahlHoeren(() => { rufe++ })
     waehleAuswahl('t1', zeile)
     klareAuswahl('t1')
-    klareAuswahl('t1') // schon leer -> keine Meldung
+    klareAuswahl('t1')
     expect(rufe).toBe(2)
   })
 })
@@ -78,9 +73,6 @@ describe('setzeAuswahl (Uebernehmen-Geste, 2026-08-06)', () => {
   const zeile = { '2_8': '10024', name: 'Berger' }
 
   it('setzt die Zeile — und DERSELBE Satz noch einmal hebt sie NICHT auf', () => {
-    // Der Unterschied zum Anklicken: wer im Nachschlage-Fenster denselben
-    // Kunden ein zweites Mal bestaetigt, meint „ja, den" — ein Toggle machte
-    // aus der Bestaetigung ein Loeschen.
     setzeAuswahl('feld', zeile)
     setzeAuswahl('feld', { '2_8': '10024', name: 'Berger' })
     expect(auswahlFuer('feld')).toEqual(zeile)
@@ -90,7 +82,7 @@ describe('setzeAuswahl (Uebernehmen-Geste, 2026-08-06)', () => {
     let rufe = 0
     aufAuswahlHoeren(() => { rufe++ })
     setzeAuswahl('feld', zeile)
-    setzeAuswahl('feld', zeile) // schon gesetzt -> keine Meldung, kein Neuzeichnen
+    setzeAuswahl('feld', zeile)
     setzeAuswahl('feld', { '2_8': '10031' })
     expect(auswahlFuer('feld')).toEqual({ '2_8': '10031' })
     expect(rufe).toBe(2)
@@ -129,10 +121,6 @@ describe('folgenAusAttribut (Laufzeit-Leser des Export-Attributs)', () => {
   })
 })
 
-// Der Filter wohnte bis 2026-08-06 in tabelle/seRuntime (samt dieser Tests).
-// Er ist hierher gezogen, weil die Einzelwert-Bausteine der zweite Folger
-// sind und beide DIESELBE Regel brauchen. LEITPLANKE: Tests niemals
-// loeschen/abschwaechen — sie sind unveraendert mitgezogen.
 const folger = (keyPairs: { fromField: string; toField: string }[]): HTMLElement =>
   elementMit({ folgtauswahl: JSON.stringify([{ geberId: 'kunden', keyPairs }]) })
 
@@ -197,8 +185,6 @@ describe('zeilenNachAuswahl', () => {
   })
 
   it('LEERER Schluesselwert beim Geber trifft NICHTS (Regel wie schluesselAus)', () => {
-    // Der gewaehlte Kunde hat keine Adressnummer: „alle Belege" waere
-    // geraten, „die mit ebenfalls leerem Feld" auch — also keine.
     waehleAuswahl('kunden', { '2_8': '   ' })
     const { rows, gefiltert } = zeilenNachAuswahl(
       folger([{ fromField: '2_8', toField: '3_8' }]),
@@ -230,10 +216,6 @@ describe('ersteZeileNachAuswahl (Einzelwert-Bausteine, 2026-08-06)', () => {
     expect(ersteZeileNachAuswahl(folger(paar), belege)).toBe(belege[1])
   })
 
-  // Strenge Leer-Regel (Nutzer-Entscheidung 2026-08-06 nach dem SE-Echttest):
-  // wer der Auswahl folgt, zeigt NUR, was die Auswahl liefert. „Die erste
-  // Zeile" waere ein konkreter Datensatz, den der Bediener fuer den
-  // ausgewaehlten haelt.
   it('mit Folge, aber ohne Auswahl: LEER — nicht die erste Zeile', () => {
     expect(ersteZeileNachAuswahl(folger(paar), belege)).toBeUndefined()
   })
@@ -242,7 +224,7 @@ describe('ersteZeileNachAuswahl (Einzelwert-Bausteine, 2026-08-06)', () => {
     const el = folger(paar)
     waehleAuswahl('kunden', { '2_8': '20002' })
     expect(ersteZeileNachAuswahl(el, belege)).toBe(belege[1])
-    // Dieselbe Zeile noch einmal = abgewaehlt (Toggle).
+
     waehleAuswahl('kunden', { '2_8': '20002' })
     expect(ersteZeileNachAuswahl(el, belege)).toBeUndefined()
   })
@@ -253,7 +235,6 @@ describe('ersteZeileNachAuswahl (Einzelwert-Bausteine, 2026-08-06)', () => {
   })
 
   it('HALBES Feldpaar zaehlt nicht: Grundzustand, kein Leer-Blinken beim Einstellen', () => {
-    // Der Bediener hat den Geber gewaehlt und tippt gerade am Feldpaar.
     const halb = folger([{ fromField: '2_8', toField: '' }])
     expect(ersteZeileNachAuswahl(halb, belege)).toBe(belege[0])
     waehleAuswahl('kunden', { '2_8': '20002' })
@@ -266,27 +247,10 @@ describe('ersteZeileNachAuswahl (Einzelwert-Bausteine, 2026-08-06)', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// A7.3 (2026-08-11): Was macht ein KREIS in den Auswahl-Folgen?
-//
-// „A folgt B, B folgt A" ist im Editor einstellbar. Die Frage des Plans war
-// nicht, ob man das verbieten soll, sondern erst einmal: endet die Nachmeldung
-// in `melde()` dann ueberhaupt? Sie laeuft `do { hoerer } while (nachmeldung)`,
-// und jeder Hoerer darf die Auswahl waehrend des Laufs erneut aendern.
-//
-// Die Faelle unten stellen die Hydrierung der Maske nach — nicht mit Bausteinen
-// (die sind DOM), sondern mit DENSELBEN puren Funktionen, die die Bausteine
-// dafuer rufen. Ein Kommentar je Fall nennt die Stelle, die er nachstellt.
-//
-// Der Rundenzaehler mit Deckel ist die Notbremse: laeuft eine Runde nicht aus,
-// soll der Test das BEHAUPTEN und nicht den Lauf haengen lassen.
 const RUNDEN_DECKEL = 12
 let hydriere: (() => void) | null = null
 let runden = 0
 
-// `aufAuswahlHoeren` hat bewusst kein Gegenstueck (die Bausteine der laufenden
-// Maske melden sich einmal an und bleiben). Darum EIN Hoerer, den jeder Fall
-// selbst ein- und wieder ausschaltet — sonst wirkte er in die folgenden hinein.
 aufAuswahlHoeren(() => {
   if (!hydriere) return
   runden++
@@ -306,9 +270,6 @@ function mitHydrierung(lauf: () => void, tun: () => void): number {
 }
 
 describe('Auswahl-Folge im Kreis (A7.3)', () => {
-  // Nachstellung von tabelle/seRuntime.ts:103 bzw. kanban/seRuntime.ts:206:
-  // sichtbare Zeilen ausrechnen, dann die eigene Auswahl darin wiederfinden —
-  // ist sie weg, hebt `auswahlWiederfinden` sie auf.
   const hydriereTabelle = (id: string, el: HTMLElement, zeilen: unknown[]): void => {
     auswahlWiederfinden(id, zeilenNachAuswahl(el, zeilen).rows, (r) => r)
   }
@@ -317,7 +278,6 @@ describe('Auswahl-Folge im Kreis (A7.3)', () => {
   const belege = [{ '3_8': '10001' }, { '3_8': '20002' }]
 
   it('zwei Tabellen im Kreis: die Nachmeldung endet', () => {
-    // kunden folgt belege UND belege folgt kunden — der direkte Kreis.
     const elKunden = elementMit({ folgtauswahl: JSON.stringify([
       { geberId: 'belege', keyPairs: [{ fromField: '3_8', toField: '2_8' }] },
     ]) })
@@ -329,15 +289,12 @@ describe('Auswahl-Folge im Kreis (A7.3)', () => {
       hydriereTabelle('kunden', elKunden, kunden)
       hydriereTabelle('belege', elBelege, belege)
     }, () => {
-      waehleAuswahl('belege', belege[1]) // erst ein Beleg …
-      waehleAuswahl('kunden', kunden[0]) // … dann ein Kunde, der dazu nicht passt
+      waehleAuswahl('belege', belege[1])
+      waehleAuswahl('kunden', kunden[0])
     })
 
     expect(gelaufen).toBeLessThanOrEqual(RUNDEN_DECKEL)
-    // Die zweite Wahl haelt nicht: der gewaehlte Kunde ist in der (durch den
-    // Beleg eingeengten) Liste gar nicht sichtbar, und eine Auswahl auf einer
-    // unsichtbaren Zeile hebt `auswahlWiederfinden` bewusst auf — sonst filterte
-    // die Maske nach etwas, was niemand markiert sieht.
+
     expect(auswahlFuer('kunden')).toBeUndefined()
     expect(auswahlFuer('belege')).toEqual(belege[1])
   })
@@ -364,19 +321,7 @@ describe('Auswahl-Folge im Kreis (A7.3)', () => {
     expect(auswahlFuer('c')).toEqual(c[1])
   })
 
-  // Warum die zwei Faelle oben enden: die Tabellen-Hydrierung kann eine Auswahl
-  // nur AUFHEBEN. Der Zustand schrumpft also, und was leer ist, meldet nicht
-  // erneut — hoechstens so viele Runden, wie es Geber gibt.
-  //
-  // Zwei NACHSCHLAGE-Felder koennen mehr: ihre Hydrierung
-  // (FormFeldBlock.pruefeEigenenWert, formfeld/FormFeldBlock.ts:420) leert bei
-  // Nichtpassen UND uebernimmt danach den einzigen uebrigen Satz. Sie kann also
-  // auch SETZEN — und damit ist der Zustand nicht mehr monoton.
   it('zwei Nachschlage-Felder im Kreis mit „einziger Treffer": die Nachmeldung endet NICHT', () => {
-    // Die Schluesselfelder zeigen in BEIDE Richtungen auf verschiedene Felder.
-    // Genau das nimmt der Vergleichbarkeit die Symmetrie: „a passt zu b" heisst
-    // dann nicht mehr „b passt zu a", und beide Felder koennen sich abwechselnd
-    // gegenseitig fuer unpassend erklaeren.
     const elA = elementMit({ folgtauswahl: JSON.stringify([
       { geberId: 'b', keyPairs: [{ fromField: '9_8', toField: '5_8' }] },
     ]) })
@@ -385,8 +330,7 @@ describe('Auswahl-Folge im Kreis (A7.3)', () => {
     ]) })
     const zeilenA = [{ '5_8': '1', '7_2': 'P' }, { '5_8': '2', '7_2': 'Q' }]
     const zeilenB = [{ '11_2': 'Q', '9_8': '1' }, { '11_2': 'P', '9_8': '2' }]
-    // Der gemerkte Satz je Feld (`this.satz` im Baustein) — er wandert mit der
-    // abgegebenen Auswahl, genau wie leereNachschlagen/uebernimmSatz es tun.
+
     const satz: Record<string, unknown> = { a: zeilenA[0], b: zeilenB[1] }
 
     const feld = (id: string, el: HTMLElement, zeilen: unknown[], anzeige: string, wert: string): void => {
@@ -412,11 +356,6 @@ describe('Auswahl-Folge im Kreis (A7.3)', () => {
       setzeAuswahl('b', zeilenB[1])
     })
 
-    // Ohne die Notbremse oben liefe das endlos: jede Runde raeumt das eine Feld
-    // ab, uebernimmt den einzigen uebrigen Satz, macht damit den Satz des
-    // anderen unpassend — und der tut dasselbe zurueck. In der Maske friert der
-    // Reiter ein. Was daraus folgt, ist eine Nutzerentscheidung (A7.3): dieser
-    // Test BELEGT nur, dass der Fall existiert.
     expect(gelaufen).toBeGreaterThan(RUNDEN_DECKEL)
   })
 })

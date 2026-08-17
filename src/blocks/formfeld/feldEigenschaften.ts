@@ -1,18 +1,5 @@
-// feldEigenschaften — was der Inspector zum Formularfeld anbietet.
-//
-// Aus FormFeldBlock herausgeloest (2026-08-05), als „Einzigen Treffer
-// uebernehmen" die Datei ueber den 500-Zeilen-Deckel schob (check:regeln).
-// Reine Deklaration: die Registry liest sie, Inspector und Export lesen sie
-// generisch (Regel 2). Derselbe Schnitt wie tabelle/tabelleEigenschaften.ts.
-//
-// Die Klarnamen stehen hier, die Technikwerte (text/number/nachschlagen …)
-// arbeiten unsichtbar darunter — Regel 3.
-
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 
-// Alles, was NUR beim Nachschlagen gilt, haengt an derselben Bedingung. EINE
-// Konstante dafuer: sonst zeigt beim naechsten Feldtyp die eine Sektion noch
-// und die andere schon nicht mehr.
 const NUR_NACHSCHLAGEN = { attributeName: 'fieldType', equals: 'nachschlagen' } as const
 
 export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
@@ -27,9 +14,7 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
       { value: 'textarea', label: 'Mehrzeilig' },
       { value: 'select', label: 'Auswahl' },
       { value: 'date', label: 'Datum' },
-      // Uhrzeit liefert „15:00" — genau die Form, in der SoftEngine Zeiten
-      // schreibt (Feld-Art 'Z', belegt im empfang-Log des Nutzers 2026-08-12).
-      // Anders als beim Datum wird deshalb NICHTS umgerechnet.
+
       { value: 'time', label: 'Uhrzeit' },
       { value: 'checkbox', label: 'Ankreuzfeld' },
       { value: 'nachschlagen', label: 'Nachschlagen' },
@@ -67,11 +52,7 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
     klarnameProp: 'speicherTitel',
     visibleWhen: NUR_NACHSCHLAGEN,
   },
-  // Nutzer-Entscheidung 2026-08-05. Der Fall: ein Kunde-Feld und ein
-  // Haustier-Feld, das ihm folgt. Hat der Kunde genau EIN Haustier, ist die
-  // Lupe eine Handbewegung ohne Wahl — es gibt nichts zu waehlen. Standard
-  // bleibt NEIN: ein Feld, das sich von selbst fuellt, muss der Bauer wollen
-  // (Regel 7 — der Editor erfindet nichts).
+
   {
     attributeName: 'einzigerTreffer',
     name: 'Einzigen Treffer übernehmen',
@@ -85,10 +66,7 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
     name: 'Feld',
     description: 'Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.',
     kind: 'field',
-    // NICHT am Nachschlage-Feld: dort ENTSTEHT der Wert durch die Auswahl
-    // im Fenster. Eine Datenbindung obendrauf ueberschriebe ihn bei jedem
-    // SE-Push, waehrend das Feld weiter den Klarwert zeigte — Anzeige und
-    // Ketten-Wert liefen still auseinander.
+
     visibleWhen: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
   },
 ]

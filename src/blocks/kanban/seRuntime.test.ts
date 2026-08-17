@@ -1,16 +1,5 @@
-// Unit-Tests für die puren Helfer der SoftEngine-Anbindung:
-// Feldcode-Auflösung (direkt + pos_len aus dem SATZ), Zeilen aus den
-// SEDATA-Formen der Referenzmaske, Spalten-Zuordnung mit Auffang.
-// Die DOM-Hydrierung selbst ist NICHT abgedeckt: der Browser-Test dazu ist mit
-// Playwright entfallen (Nutzer-Entscheidung 2026-07-23), und neue Testarten
-// sind gesperrt. Sie wird von Hand im Browser und in SoftEngine geprueft.
-// LEITPLANKE: Tests niemals löschen/abschwächen, um "grün" zu werden.
-// Schicht-Umzug 2026-07-15: die allgemeinen Helfer wohnen jetzt in
-// src/softengine/ — nur die Importpfade sind neu, jede Aussage unverändert.
-
 import { describe, expect, it } from 'vitest'
-// formatNowDate ist mit Z2 nach core/data/relations gezogen (zweiter
-// Konsument seAktionen) — der Testfall selbst ist unverändert.
+
 import { formatNowDate } from '../../core/data/relations'
 import {
   findRuntimeDataSource,
@@ -29,8 +18,6 @@ import {
 } from '../../softengine/relations'
 import { columnIndexFor } from './seRuntime'
 
-// die exportierte Maske traegt ihre Quellen-Definitionen selbst
-// (window.FF_DATA_SOURCES aus exportMask) — hier die pure Aufloesung dazu.
 describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
   const liste = [
     { id: 'terminplaner', name: 'Terminplaner', tableId: 'IDBID0001', indexField: '0_10' },
@@ -56,8 +43,6 @@ describe('findRuntimeDataSource (FF_DATA_SOURCES -> Quelle)', () => {
   })
 })
 
-// die exportierte Maske traegt ihre Relation-Vorlagen selbst
-// (window.FF_RELATIONS aus exportMask) — hier die pure Aufloesung dazu.
 describe('findRuntimeRelation (FF_RELATIONS -> Vorlage)', () => {
   const liste = [
     { id: 'standard-put', verb: 'PUT_RELATION', nr: '174', params: ['{FELD_POS}', 'L'] },
@@ -101,8 +86,7 @@ describe('Relations-Antworten (BWMSG/WWMSG-Callback und SEDATA-Fallback)', () =>
       Daten: {},
     }
     expect(seMessageKeys(seData)).toEqual(['Message1', 'Message3'])
-    // Seit 2026-08-07 kommt die ROHE Antwort mit zurueck: nur aus ihr kann ein
-    // Ketten-Parameter ein einzelnes FELD des Ergebnisses lesen.
+
     expect(newSeMessageResult(seData, new Set(['Message1'])))
       .toEqual({ wert: 'neu', roh: seData.Message3 })
     expect(newSeMessageResult(seData, new Set(['Message1', 'Message3']))).toBeUndefined()
@@ -157,7 +141,6 @@ describe('getField (Feldcode -> Wert)', () => {
   })
 
   it('faellt auf pos_len aus dem SATZ-Rohstring zurueck (SATZNEU vor SATZ)', () => {
-    //            0123456789
     const satz = 'K2      Katze                         '
     expect(getField({ SATZ: satz }, '0_8')).toBe('K2')
     expect(getField({ SATZ: satz }, '8_30')).toBe('Katze')
@@ -171,15 +154,12 @@ describe('getField (Feldcode -> Wert)', () => {
     expect(getField('keine zeile', '78_30')).toBe('')
   })
 
-  // SE-Echttest 2026-07-11: SoftEngine liefert Zeilen-Properties MIT
-  // Tabellen-Praefix (TFELD.Name = 'IDBID0001_253_30') — die Endungs-Regel
-  // der Referenz (getField Z. 729) loest den Code '253_30' dagegen auf.
   it('findet praefixierte Schluessel (Endung _code, echte SE-Form)', () => {
     expect(getField({ IDBID0001_253_30: ' 2 ' }, '253_30')).toBe('2')
     expect(getField({ IDBID0001_78_30: 'Minka' }, '78_30')).toBe('Minka')
-    // Leere direkte Property blockiert den Scan nicht (Regel der Referenz).
+
     expect(getField({ '253_30': ' ', IDBID0001_253_30: '2' }, '253_30')).toBe('2')
-    // Praefix-Regel (code_...) der Referenz ebenfalls abgedeckt.
+
     expect(getField({ '10_8_zusatz': 'X' }, '10_8')).toBe('X')
   })
 })
@@ -194,12 +174,11 @@ describe('setField (Schreibweg 5.3b: Wert -> Zeile)', () => {
   })
 
   it('patcht pos_len im SATZ-Rohstring: exakte Feldlaenge, Rest unberuehrt', () => {
-    //            0123456789
     const row = { SATZ: 'K2      Katze                         X' }
     expect(setField(row, '8_30', 'Hund')).toBe(true)
     expect(row.SATZ).toBe('K2      Hund                          X')
-    expect(getField(row, '8_30')).toBe('Hund') // liest zurueck, was geschrieben wurde
-    expect(getField(row, '0_8')).toBe('K2')    // Nachbarfeld unveraendert
+    expect(getField(row, '8_30')).toBe('Hund')
+    expect(getField(row, '0_8')).toBe('K2')
   })
 
   it('kuerzt zu lange Werte auf die Feldlaenge und patcht SATZNEU vor SATZ', () => {
@@ -231,22 +210,15 @@ describe('setField (Schreibweg 5.3b: Wert -> Zeile)', () => {
     expect(row).toEqual({ name: 'bleibt' })
   })
 
-  // SE-Echttest 2026-07-11: der Schreibweg muss dieselben praefixierten
-  // Schluessel aktualisieren, die getField liest — sonst spraenge die
-  // gezogene Karte bei der Neu-Hydrierung zurueck.
   it('patcht praefixierte Schluessel (echte SE-Form) und liest sie zurueck', () => {
     const row: Record<string, unknown> = { IDBID0001_253_30: '2', IDBID0001_78_30: 'Minka' }
     expect(setField(row, '253_30', '3')).toBe(true)
     expect(row.IDBID0001_253_30).toBe('3')
-    expect(row.IDBID0001_78_30).toBe('Minka') // Nachbarfeld unberuehrt
+    expect(row.IDBID0001_78_30).toBe('Minka')
     expect(getField(row, '253_30')).toBe('3')
   })
 })
 
-// SE-Push (Phase 2): SoftEngine schiebt die Daten an den REGISTER-Callback
-// (String oder Objekt) bzw. als message-Event { MSG: { DATA } } — Formen
-// exakt nach Referenz behandlung-umbau Block 1/9 (__seConsume/regSE) und
-// altem Editor (installMessageHook).
 describe('payloadDaten (geschobenes SE-Paket -> Daten)', () => {
   const daten = { SEFileLoop: [{ ALIAS: 'Terminplaner', Zeilen: [] }] }
 

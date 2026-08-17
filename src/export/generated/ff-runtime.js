@@ -1,14 +1,8 @@
 (function(){var e=globalThis,t=e.ShadowRoot&&(e.ShadyCSS===void 0||e.ShadyCSS.nativeShadow)&&`adoptedStyleSheets`in Document.prototype&&`replace`in CSSStyleSheet.prototype,n=Symbol(),r=new WeakMap,i=class{constructor(e,t,r){if(this._$cssResult$=!0,r!==n)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=e,this.t=t}get styleSheet(){let e=this.o,n=this.t;if(t&&e===void 0){let t=n!==void 0&&n.length===1;t&&(e=r.get(n)),e===void 0&&((this.o=e=new CSSStyleSheet).replaceSync(this.cssText),t&&r.set(n,e))}return e}toString(){return this.cssText}},a=e=>new i(typeof e==`string`?e:e+``,void 0,n),o=(e,...t)=>new i(e.length===1?e[0]:t.reduce((t,n,r)=>t+(e=>{if(!0===e._$cssResult$)return e.cssText;if(typeof e==`number`)return e;throw Error(`Value passed to 'css' function must be a 'css' function result: `+e+`. Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.`)})(n)+e[r+1],e[0]),e,n),s=(n,r)=>{if(t)n.adoptedStyleSheets=r.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(let t of r){let r=document.createElement(`style`),i=e.litNonce;i!==void 0&&r.setAttribute(`nonce`,i),r.textContent=t.cssText,n.appendChild(r)}},c=t?e=>e:e=>e instanceof CSSStyleSheet?(e=>{let t=``;for(let n of e.cssRules)t+=n.cssText;return a(t)})(e):e,{is:l,defineProperty:u,getOwnPropertyDescriptor:d,getOwnPropertyNames:f,getOwnPropertySymbols:ee,getPrototypeOf:te}=Object,p=globalThis,m=p.trustedTypes,ne=m?m.emptyScript:``,h=p.reactiveElementPolyfillSupport,g=(e,t)=>e,_={toAttribute(e,t){switch(t){case Boolean:e=e?ne:null;break;case Object:case Array:e=e==null?e:JSON.stringify(e)}return e},fromAttribute(e,t){let n=e;switch(t){case Boolean:n=e!==null;break;case Number:n=e===null?null:Number(e);break;case Object:case Array:try{n=JSON.parse(e)}catch{n=null}}return n}},v=(e,t)=>!l(e,t),re={attribute:!0,type:String,converter:_,reflect:!1,useDefault:!1,hasChanged:v};Symbol.metadata??=Symbol(`metadata`),p.litPropertyMetadata??=new WeakMap;var y=class extends HTMLElement{static addInitializer(e){this._$Ei(),(this.l??=[]).push(e)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(e,t=re){if(t.state&&(t.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(e)&&((t=Object.create(t)).wrapped=!0),this.elementProperties.set(e,t),!t.noAccessor){let n=Symbol(),r=this.getPropertyDescriptor(e,n,t);r!==void 0&&u(this.prototype,e,r)}}static getPropertyDescriptor(e,t,n){let{get:r,set:i}=d(this.prototype,e)??{get(){return this[t]},set(e){this[t]=e}};return{get:r,set(t){let a=r?.call(this);i?.call(this,t),this.requestUpdate(e,a,n)},configurable:!0,enumerable:!0}}static getPropertyOptions(e){return this.elementProperties.get(e)??re}static _$Ei(){if(this.hasOwnProperty(g(`elementProperties`)))return;let e=te(this);e.finalize(),e.l!==void 0&&(this.l=[...e.l]),this.elementProperties=new Map(e.elementProperties)}static finalize(){if(this.hasOwnProperty(g(`finalized`)))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(g(`properties`))){let e=this.properties,t=[...f(e),...ee(e)];for(let n of t)this.createProperty(n,e[n])}let e=this[Symbol.metadata];if(e!==null){let t=litPropertyMetadata.get(e);if(t!==void 0)for(let[e,n]of t)this.elementProperties.set(e,n)}this._$Eh=new Map;for(let[e,t]of this.elementProperties){let n=this._$Eu(e,t);n!==void 0&&this._$Eh.set(n,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(e){let t=[];if(Array.isArray(e)){let n=new Set(e.flat(1/0).reverse());for(let e of n)t.unshift(c(e))}else e!==void 0&&t.push(c(e));return t}static _$Eu(e,t){let n=t.attribute;return!1===n?void 0:typeof n==`string`?n:typeof e==`string`?e.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(e=>this.enableUpdating=e),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(e=>e(this))}addController(e){(this._$EO??=new Set).add(e),this.renderRoot!==void 0&&this.isConnected&&e.hostConnected?.()}removeController(e){this._$EO?.delete(e)}_$E_(){let e=new Map,t=this.constructor.elementProperties;for(let n of t.keys())this.hasOwnProperty(n)&&(e.set(n,this[n]),delete this[n]);e.size>0&&(this._$Ep=e)}createRenderRoot(){let e=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return s(e,this.constructor.elementStyles),e}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(e=>e.hostConnected?.())}enableUpdating(e){}disconnectedCallback(){this._$EO?.forEach(e=>e.hostDisconnected?.())}attributeChangedCallback(e,t,n){this._$AK(e,n)}_$ET(e,t){let n=this.constructor.elementProperties.get(e),r=this.constructor._$Eu(e,n);if(r!==void 0&&!0===n.reflect){let i=(n.converter?.toAttribute===void 0?_:n.converter).toAttribute(t,n.type);this._$Em=e,i==null?this.removeAttribute(r):this.setAttribute(r,i),this._$Em=null}}_$AK(e,t){let n=this.constructor,r=n._$Eh.get(e);if(r!==void 0&&this._$Em!==r){let e=n.getPropertyOptions(r),i=typeof e.converter==`function`?{fromAttribute:e.converter}:e.converter?.fromAttribute===void 0?_:e.converter;this._$Em=r;let a=i.fromAttribute(t,e.type);this[r]=a??this._$Ej?.get(r)??a,this._$Em=null}}requestUpdate(e,t,n,r=!1,i){if(e!==void 0){let a=this.constructor;if(!1===r&&(i=this[e]),n??=a.getPropertyOptions(e),!((n.hasChanged??v)(i,t)||n.useDefault&&n.reflect&&i===this._$Ej?.get(e)&&!this.hasAttribute(a._$Eu(e,n))))return;this.C(e,t,n)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(e,t,{useDefault:n,reflect:r,wrapped:i},a){n&&!(this._$Ej??=new Map).has(e)&&(this._$Ej.set(e,a??t??this[e]),!0!==i||a!==void 0)||(this._$AL.has(e)||(this.hasUpdated||n||(t=void 0),this._$AL.set(e,t)),!0===r&&this._$Em!==e&&(this._$Eq??=new Set).add(e))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}let e=this.scheduleUpdate();return e!=null&&await e,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(let[e,t]of this._$Ep)this[e]=t;this._$Ep=void 0}let e=this.constructor.elementProperties;if(e.size>0)for(let[t,n]of e){let{wrapped:e}=n,r=this[t];!0!==e||this._$AL.has(t)||r===void 0||this.C(t,void 0,n,r)}}let e=!1,t=this._$AL;try{e=this.shouldUpdate(t),e?(this.willUpdate(t),this._$EO?.forEach(e=>e.hostUpdate?.()),this.update(t)):this._$EM()}catch(t){throw e=!1,this._$EM(),t}e&&this._$AE(t)}willUpdate(e){}_$AE(e){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(e)),this.updated(e)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(e){return!0}update(e){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(e){}firstUpdated(e){}};y.elementStyles=[],y.shadowRootOptions={mode:`open`},y[g(`elementProperties`)]=new Map,y[g(`finalized`)]=new Map,h?.({ReactiveElement:y}),(p.reactiveElementVersions??=[]).push(`2.1.2`);var ie=globalThis,ae=e=>e,oe=ie.trustedTypes,se=oe?oe.createPolicy(`lit-html`,{createHTML:e=>e}):void 0,ce=`$lit$`,b=`lit$${Math.random().toFixed(9).slice(2)}$`,le=`?`+b,ue=`<${le}>`,x=document,de=()=>x.createComment(``),fe=e=>e===null||typeof e!=`object`&&typeof e!=`function`,pe=Array.isArray,me=e=>pe(e)||typeof e?.[Symbol.iterator]==`function`,he=`[ 	
 \f\r]`,ge=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,_e=/-->/g,ve=/>/g,S=RegExp(`>|${he}(?:([^\\s"'>=/]+)(${he}*=${he}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,`g`),ye=/'/g,be=/"/g,xe=/^(?:script|style|textarea|title)$/i,Se=e=>(t,...n)=>({_$litType$:e,strings:t,values:n}),C=Se(1),Ce=Se(2),w=Symbol.for(`lit-noChange`),T=Symbol.for(`lit-nothing`),we=new WeakMap,E=x.createTreeWalker(x,129);function Te(e,t){if(!pe(e)||!e.hasOwnProperty(`raw`))throw Error(`invalid template strings array`);return se===void 0?t:se.createHTML(t)}var Ee=(e,t)=>{let n=e.length-1,r=[],i,a=t===2?`<svg>`:t===3?`<math>`:``,o=ge;for(let t=0;t<n;t++){let n=e[t],s,c,l=-1,u=0;for(;u<n.length&&(o.lastIndex=u,c=o.exec(n),c!==null);)u=o.lastIndex,o===ge?c[1]===`!--`?o=_e:c[1]===void 0?c[2]===void 0?c[3]!==void 0&&(o=S):(xe.test(c[2])&&(i=RegExp(`</`+c[2],`g`)),o=S):o=ve:o===S?c[0]===`>`?(o=i??ge,l=-1):c[1]===void 0?l=-2:(l=o.lastIndex-c[2].length,s=c[1],o=c[3]===void 0?S:c[3]===`"`?be:ye):o===be||o===ye?o=S:o===_e||o===ve?o=ge:(o=S,i=void 0);let d=o===S&&e[t+1].startsWith(`/>`)?` `:``;a+=o===ge?n+ue:l>=0?(r.push(s),n.slice(0,l)+ce+n.slice(l)+b+d):n+b+(l===-2?t:d)}return[Te(e,a+(e[n]||`<?>`)+(t===2?`</svg>`:t===3?`</math>`:``)),r]},De=class e{constructor({strings:t,_$litType$:n},r){let i;this.parts=[];let a=0,o=0,s=t.length-1,c=this.parts,[l,u]=Ee(t,n);if(this.el=e.createElement(l,r),E.currentNode=this.el.content,n===2||n===3){let e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;(i=E.nextNode())!==null&&c.length<s;){if(i.nodeType===1){if(i.hasAttributes())for(let e of i.getAttributeNames())if(e.endsWith(ce)){let t=u[o++],n=i.getAttribute(e).split(b),r=/([.?@])?(.*)/.exec(t);c.push({type:1,index:a,name:r[2],strings:n,ctor:r[1]===`.`?je:r[1]===`?`?Me:r[1]===`@`?Ne:Ae}),i.removeAttribute(e)}else e.startsWith(b)&&(c.push({type:6,index:a}),i.removeAttribute(e));if(xe.test(i.tagName)){let e=i.textContent.split(b),t=e.length-1;if(t>0){i.textContent=oe?oe.emptyScript:``;for(let n=0;n<t;n++)i.append(e[n],de()),E.nextNode(),c.push({type:2,index:++a});i.append(e[t],de())}}}else if(i.nodeType===8)if(i.data===le)c.push({type:2,index:a});else{let e=-1;for(;(e=i.data.indexOf(b,e+1))!==-1;)c.push({type:7,index:a}),e+=b.length-1}a++}}static createElement(e,t){let n=x.createElement(`template`);return n.innerHTML=e,n}};function D(e,t,n=e,r){if(t===w)return t;let i=r===void 0?n._$Cl:n._$Co?.[r],a=fe(t)?void 0:t._$litDirective$;return i?.constructor!==a&&(i?._$AO?.(!1),a===void 0?i=void 0:(i=new a(e),i._$AT(e,n,r)),r===void 0?n._$Cl=i:(n._$Co??=[])[r]=i),i!==void 0&&(t=D(e,i._$AS(e,t.values),i,r)),t}var Oe=class{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){let{el:{content:t},parts:n}=this._$AD,r=(e?.creationScope??x).importNode(t,!0);E.currentNode=r;let i=E.nextNode(),a=0,o=0,s=n[0];for(;s!==void 0;){if(a===s.index){let t;s.type===2?t=new ke(i,i.nextSibling,this,e):s.type===1?t=new s.ctor(i,s.name,s.strings,this,e):s.type===6&&(t=new Pe(i,this,e)),this._$AV.push(t),s=n[++o]}a!==s?.index&&(i=E.nextNode(),a++)}return E.currentNode=x,r}p(e){let t=0;for(let n of this._$AV)n!==void 0&&(n.strings===void 0?n._$AI(e[t]):(n._$AI(e,n,t),t+=n.strings.length-2)),t++}},ke=class e{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,n,r){this.type=2,this._$AH=T,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=n,this.options=r,this._$Cv=r?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode,t=this._$AM;return t!==void 0&&e?.nodeType===11&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=D(this,e,t),fe(e)?e===T||e==null||e===``?(this._$AH!==T&&this._$AR(),this._$AH=T):e!==this._$AH&&e!==w&&this._(e):e._$litType$===void 0?e.nodeType===void 0?me(e)?this.k(e):this._(e):this.T(e):this.$(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==T&&fe(this._$AH)?this._$AA.nextSibling.data=e:this.T(x.createTextNode(e)),this._$AH=e}$(e){let{values:t,_$litType$:n}=e,r=typeof n==`number`?this._$AC(e):(n.el===void 0&&(n.el=De.createElement(Te(n.h,n.h[0]),this.options)),n);if(this._$AH?._$AD===r)this._$AH.p(t);else{let e=new Oe(r,this),n=e.u(this.options);e.p(t),this.T(n),this._$AH=e}}_$AC(e){let t=we.get(e.strings);return t===void 0&&we.set(e.strings,t=new De(e)),t}k(t){pe(this._$AH)||(this._$AH=[],this._$AR());let n=this._$AH,r,i=0;for(let a of t)i===n.length?n.push(r=new e(this.O(de()),this.O(de()),this,this.options)):r=n[i],r._$AI(a),i++;i<n.length&&(this._$AR(r&&r._$AB.nextSibling,i),n.length=i)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){let t=ae(e).nextSibling;ae(e).remove(),e=t}}setConnected(e){this._$AM===void 0&&(this._$Cv=e,this._$AP?.(e))}},Ae=class{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,n,r,i){this.type=1,this._$AH=T,this._$AN=void 0,this.element=e,this.name=t,this._$AM=r,this.options=i,n.length>2||n[0]!==``||n[1]!==``?(this._$AH=Array(n.length-1).fill(new String),this.strings=n):this._$AH=T}_$AI(e,t=this,n,r){let i=this.strings,a=!1;if(i===void 0)e=D(this,e,t,0),a=!fe(e)||e!==this._$AH&&e!==w,a&&(this._$AH=e);else{let r=e,o,s;for(e=i[0],o=0;o<i.length-1;o++)s=D(this,r[n+o],t,o),s===w&&(s=this._$AH[o]),a||=!fe(s)||s!==this._$AH[o],s===T?e=T:e!==T&&(e+=(s??``)+i[o+1]),this._$AH[o]=s}a&&!r&&this.j(e)}j(e){e===T?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??``)}},je=class extends Ae{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===T?void 0:e}},Me=class extends Ae{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==T)}},Ne=class extends Ae{constructor(e,t,n,r,i){super(e,t,n,r,i),this.type=5}_$AI(e,t=this){if((e=D(this,e,t,0)??T)===w)return;let n=this._$AH,r=e===T&&n!==T||e.capture!==n.capture||e.once!==n.once||e.passive!==n.passive,i=e!==T&&(n===T||r);r&&this.element.removeEventListener(this.name,this,n),i&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){typeof this._$AH==`function`?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}},Pe=class{constructor(e,t,n){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=n}get _$AU(){return this._$AM._$AU}_$AI(e){D(this,e)}},Fe=ie.litHtmlPolyfillSupport;Fe?.(De,ke),(ie.litHtmlVersions??=[]).push(`3.3.3`);var Ie=(e,t,n)=>{let r=n?.renderBefore??t,i=r._$litPart$;if(i===void 0){let e=n?.renderBefore??null;r._$litPart$=i=new ke(t.insertBefore(de(),e),e,void 0,n??{})}return i._$AI(e),i},Le=globalThis,O=class extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){let e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){let t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=Ie(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return w}};O._$litElement$=!0,O.finalized=!0,Le.litElementHydrateSupport?.({LitElement:O});var Re=Le.litElementPolyfillSupport;Re?.({LitElement:O}),(Le.litElementVersions??=[]).push(`4.2.2`);var ze={attribute:!0,type:String,converter:_,reflect:!1,hasChanged:v},Be=(e=ze,t,n)=>{let{kind:r,metadata:i}=n,a=globalThis.litPropertyMetadata.get(i);if(a===void 0&&globalThis.litPropertyMetadata.set(i,a=new Map),r===`setter`&&((e=Object.create(e)).wrapped=!0),a.set(n.name,e),r===`accessor`){let{name:r}=n;return{set(n){let i=t.get.call(this);t.set.call(this,n),this.requestUpdate(r,i,e,!0,n)},init(t){return t!==void 0&&this.C(r,void 0,e,t),t}}}if(r===`setter`){let{name:r}=n;return function(n){let i=this[r];t.call(this,n),this.requestUpdate(r,i,e,!0,n)}}throw Error(`Unsupported decorator location: `+r)};function k(e){return(t,n)=>typeof n==`object`?Be(e,t,n):((e,t,n)=>{let r=t.hasOwnProperty(n);return t.constructor.createProperty(n,e),r?Object.getOwnPropertyDescriptor(t,n):void 0})(e,t,n)}function A(e){return k({...e,state:!0,attribute:!1})}var Ve=new Map;function He(e){Ve.has(e.type)&&console.warn(`Block-Typ "${e.type}" wird ueberschrieben.`),Ve.set(e.type,e)}function Ue(){return Array.from(Ve.values())}var We={width:`auto`};function Ge(e){return Object.entries(e).map(([e,t])=>`${e.replace(/[A-Z]/g,e=>`-`+e.toLowerCase())}:${t}`).join(`;`)}var Ke={spalten:24,spaltePx:40,zeilePx:12,gapPx:8},qe={rasterX:0,rasterY:0,rasterW:Ke.spalten,rasterH:1};function Je(){return{display:`grid`,gridTemplateColumns:`repeat(${Ke.spalten}, 1fr)`,gridAutoRows:`${Ke.zeilePx}px`,gap:`${Ke.gapPx}px`,alignContent:`start`}}function Ye(){return Ge(Je())}var Xe=`weitereQuellen`,Ze={[Xe]:[]},Qe=`folgtAuswahl`,$e={[Qe]:[]};function j(e,t,n,r){var i=arguments.length,a=i<3?t:r===null?r=Object.getOwnPropertyDescriptor(t,n):r,o;if(typeof Reflect==`object`&&typeof Reflect.decorate==`function`)a=Reflect.decorate(e,t,n,r);else for(var s=e.length-1;s>=0;s--)(o=e[s])&&(a=(i<3?o(a):i>3?o(t,n,a):o(t,n))||a);return i>3&&a&&Object.defineProperty(t,n,a),a}var M=class extends O{constructor(...e){super(...e),this.editable=!1}static{this.styles=o`
     :host { display: block; }
-    :host([hidden]) { display: none; } /* s. Kommentar ueber dieser Klasse */
-    /* Rasterflaeche (Attribut 'fuellt' — im Editor von useLitElement gesetzt,
-       im Export vom Wurzel-Kind): der Baustein fuellt seine Zelle in der Hoehe
-       (die Breite fuellt display:block ohnehin). NUR auf der Maskenflaeche
-       gesetzt — in Containern (Fluss) fehlt das Attribut, der Baustein behaelt
-       seine Naturgroesse. Editor UND Export setzen es identisch (WYSIWYG,
-       Regel 1); je Baustein-CSS fuellt der sichtbare Inhalt (Knopf/Feld) dann
-       die Hostflaeche. */
+    :host([hidden]) { display: none; }
+
     :host([fuellt]) { height: 100%; box-sizing: border-box; }
     [data-ff-editable] { cursor: text; }
     :host(:not([data-editable])) [data-ff-editable] { cursor: inherit; }
@@ -19,12 +13,11 @@
     }
     :host([data-ff-editor][data-editable]) [data-ff-bound] { cursor: pointer; }
   `}static{this.customProperties=[]}get customProperties(){return this.constructor.customProperties}inlineEdit(e,t){if(!this.editable)return;let n=e.currentTarget;if(!n||n.hasAttribute(`data-ff-bound`))return;e.stopPropagation(),e.preventDefault();let r=n.textContent??``,i=Array.from(n.childNodes),a=i.map(e=>e.textContent??``);n.setAttribute(`contenteditable`,`plaintext-only`),n.focus();let o=window.getSelection(),s=document.createRange();s.selectNodeContents(n),o?.removeAllRanges(),o?.addRange(s);let c=!1,l=e=>{if(!c)if(c=!0,n.removeAttribute(`contenteditable`),n.removeEventListener(`blur`,u),n.removeEventListener(`keydown`,d),e){let e=(n.textContent??``).trim();e!==r&&this.dispatchEvent(new CustomEvent(`ff-prop-change`,{detail:{attr:t,value:e},bubbles:!0,composed:!0}))}else n.replaceChildren(...i),i.forEach((e,t)=>{e.textContent!==a[t]&&(e.textContent=a[t])})},u=()=>l(!0),d=e=>{e.key===`Enter`?(e.preventDefault(),n.blur()):e.key===`Escape`&&(e.preventDefault(),l(!1))};n.addEventListener(`blur`,u),n.addEventListener(`keydown`,d)}static defineAndRegister(e){customElements.get(e.tagName)||customElements.define(e.tagName,e),He({type:e.blockType,tagName:e.tagName,displayName:e.displayName,category:e.category,defaultProps:{...We,...qe,...e.acceptsDataSource?Ze:null,...e.kannAuswahlFolgen?$e:null,...e.defaultProps},customProperties:e.customProperties,acceptsChildren:e.acceptsChildren??!1,resizableWidth:e.resizableWidth??!0,resizableHeight:e.resizableHeight??!1,allowedChildTypes:e.allowedChildTypes,allowedParentTypes:e.allowedParentTypes,lockedWidth:e.lockedWidth,defaultChildren:e.defaultChildren,childDirection:e.childDirection,showInPalette:e.showInPalette,templateChild:e.templateChild,containerHint:e.containerHint,addChildButton:e.addChildButton,acceptsDataSource:e.acceptsDataSource,satzWahl:e.satzWahl,kannAuswahlFolgen:e.kannAuswahlFolgen,bindableSpots:e.bindableSpots,actionValueSpots:e.actionValueSpots,listenBindung:e.listenBindung,blockEvents:e.blockEvents,pageBlock:e.pageBlock,flaechenSeite:e.flaechenSeite,maskenRand:e.maskenRand,raster:e.raster})}};j([k({type:Boolean,reflect:!0,attribute:`data-editable`})],M.prototype,`editable`,void 0);var et=`root`,tt=class extends M{static{this.blockType=`ansicht`}static{this.tagName=`ff-ansicht`}static{this.displayName=`Ansicht`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.showInPalette=!1}static{this.allowedParentTypes=[et]}static{this.pageBlock=!0}static{this.flaechenSeite=!0}static{this.resizableWidth=!1}static{this.containerHint=!1}static{this.defaultProps={name:`Ansicht`}}static{this.styles=[M.styles,o`
-      /* kein eigener Kasten: Kinder sind Zellen des Wurzel-Rasters */
+
       :host { display: contents; }
     `]}render(){return C`<slot></slot>`}};M.defineAndRegister(tt);var nt=class extends M{constructor(...e){super(...e),this.quelle=``}static{this.blockType=`bild`}static{this.tagName=`ff-bild`}static{this.displayName=`Bild`}static{this.category=`anzeige`}static{this.defaultProps={quelle:``}}static{this.raster={startW:6,startH:6,minW:1,minH:1}}static{this.customProperties=[{attributeName:`quelle`,name:`Bild`,description:`Die Bilddatei wird in die Maske eingebettet — die Maske bleibt EINE Datei. Grosse Bilder werden dabei still verkleinert.`,kind:`bild`}]}static{this.styles=[M.styles,o`
       :host { display: block; }
-      /* Die Flaeche fuellt die Zelle; das Bild passt sich ganz hinein und
-         bleibt mittig, egal wie der Bauer zieht. */
+
       .flaeche {
         box-sizing: border-box;
         display: flex;
@@ -39,12 +32,7 @@
         max-height: 100%;
         object-fit: contain;
       }
-      /* Der Platzhalter ist eine EDITOR-Hilfe und traegt darum die
-         data-ff-editor-Bedingung: in der Maske steht an einer leeren Stelle
-         nichts. Gestrichelt und in der stillen Textfarbe wie jeder andere
-         Leerzustand des Baukastens (shared/leerZustand) — hier aber ohne
-         Pfote und ohne Satzbau: es ist kein Leerzustand der DATEN, sondern
-         ein Bauplan, in dem noch nichts steht. */
+
       .platzhalter { display: none; }
       :host([data-ff-editor]) .platzhalter {
         display: grid;
@@ -72,9 +60,7 @@
       font-size: var(--se-fs);
       color: var(--se-ink);
     }
-    /* Ueber der GANZEN Maske statt nur im Elternkasten: das Nachschlage-
-       Fenster haengt an einem Formularfeld, das irgendwo in einer Karte
-       sitzt — ohne fixed waere es in deren Ausschnitt eingesperrt. */
+
     :host([viewport]) {
       position: fixed;
       z-index: 2147483646;
@@ -116,8 +102,7 @@
       min-width: 0;
       overflow: hidden;
       color: var(--se-ink);
-      /* Schmuck-Schrift NUR am Namen eines Kastens (Fellnase: .tafel-titel),
-         nie im Fliesstext — sonst verliert sie ihre Wirkung. */
+
       font-family: var(--se-font-schmuck);
       font-size: var(--se-fs-lg);
       font-weight: 600;
@@ -157,9 +142,7 @@
       min-height: 0;
       overflow: auto;
     }
-    /* inhalt-fest (Popupmodus, C1): der Rumpf des Konsumenten ist ALLEINIGER
-       Scroll-Besitzer — rollte .inhalt zusaetzlich, gaebe es zwei
-       ineinander liegende Rollbalken fuer denselben Inhalt. */
+
     :host([inhalt-fest]) .inhalt { overflow: hidden; }
   `}aktualisiereEscape(){let e=this.isConnected&&this.escapeSchliesst;e!==this.escapeRegistriert&&(e?document.addEventListener(`keydown`,this.aufTaste,!0):document.removeEventListener(`keydown`,this.aufTaste,!0),this.escapeRegistriert=e)}schliesse(){this.dispatchEvent(new CustomEvent(It,{bubbles:!0,composed:!0}))}connectedCallback(){super.connectedCallback(),this.aktualisiereEscape()}updated(e){e.has(`escapeSchliesst`)&&this.aktualisiereEscape()}disconnectedCallback(){this.escapeRegistriert&&=(document.removeEventListener(`keydown`,this.aufTaste,!0),!1),super.disconnectedCallback()}render(){let e=Lt(this.breite,520),t=Lt(this.hoehe,380);return C`
       <div class="abdunklung"></div>
@@ -186,9 +169,7 @@
         </section>
       </div>
     `}};j([k()],V.prototype,`titel`,void 0),j([k({type:Number})],V.prototype,`breite`,void 0),j([k({type:Number})],V.prototype,`hoehe`,void 0),j([k({type:Boolean,reflect:!0})],V.prototype,`viewport`,void 0),j([k({type:Boolean,reflect:!0,attribute:`mit-werkzeug`})],V.prototype,`mitWerkzeug`,void 0),j([k({type:Boolean,attribute:`escape-schliesst`})],V.prototype,`escapeSchliesst`,void 0),j([k({type:Boolean,attribute:`ohne-modal`})],V.prototype,`ohneModal`,void 0),j([k({type:Boolean,reflect:!0,attribute:`inhalt-fest`})],V.prototype,`inhaltFest`,void 0),customElements.get(`ff-dialog-rahmen`)||customElements.define(Ft,V);var Rt=`input,select,textarea,button,a[href],[tabindex]:not([tabindex="-1"])`;function zt(e){for(let t of Array.from(e.querySelectorAll(`*`))){if(t instanceof HTMLElement&&t.matches(Rt)&&!t.hasAttribute(`disabled`))return t;let e=t.shadowRoot?zt(t.shadowRoot):null;if(e)return e}return null}var H=class extends M{constructor(...e){super(...e),this.name=`Popup`,this.breite=520,this.hoehe=380,this.offen=!1}static{this.blockType=`popup`}static{this.tagName=`ff-popup`}static{this.displayName=`Popup`}static{this.category=`layout`}static{this.acceptsChildren=!0}static{this.showInPalette=!1}static{this.allowedParentTypes=[et]}static{this.pageBlock=!0}static{this.resizableWidth=!1}static{this.containerHint=!1}static{this.defaultProps={name:`Popup`,breite:520,hoehe:380}}static{this.styles=[M.styles,o`
-      /* Geschlossen = restlos unsichtbar (Export-Zustand, bis der
-         Ketten-Schritt öffnet). Der Editor-Seitenreiter erzwingt die Sicht
-         über data-ff-editor. */
+
       :host { display: none; }
       :host([offen]),
       :host([data-ff-editor]) {
@@ -198,14 +179,7 @@
         z-index: 10;
         font-family: var(--se-font);
       }
-      /* Der Titel im Kopf des DialogRahmens: als geslottetes Kind gehört er
-         DIESEM Schatten, der Rahmen gibt ihm nur den Platz (flex:1) und die
-         Schrift (erbt). display:block + min-height, damit ein LEER
-         getippter Name die volle Kopfbreite als Doppelklick-Fläche behält —
-         ein leerer Inline-span hätte null Pixel und ließe sich nie wieder
-         beschreiben (Nutzer-Meldung 2026-08-11). Nowrap/ellipsis müssen
-         MIT auf den Block wandern: die Kürzung des Rahmens wirkt nur auf
-         Inline-Inhalt. */
+
       .titel {
         display: block;
         min-height: 1.4em;
@@ -213,14 +187,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      /* Der Rumpf IST eine Rasterflaeche — dasselbe Gitter wie die
-         Maskenwurzel, aus DERSELBEN Quelle (rasterFlaecheCss, C2
-         2026-08-16). Bis dahin war er eine Flex-Spalte: im Popup lag alles
-         zwangsweise untereinander, und Nebeneinander ging nur ueber den
-         Baustein „Zeile" (mit diesem Umbau gestrichen).
-         Er ist der ALLEINIGE Scroll-Besitzer des Popup-Inhalts (der Rahmen
-         steht auf inhalt-fest); height:100% füllt den Inhaltsbereich des
-         Rahmens, damit overflow hier greift. */
+
       .rumpf {
         box-sizing: border-box;
         height: 100%;
@@ -228,10 +195,7 @@
         padding: 12px;
         ${a(Ye())};
       }
-      /* display:contents am slot ist die Bedingung dafuer, dass die
-         geslotteten Bausteine UNMITTELBAR Zellen des Rumpfs werden — mit
-         einem eigenen Kasten dazwischen laege der ganze Inhalt in EINER
-         Zelle. */
+
       .rumpf slot { display: contents; }
     `]}onClose(){this.hasAttribute(`data-ff-editor`)||this.removeAttribute(`offen`)}updated(e){super.updated(e),!(!e.has(`offen`)||!this.offen)&&(this.hasAttribute(`data-ff-editor`)||this.updateComplete.then(()=>{!this.offen||!this.isConnected||(zt(this)??(this.shadowRoot?zt(this.shadowRoot):null))?.focus()}))}render(){return C`<ff-dialog-rahmen
         .breite=${this.breite}
@@ -259,45 +223,29 @@
         font-family: var(--se-font);
         font-size: var(--se-fs);
         font-weight: 600;
-        /* Zeilenhoehe wie in der Demo (.knopf 1.2) und AUSDRUECKLICH: bei
-           Knoepfen und Eingabefeldern bringt der Browser eine eigene mit, die
-           einen geerbten Wert schlaegt. Ohne diese Zeile haengt die Knopfhoehe
-           also am Browser statt am Vorbild — sichtbar wird das erst, wenn ein
-           anderer Browser anders rechnet. */
+
         line-height: 1.2;
-        /* Dauer aus dem gemeinsamen Wert (2026-07-30): vorher stand hier
-           eine eigene 120ms-Angabe — zwei Bausteine mit knapp
-           unterschiedlichem Takt wirken unruhig. */
+
         transition: background-color var(--se-move), border-color var(--se-move);
       }
       button:hover { background: var(--se-accent-dark); border-color: var(--se-accent-dark); }
-      /* Der Knopf muss beim Druecken sichtbar antworten — ohne Rueckmeldung
-         weiss der Bediener nicht, ob er getroffen hat. Flach geloest
-         (Fellnase Regel 4, "die Kante macht die Arbeit"): die Kante springt
-         auf Espresso. Bis 2026-08-06 sank der Knopf stattdessen um 1px. */
+
       button:active { background: var(--se-accent-dark); border-color: var(--se-ink); }
       button:focus-visible { outline: 2px solid var(--se-accent); outline-offset: 2px; }
-      /* Rasterflaeche: der Knopf fuellt seine Zelle (Ziehen macht den KNOPF
-         groesser, nicht einen leeren Rahmen). Im Fluss (kein 'fuellt') bleibt
-         er naturgross. */
+
       :host([fuellt]) button { width: 100%; height: 100%; }
     `]}render(){return C`<button
       data-ff-editable
       @dblclick=${e=>this.inlineEdit(e,`label`)}
     >${this.label}</button>`}connectedCallback(){super.connectedCallback(),Fn(this,`onClick`)}};j([k()],In.prototype,`label`,void 0),M.defineAndRegister(In);var Ln=[`info`,`success`,`warning`,`danger`];function Rn(e){return Ln.includes(e)?e:`info`}var zn=[{wert:`info`,name:`Hinweis`},{wert:`success`,name:`Erfolg`},{wert:`warning`,name:`Warnung`},{wert:`danger`,name:`Fehler`}];function Bn(e,t){return{attributeName:e,name:`Bedeutung`,description:t,kind:`select`,options:zn.map(e=>({value:e.wert,label:e.name}))}}var Vn=o`
-  /* Masse Wert fuer Wert aus der Demo (atome.css .marke, --schnitt 7px), seit
-     2026-08-07: bis dahin war die Marke rundum kleiner (10,5px, kein
-     Zeilenmass, 3/9/3/7 Innenabstand, 5px Abstand, 6px Schnitt) und wirkte
-     neben der Demo wie zusammengeschoben. Die 1,3 ist ihr eigenes Zeilenmass
-     aus der Demo, nicht das der Maske — eine Marke ist eine Zeile Text in
-     einer Flaeche, sie atmet nicht mit dem Fliesstext. */
+
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 5px 11px 5px 9px;
     border-radius: var(--se-r-sm);
-    /* der 45deg-Schnitt oben rechts — 7px tief */
+
     clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
     font-family: var(--se-font);
     font-size: var(--se-fs-sm);
@@ -308,7 +256,7 @@
     background: var(--se-panel-2);
     white-space: nowrap;
   }
-  /* der quadratische Punkt: bewusst OHNE border-radius */
+
   .chip::before {
     content: '';
     flex: none;
@@ -325,9 +273,7 @@
     --chip-punkt: var(--se-panel);
   }
 `,Hn=Ce`<circle cx="6.8" cy="9.6" r="1.9"></circle><circle cx="10.4" cy="7.2" r="1.9"></circle><circle cx="14.6" cy="7.2" r="1.9"></circle><circle cx="18.2" cy="9.6" r="1.9"></circle><path d="M12.5 11.2c-2.9 0-5.3 2.1-5.3 4.4 0 1.7 1.3 2.9 3.1 2.9.9 0 1.5-.3 2.2-.3s1.3.3 2.2.3c1.8 0 3.1-1.2 3.1-2.9 0-2.3-2.4-4.4-5.3-4.4z"></path>`;function Un(){return C`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${Hn}</svg>`}var Wn={hund:`data:image/png;base64,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`,katze:`data:image/png;base64,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`,kaninchen:`data:image/png;base64,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`,hamster:`data:image/png;base64,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`,meerschweinchen:`data:image/png;base64,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`,vogel:`data:image/png;base64,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`,schildkroete:`data:image/png;base64,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`,fisch:`data:image/png;base64,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`,schlange:`data:image/png;base64,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`,pferd:`data:image/png;base64,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`},Gn=[[`welpe`,`hund`],[`hund`,`hund`],[`kater`,`katze`],[`katze`,`katze`],[`kaninchen`,`kaninchen`],[`hase`,`kaninchen`],[`meerschwein`,`meerschweinchen`],[`hamster`,`hamster`],[`ratte`,`hamster`],[`maus`,`hamster`],[`wellensittich`,`vogel`],[`sittich`,`vogel`],[`papagei`,`vogel`],[`vogel`,`vogel`],[`schildkr`,`schildkroete`],[`schlange`,`schlange`],[`natter`,`schlange`],[`python`,`schlange`],[`echse`,`schlange`],[`gecko`,`schlange`],[`reptil`,`schlange`],[`fisch`,`fisch`],[`koi`,`fisch`],[`pferd`,`pferd`],[`pony`,`pferd`],[`fohlen`,`pferd`]];function Kn(e){let t=e.toLowerCase();for(let[e,n]of Gn)if(t.includes(e))return n;return``}function qn(e){let t=Kn(e),n=t===``?void 0:Wn[t];if(n!==void 0)return C`<img src=${n} alt="" aria-hidden="true" />`}function Jn(e){return qn(e)??Un()}var Yn=o`
-      /* Grundform (Demo .karte): Papierflaeche, EINE 1,5px-Kante, flach.
-         Die linke obere Ecke ist EGKIG, weil dort die Lasche ansetzt — ohne
-         Lasche ist sie rund wie die anderen drei (Klasse setzt der Baustein). */
+
       .card {
         position: relative;
         box-sizing: border-box;
@@ -342,72 +288,27 @@
         transition: border-color var(--se-move);
       }
       .card.ohne-reiter { border-radius: var(--se-r-md); }
-      /* Der 24px-Vorschub (Demo: .karte margin-top 24px) ist der Platz, den die
-         LASCHE braucht: sie sitzt auf der Oberkante und ragt nach oben aus der
-         Karte heraus. Deshalb haengt er an der Lasche und steht am HOST, nicht
-         an der Karte:
-           - an der Lasche, weil eine Karte OHNE Datum und Zeit keine Lasche hat
-             und dann auch keinen Platz dafuer braucht. Vom 2026-08-07 bis heute
-             galt er fuer jede Karte — eine frei auf dem Blatt liegende Karte
-             ohne Lasche bekam dadurch eine 24px-Delle ueber sich.
-           - am Host, weil ein Abstand INNEN von der Kartenhoehe abgeht: in einem
-             Platz mit fester Hoehe rutschte die Karte 24px nach unten und lief
-             unten heraus. Aussen schiebt er die Karte als Ganzes.
-         Den Abstand zwischen zwei Karten OHNE Lasche gibt die Spalte
-         (KanbanSpalteBlock, ::slotted) — sonst kaeme er bei Karten MIT Lasche
-         doppelt.
-         flow-root bleibt: ein eigenes Element ist von sich aus 'inline', erst
-         das macht die Kartenhuelle zu einem Block mit eigener Flaeche. */
+
       :host { display: flow-root; }
       :host([hat-reiter]) { margin-top: 24px; }
-      /* Flach (Fellnase Regel 4): beim Zeigen wird die KANTE dunkler, die
-         Karte hebt nicht ab. */
+
       .card:hover { border-color: var(--se-faint); }
-      /* Hier lag von 2026-07-30 bis 2026-08-07 ein 3px breiter Farbstreifen
-         auf der LINKEN Kante, der den Status noch einmal am Kartenkoerper
-         zeigte. Die Entscheidung dafuer ist aufgehoben (Nutzer 2026-08-07):
-         die Demo kennt ihn nicht — sie gibt der Karte rundum EINE Kante
-         gleicher Staerke (atome.css .karte) und zeigt den Status allein an
-         der Marke. Genau dort steht er weiterhin; verloren geht nichts.
-         Besonders behandelt wird nur der Notfall (s. unten). */
-      /* Notfall (Demo .karte--notfall): dieselbe Karte, klare Kante — Akzent
-         an Rand und Lasche, ein HAUCH davon im Grund. Ein Anflug, keine
-         Flaeche (Regel 2: ein lauter Ton je Flaeche). ALLE VIER Kanten im
-         selben Ton und derselben Staerke: die Demo setzt border-color, nicht
-         eine einzelne Kante, und kennt keinen zweiten Rotton. */
+
       .card.v-danger {
         border-color: var(--se-accent);
         background: var(--se-red-soft);
       }
       .card.v-danger:hover { border-color: var(--se-accent-dark); }
-      /* Die GEWAEHLTE Karte (Auswahl-Geber Kanban, 2026-08-05): getoente
-         Akzentflaeche + Akzentrahmen — dieselbe Handschrift wie die gewaehlte
-         Tabellenzeile. Das Attribut setzt NUR die Laufzeit (kanban/seRuntime),
-         der Editor erfindet keine Auswahl (Regel 7). Rundum EIN Rahmen: bis
-         2026-08-07 standen hier drei einzelne Kanten, damit der linke
-         Status-Streifen durchschien — den gibt es nicht mehr. */
+
       :host([data-ff-auswahl]) .card {
         border-color: var(--se-accent);
         background: var(--se-accent-soft);
       }
-      /* Die GEZOGENE Karte tritt zurueck, solange sie am Mauszeiger haengt:
-         so ist sichtbar, WELCHE Karte gerade unterwegs ist, und ihr alter
-         Platz sieht nicht mehr nach „liegt hier" aus. Sie bleibt liegen (kein
-         eingebautes Umhaengen, s. kanban/seRuntime) — blass heisst also
-         „unterwegs", nicht „weg". Das Attribut setzt NUR die Laufzeit; im
-         Editor gibt es diesen Zug nicht. */
+
       :host([data-ff-zieht]) .card {
         opacity: 0.45;
       }
 
-      /* Die Lasche (Demo .karte-reiter): sitzt AUF der Oberkante, ohne
-         Unterkante — sie geht in die Karte ueber. left:-1.5px richtet sie an
-         der Aussenkante aus, nicht am Innenrand.
-         Nachgerechnet (2026-08-07): left zaehlt ab dem INNENrand der Karte,
-         also hinter deren Kante. Minus eine Kantenstaerke landet die Lasche
-         damit genau auf der Aussenkante — aber nur, solange links dieselbe
-         1,5px-Kante liegt wie rundum. Mit dem frueheren 3px-Streifen stand sie
-         1,5px zu weit innen; seit er weg ist, stimmt es wieder. */
       .reiter {
         position: absolute;
         left: calc(-1 * var(--se-border));
@@ -436,15 +337,13 @@
         color: var(--se-card-bg);
       }
 
-      /* Kopf (Demo .karte-kopf): Bild links, 10px Abstand, daneben die Namen. */
       .kopf {
         display: flex;
         align-items: center;
         gap: var(--se-gap);
         min-width: 0;
       }
-      /* Das Tierzeichen steht FREI, ohne Kachel (Fellnase-Entscheidung).
-         36px ist das Kartenmass der Demo (.tier ohne Groessen-Zusatz). */
+
       .avatar {
         box-sizing: border-box;
         display: grid;
@@ -462,8 +361,7 @@
         object-fit: contain;
       }
       .namen { min-width: 0; }
-      /* Name (Demo .karte-name: 700 15,5px/1,25) und Zusatz (.karte-zusatz:
-         12,5px, gedaempft). Beide einzeilig mit „…". */
+
       .name,
       .zusatz {
         display: block;
@@ -481,8 +379,7 @@
         color: var(--se-muted);
         font-size: var(--se-fs-sm);
       }
-      /* Fliesstext (Demo .karte-grund): 9px Abstand nach oben, hoehere
-         Zeilenhoehe, hoechstens zwei Zeilen. */
+
       .grund {
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -493,8 +390,7 @@
         font-size: var(--se-fs);
         line-height: 1.45;
       }
-      /* Fusszeile (Demo .karte-fuss): zwei Plaetze, auseinandergeschoben —
-         links ein gedaempfter Text, rechts die Marke. */
+
       .fuss {
         display: flex;
         align-items: center;
@@ -510,16 +406,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      /* margin-left:auto haelt die Marke RECHTS, auch wenn der linke Platz
-         leer ist. space-between allein reicht nicht: mit nur einem Kind
-         schiebt es dieses an den Anfang — in der Maske waere die Marke also
-         nach links gerutscht, sobald Titel 2 ungebunden bleibt (der
-         Normalfall). In der Demo stehen immer beide Plaetze, dort faellt es
-         nicht auf. */
+
       .fuss .chip { flex: none; margin-left: auto; }
 
-      /* Leere Stellen: im Editor an JEDER Karte gleich, in der Maske nie.
-         Warum, steht im Dateikopf (U8). */
       :host([data-ff-editor]) [data-ff-spot]:empty::before {
         content: '—';
         color: var(--se-faint);
@@ -565,14 +454,10 @@
                 >${this.chipText}</span>`:T}
           </div>`:T}
     </div>`}};j([k()],K.prototype,`chipVariant`,void 0),j([k()],K.prototype,`heading`,void 0),j([k()],K.prototype,`heading2`,void 0),j([k()],K.prototype,`time`,void 0),j([k()],K.prototype,`date`,void 0),j([k()],K.prototype,`avatar`,void 0),j([k()],K.prototype,`meta`,void 0),j([k()],K.prototype,`text`,void 0),j([k()],K.prototype,`chipText`,void 0),j([k()],K.prototype,`headingField`,void 0),j([k()],K.prototype,`heading2Field`,void 0),j([k()],K.prototype,`timeField`,void 0),j([k()],K.prototype,`dateField`,void 0),j([k()],K.prototype,`avatarField`,void 0),j([k()],K.prototype,`metaField`,void 0),j([k()],K.prototype,`textField`,void 0),j([k()],K.prototype,`chipTextField`,void 0),M.defineAndRegister(K);function Xn(e){let t=String(e??``).trim();if(t===``)return``;let n=/^(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(t);if(n)return`${n[3]}-${n[2].padStart(2,`0`)}-${n[1].padStart(2,`0`)}`;let r=/^(\d{4})-(\d{2})-(\d{2})/.exec(t);return r?`${r[1]}-${r[2]}-${r[3]}`:``}function Zn(e){let t=String(e.getMonth()+1).padStart(2,`0`),n=String(e.getDate()).padStart(2,`0`);return`${e.getFullYear()}-${t}-${n}`}function Qn(e,t){let n=/^(\d{4})-(\d{2})-(\d{2})$/.exec(e);if(!n)return``;let r=new Date(Number(n[1]),Number(n[2])-1,Number(n[3]));return r.setDate(r.getDate()+t),Zn(r)}var $n=``,er=new Set;function tr(){return $n}function nr(e){let t=Xn(e);t!==$n&&($n=t,er.forEach(e=>e()))}function rr(e){return er.add(e),()=>{er.delete(e)}}var ir=class extends M{constructor(...e){super(...e),this.tag=``,this.tagAbmelden=null}static{this.blockType=`datum`}static{this.tagName=`ff-datum`}static{this.displayName=`Datum`}static{this.category=`anzeige`}static{this.defaultProps={}}static{this.customProperties=[]}static{this.raster={startW:9,startH:2,minW:5,minH:2}}static{this.styles=[M.styles,o`
-      /* EINE Hoehe fuer Riegel und „Heute" — vorher liefen sie mit 36px und
-         30px auseinander und standen sichtbar nicht auf einer Linie. */
+
       .waehler {
         --tag-h: 34px;
-        /* Mindestbreite des Datumsfelds. Der Browser rendert im Datumsfeld
-           TT.MM.JJJJ plus sein eigenes Kalender-Symbol; darunter bricht die
-           Anzeige um oder verschwindet. Referenz .vinput-date: 128px — hier
-           knapper, damit der Baustein sich schmaler ziehen laesst. */
+
         --tag-feld-min: 112px;
         display: flex;
         align-items: stretch;
@@ -580,11 +465,7 @@
         height: var(--tag-h);
         font-family: var(--se-font);
       }
-      /* Der gerahmte Riegel (.vdaynav): EIN Rahmen um Pfeil, Feld, Pfeil —
-         dadurch wirkt der Waehler als ein Bedienelement, nicht als drei
-         lose Teile. Er FUELLT die Breite des Bausteins: sonst steht der
-         Baustein schmal in einer breiten Zelle und der Auswahlrahmen des
-         Editors ist sichtbar breiter als das Ding darin (Nutzer 2026-07-27). */
+
       .riegel {
         box-sizing: border-box;
         display: flex;
@@ -597,7 +478,7 @@
         border-radius: var(--se-r-sm);
         background: var(--se-panel);
       }
-      /* Pfeile: im Riegel rahmenlos und quadratisch (.vdaynav .vbtn-icon). */
+
       .pfeil {
         flex: none;
         display: flex;
@@ -615,12 +496,10 @@
         cursor: pointer;
       }
       .pfeil:hover { background: var(--se-panel-2); color: var(--se-ink); }
-      /* Das Datumsfeld traegt im Riegel keinen eigenen Rahmen und steht
-         mittig + halbfett (.vinput-date) — es ist die Hauptaussage. */
+
       .feld {
         box-sizing: border-box;
-        /* Waechst mit dem Riegel, faellt aber NIE unter die Mindestbreite —
-           genau das fehlte in der ersten Fassung (gemessene 8px). */
+
         flex: 1;
         min-width: var(--tag-feld-min);
         border: none;
@@ -633,8 +512,7 @@
         text-align: center;
       }
       .feld:focus { outline: none; }
-      /* „Heute" steht NEBEN dem Riegel und ist ein normaler Knopf (.vbtn),
-         gleich hoch wie der Riegel. */
+
       .heute {
         box-sizing: border-box;
         flex: none;
@@ -651,13 +529,7 @@
         cursor: pointer;
       }
       .heute:hover { border-color: var(--se-accent); color: var(--se-accent); }
-      /* Schmal gezogen raeumt der Waehler selbst auf, statt sich zu
-         verstuemmeln: zuerst geht „Heute" (die Pfeile leisten dasselbe,
-         nur langsamer), dann rueckt das Datumsfeld enger zusammen. Ohne
-         das waere der Baustein nie unter ~240px zu bekommen (Nutzer
-         2026-07-27). Container-Abfragen sind hier ungefaehrlich: kennt sie
-         ein alter Browser nicht, ueberspringt er den Block und der Waehler
-         bleibt schlicht in seiner breiten Form — nichts bricht. */
+
       :host { container-type: inline-size; }
       @container (max-width: 210px) {
         .heute { display: none; }
@@ -665,14 +537,11 @@
       @container (max-width: 160px) {
         .waehler { --tag-feld-min: 80px; }
       }
-      /* Im Editor wird gestaltet, nicht bedient (Regel 7): der Waehler zeigt
-         dort den heutigen Tag, nimmt aber keine Eingabe an. */
+
       :host([data-ff-editor]) .feld,
       :host([data-ff-editor]) .pfeil,
       :host([data-ff-editor]) .heute { pointer-events: none; }
-      /* Rasterflaeche: hoeher gezogen waechst der Waehler MIT (wie das
-         Eingabefeld beim Formularfeld) — vorher wuchs nur die Zelle und der
-         Baustein blieb klein darin stehen (Nutzer 2026-07-27). */
+
       :host([fuellt]) .waehler { height: 100%; }
     `]}setzeTag(e){nr(e),this.tag=tr()}render(){return C`<div class="waehler">
       <div class="riegel">
@@ -689,18 +558,14 @@
     </div>`}connectedCallback(){super.connectedCallback(),this.tag=tr()||Zn(new Date),!this.hasAttribute(`data-ff-editor`)&&(this.setzeTag(this.tag),this.tagAbmelden?.(),this.tagAbmelden=rr(()=>{this.tag=tr()}))}disconnectedCallback(){super.disconnectedCallback(),this.tagAbmelden?.(),this.tagAbmelden=null}};j([A()],ir.prototype,`tag`,void 0),M.defineAndRegister(ir);var ar={attributeName:`fieldType`,equals:`nachschlagen`},or=[{attributeName:`fieldType`,name:`Feldtyp`,description:`Welche Art Eingabe das Feld annimmt.`,kind:`select`,options:[{value:`text`,label:`Text`},{value:`number`,label:`Zahl`},{value:`textarea`,label:`Mehrzeilig`},{value:`select`,label:`Auswahl`},{value:`date`,label:`Datum`},{value:`time`,label:`Uhrzeit`},{value:`checkbox`,label:`Ankreuzfeld`},{value:`nachschlagen`,label:`Nachschlagen`}]},{attributeName:`options`,name:`Auswahl-Optionen`,description:`Nur bei Feldtyp "Auswahl": Einträge durch Komma getrennt (z. B. "Zimmer 1, Zimmer 2") — jeder Eintrag wird eine Dropdown-Zeile.`,kind:`text`,visibleWhen:{attributeName:`fieldType`,equals:`select`}},{attributeName:`nachschlagQuelle`,name:`Quelle`,description:`Nur bei Feldtyp "Nachschlagen": aus dieser Datenquelle wählt der Bediener eine Zeile.`,kind:`quelle`,visibleWhen:ar},{attributeName:`anzeigeFeld`,name:`Angezeigt wird`,description:`Feld der Nachschlage-Quelle, dessen Wert der Bediener sieht (z. B. der Name).`,kind:`field`,quelleProp:`nachschlagQuelle`,klarnameProp:`anzeigeTitel`,visibleWhen:ar},{attributeName:`speicherFeld`,name:`Gespeichert wird`,description:`Feld der Nachschlage-Quelle, dessen Wert die Maske sich merkt und die Kette "Wert geändert" weitergibt (z. B. die Nummer).`,kind:`field`,quelleProp:`nachschlagQuelle`,klarnameProp:`speicherTitel`,visibleWhen:ar},{attributeName:`einzigerTreffer`,name:`Einzigen Treffer übernehmen`,description:`Bleibt in der Maske genau EIN Satz übrig (weil das Feld der Auswahl eines anderen folgt), übernimmt es diesen von selbst — ohne dass der Bediener die Lupe drückt. Nur in ein leeres Feld; die Lupe bleibt daneben bedienbar.`,kind:`segment`,options:[{value:`ja`,label:`Ja`},{value:`nein`,label:`Nein`}],visibleWhen:ar},{attributeName:`valueField`,name:`Feld`,description:`Feld der angeschlossenen Datenquelle, dessen Wert angezeigt und lokal aktualisiert wird.`,kind:`field`,visibleWhen:{attributeName:`fieldType`,notEquals:`nachschlagen`}}];function sr(e){return`${e.toLowerCase()}field`}function cr(e){let t=e.split(`::`);if(t.length!==2)return{quelleId:``,code:e};let[n,r]=t;return n===``||r===``?{quelleId:``,code:e}:{quelleId:n,code:r}}var lr=999,ur=`0`,dr=`255`,fr=new Map;function pr(e){let t=pt(e);ft(e,[]),t!==void 0&&t.length>0&&tn()}async function mr(e,t,n,r,i){return(await Tn({id:`relation-lader`,verb:`GET_RELATION`,nr:e.nr,params:[]},[t.belegart,r,i,t.belegnummer,t.jahr,t.archiv,``,String(n),``,``,``,``],{still:!0,satzAntwort:!0})).wert}function hr(e,t,n){let r=(fr.get(e.id)??0)+1;if(fr.set(e.id,r),n===void 0){pr(e.name);return}let i={belegart:I(n,t.belegartFeld),belegnummer:I(n,t.belegnummerFeld),jahr:t.jahrFeld===``?``:I(n,t.jahrFeld),archiv:t.archivFeld===``?``:I(n,t.archivFeld)};if(i.belegart===``||i.belegnummer===``){pr(e.name);return}pr(e.name),(async()=>{let n=[],a=!1;for(let o=1;o<=lr;o+=1){let s=await mr(t,i,o,ur,dr);if(fr.get(e.id)!==r)return;if(t.endeFelder.every(e=>I({SATZ:s},e)===``)){a=!0;break}let c={SATZ:s};for(let n of t.zusatzFelder){let a=n.indexOf(`_`),s=await mr(t,i,o,n.slice(0,a),n.slice(a+1));if(fr.get(e.id)!==r)return;c[n]=s}n.push(c)}a||W(`Positionen laden: nach ${lr} Zeilen ohne Ende-Kennung abgebrochen (Relation Nr. ${t.nr}) — die Liste ist wahrscheinlich unvollständig, vermutlich passen Relationsnummer oder Ende-Felder nicht.`),fr.get(e.id)===r&&(ft(e.name,n),tn())})()}var gr=new Map,_r=!1;function vr(){let e=new Map;for(let t of Ue())t.satzWahl&&e.set(t.tagName.toLowerCase(),(t.satzWahl.quelleProp??`source`).toLowerCase());return e}function yr(e,t){if(!(e===``||typeof document>`u`))for(let n of Array.from(document.querySelectorAll(`[data-ff-id]`))){let r=t.get(n.tagName.toLowerCase());if(r===void 0||n.getAttribute(r)!==e)continue;let i=Tt(n.getAttribute(`data-ff-id`)??``);if(i!==void 0)return i}}function br(){let e=G().FF_DATA_SOURCES;if(!Array.isArray(e))return;let t=vr();for(let n of e){if(!P(n)||typeof n.id!=`string`)continue;let r=F(e,n.id);if(!r?.ladeRelation)continue;let i=yr(r.ladeRelation.geberQuelleId,t),a=yt(i);gr.get(r.id)!==a&&(gr.set(r.id,a),hr(r,r.ladeRelation,i))}}function xr(){_r||(_r=!0,wt(br))}function Sr(e){let t=new Set,n=!1,r=()=>{qt()&&t.forEach(e.hydriere)};return{connect:i=>{i.hasAttribute(`data-ff-editor`)||(t.add(i),e.verdrahte?.(i),n||(n=!0,Qt(r),rr(r),wt(r),xr()),sn(),qt()&&e.hydriere(i))},disconnect:e=>{t.delete(e)}}}var Cr=Xe.toLowerCase(),wr=``;function Tr(e){if(e.length===0)return``;let t=[];for(let n of e){let e=n.trim();if(e===``)return``;t.push(e)}return t.join(wr)}function Er(e){let t=e.getAttribute(Cr)??``;if(t===``)return[];try{let e=JSON.parse(t);if(!Array.isArray(e))return[];let n=[];for(let t of e){if(!t||typeof t!=`object`)continue;let e=t;if(typeof e.quelleId!=`string`||e.quelleId===``)continue;let r=[];for(let t of Array.isArray(e.keyPairs)?e.keyPairs:[]){if(!t||typeof t!=`object`)continue;let e=t;typeof e.fromField!=`string`||typeof e.toField!=`string`||e.fromField.trim()===``||e.toField.trim()===``||r.push({fromField:e.fromField,toField:e.toField})}r.length!==0&&n.push({quelleId:e.quelleId,keyPairs:r})}return n}catch{return[]}}function Dr(e){let t=Er(e);if(t.length===0)return(e,t)=>I(e,cr(t).code);let n=G().SEDATA,r=G().FF_DATA_SOURCES,i=new Map;for(let e of t){let t=F(r,e.quelleId);if(!t)continue;let a=R(n,t.name,t.tableId),o=new Map;for(let t of a){let n=Tr(e.keyPairs.map(e=>I(t,e.toField)));n!==``&&!o.has(n)&&o.set(n,t)}i.set(e.quelleId,{nachSchluessel:o,hierFelder:e.keyPairs.map(e=>e.fromField)})}return(e,t)=>{let{quelleId:n,code:r}=cr(t);if(n===``)return I(e,r);let a=i.get(n);if(!a)return``;let o=Tr(a.hierFelder.map(t=>I(e,t)));if(o===``)return``;let s=a.nachSchluessel.get(o);return s===void 0?``:I(s,r)}}function Or(e,t){let n=e.getAttribute(`source`)??``,r=e.getAttribute(t)??``;if(n===``||r===``)return{art:`ungebunden`};let i=F(G().FF_DATA_SOURCES,n);if(!i)return{art:`ohneQuelle`};let a=Pt(e,R(G().SEDATA,i.name,i.tableId));if(a===void 0)return{art:`ohneZeile`};let{quelleId:o,code:s}=cr(r);return{art:`wert`,wert:o===``?I(a,s):Dr(e)(a,r),zeile:a,quelle:i,quelleId:o,reinerCode:s}}var kr=new WeakMap,Ar=new WeakSet;function jr(e){let t=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(e);return t?`${t[3]}-${t[2]}-${t[1]}`:e}function Mr(e){let t=/^(\d{4})-(\d{2})-(\d{2})$/.exec(e);return t?`${t[3]}.${t[2]}.${t[1]}`:e}function Nr(e){return typeof e.value==`string`?e.value:``}function Pr(e){if(e.pruefeEigenenWert?.(),e.getAttribute(`fieldtype`)===`nachschlagen`){kr.delete(e);return}let t=Or(e,sr(`value`));if(t.art!==`wert`){kr.delete(e),t.art===`ohneZeile`&&(e.value=``);return}let{zeile:n,quelle:r,quelleId:i,reinerCode:a,wert:o}=t,s=r.indexField===``?``:I(n,r.indexField);i===``?kr.set(e,{row:n,code:a,pindex:s}):kr.delete(e),e.value=o}function Fr(e){let t=kr.get(e);return t&&ht(t.row,t.code,Nr(e)),t}function Ir(e){Ar.has(e)||(Ar.add(e),e.addEventListener(`input`,()=>{Fr(e)}),e.addEventListener(`change`,()=>{let t=Fr(e);Nn(e,`onChange`,{VALUE:Nr(e),PINDEX:t?.pindex??``}).catch(Mn)}))}var Lr=Sr({hydriere:Pr,verdrahte:Ir}),Rr=Lr.connect,zr=Lr.disconnect,Br=o`
   .feld {
     font-family: var(--se-font);
-    /* Innenabstände EINMAL definiert — .ctrl und .ph leiten sich beide
-       daraus ab, damit der Platzhalter exakt an der Textposition sitzt.
-       (N1: keine Magic Numbers, die beim Padding-Ändern auseinanderlaufen.) */
+
     --feld-pad-y: 7px;
     --feld-pad-x: 10px;
     --feld-rand: var(--se-border);
   }
-  /* Anker für den im Feld sitzenden Platzhalter. */
+
   .huelle { position: relative; }
-  /* .ctrl exakt nach Referenz-Optik: Rahmen, Panel-Flaeche, kantiger
-     Radius; Fokus = Hausfarbe als Rahmen + ein zweiter
-     Strich derselben Staerke (Fellnase ist flach: kein Leuchten). */
+
   .ctrl {
     box-sizing: border-box;
     width: 100%;
@@ -710,15 +575,7 @@
     border-radius: var(--se-r-md);
     font-family: var(--se-font);
     font-size: var(--se-fs);
-    /* Zeilenhoehe wie in der Demo (.feld 1.4) und AUSDRUECKLICH hier, nicht
-       geerbt: bei Eingabefeldern bringt der Browser eine eigene mit, die einen
-       geerbten Wert schlaegt. Am 2026-08-07 wurde an dieser Stelle eine
-       Zeilenhoehe von 1.5 entfernt mit der Begruendung, der lange Text nehme
-       nun die Zeilenhoehe der Maske — das tat er nicht, er fiel auf den
-       Browserwert zurueck. Der Platzhalter darunter (.ph) ist dagegen ein
-       normaler Kasten und ERBTE die 1.55 der Maske: dadurch sass der
-       Platzhaltertext rund 2px tiefer als der getippte Text im selben Feld.
-       Ein Wert an beiden Stellen beendet das. */
+
     line-height: 1.4;
     color: var(--se-ink);
   }
@@ -733,12 +590,7 @@
     min-height: 64px;
   }
   select.ctrl { padding: calc(var(--feld-pad-y) - 1px) calc(var(--feld-pad-x) - 2px); }
-  /* Der Platzhalter sitzt IM Feld (an der Textposition des .ctrl:
-     1px Rahmen + 7px/10px Innenabstand), faengt keine Klicks der
-     Maske ab und verschwindet, sobald das Feld Inhalt hat.
-     Zeilenhoehe = die des Feldes (.ctrl 1.4): Innenabstand allein reicht
-     nicht, um zwei Texte zur Deckung zu bringen — die Zeilenhoehe bestimmt
-     mit, wo die Schrift in ihrer Zeile liegt. */
+
   .ph {
     position: absolute;
     top: calc(var(--feld-pad-y) + var(--feld-rand));
@@ -753,55 +605,17 @@
     pointer-events: none;
   }
   .ph[hidden] { display: none; }
-  /* Der Platzhalter eines GEBUNDENEN Felds braucht hier keine Sonderregel:
-     im Export steht dort bereits der Feld-Klarname ("Tiername"), derselbe
-     Text, den der Editor an der Stelle zeigt (exportMask/bindungsVorschau).
-     Er verschwindet wie jeder Platzhalter, sobald ein Wert da ist.
-     Bis 2026-08-06 versteckte an dieser Stelle eine Regel den Platzhalter
-     gebundener Felder in der Maske ganz. Grund war, dass die Maske damals
-     den GETIPPTEN Text zeigte: der Bediener las in SoftEngine ploetzlich
-     "Feldname", wo der Editor "Tiername" gezeigt hatte (SE-Echttest
-     2026-08-04). Verstecken war die ehrliche Notloesung — ein leeres Feld
-     verriet aber nicht mehr, wozu es gehoert. Jetzt stimmt der Text, und
-     die Regel ist ueberfluessig. */
-  /* Select hat 1px weniger Innenabstand als Textfelder; der eingeblendete
-     Feldtext sitzt trotzdem exakt an seiner nativen Textposition. */
+
   .ph-select {
     top: calc(var(--feld-pad-y) - 1px + var(--feld-rand));
     left: calc(var(--feld-pad-x) - 2px + var(--feld-rand));
-    right: 25px; /* Platz für den Aufklapp-Pfeil */
+    right: 25px;
   }
-  /* Datum und Uhrzeit (2026-08-17): Ein leeres <input type="date"> zeigt von
-     sich aus "tt.mm.jjjj", ein leeres <input type="time"> zeigt "--:--".
-     Unser Platzhalter liegt darueber — beide zusammen waeren zwei Texte
-     uebereinander. Deshalb weicht abwechselnd einer:
-       - RUHEND und leer: der browsereigene Hinweis wird unsichtbar, sichtbar
-         ist der Feldname ("Anreise") — genau wie beim Textfeld.
-       - IM FOKUS: das Feld gehoert dem Tippen. Der Name tritt zur Seite, die
-         Segmente kommen zurueck. Ohne das tippte der Bediener blind: der
-         Wert bleibt leer, bis das Datum VOLLSTAENDIG ist, der Name laege also
-         waehrend der ganzen Eingabe darueber.
-     WER den Namen wegnimmt, entscheidet der Baustein ueber ein Zustandsfeld
-     (FormFeldBlock: Fokus AM STEUERELEMENT), nicht :focus-within an dieser
-     Huelle. Ein paar Stunden lang stand hier :focus-within — und das schloss
-     den Platzhalter SELBST ein: der Doppelklick zum Umbenennen fokussiert
-     genau diesen Text, die Regel liess ihn im selben Moment verschwinden, und
-     das Umbenennen "tat nichts" (Nutzer-Befund 2026-08-17). Auch :has() waere
-     hier falsch gewesen: der eingebettete Browser von SoftEngine ist in seiner
-     Version unbekannt, und die Regel darf nicht davon abhaengen.
-     opacity statt display/visibility: nur so bleibt das Feld gleich hoch und
-     die Segmente behalten ihre Breite (kein Sprung beim Fokus). Der
-     ::-webkit-datetime-edit-Teil ist Chromium/Edge — genau dort laeuft der
-     Editor und laeuft SoftEngine (WinUI wie WebUI). In einem anderen Browser
-     greift die Regel nicht: dann stuenden beide Texte uebereinander. Das ist
-     die bewusst in Kauf genommene Grenze (Nutzer-Ansage 2026-08-17). */
+
   .huelle.leer input[type="date"]:not(:focus)::-webkit-datetime-edit,
   .huelle.leer input[type="time"]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
   .huelle.leer.tippt .ph-nativ { display: none; }
-  /* Ankreuzfeld: Kästchen + Beschriftung in EINER Zeile (Referenz
-     .impf-chk) — bewusst ohne <label for>-Kopplung: im Editor ist die
-     Beschriftung das Umbenennen-Ziel. Den Haken-Klick auf den Text
-     übernimmt in der MASKE ein eigener Handler (N1, s. onTextClick). */
+
   .zeile {
     display: flex;
     align-items: center;
@@ -816,15 +630,10 @@
     flex: none;
     accent-color: var(--se-accent);
   }
-  /* Nachschlagen: Feld + Lupe in EINER Zeile; die Lupe sitzt im Feld
-     rechts. Der gestrichelte Rahmen sagt wie bei gebundenen Stellen:
-     dieser Wert kommt aus Daten, nicht aus der Tastatur. */
+
   .nachschlag { position: relative; }
   .nachschlag .ctrl { padding-right: 34px; border-style: dashed; }
-  /* Nur EIN Knopf im Feld: die Lupe. Bis 2026-08-07 sass links daneben ein ×
-     zum Loeschen (samt breiterem Innenabstand fuer beide) — es ist raus
-     (Nutzer-Ansage): geloescht wird mit der Tastatur, wie in jedem anderen
-     Feld. Zwei Knoepfe in einem 240px-Feld waren ohnehin einer zu viel. */
+
   .lupe {
     position: absolute;
     top: var(--feld-rand);
@@ -842,10 +651,7 @@
   }
   .lupe:hover { background: var(--se-accent-soft); color: var(--se-ink); }
   .lupe:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
-  /* Im Editor wird gestaltet, nicht ausgefuellt: das Eingabeelement
-     nimmt dort keine Bedienung an — dafuer wird der Platzhalter
-     anfassbar (Doppelklick = Text im Feld aendern). Ein leerer
-     Platzhalter bekommt nur im Editor einen greifbaren Hinweis. */
+
   :host([data-ff-editor]) .ctrl,
   :host([data-ff-editor]) .lupe { pointer-events: none; }
   :host([data-ff-editor]) .ph { pointer-events: auto; cursor: text; }
@@ -853,15 +659,11 @@
     border-style: dotted;
     border-color: var(--se-accent);
   }
-  /* N1: der "Text …"-Griff gilt für JEDEN geleerten Inline-Edit-Text —
-     auch die Ankreuzfeld-Beschriftung bleibt im Editor anfassbar. */
+
   :host([data-ff-editor]) [data-ff-editable]:empty::before { content: 'Text …'; opacity: 0.6; }
-  /* N1: in der MASKE schaltet die Beschriftung den Haken (Windows-
-     Gewohnheit) — klickbar zeigen, Textauswahl beim Klicken vermeiden. */
+
   :host(:not([data-ff-editor])) .zeile .text { cursor: pointer; user-select: none; }
-  /* Rasterflaeche: das Eingabefeld fuellt seine Zelle in Breite und Hoehe
-     (Ziehen macht das FELD groesser). Nur die Text-artigen Felder in der
-     .huelle strecken sich; das Ankreuzfeld (.zeile) bleibt 15px. */
+
   :host([fuellt]) .feld,
   :host([fuellt]) .huelle { height: 100%; }
   :host([fuellt]) .huelle .ctrl { height: 100%; }
@@ -936,16 +738,14 @@
     line-height: 1.4;
     text-align: center;
   }
-  /* Das Zeichen leicht gekippt — es liegt da wie eine Spur, nicht wie ein
-     Symbol in einem Formular. Die CSS-Farbe schlaegt das fill-Attribut der
-     Pfote (Praesentationsattribute verlieren gegen jede Regel). */
+
   .leer svg {
     width: 22px;
     height: 22px;
     fill: var(--se-faint);
     transform: rotate(-12deg);
   }
-  /* In der Tafel traegt der Rahmen schon die Kante — kein zweiter Strich. */
+
   .leer--tafel {
     border: none;
     padding: 44px 20px 48px;
@@ -955,10 +755,7 @@
   slot { display: contents; }
 `,pi=`frei · hierher ziehen`,mi=`ff-zimmer-inhalt`,J=class extends M{constructor(...e){super(...e),this.heading=`Neues Zimmer`,this.leerHinweis=``}static{this.blockType=`kanban-zimmer`}static{this.tagName=`ff-kanban-zimmer`}static{this.displayName=`Kanban-Zimmer`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[K.blockType]}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.allowedParentTypes=[`kanban-spalte`]}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={heading:`Neues Zimmer`}}static{this.styles=[M.styles,ui,fi,o`
       :host { display: block; }
-      /* Vorbild .zimmer-kopf: versal und gesperrt, damit er sich vom
-         Kartentext absetzt, ohne eine zweite Flaeche zu brauchen. Die
-         Strukturmasse (Abstaende, letter-spacing) bleiben Literale wie in
-         der Demo, Farbe und Schrift kommen aus Tokens. */
+
       .kopf {
         padding: 2px 2px 0;
         font-family: var(--se-font);
@@ -972,21 +769,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      /* Der Rumpf traegt die Karten. Sein Abstand zum Kopf ist der
-         24px-Vorschub der ersten Karte (kartenAbstand) — genau wie in der
-         Spalte, wo ihn die Unterkante des Spaltenkopfs setzt. */
+
       .body {
         display: flex;
         flex-direction: column;
         align-items: stretch;
       }
-      /* Ziel des Zugs — dieselbe Handschrift wie an der Spalte (dort steht die
-         Begruendung ausfuehrlich). Markiert wird immer nur die INNERSTE
-         Flaeche: liegt der Zeiger hier, leuchtet das Zimmer und nicht die
-         Spalte, denn dieser Titel reist als {ZIMMER} zur Kette. Die Kante
-         liegt hier AUF der Box (kein Versatz nach innen): das Zimmer hat
-         keinen eigenen Innenabstand, ein Outline nach innen schnitte durch
-         den Kopftext. Platz dafuer ist da — der Spaltenrumpf hat 10px. */
+
       :host([data-ff-ziel]) .zimmer {
         background: var(--se-accent-soft);
         border-radius: var(--se-r-md);
@@ -1003,23 +792,13 @@
         ${li(this.leerHinweis)}
       </div>
     </div>`}};j([k()],J.prototype,`heading`,void 0),j([k({attribute:!1})],J.prototype,`leerHinweis`,void 0),M.defineAndRegister(J);var Y=class extends M{static{this.blockType=`kanban-spalte`}static{this.tagName=`ff-kanban-spalte`}static{this.displayName=`Kanban-Spalte`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[K.blockType,J.blockType]}static{this.addChildButton={label:`Zimmer`,childType:J.blockType}}static{this.childDirection=`column`}static{this.showInPalette=!1}static{this.containerHint=!1}static{this.allowedParentTypes=[`kanban`]}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.defaultProps={variant:`info`,heading:`Neue Spalte`,auffang:`nein`,zimmerField:``}}static{this.customProperties=[Bn(`variant`,`Bedeutung der Spalte — bestimmt ihre Farbwelt (Kopf, Fläche, Rahmen).`),di(`auffang`,`Auffangspalte`,`Einträge ohne passenden Spaltentitel landen hier. Ohne Auffangspalte landen sie in der ersten Spalte.`,{requiresDataSource:!0,exclusiveAmongSiblings:!0}),{attributeName:`zimmerField`,name:`Unterteilen nach`,description:`Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welches Zimmer dieser Spalte ein Eintrag kommt. Wirkt erst, wenn die Spalte Zimmer hat.`,kind:`field`}]}static{this.styles=[M.styles,ui,fi,o`
-      /* Die Spalte fuellt die Board-Hoehe in BEIDEN Welten (P1.2-Fix eines
-         P1.3-Fehlers): die Host-HOEHE bleibt auto — nur so greift im Export
-         das align-items:stretch des Boards (eine Prozent-Hoehe zaehlt fuer
-         stretch nicht als auto und loeste sich gegen die unbestimmte
-         Board-Hoehe zur Inhaltshoehe auf -> leere Spalten blieben kurz).
-         min-height:100% deckt den Editor ab (BlockHost-Wrapper = Flex-Item,
-         reicht feste Hoehen per 100%-Kette durch); der Host ist selbst
-         Flex-Spalte, damit .col die Host-Box IMMER fuellt (flex:1 statt
-         height:100% — Prozent braeuchte eine bestimmte Elternhoehe). */
+
       :host {
         display: flex;
         flex-direction: column;
         min-height: 100%;
       }
-      /* Flaeche = Toenung der Bedeutung, ueber die GANZE Spalte; kein Rahmen,
-         der Farbwechsel setzt sie ab. Rundung 7px = calc(--rundung + 2px) des
-         Vorbilds; overflow:hidden schneidet an den Ecken ab. S. Klassenkopf. */
+
       .col {
         box-sizing: border-box;
         display: flex;
@@ -1031,26 +810,18 @@
         border-radius: var(--se-r-lg);
         font-family: var(--se-font);
       }
-      /* --col-strong: Punkt + Zaehlerrand · --col-soft: die Spaltenflaeche. */
+
       .col.v-info { --col-strong: var(--se-blue); --col-soft: var(--se-blue-soft); }
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); }
       .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); }
       .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); }
-      /* Ziel des Zugs: solange der Zeiger mit einer Karte hier steht, sagt die
-         Spalte „hier landet sie" — Akzentflaeche statt Bedeutungs-Ton, dazu
-         eine Akzentkante. Sie ist ein OUTLINE nach innen, kein border: ein
-         border wuerde die Spalte im Zug um 1,5px verschieben, und dann
-         wackelte das ganze Board unter der Maus. Der Bedeutungs-Ton weicht
-         bewusst: waehrend des Zugs ist die Frage nicht, was die Spalte
-         bedeutet, sondern wo man loslassen kann. Das Attribut setzt NUR die
-         Laufzeit (./seRuntime), der Editor kennt diesen Zug nicht. */
+
       :host([data-ff-ziel]) .col {
         background: var(--se-accent-soft);
         outline: var(--se-border) solid var(--se-accent);
         outline-offset: calc(-1 * var(--se-border));
       }
-      /* Kopf ohne eigene Flaeche und ohne Trennlinie (Vorbild .spalte-kopf:
-         nur Abstaende); seine Unterkante ist der Abstand zur ersten Karte. */
+
       .head {
         flex: none;
         display: flex;
@@ -1058,22 +829,14 @@
         gap: var(--se-gap-sm);
         padding: 10px 12px;
       }
-      /* Quadratisch, nicht rund: derselbe Punkt wie an der Status-Marke
-         (Fellnase Regel 5, 2026-08-06) — bis dahin war er eine Scheibe. */
+
       .dot {
         flex: none;
         width: 8px;
         height: 8px;
         background: var(--col-strong);
       }
-      /* Eigene Zeilenhoehen wie in der Demo (.spalte-titel 1.3, .zaehler 1).
-         Ohne sie erben beide die Zeilenhoehe der Maske (--se-lh, 1.55) und
-         werden dadurch hoeher als im Vorbild: der Titel schiebt den Kopf
-         auseinander, der Zaehler wird zum Kaestchen mit Luft ueber und unter
-         der Zahl. Die Demo setzt die Werte am Element, nicht am Grundtext —
-         deshalb stehen sie auch hier am Element. */
-      /* Titel und Zahl in normaler Textfarbe — die Bedeutung zeigt die
-         Flaeche (Vorbild: .spalte-titel ohne Farbe, .zaehler espresso). */
+
       .title {
         color: var(--se-ink);
         font-size: var(--se-fs);
@@ -1083,7 +846,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      /* Zaehler: Papierflaeche, Rand im kraeftigen Ton (Vorbild .zaehler). */
+
       .count {
         margin-left: auto;
         min-width: 22px;
@@ -1098,15 +861,7 @@
         font-weight: 600;
         color: var(--se-ink);
       }
-      /* K0: der Rumpf scrollt senkrecht (Empfang-Vorbild .vspalte-karten);
-         min-height:0 erlaubt ihm, bei fester Board-Höhe kleiner zu werden
-         als sein Inhalt — der Leer-Hinweis hält leere Spalten offen. */
-      /* Innenabstand nach Demo (.spalte: 10px seitlich, 12px unten). Oben
-         KEINER: dort steht der Kopf, dessen eigene Unterkante den Abstand zur
-         ersten Karte schon setzt — genau wie .spalte-kopf in der Demo.
-         KEIN gap: den Kartenabstand macht der 24px-Vorschub der Karte
-         (kartenStil). Bis 2026-08-07 lagen hier 6px obendrauf, also 30px statt
-         24px zwischen zwei Karten. */
+
       .body {
         padding: 0 10px 12px;
         display: flex;
@@ -1116,13 +871,7 @@
         min-height: 0;
         overflow-y: auto;
       }
-      /* Der Abstand zwischen zwei gestapelten Karten steht seit N4 in
-         ./kartenAbstand — dieselbe Regel braucht auch der Zimmer-Rumpf, und
-         zwei Kopien waeren zwei Wahrheiten. Sie gilt hier unveraendert und
-         trifft ab N4 auch die Zimmer selbst: das Optik-Vorbild setzt sie
-         zwar enger (8px), aber eine tag-genaue Regel griffe nur im Export
-         (im Editor liegt jedes Kind in einem Wrapper) — Editor und Maske
-         stuenden dann verschieden da. Begruendung ausfuehrlich dort. */
+
     `]}constructor(){super(),this.variant=`info`,this.heading=`Neue Spalte`,this.leerHinweis=``,this._count=0,this.addEventListener(mi,()=>this.zaehle())}zaehle(){this._count=Array.from(this.querySelectorAll(K.tagName)).filter(e=>!e.hasAttribute(`data-ff-editor-helper`)).length}render(){return C`<div class="col v-${Rn(this.variant)}">
       <div class="head">
         <span class="dot"></span>
@@ -1138,18 +887,7 @@
         ${li(this.leerHinweis)}
       </div>
     </div>`}};j([k()],Y.prototype,`variant`,void 0),j([k()],Y.prototype,`heading`,void 0),j([k({attribute:!1})],Y.prototype,`leerHinweis`,void 0),j([A()],Y.prototype,`_count`,void 0),M.defineAndRegister(Y);function hi(e,t,n){return t===``||n===``?[...e]:e.filter(e=>Xn(I(e,t))===n)}function gi(e,t){let n=e.trim().toLowerCase();if(n!==``)for(let e=0;e<t.length;e++){let r=t[e].trim().toLowerCase();if(r!==``&&r===n)return e}return-1}function _i(e){return e.findIndex(e=>(e??``).trim()===`ja`)}var vi=new WeakMap,yi=Y.tagName,bi=J.tagName,xi=K.tagName;function Si(e){return Array.from(e.children).filter(e=>e.tagName.toLowerCase()===yi)}function Ci(e){return Array.from(e.children).filter(e=>e.tagName.toLowerCase()===xi)}function wi(e){return Array.from(e.children).filter(e=>e.tagName.toLowerCase()===bi)}function Ti(e){return[e,...wi(e)]}function Ei(e,t){let n=e.getAttribute(`leertext`)??`Keine Datensätze.`,r=(e,t)=>{e.leerHinweis=t};for(let e of t){let t=wi(e);for(let e of t)r(e,Ci(e).length===0?pi:``);r(e,t.length===0&&Ci(e).length===0?n:``)}}function Di(e){return Ue().find(t=>t.tagName===e.toLowerCase())?.bindableSpots??[]}function Oi(e,t){let n=wi(e);if(n.length===0)return null;let r=e.getAttribute(`zimmerfield`)??``;if(r===``)return n[0];let i=n.map(e=>e.getAttribute(`heading`)??J.defaultProps.heading),a=gi(I(t,r),i);return a>=0?n[a]:n[0]}function ki(e){Z?.board===e&&Fi();let t=e.getAttribute(`source`)??``,n=e.getAttribute(`statusfield`)??``;if(t===``)return;let r=F(G().FF_DATA_SOURCES,t);if(!r)return;let i=Si(e);if(i.length===0)return;let a=vi.get(e);if(!a){let t=e.querySelector(`template[data-ff-template]`)?.content.firstElementChild??e.querySelector(xi);t&&(a=t.cloneNode(!0),vi.set(e,a))}if(!a)return;let o=hi(R(G().SEDATA,r.name,r.tableId),e.getAttribute(`tagfield`)??``,tr()),s=i.map(e=>e.getAttribute(`heading`)??Y.defaultProps.heading),c=Di(a.tagName),l=_i(i.map(e=>e.getAttribute(`auffang`))),u=Dr(e);for(let e of i)for(let t of Ti(e))Ci(t).forEach(e=>e.remove());for(let e of o){let t=a.cloneNode(!0),o=n===``?-1:gi(I(e,n),s),d=o>=0?i[o]:l>=0?i[l]:i[0];(Oi(d,e)??d).appendChild(t);for(let n of c){let r=t.getAttribute(sr(n.prop))??``;r!==``&&(t[n.prop]=u(e,r))}let f=r.indexField===``?``:I(e,r.indexField);X.set(t,{row:e,pindex:f}),t.draggable=!0}Ei(e,i);let d=i.flatMap(e=>Ti(e).flatMap(Ci)),f=Dt(B(e),d,e=>X.get(e)?.row);for(let e of f)d[e].setAttribute(`data-ff-auswahl`,``)}var X=new WeakMap,Z=null,Ai=new WeakSet,ji=`data-ff-zieht`,Mi=`data-ff-ziel`,Ni=null;function Pi(e){Ni!==e&&(Ni?.removeAttribute(Mi),Ni=e,Ni?.setAttribute(Mi,``))}function Fi(){Z?.card.removeAttribute(ji),Z=null,Pi(null)}function Ii(e,t,n){for(let r of t.composedPath())if(r instanceof HTMLElement&&r.tagName.toLowerCase()===n&&e.contains(r))return r;return null}function Li(e,t){return Ii(e,t,yi)}function Ri(e,t,n){if(!Z||Z.board!==e)return;let r=X.get(Z.card);if(!r)return;let i=t.getAttribute(`heading`)??``,a=n?.getAttribute(`heading`)??``;Nn(e,`onCardDrop`,{PINDEX:r.pindex,VALUE:i,ZIMMER:a}).catch(Mn)}function zi(e){Ai.has(e)||(Ai.add(e),e.addEventListener(`click`,t=>{let n=t.composedPath().find(e=>e instanceof HTMLElement&&X.has(e))??null;if(!n)return;let r=X.get(n);r&&Ot(B(e),r.row),Nn(e,`onCardClick`,{PINDEX:r?.pindex??``}).catch(Mn)}),e.addEventListener(`dragstart`,t=>{let n=t.composedPath().find(e=>e instanceof HTMLElement&&X.has(e))??null;n&&(Z={card:n,board:e},t.dataTransfer?.setData(`text/plain`,X.get(n)?.pindex??``),t.dataTransfer&&(t.dataTransfer.effectAllowed=`move`),setTimeout(()=>{Z?.card===n&&n.setAttribute(ji,``)},0))}),e.addEventListener(`dragend`,Fi),e.addEventListener(`dragover`,t=>{let n=Li(e,t);if(Z?.board!==e||!n){Pi(null);return}t.preventDefault(),t.dataTransfer&&(t.dataTransfer.dropEffect=`move`),Pi(Ii(e,t,bi)??n)}),e.addEventListener(`dragleave`,t=>{let n=t.relatedTarget;(!(n instanceof Node)||!e.contains(n))&&Pi(null)}),e.addEventListener(`drop`,t=>{let n=Li(e,t);n&&(t.preventDefault(),Ri(e,n,Ii(e,t,bi)),Fi())}))}var Bi=Sr({hydriere:ki,verdrahte:zi}),Vi=Bi.connect,Hi=Bi.disconnect,Ui=Y.blockType,Wi=class extends M{static{this.blockType=`kanban`}static{this.tagName=`ff-kanban`}static{this.displayName=`Kanban`}static{this.category=`anzeige`}static{this.acceptsChildren=!0}static{this.allowedChildTypes=[Ui]}static{this.childDirection=`row`}static{this.lockedWidth=`fill`}static{this.resizableWidth=!1}static{this.containerHint=!1}static{this.addChildButton={label:`Spalte`,childType:Ui}}static{this.templateChild={type:K.blockType,label:`Muster`}}static{this.resizableHeight=!0}static{this.acceptsDataSource=!0}static{this.satzWahl={}}static{this.blockEvents=[{key:`onCardClick`,name:`Karte angeklickt`},{key:`onCardDrop`,name:`Karte verschoben`}]}static{this.defaultProps={width:`fill`,height:`fill`,source:``,statusField:``,tagField:``,leerText:si}}static{this.raster={startW:24,startH:20,minW:6,minH:8}}static{this.customProperties=[{attributeName:`statusField`,name:`Einsortieren nach`,description:`Optional: Feld der Datenquelle, dessen Inhalt bestimmt, in welche Spalte ein Eintrag kommt. Leer = alle Einträge in der Auffang-Spalte.`,kind:`field`},{attributeName:`tagField`,name:`Tag filtern nach`,description:`Optional: Feld der Datenquelle, in dem das Datum steht. Gesetzt zeigt das Board nur Einträge des Tages, den der Tageswähler zeigt. Leer = alle Einträge.`,kind:`field`},ci()]}static{this.defaultChildren=[{type:Ui,props:{heading:`Offen`,variant:`warning`},children:[{type:K.blockType}]},{type:Ui,props:{heading:`In Arbeit`,variant:`info`}},{type:Ui,props:{heading:`Fertig`,variant:`success`}}]}static{this.styles=[M.styles,o`
-      /* K0/Entscheidung A: ALLE Spalten sind IMMER nebeneinander sichtbar —
-         kein Umbruch in die naechste Zeile, kein horizontaler Scroll,
-         keine Mindestbreite. Die Spalten teilen sich die Zeile gleichmäßig
-         (lockedWidth 'fill' der Spalte: flex-basis 0 + min-width 0) und
-         werden gleich hoch (stretch); Karten scrollen senkrecht IM
-         Spaltenrumpf. min-width:0 am Host erlaubt dem Board, in
-         Zeilen-Bereichen schmaler zu werden als sein Inhalt. */
-      /* height:100% laesst das Board eine feste Hoehe ausfuellen —
-         im Editor traegt sie der Canvas-Wrapper, im Export das Element
-         selbst (Inline-Style schlaegt die 100%). Ohne feste Hoehe loest
-         sich 100% zu auto auf (Elternhoehe haengt vom Inhalt ab) —
-         Verhalten wie bisher. */
+
       :host { min-width: 0; height: 100%; }
       .board {
         display: flex;
@@ -1178,10 +916,9 @@
         cursor: pointer;
       }
       :host(:hover) { background: var(--se-muted); }
-      /* Der aktive Eintrag: genau EINER traegt ihn, gesetzt von der Navi. */
+
       :host([aktiv]) { background: var(--se-accent); color: var(--se-panel); }
-      /* Zeichen-Groesse des Vorbilds (.vnav-ic 20px), rund und ohne Schrift:
-         geschlossen ist DAS der ganze Eintrag. */
+
       .zeichen {
         width: 22px;
         height: 22px;
@@ -1190,16 +927,13 @@
         background: var(--ton);
       }
       :host([aktiv]) .zeichen { background: var(--se-panel); }
-      /* Die waehlbaren Toene: je Wert genau ein Masken-Token. Der Grundwert
-         steht oben am :host und ist DERSELBE wie 'sonne' — der Export laesst
-         Standardwerte weg, ein Eintrag im Standardton traegt also gar kein
-         ton-Attribut, und ohne Grundwert waere sein Punkt unsichtbar. */
+
       :host([ton='sonne'])   { --ton: var(--se-amber); }
       :host([ton='salbei'])  { --ton: var(--se-green); }
       :host([ton='himmel'])  { --ton: var(--se-blue); }
       :host([ton='flieder']) { --ton: var(--se-violet); }
       :host([ton='koralle']) { --ton: var(--se-accent); }
-      /* Name erst in der offenen Leiste (s. Dateikopf) */
+
       .name { display: none; }
       :host([breit]) .name {
         display: block;
@@ -1228,7 +962,7 @@
       :host([offen]) .leiste {
         background: color-mix(in oklab, var(--se-ink) 88%, transparent);
       }
-      /* Kopf mit dem Klapp-Knopf (Vorbild .vnav-kopf, ohne dessen Marke) */
+
       .kopf {
         flex: none;
         display: flex;
@@ -1349,20 +1083,7 @@
       </div>
     `}var To=o`
       :host { min-width: 0; height: 100%; }
-      /* --zeilen-hoehe ist der Takt der Tabelle. Die ZAHL steht nicht mehr
-         hier, sondern in ./seitengroesse (ZEILEN_HOEHE) — der Baustein setzt
-         sie beim Zeichnen als Variable. Grund (2026-08-06): seit die Tabelle
-         ihre Zeilenzahl aus der eigenen Hoehe RECHNET, brauchen Optik und
-         Rechnung denselben Wert. Zwei Stellen hiessen: beim naechsten
-         Feinschliff rechnet die Seitengroesse still falsch.
-         Vorgegeben (nicht aus Schrift + Innenabstand geschaetzt) bleibt er
-         weiterhin: ein geschaetzter Wert lief hier schon 4,25px je Zeile aus
-         dem Takt und sah nach vier Zeilen krumm aus (Nutzer 2026-07-25). */
-      /* Der Tafel-Rahmen (Demo .tafel, Werte 1:1): Papierflaeche, EINE
-         1,5px-Kante, grosse Rundung, nichts Koerperhaftes. overflow:hidden
-         schneidet Suchzeile und Fusszeile an den runden Ecken sauber ab.
-         position:relative ist der Anker der frei schwebenden Editor-Hilfe
-         unten (.steuerung), sonst nichts. */
+
       .tabelle {
         position: relative;
         box-sizing: border-box;
@@ -1377,8 +1098,7 @@
         font-size: var(--se-fs);
         color: var(--se-ink);
       }
-      /* Suchzeile ueber dem Kopf: gehoert zur Tabelle, nicht zur Maske
-         drumherum — deshalb sitzt sie INNERHALB des Rahmens. */
+
       .suchzeile {
         padding: 5px 8px;
         border-bottom: var(--se-border) solid var(--se-line);
@@ -1386,12 +1106,7 @@
       }
       .suchzeile input {
         box-sizing: border-box;
-        /* NICHT ueber die ganze Breite (Nutzer 2026-07-25): ein Suchfeld,
-           das die volle Tabellenbreite einnimmt, sieht aus wie ein
-           Eingabefeld der Maske statt wie eine Suche. Ausserdem braucht die
-           Editor-Steuerung (+/−) rechts daneben Platz, sonst liegt sie auf
-           dem Feld. Schmal genug, um als Suche gelesen zu werden, breit
-           genug fuer einen Suchbegriff. */
+
         width: 100%;
         max-width: 15rem;
         height: 24px;
@@ -1407,16 +1122,7 @@
         outline: none;
         border-color: var(--se-accent);
       }
-      /* Kopf und Zeilen tragen eine feste Hoehe — daraus entsteht der
-         gleichmaessige Takt, den man als sauberes Lineal wahrnimmt.
-         ZWEI Variablen, seit die Zeilen den Rest aufnehmen (S2.1, 2026-08-11):
-         die Zeilen sind um Rest/Anzahl hoeher als der Grundtakt (1 bis 4 px),
-         der KOPF bleibt beim Grundtakt. Das ist keine Kosmetik, sondern der
-         Riegel gegen eine Schleife: die Messung zieht die Kopfhoehe von der
-         Rumpfhoehe ab — waechst der Kopf mit, aendert sich der Platz, den die
-         Messung gerade verteilt hat, und die Tabelle zappelte zwischen zwei
-         Zeilenzahlen. Ohne Messung sind beide Werte gleich, dann sieht man
-         keinen Unterschied. */
+
       .kopf {
         display: grid;
         height: var(--takt);
@@ -1427,15 +1133,7 @@
         height: var(--zeilen-hoehe);
         box-sizing: border-box;
       }
-      /* Die Kopfzeile sitzt IM scrollenden Rumpf und klebt dort oben fest.
-         Grund (Nutzer-Meldung 2026-07-27, zweiter Anlauf): stand sie
-         ausserhalb, war sie um die Scrollleiste BREITER als die Zeilen
-         darunter — ihre Spaltentrenner liefen um 3,75px, 7,5px, 11,25px
-         aus der Flucht, wachsend nach rechts. Im selben Kasten koennen
-         Kopf, Zeilen und Lineal gar nicht mehr verschieden breit sein.
-         Der sichtbare Nebeneffekt ist erwuenscht: die Ueberschriften
-         bleiben beim Scrollen stehen.
-         Die Flaeche MUSS deckend sein, sonst scheinen Zeilen durch. */
+
       .kopf {
         position: sticky;
         top: 0;
@@ -1446,48 +1144,20 @@
         font-size: var(--se-fs-sm);
         font-weight: 600;
       }
-      /* Der Rumpf fuellt die Bausteinhoehe. Bleibt unter den Zeilen Platz
-         (die Tabelle ist im Raster hoeher als ihre Zeilen brauchen), lief
-         dort vorher eine leere weisse Flaeche — sah aus wie ein Fehler.
-         Jetzt zeichnet ein sich wiederholender Verlauf die Zeilenlinien
-         einfach weiter, im selben Takt wie echte Zeilen. Kein Inhalt wird
-         erfunden (Regel 7), nur das Lineal laeuft durch. */
+
       .koerper {
         flex: 1 1 auto;
         overflow: auto;
         display: flex;
         flex-direction: column;
       }
-      /* Zeilen behalten ihre feste Hoehe, auch als Flex-Kinder: ohne
-         flex:none wuerden sie zusammengedrueckt, sobald der Rumpf zu klein
-         wird — der Zeilentakt waere dahin. */
-      .koerper > .zeile { flex: none; }
-      /* Das LINEAL im Leerraum unter der letzten Zeile: ein eigenes Element
-         statt eines Hintergrunds auf dem Rumpf.
-         Grund (Nutzer-Meldung 2026-07-27, senkrechte Linien versetzt): der
-         Rumpf scrollt. Sobald Datensaetze drin sind, erscheint die
-         Scrollleiste und die Zeilen werden in der SCHMALEREN Restbreite
-         gezeichnet — ein Hintergrund auf dem Rumpf rechnet seine
-         Spaltenbreite aber weiter aus der vollen Breite samt
-         Scrollleisten-Streifen. Der Versatz wuchs nach rechts (bei 15px
-         Leiste und drei Spalten: 5px, 10px).
-         Als eigenes Kind hat das Lineal EXAKT die Breite der Zeilen — mit
-         und ohne Scrollleiste. Es kann sich gar nicht mehr verrechnen.
 
-         Das flex 1 1 auto darunter ist seit 2026-08-10 nur noch der RUECKFALL
-         fuer den nicht messbaren Fall (kein ResizeObserver, oder die Tabelle
-         steht im Fluss ohne vorgegebene Hoehe). Sobald gemessen werden kann,
-         setzt ./tabelleKoerper stattdessen flex 0 1 auto und eine feste Hoehe
-         aus ganzen Takten: sonst nimmt das Lineal auch den angebrochenen
-         Rest-Takt auf (2 bis 30 px) und malt seine Spaltentrenner hinein — das
-         las sich als leere, teils duennere letzte Zeile. */
+      .koerper > .zeile { flex: none; }
+
       .lineal {
         flex: 1 1 auto;
         min-height: 0;
-        /* ZWEI Lagen, sonst sieht der leere Rest kaputt aus: nur Querstriche
-           ohne Spaltentrenner wirkt wie eine abgebrochene Tabelle.
-           Waagerecht im Zeilentakt als Verlauf — das ist reine Wiederholung
-           und kann sich nicht verrechnen. */
+
         background-image:
           repeating-linear-gradient(
             to bottom,
@@ -1497,59 +1167,29 @@
             var(--se-line-soft) var(--zeilen-hoehe)
           );
         background-position: 0 0;
-        /* Senkrecht dagegen mit echten Zellen im GLEICHEN Raster wie Kopf und
-           Zeilen (der Baustein setzt es als style). Bis 2026-08-06 war auch das
-           ein Verlauf im Takt 100% geteilt durch Spaltenzahl — das stimmte nur, solange
-           alle Spalten gleich breit waren. Seit die Art die Breite bestimmt
-           (Zahl 90, Datum 100, Status 120), waeren die Striche aus der Flucht
-           gelaufen, wachsend nach rechts — genau der Fehler, den dieses
-           Element 2026-07-27 schon einmal beseitigt hat. */
+
         display: grid;
       }
-      /* Der Leerzustand (shared/leerZustand) fuellt den Rumpf und sitzt darin
-         mittig. Die Demo braucht das nicht — ihre Tafel ist nur so hoch wie
-         ihr Inhalt. Unsere steht im Raster mit vorgegebener Hoehe: ohne diese
-         zwei Angaben klebte die Meldung oben und darunter bliebe eine weisse
-         Flaeche — genau das Bild, gegen das schon das Lineal gebaut wurde. */
+
       .koerper > .leer--tafel {
         flex: 1 1 auto;
         align-content: center;
       }
       .lineal > div { border-right: 1px solid var(--se-line-soft); }
       .lineal > div:last-child { border-right: none; }
-      /* Echte Zeilen decken den Verlauf ab -> keine doppelte Linie. */
+
       .zeile {
         border-bottom: 1px solid var(--se-line-soft);
         background: var(--se-panel);
         transition: background-color var(--se-move);
       }
-      /* Die Zeile unter dem Zeiger hinterlegt sich (2026-07-30). In einer
-         dichten Liste ist das kein Schmuck: es zeigt, WELCHE Zeile man
-         gleich anklickt — bei 32px Zeilenhoehe verrutscht man sonst leicht
-         um eine. Der Kopf ist ausgenommen, er ist keine Datenzeile.
-         Der Ton kommt aus der Demo (.tabelle tbody tr:hover -> --creme):
-         eine Spur heller als der Seitengrund der Maske, nicht die sandfarbene
-         Innenflaeche — bis 2026-08-06 stand hier --se-panel-2 und die Zeile
-         sprang beim Zeigen deutlich zu dunkel. */
+
       .koerper > .zeile:hover {
         background: var(--se-bg);
       }
-      /* Waehlbare Zeile (nur Laufzeit mit echten Daten, Klasse setzt der
-         Baustein): der Zeiger sagt „hier passiert etwas". */
+
       .koerper > .zeile.waehlbar { cursor: pointer; }
-      /* Die GEWAEHLTE Zeile (2026-08-05): getoente Akzentflaeche + kraeftiger
-         Balken an der linken Kante — kantig, eindeutig, dieselbe Handschrift
-         wie der Rest der Maske. inset-Schatten statt Rahmen, damit die
-         Spaltenbreiten keinen Pixel verrutschen. Der Text wird voll lesbar
-         (--se-ink statt --se-muted): die gewaehlte Zeile ist die, mit der
-         der Bediener gerade arbeitet.
-         Beide Werte stehen so in der Demo (.zeile--gewaehlt): Flaeche
-         --sonne-zart (= --se-amber-soft), Streifen --koralle. Bis 2026-08-06
-         war die Flaeche --se-accent-soft, also die getoente HAUSFARBE — damit
-         trug die gewaehlte Zeile zweimal denselben Ton und der Streifen
-         verlor seine Ansage. Der inset-Streifen ist kein Schatten (Regel 4):
-         er sitzt IN der Zeile, damit die Spaltenbreiten keinen Pixel
-         verrutschen. */
+
       .zeile.gewaehlt,
       .koerper > .zeile.gewaehlt:hover {
         background: var(--se-amber-soft);
@@ -1558,11 +1198,6 @@
       .zeile.gewaehlt > div { color: var(--se-ink); }
       .kopf > div,
       .zeile > div {
-        /* KEIN senkrechter Innenabstand: die Zeilenhoehe steht fest, der
-           Text wird ueber line-height darin zentriert. So bleibt die Hoehe
-           unabhaengig von der Schriftgroesse exakt im Takt — und die
-           Textkuerzung mit „…" funktioniert weiter (das braucht einen
-           Block, kein Flex). */
         padding: 0 10px;
         line-height: calc(var(--zeilen-hoehe) - 1px);
         min-width: 0;
@@ -1571,48 +1206,26 @@
         text-overflow: ellipsis;
         border-right: 1px solid var(--se-line-soft);
       }
-      /* Der Kopf ist um den verteilten Rest flacher als eine Zeile (s. oben),
-         also braucht sein Text die Kopfhoehe, nicht die Zeilenhoehe — sonst
-         saesse die Ueberschrift ein bis vier Pixel zu tief. Alles andere gilt
-         aus der Regel darueber. */
+
       .kopf > div { line-height: calc(var(--takt) - 1px); }
       .kopf > div:last-child,
       .zeile > div:last-child { border-right: none; }
       .kopf > div { cursor: pointer; user-select: none; }
       .sort-pfeil { font-size: 9px; color: var(--se-muted); }
-      /* Zellentext in vollem Espresso, wie in der Demo (.tabelle td erbt den
-         Grundton und daempft nichts). Bis 2026-08-06 stand hier --se-muted:
-         die Werte waren blasser als ihre eigenen Ueberschriften, und die
-         Tabelle las sich wie ausgegraut. Gedaempft bleibt allein, was WIRKLICH
-         Nebensache ist — Sortierpfeil und Fusszeile. */
+
       .zeile > div { color: var(--se-ink); }
 
-      /* ---- Spalten-Arten (./spaltenArten) ------------------------------
-         Zahl und Datum teilen sich eine Klasse, weil die Demo es genauso
-         macht: ihre Datumsspalten tragen die Klasse zelle-zahl. Rechtsbuendig mit
-         gleichbreiten Ziffern (font-variant-numeric: tabular-nums) — damit
-         stehen Tausender und Punkte untereinander. Der KOPF bekommt dieselbe
-         Klasse und dieselbe Ausrichtung (Demo: .zahl-kopf), sonst stuende
-         eine linksbuendige Ueberschrift ueber rechtsbuendigen Werten.
-         Ein Datum wird nur AUSGERICHTET, nie umgerechnet (Nutzer 2026-08-06):
-         was SoftEngine liefert, steht da. */
       .kopf > div.zahl,
       .zeile > div.zahl {
         text-align: right;
         font-variant-numeric: tabular-nums;
       }
-      /* Die Status-Zelle traegt eine Marke, keinen Text: als Flex-Kasten sitzt
-         sie senkrecht mittig in der Zeile. Die Textkuerzung mit „…" faellt
-         hier weg (die braeuchte einen Block) — noetig ist sie nicht, die Marke
-         bricht ohnehin nicht um und der Zellrand schneidet sie ab. */
+
       .zeile > div.status {
         display: flex;
         align-items: center;
       }
-      /* „Bild + Name" (Demo .zelle-patient): Bild links, daneben Name ueber
-         der kleineren Unterzeile. Wie die Status-Zelle ein Flex-Kasten und
-         damit ohne die Zeilen-line-height — die gilt fuer EINE Textzeile und
-         wuerde hier beide auseinandertreiben. */
+
       .zeile > div.bild {
         display: flex;
         align-items: center;
@@ -1620,15 +1233,11 @@
       .bild-name {
         display: flex;
         align-items: center;
-        /* 10px wie in der Demo (.zelle-patient gap). */
+
         gap: var(--se-gap);
         min-width: 0;
       }
-      /* 26px — das Tabellenmass der Demo (.tier--klein). Das Zeichen steht
-         FREI: keine Kachel, kein Kreis, kein Rahmen (Fellnase-Entscheidung
-         „ohne sie atmet es", vom Nutzer am 2026-08-06 fuer die Tabelle
-         bestaetigt). Auch keine leere Flaeche, wenn nichts gebunden ist — die
-         Zelle zeichnet das Zeichen dann gar nicht erst (./spaltenArten). */
+
       .bild-zeichen {
         display: grid;
         place-items: center;
@@ -1640,14 +1249,11 @@
         width: 100%;
         height: 100%;
         display: block;
-        /* Die Zeichen sind quadratisch aufgefuellt; contain haelt sie auch
-           dann unverzerrt, wenn die Flaeche einmal nicht quadratisch ist. */
+
         object-fit: contain;
       }
       .bild-text { min-width: 0; }
-      /* Name (Demo .zelle-name: 600 15px/1.25) und Unterzeile (.zelle-zusatz:
-         12,5px, gedaempft — hier --se-fs-sm = 12px, die dichte Stufe).
-         Beide einzeilig mit „…": eine umbrechende Zeile spraenge aus dem Takt. */
+
       .bild-titel,
       .bild-unter {
         white-space: nowrap;
@@ -1664,11 +1270,7 @@
         font-size: var(--se-fs-sm);
         line-height: 1.35;
       }
-      /* Fusszeile (Demo .tafel-fuss): OHNE eigene Flaeche — die Trennlinie
-         allein setzt sie ab, genau wie in der Demo („der Rahmen traegt schon
-         die Kante"). Bis 2026-08-06 lag hier --se-panel-2; der sandfarbene
-         Streifen machte aus der Fusszeile eine zweite Leiste unter der
-         Tabelle statt ihres unteren Randes. */
+
       .fusszeile {
         display: flex;
         align-items: center;
@@ -1683,17 +1285,7 @@
         align-items: center;
         gap: 6px;
       }
-      /* Feste Hoehe fuer die Blaetter-Knoepfe: die Fusszeilenhoehe geht von der
-         Rumpfhoehe ab und bestimmt damit mit, wie viele Zeilen passen. Eine vom
-         Browser geschaetzte Knopfhoehe waere eine Zahl, die im Editor und in
-         SoftEngine verschieden ausfallen kann — und dann zeigte der Editor eine
-         Zeile mehr oder weniger als die Maske (Regel 1: was zu sehen ist, IST
-         der Export).
-         Bis 2026-08-11 (S2.1) stand daneben ein <select> fuer „Zeilen pro
-         Seite", das der Editor immer und die Maske nur auf Wunsch zeigte —
-         dieselbe feste Hoehe galt deshalb fuer beide Elemente, sonst haette
-         schon sein Dasein die Zeilenzahl verschoben. Der Waehler ist weg, die
-         Fusszeile ist in beiden Welten dieselbe; die feste Hoehe bleibt. */
+
       .seiten-nav button {
         box-sizing: border-box;
         height: 22px;
@@ -1710,14 +1302,7 @@
         opacity: 0.3;
         cursor: default;
       }
-      /* Editor-only Spalten-Steuerung — NUR auf der Maskenfläche, nie im
-         Export. Sie SCHWEBT bewusst in der oberen rechten Ecke, statt in einer
-         Reihe mitzulaufen: eine Editor-Hilfe darf dem Baustein keinen Platz
-         stehlen, sonst sitzt der Inhalt im Editor anders als im Export
-         (WYSIWYG-Bruch, s. BlockHost). Genau daran ist am 2026-08-06 der
-         Knoepfe-Platz in einer Kopfzeile gescheitert — die „+"/„−" schoben
-         den Knopf im Editor nach links, im Export klebte er an der Kante.
-         Wer diese Ecke belegen will, muss die Steuerung zuerst umziehen. */
+
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
         position: absolute;
@@ -1750,34 +1335,17 @@
     </div>`}};j([k({converter:{fromAttribute:e=>e?Ha(e):La(),toAttribute:e=>JSON.stringify(e)}})],Q.prototype,`spalten`,void 0),j([k()],Q.prototype,`source`,void 0),j([k()],Q.prototype,`suche`,void 0),j([k()],Q.prototype,`leerText`,void 0),j([k({attribute:!1})],Q.prototype,`datenzeilen`,void 0),j([k({attribute:!1})],Q.prototype,`zusatzzeilen`,void 0),j([k({attribute:!1})],Q.prototype,`rohzeilen`,void 0),j([k({attribute:!1})],Q.prototype,`auswahlIndex`,void 0),j([k({attribute:!1})],Q.prototype,`durchAuswahlGefiltert`,void 0),j([k({attribute:!1})],Q.prototype,`datenGeliefert`,void 0),M.defineAndRegister(Q);var Eo=sr(`text`);function Do(e){let t=e.getAttribute(`source`)??``,n=e.getAttribute(Eo)??``;return t===``||n===``?void 0:{sourceId:t,code:n}}function Oo(e){let t=Or(e,Eo);t.art!==`ungebunden`&&(e.text=t.art===`wert`?t.wert:``)}function ko(e){Do(e)&&(e.text=``)}var Ao=Sr({hydriere:Oo,verdrahte:ko}),jo=Ao.connect,Mo=Ao.disconnect,No=6,Po=96,Fo=14,Io={duenn:`300`,normal:`400`,fett:`700`},Lo={links:`left`,mitte:`center`,rechts:`right`},Ro={standard:`var(--se-ink)`,gedaempft:`var(--se-muted)`,akzent:`var(--se-accent)`,erfolg:`var(--se-green)`,warnung:`var(--se-amber)`,fehler:`var(--se-red)`},zo=`standard`;function Bo(e){if(e===`ueberschrift`)return 15;if(e===`klein`)return 12;let t=typeof e==`number`?e:Number.parseFloat(String(e??``));return Number.isFinite(t)?Math.min(Po,Math.max(No,t)):Fo}function Vo(e){return typeof e==`string`&&e in Io?e:`normal`}function Ho(e){return typeof e==`string`&&e in Lo?e:`links`}function Uo(e){return typeof e==`string`&&e in Ro?e:zo}var $=class extends M{constructor(...e){super(...e),this.groesse=Fo,this.gewicht=`normal`,this.ausrichtung=`links`,this.farbe=zo,this.text=`Text`,this.source=``,this.textField=``}static{this.blockType=`text`}static{this.tagName=`ff-text`}static{this.displayName=`Text`}static{this.category=`anzeige`}static{this.acceptsDataSource=!0}static{this.kannAuswahlFolgen=!0}static{this.bindableSpots=[{prop:`text`,label:`Text`}]}static{this.defaultProps={width:`fill`,groesse:Fo,gewicht:`normal`,ausrichtung:`links`,farbe:zo,text:`Text`,source:``,textField:``}}static{this.raster={startW:6,startH:2,minW:1,minH:1}}static{this.customProperties=[{attributeName:`groesse`,name:`Größe`,description:`Schriftgröße in Pixeln.`,kind:`number`,unit:`px`,min:No,max:Po,inspectorRow:`Text-Stil`},{attributeName:`gewicht`,name:`Gewicht`,description:`Strichstärke der Schrift.`,kind:`segment`,options:[{value:`duenn`,label:`Dünn`},{value:`normal`,label:`Normal`},{value:`fett`,label:`Fett`}],inspectorRow:`Text-Stil`},{attributeName:`ausrichtung`,name:`Ausrichtung`,description:`Wo der Text in seiner Breite sitzt.`,kind:`segment`,options:[{value:`links`,label:`Links`},{value:`mitte`,label:`Mitte`},{value:`rechts`,label:`Rechts`}],inspectorRow:`Text-Stil`},{attributeName:`farbe`,name:`Farbe`,description:`Textfarbe aus den Farben der Maske.`,kind:`select`,options:[{value:`standard`,label:`Standard`},{value:`gedaempft`,label:`Gedämpft`},{value:`akzent`,label:`Akzent`},{value:`erfolg`,label:`Erfolg`},{value:`warnung`,label:`Warnung`},{value:`fehler`,label:`Fehler`}]}]}static{this.styles=[M.styles,o`
       .text {
         font-family: var(--se-font);
-        /* Farbe kommt als Inline-Stil aus FARBEN (styleMap) — hier steht nur
-           der Ausgangswert, damit die Stelle auch ohne gesetzte Prop Text
-           in der Haus-Textfarbe zeigt. */
+
         color: var(--se-ink);
-        /* EINE Zeilenhoehe fuer beides: die Zeile des gesetzten Textes UND die
-           Hoehe, die ein leerer Text freihaelt (s. unten). Zwei getrennte
-           Zahlen liefen beim naechsten Nachstellen auseinander.
-           Die ZAHL steht nicht mehr hier, sondern als --se-lh in den
-           Masken-Tokens (2026-08-07): ein Textbaustein ist Fliesstext der
-           Maske und atmet genau wie sie. Bis dahin standen hier 1.35 —
-           enger als die Demo, ohne Grund. Die eigene Variable bleibt, weil
-           die Leerzeilen-Hoehe unten mit ihr rechnet. */
+
         --text-zeilenhoehe: var(--se-lh);
         line-height: var(--text-zeilenhoehe);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
-      /* Ein LEERER Text hat kein Zeilenfeld: in der Maske klappte er auf Hoehe
-         0 zusammen — der Baustein war unsichtbar und das Layout sprang, sobald
-         ein gebundener Text ohne Auswahl leer blieb (SE-Echttest 2026-08-04).
-         Er haelt jetzt immer genau EINE Zeile frei. Relativ gerechnet
-         (Schriftgroesse x Zeilenhoehe), damit die Luecke mit jeder frei
-         eingestellten Groesse mitwaechst statt an einer Pixelzahl zu kleben. */
+
       .text:empty { min-height: calc(1em * var(--text-zeilenhoehe)); }
-      /* Leerer Text bleibt im Editor ein greifbares Klick-Ziel (Regel 7:
-         Platzhalter statt erfundener Wert) — der Griff fuellt dieselbe eine
-         Zeile, die Editor-Hilfe sieht also unveraendert aus; die Maske zeigt
-         bei leerem Text weiterhin nichts, nur ohne einzuklappen. */
+
       :host([data-ff-editor]) .text:empty::before {
         content: 'Text …';
         color: var(--se-faint);
@@ -1790,10 +1358,7 @@
       ?data-ff-bound=${this.textField!==``}
       @dblclick=${e=>this.inlineEdit(e,`text`)}
     >${this.text}</div>`}connectedCallback(){super.connectedCallback(),jo(this)}disconnectedCallback(){super.disconnectedCallback(),Mo(this)}};j([k({type:Number})],$.prototype,`groesse`,void 0),j([k()],$.prototype,`gewicht`,void 0),j([k()],$.prototype,`ausrichtung`,void 0),j([k()],$.prototype,`farbe`,void 0),j([k()],$.prototype,`text`,void 0),j([k()],$.prototype,`source`,void 0),j([k()],$.prototype,`textField`,void 0),M.defineAndRegister($);var Wo=[`waagerecht`,`senkrecht`],Go=`waagerecht`;function Ko(e){return Wo.includes(e)?e:Go}var qo=class extends M{constructor(...e){super(...e),this.richtung=Go}static{this.blockType=`trenner`}static{this.tagName=`ff-trenner`}static{this.displayName=`Trennlinie`}static{this.category=`layout`}static{this.defaultProps={width:`fill`,richtung:Go}}static{this.resizableWidth=!1}static{this.raster={startW:24,startH:1,minW:1,minH:1,varianten:[{wenn:{attributeName:`richtung`,equals:`senkrecht`},startW:1,startH:6,breiteZiehbar:!1}]}}static{this.customProperties=[{attributeName:`richtung`,name:`Richtung`,description:`Waagerecht trennt oben von unten, senkrecht links von rechts.`,kind:`select`,options:[{value:`waagerecht`,label:`Waagerecht`},{value:`senkrecht`,label:`Senkrecht`}]}]}static{this.styles=[M.styles,o`
-      /* Die Flaeche traegt den dezenten Aussenabstand (--se-gap-sm) QUER zur
-         Linie und haelt den Strich mittig. Auf der Rasterflaeche fuellt sie
-         die Zelle (:host([fuellt]) setzt die Hoehe), im Fluss bleibt sie so
-         hoch wie ihr Inhalt. */
+
       .flaeche {
         box-sizing: border-box;
         display: flex;
@@ -1804,9 +1369,7 @@
       .waagerecht { padding: var(--se-gap-sm) 0; }
       .senkrecht {
         padding: 0 var(--se-gap-sm);
-        /* Im FLUSS gibt es keine Zellhoehe, aus der sich der Strich bedienen
-           koennte — ohne dieses Mindestmass waere er dort 0 hoch und damit
-           unsichtbar. Auf der Rasterflaeche gewinnt die Zellhoehe. */
+
         min-height: 24px;
       }
       .linie { background: var(--se-line); }
