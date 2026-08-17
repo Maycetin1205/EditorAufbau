@@ -1,10 +1,12 @@
-// SchrittListe — die Schritte EINER Aktionskette als Liste.
+// SchrittListe — die Schritte EINER Aktionskette, untereinander.
 //
-// Herausgeloest 2026-08-17, weil sie ab jetzt an ZWEI Orten steht: schmal im
-// Inspector (nur ansehen, „Kette bearbeiten" fuehrt weiter) und breit im
-// Ketten-Fenster (ansehen UND umbauen). Zwei Abschriften waeren zwei
-// Wahrheiten — und die Zeile, die sagt, was ein Schritt tut, ist genau die,
-// die nirgends auseinanderlaufen darf.
+// Volle Breite, eine Zeile je Schritt (Nutzer-Vorgabe 2026-08-17). Die erste
+// Fassung stellte sie in eine 22-rem-Spalte neben das Formular; dort stand
+// von jeder Zeile die Haelfte. Jetzt traegt die Zeile alles nebeneinander:
+// Nummer, was der Schritt tut, die eigene Notiz, die Knoepfe — und der
+// angeklickte Schritt klappt DARUNTER auf, statt in eine zweite Spalte
+// auszuwandern. Damit bleibt beim Ausfuellen sichtbar, was drumherum
+// passiert.
 //
 // Jede Zeile traegt zwei Angaben (s. ./schrittZusammenfassung):
 //   Zeile 1  was der Schritt IST   (Vorlagenname bzw. Schritt-Art)
@@ -16,8 +18,10 @@
 // beruft: so ist zu sehen, welche Schreib-Schritte in den Satz gehen, den ein
 // „neuen Satz anlegen" davor erzeugt hat.
 
-import { ArrowDown, ArrowUp, Copy, Pencil, X } from '@/ui/zeichen'
+import type { ReactNode } from 'react'
+import { ArrowDown, ArrowUp, Copy, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
+import { TextInput } from '@/ui/atoms/text-input'
 import { actionValueTargets, auswahlGeberImBaum } from '../../core/blocks/treeQuery'
 import { ergebnisSchritteVor, stepTypeName, type ActionStep } from '../../core/data/aktionen'
 import { formatRelationSyntax } from '../../core/data/relations'
@@ -31,16 +35,20 @@ import { ankerSchrittId, schrittZusammenfassung } from './schrittZusammenfassung
 
 interface SchrittListeProps {
   steps: readonly ActionStep[]
-  // Hervorgehobener Schritt (im Fenster der gerade bearbeitete).
+  // Der aufgeklappte Schritt.
   aktivId?: string
   // Zeile angeklickt. Fehlt der Rueckkanal, sind die Zeilen nicht anklickbar.
   onWaehle?: (step: ActionStep) => void
-  // Die Umbau-Knoepfe (hoch/runter/duplizieren/loeschen). Ohne `onAendern`
-  // gibt es sie nicht — der Inspector zeigt die Kette nur an.
+  // Die Umbau-Knoepfe (hoch/runter/duplizieren/loeschen) und die Notiz. Ohne
+  // `onAendern` ist die Liste reine Anzeige.
   onAendern?: (steps: ActionStep[]) => void
+  // Was unter der aufgeklappten Zeile steht (das Schritt-Formular).
+  aufgeklappt?: ReactNode
 }
 
-export function SchrittListe({ steps, aktivId, onWaehle, onAendern }: SchrittListeProps) {
+export function SchrittListe({
+  steps, aktivId, onWaehle, onAendern, aufgeklappt,
+}: SchrittListeProps) {
   const ed = useEditor()
   const relations = useRelations()
   const dataSources = useDataSources()
@@ -60,6 +68,20 @@ export function SchrittListe({ steps, aktivId, onWaehle, onAendern }: SchrittLis
     const next = [...steps]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
+    onAendern(next)
+  }
+
+  // Die eigene Beschriftung EINES Schritts. Leer heisst weg — ein leerer
+  // String in jeder Maskendatei waere Ballast.
+  const setzeNotiz = (at: number, text: string): void => {
+    if (!onAendern) return
+    const next = steps.map((s, i) => {
+      if (i !== at) return s
+      const kopie = { ...s }
+      if (text.trim() === '') delete kopie.notiz
+      else kopie.notiz = text
+      return kopie
+    })
     onAendern(next)
   }
 
@@ -111,71 +133,96 @@ export function SchrittListe({ steps, aktivId, onWaehle, onAendern }: SchrittLis
         const eingerueckt = anker !== '' && steps.some((x) => x.id === anker)
 
         return (
-          <li
-            key={s.id}
-            className={`flex items-start gap-0.5 border-l-2 py-1.5 pr-1 transition-colors ${
-              eingerueckt ? 'pl-4' : 'pl-1'
-            } ${
-              problem !== null
-                ? 'border-amber-500 bg-amber-500/10'
-                : s.id === aktivId
-                  ? 'border-primary bg-primary/10'
-                  : 'border-transparent hover:bg-secondary/50'
-            }`}
-          >
-            {/* w-5, nicht w-4: ab dem zehnten Schritt braucht „10." zwei
-                Ziffern und den Punkt — in 16px stand der Punkt halb aussen. */}
-            <span className="w-5 shrink-0 pt-0.5 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
-              {i + 1}.
-            </span>
-            <button
-              type="button"
-              disabled={!onWaehle}
-              onClick={() => onWaehle?.(s)}
-              title={problem ?? (relation ? formatRelationSyntax(relation) : undefined)}
-              className="min-w-0 flex-1 text-left disabled:cursor-default"
+          <li key={s.id} className="border-b border-border/70 last:border-b-0">
+            <div
+              className={`flex items-center gap-2 border-l-2 py-1.5 pr-1 transition-colors ${
+                eingerueckt ? 'pl-5' : 'pl-1'
+              } ${
+                problem !== null
+                  ? 'border-amber-500 bg-amber-500/10'
+                  : s.id === aktivId
+                    ? 'border-primary bg-primary/10'
+                    : 'border-transparent hover:bg-secondary/50'
+              }`}
             >
-              <span className="block truncate text-xs">
-                {zus.was}
-                {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
-                {popupName ? ` — ${popupName}` : ''}
-                {problem !== null ? ' — unvollständig' : ''}
+              {/* w-6, nicht w-4: ab dem zehnten Schritt braucht „10." zwei
+                  Ziffern und den Punkt. */}
+              <span className="w-6 shrink-0 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
+                {i + 1}.
               </span>
-              {naeher !== '' && (
-                <span className="block truncate text-[0.6875rem] text-muted-foreground">
-                  {naeher}
+              <button
+                type="button"
+                disabled={!onWaehle}
+                onClick={() => onWaehle?.(s)}
+                title={problem ?? (relation ? formatRelationSyntax(relation) : undefined)}
+                className="min-w-0 flex-[3] text-left disabled:cursor-default"
+              >
+                <span className="block truncate text-xs">
+                  {zus.was}
+                  {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
+                  {popupName ? ` — ${popupName}` : ''}
+                  {problem !== null ? ' — unvollständig' : ''}
+                </span>
+                {naeher !== '' && (
+                  <span className="block truncate text-[0.6875rem] text-muted-foreground">
+                    {naeher}
+                  </span>
+                )}
+              </button>
+              {/* Die eigene Beschriftung. Sie steht IN der Zeile, nicht in
+                  einer eigenen Spalte daneben: sie gehoert zum Schritt. */}
+              {onAendern ? (
+                <TextInput
+                  aria-label={`Notiz zu Schritt ${i + 1}`}
+                  placeholder="Notiz"
+                  value={s.notiz ?? ''}
+                  onChange={(e) => setzeNotiz(i, e.target.value)}
+                  className="h-7 min-w-0 flex-[2] border-transparent bg-transparent text-[0.6875rem] hover:border-input focus:border-input"
+                />
+              ) : (
+                s.notiz !== undefined && s.notiz !== '' && (
+                  <span className="min-w-0 flex-[2] truncate text-[0.6875rem] text-muted-foreground">
+                    {s.notiz}
+                  </span>
+                )
+              )}
+              {onAendern && (
+                <span className="flex shrink-0 items-center">
+                  <IconButton
+                    aria-label={`Schritt ${i + 1} nach oben`}
+                    disabled={i === 0}
+                    onClick={() => verschiebe(i, i - 1)}
+                  >
+                    <ArrowUp size={12} />
+                  </IconButton>
+                  <IconButton
+                    aria-label={`Schritt ${i + 1} nach unten`}
+                    disabled={i === steps.length - 1}
+                    onClick={() => verschiebe(i, i + 1)}
+                  >
+                    <ArrowDown size={12} />
+                  </IconButton>
+                  <IconButton
+                    aria-label={`Schritt ${i + 1} duplizieren`}
+                    onClick={() => dupliziere(i)}
+                  >
+                    <Copy size={12} />
+                  </IconButton>
+                  <IconButton
+                    aria-label={`Schritt ${i + 1} löschen`}
+                    onClick={() => onAendern(steps.filter((x) => x.id !== s.id))}
+                  >
+                    <X size={12} />
+                  </IconButton>
                 </span>
               )}
-            </button>
-            {onAendern && (
-              <>
-                <IconButton
-                  aria-label={`Schritt ${i + 1} nach oben`}
-                  disabled={i === 0}
-                  onClick={() => verschiebe(i, i - 1)}
-                >
-                  <ArrowUp size={12} />
-                </IconButton>
-                <IconButton
-                  aria-label={`Schritt ${i + 1} nach unten`}
-                  disabled={i === steps.length - 1}
-                  onClick={() => verschiebe(i, i + 1)}
-                >
-                  <ArrowDown size={12} />
-                </IconButton>
-                <IconButton aria-label={`Schritt ${i + 1} bearbeiten`} onClick={() => onWaehle?.(s)}>
-                  <Pencil size={12} />
-                </IconButton>
-                <IconButton aria-label={`Schritt ${i + 1} duplizieren`} onClick={() => dupliziere(i)}>
-                  <Copy size={12} />
-                </IconButton>
-                <IconButton
-                  aria-label={`Schritt ${i + 1} löschen`}
-                  onClick={() => onAendern(steps.filter((x) => x.id !== s.id))}
-                >
-                  <X size={12} />
-                </IconButton>
-              </>
+            </div>
+            {/* Aufgeklappt: das Formular steht UNTER seiner Zeile, in voller
+                Breite, die Liste bleibt drumherum stehen. */}
+            {s.id === aktivId && aufgeklappt !== undefined && (
+              <div className="border-t border-border bg-secondary/20 px-3 py-3">
+                {aufgeklappt}
+              </div>
             )}
           </li>
         )

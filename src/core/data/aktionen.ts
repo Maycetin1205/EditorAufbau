@@ -161,6 +161,13 @@ interface ActionStepBase {
   // Optionaler Name fuer das Ergebnis eines Schritts. START_TOOL liefert
   // heute keines; RELATION nutzt ihn spaeter fuer GET-Ergebnisse.
   resultKey: string
+  // Eigene Beschriftung des Bauers, frei getippt (2026-08-17). Sie
+  // unterscheidet Schritte, die die Maschine nicht unterscheiden kann —
+  // „Kunde anlegen", „gehoert zum Tier", „pruefen".
+  //
+  // Sie reist NIE in die Maske: withoutEditorId baut den Laufzeit-Schritt
+  // Feld fuer Feld auf, ein Zusatzfeld kommt dort gar nicht erst durch.
+  notiz?: string
 }
 
 export interface StartToolStep extends ActionStepBase {
@@ -376,7 +383,11 @@ export function sanitizeBlockEvents(
         break
       }
       seenIds.add(id)
-      steps.push({ id, ...fields } as ActionStep)
+      // Die Notiz haengt wie die id am EDITOR-Schritt, nicht am Laufzeit-Feld
+      // (stepFields liefert genau das, was die Maske kennt). Leer heisst weg:
+      // ein leerer String in jeder Maskendatei waere Ballast.
+      const notiz = isRecord(entry) && typeof entry.notiz === 'string' ? entry.notiz.trim() : ''
+      steps.push({ id, ...fields, ...(notiz !== '' ? { notiz } : {}) } as ActionStep)
     }
     if (!broken && steps.length > 0) out[key] = steps
   }

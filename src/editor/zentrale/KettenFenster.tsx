@@ -4,8 +4,13 @@
 // blaetterte bis hierhin das 340-px-Inspector-Panel um. Eine Relation hat bis
 // zu zwoelf Parameter, jeder mit Herkunft UND Ziel — das passt dort nicht,
 // und waehrend man es ausfuellte, war der Baustein, um den es geht, nicht
-// mehr zu sehen. Jetzt: links die Kette, rechts der angeklickte Schritt, der
-// Baustein bleibt hinter dem Fenster stehen.
+// mehr zu sehen. Jetzt steht die Kette untereinander ueber die ganze
+// Fensterbreite, und der angeklickte Schritt klappt DARUNTER auf.
+//
+// Die erste Fassung hatte die Liste noch in einer 22-rem-Spalte links neben
+// dem Formular — dort stand von jeder Zeile die Haelfte (Nutzer-Befund
+// 2026-08-17: „wäre es nicht besser, das ich nicht links eine spalte habe wo
+// man nur die hälfte sieht"). Der alte Fehler, nur verkleinert.
 //
 // Die Kette bleibt AM BAUSTEIN (Regel 7) — der Inspector zeigt sie weiter und
 // oeffnet nur dieses Fenster. Umgezogen ist das BEARBEITEN, nicht der Besitz.
@@ -16,6 +21,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, X } from '@/ui/zeichen'
+import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import type { ActionStep } from '../../core/data/aktionen'
@@ -69,8 +75,6 @@ export function KettenFenster({ block, eventKey, eventName, onClose }: KettenFen
     setOffeneId(step.id)
   }
 
-  const zeigeFormular = neu || offen !== undefined
-
   return createPortal(
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/30 p-6"
@@ -96,63 +100,63 @@ export function KettenFenster({ block, eventKey, eventName, onClose }: KettenFen
           </IconButton>
         </div>
 
-        <div className="flex min-h-0 flex-1">
-          <div className="flex w-[22rem] shrink-0 flex-col border-r border-border">
-            <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-              <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                Schritte
-              </span>
-              <IconButton
-                aria-label="Schritt hinzufügen"
-                title="Schritt hinzufügen"
-                onClick={() => {
-                  setOffeneId(null)
-                  setNeu(true)
-                }}
-              >
-                <Plus size={14} />
-              </IconButton>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
-              <SchrittListe
-                steps={kette}
-                aktivId={offeneId ?? undefined}
-                onWaehle={(s) => {
-                  setNeu(false)
-                  setOffeneId(s.id)
-                }}
-                onAendern={setzeKette}
-              />
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
+              Schritte
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOffeneId(null)
+                setNeu(true)
+              }}
+            >
+              <Plus size={13} /> Schritt
+            </Button>
           </div>
 
-          {/* Breit, aber nicht endlos: eine Parameterzeile ueber 900 px waere
-              wieder schlecht zu lesen — nur andersherum als in 340 px. */}
-          <div className="min-w-0 flex-1 overflow-y-auto p-4">
-            <div className="max-w-3xl">
-            {zeigeFormular ? (
-              <StepForm
-                // Beim Wechsel auf einen anderen Schritt baut das Formular neu
-                // auf — sonst stuenden die Eingaben des vorherigen darin.
-                key={offen?.id ?? 'neu'}
-                step={offen}
-                kette={kette}
-                onClose={() => {
-                  setNeu(false)
-                  setOffeneId(null)
-                }}
-                onSave={speichere}
-              />
-            ) : (
-              /* Kein Schritt gewaehlt: den Zustand benennen statt eine leere
-                 Flaeche zeigen (Regel 4). */
-              <p className="text-xs text-muted-foreground">
-                {kette.length === 0
-                  ? 'Noch kein Schritt.'
-                  : 'Schritt links auswählen.'}
-              </p>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <SchrittListe
+              steps={kette}
+              aktivId={offeneId ?? undefined}
+              onWaehle={(s) => {
+                setNeu(false)
+                // Nochmal auf dieselbe Zeile: zuklappen. Ein Schritt, der
+                // schon offen ist, soll sich auch wieder schliessen lassen,
+                // ohne dass man einen anderen anklicken muss.
+                setOffeneId((jetzt) => (jetzt === s.id ? null : s.id))
+              }}
+              onAendern={setzeKette}
+              aufgeklappt={
+                <StepForm
+                  // Beim Wechsel auf einen anderen Schritt baut das Formular
+                  // neu auf — sonst stuenden die Eingaben des vorherigen darin.
+                  key={offeneId ?? 'keiner'}
+                  step={offen}
+                  kette={kette}
+                  onClose={() => setOffeneId(null)}
+                  onSave={speichere}
+                />
+              }
+            />
+            {/* Ein NEUER Schritt haengt unten an, wo er auch landen wird. */}
+            {neu && (
+              <div className="border-t border-border bg-secondary/20 px-3 py-3">
+                <StepForm
+                  key="neu"
+                  kette={kette}
+                  onClose={() => setNeu(false)}
+                  onSave={speichere}
+                />
+              </div>
             )}
-            </div>
+            {kette.length === 0 && !neu && (
+              /* Leere Kette: den Zustand benennen statt eine leere Flaeche
+                 zeigen (Regel 4). */
+              <p className="px-3 py-3 text-xs text-muted-foreground">Noch kein Schritt.</p>
+            )}
           </div>
         </div>
       </div>
