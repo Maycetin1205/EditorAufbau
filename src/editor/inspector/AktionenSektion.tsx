@@ -27,6 +27,7 @@ import {
 import { stepProblem } from '../../core/data/schrittPruefung'
 import { formatRelationSyntax } from '../../core/data/relations'
 import { istUngetaufteVorlage, relationAnzeige } from '../zentrale/relationAnzeige'
+import { ankerSchrittId, schrittZusammenfassung } from '../zentrale/schrittZusammenfassung'
 import { istFensterSeite } from '../../state/pageOps'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -112,6 +113,13 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
             {steps.length > 0 && (
               <ol className="mt-0.5 divide-y divide-border/70">
                 {steps.map((s, i) => {
+                  // Die KLAMMER: ein Schritt, der sich auf das Ergebnis eines
+                  // frueheren beruft, ruecke ein — so ist auf einen Blick zu
+                  // sehen, welche Schreib-Schritte in den Satz gehen, den ein
+                  // „neuen Satz anlegen" davor erzeugt hat. Eingerueckt wird
+                  // nur, was WIRKLICH auf einen Schritt DIESER Kette zeigt.
+                  const anker = ankerSchrittId(s)
+                  const eingerueckt = anker !== '' && steps.some((x) => x.id === anker)
                   const problem = stepProblem(
                     s, relations.list, dataSources.list, popupSeiten.map((seite) => seite.id),
                     ergebnisSchritteVor(steps, s.id, relations.list).map((g) => g.id),
@@ -122,10 +130,28 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                   const popupName = s.type === 'POPUP_OPEN' || s.type === 'POPUP_CLOSE'
                     ? popupSeiten.find((seite) => seite.id === s.popupId)?.name
                     : undefined
+                  const was = s.type === 'RELATION' && relation
+                    ? (istUngetaufteVorlage(relation)
+                        ? relationAnzeige(relation)
+                        : relation.name)
+                    : stepTypeName(s.type)
+                  const zus = schrittZusammenfassung(
+                    s, was, relation, ed.tree, dataSources.list,
+                    (id) => steps.findIndex((x) => x.id === id) + 1,
+                  )
+                  // Zielfeld schlaegt Tabelle: ein Schreib-Schritt sagt, WAS
+                  // er beschreibt; ein Schritt ohne Zielfeld (neuen Satz
+                  // anlegen) sagt wenigstens, WO.
+                  const naeher = [
+                    zus.ziel !== '' ? zus.ziel : zus.tabelle,
+                    zus.herkunft,
+                  ].filter((t) => t !== '').join('  ←  ')
                   return (
                     <li
                       key={s.id}
-                      className={`flex items-center gap-0.5 border-l-2 px-1 py-1.5 transition-colors ${
+                      className={`flex items-start gap-0.5 border-l-2 py-1.5 pr-1 transition-colors ${
+                        eingerueckt ? 'pl-4' : 'pl-1'
+                      } ${
                         problem !== null
                           ? 'border-amber-500 bg-amber-500/10'
                           : 'border-transparent hover:bg-secondary/50'
@@ -139,17 +165,24 @@ export function AktionenSektion({ block, events, onEditStep }: AktionenSektionPr
                           zeigen Klarname bzw. „VERB · Nr."; die volle Syntax
                           liegt im Tooltip (R3-Abschluss 2026-07-21). */}
                       <span
-                        className="min-w-0 flex-1 truncate"
+                        className="min-w-0 flex-1"
                         title={problem ?? (relation ? formatRelationSyntax(relation) : undefined)}
                       >
-                        {s.type === 'RELATION' && relation
-                          ? (istUngetaufteVorlage(relation)
-                              ? relationAnzeige(relation)
-                              : `${stepTypeName(s.type)} — ${relation.name}`)
-                          : stepTypeName(s.type)}
-                        {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
-                        {popupName ? ` — ${popupName}` : ''}
-                        {problem !== null ? ' — unvollständig' : ''}
+                        <span className="block truncate">
+                          {zus.was}
+                          {s.type === 'START_TOOL' && s.toolNr.trim() !== '' ? ` — Nr. ${s.toolNr}` : ''}
+                          {popupName ? ` — ${popupName}` : ''}
+                          {problem !== null ? ' — unvollständig' : ''}
+                        </span>
+                        {/* Die Zeile, die elf gleichnamige Schritte
+                            unterscheidet: Zielfeld links, Herkunft rechts.
+                            Faellt weg, wo nichts aufloesbar ist — eine leere
+                            Zeile waere nur Hoehe. */}
+                        {naeher !== '' && (
+                          <span className="block truncate text-[0.6875rem] text-muted-foreground">
+                            {naeher}
+                          </span>
+                        )}
                       </span>
                       <IconButton
                         aria-label={`Schritt ${i + 1} nach oben`}
