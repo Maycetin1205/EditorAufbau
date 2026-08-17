@@ -115,6 +115,18 @@ export class KanbanZimmerBlock extends BasicBlock {
         flex-direction: column;
         align-items: stretch;
       }
+      /* Ziel des Zugs — dieselbe Handschrift wie an der Spalte (dort steht die
+         Begruendung ausfuehrlich). Markiert wird immer nur die INNERSTE
+         Flaeche: liegt der Zeiger hier, leuchtet das Zimmer und nicht die
+         Spalte, denn dieser Titel reist als {ZIMMER} zur Kette. Die Kante
+         liegt hier AUF der Box (kein Versatz nach innen): das Zimmer hat
+         keinen eigenen Innenabstand, ein Outline nach innen schnitte durch
+         den Kopftext. Platz dafuer ist da — der Spaltenrumpf hat 10px. */
+      :host([data-ff-ziel]) .zimmer {
+        background: var(--se-accent-soft);
+        border-radius: var(--se-r-md);
+        outline: var(--se-border) solid var(--se-accent);
+      }
     `,
   ]
 

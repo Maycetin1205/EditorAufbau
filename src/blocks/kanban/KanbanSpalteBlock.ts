@@ -173,6 +173,19 @@ export class KanbanSpalteBlock extends BasicBlock {
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); }
       .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); }
       .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); }
+      /* Ziel des Zugs: solange der Zeiger mit einer Karte hier steht, sagt die
+         Spalte „hier landet sie" — Akzentflaeche statt Bedeutungs-Ton, dazu
+         eine Akzentkante. Sie ist ein OUTLINE nach innen, kein border: ein
+         border wuerde die Spalte im Zug um 1,5px verschieben, und dann
+         wackelte das ganze Board unter der Maus. Der Bedeutungs-Ton weicht
+         bewusst: waehrend des Zugs ist die Frage nicht, was die Spalte
+         bedeutet, sondern wo man loslassen kann. Das Attribut setzt NUR die
+         Laufzeit (./seRuntime), der Editor kennt diesen Zug nicht. */
+      :host([data-ff-ziel]) .col {
+        background: var(--se-accent-soft);
+        outline: var(--se-border) solid var(--se-accent);
+        outline-offset: calc(-1 * var(--se-border));
+      }
       /* Kopf ohne eigene Flaeche und ohne Trennlinie (Vorbild .spalte-kopf:
          nur Abstaende); seine Unterkante ist der Abstand zur ersten Karte. */
       .head {

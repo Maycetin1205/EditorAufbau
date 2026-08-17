@@ -99,6 +99,15 @@ export const kartenStil = css`
         border-color: var(--se-accent);
         background: var(--se-accent-soft);
       }
+      /* Die GEZOGENE Karte tritt zurueck, solange sie am Mauszeiger haengt:
+         so ist sichtbar, WELCHE Karte gerade unterwegs ist, und ihr alter
+         Platz sieht nicht mehr nach „liegt hier" aus. Sie bleibt liegen (kein
+         eingebautes Umhaengen, s. kanban/seRuntime) — blass heisst also
+         „unterwegs", nicht „weg". Das Attribut setzt NUR die Laufzeit; im
+         Editor gibt es diesen Zug nicht. */
+      :host([data-ff-zieht]) .card {
+        opacity: 0.45;
+      }
 
       /* Die Lasche (Demo .karte-reiter): sitzt AUF der Oberkante, ohne
          Unterkante — sie geht in die Karte ueber. left:-1.5px richtet sie an

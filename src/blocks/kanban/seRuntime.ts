@@ -165,7 +165,9 @@ function hydrate(board: HTMLElement): void {
   // PINDEX der ALTEN Karte aus und träfe bei Schreib-Ketten den falschen
   // Datensatz. Jetzt findet der Drop `dragged === null` und tut nichts — der
   // Bediener zieht neu (sichtbar folgenlos statt unsichtbar falsch, Regel 4).
-  if (dragged?.board === board) dragged = null
+  // beendeZug statt `dragged = null`: sonst überlebte die Ziel-Marke an einer
+  // Spalte den Push und leuchtete weiter, obwohl gar kein Zug mehr läuft.
+  if (dragged?.board === board) beendeZug()
 
   const sourceId = board.getAttribute('source') ?? ''
   // „Einsortieren nach" ist optional (Nutzer-Entscheidung 2026-07-15):
@@ -297,6 +299,44 @@ const cardData = new WeakMap<HTMLElement, { row: unknown; pindex: string }>()
 let dragged: { card: HTMLElement; board: HTMLElement } | null = null
 const wiredBoards = new WeakSet<HTMLElement>()
 
+// Sichtbare Rueckmeldung beim Ziehen (2026-08-17, Nutzer-Befund: „man sieht
+// garnicht, das man das ablegen kann"). Bis hierhin zeigte der Zug NICHTS —
+// HTML5-Drag allein aendert nur den Mauszeiger, und der steckt in SoftEngine
+// im eingebetteten Browser.
+//
+// Zwei Marken, beide NUR zur Laufzeit gesetzt und beide nach dem Muster von
+// data-ff-auswahl (Attribut am Host, Aussehen im CSS des Bausteins — kein
+// Inline-Stil, damit die Optik dort steht, wo die uebrige Optik steht):
+//   data-ff-zieht  an der gezogenen Karte          -> sie tritt zurueck
+//   data-ff-ziel   an der Flaeche unter dem Zeiger -> dort landet sie
+//
+// Markiert wird die INNERSTE Flaeche: liegt der Zeiger ueber einem Zimmer, ist
+// das Zimmer das Ziel, sonst die Spalte. Genau diese Flaeche gibt beim Drop
+// ihren Titel weiter ({ZIMMER} bzw. {VALUE}) — die Marke zeigt also nicht
+// irgendwas Dekoratives, sondern was die Kette bekommt.
+const ZIEHT_ATTR = 'data-ff-zieht'
+const ZIEL_ATTR = 'data-ff-ziel'
+
+// Die aktuell markierte Ziel-Flaeche. EINE Variable, weil der Browser genau
+// einen Zug zulaesst — dieselbe Begruendung wie bei `dragged`.
+let ziel: HTMLElement | null = null
+
+function markiereZiel(neu: HTMLElement | null): void {
+  if (ziel === neu) return
+  ziel?.removeAttribute(ZIEL_ATTR)
+  ziel = neu
+  ziel?.setAttribute(ZIEL_ATTR, '')
+}
+
+// Ein Zug ist zu Ende: beide Marken weg. EINE Stelle dafuer, gerufen von
+// dragend, drop UND der Hydrierung — drei Kopien waeren drei Gelegenheiten,
+// eine Marke stehen zu lassen.
+function beendeZug(): void {
+  dragged?.card.removeAttribute(ZIEHT_ATTR)
+  dragged = null
+  markiereZiel(null)
+}
+
 // Die erste Flaeche des gesuchten Typs auf dem Weg vom Ereignis nach oben.
 // N4 braucht zwei davon (Spalte fuer {VALUE}, Zimmer fuer {ZIMMER}) — darum
 // EINE Suche mit dem Tag als Argument statt zweier gleicher Schleifen.
@@ -358,14 +398,37 @@ function wireDrag(board: HTMLElement): void {
     dragged = { card, board }
     e.dataTransfer?.setData('text/plain', cardData.get(card)?.pindex ?? '')
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+    // Blass wird die Karte erst NACH diesem Ereignis: das Bild am Mauszeiger
+    // ist ein Abzug, den der Browser noch im dragstart macht — waere die Karte
+    // sofort blass, haenge ein blasses Bild am Zeiger und der Zug saehe
+    // kaputt aus statt aktiv. setTimeout(0) statt requestAnimationFrame, weil
+    // setTimeout hier ueberall schon benutzt wird und in jedem eingebetteten
+    // Browser vorhanden ist.
+    setTimeout(() => {
+      if (dragged?.card === card) card.setAttribute(ZIEHT_ATTR, '')
+    }, 0)
   })
-  board.addEventListener('dragend', () => { dragged = null })
+  board.addEventListener('dragend', beendeZug)
   board.addEventListener('dragover', (e) => {
     const column = columnOfEvent(board, e)
-    if (dragged?.board === board && column) {
-      e.preventDefault()
-      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+    if (dragged?.board !== board || !column) {
+      // Ueber dem Board, aber neben jeder Spalte: kein Ziel, keine Marke —
+      // sonst leuchtete die zuletzt beruehrte Spalte weiter und behauptete ein
+      // Ziel, an dem der Drop gar nichts ausloest.
+      markiereZiel(null)
+      return
     }
+    e.preventDefault()
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+    markiereZiel(flaecheOfEvent(board, e, ZIMMER_TAG) ?? column)
+  })
+  // Der Zeiger verlaesst das Board: dragover feuert dann nicht mehr, die letzte
+  // Marke bliebe also stehen. relatedTarget wird an Schattengrenzen auf den
+  // Host umgezielt — ein Wechsel INNERHALB des Boards liegt damit weiter im
+  // Board und loescht die Marke nicht.
+  board.addEventListener('dragleave', (e) => {
+    const nach = e.relatedTarget
+    if (!(nach instanceof Node) || !board.contains(nach)) markiereZiel(null)
   })
   board.addEventListener('drop', (e) => {
     const column = columnOfEvent(board, e)
@@ -375,7 +438,8 @@ function wireDrag(board: HTMLElement): void {
     // auf den freien Spaltenrand neben den Zimmern findet keins: dann bleibt
     // {ZIMMER} leer, und die Kette entscheidet selbst, was sie damit tut.
     handleDrop(board, column, flaecheOfEvent(board, e, ZIMMER_TAG))
-    dragged = null
+    // Nach handleDrop: die Kette braucht `dragged` noch.
+    beendeZug()
   })
 }
 
