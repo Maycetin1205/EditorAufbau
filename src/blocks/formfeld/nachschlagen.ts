@@ -9,6 +9,7 @@ import {
   type DialogRahmen,
 } from '../shared/DialogRahmen'
 import { ART_TEXT } from '../tabelle/spaltenArten'
+import type { Spalte } from '../tabelle/spalten'
 import { TabelleBlock } from '../tabelle/TabelleBlock'
 import {
   ZEILE_AKTIVIERT_EVENT,
@@ -67,19 +68,25 @@ export interface NachschlagEinstellung {
   speicherFeld: string
 }
 
+export function nurEineSpalte(anzeigeFeld: string, speicherFeld: string): boolean {
+  const anzeige = anzeigeFeld.trim()
+  return anzeige === '' || anzeige === speicherFeld.trim()
+}
+
 export function nachschlagEintraege(
   rows: readonly unknown[],
   anzeigeFeld: string,
   speicherFeld: string,
 ): Eintrag[] {
+  const anzeigeCode = anzeigeFeld.trim()
   const eintraege: Eintrag[] = []
-  const gleichesFeld = anzeigeFeld.trim() !== '' && anzeigeFeld.trim() === speicherFeld.trim()
+  const einspaltig = nurEineSpalte(anzeigeFeld, speicherFeld)
   const gesehen = new Set<string>()
   for (const row of rows) {
-    const anzeige = getField(row, anzeigeFeld).trim()
     const wert = getField(row, speicherFeld).trim()
+    const anzeige = anzeigeCode === '' ? wert : getField(row, anzeigeCode).trim()
     if (anzeige === '' && wert === '') continue
-    if (gleichesFeld) {
+    if (einspaltig) {
       if (gesehen.has(wert)) continue
       gesehen.add(wert)
     }
@@ -102,7 +109,7 @@ export type EintraegeErgebnis =
   | { ok: false; grund: 'unvollstaendig' | 'quelleFehlt' }
 
 export function holeEintraege(e: NachschlagEinstellung): EintraegeErgebnis {
-  if (e.quelleId === '' || e.anzeigeFeld === '' || e.speicherFeld === '') {
+  if (e.quelleId === '' || e.speicherFeld === '') {
     return { ok: false, grund: 'unvollstaendig' }
   }
   const quelle = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, e.quelleId)
@@ -153,19 +160,29 @@ function schliesse(mitFokus = true): void {
   ziel?.focus()
 }
 
+function spaltenFuer(args: NachschlagenArgs): Spalte[] {
+  const wertTitel = args.speicherTitel !== ''
+    ? args.speicherTitel
+    : (args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Wert')
+  const wertSpalte: Spalte = { titel: wertTitel, feld: '', art: ART_TEXT }
+  if (nurEineSpalte(args.anzeigeFeld, args.speicherFeld)) return [wertSpalte]
+  return [
+    { titel: args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt', feld: '', art: ART_TEXT },
+    wertSpalte,
+  ]
+}
+
 function macheTabelle(args: NachschlagenArgs, eintraege: readonly Eintrag[]): TabelleBlock {
   const tabelle = document.createElement(TabelleBlock.tagName) as TabelleBlock
+  const einspaltig = nurEineSpalte(args.anzeigeFeld, args.speicherFeld)
 
   tabelle.besitz = 'provided'
-  tabelle.spalten = [
-    { titel: args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt', feld: '', art: ART_TEXT },
-    { titel: args.speicherTitel !== '' ? args.speicherTitel : 'Wert', feld: '', art: ART_TEXT },
-  ]
+  tabelle.spalten = spaltenFuer(args)
   tabelle.suche = 'ja'
   tabelle.leerText = 'Diese Quelle hat keine Sätze.'
   tabelle.bereitgestellteZeilen = eintraege.map((e) => ({
     rohzeile: e.satz,
-    zellen: [e.anzeige, e.wert],
+    zellen: einspaltig ? [e.wert] : [e.anzeige, e.wert],
   }))
   tabelle.toggleAttribute('fuellt', true)
 
@@ -177,7 +194,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
   const ergebnis = holeEintraege(args)
   if (!ergebnis.ok) {
     meldeFehler(ergebnis.grund === 'unvollstaendig'
-      ? 'Nachschlagen ist an diesem Feld nicht vollstaendig eingestellt (Quelle, Angezeigt, Gespeichert).'
+      ? 'Nachschlagen braucht an diesem Feld eine Quelle und „Gespeichert wird".'
       : 'Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.')
     return
   }

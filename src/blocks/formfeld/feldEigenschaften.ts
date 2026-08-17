@@ -36,8 +36,8 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
   },
   {
     attributeName: 'anzeigeFeld',
-    name: 'Angezeigt wird',
-    description: 'Feld der Nachschlage-Quelle, dessen Wert der Bediener sieht (z. B. der Name).',
+    name: 'Angezeigt wird (optional)',
+    description: 'Leer lassen: das Feld zeigt den gespeicherten Wert. Sonst das Feld, dessen Wert der Bediener statt des Technikwerts sieht (z. B. der Name).',
     kind: 'field',
     quelleProp: 'nachschlagQuelle',
     klarnameProp: 'anzeigeTitel',

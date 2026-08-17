@@ -5,6 +5,7 @@ import {
   fensterEintraege,
   folgeBeimVerlassen,
   nachschlagEintraege,
+  nurEineSpalte,
   satzPasstZurAuswahl,
 } from './nachschlagen'
 
@@ -37,6 +38,29 @@ describe('nachschlagEintraege', () => {
     const satz = { SATZ: '  10077  Vogler' }
     const e = nachschlagEintraege([satz], '9_6', '2_5')
     expect(e).toEqual([{ anzeige: 'Vogler', wert: '10077', satz }])
+  })
+
+  it('ohne "Angezeigt wird" ist der gespeicherte Wert selbst die Anzeige', () => {
+    const e = nachschlagEintraege(ROHZEILEN, '', '2_8')
+    expect(e.map((x) => x.wert)).toEqual(['10024', '10031', '10048'])
+    expect(e.every((x) => x.anzeige === x.wert)).toBe(true)
+  })
+
+  it('ohne "Angezeigt wird" steht jeder Wert einmal da', () => {
+    const rows = [{ '2_8': '4' }, { '2_8': '4' }, { '2_8': '11' }]
+    expect(nachschlagEintraege(rows, '', '2_8').map((x) => x.wert)).toEqual(['4', '11'])
+  })
+})
+
+describe('nurEineSpalte', () => {
+  it('kein Anzeigefeld oder dasselbe Feld: eine Spalte', () => {
+    expect(nurEineSpalte('', '2_8')).toBe(true)
+    expect(nurEineSpalte('2_8', '2_8')).toBe(true)
+    expect(nurEineSpalte(' 2_8 ', '2_8')).toBe(true)
+  })
+
+  it('zwei verschiedene Felder: zwei Spalten', () => {
+    expect(nurEineSpalte('10_30', '2_8')).toBe(false)
   })
 })
 
