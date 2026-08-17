@@ -30,6 +30,22 @@ git log --oneline -8
 <!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
      keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
 
+- **NEU 2026-08-17, Nutzer-Auftrag — Datencenter UND Inspector werden
+  KOMPLETT NEU ENTWORFEN.** Alle Funktionen bleiben, nichts faellt weg; es
+  muss danach dasselbe koennen, nur bedienbar. Anlass ist nicht Geschmack:
+  gezaehlt wurden **45 verschiedene Bedienwege fuer vier Fragen** (Wert
+  angeben 16 · Liste bearbeiten 13 · Feld waehlen 9 · Quelle waehlen 7).
+  Die Gegenpruefung sagt: es sind kaum Doppelbauten, sondern
+  UNEINHEITLICHKEIT — dieselbe Handlung wird jedes Mal anders bedient
+  (fuenf Listen, fuenf verschiedene Arten, eine Zeile hinzuzufuegen; ein
+  Suchfeld gibt es in genau EINEM der Feld-Waehler). Zwei Wegweiser dazu:
+  der Beschluss „Quellen-FORMEN" (eigener Abschnitt vor Welle U) und die
+  Reihenfolge **erst Bauteile, dann Bildschirme** — ein Entwerfer bekommt
+  die sechs bis acht gemeinsamen Bauteile als Auftrag, nicht „entwirf ein
+  Datencenter". Belegtes Beispiel fuer die Dringlichkeit: die zentralste
+  Bedienung des Editors, die Klappliste „woher kommt der Wert" mit ACHT
+  Eintraegen, steckt im 340-px-Inspector und schneidet hart ab
+  (`ParameterZeile.tsx:315` beschreibt das Problem selbst).
 - **Baubarkeit von D/E/U geprueft (2026-08-17), Ergebnis kurz:** sofort an
   einen Chat gebbar sind **E3** (kleinste, braucht KEINE Migration) · **E1**
   · **D1 -> D2 -> D3** · **U7a** · **S5.3**. **GESPERRT: D4** (setzt das
@@ -2764,6 +2780,95 @@ gestrichene Rubrik „Aufgefallen unterwegs" in CLAUDE.md. Der volle
 Etappentext samt Umsetzung steht in der git-Historie (`44a3b81`, `63942b0`).
 Die Refresh-Flut selbst bleibt damit ein offenes Thema ohne beauftragte
 Loesung; Lazy-Loading (Welle Q) bleibt ebenfalls gestrichen.
+
+---
+
+# Quellen-FORMEN — Beschluss 2026-08-17 (Nutzer-Auftrag, vor dem Neuentwurf)
+
+**Anlass:** Der Nutzer hat 120+ echte SE-Masken ausgewertet. Der Editor kennt
+SECHS Quellen-Arten, SoftEngine kennt rund ZWOELF Strukturen: VAR ·
+SEFILELOOP · GET_RELATION · KENNZAHL (MIS) · TABELLE (IDs 48/84/931-934) ·
+WINDOWLOOP (LOOPFUNC) · REFRESH · WINDOW_VARIABLE · ERPAPICALL · ZGR ·
+LANGTEXT (TEXTDTK/IDB/JSD) · BERICHT/MASKE.
+
+**Der Beschluss: NICHT sechs weitere Arten anbauen.** Das waere sechsmal
+dasselbe drauf — genau die Krankheit, wegen der die Generalsanierung laeuft.
+
+## Zwoelf Strukturen sind DREI Formen
+
+| Form | Was der Bediener davon hat | SE-Strukturen |
+|---|---|---|
+| **Einzelsatz** | Felder binden | VAR · WINDOW_VARIABLE · KENNZAHL · ZGR |
+| **Liste** | Tabelle, Kanban, Nachschlagen | SEFILELOOP · WINDOWLOOP · TABELLE · REFRESH |
+| **Nachschlagen** | Schritt in einer Kette | GET_RELATION · ERPAPICALL · LANGTEXT |
+
+Alle drei Formen KANN der Editor schon (VAR, SEFILELOOP, Relations-Store).
+Was fehlt: er verwechselt die FORM mit der SCHREIBWEISE.
+
+**UNGEPRUEFT (Claude, 2026-08-17):** die Zuordnung oben ist aus der
+Nutzer-Tabelle gelesen, nicht an echten Masken nachgemessen. Am
+unsichersten sind KENNZAHL und REFRESH. Vor dem Bauen an einer echten
+Maske pruefen (Regel 5). Am Grundsatz „Form vor Art" aendert das nichts.
+
+## Was ein ARTEN-Eintrag kuenftig tragen muss
+
+`core/data/quellenArten.ts` ist bereits die Registry — eine Art ist heute
+EIN Eintrag in `ARTEN` (feste Tabellen-ID, Felder einzeln oder `*`, Kennung
+noetig?, Kopfsatz moeglich?, VAR moeglich?, Relation-Laden moeglich?). Die
+Bauart stimmt, die Eintraege sind zu duenn: sie beschreiben nur Varianten
+INNERHALB eines Lieferwegs. Dazu muessen:
+
+1. **Form** — Einzelsatz | Liste | Nachschlagen. Steuert die
+   OBERFLAECHE: was darf sich daran binden, was fragt das Formular ab.
+2. **Lieferweg** — in welchen Abschnitt der SEvariablen.json der Eintrag
+   gehoert (`VAR` / `SEFILELOOP` / `ERPAPICALL` / …). Heute fest verdrahtet
+   in `export/sevariablen.ts`.
+3. **Feld-Schreibweise** — SEFILELOOP schreibt Felder NACKT (`2_8`),
+   ERPAPICALL mit PRAEFIX (`ADR_2_8`, `ART_`, `LFA_`, `IDB_`). Heute kennt
+   `felderFor` (dataSources.ts) nur die nackte Form.
+4. **Abholstelle zur Laufzeit** — `softengine/data.ts` liest heute
+   `SEDATA.Daten.SEFileLoop` und `.Var`. ERPAPICALL landet woanders:
+   `SEDATA.Daten.ErpApiCall.{ALIAS}.Zeilen[]`.
+
+Erst wenn diese vier am Eintrag haengen, ist „neue Struktur dazunehmen"
+wirklich EINE ZEILE — und zwar eine, die der Nutzer selbst anlegen kann.
+
+## ERPAPICALL — belegte Form (aus den echten Vorlagen)
+
+```json
+{ "ID": "ADRESSE.GET", "ALIAS": "Adressen",
+  "FELDER": "ADR_2_8,ADR_20_30,ADR_1114_20",
+  "VON_ADRNR": "10000", "BIS_ADRNR": "69999" }
+```
+
+Belegte IDs: `ADRESSE.GET` · `ARTIKEL.GET` · `BELEG.GET` ·
+`LIEFERADRESSE.GET` · `VERTRETER.GET` · `STUECKLISTEN.GET` ·
+`KOMPONENTEN.GET` · `PROZESSE_AUFGABEN.GET` · `WIEDERVORLAGE.GET` ·
+`IDBSE0881.GET`. **Kein `BELEGPOSITION.GET`** — fuer Positionen bleibt
+Relation 69 der einzige belegte Laufzeit-Weg (Wellenkopf R).
+Im Export steht `ERPAPICALL` heute als LEERE Liste (`sevariablen.ts`).
+
+## ⚠ DER UNTERSCHIED, DER NICHT VERLORENGEHEN DARF
+
+**ERPAPICALL DEKLARIEREN ist etwas anderes als ERPAPICALL AUFRUFEN.**
+
+- **Deklarieren** (Eintrag in der SEvariablen.json, SoftEngine liest ihn
+  beim Laden und liefert): durch die echten Vorlagen BELEGT, oben steht die
+  Form. Das ist der Weg, den dieser Beschluss meint.
+- **Aufrufen** zur Laufzeit per `basisHTML_SND_MSG('ERPAPICALL', …)`:
+  **FRIERT DIE WINUI-MASKE EIN** (nur noch Task-Manager hilft) — Echttest
+  des Nutzers, s. CLAUDE.md. Bleibt tabu, bis die ErpApiCall-Referenz der
+  Installation vorliegt.
+
+Wer das verwechselt, legt dem Nutzer die Maske lahm.
+
+## Folge fuer den Neuentwurf von Datencenter und Inspector
+
+Das Formular fragt ZUERST die FORM („Ein Satz? Eine Liste? Ein
+Nachschlagen?") und zeigt danach nur, was zu dieser Form gehoert — nicht
+eine Klappliste mit zwoelf Kuerzeln. Der Entwurfsauftrag beschreibt DREI
+Formen, nicht zwoelf Arten; sonst ist die Oberflaeche bei der naechsten
+SE-Struktur wieder falsch.
 
 ---
 
