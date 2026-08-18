@@ -100,12 +100,27 @@ export function benutzteFelderJeQuelle(
 
     if (def?.listenBindung) {
       const b = def.listenBindung
+
+      // Traegt die Bindung ein `quelleProp`, speichern ihre Eintraege den
+      // NACKTEN Feldcode EINER benannten Quelle (Nachschlage-Fenster). Dann
+      // waere es falsch, ihn wie eine Bindung ueber die Quellen in
+      // Reichweite aufzuloesen — er gehoert zu genau dieser Quelle, sonst
+      // bestellt der Export ihre Felder gar nicht und die Spalte bleibt in
+      // SoftEngine leer.
+      const eigeneQuelle = b.quelleProp === undefined
+        ? undefined
+        : String(node.props[b.quelleProp] ?? '')
+      const merkeEintragsFeld = (wert: unknown): void => {
+        if (eigeneQuelle === undefined) merkeBindung(wert)
+        else merke(eigeneQuelle, wert)
+      }
+
       for (const eintrag of listeLesen(node.props[b.prop], b)) {
-        merkeBindung(eintrag[b.feldKey])
+        merkeEintragsFeld(eintrag[b.feldKey])
         if (!b.eintragsWahl) continue
         const gebunden = eintragsFelderLesen(b.eintragsWahl, eintrag)
         for (const zf of eintragsFelderVon(b.eintragsWahl, eintrag)) {
-          merkeBindung(gebunden[zf.key])
+          merkeEintragsFeld(gebunden[zf.key])
         }
       }
     }

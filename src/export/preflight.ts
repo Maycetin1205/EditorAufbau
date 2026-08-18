@@ -107,9 +107,12 @@ export function preflightMask(
       const b = def.listenBindung
       const wahl = b.eintragsWahl
       const zuo = b.eintragsZuordnung
+      // Mit `quelleProp` gehoert die Liste zu EINER benannten Quelle; sie
+      // wird oben beim Quellen-Prop geprueft, nicht als Bindung.
+      const eigeneQuelle = b.quelleProp !== undefined
       listeLesen(node.props[b.prop], b).forEach((eintrag, i) => {
         const titel = String(eintrag[b.titelKey] ?? '') || `Nr. ${i + 1}`
-        pruefeBindung(eintrag[b.feldKey], titel)
+        if (!eigeneQuelle) pruefeBindung(eintrag[b.feldKey], titel)
 
         if (wahl) {
           const gebunden = eintragsFelderLesen(wahl, eintrag)
@@ -145,6 +148,26 @@ export function preflightMask(
           detail: `Baustein "${bausteinName(node, sources)}", "${prop.name}" nennt eine gelöschte oder unbekannte Datenquelle — die Stelle bliebe in der Maske leer.`,
         })
         continue
+      }
+
+      // Zeigt eine LISTEN-Bindung auf diese Quelle (die Spalten des
+      // Nachschlage-Fensters), gehoeren ihre Feldcodes ebenfalls hierher —
+      // sie sind nackte Codes DIESER Quelle, keine Bindungen ueber die
+      // Quellen in Reichweite. Ohne diesen Zweig meldete der Preflight sie
+      // als „Bindung ohne Datenquelle", obwohl die Quelle danebensteht.
+      const liste = def?.listenBindung
+      if (liste && liste.quelleProp === prop.attributeName) {
+        listeLesen(node.props[liste.prop], liste).forEach((eintrag, i) => {
+          const code = String(eintrag[liste.feldKey] ?? '')
+          // Leer ist erlaubt: eine Spalte ohne Feld bleibt im Fenster leer.
+          if (code === '' || quelle.fields.some((f) => f.code === code)) return
+          const titel = String(eintrag[liste.titelKey] ?? '') || `Nr. ${i + 1}`
+          results.push({
+            name: 'Gebundenes Feld fehlt',
+            ok: false,
+            detail: `Baustein "${bausteinName(node, sources)}", Spalte "${titel}": das Feld gibt es in der Datenquelle "${quelle.name}" nicht (mehr) — die Spalte bliebe im Nachschlage-Fenster leer. (Feldcode ${code})`,
+          })
+        })
       }
 
       for (const feldProp of def?.customProperties ?? []) {

@@ -71,9 +71,7 @@ export function coerceNachschlagSpalten(v: unknown): Spalte[] {
 export interface NachschlagenArgs {
   el: HTMLElement
   quelleId: string
-  anzeigeFeld: string
   speicherFeld: string
-  anzeigeTitel: string
   speicherTitel: string
 
   spalten: readonly Spalte[]
@@ -91,8 +89,17 @@ export interface Eintrag {
 export interface NachschlagEinstellung {
   el: HTMLElement
   quelleId: string
-  anzeigeFeld: string
   speicherFeld: string
+
+  spalten: readonly Spalte[]
+}
+
+// Was im FELD steht, ist die erste Spalte des Fensters. Ohne eigene
+// Spalten zeigt das Fenster nur „Gespeichert wird" — dann ist der
+// gespeicherte Wert selbst die Anzeige.
+export function anzeigeFeldVon(spalten: readonly Spalte[], speicherFeld: string): string {
+  const erste = spalten[0]
+  return erste === undefined ? speicherFeld : erste.feld
 }
 
 export function nurEineSpalte(anzeigeFeld: string, speicherFeld: string): boolean {
@@ -142,7 +149,8 @@ export function holeEintraege(e: NachschlagEinstellung): EintraegeErgebnis {
   const quelle = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, e.quelleId)
   if (!quelle) return { ok: false, grund: 'quelleFehlt' }
   const rows = rowsFor(seGlobal().SEDATA, quelle.name, quelle.tableId)
-  return { ok: true, eintraege: fensterEintraege(e.el, rows, e.anzeigeFeld, e.speicherFeld) }
+  const anzeigeFeld = anzeigeFeldVon(coerceNachschlagSpalten([...e.spalten]), e.speicherFeld)
+  return { ok: true, eintraege: fensterEintraege(e.el, rows, anzeigeFeld, e.speicherFeld) }
 }
 
 export function einzigenTrefferFinden(
@@ -195,34 +203,25 @@ export function schliesseNachschlagenFuer(el: HTMLElement): void {
   if (offenFuer === el) schliesse(false)
 }
 
-type SpaltenQuelle = Pick<
-  NachschlagenArgs,
-  'anzeigeFeld' | 'speicherFeld' | 'anzeigeTitel' | 'speicherTitel'
->
+type SpaltenQuelle = Pick<NachschlagenArgs, 'speicherFeld' | 'speicherTitel'>
 
-// Die Automatik-Spalten. feld traegt die Codes, damit derselbe Stand auch
-// als Startpunkt im Einstell-Fenster dient; die Laufzeit-Zellen kommen bei
-// der Automatik trotzdem aus den fertigen Eintraegen (anzeige/wert).
+// Die Automatik: EINE Spalte, „Gespeichert wird". feld traegt den Code,
+// damit derselbe Stand auch als Startpunkt im Einstell-Fenster dient; die
+// Laufzeit-Zellen kommen bei der Automatik trotzdem aus den fertigen
+// Eintraegen (anzeige/wert). Wer mehr Spalten will, stellt sie an der Lupe
+// ein — die erste davon ist dann, was im Feld steht.
 export function automatikSpalten(args: SpaltenQuelle): Spalte[] {
-  const wertTitel = args.speicherTitel !== ''
-    ? args.speicherTitel
-    : (args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Wert')
-  const wertSpalte: Spalte = { titel: wertTitel, feld: args.speicherFeld, art: ART_TEXT }
-  if (nurEineSpalte(args.anzeigeFeld, args.speicherFeld)) return [wertSpalte]
-  return [
-    {
-      titel: args.anzeigeTitel !== '' ? args.anzeigeTitel : 'Angezeigt',
-      feld: args.anzeigeFeld,
-      art: ART_TEXT,
-    },
-    wertSpalte,
-  ]
+  const titel = args.speicherTitel !== '' ? args.speicherTitel : 'Wert'
+  return [{ titel, feld: args.speicherFeld, art: ART_TEXT }]
 }
 
 function macheTabelle(args: NachschlagenArgs, eintraege: readonly Eintrag[]): TabelleBlock {
   const tabelle = document.createElement(TabelleBlock.tagName) as TabelleBlock
-  const einspaltig = nurEineSpalte(args.anzeigeFeld, args.speicherFeld)
   const eigene = coerceNachschlagSpalten([...args.spalten])
+  const einspaltig = nurEineSpalte(
+    anzeigeFeldVon(eigene, args.speicherFeld),
+    args.speicherFeld,
+  )
 
   tabelle.besitz = 'provided'
   tabelle.spalten = eigene.length > 0 ? eigene : automatikSpalten(args)

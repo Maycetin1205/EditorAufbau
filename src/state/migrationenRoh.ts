@@ -110,3 +110,37 @@ export function migrateZeileAufloesen(src: Record<string, RohKnoten>): string[] 
   }
   return entfernt
 }
+
+// V0 (2026-08-18): Das Nachschlage-Feld hat kein „Angezeigt wird" mehr —
+// was im Feld steht, ist die ERSTE Spalte seines Fensters. Ein alter Stand
+// mit eigenem Anzeigefeld und ohne eigene Spalten bekommt daraus genau die
+// zwei Spalten, die er bisher sah; sonst ginge die Einstellung still
+// verloren. Die Art der Spalte bleibt offen — `alsSpalte` setzt Text.
+// Laeuft auf den ROHDATEN, weil `normalizeProps` unbekannte Props
+// wegwirft, und raeumt die alten Props gleich mit weg, damit die
+// Verlustpruefung des Datei-Wegs nichts vermisst.
+export function migrateAnzeigeFeldAufSpalten(src: Record<string, RohKnoten>): void {
+  for (const node of Object.values(src)) {
+    if (!node || typeof node !== 'object' || node.type !== 'formfeld') continue
+    if (!node.props || typeof node.props !== 'object') continue
+    const props = rohProps(node)
+    if (!('anzeigeFeld' in props) && !('anzeigeTitel' in props)) continue
+
+    const text = (wert: unknown): string => (typeof wert === 'string' ? wert : '')
+    const anzeigeFeld = text(props.anzeigeFeld).trim()
+    const speicherFeld = text(props.speicherFeld).trim()
+    const eigene = props.nachschlagSpalten
+    const hatEigene = Array.isArray(eigene) && eigene.length > 0
+
+    if (!hatEigene && anzeigeFeld !== '' && anzeigeFeld !== speicherFeld) {
+      const anzeigeTitel = text(props.anzeigeTitel)
+      const speicherTitel = text(props.speicherTitel)
+      props.nachschlagSpalten = [
+        { titel: anzeigeTitel !== '' ? anzeigeTitel : 'Angezeigt', feld: anzeigeFeld },
+        { titel: speicherTitel !== '' ? speicherTitel : 'Wert', feld: speicherFeld },
+      ]
+    }
+    delete props.anzeigeFeld
+    delete props.anzeigeTitel
+  }
+}

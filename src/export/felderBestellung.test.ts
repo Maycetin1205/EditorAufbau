@@ -129,7 +129,11 @@ describe('exportMask: FELDER-Bestellung', () => {
         id: 'feld', type: 'formfeld', parentId: 'root', childIds: [],
         props: {
           label: 'Kunde', fieldType: 'nachschlagen', nachschlagQuelle: 'kunden',
-          anzeigeFeld: '20_30', speicherFeld: '10_8',
+          speicherFeld: '10_8',
+          nachschlagSpalten: [
+            { titel: 'Name', feld: '20_30', art: 'text' },
+            { titel: 'Adressnummer', feld: '10_8', art: 'text' },
+          ],
 
           valueField: '40_60',
         },

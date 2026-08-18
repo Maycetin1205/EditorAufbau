@@ -15,6 +15,7 @@ import {
   weggefalleneProps,
 } from './migrations'
 import {
+  migrateAnzeigeFeldAufSpalten,
   migrateKanbanVorlage,
   migrateKnopfAusTabelle,
   migrateZeileAufloesen,
@@ -32,6 +33,7 @@ export function sanitizeTree(
   const tree = createEmptyTree()
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   const onDropType = meldungen?.typVerworfen
+  migrateAnzeigeFeldAufSpalten(src)
   const rohEntfernt = [
     ...migrateKanbanVorlage(src),
     ...migrateKnopfAusTabelle(src),

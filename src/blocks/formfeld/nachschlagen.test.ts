@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setzeAuswahlZurueck, waehleAuswahl } from '../shared/auswahl'
 import {
+  anzeigeFeldVon,
+  automatikSpalten,
   einzigenTrefferFinden,
   fensterEintraege,
   folgeBeimVerlassen,
@@ -40,15 +42,44 @@ describe('nachschlagEintraege', () => {
     expect(e).toEqual([{ anzeige: 'Vogler', wert: '10077', satz }])
   })
 
-  it('ohne "Angezeigt wird" ist der gespeicherte Wert selbst die Anzeige', () => {
+  it('ohne eigene erste Spalte ist der gespeicherte Wert selbst die Anzeige', () => {
     const e = nachschlagEintraege(ROHZEILEN, '', '2_8')
     expect(e.map((x) => x.wert)).toEqual(['10024', '10031', '10048'])
     expect(e.every((x) => x.anzeige === x.wert)).toBe(true)
   })
 
-  it('ohne "Angezeigt wird" steht jeder Wert einmal da', () => {
+  it('ohne eigene erste Spalte steht jeder Wert einmal da', () => {
     const rows = [{ '2_8': '4' }, { '2_8': '4' }, { '2_8': '11' }]
     expect(nachschlagEintraege(rows, '', '2_8').map((x) => x.wert)).toEqual(['4', '11'])
+  })
+})
+
+describe('anzeigeFeldVon (V0: im Feld steht Spalte 1 des Fensters)', () => {
+  it('ohne eigene Spalten ist der gespeicherte Wert die Anzeige', () => {
+    expect(anzeigeFeldVon([], '2_8')).toBe('2_8')
+  })
+
+  it('mit eigenen Spalten zaehlt die ERSTE — nicht die, die gespeichert wird', () => {
+    const spalten = [
+      { titel: 'Name', feld: '10_30', art: 'text' },
+      { titel: 'Nummer', feld: '2_8', art: 'text' },
+    ]
+    expect(anzeigeFeldVon(spalten, '2_8')).toBe('10_30')
+  })
+
+  it('eine erste Spalte ohne Feld zeigt nichts an — kein stiller Rueckfall', () => {
+    expect(anzeigeFeldVon([{ titel: 'Leer', feld: '', art: 'text' }], '2_8')).toBe('')
+  })
+})
+
+describe('automatikSpalten', () => {
+  it('ohne eigene Spalten zeigt das Fenster genau „Gespeichert wird"', () => {
+    expect(automatikSpalten({ speicherFeld: '2_8', speicherTitel: 'Adressnummer' }))
+      .toEqual([{ titel: 'Adressnummer', feld: '2_8', art: 'text' }])
+  })
+
+  it('ohne Klarnamen heisst die Spalte „Wert"', () => {
+    expect(automatikSpalten({ speicherFeld: '2_8', speicherTitel: '' })[0].titel).toBe('Wert')
   })
 })
 

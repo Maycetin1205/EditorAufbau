@@ -82,8 +82,6 @@ export class FormFeldBlock extends BasicBlock {
     valueField: '',
 
     nachschlagQuelle: '',
-    anzeigeFeld: '',
-    anzeigeTitel: '',
     speicherFeld: '',
     speicherTitel: '',
 
@@ -105,8 +103,6 @@ export class FormFeldBlock extends BasicBlock {
   @property() value = ''
   @property() valueField = ''
   @property() nachschlagQuelle = ''
-  @property() anzeigeFeld = ''
-  @property() anzeigeTitel = ''
   @property() speicherFeld = ''
   @property() speicherTitel = ''
   @property({
@@ -208,9 +204,7 @@ export class FormFeldBlock extends BasicBlock {
     oeffneNachschlagen({
       el: this,
       quelleId: this.nachschlagQuelle,
-      anzeigeFeld: this.anzeigeFeld,
       speicherFeld: this.speicherFeld,
-      anzeigeTitel: this.anzeigeTitel,
       speicherTitel: this.speicherTitel,
       spalten: this.nachschlagSpalten,
       titel: this.placeholder,
@@ -228,9 +222,7 @@ export class FormFeldBlock extends BasicBlock {
     const eigene = coerceNachschlagSpalten(this.nachschlagSpalten)
     if (eigene.length > 0) return eigene
     return automatikSpalten({
-      anzeigeFeld: this.anzeigeFeld,
       speicherFeld: this.speicherFeld,
-      anzeigeTitel: this.anzeigeTitel,
       speicherTitel: this.speicherTitel,
     })
   }
@@ -307,8 +299,8 @@ export class FormFeldBlock extends BasicBlock {
     const ergebnis = holeEintraege({
       el: this,
       quelleId: this.nachschlagQuelle,
-      anzeigeFeld: this.anzeigeFeld,
       speicherFeld: this.speicherFeld,
+      spalten: this.nachschlagSpalten,
     })
     if (!ergebnis.ok) return
     const treffer = einzigenTrefferFinden(ergebnis.eintraege, this.satz === undefined)

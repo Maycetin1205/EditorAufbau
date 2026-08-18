@@ -47,12 +47,12 @@ dann `go` (0.3), dann genau EINE Etappe.
   4. Mini-Frage: `preflight.ts` ist seit dem Punkt-Entfernen ohne
      Aufrufer im Produkt — loeschen (samt Tests) oder behalten?
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
-  STIRBT (→ Etappe V0) · gelber Punkt WEG (erledigt) · README JA
+  STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
-- **V1 ist GEBAUT (2026-08-18).** Offen aus der Welle V: V0 → V3 → V4 → V5.
+- **V1 und V0 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V3 → V4 → V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V0/V3/V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V3/V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
@@ -341,7 +341,16 @@ Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
 sind.
 ```
 
-## V0 · „Angezeigt wird" stirbt (ENTSCHIEDEN 2026-08-18)
+## V0 · „Angezeigt wird" stirbt (GEBAUT 2026-08-18)
+
+Gebaut wie beschrieben. Zwei Folgeschaeden mussten mit, sonst waere die
+Etappe halb gewesen: der Export bestellte die Felder der
+Nachschlage-SPALTEN gar nicht (`benutzteQuellen.ts`, Listen-Bindung mit
+`quelleProp` wurde ueber die Quellen in Reichweite aufgeloest statt ueber
+die benannte Quelle — seit D4 so, jetzt scharf, weil die Anzeige daran
+haengt), und der Preflight meldete dieselben Spalten als „Bindung ohne
+Datenquelle". `feldRuntime.ts` blieb unangetastet: es ueberspringt
+Nachschlage-Felder ohnehin (`hydrateField`, fruehes return).
 
 Das Nachschlage-Feld verliert die Eigenschaften `anzeigeFeld`/`anzeigeTitel`;
 im Feld erscheint kuenftig der Wert der ERSTEN Spalte des Fensters, in der

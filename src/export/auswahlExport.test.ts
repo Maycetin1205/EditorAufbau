@@ -128,8 +128,6 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
 
         source: '', value: '', valueField: '', width: 240,
         nachschlagQuelle,
-        anzeigeFeld: nachschlagQuelle === '' ? '' : '2_8',
-        anzeigeTitel: nachschlagQuelle === '' ? '' : 'Kundennummer',
         speicherFeld: nachschlagQuelle === '' ? '' : '0_10',
         speicherTitel: nachschlagQuelle === '' ? '' : 'Satz-Nr.',
         folgtAuswahl: [{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }],

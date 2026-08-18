@@ -89,6 +89,52 @@ describe('Aufräum-Migration (2026-08-06: Knopf aus Tabelle)', () => {
   })
 })
 
+describe('Migration (V0, 2026-08-18: „Angezeigt wird" wird zur ersten Fenster-Spalte)', () => {
+  const feldStand = (props: Record<string, unknown>): unknown => ({
+    tree: {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['feld'] },
+      feld: { id: 'feld', type: 'formfeld', props, parentId: 'root', childIds: [] },
+    },
+    selectedId: null,
+  })
+
+  it('macht aus dem alten Anzeigefeld zwei Spalten — die erste ist, was im Feld steht', () => {
+    const ed = load(feldStand({
+      fieldType: 'nachschlagen', nachschlagQuelle: 'q-adr',
+      anzeigeFeld: '10_30', anzeigeTitel: 'Name',
+      speicherFeld: '2_8', speicherTitel: 'Adressnummer',
+    }))
+    // Ohne `art`: die Migration kennt bewusst keine Spalten-Arten (sie liegt
+    // in state/, darf also keinen Baustein importieren). Die Art setzt der
+    // Normalisierer der Tabelle beim Lesen — Text.
+    expect(ed.getNode('feld')?.props.nachschlagSpalten).toEqual([
+      { titel: 'Name', feld: '10_30' },
+      { titel: 'Adressnummer', feld: '2_8' },
+    ])
+    expect(ed.getNode('feld')?.props.anzeigeFeld).toBeUndefined()
+    expect(ed.getNode('feld')?.props.anzeigeTitel).toBeUndefined()
+  })
+
+  it('selbst gestellte Spalten bleiben unangetastet — sie sind die juengere Ansage', () => {
+    const eigene = [{ titel: 'Ort', feld: '40_20', art: 'text' }]
+    const ed = load(feldStand({
+      fieldType: 'nachschlagen', nachschlagQuelle: 'q-adr',
+      anzeigeFeld: '10_30', anzeigeTitel: 'Name',
+      speicherFeld: '2_8', speicherTitel: 'Adressnummer',
+      nachschlagSpalten: eigene,
+    }))
+    expect(ed.getNode('feld')?.props.nachschlagSpalten).toEqual(eigene)
+  })
+
+  it('kein oder gleiches Anzeigefeld: es bleibt bei der Automatik (eine Spalte)', () => {
+    const ed = load(feldStand({
+      fieldType: 'nachschlagen', nachschlagQuelle: 'q-adr',
+      anzeigeFeld: '2_8', speicherFeld: '2_8', speicherTitel: 'Adressnummer',
+    }))
+    expect(ed.getNode('feld')?.props.nachschlagSpalten).toEqual([])
+  })
+})
+
 describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => {
   it('leert exakt die früheren Werkswerte, echte Eingaben bleiben', () => {
     const ed = load({

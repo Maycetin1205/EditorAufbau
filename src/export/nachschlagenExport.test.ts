@@ -35,8 +35,12 @@ const BEIDE = [...ADRESSEN, ...TIERE]
 const KUNDE_PROPS = {
   fieldType: 'nachschlagen', placeholder: 'Kunde', options: '',
   source: '', value: '', valueField: '', width: 240,
-  nachschlagQuelle: 'q-adr', anzeigeFeld: '10_30', anzeigeTitel: 'Name',
+  nachschlagQuelle: 'q-adr',
   speicherFeld: '110_10', speicherTitel: 'Adressnummer',
+  nachschlagSpalten: [
+    { titel: 'Name', feld: '10_30', art: 'text' },
+    { titel: 'Adressnummer', feld: '110_10', art: 'text' },
+  ],
 }
 
 const TEXT_PROPS = {
@@ -60,9 +64,11 @@ describe('Nachschlage-Feld im Export', () => {
     const kundeTag = /<ff-formfeld[^>]*placeholder="Kunde"[^>]*/.exec(html)?.[0] ?? ''
 
     expect(kundeTag).toContain('nachschlagquelle="q-adr"')
-    expect(kundeTag).toContain('anzeigefeld="10_30"')
-    expect(kundeTag).toContain('anzeigetitel="Name"')
     expect(kundeTag).toContain('speicherfeld="110_10"')
+    // Was im Feld steht, ist Spalte 1 des Fensters — sie reist als Spalte mit,
+    // nicht mehr als eigene Eigenschaft „Angezeigt wird" (V0).
+    expect(kundeTag).toContain('10_30')
+    expect(kundeTag).not.toContain('anzeigefeld=')
 
     expect(JSON.parse(sevariablen).SEFILELOOP).toHaveLength(1)
     expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
@@ -90,7 +96,7 @@ describe('Nachschlage-Feld im Export', () => {
 
   it('gar nichts eingestellt blockiert NICHT — angefangen ist nicht halbfertig', () => {
     const tree = baumMit({
-      ...KUNDE_PROPS, nachschlagQuelle: '', anzeigeFeld: '', anzeigeTitel: '',
+      ...KUNDE_PROPS, nachschlagQuelle: '', nachschlagSpalten: [],
       speicherFeld: '', speicherTitel: '',
     })
     expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
@@ -109,7 +115,7 @@ describe('Nachschlage-Feld im Export', () => {
 
   it('ohne eingestellte Nachschlage-Quelle kein data-ff-id — es gibt kein Fenster', () => {
     const { html } = exportMask(
-      baumMit({ ...KUNDE_PROPS, nachschlagQuelle: '', anzeigeFeld: '', anzeigeTitel: '', speicherFeld: '', speicherTitel: '' }),
+      baumMit({ ...KUNDE_PROPS, nachschlagQuelle: '', nachschlagSpalten: [], speicherFeld: '', speicherTitel: '' }),
       'Maske', ADRESSEN,
     )
 
@@ -144,8 +150,12 @@ describe('Nachschlage-Feld im Export', () => {
       props: {
         fieldType: 'nachschlagen', placeholder: 'Haustier', options: '',
         source: '', value: '', valueField: '', width: 240,
-        nachschlagQuelle: 'q-tiere', anzeigeFeld: '18_30', anzeigeTitel: 'Tiername',
+        nachschlagQuelle: 'q-tiere',
         speicherFeld: '0_10', speicherTitel: 'Satz-Nr.',
+        nachschlagSpalten: [
+          { titel: 'Tiername', feld: '18_30', art: 'text' },
+          { titel: 'Satz-Nr.', feld: '0_10', art: 'text' },
+        ],
 
         folgtAuswahl: [{ geberId: 'kunde', keyPairs: [{ fromField: '110_10', toField }] }],
       },
