@@ -54,20 +54,34 @@ dann `go` (0.3), dann genau EINE Etappe.
   s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
-  (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
-  V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
+  V6 nach Kurzentwurf · G3b → G3c → G4 → G5 (Wellen-Kopf G) · E1 · E3 ·
+  U7a · A10 (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3
+  (nach U5/U7). V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf
+  Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
   Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
   Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9, V7,
-  G1, G2 und G3 sind GEBAUT (2026-08-18);** naechster Kopier-Auftrag: G4.
+  G1, G2 und G3 sind GEBAUT (2026-08-18).**
   Mit G3 ist die Erfassungszeile einstellungsfrei geworden — sie leitet
   alles aus der Bindung der Spalte und der Verknuepfung des Bausteins ab;
   die Rollen-Maschinerie samt zweiter Bedienstelle am Listen-Eintrag
   (`ListenStelle`) ist ersatzlos ausgebaut, alte Staende raeumt
   `migrateErfassungsRollenWeg` beim Laden.
+  **Ehrlichkeits-Korrektur (2026-08-18, spaeter Abend):** G3 ist OHNE
+  den Tastenfluss gebaut — `erfassungsLauf` kennt nur Pfeile,
+  Enter-Uebernahme und Escape=Liste-zu; kein Springen, kein
+  Tab-Verhalten, keine Escape-Stufe 2. Der Tastenfluss stand damit in
+  keiner offenen Etappe mehr; er ist jetzt Etappe **G3b**. Dazu kam aus
+  der Demo-Abnahme des Nutzers (klickbare Attrappe, 2026-08-18 abends):
+  **G3c** (Automatik-Anker — im Zielszenario „Tabelle zeigt
+  Belegpositionen" schraenkt heute nichts ein und fuellt sich nichts),
+  die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
+  (Entschlanken). Naechste Etappen: G3b → G3c → G4 → G5; gebaut wird auf
+  Branch `claude/inline-edit-receipt-table-823di6` (dieser Branch fuehrt
+  den Erfassungs-Stand weiter — nicht mehr parallel auf
+  `claude/softengine-erp-templates-ynqibv` arbeiten).
 - **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
   Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
   WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
@@ -721,6 +735,21 @@ Tabellen-Quelle loest die verknuepften Saetze (sie hingen an seinem
 Schluessel) und bestimmt sie neu. Kein Partner gefunden → die Zelle
 bleibt leer, die Zeile bleibt stehen.
 
+**MESSLATTE (Nutzer-Abnahme an der klickbaren Demo, 2026-08-18 abends) —
+jede G-Etappe wird an diesem Szenario gemessen:** Die Tabelle zeigt die
+Positionen des gewaehlten Belegs (Quelle der Tabelle = Belegpositionen).
+Spalten Artikelnummer + Bezeichnung sind an die ARTIKEL-Quelle gebunden;
+Tierart, Verabreichung und Wartezeit je an ihre eigene Quelle,
+selektiert ueber Artikelnummer bzw. Artikelnummer + Tierart; Menge frei.
+Erwartung: Artikel tippen („bay") → waehlen → Nummer UND Bezeichnung
+stehen da, der Cursor springt weiter · die Tierart-Liste zeigt nur die
+Tierarten DIESES Artikels; genau eine → fuellt sich selbst samt
+Verabreichung/Wartezeit, der Cursor landet auf der Menge · Menge tippen,
+Enter → Zeile bleibt stehen, naechste Zeile · EIN Knopf schreibt alle
+erfassten Zeilen untereinander. **Dazu die Nutzer-Entscheidung
+„Formularfeld-Prinzip": es zaehlt, was in der Zelle STEHT — Herkunft
+egal (gewaehlt oder frei getippt), keine Pruefung, keine Warnung.**
+
 **Tasten (der Kern des Ganzen):** Enter uebernimmt den markierten
 Vorschlag und springt zur naechsten TIPPBAREN Zelle — es oeffnet nie
 erneut · Tab/Enter ueberspringen Zellen, die sich selbst gefuellt haben ·
@@ -769,7 +798,7 @@ Erfassungszeile ist die naechste FREIE Zeile — direkt unter der letzten
 Datenzeile, leere Tabelle → Zeile 1 ganz oben. Nicht unten am
 Tabellenrand hinter den Fuellzeilen.
 
-## G3 · Die Zelle leitet sich ab, die Tasten geben das Tempo
+## G3 · Die Zelle leitet sich ab (GEBAUT 2026-08-18 — ohne Tastenfluss, s. G3b)
 
 **Nutzer-Entscheidung 2026-08-18:** An der Erfassungszeile wird nichts
 mehr eingestellt — keine Rolle je Zelle, keine eigene Quelle je Spalte,
@@ -779,11 +808,8 @@ schon in der Bindung der Spalte und in der Verknuepfung des Bausteins
 Inspector — kein Umzug ins Datencenter, keine zweite Terminologie).
 Die drei Zellenarten und die Uebernahme-Regeln stehen im Wellen-Kopf.
 
-Dazu der Tastenfluss an der Erfassungszeile: Enter uebernimmt den
-markierten Vorschlag und springt zur naechsten TIPPBAREN Zelle ·
-Tab/Enter ueberspringen, was sich selbst gefuellt hat · genau EIN
-moeglicher Treffer fuellt sich selbst · Escape zweistufig (erst Liste
-zu, dann Zelle leeren) · F3-Abfangen mit Echttest-Vorbehalt.
+Der hier urspruenglich mit eingeplante Tastenfluss wurde NICHT
+mitgebaut (Ehrlichkeits-Korrektur in 0.1) — er ist Etappe G3b.
 
 **Gestrichen, nicht wieder vorschlagen:** die Vorbelegung („Menge 1" per
 Doppelklick in die Zelle) · die Rollen Nachschlagen/Folgt/Frei · die
@@ -796,6 +822,51 @@ deren erster tippbarer Zelle. **Kein Raeumen, kein Zuruecksprung in
 dieselbe Zeile** — und weiterhin kein Schreiben und kein Ereignis:
 geschrieben wird erst in G4, ueber den Knopf.
 **Runtime-Bytes aendern sich bewusst.**
+
+## G3b · Der Tastenfluss (zack, zack, zack)
+
+Nur Bedien-Logik an der bestehenden Erfassungszeile, kein neues Konzept:
+
+- Enter/Tab uebernehmen den markierten Vorschlag und springen zur
+  naechsten LEEREN Zelle — Selbstgefuelltes wird uebersprungen; Pfeile
+  und Klick erreichen trotzdem jede Zelle (Leitsatz im Wellen-Kopf).
+- Escape zweistufig: erst Liste zu, dann Zelle leeren; das Leeren loest
+  auch den gewaehlten Satz der Zellen-Quelle (sonst stuende der Wert
+  beim naechsten Rendern wieder da).
+- Enter in einer Zelle, fuer die es keinen einzigen moeglichen Satz
+  gibt (kein Partner), springt weiter statt nichts zu tun.
+- „Enter auf der letzten Zelle = Zeile erfasst" kommt erst mit G4 —
+  G3b baut das Springen INNERHALB der Zeile.
+- F3 bleibt zurueckgestellt (Echttest-Vorbehalt, Wellen-Kopf); Enter
+  ist der Hauptweg.
+
+Der Tasten-Entscheid bleibt browserfrei pruefbar (`erfassungsLauf` /
+`vorschlagListe.tastenFolge`); nur das Fokus-Setzen selbst lebt in der
+Bedienung. **Runtime-Bytes aendern sich bewusst.**
+
+## G3c · Automatik-Anker: die werdende Zeile liefert die Schluessel
+
+**Befund (Demo-Abnahme 2026-08-18):** Einschraenkung und
+Ein-Treffer-Automatik haengen am gewaehlten Satz der TABELLEN-Quelle
+(`erfassungsLauf.ts`, Anker `fuelleVerknuepfte` / `eintraege`). Im
+Messlatten-Szenario ist die Tabellen-Quelle „Belegpositionen" — beim
+Erfassen einer NEUEN Position gibt es diesen Satz nie. Folge heute:
+nichts schraenkt ein, nichts fuellt sich; die Komfort-Automatik
+funktioniert nur, wenn die Tabelle den ARTIKELSTAMM anzeigt (so sind
+die G3-Tests gebaut) — genau andersherum als das Zielszenario.
+
+**Umbau:** Fehlt der Satz der Tabellen-Quelle, liefern die BEREITS
+GEWAEHLTEN Saetze der verknuepften Quellen die Schluesselwerte der
+werdenden Zeile — der gewaehlte Artikel liefert die Artikelnummer usw.
+Ein Schluesselwert wird generisch aufgeloest: erst am Satz der
+Tabellen-Quelle (wie heute), sonst ueber die Verknuepfungs-Paare an
+jedem anderen gewaehlten Satz. Einschraenkung und
+Ein-Treffer-Automatik laufen ueber diese Werte; die Automatik greift
+nur, wenn mindestens ein Schluesselwert bekannt ist (sonst wuerde ein
+einziger Satz im Stamm sich ungefragt selbst waehlen). Tests: das
+Messlatten-Szenario als eigener Fall in `erfassungsLauf.test.ts` —
+Tabellen-Quelle Positionen, Artikel verknuepft, KEIN gewaehlter
+Positions-Satz. **Runtime-Bytes aendern sich bewusst.**
 
 ## G4 · Erfasste Zeilen stehen lassen + EIN Knopf schreibt sie
 
@@ -816,13 +887,43 @@ weg, nicht wieder vorschlagen).
 - **Neuer Herkunftstyp fuer Ketten-Parameter:** „Wert aus Erfassungszelle
   <Spalte>" — liefert je Lauf den Wert der jeweiligen Zeile, fuer ALLE
   Spalten verfuegbar (nicht nur fuer frei getippte).
+  **Praezisiert (Nutzer-Entscheidung 2026-08-18, Formularfeld-Prinzip):**
+  geliefert wird IMMER der sichtbare Zellwert — Herkunft egal, gewaehlt
+  oder frei getippt, keine Pruefung, keine Warnung.
 - **Nach dem Lauf werden die erfassten Zeilen geleert;** die echten
   Positionen kommen ueber den SE-Push zurueck.
 
-**Pruefpunkt VOR dem Bau:** die PUT_RELATION-82-Werte am echten Log
-nachlesen (CLAUDE.md „Neue BELEGPOSITION": Reihenfolge belegt, die `0`
-und die Leerstellen UNGEDEUTET) — nachpruefen, nicht raten; liegt das
-Log nicht im Repo, den Nutzer fragen. SE-Echttest durch den Nutzer.
+**Zum Pruefpunkt PUT_RELATION 82:** Der Mechanismus selbst ist
+PUT-agnostisch — die Kette baut der Nutzer sichtbar, G4 verdrahtet
+keine Relation fest. Die Deutung der `0` und der Leerstellen (CLAUDE.md
+„Neue BELEGPOSITION") gehoert damit zum KETTEN-Bau des Nutzers und zum
+SE-Echttest, nicht zum Code dieser Etappe. SE-Echttest durch den
+Nutzer. **Runtime-Bytes aendern sich bewusst.**
+
+## G5 · Entschlanken (erst NACH dem Funktionskern G3b/G3c/G4)
+
+Nutzer-Wunsch, an der Demo gesehen und abgenommen (2026-08-18):
+
+- **Schalter „schlank"** am Tabellen-Baustein (Registry-Prop wie
+  „Suchzeile"): Tafel-Rahmen weg, Polster enger, die Tabelle liegt
+  buendig auf der Maske. Standard bleibt das heutige Aussehen —
+  Bestandsmasken exportieren byte-gleich.
+- **Fusszeile nur bei Bedarf:** die Zeile „X Saetze · Seite n" erscheint
+  nur, wenn wirklich geblaettert wird oder ein Filter aktiv ist. Kein
+  eigener Schalter.
+- **Spaltenname als grauer Platzhalter in leeren Erfassungszellen**
+  (Formularfeld-Prinzip, „der Klarname ist die Vorschau") — hilft auch
+  MIT Kopfzeile.
+- **Schalter „Kopfzeile aus"** NUR zusammen mit der Antwort, wo dann
+  gebunden/umbenannt wird (Vorschlag: Klick auf die Erfassungszelle
+  oeffnet den Feld-Picker des Kopfes) — und mit dem Wissen, dass
+  Sortieren per Titelklick an der fertigen Maske entfaellt. Wenn das
+  beim Bau nicht sauber aufgeht: weglassen und dem Nutzer sagen, die
+  Platzhalter-Loesung reicht womoeglich.
+- Im selben Zug: der Inspector-Erklaertext der „Erfassungszeile"
+  beschreibt noch die gestrichene G2-Rollen-Welt
+  (`tabelleEigenschaften.ts`, Anker `'Erfassungszeile'`) — berichtigen.
+
 **Runtime-Bytes aendern sich bewusst.**
 
 ---
@@ -1043,7 +1144,7 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9 → V7~~ (GEBAUT).
    V6 braucht zuerst den Kurzentwurf mit dem Nutzer und tritt hinter
    Welle G zurueck (Nutzer-Prio 2026-08-18).
-3. **Welle G:** ~~G1~~ (GEBAUT) → G2 → G3 → G4.
+3. **Welle G:** ~~G1 → G2 → G3~~ (GEBAUT) → G3b → G3c → G4 → G5.
 4. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf; V6 nach
    Kurzentwurf, sobald der Nutzer ihn will.
 5. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
