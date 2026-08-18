@@ -1,656 +1,59 @@
-# Umbau — Fassung 6 (endgueltiger Gesamt-Bauauftrag)
+# Umbau — Fassung 6 (eingedampft 2026-08-18)
 
-Stand der Analyse: 2026-08-10  
-Gepruefte Ausgangsbasis: Commit `8c03dc5` plus der unten benannte, noch nicht
-committete POS/VAR-Arbeitsstand  
-Ersetzt als Baugrundlage:
+**Diese Datei ist die einzige Uebergabe zwischen Chats.** Der Nutzer arbeitet
+in mehreren Chats; ein neuer Chat weiss nichts vom vorherigen. Pflicht beim
+Start: CLAUDE.md, dieser Abschnitt 0, `git log --oneline -10`.
 
-- `C:\Users\mu.aycetin\Downloads\UMBAU-PLAN.md` (Codex, Fassung 4)
-- `C:\Users\mu.aycetin\Downloads\UMBAU-PLAN-FINAL.md` (Opus, Fassung 5)
+**Eindampfung auf Nutzer-Ansage 2026-08-18** („nicht zig Dateien am Ende"):
+alles GEBAUTE und die Langfassungen des Gestrichenen sind raus — die
+Chronik steht ausschliesslich in der git-Historie (die Langfassung dieser
+Datei, 4 260 Zeilen, liegt dort unmittelbar vor dem Eindampf-Commit).
+Hier steht nur noch: was offen ist, was entschieden ist, was gesperrt ist.
 
-Dieser Plan ist noch **keine Erlaubnis, Code zu aendern**. Vor der ersten
-Umsetzung gilt weiterhin: Plan zeigen, ausdrueckliches `go` des Nutzers
-abwarten.
+Dieser Plan ist keine Erlaubnis, Code zu aendern. Es gilt: Ansage (0.2),
+dann `go` (0.3), dann genau EINE Etappe.
 
 ---
 
 ## 0. Fuer einen neuen Chat — zuerst lesen
 
-Der Nutzer arbeitet in **mehreren Chats**. Ein neuer Chat weiss nichts vom
-vorherigen. Diese Seite ist die einzige Uebergabe.
-
 ### 0.1 Wo wir stehen
 
-**Pflicht beim Start jedes Chats — beides lesen, nicht nur eins:**
+<!-- Nach JEDER fertigen Etappe aktualisieren. Zeiger, keine Chronik. -->
 
-```text
-git log --oneline -8
-```
-
-<!-- Diese Zeilen werden nach JEDER fertigen Etappe aktualisiert. Das ist
-     keine Chronik, sondern der Zeiger. Nicht laenger werden lassen. -->
-
-- **NEU 2026-08-17, Nutzer-Auftrag — Datencenter UND Inspector werden
-  KOMPLETT NEU ENTWORFEN.** Alle Funktionen bleiben, nichts faellt weg; es
-  muss danach dasselbe koennen, nur bedienbar. Anlass ist nicht Geschmack:
-  gezaehlt wurden **45 verschiedene Bedienwege fuer vier Fragen** (Wert
-  angeben 16 · Liste bearbeiten 13 · Feld waehlen 9 · Quelle waehlen 7).
-  Die Gegenpruefung sagt: es sind kaum Doppelbauten, sondern
-  UNEINHEITLICHKEIT — dieselbe Handlung wird jedes Mal anders bedient
-  (fuenf Listen, fuenf verschiedene Arten, eine Zeile hinzuzufuegen; ein
-  Suchfeld gibt es in genau EINEM der Feld-Waehler). Zwei Wegweiser dazu:
-  der Beschluss „Quellen-FORMEN" (eigener Abschnitt vor Welle U) und die
-  Reihenfolge **erst Bauteile, dann Bildschirme** — ein Entwerfer bekommt
-  die sechs bis acht gemeinsamen Bauteile als Auftrag, nicht „entwirf ein
-  Datencenter". Belegtes Beispiel fuer die Dringlichkeit: die zentralste
-  Bedienung des Editors, die Klappliste „woher kommt der Wert" mit ACHT
-  Eintraegen, steckt im 340-px-Inspector und schneidet hart ab
-  (`ParameterZeile.tsx:315` beschreibt das Problem selbst).
-- **Welle D ist KOMPLETT GEBAUT (2026-08-17)** — D1 `d2e029f` · D2 `b087e30`
-  · D3 `556e6b4` · dazu „Angezeigt wird optional" `6b7af0b` · D4 `82b5f92`.
-  Das Nachschlage-Fenster IST der Tabellen-Baustein (provided-Modus), und
-  die Lupe oeffnet im Editor dasselbe Fenster zum Spalten-Einstellen
-  (Eigenschaft `nachschlagSpalten` am Feld, leer = Automatik, Export
-  schreibt dann nichts). Die D4-Sperre ist hinfaellig: das U0-7-Overlay war
-  nicht noetig, der `DialogRahmen` + Shadow-DOM des Feldes reichen.
-  Browserprobe und SE-Echttest durch den Nutzer stehen aus. Bewusst offen:
-  kein `aria-modal` mehr ohne echte Fokusgrenze (eigenes Paket) · z-Ordnung
-  Feld-Auswahl (50) ueber Einstell-Fenster (40) ist ungeprueft · **eine
-  Nutzer-Entscheidung steht aus:** stirbt „Angezeigt wird" ganz (Feld zeigt
-  Spalte 1 des Fensters, nur noch „Gespeichert wird" in der Steuerung)?
-  Gefragt am 2026-08-17, noch keine Antwort — bis dahin gilt „optional".
-- **Baubarkeit von E/U geprueft (2026-08-17), Ergebnis kurz:** sofort an
-  einen Chat gebbar sind **E3** (kleinste, braucht KEINE Migration) · **E1**
-  · **U7a** · **S5.3**. **Hinfaellig: die alte D4-Sperre** (setzte das
-  Overlay aus U0-7 voraus, das es nicht gibt — Sperrvermerk im Etappentext)
-  und **U5** (leer, haengt an U4). **Warten auf den Nutzer:** U4 (Entwurfs-
-  Sitzung, plus die zwei geerbten U0-Fragen Arten-Liste + Text-Baustein) ·
-  U7b/c (eine Antwort: Koralle-Akzent in den Editor uebernehmen oder beim
-  eigenen bleiben) · U10 (nicht suchen lassen — zwei Sitzungen haben schon
-  vergeblich gesucht; der Nutzer beobachtet es bei der Gesamtprobe).
-- **Welle C ist abgeschlossen (Stand 2026-08-16).** GEBAUT: C1 (`9f42965`) ·
-  C2 (`8338708`, mit „Zeile entfaellt") · C3.1 Namensvertrag (`a16437b`,
-  doppelter Name wird hochgezaehlt statt abgelehnt) · C3.2 (`7b70f13`) ·
-  C3.3 abgespeckt, nur Fokus beim Oeffnen (`f15466a`) · C3.4 ohne die
-  Rueckfrage — Loeschknopf und Leerhinweis stehen (`a3f850d`). GESTRICHEN mit
-  Begruendung im jeweiligen Etappentext: die Loesch-Rueckfrage, die
-  Pixel-Umrechnungsformel + Goldfaelle, die 520-px-Zwangsbreite + die
-  Mindest-Spurbreite, und alles an C3.3 ausser dem Fokus. ZURUECKGESTELLT
-  (nicht gestrichen, Regel 10): Popup-Duplizieren (C3.1) und C4
-  („Verschieben nach …") — beide heute ueber die Oberflaeche unerreichbar.
-  Die Gesamtprobe des Nutzers steht aus.
-- **Neu 2026-08-12 abends: U8 + U9 eingereiht (Nutzer-Befunde mit
-  Screenshots):** drei Klicks bis zur Kanban-Karte und die Karte sieht
-  ausgewaehlt anders aus als unausgewaehlt (U8) · Loeschknoepfe doppelt und
-  dreifach sichtbar, u. a. Papierkorb am Seiten-Reiter seit N1 (U9). Beide
-  stehen im Wellen-Kopf U und in der Bau-Reihenfolge VOR N3 — erst das
-  Verhalten geraderuecken, dann die Optik. Dazu U10 (Kleinfix: Leerzeichen
-  beim Benennen im Formularfeld kommt nicht an; Ursache erst belegen).
-  AUSSERDEM vom Nutzer bestaetigt („oki", 2026-08-12): das wartende Paket
-  „Filter ueber Bedienelement" bekommt einen „Alle"-Zustand am
-  Datum-Baustein (Filter zur Laufzeit aufheben statt auf ein Datum
-  filtern) — gehoert zu dem Paket, wenn es sein go bekommt, keine eigene
-  Etappe hier.
-- **QUARANTAENE RESTLOS ENTFERNT (Nutzer-Ansage 2026-08-12, sehr deutlich):**
-  Die Sperransicht + der Schreib-Riegel aus A3/A4 haben den Nutzer aus seiner
-  eigenen Arbeit ausgesperrt („am Baustein stimmen Angaben nicht"). Auf Ansage
-  restlos raus: `Sperransicht.tsx` und `speicherGate.ts` geloescht, der
-  Browser-Weg laedt wieder NACHSICHTIG (bereinigen, oeffnen, immer speichern),
-  auch fuer Zukunfts-Staende. Die strenge Verlust-Pruefung lebt NUR noch am
-  Datei-Weg (maskenDatei lehnt einen Kandidaten ab, Sitzung bleibt). **Keine
-  Lade-Sperre und keinen Schreib-Riegel wieder vorschlagen** — dasselbe Muster
-  wie S1/R4/R5. AUSSERDEM Nutzer-Ansage vom selben Tag: **„nichts umbauen" ist
-  als Haltung GEKUENDIGT** — nicht immer nur anbauen; ein echter Umbau ist
-  ausdruecklich erlaubt, wenn es dadurch besser/einfacher wird.
-- **Proben-Stand und Arbeitsmodus (Nutzer-Ansage 2026-08-12, Chat):**
-  ALLE bis dahin offenen Browser-/SE-Proben sind durch und BESTANDEN
-  (S5.1/S5.2 · Tabelle S2/S2.1 · C1 · R2-Rest: PUT auf geholte Position,
-  Verknuepfung, Abwahl). Kein Protokoll — die Ansage gilt; die „steht
-  aus"-Vermerke in den Zeilen darunter sind damit ueberholt und bleiben
-  nur als Chronik stehen. S5.1 ist bestaetigt, der Revert-Vorbehalt
-  verbraucht (in CLAUDE.md nachgezogen). AUSSERDEM: die Umsetzung laeuft
-  OHNE Fable (kein Diff-Lese-Schritt) — Opus-Sitzungen nach dem
-  Kopier-Auftrag im Wellen-Kopf U; Netz sind Pruefbuendel + Waechter.
-  **KEINE Proben zwischendurch (Nutzer-Ansage 2026-08-12, sehr deutlich):
-  der Nutzer testet EINMAL, wenn alles fertig ist.** Jede Opus-Sitzung
-  schreibt nur ihre Klickanleitung (was sich geaendert hat, was zu
-  pruefen ist) in den Chat; der Nutzer meldet sich NUR, wenn er dabei
-  etwas findet. Keine Etappe wartet auf eine Probe.
-- **Neu beauftragt 2026-08-12: Welle U** — Generalsanierung der
-  Editor-Bedienung (Steuerung, Inspector, Palette, Begriffe, Meldungen,
-  Optik), eigener Wellen-Kopf hinter R. Sie ersetzt F1/F2 (dort vermerkt)
-  und ist ab jetzt der Arbeitsschwerpunkt. Gebaut wird sie von
-  OPUS-Sitzungen ueber die Kopier-Auftraege im Wellen-Kopf U; der
-  Planer-Chat liest nur Diffs. U0 (Entscheidungsliste) wartet auf die
-  Ja/Nein-Antworten des Nutzers.
-- **Welle R:** R1+R2 gebaut, zweifach nachgebessert, und der KERN des
-  SE-Echttests ist am **2026-08-12 BESTANDEN** (Nutzer: Beleg-Klick fuellt
-  die Positionen; nach Nachbesserung 1 auch alte Nummernkreise). Noch ohne
-  Protokoll aus der R2-Probe: PUT ueber eine Kette auf eine geholte
-  Position, Verknuepfung an geholter Zeile, Abwahl. **R3 ist GEBAUT und
-  seine SE-Probe BESTANDEN** (Nutzer-Ansage 2026-08-12: „test funzt" —
-  Beleg per Nachschlagefeld waehlen fuellt die Positionen). Damit ist die
-  Welle R fertig: **R4 und R5 sind GESTRICHEN** (Nutzer-Ansage 2026-08-12 —
-  nicht wieder vorschlagen, in keiner Form). Details im Wellen-Kopf R.
-- **Stand 2026-08-12 abends:** Welle N (Ansichten + Navi) eingeschoben
-  und erweitert um N4 (Kanban-Untergruppen/„Zimmer") und N5
-  (Bild-Baustein, Stufe 1 statisch). Design-Mix v2
-  (`designsprache/mix-fellnase-empfang.html`) ist vom Nutzer ANGENOMMEN
-  und das feste Optik-Vorbild; das Popup-Overlay-Konzept ist BESTAETIGT
-  („wie canva", U0-7). A9 ist per Praxis abgehakt, A10 wartet auf
-  niemanden (s. Etappenkoepfe). Baubar per Opus-Kopier-Auftrag:
-  N1–N5.
-- **Letzte fertige Etappen — 2026-08-16, Auftrag „Popup fertig machen"
-  (vier Etappen, vier Commits; die Gesamtprobe steht aus).**
-  Tastatur-Fokus beim Oeffnen (C3.3, abgespeckt): der PopupBlock merkt den
-  Wechsel von `offen` (jetzt eine Lit-Property) und holt die Tastatur in die
-  erste bedienbare Stelle des INHALTS, sonst aufs Schliessen-Kreuz — durch die
-  Schatten der Bausteine hindurch, sonst faende er das Eingabefeld eines
-  Formularfelds nie. Im Editor nie (data-ff-editor). NICHT gebaut und
-  gestrichen: Fokusfalle, `aria-modal`, Basis-Oeffner-Buchhaltung.
-  Davor: Drop nur im Fenster: `PopupSeite` nimmt einen Drop nur noch ueber dem RUMPF
-  an (gemessen an dessen Kasten) — Abdunklung, Rahmen und Kopfzeile lehnen ab,
-  statt den Baustein in die naechstgelegene Zelle zu klemmen. Dazu der
-  Leerzustand fuers leere Popup: der Hinweis-Kasten wohnt jetzt in
-  `editor/canvas/LeerHinweis.tsx` (zweiter echter Fall, Regel 10), Canvas und
-  PopupSeite platzieren ihn je selbst.
-  Davor: C3.2 (genau ein aktives Popup): `applyPopupStep`
-  (`blocks/shared/seAktionen.ts`) loest ZUERST genau ein Ziel auf; bei keinem
-  oder mehreren Treffern bleibt der Fenster-Stand unangetastet (vorher gingen
-  bei Doppelnamen BEIDE auf). Erst danach fallen die uebrigen zu und das Ziel
-  geht auf — welches Fenster oben liegt, entscheidet nicht mehr die
-  HTML-Reihenfolge. Keine Laufzeitmeldung (Nutzer-Ansage: nichts tun).
-  Davor: **C2 (Popup-Inhalt wird Rasterflaeche).**
-  Der Popup-Rumpf ist ein CSS-Grid wie die Maskenwurzel, aus DERSELBEN Quelle
-  (`rasterFlaecheCss` in `core/blocks/rasterLayout`, die auch die `.ff-root`-
-  Regel des Exports schreibt). Drei Stellen zogen zusammen um: `.rumpf`
-  (PopupBlock), `PopupSeite` (Raster-NodeList, Zellziel, Geist im Rumpf) und
-  die Export-Rekursion, die jetzt zentral `istRasterFlaeche(node)` fragt statt
-  `flaechenSeite` zu pruefen. Schema 5 -> 6: Popup-Kinder werden EINMALIG
-  untereinander gestapelt (Registry-Startgroessen), Ansichten bleiben
-  unberuehrt. **Der Baustein „Zeile" ist gestrichen** (Nutzer-Entscheidung):
-  bestehende Zeilen loest `state/migrationenRoh.ts` auf den ROHDATEN auf, die
-  Kinder erben auf einer Flaeche das Zellband der Zeile (nebeneinander, in
-  deren Hoehe) — darunter verschiebt sich nichts. NICHT gebaut: die
-  Pixel-Formel und die 520-px-Mindestbreite aus C2 (beide vom Nutzer
-  abgewaehlt; ein Popup mit 480 bleibt 480). Referenzabzug ABSICHTLICH neu
-  (die zwei `ff-zeile` fallen weg, Popup-Kind bekommt Zellen-Style + `fuellt`),
-  Runtime-Bytes ABSICHTLICH neu (Popup-CSS dazu, `ff-zeile` raus — nachgeprueft,
-  dass kein Editor-Code mitkam). **Nicht selbst pruefbar:** ob sich in einem
-  480er Fenster mit 24 Spalten brauchbar bauen laesst, und ob SoftEngine die
-  Popup-Kinder auf dieselben Pixel setzt wie der Editor.
-  Davor: **Opus-Sitzung 2026-08-13, zweite (N4 + N5):** N5 —
-  ein BILD-Baustein in der Bibliothek (`blocks/bild/`). Der Bauer waehlt die
-  Datei im Inspector (neue Property-Art `kind: 'bild'`), sie wird still auf
-  1024 px verkleinert und reist als eingebetteter Daten-URI mit — eine Maske
-  bleibt EINE Datei. Genau eine Eigenschaft, kein Zuschnitt-Regler; Stufe 2
-  (Bilder aus SE-Feldern) bleibt ungebaut bis zum Beleg. · N4 —
-  eine Kanban-Spalte kann UNTERGRUPPEN („Zimmer") tragen. Neuer Baustein
-  `blocks/kanban/KanbanZimmerBlock.ts`, angelegt ueber „+ Zimmer" an der
-  Spalte; zwei Sortierebenen nach genau demselben Muster (Board-Feld waehlt
-  die Spalte, Spalten-Feld `zimmerField` waehlt das Zimmer, beide vergleichen
-  gegen den Titel = Datenwert). Die Kette „Karte verschoben" bekommt
-  `{ZIMMER}` dazu. Einzelheiten und die drei vorab verlangten Festlegungen im
-  Etappenkopf N4. **U10 ist auch in dieser Sitzung NICHT gebaut** und ist bis
-  zur Gesamtprobe keine baubare Etappe (Belege im Etappenkopf U10).
-  Davor: U8 — die
-  Auswahl trifft, was man anklickt: EIN Klick waehlt die Karte, ein weiterer
-  auf denselben Baustein geht eine Ebene nach AUSSEN; ein Klick auf eine Stelle
-  des Bausteins bleibt dem Feld-Picker/Inline-Edit vorbehalten. Die Karte sieht
-  ausgewaehlt aus wie daneben. Runtime-Bytes absichtlich neu (529 Byte
-  kleiner). · U9 — ein Baustein hat nur noch EINEN sichtbaren Loeschknopf (das
-  Kreuzchen am Ding); der Papierkorb im Inspector-Kopf ist weg, der am
-  Seiten-Reiter bleibt (einziger Weg, eine Seite zu loeschen — Begruendung im
-  Etappenkopf U9). · N3 — die Kanban-Spalte traegt ihre Bedeutungsfarbe auf der
-  GANZEN Flaeche, Kopf ohne Trennlinie, Zaehler mit kraeftigem Rand; abgeschrieben
-  aus dem Mix, hebt die Sand-Entscheidung vom 2026-08-07 auf. Runtime-Bytes
-  absichtlich neu (398 Byte kleiner). **U10 ist NICHT gebaut** — die Ursache ist
-  aus dem Code nicht belegbar (Beleg im Etappenkopf U10); sie braucht EINE
-  Beobachtung des Nutzers im Browser. Export-Markup und Referenzabzug bei allen
-  drei gebauten Etappen unveraendert; Einzelheiten in den Etappenkoepfen.
-  Davor: N2.1 (2026-08-12) — die Navi ist eine Leiste des
-  Masken-RAHMENS. Neue Registry-Faehigkeit `maskenRand`
-  (`core/blocks/maskenRand.ts`, Masse 56/224): der Baustein liegt am Rand der
-  Flaeche statt in einer Zelle UND steht auf jeder Flaechen-Seite; die Flaeche
-  haelt seine schmale Breite links frei (Editor und Export aus DERSELBEN
-  Quelle). Der Kern-Fund ist eine einzige CSS-Zeile: `hidden` war in
-  SoftEngine wirkungslos, weil die Browser-Regel `[hidden]{display:none}`
-  gegen jedes `:host` eines Bausteins verliert — sie steht jetzt in
-  `BasicBlock` (vorher nur in der Ansicht, darum blieb beim Umschalten die
-  Hauptseite stehen und beide Flaechen lagen uebereinander). Der Klick im
-  Editor wechselt keine Seite mehr (er waehlt den Baustein; die Zuhoerer-Seite
-  in `Canvas.tsx` ist weg), dafuer sind die Seiten-Reiter da.
-  **Nutzer-Probe ist gelaufen** (SE-Export, mehrfach im Chat): Umschalten
-  funktioniert, „navi bleibt stabil" — OFFEN geblieben ist ein Rest-Scroll von
-  wenigen Pixeln (Maskenhoehe gegen SE-Fensterhoehe) und, als naechster
-  Kleinfix angemeldet, das UMBENENNEN der Hauptseite (Details im Etappenkopf
-  N2.1). Runtime-Bytes ABSICHTLICH neu (+2027, gelesen: nur Navi-CSS/-Template,
-  die hidden-Zeile und Minifier-Umbenennung — kein Editor-Code), Referenzabzug
-  ABSICHTLICH neu (zwei Zeilen: Wurzel-Padding und der Navi-Stil).
-  Davor: N2 (2026-08-12) — die Navi. Ein Baustein aus der
-  Bibliothek (`blocks/navi/`), seine EINTRAEGE sind Kind-Bausteine wie die
-  Kanban-Spalten — angelegt ueber den vorhandenen „+"-Anstecker
-  (addChildButton), damit sie Auswahl, Inspector, Umsortieren und Duplizieren
-  geschenkt bekommen statt einer eigenen Listen-Bedienung. Ein Eintrag zeigt
-  auf eine SEITE dieser Maske (neue Property-Art `seite` im Inspector:
-  Hauptseite + Ansichten, keine freien Links); gespeichert wird die id,
-  SICHTBAR und fuer die Laufzeit maßgeblich ist der Klarname — sie findet ihre
-  Ansicht darueber, genau wie ein Popup-Schritt sein Fenster
-  (`blocks/navi/seRuntime.ts`). Die id bleibt daheim (neues
-  Registry-Kennzeichen `nurImEditor`): sie zeigt auf einen Knoten des
-  Editor-Baums, den die Maske nicht kennt. Modell des Umschaltens: der Ast, in
-  dem die Navi liegt, bleibt IMMER stehen (Leiste, Kopfzeilen), dazu genau
-  eine Sache — die gewaehlte Ansicht oder der Rest der Hauptseite. Drei
-  Festlegungen, die der Etappentext verlangte: geloeschte Ansicht -> der
-  Eintrag BLEIBT mit seiner Beschriftung stehen und zeigt dann die Hauptseite
-  (kein Baustein verschwindet, weil woanders geloescht wurde; keine
-  Warn-Anzeige) · die Seiten-id kommt in die A5-Referenzliste
-  (`schreibeBlockReferenzenUm`, Registry-gefuehrt ueber die Property-Art —
-  in `schrittPruefung` hat sie nichts verloren, das ist die Liste fuer
-  Ketten-Schritte) · waehlbar sind nur Seiten dieser Maske. Optik abgeschrieben
-  aus `designsprache/mix-fellnase-empfang.html` (.navi). Runtime-Bytes
-  ABSICHTLICH neu (+5237 Byte = zwei Bausteine + Umschalt-Laufzeit; nachgeprueft,
-  dass KEIN Editor-Code mitkam), Referenzabzug ABSICHTLICH neu (vier Zeilen).
-  **Nicht selbst pruefbar:** ob das Umblenden in SoftEngine sitzt.
-  Davor im selben Zug ein verhaltensneutraler Schnitt (`collectRelations` aus
-  `exportMask` nach `export/benutzteRelationen.ts`, eigener Commit nach Plan 3.1).
-  Davor: N1 (2026-08-12) — die Maske kann mehrere
-  ANSICHTEN tragen. Neuer Seiten-Typ `ff-ansicht` (`blocks/ansicht/`):
-  pageBlock wie das Popup, aber `display:contents` — sie hat gar keinen
-  eigenen Kasten, ihre Kinder sind unmittelbar Zellen des EINEN Wurzel-
-  Rasters (kein zweites Raster, das driften koennte). Im Export traegt jede
-  Ansicht `hidden`; umgeschaltet wird in N2. Die Registry unterscheidet ab
-  jetzt FENSTER-Seite (Popup) und FLAECHEN-Seite (Ansicht) ueber das neue
-  Kennzeichen `flaechenSeite` — vier Stellen rieten vorher: der Store nahm
-  „die erste Definition mit pageBlock" (`Editor.addPopupPage`, jetzt
-  `addSeite(typ)`), und die zwei Popup-Waehler + die Preflight boten
-  Ansichten als waehlbares Popup an, obwohl die Laufzeit nur `ff-popup`
-  oeffnet. Seiten-Leiste ist jetzt registry-getrieben (ein „＋" je
-  Seiten-Art) und bedient am Ding: Doppelklick benennt um, Papierkorb am
-  aktiven Reiter loescht (Netz Strg+Z) — ohne das haette eine Ansicht
-  NICHTS Anklickbares. Der Leer-Hinweis fragt nach der OFFENEN Seite statt
-  nach der ganzen Maske (nebenbei: auf der Hauptseite verschwand er bisher,
-  sobald irgendwo ein Popup lag). Runtime-Bytes ABSICHTLICH neu
-  (+761 Byte = der eine neue Baustein), Referenzabzug ABSICHTLICH neu
-  (drei Zeilen: `<ff-ansicht … hidden>` ohne eigenen Stil, ihr Kind MIT
-  Zellen-Stil + `fuellt`) — **SE-Echttest offen:** dass `display:contents`
-  die Kinder wirklich ins Wurzel-Raster stellt, kann nur der Browser sagen.
-  Davor: U6 (2026-08-12) — Inspector-Kleinputz. Datum und
-  Popup haben statt eines wortlos leeren Panels je EINEN Hinweissatz (in ihren
-  `editorAngaben.ts`, die nie ins Runtime-Buendel reisen) · der Status-Regler
-  heisst „Bedeutung" statt „Farbe" (`shared/statusVariant.ts`) — waehlbar
-  waren immer schon Hinweis/Erfolg/Warnung/Fehler, die Farbe haengt fest
-  daran · das Ankreuzfeld erklaert sich in der Registry endlich selbst als
-  unbindbar (`FormFeldBlock.bindableSpots`, neue Bedingungsform `keinesVon` in
-  `core/blocks/PropertyDescription.ts` — die Sprache konnte bis dahin nur EINEN
-  Wert ausschliessen, gebraucht werden zwei). Folge: an einem vom Textfeld auf
-  Ankreuzfeld umgestellten Feld reist eine liegen gebliebene Bindung nicht mehr
-  hinaus (Beleg-Test in `export/nachschlagenExport.test.ts`). Runtime-Bytes
-  ABSICHTLICH neu (genau zwei Stellen im Minifikat, gelesen: `Bedeutung` und
-  `keinesVon`) — `build:runtime` liegt im Commit, **SE-Delta-Probe offen**.
-  Referenzabzug brauchte KEINE Erneuerung (die Referenzmaske fuehrt kein
-  Ankreuzfeld, das Buendel schneidet der Abzug heraus) — der Etappentext U6
-  erwartete das anders. Die Laufzeit wertet `wenn` nirgends aus (nachgeprueft:
-  kein `Object.is` im Buendel), die neue Form kann dort also nichts brechen.
-  **Achtung fuer die naechste Etappe:** `FormFeldBlock.ts` steht wieder exakt
-  am Deckel (500) — wer dort etwas ergaenzt, braucht vorher einen
-  Schnitt-Commit (Plan 3.1).
-  Davor: U3 (2026-08-12) — Doppelbauten zusammengelegt,
-  netto 137 Zeilen weniger, nichts sichtbar geaendert. EIN Rahmen fuer die
-  zwei schwebenden Auswahl-Fenster (`ui/molecules/auswahl-fenster.tsx`) · EINE
-  „Feld = Feld"-Zeile (`editor/inspector/SchluesselPaarZeilen.tsx`, benutzt von
-  QuellenListe UND AuswahlFolgeSektion) · EINE Loesch-Rueckfrage
-  (`bestaetigeLoeschen` in `zentrale/helfer.ts`) · POS_LEN nur noch in
-  `ladeRelation` · `warnChecks` und `setzeHolendeQuellenZurueck` raus, der
-  POPUP_RAND-Kommentar im Waechter berichtigt. **ZWEI Punkte der Etappe sind
-  bewusst NICHT gebaut** und im Etappenkopf U3 belegt: die zwei Dropdown-Bauteile
-  bleiben zweierlei (kein Duplikat, sondern zwei Aufgaben — gehoert nach U4), und
-  der pos/len-Parser bleibt viermal, weil `core/data/ladeRelation.ts` entgegen der
-  Plan-Annahme IM Runtime-Buendel steckt (`softengine/data.ts:13`) und der Import
-  Export-Bytes verschob. Runtime-Bytes, Export-Markup und Referenzabzug
-  unveraendert.
-  Davor: U2 (2026-08-12) — Loeschen und Browser-Kaesten.
-  **Loeschen fragt nie mehr nach:** die Inhalts-Rueckfrage des Kreuzchens ist
-  weg, mit ihr der Parameter `frageNach` in `state/loescheBaustein.ts`; Entf,
-  Kreuzchen und Inspector-Papierkorb tun jetzt dasselbe, Netz ist Strg+Z.
-  **Neu: die EINE Meldungsspur des Editors** (`state/meldungen.ts` +
-  `state/useMeldungen.ts` + `editor/shell/Meldungen.tsx`, Karten unten rechts,
-  z-50 also auch ueber dem Datencenter). Sie ersetzt alle sieben `alert()`
-  (Export-Abbruch, Datei nicht lesbar, abgelehnte Maskendatei, Musterkarten-
-  Schutz, verworfene Bausteintypen, Notfallkopie, Speicher-Panne). Nicht
-  blockierend, aber auch NICHT selbst ausblendend — es sind Verlustmeldungen.
-  Bewusst NICHT `softengine/meldung.ts` mitbenutzt (das ist der Balken der
-  fertigen MASKE und reist im Runtime-Buendel). **Blockierend geblieben sind
-  genau vier `window.confirm`:** Maske laden (kein Undo), „Alle Bloecke
-  loeschen" (raeumt alle Seiten) und die zwei Bibliotheks-Rueckfragen
-  (U0-3: bleiben vorerst). **Zwei unehrliche Texte richtig:** die Statuszeile
-  heisst „Bloecke (alle Seiten)" — `Editor.blockCount` zaehlt jeden Knoten,
-  auch den Inhalt der Popup-Seiten; und „Alle N Bloecke aller Seiten
-  loeschen?" nennt die fallenden Popup-Seiten. Runtime-Bytes, Export-Markup
-  und Referenzabzug UNVERAENDERT (`check:runtime`: Buendel == frischer Build).
-  Davor: U1 (2026-08-12) — Wortlaut-Putz: „Steuerung" heisst ueberall
-  **Datencenter**, die roten Belehrungskaesten und die installations-
-  individuelle „69" sind raus, „IDB-ID"/„Dateikuerzel" -> **Kennung**,
-  „Haengt an" -> **Gehoert zu** (Details im Etappenkopf U1; Runtime-Bytes
-  dort absichtlich neu, Export-Markup unveraendert).
-  Davor: R3 (2026-08-12) — der Ausloeser der holenden
-  Quellen (`blocks/shared/holendeQuellen.ts`) liest das Quellen-Attribut
-  eines Auswahl-Gebers jetzt aus der Registry (`satzWahl.quelleProp`,
-  neue `quelleAttrJeTag`) statt hart aus `source`. Damit waehlt auch das
-  Nachschlage-Formularfeld den Beleg: es GAB seine Wahl laengst ab
-  (`setzeAuswahl`/`klareAuswahl` im FormFeldBlock), nur dieser eine
-  Vergleich hoerte nicht hin — und `source` reist am Nachschlage-Feld gar
-  nicht mit (`traegtEigeneQuelle`, exportMask). Kein Formularfeld-
-  Sondercode, kein Editor-Sichtbares, Export-MARKUP unveraendert (der
-  Referenzabzug schneidet das Buendel heraus und blieb gruen);
-  Runtime-Bytes absichtlich neu (+211 Byte, der Rest des Diffs ist
-  Minifier-Umbenennung — nachgeprueft). **SE-Echttest BESTANDEN.**
-  Davor: R2-Nachbesserung (2026-08-12, zwei Commits) nach
-  dem ersten SE-Echttest der Welle R — 261er-Belegnummern lieferten 255
-  Leerzeichen, 262er lieferten Positionen. (1) Der Export bestellt die vier
-  Schluessel der Hol-Relation jetzt bei der GEBER-Quelle mit
-  (`holSchluesselJeGeber` in `export/benutzteQuellen` -> `felderFor`):
-  Jahr/Archiv standen in keiner FELDER-Bestellung, gingen darum LEER hinaus,
-  und leer findet belegt nur den aktuellen Nummernkreis. (2) Die
-  Antwort-Erkennung des Laders nimmt nur noch die belegte RESULT-Form
-  (`extractSatzAntwort` in `softengine/relations`) — vorher galt jeder
-  Schluessel der RESULT_KEYS-Liste, und weil LEER hier „Ende der Liste"
-  bedeutet, haette ein Fremdpaket mit leerem ID-Feld die Positionsliste still
-  mittendrin abgeschnitten. Runtime-Bytes aus (2) absichtlich neu.
-  Der Kern des SE-Echttests ist danach bestanden (s. o.).
-  Davor: C1 (2026-08-11, vorgezogen: A9/A10 haengen an
-  den offenen Nutzer-Proben) — das Popup komponiert den geteilten
-  `DialogRahmen` (`blocks/shared/DialogRahmen.ts`), sein eigener
-  Zwillings-Rahmen und `POPUP_RAND` sind weg; X-Vertrag steht (Maske:
-  schliessen · Editor: zur Hauptseite via `PopupSeite`, nie loeschen);
-  kein aria-modal vorm Fokus-Fang C3.3, Rumpf bleibt alleiniger
-  Scroll-Besitzer, Kinder bleiben im Flow (Raster = C2).
-  Browser-/SE-Probe offen, buendelt sich mit den unten offenen Tests.
-  Davor: R2 (2026-08-11, im zweiten Anlauf) — davor S2.1,
-  P2/Symbole, P1 (Messen), A7.3,
-  A7.2, A7.1, A6, A5, A4, A3, S3, S2, A2.1, A2, A1, A0, A8.1, A8.2.
-  Der ERSTE R2-Commit (31f8d94) war funktionslos und mit rotem Pruefbuendel
-  eingecheckt (sah nie eine Auswahl, legte Zeilen an eine Stelle, die kein
-  Leser kennt); die Reparatur ersetzt ihn: Lader `softengine/relationLader.ts`
-  (seriell, Generationszaehler, Ende-Erkennung, Felder hinter dem
-  255er-Schnitt je eigene Frage, Deckel 999 mit Klartext), Ausloeser
-  `blocks/shared/holendeQuellen.ts` (laedt nur bei WIRKLICH geaenderter
-  Geber-Zeile), Zeilen-Speicher `softengine/geholteZeilen.ts` (ueberlebt
-  jeden Push; rowsFor liest ihn als letzten Weg), Export gibt `zusatzFelder`
-  mit. Dabei zwei Altfehler behoben: getField trimmte den SATZ-Rohstring
-  VOR dem Ausschnitt (Spaltenversatz; Referenz behandlung Z. 598 trimmt
-  nicht), und ein Antwort-Paket konnte ZWEI Fragen der GET-Warteschlange
-  beantworten (runNextGet jetzt per queueMicrotask). Runtime-Bytes
-  absichtlich neu; **SE-Echttest steht aus.**
-  S2 hat Runtime-Bytes geaendert: die SoftEngine-Probe der Tabelle
-  steht noch aus. S3 ist ohne seinen dritten Eingriff (React.memo) gebaut —
-  warum, steht im Commit; die Flaeche rendert weiter komplett, nur billiger.
-  **S4 ist geprueft und AUSGELASSEN** (s. Etappenkopf S4) — damit ist die
-  Welle S abgearbeitet, bis auf das optionale S5 und den Nachschlag S2.1.
-- **Was P1 gemessen hat (2026-08-11) — die Rangliste, gegen die P2 baut:**
-  Vorbuendeln der Fremdpakete 2303 ms, davon **lucide-react 1616 ms (70 %)** und
-  1 139 089 Byte JS + 2,24 MB Quellkarte (46 % aller vorgebuendelten Bytes) fuer
-  46 von 2007 Symbolen · Startgraph **192 eigene Module / 27 947 Zeilen, KEIN
-  einziger dynamischer Import** — alles laedt beim ersten Bild, darunter 215 KB
-  Export-Rohtext (ff-runtime 179 KB + zwei CSS), die erst der Export-Klick
-  braucht (`editor/shell/Toolbar.tsx:18`) · `vite build` 2064 Module, 4,53 s ·
-  vitest steckt fast alles in Import und Transformation und fast nichts in die
-  Tests selbst (rund 80 s / 30 s gegen 2 s), aber diese drei Zahlen streuen von
-  Lauf zu Lauf um mehr als ein Drittel — sie taugen als Verhaeltnis, nicht als
-  Messpunkt.
-  **Die Verschlechterung ist gefunden und heisst Wachstum des Startgraphs:**
-  gleiche node_modules, gleiche Testdatei, nur anderer Quellstand — 2026-07-30
-  137 Module / transform 903 ms / import 1,37 s, heute 192 / 1,62 s / 2,32 s
-  (je bestes von drei Laeufen, +80 % bzw. +69 %); der Sprung liegt zwischen dem
-  03. und 07.08. (+45 Module). Die harte Zahl daran ist die Modulzahl, die
-  Zeiten stuetzen sie nur.
-  **Nicht gebaut, weil gemessen unkritisch:** die Verlaufs-Kopie
-  (`state/Editor.ts:184`) kostet 0,059 ms bei der Referenzmaske und 4,65 ms bei
-  1021 Knoten — und laeuft EINMAL je Geste, nicht je Ereignis (Tippen und Ziehen
-  sind geklammert). Regel 10: kein Aliasing-Risiko im Undo fuer nichts.
-- **Was P2 gebaut hat (2026-08-11):** die 46 benutzten Symbole liegen als eigene
-  Daten im Projekt (`ui/zeichenDaten.ts`) mit EINER Fabrik daneben
-  (`ui/zeichen.ts`), 33 Import-Stellen umgestellt. Gemessen danach: Vorbuendel
-  ohne lucide (7,72 s → 5,82 s, deps-Ordner 6986 → 3678 KB — die 1,14-MB-Datei,
-  die der Browser beim Start holte, gibt es nicht mehr), `vite build`
-  2064 → 299 Module (4,53 s → 3,01 s), Bundle
-  895,98 → 894,21 kB (also gleiche Optik, nicht weniger Symbole). **An den
-  vitest-Zeiten aendert es nichts, und das ist kein Widerspruch:** keine der 40
-  Testdateien erreicht die Symbol-Module ueberhaupt (statisch nachgegangen). Ein
-  erster Messwert schien etwas anderes zu sagen; er war Cache-Glueck. Export-Bytes,
-  Runtime-Buendel und Referenzabzug unveraendert. Nebenbefund, festgehalten weil
-  er eine Grenze schaerft: der fachliche Core hatte seinen Symbol-Typ von
-  lucide-react geborgt und umging damit `no-restricted-imports` nur, weil das
-  Paket nicht `react` heisst; er hat jetzt einen eigenen frameworkfreien Vertrag
-  (`BausteinSymbol`), die EINE Umdeutung steht in `BlockPalette.tsx`.
-- **Was S2.1 gebaut hat (2026-08-11):** der Rest unter der letzten Zeile wird
-  auf die Zeilen VERTEILT (`blocks/tabelle/seitengroesse.ts`, `zeilenmass`) —
-  jede Zeile ist um Rest/Anzahl hoeher, die Fusszeile sitzt buendig, die ANZAHL
-  bleibt am Grundtakt. Der KOPF bleibt ebenfalls am Grundtakt (zwei
-  CSS-Variablen, `--takt` und `--zeilen-hoehe`): waechst er mit, aendert er den
-  Platz, den die Messung gerade verteilt hat, und die Tabelle zappelte zwischen
-  zwei Zeilenzahlen. Der Zeilen-Waehler ist WEG, mit ihm die Props `proSeite`
-  und `zeilenWaehler`, die Inspector-Eigenschaft, `ZEILEN_PRO_SEITE`/`PASSEND`
-  und die Sitzungs-Uebersteuerung. Die A4-Falle ist geschlossen ueber
-  `weggefalleneProps` in `state/migrations.ts` (Typ + Name, ohne Bedingung, KEIN
-  Schema-Bump — die 6 bleibt fuer C2 frei); drei Faelle in
-  `state/teilverlust.test.ts` halten fest, dass ein Altbestand mit gesetztem
-  Waehler laedt, eine wirklich unbekannte Eigenschaft an derselben Tabelle aber
-  weiter sperrt. Runtime-Bytes ABSICHTLICH geaendert (183 332 -> 182 719),
-  `build:runtime` liegt im Commit. **Die SoftEngine-Probe der Tabelle deckt
-  jetzt S2 UND S2.1 ab.** Ausdruecklich anzusehen, weil ich es nicht kann: passt
-  nur EINE Zeile in die Tabelle, wird diese Zeile bis zu doppelt so hoch — die
-  direkte Folge der Verteil-Entscheidung, kein Fehler, aber ein Anblick.
-- **Was A5 gebaut hat (2026-08-11):** `state/duplizieren.ts` — zweiphasiges
-  Klonen (Knoten kopieren, DANN Verweise umschreiben) samt der EINEN Liste aller
-  Felder, die eine Baustein-id tragen (`schreibeBlockReferenzenUm`: geberId,
-  popupId, blockId in params/extraParams). Wer eine vierte Referenz einbaut,
-  ergaenzt sie DORT und in `core/data/schrittPruefung.ts`. `cloneSubtree` in
-  treeOps ist ersetzt, nicht daneben liegen geblieben. pageBlock-Duplizieren
-  meldet null (bleibt bis C3.1 gesperrt); eine Kopie direkt auf der Hauptflaeche
-  bekommt die freie Zeile (`freiePositionFuerKopie` in rasterOps), Popup-Inhalt
-  nicht — das entscheidet C3.1.
-- **Was A6 gebaut hat (2026-08-11):** die globalen Kuerzel (Delete/Strg+Z/
-  Strg+D) pruefen den ganzen `composedPath()` statt nur `event.target` und
-  schweigen, wenn ein Eingabefeld im Pfad liegt. **Der Zeiger im Etappenkopf A6
-  war falsch:** der Listener steht nicht in `Toolbar.tsx:221` (das ist der
-  Escape-Horcher des Weitere-Aktionen-Menues), sondern in
-  `state/useKeyboardShortcuts.ts`. Er ist der EINZIGE globale Horcher mit
-  loeschenden Befehlen — alle anderen (Toolbar, Inspector, FieldPicker,
-  FormularKarte, Kommandozentrale, FeldUebernahmePicker) hoeren nur auf Escape,
-  und ein Menue soll auch beim Tippen schliessen.
-- **Was A7.1 gebaut hat (2026-08-11):** `Subject.notify` ruft jeden Horcher in
-  seinem eigenen try/catch (Fehler auf die Konsole, nie verschluckt), und
-  `Editor.notify` plant den Autosave im `finally`. Der Repro-Fall steht in
-  `state/speicherPanne.test.ts` und faellt ohne den Fix nachweislich um.
-- **Was A7.2 gebaut hat (2026-08-11):** zwei zentrale Vertraege in
-  `state/history.ts`, beide vom Store weitergegeben. `Editor.transaktion(fn)` =
-  synchrone Mehrfachschreibvorgaenge mit try/finally (Aufrufer: addPopupPage,
-  PropControl 2x, FeldBindung 2x — alle vorher blankes begin/end).
-  `Editor.oeffneGeste()` = Token fuer Gesten ueber mehrere Ereignisse, oeffnet
-  beim ersten echten Schritt, schliesst GENAU EINMAL und laesst sich danach
-  nicht wieder oeffnen (Aufrufer: zieheGroesse, eingabeSitzung — die hatten je
-  eigene Merker dafuer). **Achtung fuer die naechste Etappe:** `Editor.ts` ist
-  damit bei 487 Zeilen, also 13 unter dem Deckel — wer dort etwas ergaenzt,
-  braucht vorher einen Schnitt-Commit (Plan 3.1).
-- **Was A7.3 belegt hat (2026-08-11) — und was daraus folgt, ist OFFEN:** drei
-  Faelle in `blocks/shared/auswahl.test.ts`. Ein Kreis aus TABELLEN endet
-  (direkt wie indirekt): ihre Hydrierung kann eine Auswahl nur AUFHEBEN, der
-  Zustand schrumpft. Ein Kreis aus zwei NACHSCHLAGE-Feldern mit „einziger
-  Treffer = ja" endet NICHT: `pruefeEigenenWert`
-  (`blocks/formfeld/FormFeldBlock.ts:420`) leert bei Nichtpassen und uebernimmt
-  danach den einzigen uebrigen Satz — es kann also auch SETZEN. Bei
-  unsymmetrischen Schluesselfeldern erklaeren sich beide Felder abwechselnd
-  gegenseitig fuer unpassend; die Nachmeldeschleife in `melde()` laeuft
-  unbegrenzt (mit Rundendeckel 500 nachgeprueft), der Reiter friert ein.
-  **Kein Produktcode dazu** — laut Etappentext A7.3 entscheidet der Nutzer, ob
-  gewarnt, blockiert oder nichts getan wird (Warn-Anzeigen sind ohnehin
-  gestrichen, s. S1). Der Test haelt den Fall mit einer Notbremse fest, damit
-  das Pruefbuendel nicht haengt.
-- **Was S5.1 gebaut hat (2026-08-11) — SE-ECHTTEST STEHT AUS:** eine IDB-Quelle
-  bestellt statt `FELDER:'*'` die explizite pos_len-Liste der benutzten Felder.
-  Gesammelt wird in `export/benutzteQuellen.ts` (`benutzteFelderJeQuelle`),
-  entschieden in `core/data/dataSources.ts` (`felderFor`, jetzt mit dem
-  benutzten Satz als zweitem Argument). Die Liste ist vollstaendig, weil die
-  laufende Maske KEIN Feld-Woerterbuch hat — FF_DATA_SOURCES traegt nur
-  id/name/tableId/indexField, alles andere reist als Attribut; abgezaehlt werden
-  genau die sieben Schreibstellen des Exports (Kopf der Funktion). Sicherheitsventil:
-  kein benutztes Feld gefunden ODER ein Code, der kein pos_len ist -> `*` bleibt.
-  Referenzmaske vorher `*`, nachher `0_10,40_20,10_5,30_10,20_10,50_10`;
-  Stamm-Quellen unveraendert. HTML-Bytes und `ff-runtime.js` unveraendert —
-  geaendert hat sich nur eine Zeile in `maske.sevariablen.json.snap`.
-  **Der Kontrakt ist fuer IDB NICHT belegt** (beide Chef-Masken: IDB immer `*`);
-  faellt der Echttest durch, wird der Commit per `git revert` zurueckgenommen,
-  nicht nachgebessert. Vorbereitend verhaltensneutral geschnitten:
-  `collectDataSources` zog aus `exportMask.ts` aus (stand auf 498 von 500 Zeilen),
-  die vier neuen Faelle stehen in `export/felderBestellung.test.ts`.
-- **Was S5.2 gebaut hat (2026-08-11) — DERSELBE SE-ECHTTEST DECKT ES MIT AB:**
-  Kopfsatz-Quellen (POS) stehen in den SEvariablen jetzt ZULETZT
-  (`loopReihenfolge` in `core/data/dataSources.ts`). Anlass ist ein
-  A/B-Echttest des Nutzers: POS an erster Stelle -> KEINE Quelle liefert Daten,
-  auch die Stammtabellen dahinter nicht; POS zuletzt -> alles liefert. Das ist
-  im Gegensatz zu S5.1 ein BELEGTER Kontrakt, er steht deshalb in CLAUDE.md
-  unter „SoftEngine-Kontrakte". Merkmal ist die Arten-Spalte `kopfsatzMoeglich`
-  (war schon da, keine neue noetig), kein `if ID === 'POS'`. HTML-Bytes,
-  `ff-runtime.js` und Referenzabzug unveraendert — die Referenzmaske fuehrt
-  keine Kopfsatz-Quelle.
-- **Was R1 gebaut hat (2026-08-11):** die Lade-Art „Zeilen per Relation
-  holen" an Modell (`core/data/ladeRelation.ts`), Steuerung und Export.
-  Sichtbar im Datenquellen-Formular der Belegpositionen sind NUR
-  „Woher kommen die Zeilen?", die Relationsnummer und „Beleg kommt aus";
-  die vier Feld-Zuordnungen (2_1/3_8/0_1/1_1) und die Ende-Felder
-  (11_6+18_25) sind belegte Standards und reisen unsichtbar mit
-  (Nutzer-Ansage 2026-08-11: keine Eingaben, die niemand versteht; erste
-  Formfassung mit sichtbaren Feldcodes + Erklaertext ist verworfen). Eine
-  holende Quelle bestellt KEINE SEFILELOOP (kein Kopfsatz, kein VAR); die
-  Hol-Relation reist in FF_DATA_SOURCES. HTML/Runtime sonst unveraendert,
-  Referenzabzug gruen. **In SoftEngine laedt R1 bewusst noch nichts — das
-  ist R2 (Laufzeit; inzwischen gebaut, s. oben).**
-- **Naechste Etappe: KEINE — jetzt ist die EINE Gesamtprobe des Nutzers
-  faellig** (Welle N ist mit N4/N5 fertig, Welle R ebenso). Danach braucht
-  **U4 (Entwurf Quelle/Feld/Relation)** den Nutzer selbst im Chat; erst sein
-  bestaetigter Entwurf macht U5 baubar. **U10 ist keine baubare Etappe, bis die
-  Gesamtprobe da ist** — zweimal nachgesucht, die Ursache steht nicht im Code;
-  es fehlt EINE Browserbeobachtung, und Proben zwischendurch sind gestrichen
-  (Beleg im Etappenkopf U10). Nicht wieder als „naechste Etappe" einplanen.
-  Weiter angemeldet, aus der N2.1-Probe entstanden: **die Hauptseite
-  umbenennen** (Kleinfix, braucht eine Ablage fuer ihren Namen — s.
-  Etappenkopf N2.1). U6, N1 bis N5 sind
-  gebaut, Welle R ist fertig. A9 ist per
-  Praxis abgehakt, A10 wartet auf niemanden (2026-08-12, Etappenkoepfe).
-  **P1, P2 und S2.1 sind fertig** (s. die Zeilen oben); von P1s Rangliste sind ZWEI Posten
-  bewusst offen und je eine eigene Nutzer-Entscheidung, weil sie mehr Risiko als
-  Gewinn tragen: die 215 KB Export-Rohtext beim Start liessen sich nur ueber ein
-  spaeteres Nachladen loesen, und das macht aus dem Export-Klick einen
-  asynchronen Weg (zwei Downloads, nicht ohne Browserprobe zu verantworten) ·
-  der Startgraph ohne jedes Code-Splitting ist der groesste Posten ueberhaupt,
-  aber sein Zerschneiden ist ein eigenes Paket, kein Tempo-Commit.
-  **B1 ist GESTRICHEN** (Nutzer 2026-08-11, s. Etappenkopf B1) —
-  Block 2 hat damit keinen Bau-Anteil mehr. **A7.3 ist ABGESCHLOSSEN**
-  (Nutzer 2026-08-11): Entscheidung „nichts tun" (Regel 10), s. Etappenkopf
-  A7.3 — der Beleg-Test bleibt.
-  **S1 ist GESTRICHEN** (Nutzer-Ansage 2026-08-10,
-  s. Etappenkopf S1 — nicht wieder vorschlagen), **S5.1 und S5.2 sind gebaut
-  und warten auf DIESELBE eine SE-Probe, S5.3 (Diagnose-Anzeige) ist offen und
-  braucht sein eigenes `go`**. Die Welle S (sichtbare Fehler
-  und Tempo) war am 2026-08-10 nach der Zwischenbilanz vor A3 eingeschoben
-  worden (Nutzer-Entscheidung, Begruendung im Wellenkopf S). A9 setzt A3 bis
-  A7 voraus.
-- **Arbeitsbaum:** sauber; main liegt mehrere Commits vor origin/main, der
-  Push steht aus (vorher `git fetch`, Regel 8 — nie force-pushen).
-- **Was A3 gebaut hat (2026-08-10), damit A4 daran anschliesst:** die geteilte
-  Lade-Kette `state/ladeKette.ts` mit `pruefeBaumStand` (feste Reihenfolge:
-  Zukunft abweisen → migrieren+bereinigen → Vertragspruefung) und dem Ausgang
-  `ok | migriert | quarantaene` samt `LadeProblem`-Liste · der Riegel
-  `state/speicherGate.ts` vor BEIDEN Schreibwegen (persistState +
-  VorlagenStore) · `notfallkopie.sichereQuarantaene` (Rohkopie mit
-  Zeitstempel, ueberschreibt nie) · die Sperransicht `app/Sperransicht.tsx`
-  mit den drei Wegen. **Der Schalter fuer A4 ist EINE Zeile:**
-  `verlustPruefen` in `persistence.loadFromStorage` steht auf `false` — der
-  Browser-Weg duennt bis A4 aus wie bisher, der Datei-Weg sperrt schon.
-  Bewusst UNVERAENDERT: ein unlesbarer Stand (kaputtes JSON) laeuft weiter
-  ueber den bewaehrten Weg Notfallkopie + Meldung + leer starten und sperrt
-  NICHT.
-- **Was A4 dazugelegt hat (2026-08-10):** derselbe Verlust-Vertrag fuer BEIDE
-  Wege — der `verlustPruefen`-Schalter ist ersatzlos weg, der Browser-Weg
-  sperrt jetzt auch bei Teilverlust · `state/topologie.ts` (eine Wurzel,
-  Seiten nur direkt unter der Wurzel, keine Seite in einer Seite, Beziehungen
-  beidseitig, jeder Knoten genau einmal, `canContain` fuer jede Kante) ·
-  `pruefeDatenquellen`/`pruefeRelationsVorlagen` in `core/data` (additiv, die
-  alten `sanitize*` delegieren) · `core/data/ladeProblem.ts` mit
-  `EintragProblem`/`LadeProblem` + den drei Bereichsnamen ·
-  Bibliotheks-Quarantaene im `VorlagenStore` (ein kaputter Eintrag sperrt,
-  statt die Bibliothek auszuduennen) · der Riegel SAMMELT mehrere Quellen
-  (Maske + Bibliotheken) und `verwerfeGesperrteStaende` raeumt genau deren
-  Schluessel. **Wichtiger Nebenbefund, beim Bauen gefunden:** die zwei
-  Rohdaten-Migrationen (Vorlagen-Kasten, Knopf aus Tabelle) melden jetzt ihre
-  absichtlich entfernten ids — ohne das haette der neue Schutz jeden
-  Altbestand mit Vorlagen-Kasten gesperrt (und der Datei-Weg tat genau das
-  schon vorher).
-  **Offenes Risiko, das A4 mitbringt (nicht selbst pruefbar):** ein
-  Browser-Stand, dessen Bereinigung heute etwas wegwirft, fuehrt ab jetzt
-  in die Sperransicht statt still zu laden. Bei einem vom Editor selbst
-  geschriebenen Stand kann das nicht passieren (er reist verlustfrei hin und
-  zurueck); bei einem von Hand bearbeiteten oder sehr alten schon. Der Weg
-  heraus ist die Sperransicht — sie loescht nichts ohne Bestaetigung.
-- **Teilweise gebaut — A2.1 ist NICHT vollstaendig:** gebaut sind
-  `schemaAdvanced` (frueher `migrated`), `resaveNeeded` an der Editor-Grenze
-  und `absichtlichGeleert` (die namentlich gemeldeten Stellen des
-  Demotext-Putzers). NICHT gebaut ist `problems` — dafuer gibt es heute
-  keinen Aufrufer, und Regel 10 verbietet Bauen auf Verdacht. Ebenfalls offen,
-  weil es Schema 6 voraussetzt: die Ausnahmeliste fuer die erlaubten
-  Popup-Raster-/Breiten-Diffs und die Zusage „auch ein leeres Schema-5-Popup
-  setzt schemaAdvanced". Beides gehoert in C2, wenn Schema 6 wirklich kommt.
-  Ausserdem melden die vier `migrate*`-Funktionen weiterhin nur ein Boolean,
-  keine Pfade — solange eine Schemastufe lief, bleibt die
-  Detail-Verlustpruefung der Maskendatei also weiter ganz aus.
-- **Offene Baustelle, bewusst stillgelegt:** der VAR-Abschnitt des Exports
-  (offener Satz) ist NICHT gebaut. `lieferung`/`istOffenerSatz` in
-  `core/data/dataSources.ts` ruft niemand auf, `exportMask` schreibt keinen
-  VAR-Abschnitt. Die Bauanleitung steht als `it.todo` in
-  `src/export/datenquellen.test.ts`. Ohne VAR ist die Quellen-Art
-  „Belegpositionen" in SoftEngine nicht nutzbar.
-
-**Widersprechen sich diese Zeilen und `git log`, gewinnt `git log`.** Der
-Zeiger ist von Hand gepflegt und kann vergessen worden sein; Commits nicht.
-Deshalb wird nach jeder Etappe committet — das ist die eigentliche Uebergabe
-zwischen zwei Chats, nicht dieser Absatz.
-
-**Offene Entscheidungen des Nutzers — ein neuer Chat FRAGT, entscheidet nicht:**
-
-1. ~~Soll A9 (SoftEngine-Vorher-Beleg) VOR A1 laufen?~~ **Ueberholt
-   2026-08-10:** der Nutzer gab `go` fuer A1, A1 ist gebaut. Fuer den Vertrag
-   `aus` kann A9 kein „Vorher" mehr belegen — was auch vorher schon kaum ging:
-   eine Kette mit `aus` ueberlebte weder ein Neuladen noch die Maskendatei,
-   und in der Maske selbst verwarf `parseBlockEvents` sie ebenfalls. Ein
-   Vorher-Lauf haette diesen Punkt seiner eigenen Liste also gar nicht pruefen
-   koennen. Fuer alle anderen Vertraege (Datenpush, Tabelle/Kanban, Popup,
-   Nachschlagen) ist A9 unveraendert sinnvoll.
-2. ~~A0 Schritt 3: Schriftgroessen auf ein Token heben?~~ **Gestrichen
-   2026-08-10 (Nutzer-Ansage):** die Frage kam in jedem neuen Chat wieder hoch,
-   ohne je etwas zu blockieren. `text-[0.6875rem]` bleibt, wie es ist. Nicht
-   ohne neue Nutzer-Entscheidung wieder aufmachen.
-3. ~~Wer pflegt diese Datei?~~ **Beantwortet 2026-08-10:** Sie liegt jetzt im
-   Repo und wird nach jeder Etappe im selben Commit mitgezogen. Damit ist die
-   git-Historie die Sicherung, nicht mehr ein einzelner Arbeitsbaum. Es pflegt
-   weiterhin genau EIN Chat gleichzeitig; andere schlagen Aenderungen im Chat
-   vor.
-4. **Export-Sockel akzeptieren?** 97 % jeder Exportdatei sind fester Sockel
-   (Runtime 178 KB mit allen 11 Bausteintypen + Schrift 26 KB); Nutzerdaten
-   reisen nur mit, wenn sie verwendet werden (Zwischenbilanz 2026-08-10,
-   `exportMask.ts:274-353`). Empfehlung: akzeptieren, solange das Laden in
-   SoftEngine nicht nachweislich stoert; „Export nur mit verwendeten
-   Bausteinen" waere ein eigenes spaeteres Paket. — OFFEN, ein neuer Chat
-   fragt.
-5. ~~F1 (Entwurfsgespraech Steuerung/Inspector) vorziehen?~~ **Beantwortet
-   2026-08-12:** Ja, und groesser als gedacht — der Nutzer hat die
-   Generalsanierung der GESAMTEN Editor-Bedienung beauftragt („die
-   funktionen sind gut, die umsetzung ist widerlich"). F1/F2 sind in der
-   neuen Welle U aufgegangen; ihre Regeln gelten dort weiter. Die
-   Bedien-Befunde der Zwischenbilanz (sechs Bauformen fuer „Feld einer
-   Quelle waehlen", namenlose Inspector-Sektionen, StepForm in der
-   340-px-Spalte, roher Jargon trotz Klartext in `helfer.ts:50-59`) sind
-   Eingabe der Inventur 2026-08-12 im Wellen-Kopf U.
+- **Stand 2026-08-18:** Gesamtanalyse des ganzen Repos (zwei Lese-Trupps +
+  Kernlektuere). Urteil: das Fundament traegt (Store, Registry, Export,
+  SE-Schicht sauber); die Schwaechen sassen in der Bedienschicht. Sechs
+  Fix-Commits sind in `claude/softengine-erp-templates-ynqibv` gepusht
+  (Schritt-Formular-Datenverlust · tote Lesen/Schreiben-Reiter ·
+  Undo-Killer im Feld-Picker · Klick-Schlucker · Nachschlagen-Einstellung
+  · Ankreuzfeld-Bindung), dazu: gelber Punkt im Datencenter entfernt,
+  README angelegt, dieser Plan eingedampft. Pruefbuendel gruen. Die
+  restlichen Befunde stehen als **Welle V** unten — der Nutzer hat ihnen
+  am 2026-08-18 pauschal zugestimmt; je Etappe gilt trotzdem Ansage + go.
+- **WARTET AUF DEN NUTZER (kann kein Chat erledigen):**
+  1. **Die Gesamtprobe** (Browser + SoftEngine) — Liste in Abschnitt 7.0.
+     Sie deckt alles seit dem 12.08. Gebaute ab (Wellen C, D, U8/U9,
+     N3–N5) plus die Fixe vom 18.08. Dabei: **U10 beobachten**
+     (Leerzeichen beim Benennen — Ursache braucht seine Beobachtung,
+     nicht weiter im Code suchen, zwei Sitzungen waren erfolglos).
+  2. **Koralle-Frage (U7b/c):** uebernimmt der Editor den Koralle-Akzent
+     der Designsprache? Empfehlung des Analyse-Chats: ja (konsequent zur
+     Fellnase-Ansage; Token-Trennung bleibt technisch hart). Antwort
+     steht aus; angestrichen wird ohnehin erst nach U4/U5.
+  3. **U4-Entwurfssitzung** (Datencenter + Inspector neu) — braucht den
+     Nutzer live im Chat; Grundlagen liegen bereit (Quellen-FORMEN unten,
+     Bauteil-Inventur der Analyse, 45-Bedienwege-Zaehlung).
+  4. Mini-Frage: `preflight.ts` ist seit dem Punkt-Entfernen ohne
+     Aufrufer im Produkt — loeschen (samt Tests) oder behalten?
+- **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
+  STIRBT (→ Etappe V0) · gelber Punkt WEG (erledigt) · README JA
+  (erledigt) · Plan eindampfen JA (erledigt).
+- **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go):
+  V0–V7 (unten) · E1 · E3 · U7a · A10 (Technik-Haelfte) · S5.3 (optional)
+  · E2 (nach E1) · F3 (nach U5/U7).
+- **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
+  stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
 
 ### 0.2 Ansage-Pflicht vor jeder Etappe
 
@@ -674,19 +77,21 @@ falsch machen wuerde, haelt er an und sagt es — er baut es nicht mit.
 ### 0.3 Was `go` bedeutet
 
 `go` gilt fuer **eine Etappe**, nicht fuer einen Block und nicht fuer den
-Plan. Nach der Etappe: Pruefbuendel, Ansage des Ergebnisses, warten. Der
-Nutzer testet, wann es ihm passt, und schreibt dann das naechste `go`.
+Plan. Nach der Etappe: Pruefbuendel, Klickanleitung in den Chat, committen,
+weiter. **KEINE Proben zwischendurch** (Nutzer-Ansage 2026-08-12): der
+Nutzer testet EINMAL gebuendelt, wenn sich genug angesammelt hat, und
+meldet nur Funde. Keine Etappe wartet auf eine Probe.
 
-Commits bleiben klein (ein Thema, ein Commit) — das kostet den Nutzer nichts,
-er liest sie nicht. Was ihn kostet, ist die Browserprobe: die wird pro
-**Block** gebuendelt, siehe Abschnitt 5.
+Commits bleiben klein (ein Thema, ein Commit) — das kostet den Nutzer
+nichts, er liest sie nicht. Was ihn kostet, ist die Browserprobe: die wird
+gebuendelt (s. 7.0).
 
 ---
 
 ## 1. Auftrag und Endziel
 
-Der Editor wird nicht neu geschrieben. Der vorhandene Bau wird so aufgeraeumt,
-dass danach neue Funktionen nicht mehr auf widerspruechlichen Regeln,
+Der Editor wird nicht neu geschrieben. Der vorhandene Bau wird so
+aufgeraeumt, dass neue Funktionen nicht mehr auf widerspruechlichen Regeln,
 stillen Datenverlusten und mehrfach gepflegten Wahrheiten aufsetzen.
 
 Der Umbau ist erst insgesamt fertig, wenn:
@@ -707,78 +112,58 @@ Der Umbau ist erst insgesamt fertig, wenn:
    Stellen auseinanderlaufen koennen;
 10. ungueltige Property-Schreibvorgaenge an der zentralen Schreibnaht
     abgefangen werden;
-11. der Besitz von Editor, Datenquellen und Relationen bewusst vereinheitlicht
-    oder vom Nutzer ausdruecklich als verbleibende Grenze akzeptiert ist;
+11. der Besitz von Editor, Datenquellen und Relationen bewusst
+    vereinheitlicht oder vom Nutzer ausdruecklich als verbleibende Grenze
+    akzeptiert ist;
 12. Relationen-/Aktionsbedienung und Designsprache nach den bestehenden
     Nutzerentscheidungen abgeglichen sind;
 13. alle fuenf verbindlichen Code-Pruefungen gruen sind und die vom Nutzer
     durchgefuehrten Browser-/SoftEngine-Proben bestanden wurden;
 14. keine ersetzte Altimplementierung parallel liegen bleibt.
 
-Das Ziel ist kein theoretisch perfekter Code. Das Ziel ist ein wartbares,
+Das Ziel ist kein theoretisch perfekter Code, sondern ein wartbares,
 verlustsicheres Fundament fuer die naechsten Produktfunktionen.
 
 ---
 
 ## 2. Bereits entschiedene Leitlinien
 
-Diese Punkte werden nicht erneut als technische Grundsatzfrage an den Nutzer
+Diese Punkte werden nicht erneut als Grundsatzfrage an den Nutzer
 zurueckgegeben, solange er sie nicht selbst aendert:
 
 - **Kein Komplett-Neubau.** Gute vorhandene Grenzen bleiben erhalten.
-- **Kein neues State-Framework.** Redux, Zustand oder Vergleichbares loest
-  die gefundenen Fehler nicht.
+- **Kein neues State-Framework** (Redux/Zustand/MobX loesen nichts hiervon).
 - **React bleibt Editor-Chrome, Lit/Web Components bleiben sichtbare
   Maskenbausteine und Runtime.**
 - **Vererbung ist nicht das Hauptproblem.** `BasicBlock` darf gemeinsames
-  Lit-Verhalten weiter vererben. Metadaten werden spaeter kompositorisch aus
+  Lit-Verhalten weiter vererben; Metadaten werden mit E2 kompositorisch aus
   einer Definition gelesen.
 - **Popup ist Block und Seite/Flaeche zugleich.** Es bleibt im `BlockTree`;
   kein separater Popup- oder Surface-Store.
-- **Popup wird eine echte Rasterflaeche.** Das ist Teil dieses Umbaus und
-  nicht mehr zurueckgestellt.
 - **Nachschlagen ist kein Popup-Seitenknoten.** Es bleibt ein fluechtiger
-  Laufzeitdialog.
+  Laufzeitdialog (Begruendung: ein Popup weiss nicht, WER es geoeffnet hat).
 - **Tabelle wird im Nachschlagen komponiert, nicht beerbt.**
-- **`aus` bleibt ein gespeicherter Parameterzustand und liefert an seiner
-  Syntaxposition einen leeren String.** Es wird nicht als normale sichtbare
-  Quelle in jedes Auswahlfeld aufgenommen.
-- **Popup-Runtime hat genau ein aktives Popup.** Oeffnen eines Ziels schliesst
-  andere Popups. Ein Modal-Stack wird nicht nebenbei erfunden.
-- **Popup-Namen sind nichtleer und eindeutig.**
-- **`childIds` bleiben die logische DOM-/Tab-Reihenfolge.** Bei der
-  Schema-6-Migration sowie nach Einfuegen, Verschieben, Reparenting und
-  Duplizieren auf einer Rasterflaeche wird diese Reihenfolge nachvollziehbar
-  oben-nach-unten, links-nach-rechts abgeglichen; bei geometrischem Gleichstand
-  bleibt die vorherige Reihenfolge stabil.
-- **Ein Dialog hat genau einen Scroll-Owner.** Doppeltes Scrollen in Rahmen
-  und Inhalt ist verboten.
-- **Popup-Escape-Verhalten wird nicht nebenbei erweitert.** Vorhandene
-  Schliesswege bleiben; Fokus und Tastaturgrenzen werden trotzdem korrekt.
+- **`aus` bleibt ein gespeicherter Parameterzustand** und liefert an seiner
+  Syntaxposition einen leeren String; keine sichtbare Quelle in Auswahlfeldern.
+- **Popup-Runtime hat genau ein aktives Popup.** Kein Modal-Stack.
+- **Popup-Namen sind nichtleer und eindeutig** (doppelter Name wird beim
+  Anlegen hochgezaehlt).
+- **`childIds` bleiben die logische DOM-/Tab-Reihenfolge** (oben-nach-unten,
+  links-nach-rechts; bei Gleichstand stabil).
+- **Ein Dialog hat genau einen Scroll-Owner.**
 - **Keine neue Testgattung.** Bestehende Unit-, Export-, Persistenz-,
   Referenz- und Runtime-Pruefungen duerfen und muessen wachsen.
-- **Browser- und SoftEngine-Proben macht der Nutzer.** Der Agent liefert eine
-  kurze Klickanleitung mit sichtbaren Soll-Ergebnissen und behauptet keine
-  selbst durchgefuehrte Bedienpruefung.
-
-Festgelegte Popup-Geometrie fuer den ersten sicheren Rasterstand:
-
-- dasselbe 24-Spalten-Raster wie die Hauptseite;
-- 520 px ist heute die **Standardbreite**, nicht die Mindestbreite; bisher
-  sind 240 px erlaubt;
-- Schema 6 hebt die gespeicherte Mindest- und Istbreite bestehender Popups
-  unter 520 px bewusst auf 520 px an. Das ist eine benannte sichtbare
-  Migration und kein stilles CSS-Clamping;
-- ist der Host schmaler als Rahmen plus 520 px, bleibt der Dialograhmen im
-  Viewport und die eine Popup-Surface scrollt horizontal wie vertikal. Das
-  Raster selbst wird nicht unter 520 px zusammengedrueckt;
-- bestehende 12 px Innenabstand werden bewusst beibehalten, bis der spaetere
-  Designabgleich etwas anderes entscheidet;
-- Rasterabstand kommt aus der einen gemeinsamen Rasterregel, nicht aus einem
-  zweiten Popup-Wert.
-
-Damit ist auch fuer bestehende 240- bis 519-px-Popups und fuer kleine Hosts
-deterministisch festgelegt, was sich aendert.
+- **Browser- und SoftEngine-Proben macht der Nutzer.** Der Agent liefert die
+  Klickanleitung und behauptet keine selbst durchgefuehrte Bedienpruefung.
+- **Loeschen fragt nie nach — Undo ist das Netz** (U0-Antwort 3). Nur die
+  zwei Bibliotheks-Rueckfragen im Datencenter („wird BENUTZT. Trotzdem
+  loeschen?") bleiben vorerst.
+- **Popup-Geometrie (gebauter Stand):** dasselbe 24-Spalten-Raster wie die
+  Hauptseite; 520 px ist die STANDARDbreite, kein Zwang und keine
+  Anhebe-Migration (vom Nutzer abgewaehlt — ein Popup mit 480 bleibt 480);
+  12 px Innenabstand bleibt bis zum Designabgleich; der Rasterabstand kommt
+  aus der einen gemeinsamen Rasterregel. Die bekannte Schwaeche des
+  Verhaeltnis-Rasters im Fenster behandelt Etappe V6.
 
 ---
 
@@ -786,33 +171,20 @@ deterministisch festgelegt, was sich aendert.
 
 ### 3.1 Ein Thema, ein Commit
 
-Jede unten nummerierte Etappe beziehungsweise Unteretappe ist eine eigene
-fachliche Aenderung. Zwei Dinge werden nicht deshalb zusammengelegt, weil sie
-dieselbe Datei beruehren.
-
-Insbesondere getrennt bleiben:
-
-- Datenrettung und sichtbarer Umbau;
-- Dialograhmen und Popup-Raster;
-- allgemeine Tabellenaktivierung und Fremddatenmodus;
-- Fremddatenmodus und Nachschlage-Integration;
-- verhaltensneutrale Dateischnitte und fachliche Aenderungen;
-- Registry-Umbau und Property-Validierung;
-- Architektur und Designpolitur.
+Jede Etappe ist eine eigene fachliche Aenderung. Zwei Dinge werden nicht
+deshalb zusammengelegt, weil sie dieselbe Datei beruehren. Insbesondere
+getrennt bleiben: verhaltensneutrale Dateischnitte und fachliche
+Aenderungen; Registry-Umbau und Property-Validierung; Architektur und
+Designpolitur.
 
 ### 3.2 Bestehende Arbeit gehoert dem Nutzer
 
-- Keine der vorhandenen Aenderungen wird verworfen, zurueckgesetzt oder
-  still ueberschrieben. (Erledigt fuer den Stand vom 2026-08-10: die 13
-  Dateien liegen in vier benannten Commits.)
-- Kein anonymer Stash ist die einzige Sicherung.
-- Vor Arbeitsbeginn und vor jedem Push gilt `git fetch`.
-- Ist `origin/main` voraus, wird zuerst dessen Stand angesehen und sauber
-  zusammengefuehrt.
-- Kein Force-Push.
-- Umsetzung hat genau einen federfuehrenden Agenten im Arbeitsbaum.
-  Zweitpruefungen laufen nacheinander und read-only, bis der federfuehrende
-  Agent sie uebernimmt.
+- Nichts Vorhandenes wird verworfen, zurueckgesetzt oder still
+  ueberschrieben; kein anonymer Stash als einzige Sicherung.
+- Vor Arbeitsbeginn und vor jedem Push: `git fetch`. Ist origin voraus,
+  erst dessen Stand ansehen und sauber zusammenfuehren. **Kein Force-Push.**
+- Genau EIN federfuehrender Agent im Arbeitsbaum; Zweitmeinungen laufen
+  nacheinander und read-only.
 
 ### 3.3 Verbindliches Pruefbuendel
 
@@ -826,1986 +198,47 @@ npm run check:runtime
 npm test
 ```
 
-`npx eslint .` ist nicht der heutige Projektvertrag und wird nicht als
-zusaetzliche rote Ampel in den Bauauftrag geschmuggelt. Soll spaeter das
-Lint-Scope erweitert werden, ist das ein eigener Werkzeug-Commit.
-
-Bei einer beabsichtigten Runtime-Aenderung kann `check:runtime` beim ersten
-Lauf rot werden und das frisch gebaute Bundle liegen lassen. Dann gilt:
-
-1. Diff des Bundles lesen;
-2. nur erklaerbare Bytes akzeptieren;
-3. erneut laufen lassen;
-4. kein Runtime-Diff darf als blindes Nebenprodukt mitgenommen werden.
-
-Bei einem beabsichtigten Exportwechsel darf der Referenzabzug aktualisiert
-werden. Der neue Snapshot wird nicht „passend gemacht", sondern sein
-vollstaendiger Diff wird als sichtbarer Teil des Commits geprueft.
+Bei beabsichtigter Runtime-Aenderung: `npm run build:runtime`, Bundle-Diff
+lesen, nur erklaerbare Bytes akzeptieren. Bei beabsichtigtem Exportwechsel:
+Referenzabzug mit `npx vitest run -u` erneuern — der vollstaendige Diff ist
+sichtbarer Teil des Commits, nichts wird „passend gemacht".
 
 ### 3.4 Ablauf je Etappe
 
-0. **Ansage nach Abschnitt 0.2 — vor jedem Code.** Was, warum (mit
-   `datei:zeile`), wo im sichtbaren Editor, was der Nutzer prueft, was der
-   Agent nicht pruefen kann. Danach `go` abwarten. Ohne Ansage kein Commit.
-1. Federfuehrender Agent liest die betroffenen Pfade und nennt den genauen
-   Schnitt.
-2. Nur die Etappe wird implementiert.
-3. Eigenes Code-Urteil: Datenfluss, Fehlerpfade, Cleanup, Export und
-   Rueckwaertskompatibilitaet lesen.
+0. Ansage nach 0.2, `go` abwarten.
+1. Betroffene Pfade LESEN, genauen Schnitt nennen.
+2. Nur die Etappe implementieren — nichts daneben.
+3. Eigenes Code-Urteil: Datenfluss, Fehlerpfade, Cleanup, Export,
+   Rueckwaertskompatibilitaet.
 4. Bestehende Testarten um die konkreten Regressionen erweitern.
-5. Fuenf Pruefungen einmal gebuendelt ausfuehren.
-6. Agent liefert eine kurze Nutzer-Klickanleitung und nennt, was nur in
-   SoftEngine pruefbar ist.
-7. Nutzer fuehrt Browserprobe aus; bei Runtime-/Exportaenderung auch
-   SoftEngine-Probe.
-8. Bei einem Fehler wird nur dieselbe Etappe korrigiert und das Pruefbuendel
-   danach erneut ausgefuehrt.
-9. Erst bei bestaetigtem Stand committen, danach vor einem Push nochmals
-   `git fetch`.
+5. Pruefbuendel einmal gebuendelt.
+6. Klickanleitung in den Chat (+ was nur in SoftEngine pruefbar ist).
+7. Committen (vorher `git fetch`); die Nutzerprobe kommt gebuendelt (0.3).
+8. Meldet die spaetere Probe einen Fehler: nur dieselbe Etappe korrigieren,
+   Pruefbuendel erneut.
 
 ### 3.5 Sofortige Stopps
 
-Eine Etappe wird nicht weitergebaut, wenn:
-
-- Nutzerbestand nicht gesichert ist;
-- der Arbeitsbaum unerwartete neue Aenderungen enthaelt;
-- eine Pruefung ohne erklaerte Ursache rot ist;
-- ein Snapshot oder Runtime-Bundle ausserhalb der beabsichtigten Wirkung
-  veraendert wird;
-- eine Migration Knoten, Props, Ereignisse, Quellen oder Relationen verliert;
-- alter Bestand nur durch manuelle Reparatur geoeffnet werden koennte;
-- Editor und Export dieselbe Eigenschaft unterschiedlich darstellen;
-- eine Nutzerprobe vom beschriebenen Soll abweicht.
-
-Es wird nicht mit „spaeter reparieren" ueber einen roten Zwischenstand hinweg
-weitergebaut.
+Nicht weiterbauen, wenn: Nutzerbestand ungesichert ist · der Arbeitsbaum
+unerwartete fremde Aenderungen enthaelt · eine Pruefung ohne erklaerte
+Ursache rot ist · ein Snapshot/Bundle ausserhalb der beabsichtigten Wirkung
+kippt · eine Migration Knoten, Props, Ereignisse, Quellen oder Relationen
+verliert · Editor und Export dieselbe Eigenschaft unterschiedlich
+darstellen. Es wird nie mit „spaeter reparieren" ueber einen roten
+Zwischenstand hinweg weitergebaut.
 
 ---
 
-## 4. Ehrlicher Ausgangszustand
-
-**Die urspruengliche Fassung dieses Abschnitts war an drei Stellen falsch.**
-Nachgemessen am 2026-08-10, unmittelbar vor A0:
-
-| Behauptet | Gemessen |
-| --- | --- |
-| 18 geaenderte Dateien | **13** (`git diff --stat`: 430+/53−) |
-| `check:regeln` rot, `exportMask.ts` 512 Zeilen | **gruen**, 491 Zeilen |
-| 432 Vitest-Tests gruen | **431 Tests, davon 1 rot** |
-
-Was davon stimmte: `HEAD` war `8c03dc5`, TypeScript/eslint/Runtime-Bundle
-waren gruen — und das **rohe Nullbyte im Regelwaechter** gab es wirklich
-(`scripts/check-regeln.mjs`, Byte 14375, ausgerechnet im Erklaertext zum
-eigenen Steuerzeichen-Verbot).
-
-Der rote Test war `datenquellen.test.ts` „bestellt den offenen Satz im
-VAR-Abschnitt": eine vorausgeschriebene Erwartung ohne Umsetzung. Auf
-Nutzer-Entscheidung 2026-08-10 als `it.todo` stillgelegt statt geloescht oder
-passend gemacht — das Pruefbuendel bleibt damit ein brauchbares Signal, und
-die fehlende Haelfte bleibt im Code sichtbar.
-
-**Lehre fuer jeden folgenden Chat: nachmessen, nicht nachlesen.** Diese Datei
-ist von Hand gepflegt; `git log` und die Pruefungen sind es nicht.
-
-Stand nach A0 (Baseline `6640ac1` + die drei Commits dieser Etappe): alle
-fuenf Pruefungen gruen, Arbeitsbaum sauber.
-
----
-
-# Welle S — Sichtbare Fehler und Tempo (eingeschoben 2026-08-10)
-
-Nutzer-Entscheidung 2026-08-10 nach der Zwischenbilanz (vier gebuendelte
-Code-Untersuchungen; die Belege stehen unten je Etappe): Diese Welle laeuft
-VOR den restlichen A-Etappen. Grund: A3 bis A8 sind fuer den Nutzer
-unsichtbar — die taeglich sichtbaren Aergernisse (Scheinzeile in der
-Tabelle, traeger Editor, langsames Laden) blieben sonst wochenlang stehen
-und kosten genau das Vertrauen, das der Umbau aufbauen soll.
-
-Fuer alle S-Etappen gilt:
-
-- KEIN Umbau nebenbei, KEIN neues Framework, KEINE neue Testgattung.
-- Jede Etappe nennt die maschinelle Grenze, die ihr Diff NICHT
-  ueberschreiten darf (bytegleiche Pruefungen). Ueberschreitet er sie
-  unerklaert, gilt Abschnitt 3.5: sofortiger Stopp.
-- Ansage- und go-Ritual aus 0.2/0.3 gelten unveraendert.
-
-## S1 · GESTRICHEN — es wird keine Warn-Anzeige gebaut
-
-**Nutzer-Ansage 2026-08-10, wenige Stunden nach Aufnahme in den Plan.**
-Hier stand eine Etappe, die die 14 unsichtbaren Preflight-Meldungen als
-Klartext-Liste zurueckgeholt haette (Befund: `Kommandozentrale.tsx:56-59`
-filtert auf eine Art, `Toolbar.tsx:59-66` zeigt nichts mehr). Der Nutzer
-will das NICHT: Bedienfehler verantwortet er selbst, der Editor soll
-funktionieren, nicht erziehen. Es wird KEINE Warn-Anzeige gebaut und
-dieser Punkt wird nicht wieder vorgeschlagen (dasselbe Muster wie die
-gestrichene Rubrik „Aufgefallen unterwegs" in CLAUDE.md). `preflight.ts`
-bleibt unangetastet liegen; ob der eine vorhandene gelbe Punkt in der
-Steuerung irgendwann faellt, waere eine eigene kleine Nutzer-Entscheidung.
-Der volle Etappentext steht in der git-Historie (`6ce5695`).
-
-## S2 · Tabelle: der bemalte Reststreifen
-
-### S2.1 · Nachschlag: Rest verteilen, Zeilen-Waehler faellt (GEBAUT 2026-08-11)
-
-Die Nutzerprobe zu S2 ergab: die vorgetaeuschte Zeile ist weg, aber der
-LEERE Platz zwischen letzter Zeile und Fusszeile stoert weiter. Mit dem
-Nutzer entschieden:
-
-- Der Rest (2-30 px, s. Belegtes Problem unten) wird auf die vorhandenen
-  Zeilen VERTEILT — jede wird 1-4 px hoeher, fuer das Auge gleich, die
-  Fusszeile sitzt immer buendig an der letzten Zeile. Zeilenzahl je Seite
-  wie heute, Editor und Maske identisch.
-- Der Zeilen-Waehler (passend zur Hoehe / 10 / 25 / 50) FAELLT WEG: es gilt
-  immer „passend zur Hoehe"; Suche und Blaettern bleiben. Eine Tabelle
-  scrollt nie innen (Nutzer: Blaettern mit Suchleiste ist der Weg).
-- ACHTUNG Wechselwirkung mit A4: faellt die zugehoerige Prop weg, braucht es
-  eine versionsgebundene Migration bzw. eine absichtlich-Meldung — sonst
-  stellt die Verlust-Kontrolle gesunde Altbestaende mit gesetztem Waehler
-  unter Quarantaene.
-- Aendert Runtime-Bytes: die offene SE-Probe aus Block S deckt danach BEIDES
-  in einem Lauf ab.
-
-### Belegtes Problem
-
-Unter den echten Zeilen bleibt geometrisch IMMER ein Rest von 2–30 px:
-die Bausteinhoehe waechst in 20-px-Schritten (`rasterLayout.ts:38`,
-zeile 12 + gap 8), eine Tabellenzeile ist 32 px hoch
-(`seitengroesse.ts:36`) — der Rest trifft nie 0. Das Lineal wird auch bei
-echten Daten gerendert (`tabelleKoerper.ts:138-140`), nimmt mit
-`flex: 1 1 auto` genau diesen Rest auf und malt darin seine Spaltentrenner
-(`tabelleStil.ts:127-151`). Ergebnis: eine scheinbar leere, je nach
-Resthoehe auch duennere letzte Zeile — vom Nutzer zweimal gemeldet
-(2026-08-07 und 2026-08-10); `6613fe2` korrigierte nur die
-Platzhalter-ANZAHL, nicht den Rest.
-
-### Arbeit
-
-1. Das Lineal zeichnet nur noch GANZE Zeilentakte; den Sub-Zeilen-Rest
-   nimmt ein unbemalter Fuellstreifen auf (Panel-Hintergrund, keine
-   Spaltentrenner, keine Rahmenlinien, die eine Zeile vortaeuschen).
-2. `passendeZeilen` (`seitengroesse.ts:101`) bleibt floor — die Rechnung
-   ist richtig; falsch ist nur, dass ihr Rest wie eine Zeile aussieht.
-3. Nebenursachen pruefen und im selben Thema beheben, soweit sie die
-   Messung zwischen Editor und Maske auseinanderziehen (Fusszeilen-Hoehe
-   mit/ohne Zeilen-Waehler, `TabelleBlock.ts:435` + `tabelleFuss.ts:62-77`;
-   waagerechte Scrollleiste frisst clientHeight,
-   `tabelleStil.ts:106-111`). Editor und Maske muessen dieselbe Zeilenzahl
-   zeigen — Abschnitt 3.5: Editor ≠ Export ist ein Stoppgrund.
-4. Die Aenderung liegt im Baustein (eine Render-Quelle) — Editor und
-   Maske sind mit demselben Diff repariert.
-
-### Fertig, wenn
-
-- bei jeder Bausteinhoehe unter der letzten Datenzeile keine Scheinzeile
-  mehr zu sehen ist (weder „leer" noch „duenner");
-- der Leerzustand (Lineal ohne Daten) weiterhin Takte zeigt;
-- `check:runtime` einen vollstaendig erklaerten Bundle-Diff zeigt (die
-  Runtime-Aenderung ist hier BEABSICHTIGT); der Referenzabzug bleibt
-  gruen, weil sein Waechter das Bundle ausschneidet
-  (`referenzabzug.test.ts:40-45`).
-
-### Nutzerprobe
-
-1. Tabelle mit genug Datensaetzen; Bausteinhoehe mehrfach ziehen.
-2. Nie eine leere/duennere Scheinzeile unter der letzten Datenzeile.
-3. Gegenprobe leere Tabelle: Hilfslinien wie bisher.
-4. SoftEngine-Probe noetig (Runtime-Bytes!) — gebuendelt am Blockende.
-
-## S3 · Editor-Tempo: die drei Render-Bremsen
-
-### Belegtes Problem
-
-Drei Befunde multiplizieren sich:
-
-1. kein einziges `React.memo` im Projekt — jede Aenderung rendert die
-   komplette Flaeche samt aller BlockHosts neu;
-2. der Props-Effekt in `useLitElement.ts:152` haengt an Eingaben
-   (`bindableSpots`, `quellen`), die bei jedem Render frisch allokiert
-   werden (`BlockHost.tsx:84/:87`) — er schreibt darum bei JEDEM Render
-   ALLE Props ALLER Bausteine neu;
-3. `rasterMove.ts:100` und `rasterDnd.ts:124` erzeugen bei jedem
-   `pointermove` ein NEUES dropTarget-Objekt — beim Ziehen laeuft
-   (1)+(2) mit Zeigerfrequenz (60–120 Hz).
-
-Dahinter, nur falls 1–3 nachweislich nicht reichen: ungecachte Baumlaeufe
-pro BlockHost pro Render (`quellenFor`/`templateMarkFor`/`isInSubtree`).
-
-### Arbeit
-
-1. dropTarget nur bei ECHTEM Zellenwechsel neu setzen (inhaltlicher
-   Vergleich statt neuem Objekt pro Ereignis).
-2. Stabile Identitaet fuer die useLitElement-Eingaben, damit der
-   Props-Effekt nur bei echten Aenderungen laeuft.
-3. `React.memo` an den Flaechen-Knoten (CanvasNode/BlockHost) mit
-   schmalen, korrekten Vergleichen.
-4. Baumlauf-Caching NUR, wenn 1–3 messbar nicht reichen (Regel 10 —
-   nichts auf Verdacht).
-5. KEIN neues State-Framework, kein Umbau von Store, History oder Undo.
-
-### Fertig, wenn
-
-- Tippen in einem Baustein nicht mehr die ganze Flaeche rendert;
-- Ziehen/Resize fluessig ist (Nutzer-Urteil in der Browserprobe);
-- Export-HTML, SEvariablen, Runtime-Bundle und Referenzabzug BYTEGLEICH
-  sind — das ist die harte Grenze dieser Etappe;
-- Undo/Redo, Auswahl und Tipp-Sitzungen unveraendert arbeiten (bestehende
-  Testarten wachsen um die konkreten Regressionen mit).
-
-### Nutzerprobe
-
-1. Maske mit vielen Bausteinen (Tabelle, Kanban, Formulare, Popup).
-2. Tippen ohne Verzoegerung; Ziehen/Groesse-Aendern ohne Ruckeln.
-3. Undo/Redo stichprobenartig.
-
-## S4 · Editor-Laden im Dev-Server
-
-### Belegtes Problem
-
-33 Barrel-Importe `from 'lucide-react'` erzwingen im Dev-Server ein
-1,14-MB-Prebundle (Paket mit 4014 Icon-Modulen; kein `optimizeDeps` in
-`vite.config.ts`) — der groesste einzelne Ladeposten beim Editor-Start.
-Der fertige Build ist nicht betroffen; gearbeitet wird aber im Dev-Server.
-
-### AUSGELASSEN 2026-08-10 — es gibt keine kleine sichere Loesung
-
-Geprueft, nicht gebaut (Auslass-Klausel des Bauauftrags: „keine
-nachweislich sichere kleine Loesung → auslassen statt basteln"). Der Befund
-stimmt: `node_modules/.vite/deps/lucide-react.js` misst 1 139 089 Bytes
-(dazu 2,2 MB Quellkarte), 33 Import-Stellen, 35 verschiedene Zeichen. Nur
-die Abhilfe gibt es nicht:
-
-- **Gezielte Icon-Importe** braeuchten `lucide-react/dist/esm/icons/*.mjs`.
-  Diese Dateien liegen zwar da (2007 Stueck), sind aber KEIN oeffentlicher
-  Weg: das Paket (Fassung 1.27.0) hat kein `exports`-Feld, seine
-  mitgelieferte Anleitung nennt den Pfad nirgends, und Typen gibt es nur
-  drei — alle fuer den Sammel-Eingang. Ein gezielter Import laesst damit
-  `npx tsc -b` auffallen; ihn mit einer selbstgeschriebenen Typ-Zusage
-  ruhigzustellen hiesse, einen undokumentierten Innenweg zu behaupten,
-  den niemand pruefen kann.
-- **optimizeDeps** hat keinen Schalter, der einen Sammel-Eingang auf die
-  benutzten Ausgaenge eindampft. `exclude` macht es SCHLIMMER (dann laedt
-  der Browser die ~2000 Einzelmodule statt eines Buendels), `include`
-  aendert nichts.
-
-Das Buendel entsteht ausserdem EINMAL und liegt danach im Zwischenspeicher
-(die gemessene Datei ist vom 2026-08-06); es kostet den ersten Start nach
-einer Paket-Aenderung, nicht jeden Start.
-
-Wiederaufnahme braucht eine Nutzer-Entscheidung — und zwar zu der Frage,
-ob 33 Dateien auf einen undokumentierten Paket-Innenweg umgestellt werden
-duerfen. Ohne die bleibt es, wie es ist.
-
-## S5 · Masken-Tempo (OPTIONAL — eigenes go, SE-Echttest Pflicht)
-
-Nicht Teil des Block-S-Standards, weil es Export- bzw. Runtime-Bytes aendert.
-Zwei Posten, unabhaengig voneinander.
-
-**Beide gebauten Posten (S5.1, S5.2) aendern die SEvariablen und warten auf
-DIESELBE eine SE-Probe des Nutzers.**
-
-### S5.1 · Der Export bestellt nur noch die benutzten Felder (GEBAUT 2026-08-11)
-
-**Belegtes Problem (Nutzer-Log 2026-08-11):** SoftEngine macht fuer JEDEN
-gelieferten Wert einen Bild-Nachschlag (GET_RELATION 1911, Antwort fast immer
-„No_Pic.png") — Maske oeffnen = 5 953 Aufrufe in 9,2 s, eine Schreib-Kette mit
-Aktualisieren ~20 000 Log-Zeilen. Die SE-Seite koennen wir nicht aendern, die
-MENGE liefert unsere Bestellung: jede IDB-Quelle bestellte `FELDER:'*'`, also
-alle Felder aller Zeilen, obwohl die Maske nur wenige liest.
-
-**Arbeit:** je IDB-SEFILELOOP-Quelle die explizite pos_len-Liste der BENUTZTEN
-Felder statt `*`. Gesammelt wird registry-getrieben (Regel 2) aus allen Wegen,
-auf denen ein Feldcode in die Maske reist — Bindungen, Listen-Eintraege,
-Feld-Properties, Verknuepfungs- und Auswahl-Schluessel, Ketten-Parameter, plus
-die Datensatz-Nummer der Quelle. Der Schnitt liegt in
-`export/benutzteQuellen.ts` (`benutzteFelderJeQuelle` sammelt) und
-`core/data/dataSources.ts` (`felderFor` entscheidet die Form je Quellen-ART).
-
-**Kontrakt-Ehrlichkeit:** fuer IDB ist die explizite Liste NIRGENDS belegt —
-beide Chef-Masken fuehren IDB mit `*`. Belegt ist nur die FORM (pos_len,
-komma-getrennt) an den Stamm-Quellen und am POS-Loop von `JsonBeleg.json`;
-dass die Zeilen-Schluessel pos_len tragen (`IDBID0001_253_30`), macht sie
-plausibel. **Es entscheidet der EINE SE-Echttest des Nutzers. Schlaegt er
-fehl, wird der Commit per `git revert` zurueckgenommen** — nicht nachgebessert.
-
-**Sicherheitsventil:** laesst sich die Verwendungsliste einer Quelle nicht
-vollstaendig als pos_len ausdruecken, bleibt fuer DIESE Quelle `*`. Lieber `*`
-als ein still leeres Feld in der Maske.
-
-**Nutzerprobe:** Export ziehen, in `index.basis.SEvariablen.json` die
-FELDER-Liste ansehen; dann SE-Echttest — Daten kommen an, 1911-Flut im Log
-deutlich kleiner.
-
-### S5.2 · Kopfsatz-Quellen stehen zuletzt (GEBAUT 2026-08-11)
-
-**Belegtes Problem (A/B-Echttest des Nutzers, identische Maske):** steht der
-POS-Loop (Belegpositionen) in der exportierten SEvariablen.json an ERSTER
-Stelle, liefert SoftEngine aus KEINER Quelle Daten — auch ADR/ART/IDB dahinter
-bleiben leer. Dieselbe Datei mit POS an LETZTER Stelle: alle Quellen liefern.
-Ein Kopfsatz-Loop scheitert standalone, und SoftEngine bricht beim ersten
-gescheiterten Loop offenbar die ganze Liste ab. Der Export schrieb bis dahin in
-Anlege-/Baum-Reihenfolge — wer die Positionen zuerst anlegte, bekam eine Maske,
-in der GAR NICHTS ankam, ohne Fehlermeldung und ohne Bezug zur Ursache.
-
-**Arbeit:** `loopReihenfolge` in `core/data/dataSources.ts` — Arten mit
-`kopfsatzMoeglich` ans Ende, alle uebrigen behalten ihre Reihenfolge
-untereinander (zwei Eimer statt Sortierung, damit die Stabilitaet sichtbar
-ist). Kein `if ID === 'POS'`: das Merkmal traegt die Arten-Tabelle, sie hatte
-es bereits (Regel 2). Geformt wird NUR die Ausgabe der SEvariablen; die
-Bibliothek bleibt unberuehrt, FF_DATA_SOURCES bleibt in Baum-Reihenfolge (die
-Laufzeit schlaegt dort per id nach), das HTML damit Byte fuer Byte unveraendert.
-
-**Nutzerprobe:** Export einer Maske mit Belegpositionen ziehen — in
-`index.basis.SEvariablen.json` steht der POS-Eintrag zuletzt, egal wann die
-Quelle angelegt wurde. Dann SE-Echttest: alle Quellen liefern.
-
-### S5.3 · Diagnose-Anzeige (NICHT gebaut, eigenes go)
-
-Die Diagnose-Anzeige schreibt bei jedem SE-Ereignis das JSON des ersten
-Datenpakets mehrfach neu (`bridge.ts:110-148`) — datenmengenproportionale
-Arbeit mitten im Maskenstart. Falls der Nutzer es freigibt: Diagnose nur
-noch auf Anforderung fuellen, Maskenverhalten sonst identisch; der genaue
-Schnitt kommt in der Ansage, ein SE-Echttest ist danach Pflicht.
-
----
-
-# Welle P — Tempo (eingeschoben 2026-08-11)
-
-Nutzer-Ansage: „laedt ewig, nicht performant — und das ging auch mal
-schneller." Welle S hat die zwei belegten Render-Bremsen geloest (S3) und
-das Dev-Laden ausgelassen (S4, Begruendung dort); das Ergebnis reicht dem
-Nutzer nicht, und „ging mal schneller" heisst: es gibt eine
-VERSCHLECHTERUNG, die sich finden laesst. Regel dieser Welle: erst messen,
-dann bauen — kein Fix ohne Zahl.
-
-## P1 · Messen (kein Code, kein eigener Commit)
-
-- OHNE Dev-Server (Regel 9): `vite build`-Zeiten und Modulzahlen ·
-  `npx vite optimize --force` (Prebundle-Kosten der Abhaengigkeiten) ·
-  vitest-Importzeiten (zuletzt 56 s Import bei 1,4 s Tests) · Importgraph
-  des App-Starts (was wird beim ersten Laden alles gezogen) · Vergleich mit
-  aelteren Staenden ueber die git-Historie, soweit ohne Browser moeglich.
-- Ergebnis ist eine RANGLISTE MIT ZAHLEN — was kostet den Start, was das
-  Arbeiten. Sie steht im Abschlussbericht und in der jeweiligen
-  P2-Commitbeschreibung.
-- Das GEFUEHL (fluessig beim Tippen/Ziehen, Start im Browser) kann nur der
-  Nutzer beurteilen — seine Probe am Blockende bleibt das Urteil.
-
-## P2 · Die belegten Top-Bremsen loesen
-
-- NUR was P1 mit Zahlen belegt hat; je Bremse EIN Commit.
-- Bekannte Kandidaten (Zwischenbilanz 2026-08-10, alle erst nach
-  P1-Beleg): die Verlaufs-Kopie — `pushHistory` klont je Schritt den
-  GANZEN Baum, obwohl der Baum unveraenderlich fortgeschrieben wird
-  (pruefen, ob Snapshots ohne Klon auskommen) · die Icon-Bibliothek —
-  lucide-react 1.27.0 hat keinen Einzel-Icon-Weg (S4); Kandidat ist das
-  Vendorn der ~33 benutzten Icons als lokale Dateien, damit faellt das
-  1,14-MB-Prebundle ganz · was P1 sonst belegt.
-- Harte Grenze: P2 aendert KEIN Export-Byte (ff-runtime, Referenzabzug,
-  SEvariablen unveraendert) und bringt KEINE neue Abhaengigkeit mit.
-  Masken-Tempo bleibt S5 (eigenes go, SE-Echttest Pflicht).
-
-Im selben Block faehrt **S2.1** (Tabellen-Nachschlag, s. Etappenkopf in
-S2) mit — er aendert als einziger Runtime-Bytes; die offene SE-Probe aus
-Block S deckt danach beides ab.
-
-# Welle A — Bestand retten und Integritaet herstellen
-
-Diese Welle ist vor neuen sichtbaren Architekturarbeiten Pflicht. Sie schliesst
-bekannte Wege, auf denen Daten, Referenzen, Undo oder Autosave still falsch
-werden koennen.
-
-## A0 · POS/VAR-Arbeit sichern und Baseline herstellen
-
-### Ziel
-
-Der bestehende Arbeitsstand wird fachlich abgeschlossen oder als ausdruecklich
-benannter, wiederherstellbarer WIP-Stand gesichert. Nichts wird geloescht.
-
-### Arbeit
-
-1. Vor einem Reload des Editors eine aktuelle editierbare Maskendatei sichern,
-   besonders wenn Aktionsparameter mit `aus` verwendet wurden.
-2. Alle 18 geaenderten Dateien dem POS/VAR-Thema zuordnen.
-3. POS/VAR entweder fertigstellen oder als klar benannten Sicherungsstand
-   festhalten; nicht mit dem Umbau vermischen.
-4. `exportMask.ts` thematisch unter 500 Zeilen schneiden, falls der fertige
-   POS/VAR-Diff dies weiterhin erfordert. Dieser Schnitt veraendert kein
-   Exportbyte.
-5. Pruefbuendel gruen herstellen.
-6. Exakten neuen Baseline-Commit und das dazugehoerige Masken-Backup benennen.
-
-### Fertig, wenn
-
-- kein Nutzer-Diff ungesichert ist;
-- der Arbeitsbaum nach dem Baseline-Commit sauber ist;
-- alle fuenf Pruefungen gruen sind;
-- der Referenzabzug gegen die tatsaechliche Baseline passt;
-- die weitere Umbauarbeit nicht mehr auf einem anonymen Mischstand beginnt.
-
-## A1 · `aus`-Datenverlust schliessen
-
-### Belegtes Problem
-
-UI, Typ und Runtime kennen `{ source: 'aus', value: '' }`. Der strenge
-Lade-Sanitizer akzeptiert `aus` nicht und kann dadurch die gesamte
-Ereigniskette verwerfen.
-
-### Arbeit
-
-1. Sichtbare Quellenoptionen und erlaubte gespeicherte Parameterquellen
-   getrennt modellieren.
-2. `aus` im gespeicherten Vertrag akzeptieren, ohne es als normale
-   auswählbare Datenquelle ueberall anzuzeigen.
-3. Runtime-Aufloesung bleibt leerer String an derselben Parameterposition.
-4. Sanitizer darf wegen dieses gueltigen Zustands weder Bindung noch Kette
-   entfernen.
-5. Maskendatei darf deswegen nicht mehr als veraendert/beschaedigt abgelehnt
-   werden.
-
-### Bestehende Testarten erweitern
-
-- Binding-Sanitizer mit `aus`;
-- komplette Ereigniskette mit `aus`;
-- Browser-Reload/Persistenzpfad;
-- Maskendatei-Parse;
-- Export-Parse und Runtime-Parameteraufloesung;
-- Nachbarparameter behalten ihre Position und Werte.
-
-### Nutzerprobe
-
-1. Aktion mit mindestens drei Parametern anlegen, mittleren Parameter auf
-   `aus` setzen.
-2. Speichern und neu laden.
-3. Aktion muss vollstaendig sichtbar bleiben.
-4. Export in SoftEngine ausloesen.
-5. Mittlerer Parameter muss leer, die beiden anderen muessen unveraendert
-   positioniert sein.
-
-## A2 · Migrationsschutz vor Schema 6
-
-### Belegtes Problem
-
-Die historische Demo-Bereinigung wird heute ueber
-`schemaVersion < CURRENT_SCHEMA_VERSION` aktiviert. Ein Sprung von 5 auf 6
-wuerde dadurch echte Werte wie `Heute`, `09:15` oder
-`Rueckruf Fr. Wagner` erneut als alte Demowerte behandeln und leeren.
-
-### Arbeit — eigener Commit, noch kein Schema-6-Bump
-
-1. Nach Git-/Bestandspruefung gilt die feste historische Grenze
-   `DEMO_CLEANUP_BEFORE_SCHEMA = 5`: Demo-Bereinigung laeuft ausschliesslich
-   fuer `schemaVersion < 5`, niemals fuer 5 oder spaeter. Diese benannte
-   Konstante wird von Browser- und Dateipfad gemeinsam gelesen.
-2. Browser-Lader und Maskendatei benutzen dieselbe feste Schwelle.
-3. Testdaten decken Schema 4 (`N-1`), Schema 5 (`N`) und ein simuliertes
-   Schema 6 ab; sie verwenden niemals ersatzweise `CURRENT_SCHEMA_VERSION`.
-4. Schema bleibt in diesem Commit noch 5.
-
-### Fertig, wenn
-
-- Schema-5-Echtwerte `Heute`, `09:15` und `Rueckruf Fr. Wagner` einen
-  simulierten naechsten Versionssprung unveraendert ueberleben;
-- echte alte Demodaten aus der historischen Version weiterhin korrekt
-  bereinigt werden;
-- Browser- und Dateipfad identisch entscheiden.
-
-### A2.1 Migrationsergebnis nicht laenger als ein einziges Boolean fuehren
-
-Vor Schema 6 wird der heutige Sammelbegriff `migrated` getrennt in:
-
-- `schemaAdvanced`: eine Schemastufe wurde durchlaufen;
-- `resaveNeeded`: der gueltige Stand muss unter der neuen Version neu
-  gespeichert werden;
-- `intentionalChanges`: exakt benannte Pfade/Werte, welche die konkrete
-  Migration absichtlich aendern durfte;
-- `problems`: alle anderen Verluste oder Abweichungen.
-
-Der Maskendatei-Import ueberspringt seine Detail-Verlustpruefung niemals nur
-deshalb, weil irgendeine Migration lief. Bei Schema 6 werden ausschliesslich
-die erlaubten Popup-Raster-/Breiten- und bewusst beschlossenen Root-
-Reihenfolgen-Diffs ausgenommen; Events, Props, Quellen und Relationen werden
-weiter vollstaendig verglichen. Auch ein leeres Schema-5-Popup setzt
-`schemaAdvanced/resaveNeeded`, damit es nicht ewig auf Version 5 bleibt.
-
-## A3 · Neuere Browserstaende nicht mit alter App zerstoeren
-
-### Belegtes Problem
-
-Der Maskendatei-Import lehnt eine Schemaversion aus der Zukunft ab. Der
-Browserspeicher tut das nicht. Eine alte oder gecachte App kann daher einen
-neueren Stand laden, unbekannte Daten entfernen und die verkleinerte Version
-autospeichern.
-
-### Arbeit
-
-1. Einen diskriminierten Ladeausgang einfuehren:
-   - `ok`;
-   - `migrated`;
-   - `quarantined` mit konkretem Grund und Rohdaten.
-2. Feste Lade-Reihenfolge fuer Browser und Maskendatei:
-   - Zukunftsversion vor jeder Aenderung abweisen;
-   - Rohform strukturell parsen;
-   - ausschliesslich versionsgebundene Migrationen anwenden;
-   - danach gegen den aktuellen Baum-/Bibliotheksvertrag pruefen;
-   - erst danach sanitizen.
-3. `schemaVersion > CURRENT_SCHEMA_VERSION` wird `quarantined`.
-4. Ein quarantined Stand wird nicht hydriert, migriert oder autospeichert.
-   Beim **Browserstart** bleiben Editor und alle Speicherplaner
-   schreibgesperrt.
-5. Dafuer entsteht bereits hier ein minimaler gemeinsamer `SpeicherGate`, den
-   Blockbaum-, Datenquellen- und Relationsspeicher vor jedem Schreiben
-   abfragen. A10 uebernimmt diesen Gate spaeter in den technischen
-   Sitzungsbesitz; seine Einfuehrung entscheidet noch nicht die fachliche
-   Lebensdauer der Bibliotheken.
-6. Rohdaten werden unveraendert mit Zeitstempel als Notfallkopie gehalten.
-7. Die Sperransicht bietet nur klar getrennte Wege:
-   - Rohdaten als Datei sichern;
-   - eine nachweislich gueltige Maskendatei oeffnen;
-   - lokalen Stand nach ausdruecklicher Bestaetigung verwerfen und leer
-     beginnen.
-8. Nutzer erhaelt Klartext: Stand stammt aus neuerer Editorversion oder wurde
-   unter Quarantaene gestellt; keine automatische Reparatur vortaeuschen.
-9. Beim **Import einer Maskendatei** ist die Datei nur ein Kandidat: Ein
-   quarantined Kandidat wird mit Problemliste abgelehnt, sperrt aber nicht die
-   bereits offene gueltige Sitzung und deren Autosaves. Gemeinsames
-   Parse-Ergebnis, unterschiedliche Aufruferpolitik.
-
-### Fertig, wenn
-
-- eine alte App neuere Browserdaten bytegenau unangetastet laesst;
-- kein Klick einen Autosave der reduzierten Form ausloesen kann;
-- Maskendatei und Browserspeicher dieselbe Versionspolitik haben;
-- nur das Oeffnen eines gueltigen Standes oder das ausdruecklich bestaetigte
-  Leeren hebt die Schreibsperre auf.
-
-## A4 · Teilverlust beim Laden sichtbar und wiederherstellbar machen
-
-### Belegtes Problem
-
-Einzelne ungueltige oder doppelte Quellen, Relationen, Eigenschaften und
-Ereignisketten koennen im Browserpfad still uebersprungen werden. Die naechste
-Aenderung speichert danach nur noch die ausgeduennte Bibliothek.
-
-### Arbeit
-
-1. Die Sanitizer fuer Blockbaum/Props/Events, Datenquellen und Relationen
-   liefern `bereinigter Wert + Problemliste`, nicht still nur einen kleineren
-   Wert.
-2. Die Pruefung verwendet exakt die in A3 festgelegte Reihenfolge. Historischer
-   Rohaltbestand wird erst migriert und erst danach gegen heutige Parent-Regeln
-   bewertet.
-3. Bei irgendeinem nicht ausdruecklich migrationsbedingten Teilverlust lautet
-   der Ausgang `quarantined`.
-4. Rohstand und Problemliste bleiben erhalten; die Sperransicht nennt Bereich,
-   Eintrags-ID/Pfad und Grund und bietet die drei A3-Wiederherstellungswege.
-5. Kein Speicherplaner laeuft, solange der Stand quarantined ist. Ein blosses
-   „Verlust bestaetigen" darf keinen kleineren Stand ueber die Rohdaten
-   schreiben.
-6. Maskendatei und Browserpfad verwenden dieselben Verlustkriterien.
-7. Baumstruktur prueft nach Migration auch `canContain`,
-   `allowedChildTypes` und `allowedParentTypes`.
-8. Zusaetzliche Topologie-Invarianten:
-   - exakt eine synthetische Root;
-   - `pageBlock` ausschliesslich direkt unter Root;
-   - keine Seite unter Seite;
-   - jede `parentId`-/`childIds`-Beziehung ist beidseitig konsistent;
-   - jeder erreichbare Knoten genau einmal im Baum.
-9. Ein Popup unter Popup oder ein anderer unzulaessiger Eltern-Kind-Vertrag
-   wird nicht als unsichtbarer Knoten durchgeschleust.
-
-### Fertig, wenn
-
-- kein einzelner fehlerhafter Eintrag still verschwindet;
-- die Meldung den betroffenen Eintrag und Grund nennt;
-- der unveraenderte Rohstand wiederherstellbar bleibt;
-- eine handbearbeitete Datei keine fuer den Editor unsichtbare, aber im Export
-  vorhandene Struktur erzeugen kann.
-
-## A5 · Generisches Duplizieren mit echten Blockreferenzen
-
-### Belegtes Problem
-
-`cloneSubtree` vergibt neue Knoten-IDs, kopiert Props und Events mit ihren
-alten `blockId`, `geberId` und `popupId` jedoch unveraendert. Eine Kopie kann
-dadurch still mit dem Original weiterarbeiten.
-
-### Arbeit
-
-1. Zweiphasiges Klonen:
-   - gesamten Unterbaum mit `alte ID -> neue ID` erfassen;
-   - danach Referenzen umschreiben.
-2. Referenzregel:
-   - zeigt eine Referenz auf einen mitkopierten Knoten, wird sie auf dessen
-     neue ID umgeschrieben;
-   - zeigt sie bewusst nach ausserhalb des kopierten Unterbaums, bleibt sie
-     extern;
-   - Datenquellen- und Relations-IDs sind keine Block-IDs und bleiben
-     unveraendert.
-3. Die Umschreibung ist eine zentrale reine Funktion und kennt alle heutigen
-   blockinternen Referenzfelder.
-4. `pageBlock`-Duplizieren bleibt in A5 deaktiviert. Popup-Name, aktive Seite
-   und Rasterplatzierung werden erst nach dem neuen Popup-Vertrag in C3.1
-   aktiviert.
-5. Die generische Kopie bleibt in derselben Parent-Struktur. Fuer heute bereits
-   sichtbare direkte Root-Rasterkinder wird eine freie Position ueber die
-   bestehende Rasteroperation gewaehlt statt pixelgleicher Ueberdeckung.
-   Popup-Surface-Platzierung wartet bis C3.1.
-
-### Bestehende Tests
-
-- kopierter Knopf liest kopiertes Feld;
-- kopierte Folgetabelle folgt kopiertem Geber;
-- externe Referenz bleibt extern;
-- `pageBlock` kann noch nicht dupliziert werden;
-- direktes Root-Rasterkind liegt nach Kopie sichtbar frei;
-- Undo/Redo der normalen Unterbaumkopie in einem Schritt.
-
-## A6 · Shadow-DOM-sichere Tastaturkuerzel
-
-### Belegtes Problem
-
-Der globale Listener prueft nur `event.target`. Bei Ereignissen aus Shadow
-DOM kann dieses Ziel auf den Custom-Element-Host umgebogen werden. Delete,
-Ctrl+Z oder Ctrl+D koennen dann beim Texteditieren den Editor statt des
-Eingabefelds steuern.
-
-### Arbeit
-
-1. Vollstaendigen `event.composedPath()` pruefen.
-2. Bei `input`, `textarea`, `select` oder einem `contenteditable`-Element im
-   Pfad keine globalen Editor-Kuerzel ausfuehren.
-3. Bestehende Kuerzel ausserhalb von Eingaben unveraendert lassen.
-
-### Nutzerprobe
-
-- Text in jedem Lit-Inline-Editor markieren und Delete/Ctrl+Z/Ctrl+D testen;
-- kein Baustein darf geloescht, dupliziert oder per Editor-Undo veraendert
-  werden;
-- nach Verlassen des Textfelds muessen die Editor-Kuerzel wieder arbeiten.
-
-## A7 · Benachrichtigung, Autosave und Transaktionen absichern
-
-Diese Unterpunkte bleiben getrennte Commits.
-
-### A7.1 Listener isolieren
-
-- Vor der Reparatur reproduziert ein Fall in einer bestehenden Unit-Testdatei,
-  dass ein werfender Listener spaetere Benachrichtigung/Autosave gefaehrdet.
-- Ein fehlerhafter Subject-Listener stoppt nicht alle spaeteren Listener.
-- Bereits erfolgte Zustandsaenderung plant Autosave garantiert, etwa ueber
-  eine sichere Reihenfolge beziehungsweise `finally`.
-- Fehler bleibt sichtbar und wird nicht stumm verschluckt.
-
-### A7.2 Sichere Transaktionshilfe
-
-- Vor der Reparatur reproduziert ein Fall in einer bestehenden Unit-Testdatei
-  einen offengebliebenen Transaktionspfad.
-- Synchrone Mehrfachschreibvorgaenge verwenden einen zentralen
-  `transaction(fn)`-Vertrag mit `try/finally`.
-- Mehrere Events umfassende Gesten wie Resize, DnD und Tippsitzungen werden
-  **nicht** in eine synchrone Funktion gezwungen. Sie verwenden einen zentralen,
-  idempotent schliessbaren Transaktions-Token.
-- Dieser Token schliesst bei normalem Ende sowie `pointerup`, `pointercancel`,
-  Blur und Unmount genau einmal.
-- Ein geworfener Fehler kann `_txDepth` nicht dauerhaft groesser null lassen.
-- Nach einem provozierten Fehler entstehen wieder normale Undo-Punkte.
-
-### A7.3 Auswahlfolge-Zyklen erst belegen, nicht auf Verdacht verbieten
-
-**ABGESCHLOSSEN 2026-08-11.** Der Beleg fand einen echten Fall (zwei
-Nachschlage-Felder ueber Kreuz mit „einziger Treffer = ja", s. Zeiger 0.1
-und `blocks/shared/auswahl.test.ts`). Nutzer-Entscheidung: **nichts tun**
-(Regel 10) — keine Notbremse (koennte gewollte Nachzieh-Ketten
-abschneiden), kein Anbiete-Filter. Produktcode kommt erst, falls der Fall
-je real einfriert; der Test benennt ihn dann sofort. Der urspruengliche
-Etappentext folgt unveraendert:
-
-- Zuerst wird in einer bestehenden Testart geklaert, ob ein direkter oder
-  indirekter Kreis die heutige monotone Nachmeldung tatsaechlich nicht
-  beendet oder Daten falsch veraendert.
-- Ist der heutige Lauf nachweislich endlich und fachlich erlaubt, entsteht
-  **kein** neuer Preflight-Blocker und kein Code-Commit.
-- Nur bei reproduziertem Fehler wird dieselbe reine Zyklusfunktion in
-  Inspector und Preflight verwendet und eine Runtime-Notbremse mit sichtbarer
-  Fehlermeldung ergaenzt.
-- Ob ein fachlich endlicher Kreis nur gewarnt oder blockiert werden soll, ist
-  dann eine Nutzerentscheidung und keine heimliche Reparatur.
-
-## A8 · Regelwaechter und Wahrheitsaussagen
-
-Werkzeug und Kommentare werden nicht mit einer Runtime-Aenderung vermischt.
-
-### A8.1 Regelwaechter
-
-- rohes Nullbyte entfernen;
-- Steuerzeichenpruefung so fassen, dass relevante Skripte nicht ausserhalb
-  ihres eigenen Waechters liegen;
-- Fehlermeldungen erklaeren weiterhin das Warum;
-- Dateideckel bleibt fuer alle `src`-Dateien 500 Zeilen.
-
-Die exakte Registry-Zwei-Mengen-Pruefung folgt erst in E1 direkt vor dem
-Registry-Umbau. A8 baut sie nicht ein zweites Mal vorab.
-
-### A8.2 Kommentare und heutiges Projektgedaechtnis
-
-- Konkrete Abhakliste gegen den heutigen Code:
-  - `BlockDefinition.ts` zu `pageBlock`/Popup-Layout;
-  - `BlockData.ts` zu Root/Popup-Raster;
-  - `rasterLayout.ts` zu seinem tatsaechlichen Scope;
-  - `useLitElement.ts` zur React-Lit-Schreibnaht;
-  - `BlockHost.tsx` zu Popup-/Rasterverhalten;
-  - `ParameterZeile.tsx` zum falschen Vorlagenrueckfall bei `aus`;
-  - `CLAUDE.md` zu Kanban-Stand, `POPUP_RAND`, Store-Besitz und dem
-    faelschlich als abgeschlossen beschriebenen Maskendesign.
-- keine zukunftsbehauptenden Kommentare, bevor die jeweilige Etappe gebaut
-  wurde;
-- `meldung.ts`: einfacher DOM-Notfallweg bleibt; nur seine alten
-  Fallbackfarben werden in der Designwelle gegen Tokens abgeglichen.
-- Wenn C2, E2 oder A10 spaeter eine aktuelle Wahrheit aendern, wird
-  `CLAUDE.md` im selben Commit mitgezogen. Die V6-Datei liegt seit dem
-  2026-08-10 IM Repo (Nutzer-Entscheidung: uncommittet waere die Uebergabe
-  zwischen zwei Chats beim naechsten Fehlgriff weg). Sie bleibt trotzdem
-  Bauauftrag und wird **keine** Projektchronik: es wird der Zeiger in 0.1
-  fortgeschrieben, nicht eine Liste dessen, was war.
-
-## A9 · Belegter SoftEngine-Ausgangslauf
-
-**ABGEHAKT per Praxis (Nutzer 2026-08-12: „a9 a10 ist doch erledigt").**
-Die laufenden Echttests (R2 bestanden, taegliche Nutzung) ersetzen den
-formalen Ausgangslauf. Als Rest-Pflicht bleibt nur: VOR C2 die
-Maskendatei sichern (steht im C2-Kopf). Keine eigene Etappe mehr.
-
-Nach A0 bis A8, vor dem sichtbaren Komponentenumbau:
-
-1. Agent nennt exakten Commit und erstellt eine kurze Testanleitung.
-2. Nutzer prueft eine reale bestehende Maske in SoftEngine:
-   - Datenpush;
-   - Tabelle/Kanban;
-   - Ereigniskette inklusive `aus`;
-   - Popup oeffnen/schliessen;
-   - Nachschlagen;
-   - HTML + SEvariablen.
-3. Ergebnis wird in der erlaubten Belegseite
-   `docs/softengine-wiki/echttests.md` festgehalten. Falls sie noch nicht
-   existiert, wird genau diese Evidenzseite angelegt, keine Plan-/Changelog-
-   Ablage.
-4. Jede Zeile enthaelt: Datum, Commit, Maskendatei, Plattform WinUI/WebUI,
-   gepruefter Vertrag, Ergebnis und ob irgendeine Handkorrektur noetig war.
-5. Eine Coverage-Matrix nennt auch `nicht benutzt = nicht belegt`. Ein Lauf
-   beweist weder MEMTAB/ERPAPICALL noch Ankreuzfeld- oder andere Vertraege, die
-   in der Testmaske nicht vorkamen.
-
-Dieser Lauf ist der Vorher-Beleg fuer die folgenden Runtime-Etappen.
-
-## A10 · Store-Besitz vor dem atomaren Export entscheiden
-
-**Fachliche Haelfte BEANTWORTET (Nutzer 2026-08-12): die Bibliothek
-bleibt editorweit — keine Maske bringt eigene Quellen/Relationen mit.**
-Die Technik-Haelfte (Sitzungs-Besitz statt Modul-Singletons) wartet auf
-KEINE Nutzer-Entscheidung mehr; sie bekommt ihr eigenes go, wenn ein
-Umbau sie wirklich erzwingt (Regel 10).
-
-### Zwei getrennte Fragen
-
-1. **Technischer Besitz:** Empfehlung ist eine injizierte Sitzungsinstanz, die
-   Editor/Blockbaum, DataSourceStore und RelationStore gemeinsam bereitstellt.
-   Dadurch koennen Export, Persistenz und Preflight einen atomaren Snapshot
-   ohne versteckte globale Importe erhalten.
-2. **Produkt-Lebensdauer:** Davon getrennt wird entschieden, ob Quellen und
-   Relationen zu einer einzelnen Maske oder zur gesamten laufenden App/
-   Arbeitsbibliothek gehoeren. Der technische Umbau darf nicht still
-   „neue Maske = leere Bibliotheken" erfinden.
-
-### Empfehlung dieses Plans
-
-- technischen Sitzungs-/DI-Besitz umsetzen;
-- die heutige fachliche Lebensdauer von Quellen/Relationen zunaechst
-  unveraendert lassen;
-- Exportinputs gemeinsam und explizit erfassen;
-- zwei Sitzungsinstanzen muessen technisch ohne gegenseitige
-  Testverschmutzung erzeugbar sein, ohne damit automatisch die Produktregel
-  fuer `Neue Maske` festzulegen.
-
-Diese ausdrueckliche Nutzerbestaetigung erfolgt nach Welle A. Bei Zustimmung
-wird A10 vor B1 implementiert und `CLAUDE.md` im selben Commit aktualisiert.
-Bei bewusster Verschiebung muss B1 trotzdem einen synchron erfassten Snapshot
-der drei heutigen Besitzer bilden; die verbleibende Grenze wird im
-Abschlussbericht genannt.
-
----
-
-# Welle B — Export und kleine klar begrenzte Bedienverbesserung
-
-## B1 · GESTRICHEN — die zwei automatischen Downloads bleiben
-
-**Nutzer-Ansage 2026-08-11.** Hier stand ein Umbau des Export-Klicks (ein
-eingefrorener Exportstand, zwei ausdrueckliche Anforder-Knoepfe mit
-Veraltet-Sperre), weil Chrome/Edge den zweiten automatischen Download nur
-nach einer Nachfrage zulassen und ein abgelehnter zweiter Download still
-verschwindet. Der Nutzer nimmt genau das bewusst in Kauf („es funktioniert
-ja so — kein Problem, wenn ich Zulassen druecken muss"). Es wird kein
-Export-Umbau gebaut und dieser Punkt nicht wieder vorgeschlagen (dasselbe
-Muster wie S1). Der volle Etappentext steht in der git-Historie. Damit hat
-Block 2 keinen Bau-Anteil mehr: A9 ist ein SE-Lauf des Nutzers, A10 eine
-Entscheidung (deren Umbau ohnehin nur nach eigenem Go kaeme).
-
----
-
-# Welle C — Ein Dialograhmen und Popup als echte Flaeche
-
-## C1 · Popup verwendet `DialogRahmen`, Inhalt bleibt Flow
-
-**GEBAUT 2026-08-11** (Commit `9f42965`). Der Text bleibt als Vertrag stehen;
-gebaut ist er. Nicht gebaut und mit C3.3 dauerhaft gestrichen: `aria-modal`
-und `aria-labelledby` (Punkte 8 und 9 unten) — Begruendung im Kopf von C3.3.
-
-### Warum getrennt
-
-Rahmenvereinheitlichung ist eine strukturell-visuelle Aenderung. Raster ist
-eine Datenmigration plus DnD-, Export- und Laufzeitaenderung. Dieselbe Datei
-ist kein Grund, beide Risiken in einen Commit zu packen.
-
-### Arbeit
-
-1. `PopupBlock` komponiert den vorhandenen `DialogRahmen`.
-2. Popup-Kinder bleiben in dieser Etappe exakt im heutigen Flow.
-3. Inline editierbarer Popup-Titel bleibt im Editor erhalten.
-4. Das **Dialogkopf-X** hat einen eindeutigen Vertrag:
-   - Runtime: dieses Popup schliessen;
-   - Editor: zur Hauptseite/aus der Preview wechseln, niemals loeschen.
-   Es ist nicht das spaetere Seiten-/Auswahlrahmen-Loeschkreuz.
-5. Kein neuer Escape-Vertrag fuer Popups. Ein verbundenes, aber unsichtbares
-   Popup darf insbesondere keinen globalen Escape-Listener aktiv halten.
-6. Overlay, Startgroesse, Resize, Titel und bestehender Innenabstand bleiben
-   erhalten oder jede sichtbare Abweichung wird vorab benannt.
-7. Im Popupmodus ist `DialogRahmen.inhalt` `overflow: hidden`; die
-   Popup-`.rumpf`-Surface ist alleiniger horizontaler und vertikaler
-   Scroll-Owner.
-8. `DialogRahmen` verknuepft seinen zugänglichen Namen per `aria-labelledby`
-   mit dem sichtbaren Titel.
-9. Solange Fokusbegrenzung C3.3 noch nicht fertig ist, setzt der Popupmodus
-   nicht vorzeitig `aria-modal=true`. Eine Accessibility-Zusage wird nicht
-   mehrere Commits vor ihrer Funktion exportiert.
-10. Nachschlagen wird in diesem Commit nicht veraendert.
-
-### Nutzerprobe Browser und SoftEngine
-
-- Popup mit leerem, kurzem und langem Inhalt;
-- Titel bearbeiten;
-- Breite/Hoehe aendern;
-- Dialogkopf-X in Runtime und Editor mit den beiden verschiedenen Solls;
-- konfigurierte Schliessen-Aktion;
-- kein Doppel-Scroll;
-- Nachschlagen sieht und arbeitet unveraendert.
-
-## C2 · Schema 6, zentraler Kind-Layoutvertrag und Popup-Raster atomar
-
-**Zusatzauftrag 2026-08-12 (Nutzer, U0-5):** der Baustein „Zeile"
-ENTFAELLT mit diesem Umbau. Die Migration loest bestehende Zeilen auf
-(Kinder ruecken in Reihenfolge an die Stelle der Zeile); Palette,
-Registry, Export-Test und Veralten-Positivliste ziehen mit. Bis C2
-bleibt Zeile unveraendert — im rasterlosen Popup ist sie der einzige
-Weg fuer Nebeneinander.
-
-### Ziel
-
-Store, Editor, DnD und Export entscheiden nicht mehr separat, ob Kinder in
-Flow oder Raster liegen. Es gibt **keinen eingecheckten Zwischenstand**, in
-dem der Vertrag schon Popup-Raster behauptet, Migration, Renderer oder Export
-aber noch Flow verwenden. Vorbereitung und Schnittbeweis bleiben uncommittet;
-der vollstaendige Schalter ist ein fachlich atomarer Commit.
-
-### Voraussetzungen
-
-- A0 sauber;
-- A2/A2.1 Migrationsschutz und differenzierte Migrationsausgaenge gruen;
-- Maskendatei-Backup vorhanden;
-- C1 bestanden.
-
-### Zentraler Layout- und Surface-Vertrag
-
-1. Eine runtime-neutrale zentrale Abfrage einfuehren, sinngemaess
-   `childLayoutOf(parentNodeOrRoot, definition) -> 'flow' | 'raster'`.
-   Die synthetische Wurzel wird ausdruecklich erkannt; sie besitzt keine
-   normale Registry-Definition.
-2. Layout wird nicht pauschal aus `pageBlock` abgeleitet. Eine explizite
-   runtime-sichere Faehigkeit `childLayout: 'flow' | 'raster'` beschreibt den
-   Kind-Layoutvertrag. `PopupBlock` deklariert `raster`; ein spaeterer anderer
-   Seitentyp koennte bewusst Flow verwenden.
-3. Vertrag:
-   - synthetische Wurzel: Raster;
-   - Popup-Definition: Raster;
-   - normale Container: ihre explizite Definition beziehungsweise Flow-
-     Standard.
-4. `Editor.addBlock`, Rasteroperationen, Canvas/PopupSeite, Export und
-   DnD lesen dieselbe Entscheidung. Seiten-/Auswahlgrenzen bleiben orthogonal
-   in `pageOps` und werden nicht aus dem Kindlayout abgeleitet.
-5. Keine konkreten Bausteinimports in generischem Code.
-6. `POPUP_RAND` beziehungsweise neutrale Flaechengeometrie in einen
-   runtime-neutralen gemeinsamen Ort verschieben; die heutige
-   Popup-Ausnahme im Regelwaechter danach entfernen.
-7. DnD-Flaechenmechanik wird gemeinsam extrahiert, nicht aus `Canvas` nach
-   `PopupSeite` kopiert.
-8. Surface-API liefert das reale Grid-Element und den realen Scroll-Owner
-   explizit, bevorzugt als `{ gridEl, scrollOwner }`. Fuer Popup sind beide
-   dieselbe `.rumpf`-Surface. Kein generisches
-   `shadowRoot.querySelector('.rumpf')` und kein `wrapper.parentElement` als
-   versteckter Vertrag.
-9. `CLAUDE.md` wird im selben Commit auf den neuen aktuellen Layout-/
-   `POPUP_RAND`-Stand gebracht.
-
-### Migration 5 -> 6
-
-1. Ausschliesslich direkte Nicht-Seiten-Kinder jedes Root-Popups migrieren.
-2. Sichtbare heutige Reihenfolge kommt aus `childIds`.
-3. Alte unsichtbare `rasterX/Y/W/H` nicht blind erhalten, da der Nutzer sie
-   im Flow nie kontrollieren konnte und Umsortieren nur `childIds` aenderte.
-4. **GESTRICHEN (Nutzer-Entscheidung 2026-08-16).** Hier stand: Popup-Istbreite
-   und Mindestbreite unter 520 px werden auf 520 px migriert. **Popups behalten
-   ihre Breite** — ein Popup mit 480 bleibt 480. Grund: die Spalten sind `1fr`
-   und wachsen ohnehin mit, eine Zwangsbreite haette nur bestehende Fenster
-   verstellt. Nicht wieder vorschlagen. (Mit demselben Beschluss faellt die
-   Mindest-Spurbreite in „Editor und DnD" Punkt 7.)
-5. **GESTRICHEN (Nutzer-Entscheidung 2026-08-16).** Hier stand eine exakte
-   Pixel-Umrechnungs-Formel (`columns = 24`, `row = 12`, `gap = 8`,
-   `padding = 12`, `border = 1.5`, `gridContentWidth = 493`, `colWidth`,
-   `ceil`-Regeln, Sonderfaelle fuer `auto`/`fill`/benannte Masse). **Grund: die
-   Umrechnungs-Maschine gibt es laengst** — sie laeuft seit Schema 3
-   (`state/migrations.ts`, `migrationsBreite`/`migrationsHoehe`) und ist ueber
-   Popups bereits gelaufen, weil `rasterFlaechenIds` jeden pageBlock nimmt.
-   Eine zweite Formel danebenzustellen haette nur eine zweite Wahrheit erzeugt.
-   **Noetig ist genau zweierlei:**
-   - direkte Popup-Kinder in `childIds`-Reihenfolge untereinander stapeln;
-   - ihre Groesse kommt aus den Registry-Startgroessen.
-   **Kosten dieser Vereinfachung, bewusst in Kauf genommen:** einmal am
-   Anfasser ziehen. Nicht wieder vorschlagen.
-6. **GESTRICHEN (Nutzer-Entscheidung 2026-08-16)** — Anhaengsel von Punkt 5.
-   Hier stand: Schema-1/2/3/4-Staende muessen beim direkten Upgrade auf 6
-   dasselbe Ergebnis liefern wie stufenweise Upgrades ueber 5. Ohne eigene
-   Formel gibt es nichts zu vergleichen: es migriert dieselbe eine Maschine.
-7. Validierungsreihenfolge:
-   - bei Schema < 6 werden die nie sichtbaren Rasterprops direkter
-     Popup-Kinder vor der Validierung ausdruecklich als ersetzbar behandelt;
-   - sichtbare Root-Rasterwerte werden vor der Migration validiert;
-   - neu erzeugte Popup-Werte werden danach validiert;
-   - bei Schema 6 werden alle aktiven Root-/Popup-Surface-Werte validiert;
-   - dormant Rasterprops normaler Flow-Kinder werden entfernt, statt spaeter
-     versehentlich aktiv zu werden.
-8. Gueltige Rasterwerte sind:
-   ganzzahlig und endlich, `x/y >= 0`, `w/h >= 1`, `x + w <= 24`.
-   Ungueltige Werte gehen in Quarantaene statt ausserhalb der Flaeche zu
-   exportieren.
-9. Nur direkte **Nicht-Seiten-Kinder** der Root-Surface werden nach `y,x`
-   stabil normalisiert. `pageBlock`-IDs bleiben in ihren bisherigen Root-Slots
-   und in ihrer relativen Reihenfolge; Popup-Reiter/Exportreihenfolge aendern
-   sich dadurch nicht.
-   **„Bytegleich" gilt fuer die Hauptflaeche NICHT mehr** (aufgeloest
-   2026-08-16). Hier stand: „Hauptseiten-Koordinaten und Props bleiben
-   bytegleich." Das widersprach dem Zusatzauftrag oben („Zeile entfaellt"),
-   denn eine Zeile lag auch auf der HAUPTFLAECHE — in der Referenzmaske
-   (`src/test/referenzMaske.ts`) ueber die volle Breite, mit zwei Bausteinen
-   darin. Beides zugleich ging nicht. **Aufgeloest zugunsten der
-   Nutzer-Entscheidung: Zeile wird ueberall aufgeloest, auch auf der
-   Hauptflaeche**; ihre Kinder erben das Zellband der Zeile (nebeneinander, in
-   deren Hoehe), darunter verschiebt sich nichts. Der Referenzabzug ist damit
-   absichtlich neu — so gebaut in `8338708`, dort steht die Begruendung auch im
-   Code-Kommentar.
-10. Kinder innerhalb von Gruppe oder anderen Flow-Containern bleiben
-   unberuehrt. (Zeile ist hier ersatzlos gestrichen, s. Punkt 9 und den
-   Zusatzauftrag im Kopf von C2 — nicht wieder einbauen.)
-11. Schema-6-Staende sind beim erneuten Laden idempotent.
-
-### Editor und DnD
-
-1. `PopupSeite` verwendet Rasterziel, Rastergeist und Raster-`NodeList`.
-2. Der in C2 definierte Surface-Vertrag liefert echtes Grid und Scroll-Owner.
-   `wrapper.parentElement` ist im Shadow DOM kein ausreichender Vertrag.
-3. Pointer-Berechnung beruecksichtigt vertikalen **und horizontalen**
-   Scrollstand des einen Scroll-Owners.
-4. Drop ist nur im Popup-Rumpf erlaubt, nicht auf Kopf, Rahmen oder Overlay.
-5. Ziehen aus der Palette, Verschieben, Resize, Undo und Redo benutzen
-   dieselbe Flaechenmechanik wie die Hauptseite.
-6. Es wird nicht faelschlich behauptet, Raster->Flow-Reparenting sei heute
-   vorhanden. Der generische neue Bedienweg wird separat in C4 gebaut.
-7. Geometrie/CSS: `.rumpf` bleibt `width:100%`, Grid und einziger
-   Scroll-Owner.
-   **GESTRICHEN (Nutzer-Entscheidung 2026-08-16):** die feste Rechnung
-   520 px Border-Box / 493 px Contentbreite und der Surface-Parameter
-   **Mindest-Spurbreite `12.875px`** samt
-   `repeat(24, minmax(var(--raster-min-track), 1fr))`. Grund: dieselbe
-   Entscheidung wie Migration Punkt 4 — Popups behalten ihre Breite, die
-   Spalten sind `1fr` und wachsen mit; eine Mindest-Spur haette einen
-   waagerechten Scrollbalken erzwungen, den niemand verlangt hat. Nicht
-   wieder vorschlagen.
-
-### Logische Reihenfolge
-
-1. Direkte Surface-Kinder werden innerhalb derselben Undo-Transaktion nach
-   `rasterY`, dann `rasterX` geordnet nach:
-   - Schema-Migration;
-   - Palette-Add/Drop;
-   - Move innerhalb derselben Surface;
-   - Cross-Parent-Move auf eine Surface;
-   - Duplikation.
-2. Gleichstaende behalten ihre bisherige relative Reihenfolge.
-3. Diese Reihenfolge wird als `childIds` gespeichert und ist damit auch
-   Export-DOM-, Tab- und Screenreader-Reihenfolge.
-4. Dieselbe Regel gilt fuer aktive Rasterkinder von Root und Popup. Bei Root
-   werden nur Nicht-Seiten-Kinder in ihren bestehenden Nicht-Seiten-Slots
-   ersetzt; `pageBlock`-Slots und -Reihenfolge bleiben unangetastet.
-5. Bei Ueberlappung bestimmt diese stabile DOM-Reihenfolge zugleich die
-   Paint-Reihenfolge: das spaeter in der logischen Reihenfolge liegende
-   Element liegt oben. Ziehen erzeugt keine versteckte zweite Z-Historie.
-
-### Export und Runtime
-
-1. Direkte Popup-Kinder werden mit Rasterstyles exportiert.
-2. `fuellt` wird anhand desselben Flaechenvertrags gesetzt wie auf der
-   Hauptseite.
-3. Export-DOM folgt der logischen `childIds`-Reihenfolge.
-4. Popup-Rumpf verwendet die gemeinsame Raster-CSS-Quelle.
-5. Padding bleibt bewusst popup-spezifisch; Gap kommt aus gemeinsamer Regel.
-6. Tabellen im Popup werden explizit geprueft, weil `fuellt` ihre
-   Seitengroessenmessung veraendert.
-7. Maschinelle Exaktpruefung:
-   - Popup-Host selbst ohne Grid-Item-Style und ohne `fuellt`;
-   - jedes direkte Nicht-Seiten-Kind mit Rasterstyle und `fuellt`;
-   - verschachtelte Flow-Kinder ohne beides;
-   - Popup-Rumpf mit gemeinsamer Grid-CSS plus eigenem 12-px-Padding.
-
-### Bestehende Tests
-
-- Schema-5-Popup mit umsortierten und mehrzeiligen Kindern;
-- Schema-6-Reload idempotent;
-- **GESTRICHEN (Nutzer-Entscheidung 2026-08-16):** „direkte Upgrades Schema
-  1/2/3/4/5 nach 6 sowie stufenweiser Vergleich" und „Golden-Faelle fuer
-  Pixel-, `auto`-, `fill`- und benannte Breite/Hoehe". Beide pruefen die in
-  Migration Punkt 5/6 gestrichene eigene Pixel-Formel; ohne sie migriert die
-  eine vorhandene Maschine, die diese Faelle seit Schema 3 abdeckt;
-- Root-Koordinaten/Props unberuehrt, Root-Lesereihenfolge bewusst
-  nur fuer Nicht-Seiten-Kinder normalisiert; zwei Popups behalten Slots und
-  Reiterreihenfolge;
-- verschachtelte Flow-Kinder unberuehrt;
-- echte Texte aus A2 bleiben erhalten;
-- Browser- und Maskendateipfad gleich;
-- ungueltige/out-of-range Rasterwerte gehen nicht still durch;
-- Add/Drop/Move/Duplikation normalisieren DOM-/Tab-Reihenfolge;
-- Ueberlappung hat die festgelegte stabile Paint-Reihenfolge;
-- Popup-Export enthaelt Rasterstyle und `fuellt` korrekt;
-- Referenzabzug zeigt den beabsichtigten Popup-Diff;
-- Runtime-Bundle enthaelt nur die erklaerten Aenderungen.
-
-## C3 · Popup-Identitaet, Modalitaet und sichere Bedienung
-
-Diese Punkte sind Teil der Popup-Fertigstellung, koennen aber in getrennten
-Commits nach C2 umgesetzt werden.
-
-### C3.1 Namen, Aktionen und Popup-Duplizieren
-
-**Der Namensvertrag ist GEBAUT (2026-08-16, Commit `a16437b`)** — eine zentrale
-Schreibfunktion (`state/pageOps.ts`, `schreibWert`): Seitennamen sind getrimmt,
-nie leer, nie doppelt. **Eine Abweichung vom Wortlaut unten, bewusst:** ein
-doppelter Name wird **hochgezaehlt** („Popup 2"), nicht abgelehnt — ein
-abgelehnter Tastendruck sieht aus wie eine kaputte Tastatur, und eine Warnung
-gibt es hier nicht (Warn-Anzeigen sind gestrichen, s. CLAUDE.md).
-
-- Eine zentrale Schreibfunktion trimmt Popup-Namen. Leer/Whitespace wird
-  abgelehnt; Eindeutigkeit gilt nach `trim().toLocaleLowerCase('de-DE')`;
-- UI verhindert den ungueltigen Schreibvorgang, Preflight prueft denselben
-  Vertrag defensiv nochmals;
-- Ersatzanzeige `Popup` darf nicht einen tatsaechlich leeren Runtime-Namen
-  verschleiern;
-- neue Seiten und Duplikate erhalten deterministisch `Popup`, `Popup 2`, ...;
-- Umbenennen aktualisiert weiterhin ueber stabile Popup-ID den Exportnamen;
-- Altbestand mit leerem/doppeltem Namen geht nicht still durch, sondern wird
-  mit konkreter Seite gemeldet;
-- **ZURUECKGESTELLT, nicht gestrichen (Nutzer-Entscheidung 2026-08-16):**
-  `pageBlock`-Duplizieren wieder freischalten (Referenzen umschreiben, Name
-  eindeutig, Kopie wird aktive Seite). **Grund: der Fall ist ueber die
-  Oberflaeche heute gar nicht erreichbar** — `state/duplizieren.ts:188` sperrt
-  Seiten bewusst, und ein Seiten-Baustein erscheint nie im Fluss, ist also
-  nicht anklickbar; Strg+D trifft ihn nie. Regel 10: gebaut wird es, wenn es
-  einmal wirklich vermisst wird. Der Riegel bleibt bis dahin, damit der Fall
-  auch nicht heimlich erreichbar wird.
-
-### C3.2 Genau ein aktives Popup
-
-- `POPUP_OPEN` trimmt/validiert den Zielnamen und loest **zuerst genau ein**
-  Ziel auf. Bei keinem oder mehreren Treffern bleibt der aktuelle Dialogstand
-  unveraendert und eine klare Laufzeitmeldung entsteht;
-- erst nach eindeutigem Treffer werden andere Popups geschlossen und das Ziel
-  geoeffnet;
-- DOM-Erstellreihenfolge darf keine Rolle spielen;
-- Test in beiden Erstellreihenfolgen;
-- Popup A darf Popup B oeffnen, ohne dass B hinter A liegt;
-- `POPUP_CLOSE` und Dialogkopf-X schliessen nur ihr eindeutig bestimmtes
-  Popup;
-- Testfaelle: fehlend, doppelt in fremd/manipuliertem HTML, bereits aktiv,
-  `OPEN A -> OPEN B` in einer Kette und A oeffnet B.
-
-### C3.3 Fokus beim Oeffnen
-
-**Auf einen Punkt eingedampft (Nutzer-Entscheidung 2026-08-16); so GEBAUT
-am selben Tag, Commit `f15466a`:**
-
-- Oeffnen verschiebt den Fokus in die erste bedienbare Stelle des INHALTS,
-  sonst aufs Schliessen-Kreuz. Im Editor nie (`data-ff-editor`).
-
-**GESTRICHEN — Vorrat, kein gemeldeter Fall. Nicht wieder vorschlagen:**
-`aria-labelledby` als zugaenglicher Name · Vorwaerts-/Rueckwaerts-Tab bleiben
-im Popup (Fokusfalle) · der **Basis-Oeffner** ausserhalb aller Popups samt
-seiner Buchhaltung ueber den Wechsel A -> B und dem Hauptmasken-Fallback ·
-`aria-modal=true`. Grund: das sind Zusagen fuer Bedienfaelle, die niemand
-gemeldet hat, jede mit eigener Buchhaltung zur Laufzeit. Folge fuer C1: dessen
-Arbeit-Punkt 9 („kein `aria-modal`, solange die Fokusgrenze fehlt") gilt damit
-dauerhaft, nicht nur uebergangsweise.
-
-### C3.4 Loeschen und Leerseiten
-
-- **Seitenreiter-/Auswahlrahmen-Loeschknopf**, Inspector und Delete-Taste
-  benutzen denselben Loeschvertrag. Das Dialogkopf-X aus C1 schliesst/verlaesst
-  nur und loescht niemals;
-- **GESTRICHEN (Nutzer-Entscheidung 2026-08-16):** „Popup mit Inhalt verlangt
-  ueber jeden Weg dieselbe Bestaetigung." Grund: das widerspricht der
-  Nutzer-Ansage aus U2 — **Loeschen fragt nie nach** (`state/loescheBaustein.ts`,
-  der Parameter `frageNach` ist dort ersatzlos weg; Netz ist Strg+Z). Ein
-  Popup ist davon nicht ausgenommen. Nicht wieder vorschlagen;
-- bei eingehenden Popup-Aktionen ist Loeschen blockiert. Die Verwendungen
-  werden aufgelistet und muessen zuerst entfernt oder umgebogen werden;
-- keine stille Kaskade und kein automatisches Entfernen ganzer Aktionsschritte;
-- Undo stellt kompletten Unterbaum wieder her;
-- Hauptseite zeigt Leerhinweis, auch wenn global nur Popup-Knoten existieren;
-- leeres Popup zeigt eigenen klaren Drop-Hinweis.
-
-## C4 · Ein echter generischer Reparenting-Weg — ZURUECKGESTELLT
-
-**ZURUECKGESTELLT, nicht gestrichen (Nutzer-Entscheidung 2026-08-16).** Die
-Aktion „Verschieben nach …" wird vorerst nicht gebaut. **Grund: derselbe wie
-beim Popup-Duplizieren in C3.1** — der Bedienweg ist heute gar nicht
-erreichbar, und die Etappe baut sieben neue Regeln (Zielliste, Flow->Raster,
-Raster->Flow, Root<->Popup, Seitenwechsel mit Auswahl, Undo als EIN Schritt)
-fuer einen Wunsch, den niemand geaeussert hat. Regel 10: gebaut wird es, wenn
-es einmal wirklich vermisst wird. Der Text unten bleibt als fertiger Bauplan
-stehen, damit er dann nicht neu erdacht werden muss.
-
-### Belegtes Problem
-
-Direkte Rasterknoten sind heute nicht HTML5-draggable und Pointer-Move bewegt
-nur innerhalb derselben Surface. Ein vorhandener Raster->Flow-Weg darf daher
-nicht behauptet werden.
-
-### Arbeit
-
-1. Ausgewählter Block erhaelt am Ding eine generische Aktion
-   `Verschieben nach ...`.
-2. Ziele kommen ausschliesslich aus Registry-/Parent-Vertrag und umfassen:
-   - gueltigen Flow-Container derselben Seite;
-   - Hauptflaeche;
-   - andere Popup-Seite, soweit der Typ dort erlaubt ist.
-3. Flow->Raster vergibt eine freie Rasterzelle und normalisiert `childIds`.
-4. Raster->Flow entfernt/ignoriert Surface-Position nur im neuen Parent,
-   ohne andere Props zu verlieren.
-5. Raster->Raster (Root<->Popup) behaelt `w/h`, klemmt `w` auf maximal 24 und
-   setzt deterministisch `x=0`, `y=naechsteFreieZeile` im Ziel; danach wird
-   dessen logische Reihenfolge normalisiert.
-6. Nach Cross-Page-Move wird die Zielseite aktiv und der verschobene Block
-   bleibt sichtbar ausgewaehlt; der Inspector zeigt ihn sofort. Undo/Redo
-   aktiviert entsprechend Ziel-/Quellseite oder filtert die Auswahl, niemals
-   bleibt eine unsichtbare Auswahl.
-7. Move und Undo/Redo sind je ein Zustandsschritt; kein Clone-and-delete.
-
-### Nutzerprobe
-
-- Flow-Container -> Popup-Raster;
-- Popup-Raster -> sichtbarer Flow-Container;
-- Root -> Popup und Popup -> Root;
-- Ziel ist bereits belegt und Block ist breiter als freie Stelle;
-- unzulaessiges Ziel erscheint nicht;
-- nach Move ist Zielseite sichtbar und Inspector zeigt den richtigen Block;
-- Export, Reload und Undo/Redo behalten Parent, aktive Seite, Auswahl und
-  Layout korrekt.
-
-### Nutzer-Abnahmematrix fuer Welle C
-
-1. Altes Schema-5-Popup vor und nach Migration vergleichen.
-2. Popup mit bisherigen 240-/400-px-Werten und mit grosser Breite: **jedes
-   behaelt seine Breite** (die 520-px-Zwangsmigration ist gestrichen,
-   s. Migration Punkt 4).
-3. Elemente einfuegen, verschieben, vergroessern, duplizieren, Undo/Redo.
-4. **Hinfaellig:** hier stand „Zeile mit verschachteltem Datum bleibt Flow".
-   Den Baustein Zeile gibt es nicht mehr (s. Zusatzauftrag im Kopf von C2).
-   Zu pruefen ist stattdessen: die Kinder einer frueheren Zeile liegen nach
-   dem Laden NEBENEINANDER in einem Zellband, nichts darunter ist verrutscht.
-5. Palette-Drop weit oben erzeugt passende DOM-/Tab-Reihenfolge.
-6. DnD nach vertikalem und horizontalem Scroll; Kopf, Rahmen und Overlay
-   zeigen keinen Geist und akzeptieren keinen Drop.
-7. Ueberlappung folgt der festgelegten stabilen Paint-Reihenfolge.
-8. **Entfaellt vorerst** — Reparenting in beide Richtungen und zwischen
-   Root/Popup ist mit C4 zurueckgestellt.
-9. Tabelle beginnt geschlossen, erhaelt Daten, oeffnet und misst korrekt;
-   Schliessen/Oeffnen dupliziert weder Listener noch Observer.
-10. Speichern, Reload, Maskendatei speichern und erneut oeffnen.
-11. Export in SoftEngine: Positionen entsprechen Editor.
-12. Tab folgt sichtbar oben-links nach unten-rechts.
-13. Zwei Popups in beiden Erstellreihenfolgen gegenseitig oeffnen.
-14. Fokus **nach dem Oeffnen** sitzt in der ersten bedienbaren Stelle des
-    Inhalts. Tab-Grenze und Fokus nach Wechsel/Schliessen sind mit C3.3
-    gestrichen und werden nicht geprueft.
-15. Leerer Name, nur Leerzeichen und ein Name, den es schon gibt: der Name
-    landet getrimmt, nie leer, und ein doppelter wird **hochgezaehlt** (nicht
-    abgelehnt, s. C3.1). Ein fehlendes Runtimeziel laesst das aktuelle Popup
-    stehen.
-16. Dialogkopf-X und Seiten-Loeschknopf zeigen ihre verschiedenen Wirkungen.
-17. Loeschen ueber Seitenknopf, Inspector und Tastatur verhaelt sich gleich —
-    **ohne Rueckfrage** (s. C3.4); eingehende Aktionen blockieren es mit
-    Verwendungsanzeige.
-18. Maske nur mit Popup und leere Hauptseite zeigt korrekten Leerzustand.
-
----
-
-# Welle D — Eine echte Tabelle im Nachschlagen
-
-## D · BESCHLUSS 2026-08-12 (Nutzer, im Chat entschieden)
-
-Der Nutzer wollte wissen, ob das Nachschlage-Fenster nicht einfach ein POPUP
-sein sollte, das er selbst auf der Flaeche baut und ans Feld bindet.
-**Entschieden: NEIN.** Das Nachschlagen bleibt ein fluechtiges Fenster —
-kein Baustein, nicht im Baum, nicht im Export. Es bekommt die echte Tabelle,
-waehlbare Spalten, und eingestellt wird es AM DING.
-
-**Warum der Popup-Weg abgelehnt ist (nicht wieder vorschlagen):**
-
-1. Ein Popup wird EXPORTIERT. Jedes Nachschlage-Feld haenge ein weiteres
-   Popup an die Maskendatei — mit Namen, id, Loeschen/Duplizieren/Undo, von
-   Hand aufgebaut. Mehr Gefummel, nicht weniger; das war der Anlass der
-   ganzen Welle U.
-2. **Ein Popup weiss nicht, WER es geoeffnet hat.** Zwei Felder am selben
-   Popup: ein Klick auf eine Zeile fuellt BEIDE, still und falsch. Um das zu
-   heilen, brauchte die Laufzeit den Begriff „wer hat gefragt, wohin geht
-   die Antwort" — einen Rueckgabeweg quer durch die Maske. Den hat sie
-   nicht und soll sie nicht bekommen.
-3. Das fluechtige Fenster hat diese Fehlerklasse gar nicht: es gehoert von
-   Natur aus zu genau EINEM Feld.
-
-**Was heute fehlte, falls es doch je gebaut wird** (am Code nachgesehen
-2026-08-12, damit niemand raet): das Formularfeld hat genau EIN Ereignis,
-`onChange` „Wert geaendert" (`FormFeldBlock.ts:139`) — kein „angeklickt",
-ein Feld kann also kein Popup oeffnen. Die Tabelle hat GAR KEIN Ereignis
-(`blockEvents` gibt es nur an Knopf, Formularfeld und Kanban) — „Zeile
-geklickt -> Popup zu" existiert nicht. Plus der Rueckgabeweg aus Punkt 2.
-Drei neue Begriffe, nicht einer.
-
-### Was damit beschlossen ist
-
-1. Nachschlagen bleibt ein fluechtiges Laufzeit-Fenster.
-2. Es zeigt die ECHTE Tabelle (D1–D3). Suche, Sortieren per Spaltenklick
-   und Blaettern kommen damit mit — die Tabelle kann sie bereits
-   (`TabelleBlock.ts:152` Suche, `:266` klickSortiere).
-3. Die SPALTEN sind waehlbar (D4).
-4. Eingestellt wird am Ding: Lupe IM EDITOR klicken -> das Fenster geht
-   ueber der abgedunkelten Maske auf -> Spalten stellen -> zu. Nicht mehr
-   blind ueber zwei Klapplisten im Inspector.
-
-### Durchdacht bis zum Schluss — diese Punkte sind entschieden, nicht offen
-
-- **Die Spalten wohnen am FELD, nicht an der Quelle.** Zwei Felder auf
-  dieselbe Quelle duerfen verschiedene Spalten zeigen.
-- **„Angezeigt wird" und „Gespeichert wird" BLEIBEN BEIDE.** Sie sind nicht
-  dasselbe wie Spalten: „Angezeigt wird" ist der Wert, den das FELD nach der
-  Wahl traegt, „Gespeichert wird" der Technikwert, den es sich merkt. Wer
-  sie fuer Spalte 1 und 2 haelt und loescht, nimmt dem Feld seinen Inhalt.
-- **Die Spalten-Einstellung ist EIN Bauteil, benutzt von Tabelle UND
-  Nachschlagen** — nicht zweimal gebaut. Sonst entsteht genau das Paar, das
-  U3 gerade aufloest. Spaltenart (Text/Zahl/Datum/Status/„Bild + Name")
-  kommt aus der Tabelle, es wird kein zweiter Begriff erfunden.
-- **Das Overlay ist EIN Mechanismus, zweimal benutzt** — dasselbe
-  „ueber der abgedunkelten Flaeche bearbeiten" wie beim Popup (U0-7). Wer
-  von beiden zuerst gebaut wird, baut ihn; der andere komponiert ihn.
-- **Im Editor uebernimmt ein Zeilenklick NICHTS.** Dort dient das Fenster
-  dem Einstellen, nicht dem Bedienen — sonst schriebe der Editor Demo-Daten
-  ins Feld (Regel 7: der Editor erfindet nie Daten).
-- **Bestand ohne Spalten-Einstellung zeigt weiter die heutigen zwei Spalten**
-  (Anzeige + Wert). Kein Zwang, kein Verlust.
-- **Export-Bytes:** die Spalten reisen als Attribut am FELD mit, wie die
-  heutigen zwei Einstellungen. Steht die Einstellung auf Standard, wird
-  NICHTS geschrieben (Standardwert-Attribute schreibt der Export nicht) —
-  das MARKUP einer Altmaske bleibt damit unveraendert. Das ist die
-  Abnahmebedingung von D4, nicht eine Hoffnung. Die exportierte DATEI
-  aendert sich trotzdem, s. „Pflicht in JEDER D-Etappe" gleich unten.
-
-### Pflicht in JEDER D-Etappe (nachgetragen 2026-08-17)
-
-Stand in keiner der Etappen und fehlte damit ueberall:
-
-- **Die exportierte DATEI aendert sich in JEDER D-Etappe** — zwangslaeufig,
-  ohne dass jemand etwas am Markup anfasst. Das Laufzeit-Buendel steckt in
-  jeder Maskendatei (`export/exportMask.ts`), und D baut am Tabellen-Baustein,
-  der darin liegt. Wer „byte-gleich" liest, meint IMMER nur das Markup, nie
-  die Datei.
-- **Der Referenzabzug aendert sich davon NICHT** (am Code nachgesehen
-  2026-08-17, `referenzabzug.test.ts` `ohneBuendel`): das Buendel wird vor
-  dem Vergleich HERAUSGESCHNITTEN, der Abzug zeigt genau das Markup. Also:
-  `npm run build:runtime` gehoert in jede D-Etappe, `npx vitest run -u`
-  aber NUR, wenn die Etappe das Markup absichtlich aendert — und dann wird
-  der Diff GELESEN, nicht durchgewunken. Bleibt der Abzug bei einer reinen
-  Laufzeit-Aenderung gruen, ist das der Beweis, dass das Markup steht, kein
-  Versehen. (Das Buendel selbst bewachen `check:runtime` und `export.test.ts`.)
-- **Und danach eine SoftEngine-Probe durch den Nutzer** (Regel 9: Browser-
-  und SE-Test macht der Nutzer). Der bauende Chat liefert dazu eine kurze
-  Klickanleitung und sagt, was er nicht pruefen konnte.
-
-## D0 · Nur bei Bedarf verhaltensneutral schneiden
-
-Vor D1 wird anhand des geplanten Diffs entschieden, welche Datei wirklich
-geteilt werden muss.
-
-- `FormFeldBlock.ts` wird nicht vorsorglich geschnitten, wenn die neue Logik
-  dort nicht entsteht.
-- Wahrscheinlicher braucht `TabelleBlock.ts` einen thematischen Schnitt fuer
-  Datenbesitz, Aktivierung oder Fokus.
-- Jeder noetige Schnitt ist ein eigener byte- und verhaltensneutraler Commit.
-
-## D1 · Allgemeiner Tabellenzeilen-Aktivierungsvertrag (GEBAUT 2026-08-17, `d2e029f`)
-
-### Ziel
-
-Eine Tabellenzeile kann unabhaengig von Geber-ID und dauerhafter Auswahl
-allgemein aktiviert werden.
-
-### Vertrag
-
-1. Ein einziger interner Pfad behandelt Maus und Tastatur.
-2. Semantik ist vollstaendig und nicht nur ein fokussierbares `div`:
-   Tabellencontainer `role=table`, Kopf-/Datenzeilen `role=row`, Kopfzellen
-   `role=columnheader`, Datenzellen `role=cell`; `aria-selected` nur bei echter
-   Auswahlsemantik.
-3. Jede aktivierbare Datenzeile behaelt wie das heutige Nachschlagen
-   `tabindex=0`. Es wird in diesem Umbau kein halbes roving-tabindex ohne
-   Pfeilnavigation eingefuehrt. Eine spaetere Roving-Variante waere nur mit
-   vollstaendiger Up/Down/Home/End-Navigation ein eigener Auftrag.
-4. Enter aktiviert die Zeile; weitere Tasten werden nur mit klarer Semantik
-   hinzugefuegt.
-5. Exaktes generisches Custom Event `ff-zeile-aktiviert`:
-   - `bubbles: true`;
-   - `composed: true`;
-   - Detail `{ rohzeile, rohIndex, ansichtIndex }`;
-   - `rohIndex` zeigt stabil in den unveraenderten gelieferten Rohdatensatz;
-   - `ansichtIndex` ist die Position nach Filter/Sortierung auf der aktuellen
-     Seite.
-6. Aktivierung funktioniert ohne `data-ff-id` und ohne Auswahl-Geber.
-7. Normale Tabelle darf bei Aktivierung zusaetzlich ihre heutige Auswahl
-   toggeln.
-8. Aktivierung und Auswahl-Toggle bleiben getrennte Begriffe und Funktionen.
-9. Nach Sortieren/Filtern/Blaettern wird Zeilenfokus nur restauriert, wenn vor
-   dem Re-Render tatsaechlich eine Datenzeile DOM-Fokus hatte. Fokus in Suche,
-   Tabellenkopf oder Paging bleibt dort. War eine Zeile fokussiert, bleibt
-   dieselbe Rohzeile fokussiert, wenn sichtbar; sonst erste Datenzeile, bei
-   leerer Seite der Tabellencontainer.
-
-### Nutzerprobe
-
-- normale Tabelle per Maus und Enter aktivieren;
-- Auswahlverhalten bleibt wie vorher;
-- sortieren, filtern, Seite wechseln;
-- kein doppeltes Event;
-- Fokus ist sichtbar und nachvollziehbar.
-
-## D2 · Allgemeiner Modus fuer bereitgestellte Daten (GEBAUT 2026-08-17, `b087e30`)
-
-### Ziel
-
-Dieselbe Tabellenkomponente kann entweder ihre normalen SoftEngine-Daten
-besitzen oder Zeilen von einem umgebenden Verbraucher erhalten.
-
-### Vertrag
-
-1. Expliziter Besitzmodus, sinngemaess:
-   - `softengine`;
-   - `provided`.
-2. Modus wird vor DOM-Anschluss gesetzt.
-3. Im `provided`-Modus:
-   - kein `connectTable`;
-   - kein `bootSe`;
-   - kein vorgetaeuschtes `source`-Attribut;
-   - eine einzige atomar gesetzte, nicht als HTML-Attribut reflektierte API
-     `bereitgestellteZeilen` ist die Wahrheit:
-     `{ rohzeile, zellen, zusatz }[]`;
-   - interne `datenzeilen`, `rohzeilen` und `zusatzzeilen` werden nur gemeinsam
-     daraus abgeleitet, niemals einzeln vom Verbraucher gesetzt;
-   - `datenGeliefert/hatDaten` wird ausdruecklich aus diesem Modus bestimmt.
-4. Beim Moduswechsel werden alle abgeleiteten Felder konsistent
-   zurueckgesetzt:
-   - Anzeigezeilen;
-   - Rohzeilen;
-   - Zusatzdaten;
-   - Auswahlindex;
-   - Filter-/Suchzustand;
-   - Paging;
-   - Messzustand;
-   - `durchAuswahlGefiltert = false`.
-5. Beim Besitzmoduswechsel wird nur das SoftEngine-Datenabo getrennt oder
-   aufgebaut. Der ResizeObserver bleibt in beiden Modi aktiv, solange die
-   Tabelle verbunden und sichtbar ist, und wird erst beim DOM-Abbau entfernt.
-6. Normale Tabellen bleiben byte- und verhaltensgleich, soweit die neue
-   allgemeine Aktivierung keinen bewusst dokumentierten Exportdiff erfordert.
-
-### Bestehende Tests
-
-- provided vor Connection;
-- keine SoftEngine-Anmeldung;
-- Datenpush ueberschreibt provided nicht;
-- Rohzeile bleibt vollstaendig;
-- Wechsel/Abbau hinterlaesst keine Auswahl- oder Filterreste;
-- beide Richtungen `softengine -> provided -> softengine` bleiben atomar;
-- normale Tabelle hydriert weiterhin mehrfach korrekt.
-
-## D3 · Nachschlagen komponiert `ff-tabelle` (GEBAUT 2026-08-17, `556e6b4`)
-
-### Ziel
-
-Die manuell gebaute Nachschlage-Zeilenliste wird vollstaendig durch die echte
-Tabellenkomponente im bereitgestellten Modus ersetzt.
-
-### Arbeit
-
-1. Bestehender `DialogRahmen` bleibt Rahmen.
-2. Nachschlagen friert die relevante Datenmenge beim Oeffnen wie heute ein.
-   Ein Datenpush waehrend des offenen Dialogs veraendert diese Ansicht nicht;
-   erst Schliessen und erneutes Oeffnen zeigt den neuen Stand.
-3. `holeEintraege` inklusive bestehender Auswahlfolge-/Folgefilterung bleibt
-   die **eine** Wahrheit fuer Dialog und automatische Einzeluebernahme. Ein
-   Beispiel `Kunde -> nur dessen Tiere` muss vor und nach Umbau identisch sein.
-4. Es erzeugt genau die fachlich benoetigten Spalten:
-   - Anzeigename;
-   - Technikwert;
-   vorerst als Text, ohne erfundene Bild-/Statuskonfiguration.
-5. Tabelle erhaelt die atomaren `bereitgestellteZeilen` mit vollstaendigen
-   Rohzeilen.
-6. Allgemeines Zeilenaktivierungs-Event waehlt die Rohzeile und schliesst den
-   Dialog.
-7. Genau ein Treffer wird weiterhin ohne geoeffneten Dialog automatisch ueber
-   denselben `holeEintraege`-Stand uebernommen.
-8. Maus und Enter liefern dieselbe Zeile.
-9. Suche, Kein-Treffer-Zustand, Paging und Groessenmessung verwenden die
-   allgemeinen Tabellenfaehigkeiten.
-10. Im Modus mit fuellender eingebetteter Tabelle ist
-   `DialogRahmen.inhalt` `overflow:hidden`; allein der Tabellenkoerper scrollt.
-11. Fokus geht beim Oeffnen sicher in die Suche und nach Schliessen/Übernahme
-   zur Lupe beziehungsweise zum ausloesenden Feld zurueck.
-12. Vorwaerts- und Rueckwaerts-Tab bleiben im Nachschlagedialog; der sichtbare
-    Titel ist per `aria-labelledby` verknuepft. `aria-modal=true` wird nur mit
-    funktionierender Fokusgrenze behauptet.
-13. Mehrfaches Oeffnen/Schliessen erzeugt keine Listener- oder
-   ResizeObserver-Dopplung.
-14. Alte handgebaute Tabellenzeilen, Styles und Eventpfade werden restlos
-    entfernt. Keine zweite Darstellung bleibt als „Fallback" liegen.
-
-### Bewusste sichtbare Entscheidungen
-
-- Tabellenkopf, Sortierbarkeit, Technikwert-Schrift und Footer werden vor der
-  Implementierung anhand des bestehenden Tabellenverhaltens benannt.
-- Marken, Tierbilder oder spezielle Spaltenbreiten erscheinen nur, wenn die
-  Spaltenart dies wirklich konfiguriert. Zwei Textspalten erfinden sie nicht.
-- WinUI ohne verlaessliche ResizeObserver-Messung behaelt einen ehrlichen
-  begrenzten Fallback statt geratenem Vollbildverhalten.
-
-### Nutzer-Abnahmematrix Welle D
-
-1. Nachschlagen mit vielen, wenigen und null Datensaetzen.
-2. Suche mit Treffer und ohne Treffer.
-3. Mauswahl und Enterwahl derselben Zeile.
-4. Paging und Sortierung, sofern bewusst aktiviert.
-5. Vollstaendige Rohzeile befuellt das Zielfeld korrekt.
-6. Auswahlfolge `Kunde -> nur dessen Tiere` und automatische Uebernahme bei
-   genau einem Treffer.
-7. Mehrfach oeffnen, schliessen, erneut oeffnen.
-8. Datenpush waehrend des offenen Dialogs: Ansicht bleibt eingefroren;
-   nach Schliessen/erneutem Oeffnen erscheint der neue Stand.
-9. Fokus zurueck zur Lupe.
-10. Normale Tabelle ausserhalb des Dialogs unveraendert.
-11. SoftEngine-Probe in WinUI und, soweit verfuegbar, WebUI.
-
-## D4 · Spalten waehlen — eingestellt am Ding (GEBAUT 2026-08-17, `82b5f92`)
-
-**Laeuft NACH D3.** D3 baut die echte Tabelle ins Fenster, mit den heutigen
-zwei Spalten — bis dahin gibt es sichtbar nichts einzustellen. D4 macht die
-Spalten waehlbar. Zwei Etappen, nicht eine: D3 baut unter der Haube um, D4
-wird sichtbar bedienbar; klemmt es, weiss der Nutzer sonst nicht, woran.
-
-**GESPERRT, so wie es hier steht (Pruefung 2026-08-17).** Nicht an einen
-Chat geben, bevor das geklaert ist — Punkt 2 unten setzt eine Overlay-
-Bearbeitung voraus, DIE ES NICHT GIBT: sie steckt ungebaut in U0-7, und
-Popups werden im Editor heute als SEITE bearbeitet (`Canvas.tsx` ->
-`PopupSeite`), nicht ueber der abgedunkelten Flaeche. D4 muesste den
-Mechanismus also miterfinden, ohne Bauanleitung. Dazu haengt das
-Nachschlage-Fenster zur Laufzeit am Dokument statt im Baustein-Rahmen —
-das Ereignis der Spalten-Einstellung kaeme dort nie an. Beides ist eine
-Entwurfsfrage, keine Fleissarbeit: erst U0-7 bauen (oder entscheiden, wie
-das Fenster im Editor verankert wird), dann D4 neu aufschreiben.
-
-**Arbeit:**
-
-1. Neue Feld-Eigenschaft: welche Felder der Quelle als SPALTEN erscheinen.
-   Sie wohnt am FELD (zwei Felder auf dieselbe Quelle duerfen verschiedene
-   Spalten zeigen), nicht an der Quelle.
-2. Eingestellt wird AM DING: die Lupe im Editor oeffnet dasselbe Fenster
-   ueber der abgedunkelten Flaeche; dort werden die Spalten gestellt.
-   Der Mechanismus ist DERSELBE wie die Popup-Overlay-Bearbeitung (U0-7) —
-   wer zuerst gebaut wird, baut ihn, der andere komponiert ihn. Kein
-   zweites Overlay.
-3. Die Spalten-Einstellung selbst ist EIN Bauteil, geteilt mit der Tabelle.
-   Spaltenart (Text/Zahl/Datum/Status/„Bild + Name") kommt von dort; es
-   wird kein zweiter Begriff erfunden.
-4. Migration: Bestand ohne die Eigenschaft zeigt weiter Anzeige + Wert.
-5. Im Editor uebernimmt ein Zeilenklick NICHTS (Regel 7).
-
-**Fertig, wenn:**
-
-- Spalten waehlbar, Editor und laufende Maske zeigen dieselben;
-- „Angezeigt wird" und „Gespeichert wird" gibt es unveraendert weiter —
-  sie sind NICHT durch Spalten ersetzt (s. Beschluss oben);
-- **das MARKUP einer Altmaske bleibt unveraendert** — kein neues Attribut,
-  kein geaenderter Wert (Standard-Einstellung schreibt kein Attribut). Das
-  ist die harte Grenze dieser Etappe, keine Hoffnung. Die DATEI aendert sich
-  trotzdem (Laufzeit-Buendel, s. „Pflicht in JEDER D-Etappe"); geprueft wird
-  am Diff des Referenzabzugs, nicht an der Dateigroesse;
-- der Referenzabzug bleibt gruen, solange die Referenzmaske keine
-  Spalten stellt.
-
-**Nutzerprobe:** Nachschlage-Feld im Editor anlegen, Lupe klicken, Spalten
-stellen, schliessen, speichern, neu laden — Einstellung ist da. In der
-Maske: Lupe zeigt genau diese Spalten, Suche und Sortieren arbeiten,
-Uebernahme fuellt das Feld wie vorher.
-
----
-
-# Welle E — Der grosse Innenumbau
-
-Diese Welle ist der Teil, den Fassung 5 zu stark auf „spaeter" verschoben hat.
-Sie erfolgt erst nach den sichtbaren Vertragsklaerungen, damit die Registry
-nicht gleichzeitig mit Popup und Tabelle umgebaut wird.
-
-## E1 · Vollstaendiges Registry-Inventar und Waechter zuerst
-
-### Vor jedem Metadatenumbau erfassen
-
-Fuer jeden Bausteintyp:
-
-- `blockType`;
-- `tagName`;
-- Kategorie;
-- Default-Props und deren Reihenfolge;
-- Parent-/Child-Faehigkeiten;
-- Resize-/Raster-Faehigkeiten;
-- Bindungsstellen;
-- Blockevents;
-- Visible-When-/Auswahlfaehigkeiten;
-- Exportattribute;
-- reine Editor-Angaben wie Icon, Hilfetext und Palettenname.
-
-Das Inventar wird im Plan-/Review-Chat vorgelegt, nicht als neue dauerhafte
-Dokumentationsablage.
-
-Der Regelwaechter muss vor der Migration beweisen:
-
-- zwei unabhaengig aus realen Code-/Registrierungseinstiegen abgeleitete
-  Mengen stimmen ueberein; keine manuelle Soll-Typenliste;
-- exakt alle tatsaechlichen Bausteintypen erkannt;
-- keiner doppelt;
-- keiner fehlt;
-- jeder weiterhin in Exporttest, Positivliste und Referenzabzug vertreten;
-- keine erkannte Definition kann faelschlich gruen sein: wird eine davon
-  entfernt oder umbenannt, muss der Waechter rot werden — an mehreren
-  erprobt, nicht an einer.
-
-Eine ANZAHL steht hier bewusst nicht mehr (die alte Fassung sprach von
-„elf" — es sind heute 15). Die Wahrheit ist die Import-Liste in
-`src/blocks/register.ts`; dagegen wird gegengeprueft, nicht gegen eine Zahl
-im Plan.
-
-**Was E1 NICHT abdeckt — ausdruecklich mitzupruefen:** der Waechter zaehlt
-TYPEN, nicht FELDER. Eine Faehigkeit wird heute an DREI Stellen gefuehrt:
-deklariert am Baustein (`core/blocks/BlockComponent.ts`), beschrieben in der
-Definition (`core/blocks/BlockDefinition.ts`) und von Hand hinueberkopiert
-(`blocks/base/BasicBlock.ts`, rund zwei Dutzend Kopierzeilen). Vergisst
-jemand eine Kopierzeile, verschluckt der Baustein die Faehigkeit STILL —
-alle Typen sind da, der Waechter bleibt gruen. E1 braucht dafuer eine eigene
-Probe, oder E2 raeumt den Drei-Stellen-Vertrag ab und der Satz zieht dorthin
-um. Ungeprueft stehen lassen darf man ihn nicht.
-
-## E2 · Eine runtime-sichere Baustein-Definition
-
-### Ziel
-
-Faehigkeiten und Defaults haben eine kanonische runtime-sichere Quelle.
-
-### Grenze
-
-`editorAngaben` bleibt getrennt. Icons, React-/Lucide-Werte und reine
-Editor-Hilfen duerfen nicht in das Runtime-Bundle jeder SoftEngine-Maske
-gelangen.
-
-### Arbeit
-
-1. `BlockCategory` und andere von Core/Editor gemeinsam benoetigte reine Typen
-   vorab an einen neutralen runtime-sicheren Ort verschieben.
-2. Direkte Metadatenleser als Abhakliste pruefen:
-   - `editorAngaben`;
-   - Kanban-Runtime;
-   - `seAktionen`;
-   - Kindtyp-/Parentpruefung;
-   - Tabellenbindung;
-   - Default-/Export-Anker;
-   - Regelwaechter und Runtime-Einstieg.
-3. Runtime-sichere Definition enthaelt Typ, Tag, Defaults und Faehigkeiten.
-4. `BasicBlock` liest Metadaten aus dieser Definition, kopiert sie nicht mehr
-   als unabhaengige statische Wahrheiten.
-5. Registry liest dieselbe Definition.
-6. Editor-Angaben referenzieren den Typ, bleiben aber in editor-only Modul.
-7. Vorhandene Default-Reihenfolge bleibt deterministisch, damit nicht jede
-   Maske ohne fachlichen Grund Exportbytes aendert.
-8. Importgraph wird vor und nach dem Umbau geprueft:
-   - Core importiert keine konkreten Bausteine;
-   - Runtime importiert keine Editor-Icons;
-   - keine neuen Zyklen.
-9. Toter Instanz-Metadaten-Getter wird entfernt, wenn nachweislich kein Leser
-   verbleibt.
-10. `CLAUDE.md` wird im selben Commit an die neue kanonische Wahrheit
-    angepasst.
-
-### Vorgehen
-
-- ein repraesentativer Baustein darf lokal/uncommittet als Schnittbeweis
-  dienen;
-- Diff und Runtime-Bundle daran pruefen und den Probediff danach in die
-  vollstaendige Migration integrieren;
-- committed wird erst die vollstaendige Migration ohne dauerhaften Dual-Path
-  aus alter und neuer Registry;
-- mechanische Migration der uebrigen Bausteine bleibt derselbe klar begrenzte
-  Architekturauftrag;
-- keine gleichzeitige sichtbare Eigenschaftsaenderung.
-
-### Fertig, wenn
-
-- neue Faehigkeit an genau einer runtime-sicheren Stelle deklariert wird;
-- Defaultwert genau eine kanonische Quelle hat;
-- Waechter exakt alle Definitionen erkennt;
-- Runtime-Bundle keine Editor-Abhaengigkeit traegt;
-- Referenzexport ohne unbeabsichtigten Diff bleibt;
-- alte parallele Metadatenlisten entfernt sind.
-
-## E3 · Property-Schreibnaht absichern
-
-### Ziel
-
-`Editor.updateProperty` speichert keine Tippfehler oder Eigenschaften, die der
-Baustein gar nicht besitzt und erst beim naechsten Reload verschwinden.
-
-### Arbeit
-
-1. Gegen die kanonische Definition beziehungsweise erlaubte Property-Menge
-   validieren.
-2. Raster-/interne Props haben einen ausdruecklichen zentralen Vertrag.
-3. Ungueltige Property wird **vor** `pushHistory`, State-Zuweisung, Version/
-   `notify` und Autosave abgelehnt. Sie veraendert weder Baum noch Undo/Redo,
-   Listenerbenachrichtigung oder Speicherplanung.
-4. Entwicklerdiagnose nennt Blocktyp und Propertyname und wird fuer denselben
-   Fehler dedupliziert statt bei jedem Render erneut gespammt.
-5. Alle heutigen Aufrufer inventarisieren; kein generischer Doppel-Cast wird
-   nur aus optischen Gruenden entfernt, wenn TypeScript ihn fuer die
-   React-Lit-Grenze benoetigt.
-6. Sanitizer und Schreibnaht verwenden dieselbe Property-Wahrheit.
-7. **KEINE Migration bauen** (nachgetragen 2026-08-17): der Lader wirft
-   unbekannte Eigenschaften schon heute weg — `normalizeProps` in
-   `state/treeOps.ts` uebernimmt nur Keys, die der Baustein als defaultProp
-   kennt. Altbestand mit verirrten Props ist damit bereits sauber, sobald er
-   einmal geladen wurde. Wer hier eine Migration schreibt, schreibt sie fuer
-   nichts. E3 sichert die SCHREIB-Seite, das Lesen ist erledigt.
-
-### Fertig, wenn
-
-- Tippfehler sofort auffallen;
-- gueltige heutige Controls unveraendert arbeiten;
-- Property nicht erst nach Reload verschwindet;
-- keine zweite Property-Liste nur fuer den Editor entsteht;
-- Test beweist bei ungueltigem Key: kein History-Eintrag, keine Version/
-  Benachrichtigung und kein Autosave.
-
----
-
-# Welle F — Relationen, Aktionen und Designsprache
-
-Diese Welle ist nicht bloss Kosmetik. Sie schliesst den Gesamtumfang aus
-Fassung 4 ab, wird aber bewusst nach der Daten- und Komponentenarchitektur
-gebaut.
-
-## F1 · Relationen- und Aktionsbedienung erst entwerfen
-
-**AUFGEGANGEN IN WELLE U (2026-08-12, Nutzer-Auftrag Generalsanierung).**
-Nicht mehr getrennt bearbeiten. Die Regeln und die Entwurfsfragen unten
-gelten in Welle U unveraendert weiter.
-
-### Regeln
-
-- kein Code, bevor der Nutzer den sichtbaren Entwurf in Klartext beziehungsweise
-  als kleines Bild/Wireframe bestaetigt;
-- keine Tutorial- und Erklaertexte in der Steuerung;
-- SoftEngine-Begriffe bleiben wie entschieden sichtbar:
-  `START_TOOL`, `GET_RELATION`, `PUT_RELATION`, `PUTADD_RELATION`;
-- Technikwerte und IDs bleiben technisch, sichtbare Auswahl verwendet
-  Klarnamen;
-- `aus` ist klarer Parameterzustand, kein verschwundener Formularplatz;
-- START_TOOL zeigt keine erfundenen Parameter;
-- Ketten bleiben sichtbar und sind der einzige Schreibweg;
-- Verwendung und Folgen einer Relation werden vollstaendig angezeigt;
-- der Entwurf nimmt die Bedien-Befunde der Zwischenbilanz 2026-08-10 als
-  Eingabe: sechs verschiedene Bauformen fuer „Feld einer Quelle waehlen",
-  namenlose Inspector-Sektionen (bis 26 Bedienelemente ohne Ueberschrift),
-  die StepForm als groesste Eingabemaske in der 340-px-Spalte, roher
-  Jargon (PINDEX/VALUE/Rohsyntax) trotz vorhandenem Klartext
-  (`helfer.ts:50-59`).
-
-### Entwurf beantwortet mindestens
-
-1. Wo sieht der Nutzer Quelle, Schrittart und Ziel?
-2. Wie erkennt er fehlende Pflichtparameter?
-3. Wie sieht `aus` aus, ohne einen Parameter zu verschieben?
-4. Wie werden „Ergebnis von Schritt N" und Blockwerte unterschieden?
-5. Wie werden geloeschte Ziele/Quellen sichtbar?
-6. Wie werden lange Ketten lesbar, ohne einen neuen versteckten Wizard zu
-   erfinden?
-7. Wie bleiben Tastatur und Fokus nachvollziehbar?
-
-## F2 · Bestaetigten Relations-/Aktionsentwurf implementieren
-
-**AUFGEGANGEN IN WELLE U (2026-08-12).** Die Punkte unten gelten dort als
-Bau-Regeln weiter.
-
-- bestehendes Datenmodell nur aendern, wenn der bestaetigte Entwurf es
-  wirklich verlangt;
-- keine Migration ohne eigenen Schutz und Altbestandstest;
-- keine zweite Terminologie;
-- Preflight-Fehler verlinken/benennen die sichtbare Stelle;
-- alte UI restlos entfernen, wenn sie ersetzt ist;
-- normale bestehende Ketten muessen bytegleich exportieren, sofern keine
-  bewusste Semantikaenderung beschlossen wurde.
-
-Nutzerprobe umfasst Anlegen, Bearbeiten, `aus`, Schritt-Ergebnisse,
-geloeschte Referenz, Reload, Undo/Redo und SoftEngine-Ausfuehrung.
-
-## F3 · Designsprache systematisch abgleichen
-
-### Quelle
-
-Die eingecheckte `designsprache/` und `masken-tokens.css` sind das Vorbild.
-Es wird abgeschrieben, nicht aus KI-Geschmack neu gestaltet. Fehlt eine
-Entscheidung im Musterbogen, wird gefragt.
-
-### Reihenfolge
-
-1. Gemeinsame Atome/Styles pruefen, nicht jeden Baustein einzeln flicken.
-2. Dialog/Popup/Tabelle gegen Tafel-Rahmen und Tokens vergleichen.
-3. Tabelle: Spaltenbreiten nach Art, nicht nach zufaelligem Inhalt.
-4. Status: Rohwert ohne Zuordnung grau; Bedeutung bestimmt feste Farbe.
-5. `Bild + Name` verwendet geteilte Bilder/Assets.
-6. Datum nur ausrichten, nie inhaltlich umrechnen.
-7. Kanban-Karte gegen fehlende Reiter/Fusszeile pruefen.
-8. Veraltete Meldungs-Fallbackfarben an heutige Tokens angleichen.
-9. Editor-UI-Tokens und Masken-/Runtime-Tokens nicht vermischen.
-
-### Fertig, wenn
-
-- jede sichtbare Abweichung entweder korrigiert oder als bewusste
-  Nutzerentscheidung benannt ist;
-- kein bausteinspezifischer Hex-Farbwert neu entsteht;
-- Editor und Export dieselbe Web Component zeigen;
-- Designaenderungen keinen Daten- oder Runtime-Vertrag veraendern;
-- Nutzer den Vergleich im Browser und bei betroffenen Runtime-Komponenten in
-  SoftEngine bestaetigt hat.
-
----
-
-## R · Zeilen per Relation holen (eingeschoben 2026-08-11, Nutzer-Auftrag)
-
-**Auftrag des Nutzers vom 2026-08-11** nach einem Tag Echttests an seiner
-laufenden Maske: eine freistehende Maske zeigt die Positionen des Belegs, den
-der Bediener in der Belege-Tabelle anklickt. Der Schiebe-Weg (SEFILELOOP)
-kann das nachweislich nicht: ohne Kopfsatz liefert SoftEngine nichts, die
-Feld-Referenz `BEL_0_11` loest nur IM Beleg auf, ein Literal-Index nagelt die
-Datei auf genau EINEN Beleg fest (Echttests 2026-08-10/11, Gedaechtnis
-`pos-braucht-kopfsatz`).
-
-**Abgrenzung — WICHTIG fuer jeden neuen Chat:**
-
-- **R ist NICHT die gestrichene Welle Q** („Daten auf Abruf", Einschub
-  `1884394`, Revert `b484e11`, Gedaechtnis `daten-auf-abruf-gestrichen`).
-  Q war ein Generalumbau: JEDE Quelle umschaltbar, generische Frage-Funktion,
-  Nachschlagen fragt beim Tippen, eigene Tabellen-Ausloeser. R ist EINE
-  zusaetzliche Lade-Art fuer den EINEN belegten Fall; bestehende Quellen,
-  Masken und Exporte bleiben byte-gleich. Der Nutzer hat R am 2026-08-11 in
-  Kenntnis der Q-Streichung ausdruecklich beauftragt („B bauen").
-- **R ist nicht D2:** D2 gibt einer TABELLEN-Komponente Zeilen von einem
-  umgebenden Baustein (fuer D3/Nachschlagen). R fuellt die QUELLE; alle
-  Verbraucher (Tabelle, Einzelwerte, Ketten, Verknuepfung, Auswahl
-  geben/folgen) lesen sie unveraendert ueber den normalen Datenweg.
-
-**Alles Folgende ist am 2026-08-10/11 in der SoftEngine des Nutzers LIVE
-belegt** (Testmaske `Desktop\test69` + Handbau-Lader in seiner echten Maske;
-Kurzfassung auch in CLAUDE.md, Kapitel SoftEngine-Kontrakte):
-
-- Relation 69 („Relation Position") liefert zur Laufzeit Positionsfelder:
-  `basisHTML_SND_MSG('GET_RELATION', { NR: '69', PARAMS: [BELART, POS, LEN,
-  BELNR, JAHR, ARCHIV, '', POSNR, '', '', '', ''] })`, Antwort
-  `{"RESULT":"..."}` ueber den REGISTER-Callback, 2–19 ms je Frage.
-- JAHR/ARCHIV muessen mit (BEL-Felder `0_1`/`1_1` der angeklickten Zeile):
-  leer fand die Relation nur den aktuellen Nummernkreis (262er), mit Werten
-  auch die 261er.
-- Ein breiter Schnitt `POS=0, LEN=255` liefert die vordere Positionszeile in
-  EINEM Aufruf (die Antwort-Variable fasst 255 Zeichen, SE-Log `zlen=255`);
-  nur Felder dahinter (z. B. `280_12`) kosten je eine weitere Frage.
-- Ende der Liste: `11_6` UND `18_25` beide leer. Der Positionsident `645_10`
-  ist in dieser Installation LEER und taugt nicht als Ende-Marker.
-- Streng seriell fragen: GET-Antworten tragen keine Zuordnung zur Frage.
-  `ALS_ARRAY`/`ALIAS` (offizielle Framework-Felder) aendern daran nichts:
-  Antwort wird eine 10er-Liste, gefuellt bleibt EIN Wert.
-- Einspeisen: Zeilen als Objekte mit direkten `pos_len`-Properties plus
-  SATZ-Rohstring in den normalen Datenweg; `getField`
-  (`src/softengine/data.ts:59`) schneidet die uebrigen Spalten selbst.
-- ERPAPICALL zur Laufzeit friert die WinUI-Maske des Nutzers EIN (nur
-  Task-Manager hilft) — NICHT verwenden, bis die ErpApiCall-Referenz der
-  Installation vorliegt (Gedaechtnis `erpapicall-laufzeit-form`).
-- Referenz-Implementierung: der Handbau-Lader in der Nutzer-Maske
-  (`Downloads\index.basis.source.html`, Block „Klick-Lader v3") — der
-  Editor-Code muss sich exakt daran messen.
-
-### R1 · Lade-Art am Quellen-Modell, Steuerung und Export
-
-**Ziel:** Eine Datenquelle traegt sichtbar die Lade-Art „Zeilen per Relation
-holen": Relationsnummer, Geber-Quelle (deren gewaehlte Zeile den Beleg
-bestimmt), die vier Parameter-Zuordnungen (Belegart/Belegnummer/Jahr/Archiv
-<- Feldcodes der Geber-Zeile) und die Ende-Felder. Vorbelegung = der belegte
-Fall (69, 2_1/3_8/0_1/1_1, Ende 11_6+18_25).
-
-**Arbeit:**
-
-- Modell als Daten am Quellen-Eintrag (`core/data/dataSources.ts`-Umfeld,
-  kein Baustein-Sondercode, Regel 2); Persistenz additiv, KEIN Schema-Bump
-  (die 6 bleibt fuer C2 frei).
-- Formular in der Steuerung (Datenquellen-Formular), Abschnitt „Woher kommen
-  die Zeilen?" mit den zwei Arten.
-- Export schreibt die Einstellung als Daten an die Maske und laesst fuer
-  solche Quellen den SEFILELOOP-Eintrag weg (`export/exportMask.ts`,
-  `collectDataSources`).
-- Export-Testfaelle (Round-Trip); Referenzabzug bleibt gruen, weil die
-  Referenzmaske die neue Art nicht nutzt.
-
-**Wo sichtbar:** Steuerung -> Datenquellen; die Export-Datei. In SoftEngine
-noch nichts — R1 laedt bewusst nicht.
-
-### R2 · Laufzeit: die Quelle holt bei Auswahl-Wechsel
-
-**Ziel:** Wechselt die Auswahl der Geber-Quelle, holt die Quelle ihre Zeilen
-selbst (Schnitt je Position + Einzelfelder, Ende-Erkennung, streng seriell,
-Anzeige erst am Ende) und speist sie in den normalen Datenweg. Danach
-verhaelt sich die Quelle wie jede andere: Tabelle, Verknuepfung, Ketten,
-Auswahl geben/folgen — alles unveraendert nutzbar.
-
-**Arbeit:**
-
-- Lader als generisches Modul in `src/softengine/` (kennt NIE einen
-  Baustein), gespeist aus der R1-Einstellung; Ausloeser = Auswahl-Abo
-  (`blocks/shared/auswahl`-Mechanik von aussen, Schichtregel beachten).
-- Ein GET in Flug (bestehende Warteschlange, `seGetNewIndex`-Muster);
-  Generationszaehler gegen ueberholte Antworten; Timeout still-harmlos.
-- Runtime-Buendel bewusst neu (`build:runtime`), Veralten-Waechter und
-  Export-Referenzabzug entsprechend.
-
-**Nutzerprobe (SE-Echttest, gebuendelt nach R2):** Beleg anklicken ->
-Positionen erscheinen (261er UND 262er Nummernkreis); Abwahl leert;
-Verknuepfung auf den Artikelstamm an einer geholten Zeile; **PUT ueber eine
-sichtbare Kette auf eine geholte Position** (Schreiben — ausdrueckliche
-Nutzer-Anforderung 2026-08-11); Maske ausserhalb von SoftEngine bleibt
-still-harmlos.
-
-**Was der bauende Agent nicht pruefen kann:** alles in SoftEngine — macht
-der Nutzer.
-
-### R3 · Beleg per Nachschlage-Formularfeld waehlen (GEBAUT 2026-08-12)
-
-**Nutzer-Wunsch 2026-08-12:** einen Beleg ansehen/beschreiben, ohne immer
-eine Belege-Tabelle auf der Maske zu haben — das Nachschlage-Formularfeld
-soll ihn waehlen.
-
-**Kein Sonderweg (Nutzer-Klarstellung 2026-08-12: „ich will einfach ganz
-normal Auswahl folgt benutzen koennen"):** R3 vervollstaendigt genau das —
-Folger-Bausteine hoeren heute schon auf das Nachschlagefeld, nur das
-NACHLADEN holender Quellen (holendeQuellen) tat es nicht. Danach geben
-Tabelle, Kanban und Nachschlagefeld ihre Auswahl ueber EINEN Mechanismus.
-
-**Stand im Code:** Der Ausloeser `blocks/shared/holendeQuellen.ts` kennt
-heute nur Geber-BLOECKE mit `source`-Attribut (Tabelle/Kanban). Das
-Nachschlage-Formularfeld gibt seine Wahl bereits als Auswahl weiter
-(satzWahl ueber `nachschlagQuelle`, `setzeAuswahl` in
-`blocks/formfeld/FormFeldBlock.ts`) — es fehlt NUR das Mapping in
-holendeQuellen; die Luecke ist dort im Kommentar dokumentiert.
-
-**Arbeit:** Mapping generisch ueber die Registry-Angabe erweitern
-(satzWahl.quelleProp), KEIN Formularfeld-Sondercode (Regel 2).
-Runtime-Buendel bewusst neu (`build:runtime`). Bestehende Testdatei
-(`softengine/relationLader.test.ts`-Umfeld) um den Fall erweitern — keine
-neue Test-Gattung.
-
-**Nutzerprobe (SE) — BESTANDEN 2026-08-12** (Nutzer-Ansage, kein Protokoll):
-Beleg im Nachschlagefeld waehlen -> Positionen erscheinen; Wahl leeren ->
-Positionen leeren.
-
-**Gebaut 2026-08-12:** `quelleAttrJeTag` in `blocks/shared/holendeQuellen.ts`
-(Tag -> Quellen-Attribut, aus `satzWahl.quelleProp`, sonst `source`); der
-DOM-Scan vergleicht damit statt hart mit `source`. Die Zustands-Bedingung
-(`satzWahl.wenn`) bildet die Laufzeit NICHT nach — `data-ff-id` steht ohnehin
-nur an Bausteinen, die gerade wirklich Geber sind (`istAuswahlGeber` beim
-Export). „Wahl leeren" brauchte keinen Code: `leereNachschlagen` ruft schon
-`klareAuswahl`, und leere Auswahl heisst beim Lader „leeren". Test:
-`blocks/shared/holendeQuellen.test.ts` (Node, Zuordnung aus der echten
-Registry) — der DOM-Scan selbst bleibt ungetestet, das waere eine neue
-Testgattung (Regel 9).
-
-### R4 · GESTRICHEN — es wird nichts gebaut
-
-**Nutzer-Ansage 2026-08-12.** Hier stand eine Etappe „Beleg anlegen und
-sofort sehen". Sie ist restlos gestrichen und **wird nicht wieder
-vorgeschlagen, in keiner Form und unter keinem anderen Namen.**
-
-### R5 · GESTRICHEN — es wird kein Zeilenfilter gebaut
-
-**Nutzer-Ansage 2026-08-12, unmittelbar nach dem Bau.** Hier stand eine
-Etappe „Zeilenfilter an der Datenquelle" (gegen die Refresh-Flut). Sie war
-gebaut und ist auf Ansage des Nutzers restlos zurueckgenommen — Code, Tests
-und Etappentext. Grund: das Feld verlangte einen von Hand getippten
-SoftEngine-Ausdruck mit Feldcodes, obwohl die Quelle die Felder des Nutzers
-mit Klarnamen kennt (Regel 3 gebrochen), und der Nutzer braucht die Sache in
-dieser Form nicht.
-
-**Es wird nicht wieder vorgeschlagen** — dasselbe Muster wie S1 und die
-gestrichene Rubrik „Aufgefallen unterwegs" in CLAUDE.md. Der volle
-Etappentext samt Umsetzung steht in der git-Historie (`44a3b81`, `63942b0`).
-Die Refresh-Flut selbst bleibt damit ein offenes Thema ohne beauftragte
-Loesung; Lazy-Loading (Welle Q) bleibt ebenfalls gestrichen.
-
----
-
-# Quellen-FORMEN — Beschluss 2026-08-17 (Nutzer-Auftrag, vor dem Neuentwurf)
+# Quellen-FORMEN — Beschluss 2026-08-17 (gilt fuer den U4-Entwurf)
 
 **Anlass:** Der Nutzer hat 120+ echte SE-Masken ausgewertet. Der Editor kennt
-SECHS Quellen-Arten, SoftEngine kennt rund ZWOELF Strukturen: VAR ·
-SEFILELOOP · GET_RELATION · KENNZAHL (MIS) · TABELLE (IDs 48/84/931-934) ·
-WINDOWLOOP (LOOPFUNC) · REFRESH · WINDOW_VARIABLE · ERPAPICALL · ZGR ·
-LANGTEXT (TEXTDTK/IDB/JSD) · BERICHT/MASKE.
+sechs Quellen-Arten, SoftEngine rund ZWOELF Strukturen: VAR · SEFILELOOP ·
+GET_RELATION · KENNZAHL (MIS) · TABELLE (IDs 48/84/931-934) · WINDOWLOOP
+(LOOPFUNC) · REFRESH · WINDOW_VARIABLE · ERPAPICALL · ZGR · LANGTEXT
+(TEXTDTK/IDB/JSD) · BERICHT/MASKE.
 
-**Der Beschluss: NICHT sechs weitere Arten anbauen.** Das waere sechsmal
-dasselbe drauf — genau die Krankheit, wegen der die Generalsanierung laeuft.
-
-## Zwoelf Strukturen sind DREI Formen
+**Der Beschluss: NICHT sechs weitere Arten anbauen.** Zwoelf Strukturen sind
+DREI Formen:
 
 | Form | Was der Bediener davon hat | SE-Strukturen |
 |---|---|---|
@@ -2813,1122 +246,392 @@ dasselbe drauf — genau die Krankheit, wegen der die Generalsanierung laeuft.
 | **Liste** | Tabelle, Kanban, Nachschlagen | SEFILELOOP · WINDOWLOOP · TABELLE · REFRESH |
 | **Nachschlagen** | Schritt in einer Kette | GET_RELATION · ERPAPICALL · LANGTEXT |
 
-Alle drei Formen KANN der Editor schon (VAR, SEFILELOOP, Relations-Store).
-Was fehlt: er verwechselt die FORM mit der SCHREIBWEISE.
+**UNGEPRUEFT (2026-08-17):** die Zuordnung ist aus der Nutzer-Tabelle
+gelesen, nicht an echten Masken nachgemessen — am unsichersten KENNZAHL und
+REFRESH. Vor dem Bauen an einer echten Maske pruefen (Regel 5). Am
+Grundsatz „Form vor Art" aendert das nichts.
 
-**UNGEPRUEFT (Claude, 2026-08-17):** die Zuordnung oben ist aus der
-Nutzer-Tabelle gelesen, nicht an echten Masken nachgemessen. Am
-unsichersten sind KENNZAHL und REFRESH. Vor dem Bauen an einer echten
-Maske pruefen (Regel 5). Am Grundsatz „Form vor Art" aendert das nichts.
+**Was ein ARTEN-Eintrag kuenftig tragen muss** (`core/data/quellenArten.ts`
+ist bereits die Registry; die Eintraege sind zu duenn): 1. **Form**
+(Einzelsatz | Liste | Nachschlagen — steuert die Oberflaeche) · 2.
+**Lieferweg** (VAR / SEFILELOOP / ERPAPICALL — heute fest verdrahtet in
+`export/sevariablen.ts`) · 3. **Feld-Schreibweise** (SEFILELOOP nackt
+`2_8`, ERPAPICALL mit Vorsatz `ADR_2_8`) · 4. **Abholstelle zur Laufzeit**
+(`SEDATA.Daten.SEFileLoop` vs. `.ErpApiCall.{ALIAS}.Zeilen[]`). Erst dann
+ist „neue Struktur dazunehmen" wirklich EINE Zeile.
 
-## Was ein ARTEN-Eintrag kuenftig tragen muss
+**ERPAPICALL — belegte Deklarations-Form** (aus den echten Vorlagen):
+`{ "ID": "ADRESSE.GET", "ALIAS": "Adressen", "FELDER":
+"ADR_2_8,ADR_20_30,ADR_1114_20", "VON_ADRNR": "10000", "BIS_ADRNR":
+"69999" }`. Belegte IDs: ADRESSE/ARTIKEL/BELEG/LIEFERADRESSE/VERTRETER/
+STUECKLISTEN/KOMPONENTEN/PROZESSE_AUFGABEN/WIEDERVORLAGE.GET, IDBSE0881.GET.
+Kein BELEGPOSITION.GET — fuer Positionen bleibt Relation 69 der einzige
+belegte Laufzeit-Weg.
 
-`core/data/quellenArten.ts` ist bereits die Registry — eine Art ist heute
-EIN Eintrag in `ARTEN` (feste Tabellen-ID, Felder einzeln oder `*`, Kennung
-noetig?, Kopfsatz moeglich?, VAR moeglich?, Relation-Laden moeglich?). Die
-Bauart stimmt, die Eintraege sind zu duenn: sie beschreiben nur Varianten
-INNERHALB eines Lieferwegs. Dazu muessen:
+**⚠ DEKLARIEREN ist nicht AUFRUFEN:** Der Eintrag in der SEvariablen.json
+(SoftEngine liefert beim Laden) ist belegt und gemeint. Ein
+Laufzeit-AUFRUF per `basisHTML_SND_MSG('ERPAPICALL', …)` **friert die
+WinUI-Maske ein** — tabu, bis die ErpApiCall-Referenz der Installation
+vorliegt. Wer das verwechselt, legt dem Nutzer die Maske lahm.
 
-1. **Form** — Einzelsatz | Liste | Nachschlagen. Steuert die
-   OBERFLAECHE: was darf sich daran binden, was fragt das Formular ab.
-2. **Lieferweg** — in welchen Abschnitt der SEvariablen.json der Eintrag
-   gehoert (`VAR` / `SEFILELOOP` / `ERPAPICALL` / …). Heute fest verdrahtet
-   in `export/sevariablen.ts`.
-3. **Feld-Schreibweise** — SEFILELOOP schreibt Felder NACKT (`2_8`),
-   ERPAPICALL mit PRAEFIX (`ADR_2_8`, `ART_`, `LFA_`, `IDB_`). Heute kennt
-   `felderFor` (dataSources.ts) nur die nackte Form.
-4. **Abholstelle zur Laufzeit** — `softengine/data.ts` liest heute
-   `SEDATA.Daten.SEFileLoop` und `.Var`. ERPAPICALL landet woanders:
-   `SEDATA.Daten.ErpApiCall.{ALIAS}.Zeilen[]`.
-
-Erst wenn diese vier am Eintrag haengen, ist „neue Struktur dazunehmen"
-wirklich EINE ZEILE — und zwar eine, die der Nutzer selbst anlegen kann.
-
-## ERPAPICALL — belegte Form (aus den echten Vorlagen)
-
-```json
-{ "ID": "ADRESSE.GET", "ALIAS": "Adressen",
-  "FELDER": "ADR_2_8,ADR_20_30,ADR_1114_20",
-  "VON_ADRNR": "10000", "BIS_ADRNR": "69999" }
-```
-
-Belegte IDs: `ADRESSE.GET` · `ARTIKEL.GET` · `BELEG.GET` ·
-`LIEFERADRESSE.GET` · `VERTRETER.GET` · `STUECKLISTEN.GET` ·
-`KOMPONENTEN.GET` · `PROZESSE_AUFGABEN.GET` · `WIEDERVORLAGE.GET` ·
-`IDBSE0881.GET`. **Kein `BELEGPOSITION.GET`** — fuer Positionen bleibt
-Relation 69 der einzige belegte Laufzeit-Weg (Wellenkopf R).
-Im Export steht `ERPAPICALL` heute als LEERE Liste (`sevariablen.ts`).
-
-## ⚠ DER UNTERSCHIED, DER NICHT VERLORENGEHEN DARF
-
-**ERPAPICALL DEKLARIEREN ist etwas anderes als ERPAPICALL AUFRUFEN.**
-
-- **Deklarieren** (Eintrag in der SEvariablen.json, SoftEngine liest ihn
-  beim Laden und liefert): durch die echten Vorlagen BELEGT, oben steht die
-  Form. Das ist der Weg, den dieser Beschluss meint.
-- **Aufrufen** zur Laufzeit per `basisHTML_SND_MSG('ERPAPICALL', …)`:
-  **FRIERT DIE WINUI-MASKE EIN** (nur noch Task-Manager hilft) — Echttest
-  des Nutzers, s. CLAUDE.md. Bleibt tabu, bis die ErpApiCall-Referenz der
-  Installation vorliegt.
-
-Wer das verwechselt, legt dem Nutzer die Maske lahm.
-
-## Folge fuer den Neuentwurf von Datencenter und Inspector
-
-Das Formular fragt ZUERST die FORM („Ein Satz? Eine Liste? Ein
-Nachschlagen?") und zeigt danach nur, was zu dieser Form gehoert — nicht
-eine Klappliste mit zwoelf Kuerzeln. Der Entwurfsauftrag beschreibt DREI
-Formen, nicht zwoelf Arten; sonst ist die Oberflaeche bei der naechsten
-SE-Struktur wieder falsch.
+**Folge fuer den U4-Entwurf:** Das Formular fragt ZUERST die FORM („Ein
+Satz? Eine Liste? Ein Nachschlagen?") und zeigt danach nur, was zu dieser
+Form gehoert — nie eine Klappliste mit zwoelf Kuerzeln.
 
 ---
 
-# Welle U — Generalsanierung der Editor-Bedienung (eingeschoben 2026-08-12)
+# Welle V — Befunde der Gesamtanalyse (eingeschoben 2026-08-18)
 
-**Auftrag des Nutzers vom 2026-08-12 (Kern woertlich):** „die funktionen
-sind ja echt gut mittlerweile aber die umsetzung ist widerlich" · „es ist
-alles zusammengeflickt, zusammengeschmissen, das sieht aus wie 1999 [...]
-allgemein die art und weise, form, design, layout" · „ich glaube es gibt
-zig stellschrauben fuer jede einstellung, zu viele abhaengigkeiten".
-Dazu drei Screenshots (Steuerung/Datenquellen-Formular,
-Steuerung/Relationen, Inspector Formularfeld + Tabelle) und die
-Einzel-Befunde in U0. Eingabe ist AUSSERDEM die Bedien-Befundliste der
-Zwischenbilanz 2026-08-10 (s. Entscheidung 5 in 0.1) und die Inventur vom
-2026-08-12 (Etappen U1 ff.).
+Quelle: Gesamtanalyse 2026-08-18 (zwei Lese-Trupps ueber Bedienschicht und
+Bausteine + Kernlektuere; Fundstellen mit datei:zeile liegen im Analyse-Chat
+und ergeben sich beim Lesen der genannten Dateien). Der Nutzer hat den
+Befunden pauschal zugestimmt; je Etappe gilt trotzdem Ansage + go. Sechs
+Funde sind bereits gefixt und gepusht (s. git-Historie 2026-08-18).
 
-**Geltungsbereich:** NUR die Editor-Bedienoberflaeche — Steuerung,
-Inspector, Palette, Tab-Leiste, Meldungen, Begriffe, Editor-Optik. Die
-Maske selbst (Bausteine, Export-Bytes, Runtime, SoftEngine-Anschluss)
-bleibt UNVERAENDERT; der Export-Referenzabzug beweist das bei jeder
-Etappe. Eine Etappe, die davon abweichen muss, sagt es in ihrer Ansage
-ausdruecklich und begruendet es.
+## V0 · „Angezeigt wird" stirbt (ENTSCHIEDEN 2026-08-18)
 
-**Ersetzt F1/F2.** Deren Regeln gelten hier unveraendert weiter — vor
-allem: kein Code fuer die Relations-Bedienung vor bestaetigtem Entwurf;
-keine Tutorial-/Erklaertexte in der Steuerung; die SE-Fachbegriffe
-START_TOOL/GET_RELATION/PUT_RELATION/PUTADD_RELATION bleiben sichtbar;
-Klarnamen vor Technikwerten; Ketten bleiben sichtbar und der einzige
-Schreibweg; alte UI wird restlos entfernt, wenn sie ersetzt ist; keine
-zweite Terminologie.
+Das Nachschlage-Feld verliert die Eigenschaften `anzeigeFeld`/`anzeigeTitel`;
+im Feld erscheint kuenftig der Wert der ERSTEN Spalte des Fensters, in der
+Steuerung bleibt nur „Gespeichert wird". Automatik ohne eigene Spalten:
+eine Spalte = „Gespeichert wird". Migration: traegt ein gespeicherter Stand
+ein `anzeigeFeld` und KEINE eigenen Spalten, wird es beim Laden zur ersten
+Fenster-Spalte (kein stiller Verlust). „Einzigen Treffer uebernehmen" zeigt
+danach ebenfalls Spalte 1. Export/Runtime aendern sich bewusst
+(build:runtime + Referenzabzug); SE-Delta in die naechste Gesamtprobe.
 
-**Arbeitsmodus (Token-Entscheidung des Nutzers 2026-08-12, Fassung 2 vom
-selben Tag):** Gebaut wird von OPUS in frischen Sitzungen — jetzt MEHRERE
-Etappen je Sitzung, mit diesem Kopier-Auftrag (nur die erste Etappe und
-die Restreihenfolge tauschen):
+## V1 · Robustheit und Aufraeumen (klein, unsichtbar)
 
-```text
-Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0 und Abschnitt 3.
-Pruefe als Erstes `git status`: ist der Arbeitsbaum NICHT sauber,
-arbeitet dort noch eine andere Sitzung — dann STOPP und sag es dem
-Nutzer, bevor du irgendetwas anfasst.
+- **Popup-Schritt meldet Fehlschlag:** findet `applyPopupStep` sein Popup
+  nicht (umbenannt) oder zweimal, kommt die rote Meldung mit dem Warum.
+  ⚠ Widerspruchs-Vermerk: die C3.2-Ansage (2026-08-16) sagte „keine
+  Laufzeitmeldung, nichts tun"; der Nutzer hat dem Melde-Vorschlag am
+  2026-08-18 zugestimmt. Die Etappen-Ansage nennt diesen Widerspruch
+  ausdruecklich, damit die Entscheidung bewusst faellt.
+- **Kleinkopien zusammenziehen:** Ja/Nein-Optionsliste dreimal in zwei
+  Reihenfolgen (alle auf `shared/jaNeinProperty`) · identische Parser
+  `folgenAusAttribut`/`weitereAusAttribut` · kopierte Ziel-Hervorhebung
+  Kanban-Spalte/Zimmer. (Die zeichengleichen Dialoghuellen von
+  Kommandozentrale/KettenFenster NICHT anfassen — sie sterben im
+  U4/U5-Neuentwurf.)
+- **Restposten:** tote Props am `side-panel` (onBack/description) · tote
+  Typen-Exporte · unbenutztes `createStep` · fest verdrahtetes
+  `speichernDisabled` in der Toolbar · wirkungslose `navZahl`-Bedingung ·
+  abgerissener Kommentar-Halbsatz in `feldZeile.ts` · zehn falsche
+  Anfuehrungszeichen in Nutzertexten · rohe hsl-Farbe in `BlockHost` ·
+  Regel fuer den Feld-Vorsatz beim Art-Wechsel einer Quelle (heute geht er
+  still verloren; kuenftig: sichtbar behalten oder mit Ansage entfernen).
+- Falls der Nutzer die Mini-Frage aus 0.1 mit „loeschen" beantwortet:
+  `preflight.ts` + Tests entfernen (ohne Aufrufer im Produkt seit dem
+  Punkt-Entfernen; gleiche Gattung wie `warnChecks` in U3).
 
-ACHTUNG: der Kopier-Auftrag im Wellen-Kopf U der Plandatei ist die ALTE
-Fassung („genau EINE Etappe"). DIESER Auftrag hier schlaegt ihn.
-Ersetze ihn dort woertlich durch diesen Text — im ersten Commit dieser
-Sitzung.
+## V2 · Meldungen: Erfolg sichtbar machen
 
-Den Wellen-Kopf und den Etappentext liest du je Etappe DANN, wenn du bei
-ihr bist — nicht alle auf Vorrat.
+1. **Gruene Tonlage** fuer den bestehenden Meldebalken der Maske
+   (`softengine/meldung.ts`): gleiche Leiste, Masken-Tokens-Gruen, kuerzer
+   sichtbar (~4 s statt 8 s). EIN Meldeweg, zwei Tonlagen.
+2. **Neuer Schritt-Typ „MELDUNG"** in der Ketten-Registry (`STEP_TYPES`):
+   ein Textfeld; `{N}` im Text setzt das Ergebnis von Schritt N ein
+   (dieselbe Nummerierung, die die Ketten-Liste sichtbar zeigt).
+   Anwendungsfall des Nutzers: Schritt 1 legt per Relation einen Beleg an
+   (Antwort = Belegnummer), Schritt 2 meldet „Beleg {1} angelegt".
+3. **Ehrlichkeitsgrenze (dokumentieren, nicht verstecken):** PUT_RELATION
+   hat keine Antwort — eine Meldung nach reinem Schreiben belegt nur
+   „an SoftEngine uebergeben", nicht „verbucht". Der Meldungs-Schritt ist
+   deshalb Nutzer-gesteuert statt Automatik.
+   Export/Runtime aendern sich bewusst; SE-Delta in die Gesamtprobe.
+   Ob SoftEngine nach einem Anlegen von selbst frische Daten schiebt
+   (Liste zeigt den neuen Beleg), klaert nur ein Echttest — das ist NICHT
+   Teil dieser Etappe (Sperrliste: R4 bleibt gestrichen).
 
-Erste Etappe: U10.
+## V3 · Nachschlage-Fenster: Groesse am Ding einstellen
 
-Der Einwurf dieses Auftrags ist das go — nicht fuer eine Etappe, sondern
-fuer so viele, wie in diese Sitzung SAUBER hineinpassen.
+Das Fenster ist heute fest 520x380 (beide Wege). Neu: im Editor-
+Einstellfenster (Lupe) dieselben zwei Anfasser wie am Popup (`zieheGroesse`
+ist die EINE Zieh-Mechanik); gespeichert als Feld-Eigenschaften
+(Standard 520x380, Export schreibt nur Abweichungen); der Laufzeit-Weg
+liest sie. Kein neues Konzept.
 
-Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
-  1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
-  2. bauen — nichts daneben
-  3. Pruefbuendel (Abschnitt 3.3) komplett
-  4. EIN Commit, KEIN Push; im selben Commit Zeiger 0.1 nachziehen und
-     die Etappe als GEBAUT markieren
-Dann die naechste Etappe, wieder ab 1.
+## V4 · Tabellen-Zeilenklick als Ketten-Ausloeser
 
-Der Zeiger 0.1 bleibt KURZ: alle Etappen dieser Sitzung kommen als EIN
-Eintrag hinein, nicht als vier.
+Die Tabelle ist die einzige Datenanzeige ohne `blockEvents`, obwohl die
+Zeilen-Aktivierung (D1) intern existiert. Neu: Ereignis „Zeile gewaehlt"
+im Fähigkeiten-Verzeichnis (wie Kanban `onCardClick`), die Aktivierung
+ruft `runEvent`; die gewaehlte Zeile ist als Herkunft in Ketten bereits
+adressierbar. Export/Runtime aendern sich bewusst.
 
-Aufhoeren: nach spaetestens VIER Etappen — und frueher, sobald du
-nachlaesst: wenn du Dateien nur noch ueberfliegst statt sie zu lesen,
-oder dir nicht mehr zutraust, deinen eigenen Diff zu beurteilen. Eine
-Etappe wird NIE halb gebaut: passt sie nicht mehr ganz rein, fang sie
-gar nicht erst an. Aufhoeren ist billiger als ein schlechter Commit.
+## V5 · Waehler-Umstellung: die acht Alt-Stellen
 
-Widerspricht dir der Plan oder der Code: STOPP und fragen, nicht raten.
+Der gemeinsame Waehler (`ui/molecules/waehler`) deckt ~14 von ~22
+Auswahlstellen. Die acht Alt-Stellen einzeln umstellen: QuellenListe
+(Inspector) · AuswahlFolgeSektion · SchluesselPaarZeilen (2 Selects ohne
+Suche) · DataSourceForm-Quellenwahl · StepForm-Seitenwahl ·
+RelationAuswahl-Liste · FeldUebernahmePicker · das rohe optgroup-Select im
+FieldPicker. Mit der Umstellung sterben die fuenf verschiedenen
+Leer-Beschriftungen und die Kunst-Optionen fuer Geloeschtes von selbst.
+Gefahrlos, gut in zwei Etappen teilbar. (Zwei Bauformen, die im
+U4/U5-Neuentwurf ohnehin sterben, nicht vorab umstellen.)
 
-Am Ende der Sitzung im Chat: EINE Klickanleitung, nach Etappen
-gegliedert (was oeffnen, was tun, was zu sehen sein muss), und was du
-NICHT pruefen konntest.
+## V6 · Popup: Groesser ziehen schafft Platz + Overlay-Bearbeitung
 
-ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH noch einmal
-aus — mit der ersten noch nicht gebauten Etappe als „Erste Etappe" und
-den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-U10 -> N4 -> N5
-Der Nutzer kopiert ihn in eine frische Sitzung, mehr nicht.
-Nach N5 gibt es keinen naechsten Auftrag: sage dem Nutzer stattdessen,
-dass jetzt seine EINE Gesamtprobe faellig ist und danach U4 (Entwurf)
-ihn selbst im Chat braucht.
-```
+Zwei Etappen, ENTWURF VOR BAU (Kurzentwurf im Chat, Nutzer nickt):
 
-~~Der Planer-Chat (Fable) liest danach nur den Diff und meldet
-Abweichungen.~~ **GESTRICHEN (Nutzer-Ansage 2026-08-12): die Umsetzung
-laeuft ohne Fable.** Kein Diff-Lese-Schritt; das Netz sind Pruefbuendel
-und Waechter. KEINE Proben zwischendurch — der Nutzer testet EINMAL am
-Ende und meldet nur Funde (Ansage 2026-08-12); die Sitzung liefert ihre
-Klickanleitung und baut weiter, ohne auf eine Probe zu warten.
+- **V6a Fenster-Raster:** Das 24-Spalten-VERHAELTNIS-Raster ist auf der
+  Maskenflaeche richtig (fuellt jeden Bildschirm), im Popup falsch: Breite
+  ziehen zoomt die Bausteine (Spalten sind Anteile), Hoehe ziehen schafft
+  Platz (Zeilen sind fixe 12 px) — Nutzer-Befund 2026-08-18 („total
+  bescheuert", zu Recht). Zielbild: im FENSTER feste Spaltenbreite,
+  Spaltenzahl folgt der Fensterbreite — groesser ziehen = mehr Zellen.
+  Der Entwurf klaert: Klemmregel beim Schmalerziehen (Baustein ragt
+  rechts raus), und dass `rasterFlaecheCss` die EINE Quelle bleibt
+  (Parameter Flaeche/Fenster statt zweiter Regel — Editor UND Export
+  lesen dieselbe Stelle, Regel 1). Export aendert sich bewusst; SE-Probe.
+- **V6b Overlay „wie Canva"** (U0-Antwort 7, bestaetigt 2026-08-12, nie
+  gebaut): das Popup wird ueber der abgedunkelten Hauptseite bearbeitet,
+  genau wie es in der Maske erscheint; Zugang ueber eine Popups-Liste in
+  der Werkzeugleiste und ueber die oeffnende Kette; X schliesst; der
+  Seiten-Reiter fuer Popups faellt.
 
-**Inventur 2026-08-12 — Kurzbefund (drei Lese-Trupps; Belege stehen als
-datei:zeile in den Etappen):**
+## V7 · Zusammenlegungen (Fundament fuer neue Bausteine)
 
-- **Das Fundament traegt.** Inspector und Palette sind rein generisch (kein
-  einziges `if type === ...`), keine Schichtverstoesse ausser den zwei
-  dokumentierten Waechter-Ausnahmen, `any`/Stummschaltung exakt am
-  eingefrorenen Budget (nur `softengine/bridge.ts`), keine Handschrift-Datei
-  ueber 500 Zeilen. Der Verfall sitzt NICHT in der Architektur.
-- **Der Muell sitzt in der Bedienschicht:** sechs Bauformen fuer „ein
-  SE-Feld benennen" · zwei Dropdown-Bauteile · Schluesselzeilen,
-  Loesch-Rueckfragen und Feld-Popups je doppelt gebaut · drei verschiedene
-  Speicher-Verhalten (Speichern-Knopf vs sofort vs Formular) ·
-  Belehrungstexte inkl. installationsindividueller „69" als UI-Tatsache ·
-  Datenverlust beim Schliessen ueber X/Hintergrund-Klick · Entf loescht
-  ohne, Kreuzchen mit Rueckfrage · Zaehler und „Alle Bloecke loeschen"
-  zaehlen unsichtbar alle Popup-Seiten mit · leere Inspector-Panels ohne
-  ein Wort (Datum, Popup) · Relation anlegen = rohe SE-Syntax in ein
-  Textfeld tippen · der Editor meldet NUR Fehler, nie Erfolg — daher das
-  Gefuehl „dauernd Meldungen".
-- **Kleinkram im Code:** pos/len-Parser viermal, POS_LEN-Regex doppelt,
-  `warnChecks`/`setzeHolendeQuellenZurueck` ohne Aufrufer, veralteter
-  POPUP_RAND-Kommentar im Waechter, drei Englisch-Ausreisser in der
-  Infra-Schicht (`dateiDownload.ts`/`downloadFile`, `speicherGate` vs
-  Prosa „Riegel").
+- **Nachschlage-Fenster einmal bauen:** Editor-Weg (Lit-Template) und
+  Laufzeit-Weg (imperativ) erzeugen dasselbe Fenster heute doppelt und
+  weichen schon ab (z-index nur im einen, data-Attribut nur im anderen).
+  EINE Bau-Funktion, zwei duenne Aufrufer.
+- **Inline-Umbenennen einmal:** die BasicBlock-Fassung wird nach `shared/`
+  gehoben, die Spaltentitel-Fassung (`spaltenBearbeiten`) ruft sie.
+- **Gemeinsamer Daten-Vorspann fuer Datenanzeigen:** Tabelle und Kanban
+  holen ihre Zeilen mit sechs identischen Schritten (Quelle finden →
+  rowsFor → Tagesfilter → Feldleser → Auswahl wiederfinden). EINE geteilte
+  Funktion in `shared/`; jede kuenftige Datenanzeige startet damit bei
+  drei Zeilen. Runtime aendert sich bewusst; SE-Delta in die Gesamtprobe.
 
-## U0 · Entscheidungsliste — der Nutzer antwortet je Zeile (Ja/Nein reicht)
+Nicht in V, sondern in U4/U5: einheitliche Erfolgs-/Fehlermeldungen des
+EDITORS, das Master-Detail-Duplikat im Datencenter, EIN Speicherverhalten,
+Loesch-Regel-Anwendung (U0-3) auf die restlichen confirm()-Stellen.
 
-Ohne die Antworten 1/2/3/4 baut U1/U2 nicht. Empfehlung steht dabei.
+---
 
-1. **Dialog umbenennen:** „Steuerung" -> „Datencenter" (das Wort des
-   Nutzers)? Empfehlung: Ja.
-2. **Belehrungs-/Warntexte ersatzlos raus:** rote Kaesten („Ohne Felder
-   liefert SoftEngine ... nichts", `FeldListe.tsx:70` /
-   `DatenquellenBereich.tsx:200`), „bei euch die 69"
-   (`DataSourceForm.tsx:262`), Erklaer-Fliesstexte. Empfehlung: Ja —
-   gleiche Linie wie „keine Warn-Anzeigen" (2026-08-10).
-3. **Loeschen fragt NIE nach:** die Kreuzchen-Rueckfrage
-   (`BlockHost.tsx:167`) faellt, Entf/Kreuzchen/Papierkorb verhalten sich
-   gleich, Undo ist das Netz (Nutzer 2026-08-12: „ohne rueckfragen ist
-   ok"). Die zwei Bibliotheks-Rueckfragen in der Steuerung („wird
-   BENUTZT. Trotzdem loeschen?") bleiben vorerst. Empfehlung: Ja.
-4. **„Andere Datei" umbenennen** — Vorschlag „SoftEngine-Datei
-   (Kuerzel)"; der Nutzer darf ein eigenes Wort setzen.
-5. **Baustein „Zeile" BLEIBT** — im Popup ist er bis C2 der einzige Weg,
-   Dinge nebeneinanderzustellen (`rasterLayout.ts:10-14`; die
-   Hauptflaeche hat dafuer ihr Raster). Nur Erklaerung wird besser.
-   Einverstanden?
-6. **Namens-Kollision „Text":** der Baustein „Text" (Anzeige) und der
-   Formularfeld-Feldtyp „Text" (Eingabe) tragen denselben Namen
-   (`TextBlock.ts:98` vs `feldEigenschaften.ts:25`). Welche Seite wird
-   umbenannt — Baustein (z. B. „Ueberschrift") oder Feldtyp (z. B.
-   „Eingabezeile")?
-7. **Popup bleibt VORERST ein Reiter** — technischer Grund: Hauptflaeche
-   ist ein Raster, das Popup ein eigenes Fenster; Bearbeiten auf der
-   Flaeche haengt an C2/C3. Jetzt wird nur Beschriftung/Zugang besser.
-   Einverstanden, Konzeptfrage auf nach C2 vertagt?
-8. **Optik-Vorbild:** 1–2 Screenshots von Software, die dem Nutzer
-   gefaellt — ODER die Ansage „Fellnase-Demo als Richtung". Ohne Vorbild
-   startet U7 nicht (abschreiben statt gestalten).
+# Welle E — Der grosse Innenumbau
 
-**Antworten des Nutzers (2026-08-12, im Chat):**
+Erst nach den sichtbaren Vertragsklaerungen, damit die Registry nicht
+gleichzeitig mit Popup und Tabelle umgebaut wird.
 
-1. Ja — Name ist ihm „egal", also gilt der Vorschlag: **Datencenter**.
-2. **Ja, raus.**
-3. **Ja — Loeschen fragt nie nach.**
-4. Ersetzt: nicht umbenennen, sondern die **Arten-Liste wird im
-   U4-Entwurf gemeinsam durchgegangen** (was gibt es, was braucht er,
-   wie heisst es verstaendlich).
-5. **GEAENDERT — „Zeile" fliegt RAUS**, umgesetzt im Popup-Umbau (C2,
-   dort als Zusatzauftrag vermerkt); bis dahin bleibt sie, weil das
-   Popup ohne Raster sonst kein Nebeneinander kann.
-6. Der Text-Baustein ist fuer den Nutzer „sinnlos wie es jetzt ist —
-   ich kann den kaum einstellen": er wird im **U4-Entwurf neu gedacht**
-   (was muss er koennen, wie heisst er); die Namens-Kollision wird dort
-   mitgeloest.
-7. **ABGELEHNT — der Reiter faellt.** Das Overlay-Konzept ist am
-   2026-08-12 vom Nutzer BESTAETIGT („popup soll doch wie canva"): das
-   Popup wird ueber der abgedunkelten Hauptseite bearbeitet, genau wie
-   es in der Maske erscheint; Zugang ueber eine Popups-Liste in der
-   Werkzeugleiste und ueber die oeffnende Kette; X schliesst. Eigene
-   Etappe, laeuft vor oder mit C2.
-8. **JA — Fellnase** („schon geil", 2026-08-12), ausdruecklich AUCH als
-   Richtung fuer das Editor-Gesicht selbst. Kein externes Vorbild mehr
-   noetig; U7 ist damit zugeschnitten (U7a/b/c, s. dort).
+## E1 · Vollstaendiges Registry-Inventar und Waechter zuerst
 
-## U1 · Wortlaut-Putz im Datencenter (GEBAUT 2026-08-12)
+Fuer jeden Bausteintyp erfassen: blockType · tagName · Kategorie ·
+Default-Props und deren Reihenfolge · Parent-/Child-Faehigkeiten ·
+Resize-/Raster-Faehigkeiten · Bindungsstellen · Blockevents ·
+Visible-When-/Auswahlfaehigkeiten · Exportattribute · reine Editor-Angaben.
+Das Inventar wird im Chat vorgelegt, nicht als neue Dauer-Ablage.
 
-**Belegte Stellen:** Belehrungstexte `FeldListe.tsx:70-80`,
-`DatenquellenBereich.tsx:199-204`, `DataSourceForm.tsx:134/262/294`
-(inkl. „bei euch die 69" — ein installationsindividueller Wert als
-UI-Tatsache); Jargon-Labels „IDB-ID"/„Dateikuerzel"/„Haengt an"
-(`quellenArten.ts`, `DataSourceForm.tsx:291-307`); Dialogname in
-`Toolbar.tsx:147` und `Kommandozentrale.tsx`.
+Der Regelwaechter muss vor der Migration beweisen: zwei unabhaengig aus
+realen Code-Einstiegen abgeleitete Mengen stimmen ueberein (keine manuelle
+Soll-Liste) · exakt alle Typen erkannt, keiner doppelt, keiner fehlt ·
+jeder in Exporttest, Positivliste und Referenzabzug vertreten · entfernte/
+umbenannte Definitionen machen den Waechter nachweislich rot (an mehreren
+erprobt). Eine ANZAHL steht bewusst nicht im Plan — die Wahrheit ist die
+Import-Liste in `src/blocks/register.ts` (heute 15).
 
-**Arbeit:** Texte gemaess U0 entfernen/ersetzen; Dialog und
-Toolbar-Knopf umbenennen; Platzhalter neutral (kein Kundenwert); KEINE
-neuen Erklaertexte. Der Export-Referenzabzug bleibt byte-gleich.
+**Was E1 NICHT abdeckt — ausdruecklich mitzupruefen:** der Waechter zaehlt
+TYPEN, nicht FELDER. Eine Faehigkeit wird heute an DREI Stellen gefuehrt
+(deklariert in `core/blocks/BlockComponent.ts`, beschrieben in
+`BlockDefinition.ts`, von Hand kopiert in `blocks/base/BasicBlock.ts`).
+Vergisst jemand eine Kopierzeile, verschluckt der Baustein die Faehigkeit
+STILL. E1 braucht dafuer eine eigene Probe — oder E2 raeumt den
+Drei-Stellen-Vertrag ab und der Satz zieht dorthin. Beleg aus der Analyse
+2026-08-18: der neue Tabellen-Modus `besitz`/`bereitgestellteZeilen`
+(Welle D) lebt komplett am Registry-Vertrag vorbei — genau diese Gattung
+faengt E2 kuenftig ein.
 
-**Fertig, wenn:** kein roter Belehrungskasten mehr; kein
-installationsindividueller Wert in einem UI-Text; ein Begriff je Ding.
+## E2 · Eine runtime-sichere Baustein-Definition
 
-**Nutzerprobe (Browser):** Datencenter oeffnen, Quelle anlegen — Texte
-weg bzw. neu, Verhalten unveraendert.
+**Ziel:** Faehigkeiten und Defaults haben EINE kanonische runtime-sichere
+Quelle. **Grenze:** `editorAngaben` bleibt getrennt — Icons und
+Editor-Hilfen duerfen nicht ins Runtime-Bundle jeder Maske.
 
-**Gebaut (2026-08-12), Abweichungen und Entscheidungen:**
+Arbeit: 1. gemeinsame reine Typen an einen neutralen runtime-sicheren Ort ·
+2. alle direkten Metadatenleser als Abhakliste (editorAngaben ·
+Kanban-Runtime · seAktionen · Kind-/Parentpruefung · Tabellenbindung ·
+Default-/Export-Anker · Regelwaechter · Runtime-Einstieg) · 3. Definition
+enthaelt Typ, Tag, Defaults, Faehigkeiten · 4. `BasicBlock` LIEST daraus,
+kopiert nicht mehr · 5. Registry liest dieselbe Definition · 6.
+Editor-Angaben referenzieren nur den Typ · 7. Default-Reihenfolge bleibt
+deterministisch (sonst aendern sich Exportbytes ohne Grund) · 8.
+Importgraph vorher/nachher: Core importiert keine Bausteine, Runtime keine
+Editor-Icons, keine neuen Zyklen · 9. toter Metadaten-Getter faellt ·
+10. CLAUDE.md im selben Commit nachziehen.
 
-- „bei euch die 69" stand nicht nur in der Beschreibung, sondern ein
-  zweites Mal in der Fehlermeldung `Relationsnummer fehlt (nur Ziffern,
-  z. B. 69)`. Beide weg — die zweite faellt unter dieselbe Fertig-Zeile
-  („kein installationsindividueller Wert in einem UI-Text").
-- Beide Kennungs-Beschriftungen heissen jetzt **Kennung** (statt „IDB-ID"
-  und „Dateikuerzel"): ein Begriff je Ding. Das Registry-Feld
-  `kennungLabel` bleibt, weil `''` weiterhin „diese Art hat eine feste
-  Kennung, frag nicht danach" traegt.
-- „Haengt an" -> **Gehoert zu**. Die FORM des Werts (`BEL_0_11`) bleibt
-  Handeingabe — sie zu ersetzen ist U4/U5, nicht Wortlaut-Putz.
-- Die Format-Platzhalter (`z. B. ID0001`, `z. B. SERPOS`, `z. B. BEL_0_11`,
-  `z. B. Terminplaner`) bleiben: sie zeigen eine FORM, sie behaupten nichts
-  ueber die Installation. Gestrichen wurde die Behauptung, nicht das
-  Beispiel.
-- Das Warndreieck an einer feldlosen Stammquelle bleibt (Marke in der
-  Liste, keine Belehrung); nur sein roter Erklaerkasten im Detail fiel.
-- Mit den Texten fiel der Prop `kind` der `FeldListe` weg — er diente
-  ALLEIN der Unterscheidung Stammquelle/IDB in genau diesen zwei Absaetzen.
-- **Runtime-Bytes ABSICHTLICH neu** (Abweichung vom Wellen-Kopf U, dort
-  ausdruecklich vorgesehen): `quellenArten.ts` haengt ueber
-  `DATA_SOURCE_KINDS` im Runtime-Buendel, die zwei Editor-Beschriftungen
-  reisen als toter Ballast in jede Exportdatei mit. Der Buendel-Diff ist
-  EINE Zeile und exakt diese zwei Strings — keine Minifier-Umbenennung,
-  nachgeprueft. Export-MARKUP unveraendert, Referenzabzug byte-gleich.
-- Nicht angefasst: der Dateiname `Kommandozentrale.tsx` (Datei-Umbenennen
-  waere ein eigenes Thema) und die Loesch-Rueckfragen (U2).
+Vorgehen: ein repraesentativer Baustein als unkommitteter Schnittbeweis;
+committed wird nur die vollstaendige Migration ohne Dual-Path; keine
+gleichzeitige sichtbare Eigenschaftsaenderung. Fertig, wenn: neue
+Faehigkeit = genau eine Stelle · Waechter erkennt alle Definitionen ·
+Bundle traegt keine Editor-Abhaengigkeit · Referenzexport ohne
+unbeabsichtigten Diff · alte Parallel-Listen weg.
 
-## U2 · Loeschen und Browser-Kaesten vereinheitlichen (GEBAUT 2026-08-12)
+## E3 · Property-Schreibnaht absichern (kleinste, sofort baubar)
 
-**Belegte Stellen:** drei Loeschwege, zwei Verhalten
-(`BlockHost.tsx:167-173` fragt; `useKeyboardShortcuts.ts:45` und
-`Inspector.tsx:254` nicht — `loescheBaustein.ts:32` prueft `frageNach`
-nur, wenn uebergeben) · Zaehler zaehlt alle Seiten inkl. Popups
-(`Editor.ts:155`, `StatusBar.tsx:18`), und „Alle N Bloecke loeschen?"
-(`Toolbar.tsx:36`) verschweigt, dass auch Popup-Seiten fallen ·
-window.alert/window.confirm als rohe Browser-Kaesten
-(`Toolbar.tsx:36/60/97/109/120`, `loescheBaustein.ts:15`,
-`persistence.ts:120`, `notfallkopie.ts:101/148`).
+`Editor.updateProperty` speichert keine Tippfehler oder fremden
+Eigenschaften mehr: 1. gegen die kanonische Property-Menge validieren ·
+2. Raster-/interne Props mit ausdruecklichem zentralem Vertrag · 3.
+Ablehnung VOR pushHistory/State/notify/Autosave · 4. Entwicklerdiagnose
+nennt Blocktyp+Property, dedupliziert · 5. alle Aufrufer inventarisieren ·
+6. Sanitizer und Schreibnaht nutzen dieselbe Wahrheit · 7. **KEINE
+Migration** (der Lader wirft unbekannte Props heute schon weg —
+`normalizeProps` in `state/treeOps.ts`; E3 sichert die SCHREIB-Seite).
+Fertig, wenn ein Test beweist: ungueltiger Key = kein History-Eintrag,
+keine Version/Benachrichtigung, kein Autosave.
 
-**Arbeit:** Kreuzchen-Rueckfrage entfernen (EIN Verhalten; Undo ist das
-Netz) · „Alle Bloecke loeschen"-Text nennt die Popup-Seiten ehrlich ·
-Statuszeile zaehlt die AKTIVE Seite ODER schreibt „alle Seiten" dazu
-(kleinere Loesung waehlen) · window.alert/confirm durch EINEN
-app-eigenen, nicht blockierenden Meldungsweg ersetzen, wo gefahrlos;
-blockierend bleibt nur, was Datenverlust verhindert (Maske laden
-ueberschreibt alles). KEINE neuen Rueckfragen, KEINE Erfolgs-Toasts auf
-Verdacht.
+---
 
-**Fertig, wenn:** Entf/Kreuzchen/Papierkorb identisch; kein nackter
-window.alert im Editor-Alltag; Texte ehrlich.
+# Welle U — Generalsanierung der Editor-Bedienung (Rest)
 
-**Nutzerprobe (Browser):** Baustein mit Inhalt per Kreuzchen loeschen —
-keine Frage, Undo holt ihn zurueck; fehlerhafte Maskendatei laden —
-app-eigene Meldung statt Browser-Kasten.
+**Geltungsbereich:** NUR die Editor-Bedienoberflaeche. Die Maske selbst
+(Bausteine, Export-Bytes, Runtime, SE-Anschluss) bleibt unveraendert; der
+Referenzabzug beweist das je Etappe. Regeln aus F1/F2 gelten weiter: kein
+Code fuer die Relations-Bedienung vor bestaetigtem Entwurf · keine
+Tutorial-Texte in der Steuerung · die SE-Fachbegriffe
+START_TOOL/GET_RELATION/PUT_RELATION/PUTADD_RELATION bleiben sichtbar ·
+Klarnamen vor Technikwerten · Ketten bleiben sichtbar und der einzige
+Schreibweg · alte UI wird restlos entfernt, wenn ersetzt · keine zweite
+Terminologie.
 
-**Gebaut (2026-08-12), Entscheidungen und Abweichungen:**
+**U0-Antworten (2026-08-12, konserviert — nicht erneut fragen):**
+1. Dialog heisst **„Datencenter"**. 2. Belehrungs-/Warntexte: **raus**.
+3. **Loeschen fragt nie nach; Undo ist das Netz** (Bibliotheks-Rueckfragen
+bleiben vorerst). 4. Arten-Liste wird im U4-Entwurf gemeinsam durchgegangen.
+5. Baustein „Zeile": **raus** (gebaut, C2). 6. Text-Baustein wird im
+U4-Entwurf neu gedacht (Namens-Kollision „Text" wird dort geloest).
+7. **Popup-Reiter faellt — Overlay „wie Canva"** (→ V6b). 8. Optik-Vorbild
+ist die **Fellnase-Demo**, ausdruecklich auch fuers Editor-Gesicht (→ U7).
 
-- Die Kreuzchen-Rueckfrage ist weg, und mit ihr der Parameter `frageNach` in
-  `state/loescheBaustein.ts` — er hatte danach keinen Aufrufer mehr (alte UI
-  wird restlos entfernt, nicht auf Vorrat stehengelassen). Alle drei Wege
-  rufen dieselbe Funktion ohne Zusatzfrage.
-- **Die Meldungsspur ist neu gebaut, nicht von der Maske geborgt:**
-  `state/meldungen.ts` (Modul-Singleton mit LISTE, kein blosser Ereignis-Kanal
-  — die erste Meldung faellt beim Laden, also vor dem ersten Bild) +
-  `state/useMeldungen.ts` (Muster useDataSources) + `editor/shell/Meldungen.tsx`
-  (Karten unten rechts, `z-50`, also auch ueber dem Datencenter-Overlay `z-40`:
-  eine Speicher-Panne muss den Bediener auch dort erreichen).
-  `softengine/meldung.ts` bleibt unberuehrt — das ist der Fehlerbalken der
-  fertigen MASKE, blendet sich aus und reist im Runtime-Buendel mit. Der
-  Grund steht in beiden Dateikoepfen, damit sie niemand „zusammenlegt".
-- **Nichts blendet sich von selbst aus, und es gibt nur EINE Sorte Karte.**
-  Auto-Ausblenden waere bei „Beim Laden entfernt: …" wieder ein stiller
-  Verlust; eine zweite Sorte (Erfolg/Warnung) gibt es nicht — es gibt keinen
-  zweiten Fall (Regel 10) und keine Erfolgs-Toasts (Wellen-Kopf U).
-- **Vier `window.confirm` bleiben blockierend:** Maske laden (kein Undo,
-  `Toolbar.tsx`), „Alle Bloecke loeschen" (raeumt in einem Klick ALLE Seiten —
-  der Plan verlangt hier ausdruecklich nur einen ehrlichen Text) und die zwei
-  Bibliotheks-Rueckfragen im Datencenter (U0-3: bleiben vorerst). Kein `alert`
-  mehr im Produktcode.
-- Statuszeile: der KLEINE Weg gewaehlt (der Plan liess die Wahl) — die Zahl
-  bleibt `Editor.blockCount`, nur die Beschriftung sagt „Bloecke (alle
-  Seiten)". Ein Zaehler je Seite haette eine neue Rechnung in den Store
-  gebracht, und dieselbe Zahl steuert auch „Alle Bloecke loeschen" und den
-  Export-Knopf.
-- Nebenbei EIN unwahrer Kommentar richtig: `state/VorlagenStore.ts` verglich
-  seine Loesch-Rueckfrage mit „dem Kreuzchen" — das fragt seit dieser Etappe
-  nicht mehr.
-- Bestehende Tests nachgezogen (keine neue Testart): `persistence.test.ts` und
-  `speicherPanne.test.ts` lesen die Meldungen jetzt aus der Spur statt aus
-  einem `alert`-Stub, gleiche Zusagen und Zahlen. Neu `state/meldungen.test.ts`
-  — Spur (sammeln, genau eine schliessen, Horcher wecken) und Loeschen ohne
-  Rueckfrage inkl. „Musterkarte bleibt stehen UND sagt warum".
-- **Runtime-Bytes, Export-Markup und Referenzabzug unveraendert** — die Etappe
-  hat keine Datei angefasst, die im Buendel landet (`check:runtime`: Buendel
-  == frischer Build).
-
-## U3 · Doppelbauten zusammenlegen (GEBAUT 2026-08-12)
-
-**Belegte Paare:** SelectControl vs SchrittSelect
-(`QuellenListe.tsx:38-46` benennt die Zweiheit selbst) ·
-Schluesselregel-Zeile doppelt (`QuellenListe.tsx:145-179` /
-`AuswahlFolgeSektion.tsx:145-169`) · Loesch-Rueckfrage-Helfer doppelt
-(`DatenquellenBereich.tsx:64-85` / `RelationenBereich.tsx:64-76`) ·
-zwei fast gleiche Feld-Popups (`FieldPicker.tsx` /
-`FeldUebernahmePicker.tsx`) · pos/len-Parser VIERMAL (`splitFieldCode`
-`core/data/relations.ts:106` ist kanonisch; Kopien `ladeRelation.ts:80`,
-`softengine/data.ts:95` und `:131`) · POS_LEN-Regex doppelt
-(`dataSources.ts:129` vs `ladeRelation.ts:58`).
-
-**Arbeit:** je Paar EINE Komponente/Funktion, Aufrufer umziehen,
-Duplikat loeschen. Kleinputz dazu: `warnChecks` (`validator.ts:89`) samt
-seines einzigen Test-Aufrufs raus · `setzeHolendeQuellenZurueck`
-(`holendeQuellen.ts:75`) raus · POPUP_RAND-Kommentar im Waechter
-(`scripts/check-regeln.mjs:263`) berichtigen. `istOffenerSatz` BLEIBT
-(dokumentierte VAR-Bauanleitung, `datenquellen.test.ts:210-225`).
-
-**Harte Grenze (Plan-Review 2026-08-12, am Buendel nachgeprueft):** die
-zwei Parser-Kopien in `softengine/data.ts:95/:131` BLEIBEN stehen —
-diese Datei steckt im Runtime-Buendel; jeder Umbau dort aenderte
-Runtime- und damit Export-Bytes, gegen das „unveraendert" dieser
-Etappe. Zusammenlegbar sind nur die Editor-/Export-Seiten:
-`ladeRelation.ts:80` -> `splitFieldCode`, und das POS_LEN-Paar
-(`dataSources.ts:129` / `ladeRelation.ts:58` — beide core/data; der
-Runtime-Lader importiert nur softengine/*, an den Imports von
-`relationLader.ts` nachgeprueft). Auch `holendeQuellen.ts` ist Runtime:
-das Entfernen des unbenutzten Exports gilt nur, solange `check:runtime`
-byte-gleich bleibt (tree-shaking wirft ihn heute schon aus dem
-Buendel); aendert sich ein Byte, STOPP statt erklaeren.
-
-**Fertig, wenn:** je Aufgabe eine Bauform; Verhalten, Export-Bytes und
-Referenzabzug unveraendert; 500er-Deckel ueberall eingehalten.
-
-**Nutzerprobe (Browser, Stichprobe):** Verknuepfung anlegen, „Auswahl
-folgen" einstellen, Feld uebernehmen — sieht aus und verhaelt sich wie
-vorher.
-
-**Gebaut (2026-08-12), Entscheidungen und Abweichungen:**
-
-- Netto 137 Zeilen weniger. **Runtime-Bytes, Export-Markup und Referenzabzug
-  unveraendert** (`check:runtime`: Buendel == frischer Build).
-- **Die zwei schwebenden Auswahl-Fenster teilen EINEN Rahmen**
-  (`ui/molecules/auswahl-fenster.tsx`): Portal an den body, feste Position im
-  Sichtfenster, das Abfangen der Editor-Gesten (Klick/Zeiger/Ziehen) und die drei
-  Schliess-Wege Aussenklick / Escape / Scrollen daneben. **Zwei Unterschiede
-  bleiben als benannte Schalter stehen**, weil sie ECHT verschieden sind und
-  diese Etappe „Verhalten unveraendert" zusagt: `imBildHalten` (nur das Fenster
-  im schmalen, rechts angedockten Bereich klemmt sich an den Viewport-Rand —
-  Nutzer-Fund 2026-07-22) und `escapeAbfangen` (nur DIESES Fenster haelt Escape
-  auf, sonst schloesse derselbe Tastendruck das Schritt-Formular darunter; der
-  Feld-Picker laesst Escape bewusst weiterlaufen). Wer einen dritten Schalter
-  braucht, baut vermutlich ein drittes Fenster.
-- **Die „Feld = Feld"-Zeilen stehen einmal**
-  (`editor/inspector/SchluesselPaarZeilen.tsx`), benutzt von QuellenListe UND
-  AuswahlFolgeSektion. Die Bezeichnungen fuer Hilfstechnik kommen als Funktionen
-  herein: sie benennen je Sektion etwas anderes („Feld 1 der ersten Datenquelle"
-  vs. „Feld 1 beim Auswahl-Geber"), und genau das ist dort der Unterschied, der
-  zaehlt. Deckel, Entfernen-Knopf und „Feld dazu" gelten jetzt fuer beide gleich.
-- **Die Loesch-Rueckfrage steht einmal** (`bestaetigeLoeschen` in
-  `zentrale/helfer.ts`), Wortlaut buchstabengleich; der einzige Unterschied
-  zwischen den Aufrufern (was am Baustein weiterlebt) reist als Parameter.
-- **POS_LEN steht einmal** (`core/data/ladeRelation.ts`), `dataSources` holt es
-  von dort — byte-neutral nachgemessen. `warnChecks` und
-  `setzeHolendeQuellenZurueck` sind weg; der eine Test-Aufruf von `warnChecks`
-  prueft dieselbe Zusage weiter ueber `r.warnung`. Der POPUP_RAND-Kommentar im
-  Waechter nennt jetzt DIALOG_RAND (die Datei importiert seit C1 genau das).
-
-**ZWEI Punkte der Etappe sind bewusst NICHT gebaut:**
-
-- **SelectControl vs SchrittSelect bleibt zweierlei.** Es sind keine Duplikate,
-  sondern zwei Bauteile fuer zwei Aufgaben: `SelectControl` ist Radix +
-  Label-Molekuel (beschriftetes Eigenschaftsfeld), `SchrittSelect` ein nacktes
-  `<select>` fuer dichte Zeilen. Zusammenlegen wuerde rund 19 Auswahlfelder
-  SICHTBAR aendern (allein `ParameterZeile.tsx` hat elf) — gegen die
-  Fertig-Zeile dieser Etappe —, die Nutzer-Korrektur vom 2026-07-22 kippen
-  (`QuellenListe.tsx:38-46`: der Browser-Pfeil lag auf dem Text) und fuer jedes
-  „— Feld —" ein Platzhalter-Konstrukt brauchen, weil Radix `''` als Wert
-  verbietet. Gehoert nach **U4** („EINE Bedienform"), wo es ohnehin steht.
-- **Der pos/len-Parser bleibt VIERMAL — die harte Grenze oben war zu eng
-  gezogen.** Sie erklaert `ladeRelation.ts:80` fuer zusammenlegbar, weil „der
-  Runtime-Lader nur softengine/* importiert, an den Imports von
-  `relationLader.ts` nachgeprueft". Das stimmt fuer relationLader — aber
-  `softengine/data.ts:13` holt `POS_LEN` und `pruefeLadeRelation` direkt aus
-  `core/data/ladeRelation`: die Datei STECKT im Runtime-Buendel. Gebaut,
-  gemessen, zurueckgenommen: mit `import { splitFieldCode } from './relations'`
-  war das Buendel exakt gleich LANG (187 019 Byte) und trotzdem in 11 Zeilen
-  anders — rollup zieht `relations` vor, der Minifier benennt danach alles um.
-  Nach der Grenze dieser Etappe („aendert sich ein Byte, STOPP statt erklaeren")
-  ist der Import wieder raus; die Warnung steht jetzt im Kopf von
-  `ladeRelation.ts`, damit es der naechste nicht noch einmal misst.
-  Zusammengelegt wird das in einer Etappe, die ohnehin eine SoftEngine-Probe
-  mitbringt.
+**Der grosse Auftrag (2026-08-17): Datencenter UND Inspector werden KOMPLETT
+NEU ENTWORFEN.** Alle Funktionen bleiben; es muss danach dasselbe koennen,
+nur bedienbar. Anlass, gezaehlt: **45 verschiedene Bedienwege fuer vier
+Fragen** (Wert angeben 16 · Liste bearbeiten 13 · Feld waehlen 9 · Quelle
+waehlen 7) — kaum Doppelbauten, sondern UNEINHEITLICHKEIT. Wegweiser:
+der Quellen-FORMEN-Beschluss (oben) und **erst Bauteile, dann Bildschirme**
+— der Entwerfer bekommt die gemeinsamen Bauteile als Auftrag, nicht
+„entwirf ein Datencenter". Die Bauteil-Inventur der Analyse 2026-08-18
+liegt als Grundlage bereit: ZeilenListe (6 Bauformen heute) ·
+Fenster/Dialog (3) · Suchfeld (4) · Loesch-/Bestaetigen-Weg (3+8 ohne) ·
+Master-Detail (2 Kopien) · Knopfliste „eins aus N" (5 Aktiv-Rezepte) ·
+Menue (1 handgebaut) · Abschnittskopf (9 handgeschriebene Kopien).
 
 ## U4 · ENTWURF: Quelle anlegen, Feld waehlen, Relation anlegen (kein Code)
 
-Hier gilt die F1-Regel woertlich: KEIN Code, bevor der Nutzer den
-sichtbaren Entwurf bestaetigt hat. Der Entwurf beantwortet die
-F1-Fragen (Wellen-Kopf F) UND:
+KEIN Code, bevor der Nutzer den sichtbaren Entwurf bestaetigt hat. Der
+Entwurf beantwortet mindestens:
 
-- EINE Bedienform fuer „ein SE-Feld benennen" — heute sechs:
-  Handeingabe (`FeldListe.tsx:89-116`) · rohe Syntax
-  (`RelationForm.tsx:70-83`) · Dropdowns (`ParameterZeile.tsx:161-186`,
-  QuellenListe, AuswahlFolge) · unsichtbar fest (`DataSourceForm.tsx:78-84`)
-  · Kombi-String „BEL_0_11" (`DataSourceForm.tsx:291-307`) · Such-Popup
-  mit unerklaerlicher Sichtbarkeitsbedingung (`StepForm.tsx:203-206`).
-- Der gefuehrte Weg „neue Quelle" (Nutzer woertlich: „Wie hole ich
-  andere quellen? ich weiss es nicht mal"): Stolpersteine weg — leere
-  Pflicht-Feldzeile mit unsichtbarem Fehler (`DataSourceForm.tsx:85-91`),
-  „Beleg kommt aus" leer ohne zweite Quelle (`:107`), DTK-Import kann
-  NUR IDB-Quellen anlegen (`DtkImportForm.tsx:62-76`).
-- Relation anlegen OHNE rohe SoftEngine-Syntax zu tippen (die SE-Verben
-  bleiben sichtbar, Entscheidung 2026-07-15).
-- EIN Speicher-Verhalten fuer Formulare (heute drei: Speichern-Knopf im
-  Dialog, Sofort-Schreiben im Inspector, StepForm mit eigenem Speichern).
-- Schliessen ohne Datenverlust-Ueberraschung (X/Hintergrund vs Escape,
-  `Kommandozentrale.tsx:69-83`) — der Entwurf legt das Verhalten fest.
+- EINE Bedienform fuer „ein SE-Feld benennen" (heute sechs: Handeingabe ·
+  rohe Syntax · Dropdowns · unsichtbar fest · Kombi-String „BEL_0_11" ·
+  Such-Popup).
+- Der gefuehrte Weg „neue Quelle" (Nutzer woertlich: „Wie hole ich andere
+  quellen? ich weiss es nicht mal") — Stolpersteine weg: leere
+  Pflicht-Feldzeile mit unsichtbarem Fehler · „Beleg kommt aus" leer ohne
+  zweite Quelle · DTK-Import kann nur IDB-Quellen anlegen.
+- Das Formular fragt zuerst die FORM (Quellen-FORMEN-Beschluss).
+- Relation anlegen OHNE rohe SoftEngine-Syntax zu tippen (SE-Verben bleiben
+  sichtbar, Entscheidung 2026-07-15).
+- EIN Speicher-Verhalten fuer Formulare (heute drei: Speichern-Knopf ·
+  Sofort-Schreiben · StepForm-eigenes Speichern).
+- Schliessen ohne Datenverlust-Ueberraschung (X/Hintergrund vs Escape).
+- Die zwei geerbten U0-Fragen: Arten-Liste verstaendlich benennen ·
+  Text-Baustein neu denken.
+- Einheitliche leise Erfolgs-/Fehlermeldungen des Editors.
 
 **Ergebnis:** Klartext-/Wireframe-Entwurf im Chat; der Nutzer bestaetigt
 oder korrigiert. Erst DANN wird U5 zugeschnitten.
 
 ## U5 · Umsetzung des bestaetigten Entwurfs (ein bis drei Etappen)
 
-Zuschnitt folgt aus U4 (z. B. 5a Quellen-Formular, 5b Relationen,
-5c Inspector-Angleich). Es gelten die F2-Bauregeln (alte UI restlos weg,
-keine zweite Terminologie, bestehende Masken exportieren byte-gleich,
-Migration nur mit eigenem Schutz).
+Zuschnitt folgt aus U4. Alte UI restlos weg, keine zweite Terminologie,
+bestehende Masken exportieren byte-gleich, Migration nur mit eigenem Schutz.
 
-## U6 · Inspector-Kleinputz (GEBAUT 2026-08-12)
+## U7 · Optik: der Editor uebernimmt die Fellnase-Richtung
 
-**Belegte Stellen:** leere Panels ohne ein Wort bei Datum
-(`DatumBlock.ts:35`) und Popup (`popup/editorAngaben.ts`) — Zeile und
-Karte zeigen fuer denselben Zustand einen Satz
-(`zeile/editorAngaben.ts:16`) · Label „Farbe" fuer ein
-Bedeutungs-Konzept (`shared/statusVariant.ts:55`; die eigene
-Beschreibung sagt „Bedeutung") · Ankreuzfeld: bindbare Stelle
-deklariert, aber bewusst unerreichbar (`FormFeldBlock.ts:124-134` vs
-`:206-207`, `Inspector.tsx:201-203`) — Deklaration an die Zusage
-„Ankreuzfeld bleibt unbindbar" angleichen.
+Die eingecheckte Demo (`designsprache/`) ist das Vorbild — auch fuer den
+Editor selbst. Die Grenze aus CLAUDE.md bleibt hart: Masken-Tokens und
+Editor-Tokens werden NIE gemischt; der Editor bekommt EIGENE Tokens mit den
+Fellnase-Werten, `masken-tokens.css` und die Export-Bytes bleiben
+byte-gleich.
 
-**Arbeit:** zwei Hinweis-Saetze ergaenzen (Muster Zeile/Karte, KEIN
-Tutorial) · „Farbe" -> „Bedeutung" · Checkbox-Deklaration ehrlich
-machen.
-
-**Byte-Ehrlichkeit (korrigiert im Plan-Review 2026-08-12 — hier stand
-faelschlich „Export-Bytes unveraendert"):** nur die zwei Hinweis-Saetze
-sind editor-only (editorAngaben laedt nie das Runtime-Buendel). „Farbe"
--> „Bedeutung" (`statusVariant.ts:55`) und die Checkbox-Deklaration
-(`FormFeldBlock.ts:124-134`) sind statics der Baustein-Klassen und
-stehen woertlich im `ff-runtime.js` (nachgeprueft): Runtime-Bytes
-aendern sich BEWUSST — `build:runtime` liegt im Commit, Referenzabzug
-erneuern, und die Etappe braucht dadurch eine SE-Delta-Probe.
-
-**Nutzerprobe (Browser):** Datum anklicken — statt Leere ein Satz;
-Karten-/Spaltenregler heisst „Bedeutung". SE-Delta gebuendelt mit den
-ohnehin offenen SE-Proben.
-
-## U7 · Optik: der Editor uebernimmt die Fellnase-Richtung (zugeschnitten 2026-08-12)
-
-**Entscheidung des Nutzers:** die eingecheckte Demo (`designsprache/`)
-ist das Vorbild — auch fuer den Editor selbst. Die Grenze aus CLAUDE.md
-bleibt hart: Masken-Tokens und Editor-Tokens werden NIE gemischt. Der
-Editor bekommt EIGENE Tokens mit den Fellnase-Werten; `masken-tokens.css`
-und die Export-Bytes bleiben byte-gleich.
-
-- **U7a · Musterbogen ergaenzen (kein Editor-Code):** die Muster, die der
-  Demo fehlen, weil sie Masken-Bausteine zeigt und keine Editor-Teile:
-  Formularzeile, Auswahlmenue, Liste-mit-Detail, Fenster/Dialog,
-  Knopfreihe, Meldung. Aus den vorhandenen Atomen (`atome.css`)
-  ABGELEITET, nicht erfunden; fehlt eine Entscheidung, wird gefragt.
-  In `designsprache/` einchecken; der Nutzer nickt sie IM BROWSER ab,
-  bevor irgendwer den Editor anfasst. U7a darf frueh laufen.
-- **U7b · Editor-Tokens umstellen:** `src/index.css` (shadcn-Variablen)
-  auf die abgenickten Werte, Schrift wie die Demo.
-- **U7c · Steuerung/Inspector/Palette angleichen:** Stelle fuer Stelle
-  gegen den ergaenzten Musterbogen; die app-eigene Meldung aus U2 nimmt
-  ihr Aussehen von dort.
+- **U7a · Musterbogen ergaenzen (kein Editor-Code, darf frueh laufen):**
+  die Muster, die der Demo fehlen: Formularzeile, Auswahlmenue,
+  Liste-mit-Detail, Fenster/Dialog, Knopfreihe, Meldung. Aus den
+  vorhandenen Atomen (`atome.css`) ABGELEITET, nicht erfunden; fehlt eine
+  Entscheidung, wird gefragt. In `designsprache/` einchecken; der Nutzer
+  nickt IM BROWSER ab, bevor irgendwer den Editor anfasst.
+- **U7b · Editor-Tokens umstellen** (`src/index.css` auf die abgenickten
+  Werte, Schrift wie die Demo). Offene Nutzer-Frage: Koralle-Akzent
+  uebernehmen? (Empfehlung: ja.)
+- **U7c · Steuerung/Inspector/Palette angleichen**, Stelle fuer Stelle
+  gegen den ergaenzten Musterbogen.
 
 **Reihenfolge-Ehrlichkeit:** U7b/U7c laufen NACH U4/U5 — sonst werden
 Formulare angestrichen, die kurz danach neu gebaut werden.
 
-## U8 · Auswahl am Ding: EIN Klick trifft die Karte, die Karte wechselt ihr Gesicht nicht (GEBAUT 2026-08-13)
+## U10 · Leerzeichen beim Benennen (NICHT baubar ohne Nutzer-Beobachtung)
 
-**Zwei Befunde, ein Thema — die Auswahl im Kanban luegt:**
-
-1. **Drei Klicks bis zur Karte** (Board → Spalte → Karte): die Auswahl
-   drillt sich durch die Huellen, statt das Getroffene zu waehlen. Belegte
-   Kette: Klick-Handler mit stopPropagation je Ebene
-   (`CanvasNode.tsx:99/:108`, `BlockHost.tsx:167/:176`). Der Nutzer klickt
-   auf die Karte und will die Karte — Regel 7 („Klick auf die Stelle").
-2. **Dieselbe Karte sieht ausgewaehlt ANDERS aus als unausgewaehlt:**
-   Platzhalter-Striche und Bild-Rahmen erscheinen nur an der ausgewaehlten
-   Karte (`CardBlock.ts:25`, gebaut nach der Ansage 2026-08-06 „keine
-   haesslichen …"). Diese Ansage ist durch den heutigen Befund UEBERHOLT:
-   eine Karte hat EIN Gesicht, unabhaengig von der Auswahl — was im Editor
-   zu sehen ist, IST die Maske (Regel 1). Auswahl zeigt sich NUR am
-   BlockHost (Rahmen + Anfasser), nie im Baustein.
-
-**Arbeit:** Klick waehlt den INNERSTEN getroffenen Baustein (ein Klick =
-Karte); Huellen (Spalte, Board) werden an Kopf/Rand getroffen oder ueber
-einen weiteren Klick auf bereits Gewaehltes — den genauen Weg legt die
-Ansage fest, nicht der Bauende unterwegs. Karten-Rendering
-auswahl-unabhaengig machen; steckt der Unterschied im Baustein selbst,
-aendern sich Runtime-Bytes BEWUSST (Ansage sagt es, Referenzabzug erneuern,
-SE-Delta-Probe gebuendelt).
-
-**Nutzerprobe:** volle Spalte, EIN Klick auf eine Karte → Karte ist
-gewaehlt; Karte sieht vor, waehrend und nach der Auswahl gleich aus.
-
-**Gebaut 2026-08-13 — der festgelegte Weg (die Ansage entschied ihn):** Klick
-waehlt den getroffenen Baustein; ein weiterer Klick auf DENSELBEN geht eine
-Ebene nach AUSSEN (Karte → Spalte → Board) und bleibt an der obersten Ebene
-der Flaeche stehen (`state/selectionOps.ts`, `auswahlZiel` ersetzt
-`drillDownZiel` — die Kettenrechnung entfaellt, es genuegt der Elternknoten).
-**Ausnahme, ohne die es nicht geht:** landet der Klick auf einer Stelle des
-Bausteins (`data-ff-spot` oder `data-ff-editable`), gibt es KEINEN Schritt nach
-aussen — an einem gewaehlten Baustein ist dieser Klick bereits vergeben (er
-oeffnet den Feld-Picker), und der erste Klick eines Doppelklicks zoege sonst
-die Auswahl weg, bevor `BasicBlock.inlineEdit` sie prueft. Der Klick meldet
-das jetzt mit (`useBindingPicker.aufBedienstelle` → `onSelect(aufStelle)` →
-`Editor.waehleGetroffenen`). Huellen bleiben zusaetzlich direkt treffbar
-(Spaltenkopf, Luecke zwischen Spalten) — und bleiben es auch bei EINER Spalte,
-weil deren freie Flaeche den Schritt nach aussen ausloest.
-Zweiter Teil: die drei `:empty`-Regeln in `blocks/card/kartenStil.ts` haengen
-nicht mehr an `[data-editable]` — Striche und Bildrahmen stehen an JEDER Karte
-im Editor. Runtime-Bytes ABSICHTLICH neu und 529 Byte KLEINER (gelesen: die
-drei Selektoren plus der gekuerzte Stil-Kommentar; die lange Begruendung steht
-jetzt im Dateikopf ausserhalb des `css`-Blocks, wo sie nicht in jede
-exportierte Maske mitreist). Export-Markup und Referenzabzug unveraendert.
-Sieben Faelle in `state/selectionOps.test.ts` halten beide Richtungen fest.
-
-## U9 · EIN sichtbarer Loeschweg je Ding (GEBAUT 2026-08-13)
-
-**Befund (Screenshot Seiten-Leiste):** Loeschen ist fuer dasselbe Ding
-mehrfach sichtbar — Papierkorb am Seiten-Reiter (`SeitenLeiste.tsx`, mit N1
-dazugekommen), Kreuzchen am Baustein (BlockHost), Entf, Loeschen im
-Inspector, „Alle Bloecke loeschen" im Menue. U2 hat das VERHALTEN
-vereinheitlicht (fragt nie nach, Undo ist das Netz) — die ANZAHL der
-sichtbaren Knoepfe blieb und waechst mit jeder neuen Flaeche weiter.
-
-**Arbeit:** Die Ansage zaehlt zuerst ALLE sichtbaren Loesch-Stellen auf
-(Inventur), der Nutzer streicht. Empfehlung: Entf + Kreuzchen am Ding
-bleiben; Inspector-Loeschknopf und Reiter-Papierkorb fallen; „Alle Bloecke
-loeschen" bleibt als bewusster Sonderweg im Menue. Kein neues Verhalten,
-nur weniger Knoepfe; Export-Bytes unveraendert. **Grenze zu C3.4:** C3.4
-regelt den Loesch-VERTRAG der Seiten (gleiches Verhalten aller Wege), U9
-die ANZAHL der sichtbaren Knoepfe — wer zuerst baut, nimmt den anderen
-Teil nicht mit.
-
-**Nutzerprobe:** je Ding genau EIN sichtbarer Loeschknopf; Entf geht
-ueberall; Undo holt alles zurueck.
-
-**Gebaut 2026-08-13 — Inventur und was daraus folgte.** Sichtbare Loeschknoepfe
-je Ding: **Baustein** = Kreuzchen (`BlockHost.tsx:251`) UND Papierkorb im
-Inspector-Kopf (`Inspector.tsx:251`) → doppelt; **Seite** = Papierkorb am
-aktiven Reiter (`SeitenLeiste.tsx:77`) → genau einer; **alle Bausteine** =
-„Alle Bloecke loeschen…" im „…"-Menue → Sonderweg. Je genau EINEN und darum
-unveraendert: Schritt einer Kette, weitere Quelle, Feldpaar-Zeile, Feld einer
-Quelle, Parameter-Zeile, Quelle/Relation im Datencenter. Die X in
-`Meldungen`/`FormularKarte`/`Kommandozentrale` sind SCHLIESSEN, kein Loeschen.
-Gefallen ist genau die eine Doppelung: **der Papierkorb im Inspector-Kopf.**
-An der Musterkarte war er ohnehin ein Knopf, der nie etwas tat (ihr Kreuzchen
-ist wegen des Loeschschutzes ausgeblendet, er blieb stehen und erklaerte beim
-Druecken nur den Schutz). Entf tut unveraendert dasselbe, Netz bleibt Strg+Z.
-**Bewusst NICHT gefallen — Abweichung von der Empfehlung oben, begruendet:**
-der Reiter-Papierkorb. Er ist der EINZIGE Weg, eine Seite zu loeschen (das X am
-Popup geht laut C1-Vertrag zur Hauptseite und loescht nie; eine Ansicht hat als
-`display:contents` gar nichts Anklickbares). Ihn zu entfernen waere kein
-„weniger Knoepfe", sondern eine Funktion weniger — und der Loesch-VERTRAG der
-Seiten gehoert laut dieser Etappe selbst zu C3.4. Bei „je Ding genau EIN
-sichtbarer Knopf" steht die Seite damit schon heute richtig.
-Reine Editor-UI: Runtime-Bytes, Export-Markup und Referenzabzug unveraendert.
-
-## U10 · Kleinfix: Leerzeichen beim Benennen im Formularfeld (Nutzer-Befund 2026-08-12, „immer noch")
-
-Beim Vergeben eines Namens im Formularfeld (Editor) kommt ein getipptes
-Leerzeichen nicht an. **Ursache NICHT belegt** — es gibt KEINEN expliziten
-Space-Handler im Code (nachgesucht 2026-08-12); die Ansage der bauenden
-Sitzung belegt die Ursache zuerst (Kandidaten: Tipp-Sitzung/Inline-Edit im
-Shadow-DOM, ein preventDefault auf dem Weg, eine trimmende
-Namens-Uebernahme) und fixt dann genau sie. Kein Umbau.
-
-**Nutzerprobe:** Formularfeld benennen mit „Vor Name" → Leerzeichen sitzt.
-
-**2026-08-13 NICHT gebaut — die Ursache ist aus dem Code nicht belegbar.**
-Nachgesucht und einzeln widerlegt, damit die naechste Sitzung nicht dieselbe
-Suche wiederholt:
-- KEIN Space-Handler, KEIN `preventDefault` auf der Leertaste. Der einzige
-  globale Tasten-Horcher (`state/useKeyboardShortcuts.ts:38-69`) kennt nur
-  Entf/Strg+Z/Strg+Y/Strg+D und steigt bei Eingabefeldern sofort aus.
-- Der Inline-Edit-Weg (`blocks/base/BasicBlock.ts:94-154`) hoert nur auf Enter
-  und Escape. Sein `trim()` beim Uebernehmen (`:127`) frisst NUR fuehrende und
-  abschliessende Leerzeichen — „Vor Name" ueberlebt es. (Ein Leerzeichen AM
-  ENDE geht damit belegt verloren; das ist aber nicht der gemeldete Fall.)
-- Die Inspector-Textfelder sind ein nacktes `<input>` ohne jede Filterung
-  (`ui/atoms/text-input.tsx`).
-- Einziger Kandidat aus dem Code waere `white-space: nowrap` am Platzhalter
-  (`blocks/formfeld/feldStil.ts:74`, sammelt Leerraum) — er FAELLT AUS: die
-  Karten-Ueberschrift (`kartenStil.ts:170`) und der Spaltentitel
-  (`KanbanSpalteBlock.ts` `.title`) tragen dieselbe Regel, und dort funktioniert
-  das Benennen mit Leerzeichen.
-**Was fehlt, ist EINE Beobachtung im laufenden Browser** (die gehoert dem
-Nutzer, Regel 9): Passiert es NUR am Formularfeld oder auch beim Umbenennen
-einer Kanban-Spalte und einer Karte? Und: kommt gar nichts an, oder steht am
-Ende ein Text ohne Leerzeichen? Mit dieser einen Antwort ist die Ursache
-eingekreist und der Fix klein.
-
-**2026-08-13, zweite Sitzung: WIEDER nicht gebaut — und ab jetzt nicht mehr
-als Etappe einplanen, bevor die Beobachtung da ist.** Nachgeprueft statt
-nachgelesen, das Ergebnis der Vorsitzung haelt: kein Space-Handler und kein
-`preventDefault` auf der Leertaste im ganzen `src` (Volltextsuche, null
-Treffer). Neu dazu, damit niemand ein drittes Mal sucht: die Inline-Edit-
-Stelle des Formularfelds ist der PLATZHALTER (`FormFeldBlock.ts:230-238`,
-Klasse `.ph`), nicht ein eigenes Label — und `.ph` traegt
-`white-space: nowrap; overflow: hidden; text-overflow: ellipsis`
-(`feldStil.ts:66-78`), also **exakt dieselbe Kombination** wie die
-Karten-Ueberschrift (`kartenStil.ts:170-172`) und der Spaltentitel
-(`KanbanSpalteBlock.ts:172-174`), wo dasselbe Benennen funktioniert. Eigen
-ist `.ph` nur `position: absolute` und die Editor-Ausnahme
-`pointer-events: auto` (`feldStil.ts:148`) — daraus eine Ursache abzuleiten
-waere Raten, und Raten verbietet der Etappentext oben.
-**Die Sperre ist doppelt:** der Fix braucht eine Browserbeobachtung (Regel 9,
-gehoert dem Nutzer), und der Nutzer hat am 2026-08-12 festgelegt, dass er
-NICHT zwischendurch prueft, sondern einmal am Ende. Die faellige Gesamtprobe
-liefert die Antwort nebenbei mit — bis dahin ist U10 keine baubare Etappe.
+Nutzer-Befund („Leerzeichen kommt nicht an", „immer noch"). Zwei Sitzungen
+haben die Ursache im Code vergeblich gesucht — **nicht weiter suchen**;
+der Nutzer beobachtet den genauen Hergang bei der Gesamtprobe, dann wird
+mit dem Beleg gebaut.
 
 ---
 
-# Welle N — Ansichten und Navi (eingeschoben 2026-08-12, Nutzer-Auftrag)
+# Welle F — Rest
 
-**Auftrag:** Der Nutzer will Masken wie die empfang-Vorlage bauen koennen:
-mehrere ANSICHTEN in einer Maske (z. B. Empfang / Terminkalender), links
-eine Navi, die umschaltet, dazu gestaltete Leerzustaende. Optik-Vorbild
-ist der Mix `designsprache/mix-fellnase-empfang.html` (gebaut 2026-08-12,
-wartet auf das Nutzer-Urteil).
+## F3 · Designsprache systematisch abgleichen (nach U5/U7)
 
-**Bauart — ausdruecklich ohne Overengineering (Nutzer-Ansage 2026-08-12:
-kein „falls der Bediener vergisst"-Kram):** kein Router, kein Verlauf,
-keine Uebergangs-Animationen, keine neuen Warnungen, keine neuen
-Test-Gattungen. Der vorhandene Seiten-Unterbau (Hauptseite/Popup,
-pageBlock) traegt alles.
-
-**Ablauf und Kosten (Nutzer-Fragen 2026-08-12):** Der Nutzer entscheidet
-je Maske, OB eine Navi da ist (normaler Baustein aus der Palette, keine
-Automatik). „+" IN der Navi legt einen Eintrag an: benennen, Farbe
-waehlen, und wahlweise eine vorhandene Ansicht verknuepfen ODER eine neue
-LEERE Ansicht anlegen — die Flaeche wechselt sofort dorthin und wird
-aufgebaut (Bedienung am Ding, Regel 7). Technisch ist Umschalten nur
-Ein-/Ausblenden im selben Dokument: sofort, kein Neuladen. Die
-Datenquellen werden EINMAL bestellt und von allen Ansichten geteilt.
-Ehrliche Kosten: die Maskendatei waechst mit jeder Ansicht, und ein
-Daten-Push aktualisiert auch verborgene Ansichten — genau wie heute
-schon bei Popups.
-
-## N1 · Ansicht als zweite Hauptseite (GEBAUT 2026-08-12)
-
-Registry-Eintrag „Ansicht": pageBlock wie das Popup, aber volle
-Rasterflaeche wie die Hauptseite, kein Fenster. Die Seiten-Leiste zeigt
-Ansichten wie heute die Seiten (die Popup-Reiter ziehen laut U0-7 spaeter
-in die Overlay-Bearbeitung um — die Leiste gehoert dann den Ansichten).
-Export: alle Ansichten stehen in der Datei, die Hauptseite ist sichtbar,
-weitere Ansichten tragen `hidden` (empfang-Muster setView). Pflicht des
-Waechters: Export-Testfall, Veralten-Positivliste, Referenzabzug.
-
-## N2 · Navi-Baustein (GEBAUT 2026-08-12 — Nachbesserung N2.1 folgt)
-
-Normaler Baustein aus der Palette. Eintraege = Ansichten der Maske
-(Referenz auf die Seiten-id, sichtbar ist der Ansichtsname); Klick
-schaltet um — im Editor auf die Seite, in der Maske per hidden-Toggle
-(Runtime-Buendel bewusst neu). Optik aus dem Mix (Espresso-Leiste,
-aktiver Eintrag in Koralle). Keine freien Links, keine externen Ziele.
-Je Eintrag eine FARBE aus den Palettentoenen (Nutzer-Anforderung
-2026-08-12, „navi mit farbmoeglichkeiten"). KEIN automatischer
-Bediener-Fuss und keine sonstigen eingebauten Zonen — wer so etwas will,
-baut es aus normalen Bausteinen.
-Die Seiten-id je Eintrag ist eine BLOCK-Referenz und kommt darum in die
-EINE Referenzliste aus A5 (`schreibeBlockReferenzenUm` in
-`state/duplizieren.ts` + `core/data/schrittPruefung.ts`) — sonst zeigt
-eine duplizierte Navi still aufs Original (genau die A5-Fehlerklasse).
-Die Ansage legt ausserdem fest, was ein Eintrag tut, dessen Ansicht
-geloescht wurde (stehen lassen und leer zeigen oder mitfallen — nicht
-raten).
-
-### N2.1 · Nachbesserung Navi (GEBAUT 2026-08-12; Optik danach im Chat nachgeschaerft)
-
-Der erste N2-Stand ist am Vorbild vorbei. FUENF Befunde, alle vom Nutzer
-am fertigen Stand gezeigt; das Vorbild ist und bleibt die empfang-Maske
-bzw. der Mix (abschreiben statt gestalten):
-
-1. **Die Navi steht nur auf EINER Seite.** Wechselt man auf die zweite
-   Ansicht, ist die Navi WEG — im Vorbild ist sie die feste Leiste, die
-   auf JEDER Ansicht steht. Entscheidung noetig (Ansage, nicht raten):
-   Navi-Baustein reist sichtbar auf allen Ansichten mit (EIN Baustein,
-   ueberall gezeichnet) — NICHT je Ansicht eine Kopie pflegen.
-2. **Optik am Vorbild vorbei:** im Vorbild ist die Navi KLEIN/schmal und
-   klappt beim Aufklappen DEZENT UEBER die Maske (Overlay); der gebaute
-   Stand steht breit im Weg. Aufklappen ueberlagert, verschiebt nie
-   Inhalt.
-3. **Nicht buendig — links, oben UND unten (Nutzer 2026-08-12):** die
-   Navi soll wie im Vorbild als volle Leiste am echten Maskenrand
-   anliegen. Ursache benannt: das Raster haelt Abstand zum Rand, kein
-   Baustein erreicht die Kante. Die Loesung ist eine REGISTRY-Faehigkeit
-   (Regel 2, z. B. „darf an den Maskenrand"), die genau dieser
-   Baustein-Art den Rand-Anschlag erlaubt — kein Navi-Sondercode im
-   Raster, kein Aufweichen des Rasters fuer alle.
-4. **Im EDITOR unbearbeitbar:** Klick auf einen Eintrag WECHSELT sofort
-   die Seite — man kann die Navi nicht anfassen/einstellen. Der
-   N2-Satz oben („Klick schaltet um — im Editor auf die Seite") ist
-   damit UEBERSCHRIEBEN: im Editor waehlt der Klick den Baustein
-   (Bedienung am Ding, Regel 7); gewechselt wird im Editor ueber die
-   Seiten-Leiste (oder Doppelklick auf den Eintrag — die Ansage legt es
-   fest). In der MASKE wechselt der Klick, das ist ihr Sinn.
-5. Damit ist auch die Doppelung beantwortet („wozu Navi UND + Ansicht
-   oben?"): die Seiten-Leiste ist das EDITOR-Werkzeug (Seiten anlegen/
-   verwalten/wechseln), die Navi ist der MASKEN-Baustein (wechselt zur
-   Laufzeit). Im Editor wechselt die Navi nicht mehr (Punkt 4), dann
-   gibt es keine zwei Wege mehr.
-
-Zwei ZUSATZ-Befunde aus dem SE-Echttest des Nutzers (Screenshot,
-2026-08-12 abends, Maske laeuft in SoftEngine):
-
-6. **Die Ansichten ueberlagern sich in SoftEngine:** Inhalte der ersten
-   Ansicht (Suchfelder, Tabelle) und der zweiten (Kanban — sollte laut
-   Nutzer auf der ZWEITEN Seite liegen) sind GLEICHZEITIG sichtbar und
-   liegen uebereinander. Das hidden-Umschalten aus N1/N2 greift in der
-   Maske nicht, und/oder der Baustein liegt im Baum auf der falschen
-   Seite. ERST am Export belegen (welche Seite traegt `hidden`, wo haengt
-   das Kanban im Baum), DANN fixen — nicht raten.
-7. **SoftEngine scrollt minimal, der Editor nicht:** Editor und Maske
-   zeigen nicht dasselbe Mass — Plan 3.5: „Editor und Export stellen
-   dieselbe Eigenschaft unterschiedlich dar" ist ein Stoppgrund. Ursache
-   messen (Viewport-/Rand-/Leisten-Differenz), im selben Thema beheben.
-
-Runtime-Bytes bewusst neu (Baustein-Verhalten + Optik); Referenzabzug
-erneuern, SE-Delta mit der Gesamtprobe.
-
-**Gebaut 2026-08-12 — was daraus wurde (und was NICHT):** Die Navi ist ein
-Baustein des Masken-RAHMENS geworden, neue Registry-Faehigkeit `maskenRand`
-(`core/blocks/maskenRand.ts`): sie liegt am Rand der Flaeche statt in einer
-Zelle (Befund 3) und steht auf JEDER Flaechen-Seite (Befund 1) — beides
-folgt aus derselben Aussage, darum EIN Kennzeichen. Befund 6 ist am Export
-belegt und nicht geraten: `hidden` blieb wirkungslos, weil die Browser-Regel
-`[hidden]{display:none}` gegen jedes `:host` eines Bausteins verliert; die
-Gegenregel steht jetzt EINMAL in `BasicBlock` statt nur in der Ansicht.
-Befund 7 war zum groessten Teil dessen Folge (zwei Flaechen im selben Raster
-= Vereinigung ihrer Zeilen) plus die 24 Rasterzeilen, die die Navi belegte;
-**ein Rest von wenigen Pixeln bleibt** (Nutzer-Probe: „wirklich Millimeter")
-— das ist Maskenhoehe gegen SE-Fensterhoehe, kein Editor/Export-Unterschied
-mehr. Befund 4/5: der Editor hoert nicht mehr auf das Wechsel-Ereignis
-(`Canvas.tsx`), der Klick waehlt den Baustein, Seiten wechselt die
-Seiten-Leiste. Aus der Nutzer-Probe nachgeschaerft: Editor-Hilfen am Rand
-nach INNEN (Kreuzchen/„+", sonst schneidet das Blatt sie ab), Auswahlrahmen
-ebenfalls · aufgeklappt ist die Leiste leicht durchscheinend · zugeklappt
-zeigt ein Eintrag eine runde Farbflaeche in Zeichen-Groesse (der 8-px-Punkt
-war „zwei Pixel") · KEINE Buchstaben darin (verworfen auf Ansage) · der
-„+"-Anstecker ist derselbe runde Knopf wie das Kreuzchen (der Kasten mit
-Rahmen und Beschriftung „sah aus wie 1999") · schmale Breite 56 statt 72,
-weil unsere Leiste die Marke und den Bediener-Fuss des Vorbilds nicht hat.
-NICHT gebaut, weil es ein eigenes Thema ist: das Abdunkeln der Restflaeche
-beim Aufklappen (unser Baustein kann die Flaeche um sich herum nicht
-ehrlich abdecken) und **die Hauptseite umbenennen** — ihr Name ist heute ein
-Literal (`pageOps.seitenDerMaske`), sie hat keinen Baustein, der ihn tragen
-koennte; Props an der WURZEL fallen beim Laden weg (`normalizeProps` kennt
-den Typ `root` nicht). Steht als naechster Kleinfix an.
-
-**Nutzerprobe:** Navi auf Hauptseite bauen, zweite Ansicht anlegen →
-Navi steht auch dort · Eintrag im Editor anklicken → Navi ist gewaehlt,
-KEIN Wechsel · in der Maske: Klick wechselt, Aufklappen legt sich dezent
-UEBER den Inhalt · Baustein sitzt buendig in der Ecke · in SoftEngine ist
-IMMER genau EINE Ansicht sichtbar, und nichts scrollt, was im Editor
-nicht scrollt.
-
-## N3 · Kanban lebendig (GEBAUT 2026-08-13)
-
-Getoente Spaltenhuelle nach Bedeutung (dieselbe Bedeutungs-Zuordnung wie
-die Marke, `shared/statusVariant`) und gestalteter Leerzustand nach dem
-leer-Atom des Mix (der Text kommt weiter aus „Text ohne Datensaetze",
-nichts Neues zu bedienen). AENDERT die Masken-Optik: Runtime/CSS bewusst
-neu, SE-/Browserprobe des Nutzers. Aktions-Knopf auf der Karte und
-Zimmer-/Untergruppen sind NICHT Teil von N3 — eigene Entscheidungen,
-erst auf Nutzer-Wunsch.
-
-**Gebaut 2026-08-13.** Die Toenung sitzt jetzt auf der GANZEN Spalte
-(`.col background: var(--col-soft)`), der Kopf hat weder eigene Flaeche noch
-Trennlinie, der Zaehler steht auf Papier mit Rand im KRAEFTIGEN Ton, Titel und
-Zahl tragen die normale Textfarbe — Zeile fuer Zeile aus
-`designsprache/mix-fellnase-empfang.html:87-101`. Die Werte gehen 1:1 auf
-(`--sand`=`--se-panel-2`, `--himmel-zart`=`--se-blue-soft`,
-`--sonne-zart`=`--se-amber-soft`, `--salbei-zart`=`--se-green-soft`,
-`--papier`=`--se-panel`, `--espresso`=`--se-ink`); kein Wert ist erfunden.
-`--col-line` hat damit keinen Nutzer mehr und ist aus den v-Klassen raus (die
-`--se-X-line`-Tokens selbst bleiben stehen, die Tabelle kennt sie).
-**Das hebt die Entscheidung vom 2026-08-07 auf** (Flaeche fuer JEDE Spalte
-Sand, nur der Kopf getoent) — begruendet mit dem neueren Vorbild, das seine
-eigene Legende ausdruecklich als N3 fuehrt („getoente Spalten, getoente
-Zaehler").
-**Zwei Dinge bewusst NICHT gebaut:** (1) Der Leerzustand ist bereits das
-leer-Atom (`blocks/shared/leerZustand.ts`, aus `atome.css` abgeschrieben, mit
-Pfote) — im Mix steht dort ein TIERBILD, das waere erfundener Inhalt (welches
-Tier?) und der Leerzustand gehoert auch der Tabelle. (2) Das Vorbild hat eine
-UNGETOENTE Spalte (Sand); unser Status-Vokabular kennt keinen neutralen Wert,
-also ist ab jetzt jede Spalte getoent. Einen neutralen Wert einzufuehren waere
-eine Aenderung am GETEILTEN Vokabular (Karte + Tabelle lesen dasselbe) und
-gehoert nicht in eine Optik-Etappe — eigene Nutzer-Entscheidung.
-Runtime-Bytes ABSICHTLICH neu und 398 Byte kleiner (gelesen: die sechs
-CSS-Aenderungen plus gekuerzte Stil-Kommentare — die Begruendung steht im
-Klassenkopf, ausserhalb des `css`-Blocks). Referenzabzug brauchte KEINE
-Erneuerung (er schneidet das Buendel heraus).
-
-## N4 · Kanban-Untergruppen („Zimmer") — GEBAUT 2026-08-13
-
-Je SPALTE optional — der Nutzer entscheidet OB und WELCHE („ich will ja
-entscheiden welche zimmer, und OB ich welche will"): die Spalte bekommt
-wahlweise eine Unterteilung nach einem Datenfeld der Quelle; je Datenwert
-eine Untergruppe mit Klarnamen — DIESELBE Zuordnungs-Bedienung wie heute
-„Einsortieren nach" an den Spalten, nichts Neues zu lernen. Ohne die
-Einstellung aendert sich nichts. Eine leere Untergruppe zeigt den
-gestalteten Leerzustand aus N3 (Muster „frei · hierher ziehen"). Ein Drop
-zwischen Untergruppen fuehrt NUR die sichtbare Kette „Karte verschoben"
-aus — die feste Zusage (kein eingebauter Schreibweg) gilt unveraendert.
-Die Ansage klaert vorab, ob die Kette den ZIEL-ZIMMER-Wert als
-Parameterquelle bekommt (analog zum Ziel-Spalten-Wert) — ohne ihn kann
-ein Zimmer-Drop nichts schreiben, und die Untergruppen waeren reine
-Anzeige.
-Runtime-Buendel bewusst neu; Export-Testfall (Waechter-Pflicht).
-
-**Gebaut 2026-08-13.** Die drei Punkte, die der Etappentext vorab zu klaeren
-verlangte, sind so entschieden:
-- **Titel = Datenwert**, wie bei der Spalte (Entscheidung 2026-07-14) — kein
-  zweites Klarname-Feld. Sonst waere eine Ebene tiefer eine andere Bedienung
-  zu lernen als eine Ebene hoeher, und der Etappentext verlangt das Gegenteil.
-- **Die Kette bekommt den Ziel-Zimmer-Wert**: neuer Kontext-Platzhalter
-  `{ZIMMER}` neben `{VALUE}` (`core/data/aktionen.ts`, `relations.ts`,
-  gefuellt in `kanban/seRuntime.ts` beim Drop; leer bei einem Drop auf eine
-  Spalte ohne Zimmer). Kein eingebauter Schreibweg — die feste Zusage gilt.
-- **Kein Auffang-Zimmer und kein einstellbarer Frei-Satz** (Regel 10): ohne
-  Treffer landet die Karte im ERSTEN Zimmer, so wie eine Zeile ohne
-  Spaltentreffer in der ersten Spalte landet; der Satz „frei · hierher
-  ziehen" steht fest im Baustein.
-Bewusste Abweichung vom Optik-Vorbild, im Code begruendet
-(`blocks/kanban/kartenAbstand.ts`): die 8 px zwischen den Zimmern sind NICHT
-abgeschrieben. Der Editor legt jedes Kind in einen Wrapper, eine tag-genaue
-`::slotted`-Regel griffe deshalb nur im Export — Editor und Maske stuenden
-verschieden da (Regel 1). Zimmer erben den Kartenabstand (24 px), in beiden
-Welten gleich.
-Der Spaltenzaehler zaehlt weiter KARTEN, nicht Zimmer: er zaehlt jetzt den
-Licht-Baum statt der geslotteten Kinder, und das Zimmer meldet ihm jede
-Inhaltsaenderung (`slotchange` ueberquert keine Schattengrenze).
-Vorbereitend verhaltensneutral geschnitten: die Kanban-Export-Faelle zogen aus
-`export.test.ts` nach `kanbanExport.test.ts` (500-Zeilen-Deckel, eigener
-Commit nach Plan 3.1).
-Runtime-Bytes ABSICHTLICH neu (194 138 -> 197 142 = +3 004 Byte, der eine neue
-Baustein; nachgeprueft, dass kein Editor-Code mitkam), Referenzabzug
-ABSICHTLICH neu (vier Zeilen: die unterteilte Spalte mit ihren zwei Zimmern).
-**Nicht selbst pruefbar:** ob SoftEngine wirklich in die Zimmer einsortiert
-und ob ein Drop auf ein Zimmer die Kette mit dem richtigen Wert ausloest.
-
-## N5 · Bild-Baustein (Upload) — Stufe 1 GEBAUT 2026-08-13
-
-**Stufe 1, sofort machbar:** ein Bild-Baustein in der Palette. Der Nutzer
-laedt das Bild IM Editor hoch; es reist als eingebetteter Daten-URI in
-der Export-Datei mit (eine Maske = EINE Datei — dieselbe Technik wie die
-Tierbilder). Der Editor verkleinert beim Upload auf eine vernuenftige
-Kante (Richtwert max. 1024 px, im Etappen-Commit begruendet), damit die
-Maskendatei nicht explodiert — still, ohne Warn-UI. Export-Testfall.
-
-**Stufe 1 gebaut 2026-08-13.** Baustein `blocks/bild/BildBlock.ts`, GENAU EINE
-Eigenschaft (das Bild) — kein Zuschnitt-Regler, kein Alternativtext, kein
-Rahmen (Regel 10; der Auftrag der Welle U beginnt mit „zig stellschrauben").
-Das Bild passt sich ganz in seine Zelle ein (`contain`), wird nie beschnitten
-und nie verzerrt. Verkleinert wird auf 1024 px laengste Kante, still und ohne
-Warn-UI (`editor/inspector/controls/bildEinbetten.ts`); PNG bleibt PNG
-(Transparenz fuer Logos), alles andere wird JPEG bei 0,85 — entschieden am
-MIME-Typ, nicht per Pixel-Durchlauf.
-**Gewaehlt wird im INSPECTOR, nicht per Doppelklick am Baustein** — bewusste
-Abweichung von Regel 7, begruendet im Kopf von `BildControl.tsx`: der
-Doppelklick auf einer Baustein-Stelle hat heute schon zwei Bedeutungen
-(Feld-Picker, Inline-Edit), und U8 hat genau dieses Zusammenspiel mit der
-Auswahl gerade erst geradegerueckt. Eine dritte Bedeutung ist eine eigene
-Nutzer-Entscheidung, kein Nebeneffekt eines neuen Bausteins.
-Neue Property-Art `kind: 'bild'` (`core/blocks/PropertyDescription.ts`), damit
-das generisch bleibt: wer als naechster ein Bild braucht, deklariert die Art
-und ist fertig. Das Einbetten liegt im Editor, nicht im Baustein — nachgeprueft
-am Buendel: weder `createImageBitmap` noch `toDataURL` reisen mit.
-Runtime-Bytes ABSICHTLICH neu (197 142 -> 199 294 = +2 152 Byte, der eine neue
-Baustein), Referenzabzug ABSICHTLICH neu (EINE Zeile: das `<ff-bild>` mit
-einem 1x1-PNG als Daten-URI — bewusst das kleinstmoegliche echte Bild, der
-Waechter soll den WEG bewachen, nicht 200 KB Base64 mitschleppen).
-**Nicht selbst pruefbar:** ob Dateidialog und Verkleinern im Browser laufen
-(ein Test dafuer waere eine neue Testgattung, Regel 9), wie das Bild aussieht,
-und ob SoftEngine einen langen Daten-URI im Attribut klaglos laedt.
-
-**Stufe 2, SPAETER und erst mit Beleg:** Bilder aus SoftEngine-FELDERN.
-Der Nutzer sagt, SoftEngine hat dafuer Felder, kennt die Form aber selbst
-noch nicht — Regel 5: erst ein echtes Beispiel (Feld-Art, Ablage,
-Abrufweg), dann bauen. Bis dahin bleibt der Baustein rein statisch.
-
-**Nutzer-Urteil zu Mix v1 (2026-08-12): „leblos / ki slop".** v2 ist
-gebaut: die EIGENEN Tierbilder des Nutzers (tier-*.png in designsprache/;
-seine Ansage dazu gab es schon am 2026-08-06 — SEINE Zeichen, nicht die
-Demo-Silhouetten), Marke auf jeder Karte, getoente Zaehler; die
-erfundenen Aktions-Knoepfe, das Tag/Woche-Segment und der
-Bediener-Kasten sind raus (nichts zeigen, was es nicht gibt).
-**v2 ist ANGENOMMEN (Nutzer 2026-08-12: „fellnase passt ganz gut"),**
-mit einer Korrektur: Tierbilder ein paar Prozent kleiner (37/45 px,
-eingepflegt). Der Mix ist damit das feste Optik-Vorbild fuer N3 und U7.
+Quelle: die eingecheckte `designsprache/` und `masken-tokens.css` — es wird
+abgeschrieben, nicht aus KI-Geschmack gestaltet; fehlt eine Entscheidung im
+Musterbogen, wird gefragt. Reihenfolge: 1. gemeinsame Atome/Styles, nicht
+jeden Baustein einzeln · 2. Dialog/Popup/Tabelle gegen Tafel-Rahmen und
+Tokens · 3. Tabellen-Spaltenbreiten nach ART, nie nach Inhalt · 4. Status:
+Rohwert ohne Zuordnung grau, Bedeutung bestimmt feste Farbe · 5. „Bild +
+Name" nutzt geteilte Bilder · 6. Datum nur ausrichten, nie umrechnen · 7.
+Kanban-Karte gegen Reiter/Fusszeile pruefen · 8. veraltete
+Meldungs-Fallbackfarben an Tokens angleichen · 9. Editor- und
+Masken-Tokens nicht vermischen. Fertig, wenn jede sichtbare Abweichung
+korrigiert oder als bewusste Nutzerentscheidung benannt ist, kein neuer
+Hex-Wert entsteht und der Nutzer den Vergleich bestaetigt hat.
 
 ---
 
-## 5. Gesamtreihenfolge der Commits
+# Einzeletappen ausserhalb der Wellen
 
-Die genaue Nummerierung darf bei notwendigen verhaltensneutralen Dateischnitten
-Unterpunkte bekommen. Die fachliche Reihenfolge bleibt.
+## A10 · Sitzungs-Besitz der Bibliotheken (Technik; eigenes go bei Bedarf)
 
-**Commits sind klein, Proben sind gebuendelt.** Der Nutzer liest keine
-Commits — kleine Commits kosten ihn nichts. Was ihn kostet, ist die
-Browserprobe. Darum gilt: ein Thema = ein Commit (3.1 unveraendert), aber
-**eine Klickanleitung pro Block**. Acht Bloecke statt 37 Proberunden.
+Fachlich BEANTWORTET (2026-08-12): die Bibliothek bleibt editorweit — keine
+Maske bringt eigene Quellen/Relationen mit. Offen ist nur die TECHNIK
+(injizierte Sitzungsinstanz statt Modul-Singletons, damit Export/Persistenz
+einen atomaren Snapshot ohne globale Importe bekommen). Sie wartet auf
+keine Entscheidung mehr, sondern auf einen Umbau, der sie wirklich
+erzwingt (Regel 10). Der technische Umbau darf nicht still „neue Maske =
+leere Bibliotheken" erfinden; zwei Sitzungsinstanzen muessen ohne
+Testverschmutzung erzeugbar sein.
 
-Die Spalte „Wo im sichtbaren Editor" ist die Kurzform der Ansage aus 0.2. Sie
-ersetzt die Ansage nicht — sie verhindert nur, dass eine Etappe ohne
-sichtbare Verankerung in den Plan rutscht. Mit `*` markierte Zeilen sind am
-Code belegt; die uebrigen sind aus dem Plan abgeleitet und werden bei der
-Ansage belegt oder korrigiert.
+## S5.3 · Diagnose-Anzeige (OPTIONAL, eigenes go, SE-Echttest Pflicht)
 
-### Block 0 — Baseline · keine Probe
+Die Diagnose schreibt bei jedem SE-Ereignis das JSON des ersten
+Datenpakets mehrfach neu (`bridge.ts`) — datenmengenproportionale Arbeit
+mitten im Maskenstart. Falls freigegeben: Diagnose nur noch auf
+Anforderung fuellen, Maskenverhalten sonst identisch.
 
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 1 | A0 Baseline | nichts sichtbar — Arbeitsstand gesichert, Pruefbuendel gruen |
+---
 
-### Block S — Sichtbare Fehler und Tempo (eingeschoben 2026-08-10) · EINE Probe am Ende
+## 5. Reihenfolge
 
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| S1 | GESTRICHEN (Nutzer 2026-08-10) | entfaellt — keine Warn-Anzeige, s. Etappenkopf S1 |
-| S2 | Tabellen-Reststreifen | \* Tabelle: keine leere/duennere Scheinzeile mehr unter der letzten Datenzeile — Editor UND Maske |
-| S2.1 | Tabellen-Nachschlag (entschieden 2026-08-11, wartet auf go) | Tabelle: kein Leerraum mehr zwischen letzter Zeile und Fusszeile; Zeilen-Waehler faellt weg — immer „passend zur Hoehe" |
-| S3 | Render-Bremsen | \* ueberall spuerbar: Tippen/Ziehen ohne Haenger; optisch nichts anders |
-| S4 | Dev-Laden | Editor-Start im Dev-Server schneller; optisch nichts anders |
-| S5 | Masken-Tempo | OPTIONAL, eigenes go; nichts sichtbar, SE-Echttest Pflicht |
+1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung + Koralle-Wort +
+   preflight-Mini-Frage.
+2. **Welle V:** V1 → V0 → V2 → V3 → V4 → V5 → V6 (Entwurf, dann Bau) → V7.
+3. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf.
+4. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
+   → F3.
 
-Die SoftEngine-Probe fuer Block S ist wegen S2 (Runtime-Bytes) noetig und
-wird EINMAL am Blockende gebuendelt, zusammen mit der Browserprobe.
-
-### Block 1 — „ergibt keinen Sinn"-Fehler · EINE Probe am Ende
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 2 | A1 `aus` | \* Steuerung → Aktion → Parameterzeile, Knopf „Parameter N fuer diese Aktion weglassen": die Kette ist nach dem Neuladen noch da. Heute ist sie **ganz** weg |
-| 3 | A2 Demo-Putzer | nichts sichtbar heute; wirkt erst bei C2 — getippte Kartenwerte („Heute", „09:15") ueberleben den Schema-Sprung |
-| 4 | A2.1 Migrationsergebnis | nichts sichtbar — Voraussetzung fuer Zeile 3 |
-| 5 | A3 Zukunftsschema | nur im Fehlerfall: Sperrmeldung mit drei Wegen statt leerem Editor |
-| 6 | A4 Teilverlust | nur im Fehlerfall: die Meldung nennt Eintrag und Grund; nichts verschwindet mehr stumm |
-| 7 | A5 Duplizieren | \* Flaeche: Baustein duplizieren (Strg+D) — die Kopie steuert die Kopie, nicht mehr das Original |
-| 8 | A6 Tastatur | \* Flaeche: Text in einem Baustein bearbeiten — Entf/Strg+Z/Strg+D treffen den Text, nicht den Baustein |
-| 9 | A7.1 Listener | nichts sichtbar — eine Aenderung wird auch dann gespeichert, wenn woanders ein Fehler auftritt |
-| 10 | A7.2 Transaktionen | Flaeche: Ziehen und Groesse aendern — nach einem Fehler wieder normale Rueckgaengig-Schritte |
-| 11 | A7.3 Auswahlzyklen | moeglicherweise gar kein Code — nur Beleg |
-| 12 | A8.1 Regelwaechter | nichts sichtbar (Werkzeug) |
-| 13 | A8.2 Wahrheitskommentare | nichts sichtbar (Kommentare, CLAUDE.md) |
-
-### Block P — Tempo (eingeschoben 2026-08-11) · EINE Probe am Ende
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| P1 | Messen | nichts sichtbar — Zahlen statt Gefuehl, kein Code |
-| P2 | Top-Bremsen | Start schneller und/oder Arbeiten fluessiger; optisch nichts anders |
-| S2.1 | Tabellen-Nachschlag | Tabelle: kein Leerraum mehr ueber der Fusszeile; Zeilen-Waehler weg (s. Block-S-Tabelle) |
-
-Die SoftEngine-Probe (Tabelle, aus Block S offen) und die Browserproben
-(Tempo-Gefuehl, A5/A6-Bedienung) buendeln sich am Ende dieses Blocks.
-
-### Block 2 — Beleg und Export
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 14 | A9 SE-Ausgangslauf | nichts geaendert — der Nutzer belegt, was heute in SoftEngine geht |
-| 15 | A10 Sitzungsbesitz (bedingt) | nichts sichtbar; nur nach eigenem Go |
-| 16 | B1 GESTRICHEN (Nutzer 2026-08-11) | entfaellt — die zwei automatischen Downloads bleiben, s. Etappenkopf B1 |
-
-### Block 3 — Popup · das riskante, steht allein
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 17 | C1 Dialograhmen | \* Popup bekommt denselben Fensterrahmen wie das Nachschlagen (Kopf mit Titel und X) |
-| 18 | C2 Schema 6 + Raster | Popup-Inhalt: Bausteine frei platzierbar statt untereinander; **bestehende Popups werden einmalig umgestellt** — Maskendatei vorher sichern |
-| 19 | C3.1 Namen | leerer oder doppelter Popup-Name wird in der Bedienung verhindert, statt spaet beim Export zu knallen |
-| 20 | C3.2 ein Popup | in der Maske: ein zweites Popup oeffnen schliesst das erste |
-| 21 | C3.3 Fokus | Tab-Taste im Popup bleibt im Fenster |
-| 22 | C3.4 Loeschen | Kreuz, Inspector und Entf loeschen gleich, mit derselben Rueckfrage |
-| 23 | C4 Reparenting | Baustein in Zeile oder Gruppe ziehen — ein klarer Weg dafuer |
-
-### Block 4 — Tabelle und Nachschlagen
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 24 | D0 Dateischnitt | nichts sichtbar |
-| 25 | D1 Zeilenaktivierung | Tabelle: Zeile mit der Tastatur anwaehlen, Enter aktiviert sie |
-| 26 | D2 Datenmodus | nichts sichtbar |
-| 27 | D3 Nachschlagen | \* Lupe am Formularfeld: die echte Tabelle statt der handgebauten Liste |
-
-### Block 5 — Innenumbau · nichts sichtbar
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 28–30 | E1, E2, E3 | nichts sichtbar. Probe = Reload und Export unveraendert. Wird hier etwas sichtbar, ist es ein Fehler |
-
-### Block 6 — Bedienung und Design · eigene Entscheidungen
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 31 | F1 Entwurf | AUFGEGANGEN in Welle U (2026-08-12) |
-| 32 | F2 Relationsoberflaeche | AUFGEGANGEN in Welle U (2026-08-12) |
-| 33 | F3 Designabgleich | ueberall sichtbar; Vorbild ist `designsprache/` — bleibt eigenstaendig (Masken-Design, nicht Editor) |
-
-### Block R — Zeilen per Relation (eingeschoben 2026-08-11) · SE-Echttest Pflicht
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| 34 | R1 Lade-Art + Export | Steuerung/Datenquellen: Abschnitt „Woher kommen die Zeilen?" |
-| 35 | R2 Laufzeit | im Editor nichts Neues — in SoftEngine fuellt der Beleg-Klick die Positionen (SE-Kern BESTANDEN 2026-08-12) |
-| 36 | R3 Formularfeld als Geber | in SoftEngine: Beleg im Nachschlagefeld waehlen fuellt die Positionen |
-
-### Block U — Generalsanierung Bedienung (eingeschoben 2026-08-12) · Klickanleitungen sammeln, EINE Probe am Ende
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| U0 | Entscheidungsliste | kein Code — der Nutzer antwortet je Zeile |
-| U1 | Wortlaut-Putz | Steuerung: Belehrungstexte weg, neue Namen |
-| U2 | Loeschen/Meldungen | ein Loeschverhalten; app-eigene Meldungen statt Browser-Kaesten |
-| U3 | Doppelbauten | nichts sichtbar — gleiche Bedienung, halber Code |
-| U4 | Entwurf Quellen/Felder/Relationen | kein Code — der Nutzer bestaetigt den Entwurf |
-| U5 | Umsetzung Entwurf | Steuerung und Inspector, vollstaendig |
-| U6 | Inspector-Kleinputz | Datum/Popup erklaeren sich; „Farbe" heisst „Bedeutung" |
-| U7 | Optik: Fellnase-Richtung (U7a Musterbogen frueh; U7b/c nach U5) | Steuerung/Inspector/Palette im neuen Gesicht |
-
-### Block N — Ansichten und Navi (eingeschoben 2026-08-12) · SE-Echttest wegen Runtime
-
-| # | Etappe | Wo im sichtbaren Editor |
-|---|---|---|
-| N1 | Ansicht-Seite | Seiten-Leiste: neue Ansicht anlegen, Flaeche wie Hauptseite |
-| N2 | Navi-Baustein | Palette: „Navi"; in der Maske schaltet er die Ansichten um |
-| N3 | Kanban lebendig | Kanban: getoente Spalten nach Bedeutung, gestalteter Leerzustand |
-| N4 | Kanban-Untergruppen | Spalte: optional „Unterteilen nach" — Zimmer erscheinen als Gruppen |
-| N5 | Bild-Baustein | Palette: „Bild"; Upload im Editor, eingebettet im Export |
-
-Nicht jeder Punkt muss gleich gross sein. Die Liste verhindert, dass ein
-Agent unter dem Etikett „Aufraeumen" fuenf unabhaengige Risiken in einen
-unpruefbaren Grosscommit legt.
+Etappen aus 2. und 3. duerfen sich mit 4. verzahnen, solange Regel 3.1
+(ein Thema, ein Commit) und EIN federfuehrender Agent je Arbeitsbaum
+gelten.
 
 ---
 
@@ -3939,135 +642,108 @@ unpruefbaren Grosscommit legt.
 - keine neue Testumgebung, Playwright-, DOM- oder Screenshottests;
 - keine Neuerfindung der SoftEngine-Bridge;
 - kein Entfernen des offiziellen Interface-Tags ohne eigenen A/B-Auftrag;
-- kein Auto-PUT oder versteckter Schreibweg;
-- kein CREATE_RECORD;
+- kein Auto-PUT oder versteckter Schreibweg; kein CREATE_RECORD;
 - keine mehrstufigen Quellenverknuepfungen;
 - keine Wiederbelebung geloeschter Projektkarten, Wizards oder
   Dokumentationssysteme;
-- keine Popup-Stack-Architektur;
-- kein editierbarer Nachschlage-Seitentyp;
+- keine Popup-Stack-Architektur; kein editierbarer Nachschlage-Seitentyp;
 - keine Designaenderung ohne Musterbogen oder Nutzerentscheidung;
 - kein Aufraeumen fachfremder Stellen „wenn man schon da ist".
 
 ---
 
-## 7. Endabnahme des gesamten Umbaus
+## 7. Proben und Endabnahme
 
-### 7.1 Maschinelle Pflicht
+### 7.0 Die JETZT anstehende Gesamtprobe (Stand 2026-08-18)
 
-- sauberer Arbeitsbaum;
-- fuenf Pruefungen gruen;
-- keine Datei ueber 500 Zeilen;
-- keine unerwarteten Runtime-Bundle-Bytes;
-- Referenzabzug vollstaendig erklaert;
-- direkte und stufenweise Upgrades alter Schema-1/2/3/4/5-Masken sowie neue
-  Schema-6-Masken geprueft;
-- zukuenftige Schema-Version wird sicher abgelehnt;
-- kein Sanitizer-Test erlaubt stillen Teilverlust;
-- keine kopierte interne Blockreferenz zeigt unbemerkt aufs Original;
-- Registry-Waechter erkennt exakt alle Bausteine;
-- Runtime-Bundle enthaelt keine Editor-Icons/-Komponenten;
-- B1: Event/Relation/Quelle aendert Export-Fingerprint, reine UI-Aenderung
-  nicht;
-- D2: `provided` meldet sich niemals bei SoftEngine an und sein Datensatz wird
-  atomar gesetzt;
-- D3: keine handgebaute Nachschlagetabelle/-Zeilenlogik bleibt parallel;
-- E2: kein Registry-Dual-Path und keine kopierten kanonischen Defaults;
-- E3: ungueltiger Property-Key ohne History, Version/Notify und Autosave.
+**Browser (Editor):** Popup: Bausteine hineinziehen (Drop nur im
+Fensterinneren), Groesse an den Anfassern, loeschen, leere Seite ·
+Nachschlagen: Feldtyp waehlen, Quelle + „Gespeichert wird", Lupe →
+Spalten einstellen (+/−, Doppelklick umbenennen, Klick auf Spaltentitel
+MUSS die Feld-Auswahl oeffnen), Typwechsel schliesst das Fenster ·
+Auswahl: EIN Klick trifft die Kanban-Karte; ein Loeschweg je Ding ·
+Kanban-Zimmer anlegen + Karte einsortieren · Bild-Baustein hochladen ·
+**U10 beobachten** (Leerzeichen beim Benennen — genauer Hergang) ·
+Fix-Proben: Lesen/Schreiben-Reiter klicken · im Spalten-Fenster tippen,
+Escape, danach muss Strg+Z gehen · Ankreuzfeld bietet kein „Feld" mehr.
 
-### 7.2 Nutzer-Browserprobe
+**SoftEngine (eine Maske exportieren, echt laden):** Daten kommen in
+Tabelle/Kanban/Feldern an · Beleg-Klick fuellt Positionen · Lupe oeffnet
+zur Laufzeit das Fenster mit echten Saetzen, Zeilenklick uebernimmt ·
+eine Kette ausfuehren · Popup per Kette oeffnen/schliessen.
 
-- Hauptseite und Popup bauen;
-- DnD, Resize, Reihenfolge, Undo/Redo;
-- Texteditieren plus globale Kuerzel;
-- Popup oeffnen, wechseln, schliessen, loeschen, duplizieren;
-- Fokus- und Tab-Reihenfolge;
-- normale Tabelle und Nachschlagetabelle;
-- Quellen, Relationen, Aktionsparameter und `aus`;
-- Export erzeugen, veralten lassen, beide Dateien einzeln anfordern;
-- Reload und Maskendatei-Roundtrip.
+Der Nutzer meldet NUR Funde.
 
-### 7.3 Nutzer-SoftEngine-Probe
+### 7.1 Maschinelle Pflicht (Endabnahme des gesamten Umbaus)
 
-- bestehende Referenzmaske vor Umbau belegt;
-- nach jeder Runtime-/Exportetappe gezielte Delta-Probe;
-- abschliessend WinUI und, soweit verfuegbar, WebUI;
-- Datenpush und Mehrfachhydrierung;
-- Tabelle/Kanban/Nachschlagen;
-- Popup-Positionen, genau-ein-Popup und Fokus;
-- Ereignisketten, `aus`, START_TOOL und Relationsschritte;
-- HTML und SEvariablen gehoeren nachweislich zum selben Exportstand.
+Sauberer Arbeitsbaum · fuenf Pruefungen gruen · keine Datei ueber 500
+Zeilen · keine unerklaerten Runtime-Bytes · Referenzabzug vollstaendig
+erklaert · direkte und stufenweise Upgrades alter Schema-Masken geprueft ·
+zukuenftige Schema-Version wird abgelehnt · kein Sanitizer-Test erlaubt
+stillen Teilverlust · keine kopierte Blockreferenz zeigt aufs Original ·
+Registry-Waechter erkennt exakt alle Bausteine · Bundle enthaelt keine
+Editor-Icons · D2: `provided` meldet sich nie bei SoftEngine an · D3:
+keine handgebaute Nachschlagetabelle parallel · E2: kein Dual-Path ·
+E3: ungueltiger Key ohne History/Notify/Autosave.
+
+### 7.2 Nutzer-Browserprobe (Endabnahme)
+
+Hauptseite und Popup bauen · DnD, Resize, Reihenfolge, Undo/Redo ·
+Texteditieren + globale Kuerzel · Popup oeffnen/wechseln/schliessen/
+loeschen · Fokus- und Tab-Reihenfolge · normale Tabelle und
+Nachschlagetabelle · Quellen, Relationen, Aktionsparameter und `aus` ·
+Export erzeugen, Reload und Maskendatei-Roundtrip.
+
+### 7.3 Nutzer-SoftEngine-Probe (Endabnahme)
+
+Referenzmaske vor/nach · Datenpush und Mehrfachhydrierung ·
+Tabelle/Kanban/Nachschlagen · Popup-Positionen, genau-ein-Popup, Fokus ·
+Ereignisketten, `aus`, START_TOOL, Relationsschritte · WinUI und, soweit
+verfuegbar, WebUI · HTML und SEvariablen gehoeren zum selben Exportstand.
 
 ### 7.4 Abschlussbericht
 
-Der Abschlussbericht nennt nur:
-
-1. welche Etappen und Commits gebaut wurden;
-2. welche fuenf Pruefungen gruen sind;
-3. welche Browser-/SE-Proben der Nutzer bestaetigt hat;
-4. welche konkrete Grenze der Nutzer bewusst verschoben hat, falls A10 oder
-   ein Designpunkt nicht umgesetzt wurde;
-5. ob neue Produktfunktionen auf dem bereinigten Fundament wieder freigegeben
-   sind.
-
-Keine Vorschlagsrubrik und keine neue Dauer-Chronik.
+Nennt nur: gebaute Etappen/Commits · gruene Pruefungen · bestaetigte
+Proben · bewusst verschobene Grenzen · ob neue Produktfunktionen wieder
+frei sind. Keine Vorschlagsrubrik, keine neue Dauer-Chronik.
 
 ---
 
-## 8. Go-/No-Go-Punkte
+## 8. Sperrliste — gestrichen oder geparkt (nicht wieder vorschlagen)
 
-### Erstes `go`
+Begruendungen in voller Laenge: git-Historie (Plan-Fassung vor dem
+2026-08-18) und CLAUDE.md.
 
-**Ein `go` gilt fuer genau eine Etappe** (Nutzer-Ansage 2026-08-10, siehe 0.3).
-Das erste `go` erlaubt A0 — nicht A0 bis A9. Danach wird jede weitere Etappe
-einzeln angesagt und einzeln freigegeben.
+**GESTRICHEN (Nutzer-Ansagen; in keiner Form wieder vorschlagen):**
 
-Der Korridor bleibt trotzdem beschraenkt: ohne neue Entscheidung geht es
-hoechstens bis A9. A10 braucht den separaten Entscheidungsstopp. Popup-,
-Tabellen-, Registry- und Designumbau sind vom ersten `go` nicht erfasst.
+- **Warn-/Preflight-Anzeigen und Export-Blockaden** (S1, 2026-08-10): der
+  Export blockt nie, der Editor erzieht nicht.
+- **Export-Klick-Umbau** (B1, 2026-08-17): zwei automatische Downloads
+  bleiben, wie sie sind — keine ZIP, keine Anforder-Knoepfe.
+- **„Beleg anlegen und sofort sehen"** (R4, 2026-08-12): die belegten
+  SE-Muster stehen in CLAUDE.md als Wissen, gebaut wird daraus nichts.
+- **Zeilenfilter am SEFILELOOP-Eintrag** (R5, 2026-08-12): gebaut und auf
+  Ansage restlos zurueckgenommen (Regel-3-Verstoss).
+- **Lade-Sperre/Schreib-Riegel/Quarantaene** (2026-08-12): der Browser-Weg
+  laedt nachsichtig; die strenge Verlust-Pruefung lebt nur am Datei-Weg.
+- **Baustein „Zeile"** (U0-5): geloescht, Migration loest Altbestand auf.
+- **Fokusfalle/aria-modal ohne echte Fokusgrenze** (C3.3): abgewaehlt.
+- **Pixel-Umrechnungsformel + 520-px-Zwangsbreite** (C2): abgewaehlt — ein
+  Popup mit 480 bleibt 480.
+- **Loesch-Rueckfrage am Baustein** (C3.4/U0-3): Loeschen fragt nie nach.
+- **Neue Testgattungen/Playwright** (CLAUDE.md, 2026-07-23/28).
 
-### Entscheidungsstopp nach A9
+**GEPARKT (kommt wieder, wenn der Anlass da ist):**
 
-Nach bestaetigtem SoftEngine-Ausgangslauf wird A10 getrennt entschieden. Erst
-nach Umsetzung oder ausdruecklich dokumentierter Verschiebung werden B1 und C
-freigegeben.
-
-### Go vor Schema 6
-
-Nur wenn Maskendatei-Backup, A2-Regression und C1-Nutzerprobe bestaetigt sind.
-
-### Go vor E2 Registry-Umbau
-
-E1 erzeugt zuerst Inventar und Waechterbeweis. E2 beginnt nur nach fertigem
-Popup/Nachschlagen und ausdruecklicher Vorlage dieses Ergebnisses.
-
-### Go vor Store-Besitz A10
-
-Explizite Nutzerbestaetigung direkt nach A9. Technische Injection und
-fachliche Lebensdauer der Bibliotheken werden getrennt entschieden.
-Empfehlung: technisches Sitzungsobjekt ja, heutige fachliche Lebensdauer
-zunaechst beibehalten.
-
-### Go vor Relations-/Designwelle
-
-Der Nutzer bestaetigt den sichtbaren Entwurf beziehungsweise die konkreten
-Abweichungen. Technikagenten entscheiden diese Produktoptik nicht allein.
-
----
-
-## 9. Endurteil
-
-Der Bau ist nicht „alles falsch" und wird nicht weggeworfen. Er besitzt gute
-Grundgrenzen, aber mehrere von KI-Agenten unabhaengig getroffene Entscheidungen
-sind nicht bis Laden, Export, Runtime, Shadow DOM und Migration durchgezogen.
-
-Fassung 6 raeumt deshalb in dieser Reihenfolge auf:
-
-1. **Verlust verhindern.**
-2. **Vertraege vereinheitlichen.**
-3. **Doppelte Komponenten entfernen.**
-4. **Metadaten und State-Besitz konsolidieren.**
-5. **Bedienung und Design bewusst abschliessen.**
-
-Erst danach gilt der Editor wieder als belastbares Fundament fuer groessere
-neue Funktionen.
+- **Popup-Duplizieren und „Verschieben nach …"** (C3.1/C4): heute ueber
+  die Oberflaeche unerreichbar — erst mit dem Overlay (V6b) sinnvoll.
+- **Dev-Server-Ladezeit** (S4): keine kleine sichere Loesung gefunden.
+- **Bild-Baustein Stufe 2** (Bilder aus SE-Feldern): wartet auf einen
+  Beleg aus einer echten Maske.
+- **Offener Satz per VAR bestellen:** als `it.todo` in
+  `datenquellen.test.ts` sichtbar gehalten — bauen, wenn die Form an
+  einer echten Maske belegt ist.
+- **MEMTAB / ERPAPICALL-Laufzeit-AUFRUF:** MEMTAB kommt in keiner echten
+  Maske vor; der Laufzeit-Aufruf friert WinUI ein — beides wartet auf
+  Belege der Installation.
+- **U10** (Leerzeichen): wartet auf die Nutzer-Beobachtung (s. Welle U).
