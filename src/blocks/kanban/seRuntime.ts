@@ -1,13 +1,10 @@
 import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
-import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor, satzIndexVon } from '../../softengine/data'
+import { getField, satzIndexVon } from '../../softengine/data'
 import { auswahlWiederfinden, geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
-import { macheFeldLeser } from '../shared/fremdeQuellen'
-import { gewaehlterTag } from '../shared/gewaehlterTag'
+import { holeDatenVorspann } from '../shared/datenVorspann'
 import { LEER_TEXT_STANDARD } from '../shared/leerZustand'
-import { zeilenAmTag } from '../shared/tagFilter'
 import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 import { CardBlock } from '../card/CardBlock'
 import { KanbanSpalteBlock } from './KanbanSpalteBlock'
@@ -89,12 +86,9 @@ function zielZimmer(column: HTMLElement, row: unknown): HTMLElement | null {
 function hydrate(board: HTMLElement): void {
   if (dragged?.board === board) beendeZug()
 
-  const sourceId = board.getAttribute('source') ?? ''
-
   const statusField = board.getAttribute('statusfield') ?? ''
-  if (sourceId === '') return
-  const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, sourceId)
-  if (!source) return
+  const vorspann = holeDatenVorspann(board)
+  if (!vorspann) return
 
   const columns = columnsOf(board)
   if (columns.length === 0) return
@@ -110,11 +104,7 @@ function hydrate(board: HTMLElement): void {
   }
   if (!template) return
 
-  const rows = zeilenAmTag(
-    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
-    board.getAttribute('tagfield') ?? '',
-    gewaehlterTag(),
-  )
+  const rows = vorspann.zeilen
 
   const columnValues = columns.map(
     (c) => c.getAttribute('heading') ?? KanbanSpalteBlock.defaultProps.heading,
@@ -122,7 +112,7 @@ function hydrate(board: HTMLElement): void {
   const spots = spotsForTag(template.tagName)
   const catchIdx = catchColumnIndex(columns.map((c) => c.getAttribute('auffang')))
 
-  const lies = macheFeldLeser(board)
+  const lies = vorspann.lies
 
   for (const col of columns) {
     for (const ablage of ablagenOf(col)) cardsOf(ablage).forEach((card) => card.remove())
@@ -147,7 +137,7 @@ function hydrate(board: HTMLElement): void {
       }
     }
 
-    const pindex = satzIndexVon(source, row)
+    const pindex = satzIndexVon(vorspann.quelle, row)
     cardData.set(card, { row, pindex })
     card.draggable = true
   }

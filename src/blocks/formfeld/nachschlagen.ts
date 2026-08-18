@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit'
+import { html, nothing, render, type TemplateResult } from 'lit'
 import type { ListenBindung } from '../../core/blocks/listenBindung'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
@@ -6,7 +6,6 @@ import { meldeFehler } from '../../softengine/meldung'
 import { zeilenNachAuswahl } from '../shared/auswahl'
 import {
   DIALOG_RAHMEN_TAG,
-  DIALOG_SCHLIESSEN_EVENT,
   type DialogGroesseDetail,
   type DialogRahmen,
 } from '../shared/DialogRahmen'
@@ -183,7 +182,9 @@ export function folgeBeimVerlassen(
   return getippt === bestaetigteAnzeige ? 'nichts' : 'zurueck'
 }
 
-let offen: DialogRahmen | null = null
+// `offen` ist der Lit-Halter am document.body, in den das Laufzeit-Fenster
+// gerendert wird — ihn entfernen raeumt Fenster samt Listenern ab.
+let offen: HTMLElement | null = null
 let offenFuer: HTMLElement | null = null
 let rueckFokus: HTMLElement | null = null
 
@@ -218,28 +219,77 @@ export function automatikSpalten(args: SpaltenQuelle): Spalte[] {
   return [{ titel, feld: args.speicherFeld, art: ART_TEXT }]
 }
 
-function macheTabelle(args: NachschlagenArgs, eintraege: readonly Eintrag[]): TabelleBlock {
-  const tabelle = document.createElement(TabelleBlock.tagName) as TabelleBlock
+interface FensterArgs {
+  titel: string
+
+  breite: number
+  hoehe: number
+
+  inhalt: TemplateResult
+  onSchliessen: () => void
+
+  // Gesetzt = Editor-Weg (Spalten stellen): das Fenster ist ziehbar
+  // (Groesse am Ding, gemeldet ueber onGroesse) und liegt mit z-index 40
+  // UNTER den Editor-Overlays (der Rahmen-Standard ist das Viewport-
+  // Maximum); pointerdown/dblclick bleiben im Fenster, damit Klicks den
+  // Baustein nicht ziehen oder waehlen (Ausnahme der Zug-Regel, s.
+  // rasterMove). Ohne `editor` traegt das Fenster den Laufzeit-Marker
+  // data-ff-nachschlagen.
+  editor?: { onGroesse: (detail: DialogGroesseDetail) => void }
+}
+
+// Das EINE Nachschlage-Fenster: Editor-Lupe (Spalten stellen) und
+// Laufzeit-Lupe (Saetze waehlen) bauen hier dasselbe Geruest — die zwei
+// Wege unterscheiden sich nur im Tabellen-Inhalt und in den benannten
+// `editor`-Extras oben, nicht in zwei Kopien.
+function fensterTpl(args: FensterArgs): TemplateResult {
+  const stop = (e: Event): void => e.stopPropagation()
+  const editor = args.editor
+  return html`<ff-dialog-rahmen
+    viewport
+    escape-schliesst
+    ohne-modal
+    inhalt-fest
+    ?ziehbar=${editor !== undefined}
+    ?data-ff-nachschlagen=${editor === undefined}
+    style=${editor !== undefined ? 'z-index:40' : nothing}
+    .titel=${args.titel !== '' ? args.titel : 'Nachschlagen'}
+    .breite=${args.breite}
+    .hoehe=${args.hoehe}
+    @ff-dialog-groesse=${editor === undefined ? nothing : (e: Event) => {
+      e.stopPropagation()
+      editor.onGroesse((e as CustomEvent<DialogGroesseDetail>).detail)
+    }}
+    @ff-dialog-schliessen=${(e: Event) => {
+      if (editor !== undefined) e.stopPropagation()
+      args.onSchliessen()
+    }}
+    @click=${stop}
+    @pointerdown=${editor === undefined ? nothing : stop}
+    @dblclick=${editor === undefined ? nothing : stop}
+  >${args.inhalt}</ff-dialog-rahmen>`
+}
+
+function laufzeitTabelleTpl(args: NachschlagenArgs, eintraege: readonly Eintrag[]): TemplateResult {
   const eigene = coerceNachschlagSpalten([...args.spalten])
   const einspaltig = nurEineSpalte(
     anzeigeFeldVon(eigene, args.speicherFeld),
     args.speicherFeld,
   )
-
-  tabelle.besitz = 'provided'
-  tabelle.spalten = eigene.length > 0 ? eigene : automatikSpalten(args)
-  tabelle.suche = 'ja'
-  tabelle.leerText = 'Diese Quelle hat keine Sätze.'
-  tabelle.bereitgestellteZeilen = eintraege.map((e) => ({
-    rohzeile: e.satz,
-    zellen: eigene.length > 0
-      ? eigene.map((s) => (s.feld === '' ? '' : getField(e.satz, s.feld)))
-      : (einspaltig ? [e.wert] : [e.anzeige, e.wert]),
-  }))
-  tabelle.toggleAttribute('fuellt', true)
-
-  tabelle.style.setProperty('--se-r-lg', '0px')
-  return tabelle
+  return html`<ff-tabelle
+    fuellt
+    suche="ja"
+    style="--se-r-lg:0px"
+    .besitz=${'provided'}
+    .spalten=${eigene.length > 0 ? eigene : automatikSpalten(args)}
+    .leerText=${'Diese Quelle hat keine Sätze.'}
+    .bereitgestellteZeilen=${eintraege.map((e) => ({
+      rohzeile: e.satz,
+      zellen: eigene.length > 0
+        ? eigene.map((s) => (s.feld === '' ? '' : getField(e.satz, s.feld)))
+        : (einspaltig ? [e.wert] : [e.anzeige, e.wert]),
+    }))}
+  ></ff-tabelle>`
 }
 
 export function oeffneNachschlagen(args: NachschlagenArgs): void {
@@ -254,23 +304,21 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
 
   schliesse(false)
 
-  const dialog = document.createElement(DIALOG_RAHMEN_TAG) as DialogRahmen
-  dialog.setAttribute('data-ff-nachschlagen', '')
-  dialog.viewport = true
-  dialog.escapeSchliesst = true
+  // Der Halter ist layout-neutral (display:contents); das Fenster darin
+  // steht ohnehin fix im Viewport.
+  const halter = document.createElement('div')
+  halter.style.display = 'contents'
+  render(fensterTpl({
+    titel: args.titel,
+    breite: args.breite,
+    hoehe: args.hoehe,
+    inhalt: laufzeitTabelleTpl(args, eintraege),
+    onSchliessen: () => schliesse(),
+  }), halter)
 
-  dialog.ohneModal = true
-
-  dialog.inhaltFest = true
-  dialog.titel = args.titel !== '' ? args.titel : 'Nachschlagen'
-  dialog.breite = args.breite
-  dialog.hoehe = args.hoehe
-  dialog.addEventListener(DIALOG_SCHLIESSEN_EVENT, () => schliesse())
-
-  dialog.addEventListener('click', (event) => event.stopPropagation())
-
-  const tabelle = macheTabelle(args, eintraege)
-  tabelle.addEventListener(ZEILE_AKTIVIERT_EVENT, (event) => {
+  const dialog = halter.querySelector<DialogRahmen>(DIALOG_RAHMEN_TAG)
+  const tabelle = halter.querySelector<TabelleBlock>(TabelleBlock.tagName)
+  tabelle?.addEventListener(ZEILE_AKTIVIERT_EVENT, (event) => {
     const detail = (event as CustomEvent<ZeileAktiviertDetail>).detail
     const eintrag = eintraege[detail.rohIndex]
     if (!eintrag) return
@@ -278,15 +326,16 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
     args.onUebernehmen(eintrag.anzeige, eintrag.wert, eintrag.satz)
   })
 
-  dialog.appendChild(tabelle)
   rueckFokus = lupeVon(args.el)
-  document.body.appendChild(dialog)
-  offen = dialog
+  document.body.appendChild(halter)
+  offen = halter
   offenFuer = args.el
 
-  void Promise.all([dialog.updateComplete, tabelle.updateComplete]).then(() => {
-    if (dialog.isConnected) tabelle.fokussiereSuche()
-  })
+  if (dialog && tabelle) {
+    void Promise.all([dialog.updateComplete, tabelle.updateComplete]).then(() => {
+      if (dialog.isConnected) tabelle.fokussiereSuche()
+    })
+  }
 }
 
 export interface SpaltenStellenArgs {
@@ -305,36 +354,20 @@ export interface SpaltenStellenArgs {
   onSchliessen: () => void
 }
 
-// Editor-Weg der Lupe: dasselbe Fenster wie zur Laufzeit, aber die Tabelle
-// laeuft im Editor-Modus (Striche statt Daten, Regel 7) und traegt ihre
-// eigene Spalten-Bedienung: +/- oben rechts, Doppelklick = umbenennen,
-// Klick auf den Titel = Feld waehlen. Lebt im Shadow-DOM des Feldes, damit
-// die Aenderungen als normale Ereignisse beim Editor ankommen (Undo).
+// Editor-Weg der Lupe: dasselbe Fenster wie zur Laufzeit (fensterTpl),
+// aber die Tabelle laeuft im Editor-Modus (Striche statt Daten, Regel 7)
+// und traegt ihre eigene Spalten-Bedienung: +/- oben rechts, Doppelklick
+// = umbenennen, Klick auf den Titel = Feld waehlen. Lebt im Shadow-DOM
+// des Feldes, damit die Aenderungen als normale Ereignisse beim Editor
+// ankommen (Undo).
 export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
-  const stop = (e: Event): void => e.stopPropagation()
-  return html`<ff-dialog-rahmen
-    viewport
-    escape-schliesst
-    ohne-modal
-    inhalt-fest
-    ziehbar
-    style="z-index:40"
-    .titel=${args.titel !== '' ? args.titel : 'Nachschlagen'}
-    .breite=${args.breite}
-    .hoehe=${args.hoehe}
-    @ff-dialog-groesse=${(e: Event) => {
-      e.stopPropagation()
-      args.onGroesse((e as CustomEvent<DialogGroesseDetail>).detail)
-    }}
-    @ff-dialog-schliessen=${(e: Event) => {
-      e.stopPropagation()
-      args.onSchliessen()
-    }}
-    @click=${stop}
-    @pointerdown=${stop}
-    @dblclick=${stop}
-  >
-    <ff-tabelle
+  return fensterTpl({
+    titel: args.titel,
+    breite: args.breite,
+    hoehe: args.hoehe,
+    onSchliessen: args.onSchliessen,
+    editor: { onGroesse: args.onGroesse },
+    inhalt: html`<ff-tabelle
       data-ff-editor
       fuellt
       suche="ja"
@@ -363,6 +396,6 @@ export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
           ...(Array.isArray(d.liste) ? { liste: d.liste } : {}),
         })
       }}
-    ></ff-tabelle>
-  </ff-dialog-rahmen>`
+    ></ff-tabelle>`,
+  })
 }

@@ -1,4 +1,5 @@
 import { html, type TemplateResult } from 'lit'
+import { starteUmbenennen } from '../shared/umbenennen'
 import { SPALTEN_MAX, SPALTEN_MIN, neueSpalte, type Spalte } from './spalten'
 
 // Kein Stop auf pointerdown (Zug-Regel in editor/canvas/rasterMove.ts) — der
@@ -42,43 +43,13 @@ export function starteTitelEdit(
   if (!ziel) return
   e.stopPropagation()
   e.preventDefault()
-
-  const originalNodes = Array.from(ziel.childNodes)
-  const original = ziel.textContent ?? ''
-  ziel.setAttribute('contenteditable', 'plaintext-only')
-  ziel.focus()
-  const sel = window.getSelection()
-  const range = document.createRange()
-  range.selectNodeContents(ziel)
-  sel?.removeAllRanges()
-  sel?.addRange(range)
-
-  let fertig = false
-  const abschluss = (commit: boolean): void => {
-    if (fertig) return
-    fertig = true
-    ziel.removeAttribute('contenteditable')
-    ziel.removeEventListener('blur', onBlur)
-    ziel.removeEventListener('keydown', onKey)
-    const neu = (ziel.textContent ?? '').trim()
-    if (commit && neu && neu !== original.trim()) {
-      uebernehmen(neu)
-    } else {
-      ziel.replaceChildren(...originalNodes)
-    }
-  }
-  const onBlur = (): void => abschluss(true)
-  const onKey = (ev: KeyboardEvent): void => {
-    if (ev.key === 'Enter') {
-      ev.preventDefault()
-      ziel.blur()
-    } else if (ev.key === 'Escape') {
-      ev.preventDefault()
-      abschluss(false)
-    }
-  }
-  ziel.addEventListener('blur', onBlur)
-  ziel.addEventListener('keydown', onKey)
+  starteUmbenennen(ziel, (neu, original) => {
+    // Ein leerer oder unveraenderter Titel wird nicht uebernommen — die
+    // Anzeige faellt auf den alten Stand zurueck.
+    if (neu === '' || neu === original.trim()) return false
+    uebernehmen(neu)
+    return true
+  })
 }
 
 export function benenneSpalteUm(

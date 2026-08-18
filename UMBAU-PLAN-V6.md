@@ -54,15 +54,15 @@ dann `go` (0.3), dann genau EINE Etappe.
   s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · V7 · G1–G4 (nach V7, Wellen-Kopf G) · E1 · E3 · U7a · A10
+  V6 nach Kurzentwurf · G1–G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
   Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
-  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8 und V9 sind
-  GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe V7.
+  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9 und V7
+  sind GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe G1.
 - **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
   Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
   WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
@@ -327,7 +327,7 @@ der komplette Diff von Buendel und Referenz gehoert erklaert in den
 Commit. Steht es NICHT dran, muessen Buendel und Referenz byte-gleich
 bleiben — aendern sie sich doch, hast du zu viel angefasst: STOPP.
 
-Erste Etappe: V7.
+Erste Etappe: G1.
 
 Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
   1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
@@ -352,7 +352,7 @@ konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
 ~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> ~~V5 (Stellen 1–5; 6–8 s.
-Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> V7 -> G1 -> G2 -> G3 -> G4
+Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> ~~V7~~ -> G1 -> G2 -> G3 -> G4
 Nach G4: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V6/E1/E3 die naechsten Kandidaten
 sind.
@@ -572,7 +572,7 @@ Zwei Etappen, ENTWURF VOR BAU (Kurzentwurf im Chat, Nutzer nickt):
   der Werkzeugleiste und ueber die oeffnende Kette; X schliesst; der
   Seiten-Reiter fuer Popups faellt.
 
-## V7 · Zusammenlegungen (Fundament fuer neue Bausteine)
+## V7 · Zusammenlegungen (Fundament fuer neue Bausteine) (GEBAUT 2026-08-18)
 
 - **Nachschlage-Fenster einmal bauen:** Editor-Weg (Lit-Template) und
   Laufzeit-Weg (imperativ) erzeugen dasselbe Fenster heute doppelt und
@@ -585,6 +585,15 @@ Zwei Etappen, ENTWURF VOR BAU (Kurzentwurf im Chat, Nutzer nickt):
   rowsFor → Tagesfilter → Feldleser → Auswahl wiederfinden). EINE geteilte
   Funktion in `shared/`; jede kuenftige Datenanzeige startet damit bei
   drei Zeilen. Runtime aendert sich bewusst; SE-Delta in die Gesamtprobe.
+
+Gebaut wie beschrieben: `blocks/shared/umbenennen.ts` (der eine Griff,
+BasicBlock und Spaltentitel rufen ihn) · `blocks/shared/datenVorspann.ts`
+(`holeDatenVorspann`; Tabelle und Kanban starten damit) · das
+Nachschlage-Fenster hat EIN Geruest (`fensterTpl` in `nachschlagen.ts`):
+die Laufzeit rendert dasselbe Template in einen Halter am body, die
+gewollten Unterschiede (ziehbar + z-index 40 nur Editor, Marker
+data-ff-nachschlagen nur Laufzeit) stehen benannt an EINER Stelle.
+Referenzabzug blieb gruen (Export ausserhalb des Buendels byte-gleich).
 
 ## V8 · Greifen wird zuverlaessig (GEBAUT 2026-08-18)
 
@@ -661,8 +670,8 @@ echten WinUI-Belegerfassung; Praezisierungen im Analyse-Chat). Ziel:
 Positionen DIREKT in der Tabelle erfassen, wie in der echten
 SoftEngine-Belegerfassung — so schnell wie moeglich, komplett ohne Maus
 moeglich (Maus geht immer). Massstab ist Tempo fuer geuebte Bediener,
-nicht Barrierefreiheit. **V7 kommt zuerst** — es ist woertlich das
-Fundament (ein Nachschlage-Fenster statt zwei, ein Daten-Vorspann).
+nicht Barrierefreiheit. **V7, das Fundament, ist GEBAUT (2026-08-18):**
+ein Nachschlage-Fenster statt zwei, ein Daten-Vorspann, ein Umbenennen.
 
 **Leitsatz (Nutzer):** Alles, was die Maske selbst wissen kann, fuellt
 sie selbst — angehalten wird nur, wo ein Mensch entscheiden muss. Alles
@@ -726,9 +735,10 @@ zuerst: Tippen ins Feld zeigt Treffer aus der Quelle, Pfeil hoch/runter
 waehlt, Enter uebernimmt, Escape schliesst; Enter auf LEEREM Feld
 oeffnet das grosse Fenster (heute geht das nur ueber die Lupe). Die
 Uebernahme beim Waehlen ist DIESELBE wie beim Fenster-Zeilenklick
-(Anker `onFeldWahl`/Uebernahme in `blocks/formfeld/nachschlagen.ts`) —
-herausziehen und teilen, nicht kopieren. **Darum zuerst V7:** solange
-das Fenster zweimal gebaut wird, wuerde G1 gegen zwei Fassungen bauen.
+(Anker `onUebernehmen`/`oeffneNachschlagen` in
+`blocks/formfeld/nachschlagen.ts`) — herausziehen und teilen, nicht
+kopieren. V7 ist gebaut: das Fenster hat EIN Geruest (`fensterTpl`),
+G1 baut dagegen, nicht gegen zwei Fassungen.
 **Runtime-Bytes aendern sich bewusst.**
 
 ## G2 · Erfassungszeile: Zeile, Rollen, Befuellen
@@ -982,11 +992,10 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 
 1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung + Koralle-Wort +
    preflight-Mini-Frage.
-2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9~~ (GEBAUT) → V7.
+2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9 → V7~~ (GEBAUT).
    V6 braucht zuerst den Kurzentwurf mit dem Nutzer und tritt hinter
    Welle G zurueck (Nutzer-Prio 2026-08-18).
-3. **Welle G** (direkt nach V7 — V7 ist ihr Fundament): G1 → G2 → G3
-   → G4.
+3. **Welle G:** G1 → G2 → G3 → G4.
 4. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf; V6 nach
    Kurzentwurf, sobald der Nutzer ihn will.
 5. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c

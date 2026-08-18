@@ -1,14 +1,12 @@
 import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, rowsFor, satzIndexVon } from '../../softengine/data'
+import { findRuntimeDataSource, satzIndexVon } from '../../softengine/data'
 import {
   auswahlWiederfinden,
   geberIdVon,
   zeilenNachAuswahl,
 } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
-import { macheFeldLeser } from '../shared/fremdeQuellen'
-import { gewaehlterTag } from '../shared/gewaehlterTag'
-import { zeilenAmTag } from '../shared/tagFilter'
+import { holeDatenVorspann } from '../shared/datenVorspann'
 import { spaltenArt } from './spaltenArten'
 import { tryCoerceSpalten, type Spalte } from './spalten'
 
@@ -50,33 +48,19 @@ export function zeilenIndexVon(el: HTMLElement, rohzeile: unknown): string {
 }
 
 function hydrateTable(el: RuntimeTableElement): void {
-  const leeren = (): void => {
+  const vorspann = holeDatenVorspann(el)
+  if (!vorspann) {
     el.datenzeilen = []
     el.zusatzzeilen = []
-  }
-  const sourceId = el.getAttribute('source') ?? ''
-  if (sourceId === '') {
-    leeren()
-    return
-  }
-  const source = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, sourceId)
-  if (!source) {
-    leeren()
     return
   }
   const spalten = spaltenVon(el)
 
-  const amTag = zeilenAmTag(
-    rowsFor(seGlobal().SEDATA, source.name, source.tableId),
-    el.getAttribute('tagfield') ?? '',
-    gewaehlterTag(),
-  )
-
-  const { rows, gefiltert } = zeilenNachAuswahl(el, amTag)
+  const { rows, gefiltert } = zeilenNachAuswahl(el, vorspann.zeilen)
 
   const auswahlIndex = auswahlWiederfinden(geberIdVon(el), rows, (r) => r)[0] ?? -1
 
-  const lies = macheFeldLeser(el)
+  const lies = vorspann.lies
 
   el.datenGeliefert = true
   el.rohzeilen = rows

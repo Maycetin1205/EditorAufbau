@@ -7,6 +7,7 @@ import { FLOW_DEFAULTS } from '../../core/blocks/flowLayout'
 import { RASTER_DEFAULTS } from '../../core/blocks/rasterLayout'
 import { AUSWAHL_FOLGE_DEFAULTS } from '../../core/data/auswahlFolge'
 import { QUELLEN_DEFAULTS } from '../../core/data/sourceLinks'
+import { starteUmbenennen } from '../shared/umbenennen'
 
 export abstract class BasicBlock extends LitElement implements BlockComponent {
   static override styles: CSSResultGroup = css`
@@ -41,53 +42,18 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
     if (target.hasAttribute('data-ff-bound')) return
     event.stopPropagation()
     event.preventDefault()
-    const original = target.textContent ?? ''
-
-    const originalNodes = Array.from(target.childNodes)
-    const originalData = originalNodes.map((n) => n.textContent ?? '')
-    target.setAttribute('contenteditable', 'plaintext-only')
-    target.focus()
-    const selection = window.getSelection()
-    const range = document.createRange()
-    range.selectNodeContents(target)
-    selection?.removeAllRanges()
-    selection?.addRange(range)
-
-    let finished = false
-    const cleanup = (commit: boolean) => {
-      if (finished) return
-      finished = true
-      target.removeAttribute('contenteditable')
-      target.removeEventListener('blur', onBlur)
-      target.removeEventListener('keydown', onKey)
-      if (commit) {
-        const next = (target.textContent ?? '').trim()
-        if (next !== original) {
-          this.dispatchEvent(new CustomEvent('ff-prop-change', {
-            detail: { attr, value: next },
-            bubbles: true,
-            composed: true,
-          }))
-        }
-      } else {
-        target.replaceChildren(...originalNodes)
-        originalNodes.forEach((n, i) => {
-          if (n.textContent !== originalData[i]) n.textContent = originalData[i]
-        })
+    starteUmbenennen(target, (neu, original) => {
+      if (neu !== original) {
+        this.dispatchEvent(new CustomEvent('ff-prop-change', {
+          detail: { attr, value: neu },
+          bubbles: true,
+          composed: true,
+        }))
       }
-    }
-    const onBlur = () => cleanup(true)
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        target.blur()
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
-        cleanup(false)
-      }
-    }
-    target.addEventListener('blur', onBlur)
-    target.addEventListener('keydown', onKey)
+      // Nie wiederherstellen: der getippte Stand bleibt stehen, bis der
+      // Editor die Eigenschaft zurueckgibt und Lit neu rendert.
+      return true
+    })
   }
 
   static defineAndRegister(BlockClass: BlockComponentStatic): void {
