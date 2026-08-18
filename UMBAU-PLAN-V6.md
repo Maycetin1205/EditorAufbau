@@ -49,10 +49,11 @@ dann `go` (0.3), dann genau EINE Etappe.
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
-- **V1, V0, V3 und V4 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V5.
+- **V1, V0, V3, V4 und V5 Stellen 1–4 sind GEBAUT (2026-08-18).** Offen aus
+  der Welle V: V5 Stellen 5–8.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V5 (Stellen 5–8) · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
@@ -311,7 +312,7 @@ der komplette Diff von Buendel und Referenz gehoert erklaert in den
 Commit. Steht es NICHT dran, muessen Buendel und Referenz byte-gleich
 bleiben — aendern sie sich doch, hast du zu viel angefasst: STOPP.
 
-Erste Etappe: V1.
+Erste Etappe: V5 (Stellen 5–8).
 
 Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
   1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
@@ -335,7 +336,7 @@ oeffnen, was tun, was zu sehen sein muss) und was du NICHT pruefen
 konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-V1 -> V0 -> V3 -> V4 -> V5
+~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> V5 (Stellen 1–4 gebaut)
 Nach V5: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
 sind.
@@ -484,7 +485,7 @@ Herkunft „gewaehlte Zeile" bereits adressierbar. NICHT im Editor ausloesen
 (`data-ff-editor`-Wache wie ueberall). **Runtime-Bytes aendern sich
 bewusst.**
 
-## V5 · Waehler-Umstellung: die acht Alt-Stellen
+## V5 · Waehler-Umstellung: die acht Alt-Stellen (1–4 GEBAUT 2026-08-18)
 
 Der gemeinsame Waehler (`ui/molecules/waehler.tsx`: `WaehlerKnopf` fuer
 den zugeklappten Knopf, `WaehlerListe` fuer offene Listen; Vorbild:
@@ -513,7 +514,8 @@ Mit der Umstellung sterben die fuenf Leer-Beschriftungen („— keine —" /
 „— keins —" / „— keinem —" / „— Quelle waehlen —" / „— Quelle —") und
 die Kunst-Optionen fuer Geloeschtes von selbst (der Waehler zeigt
 Geloeschtes rot). Editor-only: **Buendel und Referenz bleiben
-byte-gleich.** Gut in zwei Etappen teilbar (1–4 / 5–8).
+byte-gleich.** Gut in zwei Etappen teilbar (1–4 / 5–8) — **Stellen 1–4
+gebaut 2026-08-18, offen bleiben 5–8.**
 
 ## V6 · Popup: Groesser ziehen schafft Platz + Overlay-Bearbeitung
 

@@ -1,7 +1,7 @@
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
-import { SchrittSelect } from '@/ui/atoms/schritt-select'
+import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import type { DataSourceField } from '../../core/data/dataSources'
 import { MAX_SCHLUESSELPAARE, type SchluesselPaar } from '../../core/data/sourceLinks'
 
@@ -30,13 +30,26 @@ export function SchluesselPaarZeilen({
   const setzePaar = (at: number, teil: Partial<SchluesselPaar>) =>
     onAendern(paare.map((p, i) => (i === at ? { ...p, ...teil } : p)))
 
-  const felderOptionen = (felder: readonly DataSourceField[]) => (
-    <>
-      <option value="">— Feld —</option>
-      {felder.map((f) => (
-        <option key={f.code} value={f.code}>{f.label}</option>
-      ))}
-    </>
+  // Der Waehler bringt die Suche mit — eine Quelle kann hunderte Felder
+  // haben. Und er zeigt einen Feldcode, den die Quelle nicht mehr kennt,
+  // rot statt wie das rohe <select> einfach leer.
+  const feldWaehler = (
+    bezeichnung: string,
+    felder: readonly DataSourceField[],
+    wert: string,
+    onWaehle: (code: string) => void,
+  ) => (
+    <WaehlerKnopf
+      className="flex-1"
+      bezeichnung={bezeichnung}
+      gruppen={[{
+        key: 'felder',
+        eintraege: felder.map((f) => ({ wert: f.code, name: f.label, kennung: f.code })),
+      }]}
+      wert={wert}
+      leerText="— Feld —"
+      onWaehle={onWaehle}
+    />
   )
 
   return (
@@ -44,23 +57,11 @@ export function SchluesselPaarZeilen({
       <span className="text-xs text-muted-foreground">{frage}</span>
       {paare.map((paar, at) => (
         <div key={at} className="flex items-center gap-1.5">
-          <SchrittSelect
-            className="min-w-0 flex-1"
-            aria-label={linkeBezeichnung(at)}
-            value={paar.fromField}
-            onChange={(e) => setzePaar(at, { fromField: e.target.value })}
-          >
-            {felderOptionen(linkeFelder)}
-          </SchrittSelect>
+          {feldWaehler(linkeBezeichnung(at), linkeFelder, paar.fromField,
+            (code) => setzePaar(at, { fromField: code }))}
           <span className="shrink-0 text-xs text-muted-foreground">=</span>
-          <SchrittSelect
-            className="min-w-0 flex-1"
-            aria-label={rechteBezeichnung(at)}
-            value={paar.toField}
-            onChange={(e) => setzePaar(at, { toField: e.target.value })}
-          >
-            {felderOptionen(rechteFelder)}
-          </SchrittSelect>
+          {feldWaehler(rechteBezeichnung(at), rechteFelder, paar.toField,
+            (code) => setzePaar(at, { toField: code }))}
           {paare.length > 1 && (
             <IconButton
               aria-label={entfernenBezeichnung(at)}

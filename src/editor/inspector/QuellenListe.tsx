@@ -1,6 +1,7 @@
 import { Plus, X } from '@/ui/zeichen'
 import { Button } from '@/ui/atoms/button'
 import { IconButton } from '@/ui/atoms/icon-button'
+import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { quellenKennung } from '../../core/data/dataSources'
 import {
@@ -11,10 +12,7 @@ import {
 } from '../../core/data/sourceLinks'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
-import { SelectControl } from './controls/SelectControl'
 import { SchluesselPaarZeilen } from './SchluesselPaarZeilen'
-
-const KEINE = '__keine__'
 
 interface QuellenListeProps {
   block: BlockNode
@@ -44,21 +42,23 @@ export function QuellenListe({ block }: QuellenListeProps) {
     return bibliothek.filter((s) => !belegt.has(s.id))
   }
 
+  // Eine fehlende Quelle braucht keine Kunst-Option mehr: der Waehler zeigt
+  // einen Wert, den er nicht kennt, von sich aus rot.
   const quellenAuswahl = (wert: string, titel: string, onWert: (v: string) => void) => (
-    <SelectControl
+    <WaehlerKnopf
       label={titel}
-      value={wert === '' ? KEINE : wert}
-      options={[
-        { value: KEINE, label: '— keine —' },
-
-        ...optionen(wert).map((s) => ({
-          value: s.id,
-          label: s.name,
-          detail: quellenKennung(s),
+      bezeichnung={titel}
+      gruppen={[{
+        key: 'quellen',
+        eintraege: optionen(wert).map((s) => ({
+          wert: s.id,
+          name: s.name,
+          kennung: quellenKennung(s),
         })),
-        ...(fehlt(wert) ? [{ value: wert, label: '(gelöschte Quelle)' }] : []),
-      ]}
-      onChange={(v) => onWert(v === KEINE ? '' : v)}
+      }]}
+      wert={wert}
+      leerText="— keine —"
+      onWaehle={onWert}
     />
   )
 

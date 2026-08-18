@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { WaehlerKnopf, type WaehlerEintrag } from '@/ui/molecules/waehler'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { auswahlQuelleIdVon, istAuswahlGeber } from '../../core/blocks/treeQuery'
 import {
@@ -11,10 +12,7 @@ import { quellenKennung } from '../../core/data/dataSources'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { bausteinName } from '../../core/blocks/bausteinName'
-import { SelectControl } from './controls/SelectControl'
 import { SchluesselPaarZeilen } from './SchluesselPaarZeilen'
-
-const KEINER = '__keiner__'
 
 interface AuswahlFolgeSektionProps {
   block: BlockNode
@@ -40,18 +38,18 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
   const geberNode = folge ? ed.tree[folge.geberId] : undefined
   const geberQuelle = quelleVon(geberNode)
 
-  const anzeige = (n: BlockNode): { label: string; detail?: string } => {
+  const eintrag = (n: BlockNode): WaehlerEintrag => {
     const q = quelleVon(n)
     return q
-      ? { label: `${bausteinName(n, bibliothek)} (${q.name})`, detail: quellenKennung(q) }
-      : { label: bausteinName(n, bibliothek) }
+      ? { wert: n.id, name: `${bausteinName(n, bibliothek)} (${q.name})`, kennung: quellenKennung(q) }
+      : { wert: n.id, name: bausteinName(n, bibliothek) }
   }
 
   function setze(neu: AuswahlFolge[]): void {
     ed.updateProperty(block.id, AUSWAHL_FOLGE_PROP, neu)
   }
   function setzeGeber(v: string): void {
-    if (v === KEINER) {
+    if (v === '') {
       setze([])
       return
     }
@@ -67,18 +65,15 @@ export function AuswahlFolgeSektion({ block, mitTrenner }: AuswahlFolgeSektionPr
       <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
         Auswahl folgen
       </span>
-      <SelectControl
+      {/* Ein geloeschter Geber braucht keine Kunst-Option: der Waehler zeigt
+          einen Wert, den er nicht kennt, von sich aus rot. */}
+      <WaehlerKnopf
         label="Folgt der Auswahl von"
-        value={folge && folge.geberId !== '' ? folge.geberId : KEINER}
-        options={[
-          { value: KEINER, label: '— keinem —' },
-          ...kandidaten.map((n) => ({ value: n.id, ...anzeige(n) })),
-
-          ...(folge && folge.geberId !== '' && !kandidaten.some((k) => k.id === folge.geberId)
-            ? [{ value: folge.geberId, label: '(gelöschter Baustein)' }]
-            : []),
-        ]}
-        onChange={setzeGeber}
+        bezeichnung="Folgt der Auswahl von"
+        gruppen={[{ key: 'geber', eintraege: kandidaten.map(eintrag) }]}
+        wert={folge?.geberId ?? ''}
+        leerText="— keinem —"
+        onWaehle={setzeGeber}
       />
       {folge && (
         <>
