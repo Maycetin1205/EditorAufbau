@@ -754,6 +754,20 @@ lesen die Auswahl, Frei-Zellen tippen. In G2 noch OHNE das volle
 Tasten-Ballett und OHNE Schreiben.
 **Runtime-Bytes aendern sich bewusst.**
 
+**Zwei Nutzer-Korrekturen (2026-08-18, waehrend des Baus) — sie schlagen
+jede andere Lesart:**
+
+1. **Die Nachschlage-Quelle steht an der SPALTE, nicht an der Tabelle.**
+   Jede Spalte mit Rolle „Nachschlagen" hat ihre EIGENE Quelle samt
+   Uebernahme-Feld (Artikelnummer → ART, Verabreichungsart → IDBID0001).
+   Eine tabellenweite Quellen-Eigenschaft ist FALSCH und wurde entfernt.
+   Folge: auch die Folgt-Zelle nennt ihre Quelle, sonst wuesste sie bei
+   zwei Nachschlage-Spalten nicht, welcher Wahl sie folgt — der gewaehlte
+   Satz wird darum JE QUELLE gehalten.
+2. **Die Erfassungszeile ist die naechste FREIE Zeile:** direkt unter der
+   letzten Datenzeile, leere Tabelle → Zeile 1 ganz oben. Nicht unten am
+   Tabellenrand hinter den Fuellzeilen.
+
 ## G3 · Tastensteuerung (das Tempo)
 
 Der komplette Tastenfluss aus dem Wellen-Kopf, an der Erfassungszeile:
@@ -763,15 +777,28 @@ raeumt die Zeile und fokussiert die erste tippbare Zelle · F3-Abfangen
 mit Echttest-Vorbehalt.
 **Runtime-Bytes aendern sich bewusst.**
 
-## G4 · Ereignis „Zeile erfasst" + Ketten-Wert „aus Erfassungszelle"
+## G4 · Erfasste Zeilen stehen lassen + EIN Knopf schreibt sie
 
-Neues Baustein-Ereignis an der Tabelle (Muster `onRowClick`, s. V4) —
-daran haengt der Maskenbauer seine Schreib-Kette. Neuer
-Parameter-Herkunftstyp „Wert aus Erfassungszelle <Spalte>" NUR fuer
-frei getippte Zellen (Menge); Artikel- und Belegwerte nimmt die Kette
-wie heute aus gewaehlten Zeilen (Nutzer-Einwand 2026-08-18: nehmen, was
-da ist — nur das Getippte ist wirklich neu). Nach dem Ausloesen leert
-sich die Zeile; das Erscheinen der Position uebernimmt der SE-Push.
+**Endgueltige Nutzer-Entscheidung 2026-08-18** — sie ersetzt den
+vorherigen G4-Text vollstaendig (der wollte ein Ereignis „Zeile erfasst"
+je Zeile und einen Ketten-Wert nur fuer frei getippte Zellen; beides ist
+weg, nicht wieder vorschlagen).
+
+- **Die Erfassungszeile IST die Tabellenzeile.** Der Bediener fuellt sie
+  Spalte fuer Spalte, drueckt Enter → genau diese Zeile bleibt sichtbar
+  stehen und ist ab da die Zeile der Position. Dabei wird **nichts
+  geschrieben und kein Ereignis gefeuert.** Die Erfassung rueckt eine
+  Zeile tiefer — selbes Spiel, beliebig viele Zeilen.
+- **Geschrieben wird ueber EINEN Knopf:** ein normaler Knopf-Baustein, an
+  dem der Nutzer seine Relations-Kette baut, exakt wie heute bei den
+  Formularfeldern. Beim Klick laeuft die Kette **einmal je erfasster
+  Zeile.**
+- **Neuer Herkunftstyp fuer Ketten-Parameter:** „Wert aus Erfassungszelle
+  <Spalte>" — liefert je Lauf den Wert der jeweiligen Zeile, fuer ALLE
+  Spalten verfuegbar (nicht nur fuer frei getippte).
+- **Nach dem Lauf werden die erfassten Zeilen geleert;** die echten
+  Positionen kommen ueber den SE-Push zurueck.
+
 **Pruefpunkt VOR dem Bau:** die PUT_RELATION-82-Werte am echten Log
 nachlesen (CLAUDE.md „Neue BELEGPOSITION": Reihenfolge belegt, die `0`
 und die Leerstellen UNGEDEUTET) — nachpruefen, nicht raten; liegt das
