@@ -13,6 +13,11 @@ export interface KoerperLage {
 
   imEditor: boolean
 
+  // Schalter „Kopfzeile": aus = keine Titelzeile (Editor UND Maske). Die
+  // Kopf-Griffe (Feld-Picker, Umbenennen) wandern im Editor auf die Zellen;
+  // Sortieren per Titelklick entfaellt an der Maske.
+  zeigeKopf: boolean
+
   auswahlSemantik: boolean
   zeigeSuche: boolean
   suchtext: string
@@ -81,7 +86,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
         />
       </div>` : ''}
       <div class="koerper" role=${lage.leer ? nothing : 'table'} tabindex="-1">
-      <div class="kopf" role="row" style=${styleMap(lage.cols)}>
+      ${lage.zeigeKopf ? html`<div class="kopf" role="row" style=${styleMap(lage.cols)}>
         ${lage.spalten.map(
           (s, i) => html`<div
             class=${spaltenArt(s.art).klasse}
@@ -93,7 +98,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             ? html`<span class="sort-pfeil">${lage.sortAuf ? ' ▲' : ' ▼'}</span>`
             : ''}</div>`,
         )}
-      </div>
+      </div>` : nothing}
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
         ${lage.hatQuelle ? nothing : lage.erfassung}
@@ -126,7 +131,16 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               const zusatz = rohIndex !== null
                 ? (lage.zusatzzeilen[rohIndex]?.[i] ?? {})
                 : {}
-              return html`<div class=${art.klasse} role="cell">${
+              // Ohne Kopfzeile uebernimmt die Zelle im Editor den Kopf-Griff:
+              // Klick oeffnet den Feld-Picker der Spalte. Umbenennen laeuft
+              // ueber das kurze Einschalten der Kopfzeile (Inspector).
+              const kopfGriff = lage.imEditor && !lage.zeigeKopf && lage.editable
+              return html`<div
+                class=${art.klasse}
+                role="cell"
+                data-ff-editable=${kopfGriff ? '' : nothing}
+                @click=${kopfGriff ? (e: MouseEvent) => tun.klickKopf(e, i) : nothing}
+              >${
                 art.zelle(wert, s.zuordnung ?? [], zusatz)
               }</div>`
             })}

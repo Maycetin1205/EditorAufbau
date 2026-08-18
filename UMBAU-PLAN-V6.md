@@ -78,9 +78,9 @@ dann `go` (0.3), dann genau EINE Etappe.
   **G3c** (Automatik-Anker — im Zielszenario „Tabelle zeigt
   Belegpositionen" schraenkt heute nichts ein und fuellt sich nichts),
   die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
-  (Entschlanken). **G3b, G3c, G4 und G5 sind GEBAUT (2026-08-18; G5 ohne
-  „Kopfzeile aus", s. Etappentext). Die Welle G ist damit fertig bis auf
-  die Nutzerprobe.** Gebaut wurde auf Branch
+  (Entschlanken). **G3b, G3c, G4, G5 und G5b (Schalter „Kopfzeile") sind
+  GEBAUT (2026-08-18). Die Welle G ist damit fertig bis auf die
+  Nutzerprobe.** Gebaut wurde auf Branch
   `claude/inline-edit-receipt-table-823di6` (dieser Branch fuehrt
   den Erfassungs-Stand weiter — nicht mehr parallel auf
   `claude/softengine-erp-templates-ynqibv` arbeiten).
@@ -902,14 +902,18 @@ keine Relation fest. Die Deutung der `0` und der Leerstellen (CLAUDE.md
 SE-Echttest, nicht zum Code dieser Etappe. SE-Echttest durch den
 Nutzer. **Runtime-Bytes aendern sich bewusst.**
 
-## G5 · Entschlanken (GEBAUT 2026-08-18 — OHNE „Kopfzeile aus")
+## G5 · Entschlanken (GEBAUT 2026-08-18, inkl. G5b „Kopfzeile")
 
 Gebaut: Schalter „Schlank" · Fusszeile nur bei Bedarf · Spaltenname als
 Platzhalter in leeren Erfassungszellen · Inspector-Text berichtigt.
-**„Kopfzeile aus" ist bewusst NICHT gebaut** (die unten benannte
-Bedien-Antwort steht aus): die Platzhalter decken den Wunsch „da steht,
-was reingehoert" ab — kommt der Schalter doch, ist er eine eigene
-Mini-Etappe mit der Feld-Picker-Antwort.
+**G5b (eigenes go): Schalter „Kopfzeile"** — bei „aus" faellt die
+Titelzeile in Editor UND Maske (WYSIWYG; die Rumpf-Messung rechnet ohne
+Kopf mit Hoehe 0). Die Bedien-Antwort: GEBUNDEN wird per Klick auf eine
+Zelle im Editor (derselbe Feld-Picker wie am Kopf, nur bei Kopf aus
+aktiv); UMBENANNT wird, indem man die Kopfzeile kurz einschaltet — ein
+Inline-Umbenennen in Strich-Zellen waere fragile DOM-Turnerei und ist
+bewusst nicht gebaut. Sortieren per Titelklick entfaellt an der Maske
+ohne Kopf (im Inspector-Text benannt).
 
 Nutzer-Wunsch, an der Demo gesehen und abgenommen (2026-08-18):
 

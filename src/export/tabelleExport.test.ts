@@ -246,3 +246,11 @@ describe('Tabelle: Schalter Schlank (G5)', () => {
     expect(tabelleTag(exportMask(tabelleBaum({})).html)).not.toMatch(/schlank=/i)
   })
 })
+
+// G5b: der Schalter „Kopfzeile" — Standard 'ja' reist nicht, 'nein' schon.
+describe('Tabelle: Schalter Kopfzeile (G5b)', () => {
+  it('kopfzeile="nein" reist mit, der Standard laesst das Tag sauber', () => {
+    expect(tabelleTag(exportMask(tabelleBaum({ kopfzeile: 'nein' })).html)).toMatch(/\skopfzeile="nein"/i)
+    expect(tabelleTag(exportMask(tabelleBaum({})).html)).not.toMatch(/kopfzeile=/i)
+  })
+})

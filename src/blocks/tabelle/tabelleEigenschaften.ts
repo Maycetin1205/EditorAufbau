@@ -21,6 +21,12 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
     'Schlank',
     'Nimmt den Rahmen der Tafel weg und macht die Polster enger — die Tabelle liegt bündig auf der Maske. Die Fußzeile erscheint ohnehin nur noch, wenn geblättert wird oder ein Filter greift.',
   ),
+
+  jaNeinProperty(
+    'kopfzeile',
+    'Kopfzeile',
+    'Aus: Die Titelzeile fällt weg, die Spaltennamen stehen blass in den Zellen der Erfassungszeile. Gebunden wird dann per Klick auf eine Zelle; zum Umbenennen die Kopfzeile kurz einschalten. An der fertigen Maske entfällt ohne Kopf das Sortieren per Titelklick.',
+  ),
   {
     attributeName: 'tagField',
     name: 'Tag filtern nach',

@@ -8,9 +8,12 @@ export interface MessZiel {
 export function gemessenesMass(ziel: MessZiel, takt: number): Zeilenmass | null {
   if (!ziel.hasAttribute('fuellt')) return null
   const rumpf = ziel.renderRoot.querySelector('.koerper')
+  if (!(rumpf instanceof HTMLElement)) return null
+  // Ohne Kopfzeile (Schalter „Kopfzeile" aus) gehoert die ganze Hoehe den
+  // Zeilen — der Kopf ist dann schlicht 0 hoch, keine Messluecke.
   const kopf = ziel.renderRoot.querySelector('.kopf')
-  if (!(rumpf instanceof HTMLElement) || !(kopf instanceof HTMLElement)) return null
-  return zeilenmass(rumpf.clientHeight, kopf.offsetHeight, takt)
+  const kopfHoehe = kopf instanceof HTMLElement ? kopf.offsetHeight : 0
+  return zeilenmass(rumpf.clientHeight, kopfHoehe, takt)
 }
 
 export function beobachteRumpf(ziel: MessZiel, beiAenderung: () => void): ResizeObserver | null {

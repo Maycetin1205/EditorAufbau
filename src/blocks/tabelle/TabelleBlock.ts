@@ -9,7 +9,6 @@ import type {
   SatzWahl,
 } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
-import { verknuepfungenVon } from '../shared/fremdeQuellen'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
 import { vorschlagStil } from '../shared/vorschlagListe'
 import { chipStyles } from '../shared/statusVariant'
@@ -19,7 +18,7 @@ import {
   erfassungsZeileFuer,
   type ErfassungsWirt,
 } from './erfassungsBedienung'
-import { ErfassungsLauf } from './erfassungsLauf'
+import { ErfassungsAnschluss } from './erfassungsAnschluss'
 import type { ErfassungsUmfeld } from './erfassungsZellen'
 import { erfassungStil } from './erfassungStil'
 import {
@@ -90,6 +89,8 @@ export class TabelleBlock extends BasicBlock {
 
     schlank: 'nein',
 
+    kopfzeile: 'ja',
+
     tagField: '',
 
     leerText: LEER_TEXT_STANDARD,
@@ -114,6 +115,8 @@ export class TabelleBlock extends BasicBlock {
   @property() erfassung = 'nein'
 
   @property() schlank = 'nein'
+
+  @property() kopfzeile = 'ja'
 
   @property() leerText = LEER_TEXT_STANDARD
 
@@ -146,13 +149,9 @@ export class TabelleBlock extends BasicBlock {
 
   private _besitz: Datenbesitz = 'softengine'
 
-  private _lauf = new ErfassungsLauf()
-
-  // Die erfassten, noch nicht geschriebenen Zeilen (Werte je Spalte, in
-  // Spalten-Reihenfolge). Sie stehen sichtbar UEBER der Erfassungszeile und
-  // gehen erst beim Ketten-Lauf des Knopfs (erfassungLeeren) oder beim
-  // Zweckwechsel des Bausteins verloren — nie durch einen Daten-Push.
-  private _erfasste: string[][] = []
+  // Tipp-Zustand + erfasste Zeilen; sie ueberleben jeden Daten-Push und
+  // fallen nur mit dem Zweckwechsel oder dem Ketten-Lauf des Knopfs.
+  private _erfassung = new ErfassungsAnschluss()
 
   get besitz(): Datenbesitz {
     return this._besitz
@@ -198,32 +197,24 @@ export class TabelleBlock extends BasicBlock {
     this._taktGemessen = 0
     this._fokusZeile = null
     this._fokusHolen = false
-    this._lauf.zuruecksetzen()
-    this._erfasste = []
+    this._erfassung.zuruecksetzen()
   }
 
   // Der Laufzeit-Vertrag der Faehigkeit kannErfassen (ErfassungsTraegerElement
   // in core/blocks/BlockDefinition.ts): die Kette am Knopf liest die Zeilen
   // ueber data-ff-block-id und leert sie nach dem Lauf.
   get erfassteZeilen(): readonly (readonly string[])[] {
-    return this._erfasste
+    return this._erfassung.zeilen
   }
 
   erfassungLeeren(): void {
-    if (this._erfasste.length === 0) return
-    this._erfasste = []
-    this.requestUpdate()
+    if (this._erfassung.leeren()) this.requestUpdate()
   }
 
-  // Enter am Zeilenende: genau diese Zeile bleibt sichtbar stehen, die
-  // Erfassung rueckt eine Zeile tiefer, der Cursor auf die erste Zelle.
-  // Geschrieben wird hier NICHTS und kein Ereignis gefeuert (G4).
+  // Enter am Zeilenende (G4): die Zeile bleibt stehen, die Erfassung rueckt
+  // tiefer, der Cursor auf die erste Zelle. Geschrieben wird hier NICHTS.
   private erfasseZeile(): void {
-    const umfeld = this.erfassungsUmfeld()
-    const werte = umfeld.spalten.map((_, i) => this._lauf.wertVon(umfeld, i))
-    if (werte.every((w) => w === '')) return
-    this._erfasste = [...this._erfasste, werte]
-    this._lauf.zuruecksetzen()
+    if (!this._erfassung.erfasse(this.erfassungsUmfeld())) return
     this.requestUpdate()
     this.fokussiereErfassungsZelle(0)
   }
@@ -315,7 +306,7 @@ export class TabelleBlock extends BasicBlock {
   private erfassungsWirt(): ErfassungsWirt {
     return {
       baustein: this,
-      lauf: this._lauf,
+      lauf: this._erfassung.lauf,
       umfeld: () => this.erfassungsUmfeld(),
       melde: () => this.requestUpdate(),
       fokussiere: (index) => this.fokussiereErfassungsZelle(index),
@@ -332,16 +323,8 @@ export class TabelleBlock extends BasicBlock {
     })
   }
 
-  // Die Erfassungszeile leitet alles aus zwei vorhandenen Angaben ab: der
-  // Bindung jeder Spalte und der Verknuepfung des Bausteins. Beides steht am
-  // Element, also braucht sie keine eigene Einstellung.
   private erfassungsUmfeld(): ErfassungsUmfeld {
-    const verknuepfungen = verknuepfungenVon(this)
-    return {
-      spalten: this.spaltenListe(),
-      quelleId: this.source,
-      paareZu: (quelleId) => verknuepfungen.find((v) => v.quelleId === quelleId)?.keyPairs ?? [],
-    }
+    return this._erfassung.umfeld(this, this.spaltenListe(), this.source)
   }
 
   private aendere(spalten: Spalte[]): void {
@@ -376,7 +359,7 @@ export class TabelleBlock extends BasicBlock {
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed)
     if (!this.erfassungAn || this.hasAttribute('data-ff-editor')) return
-    this._lauf.aktualisiereVorschlaege(this.erfassungsUmfeld())
+    this._erfassung.lauf.aktualisiereVorschlaege(this.erfassungsUmfeld())
   }
 
   protected override updated(): void {
@@ -419,7 +402,7 @@ export class TabelleBlock extends BasicBlock {
       wunschSeite: this._seite,
       gemessen: this._mass,
       erfassungAn: this.erfassungAn,
-      erfassteAnzahl: this._erfasste.length,
+      erfassteAnzahl: this._erfassung.zeilen.length,
     })
     return html`<div class=${this.schlank === 'ja' ? 'tabelle schlank' : 'tabelle'} style=${styleMap({
       '--takt': `${ansicht.takt}px`,
@@ -431,6 +414,7 @@ export class TabelleBlock extends BasicBlock {
         cols: ansicht.cols,
         editable: this.editable,
         imEditor: this.hasAttribute('data-ff-editor'),
+        zeigeKopf: this.kopfzeile === 'ja',
         auswahlSemantik: geberIdVon(this) !== '',
         zeigeSuche: this.suche === 'ja',
         suchtext: this._suchtext,
@@ -444,7 +428,7 @@ export class TabelleBlock extends BasicBlock {
         auswahlIndex: this.auswahlIndex,
         leer: ansicht.leer,
         leerText: this.leerText,
-        erfasste: this._erfasste,
+        erfasste: this._erfassung.zeilen,
         erfassung: this.erfassungAn
           ? erfassungsZeileFuer(
               this.erfassungsWirt(),
