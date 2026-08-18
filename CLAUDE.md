@@ -444,9 +444,9 @@ Nutzer-Entscheidung anfassen:**
   Der Export blockt weiterhin nie. Der gelbe Punkt in der Steuerung ist am
   2026-08-18 auf Nutzer-Entscheidung entfernt; `preflightMask` ist damit
   aufruferloser Code (Verbleib = offene Mini-Entscheidung, s. Plan).
-  Erfolgs-MELDUNGEN der Maske sind davon unberührt — die hat der Nutzer am
-  2026-08-18 ausdrücklich beauftragt (Welle V im Plan): der Editor erzieht
-  nicht, aber die Maske darf sagen, was sie getan hat.
+  Erfolgs-Meldungen der Maske waren am 2026-08-18 kurz beauftragt und sind
+  am selben Tag auf Nutzer-Ansage („muss nicht sein") GEPARKT worden —
+  nicht von selbst wieder vorschlagen (Details: Sperrliste im Plan).
 - **Der Export-Klick bleibt, wie er ist (Nutzer-Ansage 2026-08-17, „das
   bleibt wie es ist! muss nicht in den Plan").** Dass ein Klick ZWEI
   automatische Downloads auslöst und Chromium beim zweiten nachfragt, nimmt

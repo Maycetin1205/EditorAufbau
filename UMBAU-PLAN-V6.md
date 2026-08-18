@@ -49,9 +49,11 @@ dann `go` (0.3), dann genau EINE Etappe.
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (→ Etappe V0) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
-- **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go):
-  V0–V7 (unten) · E1 · E3 · U7a · A10 (Technik-Haelfte) · S5.3 (optional)
-  · E2 (nach E1) · F3 (nach U5/U7).
+- **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
+  fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
+  V0/V1/V3/V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
+  V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
   stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
 
@@ -283,10 +285,60 @@ Form gehoert — nie eine Klappliste mit zwoelf Kuerzeln.
 # Welle V — Befunde der Gesamtanalyse (eingeschoben 2026-08-18)
 
 Quelle: Gesamtanalyse 2026-08-18 (zwei Lese-Trupps ueber Bedienschicht und
-Bausteine + Kernlektuere; Fundstellen mit datei:zeile liegen im Analyse-Chat
-und ergeben sich beim Lesen der genannten Dateien). Der Nutzer hat den
-Befunden pauschal zugestimmt; je Etappe gilt trotzdem Ansage + go. Sechs
-Funde sind bereits gefixt und gepusht (s. git-Historie 2026-08-18).
+Bausteine + Kernlektuere). Der Nutzer hat den Befunden pauschal zugestimmt.
+Sechs Funde sind bereits gefixt und gepusht (git-Historie 2026-08-18).
+Die Etappen unten nennen ihre Fundstellen als Datei + ANKER (Funktions-/
+Textstelle) statt Zeilennummern — Zeilen verschieben sich, Anker nicht:
+der bauende Agent greppt den Anker und liest die Stelle, bevor er baut.
+
+**Kopier-Auftrag fuer eine frische Bau-Sitzung (Opus) — der Nutzer fuegt
+diesen Text woertlich ein; der Einwurf ist das go fuer so viele Etappen,
+wie SAUBER in die Sitzung passen:**
+
+```text
+Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0, Abschnitt 3 und den
+Wellen-Kopf V. Pruefe als Erstes `git fetch` + `git status`: ist der
+Arbeitsbaum NICHT sauber, arbeitet dort eine andere Sitzung — dann STOPP
+und sag es dem Nutzer, bevor du irgendetwas anfasst.
+
+Den Etappentext liest du je Etappe DANN, wenn du bei ihr bist — nicht
+alle auf Vorrat. Jede Etappe nennt ihre Fundstellen als Datei + Anker:
+den Anker greppen, die Stelle LESEN, dann bauen. Steht an einer Etappe
+„Runtime-Bytes aendern sich bewusst": nach dem Bau `npm run
+build:runtime`, und schlaegt der Referenzabzug an, `npx vitest run -u` —
+der komplette Diff von Buendel und Referenz gehoert erklaert in den
+Commit. Steht es NICHT dran, muessen Buendel und Referenz byte-gleich
+bleiben — aendern sie sich doch, hast du zu viel angefasst: STOPP.
+
+Erste Etappe: V1.
+
+Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
+  1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
+  2. bauen — nichts daneben
+  3. Pruefbuendel (Abschnitt 3.3) komplett
+  4. EIN Commit; im selben Commit den Zeiger 0.1 nachziehen und die
+     Etappe im Plan als GEBAUT markieren (eine Zeile, keine Chronik)
+Dann die naechste Etappe, wieder ab 1.
+
+Aufhoeren: nach spaetestens VIER Etappen — und frueher, sobald du
+nachlaesst: wenn du Dateien nur noch ueberfliegst statt sie zu lesen,
+oder dir nicht mehr zutraust, deinen eigenen Diff zu beurteilen. Eine
+Etappe wird NIE halb gebaut: passt sie nicht mehr ganz rein, fang sie
+gar nicht erst an. Aufhoeren ist billiger als ein schlechter Commit.
+
+Widerspricht dir der Plan oder der Code: STOPP und fragen, nicht raten.
+
+Am Ende der Sitzung: `git fetch`, dann push auf den aktuellen Branch
+(NIE force). Im Chat: EINE Klickanleitung nach Etappen gegliedert (was
+oeffnen, was tun, was zu sehen sein muss) und was du NICHT pruefen
+konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
+wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
+Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
+V1 -> V0 -> V3 -> V4 -> V5
+Nach V5: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
+Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
+sind.
+```
 
 ## V0 · „Angezeigt wird" stirbt (ENTSCHIEDEN 2026-08-18)
 
@@ -296,80 +348,133 @@ Steuerung bleibt nur „Gespeichert wird". Automatik ohne eigene Spalten:
 eine Spalte = „Gespeichert wird". Migration: traegt ein gespeicherter Stand
 ein `anzeigeFeld` und KEINE eigenen Spalten, wird es beim Laden zur ersten
 Fenster-Spalte (kein stiller Verlust). „Einzigen Treffer uebernehmen" zeigt
-danach ebenfalls Spalte 1. Export/Runtime aendern sich bewusst
-(build:runtime + Referenzabzug); SE-Delta in die naechste Gesamtprobe.
+danach ebenfalls Spalte 1.
+
+Fundstellen (Anker): `blocks/formfeld/FormFeldBlock.ts` — defaultProps +
+@property `anzeigeFeld`/`anzeigeTitel`, `onLupe`, `uebernimmSatz`,
+`spaltenEffektiv` · `blocks/formfeld/nachschlagen.ts` — `nurEineSpalte`,
+`automatikSpalten`, `NachschlagenArgs`, `nachschlagEintraege`,
+`holeEintraege` · `blocks/formfeld/feldEigenschaften.ts` — die Eintraege
+„Angezeigt wird (optional)" (faellt) und „Gespeichert wird" ·
+`blocks/formfeld/feldRuntime.ts` — Hydrierung des Anzeigewerts · Migration
+auf den ROHDATEN nach dem Muster in `state/migrationenRoh.ts` (VOR
+`normalizeProps`, das unbekannte Props sonst still wegwirft) · Tests:
+`nachschlagen.test.ts`, `export/nachschlagenExport.test.ts`.
+**Runtime-Bytes aendern sich bewusst**; SE-Delta in die Gesamtprobe.
 
 ## V1 · Robustheit und Aufraeumen (klein, unsichtbar)
 
-- **Popup-Schritt meldet Fehlschlag:** findet `applyPopupStep` sein Popup
-  nicht (umbenannt) oder zweimal, kommt die rote Meldung mit dem Warum.
+- **Popup-Schritt meldet Fehlschlag:** findet `applyPopupStep`
+  (`blocks/shared/seAktionen.ts`, Anker `treffer.length !== 1`) sein Popup
+  nicht (umbenannt) oder zweimal, kommt kuenftig `meldeFehler` mit dem
+  Warum statt stillem Nichtstun.
   ⚠ Widerspruchs-Vermerk: die C3.2-Ansage (2026-08-16) sagte „keine
   Laufzeitmeldung, nichts tun"; der Nutzer hat dem Melde-Vorschlag am
   2026-08-18 zugestimmt. Die Etappen-Ansage nennt diesen Widerspruch
   ausdruecklich, damit die Entscheidung bewusst faellt.
-- **Kleinkopien zusammenziehen:** Ja/Nein-Optionsliste dreimal in zwei
-  Reihenfolgen (alle auf `shared/jaNeinProperty`) · identische Parser
-  `folgenAusAttribut`/`weitereAusAttribut` · kopierte Ziel-Hervorhebung
-  Kanban-Spalte/Zimmer. (Die zeichengleichen Dialoghuellen von
-  Kommandozentrale/KettenFenster NICHT anfassen — sie sterben im
-  U4/U5-Neuentwurf.)
-- **Restposten:** tote Props am `side-panel` (onBack/description) · tote
-  Typen-Exporte · unbenutztes `createStep` · fest verdrahtetes
-  `speichernDisabled` in der Toolbar · wirkungslose `navZahl`-Bedingung ·
-  abgerissener Kommentar-Halbsatz in `feldZeile.ts` · zehn falsche
-  Anfuehrungszeichen in Nutzertexten · rohe hsl-Farbe in `BlockHost` ·
-  Regel fuer den Feld-Vorsatz beim Art-Wechsel einer Quelle (heute geht er
-  still verloren; kuenftig: sichtbar behalten oder mit Ansage entfernen).
+- **Kleinkopien zusammenziehen:** die Ja/Nein-Optionsliste dreimal in zwei
+  Reihenfolgen — `blocks/tabelle/tabelleEigenschaften.ts` (Anker
+  `[{ value: 'ja'`) und `blocks/formfeld/feldEigenschaften.ts` (Eintrag
+  „Einzigen Treffer uebernehmen") stellen auf `shared/jaNeinProperty` um,
+  dessen Reihenfolge gilt · die zeilengleichen Parser `folgenAusAttribut`
+  (`blocks/shared/auswahl.ts`) und `weitereAusAttribut`
+  (`blocks/shared/fremdeQuellen.ts`) werden EIN gemeinsamer Parser (nur
+  der ID-Feldname unterscheidet sie) · die kopierte Ziel-Hervorhebung
+  `data-ff-ziel` in `KanbanSpalteBlock.ts` und `KanbanZimmerBlock.ts`
+  wird ein geteilter Stil. (Die zeichengleichen Dialoghuellen von
+  Kommandozentrale/KettenFenster NICHT anfassen — sie sterben in U4/U5.)
+- **Restposten:** tote Props am `ui/molecules/side-panel.tsx` (`onBack`,
+  `backLabel`, `description` — kein Aufrufer uebergibt sie) · doppelte
+  Schnittstelle `Eingabesitzung` in `editor/inspector/PropControl.tsx`
+  (die echte wohnt in `controls/eingabeSitzung.ts`) · unbenutztes
+  `createStep` in `core/data/aktionen.ts` · fest verdrahtetes
+  `speichernDisabled={false}` in `editor/shell/Toolbar.tsx` · wirkungslose
+  Bedingung `navZahl[key] !== ''` in `editor/zentrale/Kommandozentrale.tsx`
+  · abgerissener Kommentar-Halbsatz in `editor/zentrale/feldZeile.ts`
+  (Zeile 1) · in Nutzertexten schliesst ein GERADES Maschinen-Zeichen
+  (U+0022) statt des deutschen schliessenden Anfuehrungszeichens (U+201C,
+  wie ueberall sonst im Editor — Vorbild: `schrittZusammenfassung.ts`);
+  betroffen: `optionColors.ts`, `FieldPicker.tsx`, `Canvas.tsx`,
+  `PopupSeite.tsx`, `zentrale/helfer.ts`, `DtkImportForm.tsx` · rohe
+  Farbe `hsl(220 13% 78%)` in `editor/canvas/BlockHost.tsx` auf ein
+  Editor-Token · Feld-Vorsatz beim Art-Wechsel in
+  `editor/zentrale/DataSourceForm.tsx` (Anker `waehleArt`): heute geht er
+  still verloren — kuenftig sichtbar behalten oder mit Meldung entfernen.
 - Falls der Nutzer die Mini-Frage aus 0.1 mit „loeschen" beantwortet:
-  `preflight.ts` + Tests entfernen (ohne Aufrufer im Produkt seit dem
-  Punkt-Entfernen; gleiche Gattung wie `warnChecks` in U3).
+  `export/preflight.ts` + `preflight.test.ts` entfernen (ohne Aufrufer im
+  Produkt seit dem Punkt-Entfernen; gleiche Gattung wie `warnChecks`, U3).
 
-## V2 · Meldungen: Erfolg sichtbar machen
+**Runtime-Bytes aendern sich bewusst** (jaNein/Parser/Ziel-Stil/
+Popup-Meldung liegen in `blocks/`); die Editor-Restposten nicht.
 
-1. **Gruene Tonlage** fuer den bestehenden Meldebalken der Maske
-   (`softengine/meldung.ts`): gleiche Leiste, Masken-Tokens-Gruen, kuerzer
-   sichtbar (~4 s statt 8 s). EIN Meldeweg, zwei Tonlagen.
-2. **Neuer Schritt-Typ „MELDUNG"** in der Ketten-Registry (`STEP_TYPES`):
-   ein Textfeld; `{N}` im Text setzt das Ergebnis von Schritt N ein
-   (dieselbe Nummerierung, die die Ketten-Liste sichtbar zeigt).
-   Anwendungsfall des Nutzers: Schritt 1 legt per Relation einen Beleg an
-   (Antwort = Belegnummer), Schritt 2 meldet „Beleg {1} angelegt".
-3. **Ehrlichkeitsgrenze (dokumentieren, nicht verstecken):** PUT_RELATION
-   hat keine Antwort — eine Meldung nach reinem Schreiben belegt nur
-   „an SoftEngine uebergeben", nicht „verbucht". Der Meldungs-Schritt ist
-   deshalb Nutzer-gesteuert statt Automatik.
-   Export/Runtime aendern sich bewusst; SE-Delta in die Gesamtprobe.
-   Ob SoftEngine nach einem Anlegen von selbst frische Daten schiebt
-   (Liste zeigt den neuen Beleg), klaert nur ein Echttest — das ist NICHT
-   Teil dieser Etappe (Sperrliste: R4 bleibt gestrichen).
+## V2 · GEPARKT — Erfolgs-Meldungen (Nutzer-Ansage 2026-08-18: „muss
+nicht sein")
+
+Hier stand der Bau von gruenem Meldebalken + Meldungs-Schritt in Ketten
+(„Beleg {1} angelegt"). Auf Nutzer-Ansage zurueckgestellt, bevor gebaut
+wurde. Nicht von selbst wieder vorschlagen; die Skizze liegt in der
+git-Historie dieser Datei (Stand 2026-08-18). Kommt nur wieder, wenn der
+Nutzer selbst danach fragt.
 
 ## V3 · Nachschlage-Fenster: Groesse am Ding einstellen
 
-Das Fenster ist heute fest 520x380 (beide Wege). Neu: im Editor-
-Einstellfenster (Lupe) dieselben zwei Anfasser wie am Popup (`zieheGroesse`
-ist die EINE Zieh-Mechanik); gespeichert als Feld-Eigenschaften
-(Standard 520x380, Export schreibt nur Abweichungen); der Laufzeit-Weg
-liest sie. Kein neues Konzept.
+Das Fenster ist heute fest 520x380 — an BEIDEN Stellen in
+`blocks/formfeld/nachschlagen.ts`: `oeffneNachschlagen` (Anker
+`dialog.breite = 520`) und `spaltenStellenTpl` (Anker `.breite=${520}`).
+Neu: zwei Feld-Eigenschaften (defaultProps + @property am
+`FormFeldBlock`, Standard 520/380 — Export schreibt automatisch nur
+Abweichungen, Mechanik „Standard reist nicht"); beide Fenster-Wege lesen
+sie; im Editor-Einstellfenster dieselben zwei Anfasser wie am Popup —
+Vorbild WOERTLICH: `editor/canvas/PopupSeite.tsx`, Anker `startResize` /
+`zieheGroesse` (die EINE Zieh-Mechanik, nicht neu erfinden). Kein neues
+Konzept, keine Migration (neue Props mit Standard).
+**Runtime-Bytes aendern sich bewusst.**
 
 ## V4 · Tabellen-Zeilenklick als Ketten-Ausloeser
 
 Die Tabelle ist die einzige Datenanzeige ohne `blockEvents`, obwohl die
-Zeilen-Aktivierung (D1) intern existiert. Neu: Ereignis „Zeile gewaehlt"
-im Fähigkeiten-Verzeichnis (wie Kanban `onCardClick`), die Aktivierung
-ruft `runEvent`; die gewaehlte Zeile ist als Herkunft in Ketten bereits
-adressierbar. Export/Runtime aendern sich bewusst.
+Zeilen-Aktivierung (D1) intern existiert (`blocks/tabelle/
+zeilenAktivierung.ts`, Anker `ZEILE_AKTIVIERT_EVENT`). Neu: `static
+blockEvents = [{ key: 'onRowClick', name: 'Zeile gewaehlt' }]` am
+`TabelleBlock` — und die Stelle, die die Aktivierung ausloest, ruft
+zusaetzlich `runEvent`. Vorbild WOERTLICH: wie das Kanban seine
+Karten-Ereignisse deklariert (`KanbanBlock.ts`, Anker `blockEvents`) und
+ausloest (`kanban/seRuntime.ts`, Anker `runEvent(`) — dieselben
+Kontext-Schluessel sinngemaess; die gewaehlte Zeile ist in Ketten als
+Herkunft „gewaehlte Zeile" bereits adressierbar. NICHT im Editor ausloesen
+(`data-ff-editor`-Wache wie ueberall). **Runtime-Bytes aendern sich
+bewusst.**
 
 ## V5 · Waehler-Umstellung: die acht Alt-Stellen
 
-Der gemeinsame Waehler (`ui/molecules/waehler`) deckt ~14 von ~22
-Auswahlstellen. Die acht Alt-Stellen einzeln umstellen: QuellenListe
-(Inspector) · AuswahlFolgeSektion · SchluesselPaarZeilen (2 Selects ohne
-Suche) · DataSourceForm-Quellenwahl · StepForm-Seitenwahl ·
-RelationAuswahl-Liste · FeldUebernahmePicker · das rohe optgroup-Select im
-FieldPicker. Mit der Umstellung sterben die fuenf verschiedenen
-Leer-Beschriftungen und die Kunst-Optionen fuer Geloeschtes von selbst.
-Gefahrlos, gut in zwei Etappen teilbar. (Zwei Bauformen, die im
-U4/U5-Neuentwurf ohnehin sterben, nicht vorab umstellen.)
+Der gemeinsame Waehler (`ui/molecules/waehler.tsx`: `WaehlerKnopf` fuer
+den zugeklappten Knopf, `WaehlerListe` fuer offene Listen; Vorbild:
+`editor/inspector/PropControl.tsx` und `editor/zentrale/
+ParameterZeile.tsx`) deckt ~14 von ~22 Auswahlstellen. Die acht
+Alt-Stellen einzeln umstellen, je Stelle ein pruefbarer Schritt:
+
+1. `editor/inspector/QuellenListe.tsx` — SelectControl mit
+   Kunstwert `'__keine__'` und Kunst-Option „(geloeschte Quelle)".
+2. `editor/inspector/AuswahlFolgeSektion.tsx` — SelectControl mit
+   `'__keiner__'` und „(geloeschter Baustein)".
+3. `editor/inspector/SchluesselPaarZeilen.tsx` — zwei `SchrittSelect`
+   ohne Suche ueber potenziell hunderte Felder.
+4. `editor/zentrale/DataSourceForm.tsx` — Quellenwahl-SelectControl
+   (Anker `— Quelle waehlen —`).
+5. `editor/zentrale/StepForm.tsx` — Popup-Seitenwahl per SchrittSelect
+   (Anker `keine Popup-Seite vorhanden`).
+6. `editor/zentrale/RelationAuswahl.tsx` — handgebaute Knopfliste
+   (WaehlerListe hat Suche + Gruppen eingebaut).
+7. `editor/zentrale/FeldUebernahmePicker.tsx` — eigener
+   Zwei-Stufen-Picker.
+8. `editor/canvas/FieldPicker.tsx` — das rohe optgroup-`<select>` im
+   `felder`-Block (90 Zeilen ueber der WaehlerListe derselben Datei).
+
+Mit der Umstellung sterben die fuenf Leer-Beschriftungen („— keine —" /
+„— keins —" / „— keinem —" / „— Quelle waehlen —" / „— Quelle —") und
+die Kunst-Optionen fuer Geloeschtes von selbst (der Waehler zeigt
+Geloeschtes rot). Editor-only: **Buendel und Referenz bleiben
+byte-gleich.** Gut in zwei Etappen teilbar (1–4 / 5–8).
 
 ## V6 · Popup: Groesser ziehen schafft Platz + Overlay-Bearbeitung
 
@@ -624,7 +729,8 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 
 1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung + Koralle-Wort +
    preflight-Mini-Frage.
-2. **Welle V:** V1 → V0 → V2 → V3 → V4 → V5 → V6 (Entwurf, dann Bau) → V7.
+2. **Welle V:** V1 → V0 → V3 → V4 → V5 (Opus-Kopier-Auftrag im
+   Wellen-Kopf V) → V6 (Kurzentwurf mit dem Nutzer, dann Bau) → V7.
 3. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf.
 4. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
    → F3.
@@ -747,3 +853,7 @@ Begruendungen in voller Laenge: git-Historie (Plan-Fassung vor dem
   Maske vor; der Laufzeit-Aufruf friert WinUI ein — beides wartet auf
   Belege der Installation.
 - **U10** (Leerzeichen): wartet auf die Nutzer-Beobachtung (s. Welle U).
+- **Erfolgs-Meldungen (V2):** gruener Meldebalken + Meldungs-Schritt in
+  Ketten — Nutzer-Ansage 2026-08-18 „muss nicht sein", bevor gebaut
+  wurde. Kommt nur wieder, wenn der Nutzer selbst danach fragt; Skizze
+  in der git-Historie dieser Datei.
