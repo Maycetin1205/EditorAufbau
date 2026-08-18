@@ -26,15 +26,6 @@ export interface PickerWahl {
   onWaehle: (wert: string) => void
 }
 
-// Die Quelle wird IM Picker gewaehlt, weil sie am Eintrag haengt und nicht am
-// Baustein: jede Nachschlage-Spalte der Erfassungszeile hat ihre eigene.
-export interface PickerQuelle {
-  label: string
-  optionen: readonly { id: string; name: string; kennung?: string }[]
-  aktuell: string
-  onWaehle: (id: string) => void
-}
-
 export interface PickerFeld {
   key: string
   label: string
@@ -62,23 +53,16 @@ interface FieldPickerProps {
 
   wahl?: PickerWahl
 
-  quelle?: PickerQuelle
-
   felder?: readonly PickerFeld[]
 
   zuordnung?: PickerZuordnung
 
-  // Ohne onPick zeigt das Fenster KEINE Feldliste: der Rollen-Picker der
-  // Erfassungszeile hat kein Feld zu waehlen — seine Details haengen an der
-  // Rolle. Dann traegt es auch einen eigenen Namen, denn „Feld fuer X" waere
-  // gelogen.
   current?: string
 
   top: number
   left: number
 
-  onPick?: (wert: string) => void
-  titel?: string
+  onPick: (wert: string) => void
   onClose: () => void
 }
 
@@ -86,14 +70,12 @@ export function FieldPicker({
   spotLabel,
   gruppen,
   wahl,
-  quelle,
   felder,
   zuordnung,
   current,
   top,
   left,
   onPick,
-  titel,
   onClose,
 }: FieldPickerProps) {
   // Schließt das Fenster ohne blur (Escape, Außenklick), bliebe die offene
@@ -115,13 +97,13 @@ export function FieldPicker({
 
   return (
     <AuswahlFenster
-      bezeichnung={titel ?? `Feld für ${spotLabel}`}
+      bezeichnung={`Feld für ${spotLabel}`}
       oben={top}
       links={left}
       onClose={onClose}
       imBildHalten
       escapeAbfangen
-      className={zuordnung || quelle || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-80 w-64'}
+      className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-80 w-64'}
     >
 
       {wahl && (
@@ -148,32 +130,6 @@ export function FieldPicker({
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {quelle && (
-        <div className="mb-1 border-b border-border pb-1">
-          <label className="mb-1 flex items-center gap-2 px-2">
-            <span className="w-20 shrink-0 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
-              {quelle.label}
-            </span>
-            <select
-              value={quelle.aktuell}
-              onChange={(e) => quelle.onWaehle(e.target.value)}
-              className="min-w-0 flex-1 rounded-sm border border-border bg-background px-1 py-1 text-xs"
-            >
-              <option value="">— keine gewählt —</option>
-
-              {quelle.aktuell !== ''
-                && !quelle.optionen.some((o) => o.id === quelle.aktuell)
-                && <option value={quelle.aktuell}>— unbekannte Quelle —</option>}
-              {quelle.optionen.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.kennung ? `${o.name} (${o.kennung})` : o.name}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
       )}
 
@@ -303,7 +259,7 @@ export function FieldPicker({
         </div>
       )}
 
-      {onPick && <WaehlerListe
+      <WaehlerListe
         kopf={
           <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
             {gruppen.length === 1 ? `${spotLabel} · Feld aus ${gruppen[0].name}` : `${spotLabel} · Feld wählen`}
@@ -316,7 +272,7 @@ export function FieldPicker({
         wert={current ?? ''}
         leerText="— nicht gebunden —"
         onWaehle={onPick}
-      />}
+      />
     </AuswahlFenster>
   )
 }

@@ -54,16 +54,20 @@ dann `go` (0.3), dann genau EINE Etappe.
   s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · G3–G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
+  V6 nach Kurzentwurf · G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
   Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
-  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9, V7, G1
-  und G2 sind GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste
-  Etappe G3.
+  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9, V7,
+  G1, G2 und G3 sind GEBAUT (2026-08-18);** naechster Kopier-Auftrag: G4.
+  Mit G3 ist die Erfassungszeile einstellungsfrei geworden — sie leitet
+  alles aus der Bindung der Spalte und der Verknuepfung des Bausteins ab;
+  die Rollen-Maschinerie samt zweiter Bedienstelle am Listen-Eintrag
+  (`ListenStelle`) ist ersatzlos ausgebaut, alte Staende raeumt
+  `migrateErfassungsRollenWeg` beim Laden.
 - **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
   Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
   WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
@@ -689,32 +693,38 @@ Auto-PUT, die Zusage bleibt.
 **Das Bild:** Die Erfassungszeile ist die naechste freie Zeile der
 Tabelle — eine FAEHIGKEIT des Tabellen-Bausteins (Registry-Props), KEIN
 neuer Baustein; eine Tabelle ohne Erfassungszeile exportiert byte-gleich
-wie heute. Jede Zelle hat eine Rolle, eingestellt am Ding: Klick auf die
-Zelle im Editor, dasselbe Muster wie am Spaltenkopf (Anker
-`oeffneFeldPicker` in `blocks/tabelle/spaltenBearbeiten.ts`).
-Standard-Rolle: Frei. KEINE neue Symbolsprache im Editor (Nutzer-Ansage
-2026-08-18, „nicht komplizierter machen"): Nachschlage-Zellen zeigen die
-Lupe, die es am Formularfeld schon gibt — sonst Striche, der Editor
-erfindet nie Daten.
+wie heute. **An der Erfassungszeile wird NICHTS eingestellt**
+(Nutzer-Entscheidung 2026-08-18): sie leitet alles aus zwei Angaben ab,
+die es beide schon gibt — der Bindung der Spalte (am Spaltenkopf, wie
+immer) und der Verknuepfung des Bausteins („Woran erkennt man die
+zusammengehoerige Zeile?", Inspector, Prop `weitereQuellen`). Im Editor
+zeigt die Zeile darum nur Striche, keine Lupe und kein Rollen-Fenster;
+die Lupe am Formularfeld bleibt unberuehrt. Kern:
+`blocks/tabelle/erfassungsZellen.ts`.
 
-- **Nachschlagen** (z. B. Artikelnummer): tippen → Vorschlagsliste
+Daraus die drei Zellenarten:
+
+- **Kein Feld gebunden** (z. B. Menge): frei tippen, keine Vorschlaege.
+- **Feld der Tabellen-Quelle** (z. B. `3_18`): tippen → Vorschlagsliste
   direkt unter der Zelle (bis ~8 Treffer; gesucht wird in Nummer UND
-  Bezeichnung — Profis tippen „bay" fuer Baytril). Enter oder F3 auf
-  LEERER Zelle oeffnet das grosse Stamm-Fenster (das vorhandene
-  Nachschlage-Fenster). Die Wahl setzt die Auswahl der
-  Nachschlage-Quelle (`blocks/shared/auswahl.ts`).
-- **Frei** (z. B. Menge): einfach tippen. Optionale Vorbelegung
-  (z. B. Menge „1"): vorbelegte Zellen werden im Tastenfluss
-  uebersprungen, bleiben aber per Pfeil/Klick aenderbar.
-- **Folgt** (z. B. Bezeichnung, Preis): fuellt sich sofort aus der
-  gewaehlten Zeile der Nachschlage-Quelle — lokal, ohne ERP-Nachfrage
-  (vorhandene Mechanik, Anker `gewaehlteZeileDerQuelle` in
-  `blocks/shared/holendeQuellen.ts`). Haelt den Tastenfluss nie an.
+  Bezeichnung — Profis tippen „bay" fuer Baytril; angezeigt und
+  mitdurchsucht wird die erste ANDERE Spalte derselben Quelle). Enter
+  auf LEERER Zelle oeffnet das grosse Stamm-Fenster.
+- **Feld einer verknuepften Quelle** (z. B. `q-tier::5_4`): dasselbe,
+  aber nur die Saetze, deren Schluessel zum gewaehlten Satz der
+  Tabellen-Quelle passen. Genau EIN Treffer fuellt sich selbst.
+
+Die Uebernahme gilt immer fuer die GANZE Quelle: wer den Artikel waehlt,
+fuellt jede Spalte dieser Quelle mit — in beide Richtungen, das Suchwort
+darf auch in der Bezeichnungsspalte stehen. Ein neuer Satz der
+Tabellen-Quelle loest die verknuepften Saetze (sie hingen an seinem
+Schluessel) und bestimmt sie neu. Kein Partner gefunden → die Zelle
+bleibt leer, die Zeile bleibt stehen.
 
 **Tasten (der Kern des Ganzen):** Enter uebernimmt den markierten
 Vorschlag und springt zur naechsten TIPPBAREN Zelle — es oeffnet nie
-erneut · Tab/Enter ueberspringen Folgt-Zellen und Vorbelegtes · genau
-EIN moeglicher Treffer fuellt sich selbst (Ein-Treffer-Automatik) ·
+erneut · Tab/Enter ueberspringen Zellen, die sich selbst gefuellt haben ·
+genau EIN moeglicher Treffer fuellt sich selbst (Ein-Treffer-Automatik) ·
 Escape zweistufig: erst Liste zu, dann Zelle leeren · Enter auf der
 letzten Zelle = „Zeile erfasst" — die Zeile wird normale Position, die
 Erfassung rueckt eine Zeile tiefer, der Cursor steht auf der ersten
@@ -745,39 +755,39 @@ kopieren. V7 ist gebaut: das Fenster hat EIN Geruest (`fensterTpl`),
 G1 baut dagegen, nicht gegen zwei Fassungen.
 **Runtime-Bytes aendern sich bewusst.**
 
-## G2 · Erfassungszeile: Zeile, Rollen, Befuellen (GEBAUT 2026-08-18)
+## G2 · Erfassungszeile: Zeile und Befuellen (GEBAUT 2026-08-18)
 
-Der Tabellen-Baustein bekommt den Schalter „Erfassungszeile" und je
-Spalte die Rolle samt Details (Nachschlage-Quelle + Uebernahme-Feld ·
-Vorbelegung · Folgt-Feld) — Registry-Props, kein Sondercode; neue Props
-= Round-Trip-Fall im Export-Test (Regel 9). Editor: Klick auf die
-Erfassungszelle stellt die Rolle (Muster Spaltenkopf). Laufzeit:
-Nachschlage-Zelle nutzt die G1-Liste und das Fenster, Folgt-Zellen
-lesen die Auswahl, Frei-Zellen tippen. In G2 noch OHNE das volle
-Tasten-Ballett und OHNE Schreiben.
+Der Tabellen-Baustein bekommt den Schalter „Erfassungszeile" — ein
+Registry-Prop, kein Sondercode; neue Props = Round-Trip-Fall im
+Export-Test (Regel 9). Laufzeit: die gebundene Zelle nutzt die
+G1-Vorschlagsliste und das grosse Fenster, die ungebundene tippt frei.
+In G2 noch OHNE das volle Tasten-Ballett und OHNE Schreiben.
 **Runtime-Bytes aendern sich bewusst.**
 
-**Zwei Nutzer-Korrekturen (2026-08-18, waehrend des Baus) — sie schlagen
-jede andere Lesart:**
+**Nutzer-Korrektur (2026-08-18, waehrend des Baus):** Die
+Erfassungszeile ist die naechste FREIE Zeile — direkt unter der letzten
+Datenzeile, leere Tabelle → Zeile 1 ganz oben. Nicht unten am
+Tabellenrand hinter den Fuellzeilen.
 
-1. **Die Nachschlage-Quelle steht an der SPALTE, nicht an der Tabelle.**
-   Jede Spalte mit Rolle „Nachschlagen" hat ihre EIGENE Quelle samt
-   Uebernahme-Feld (Artikelnummer → ART, Verabreichungsart → IDBID0001).
-   Eine tabellenweite Quellen-Eigenschaft ist FALSCH und wurde entfernt.
-   Folge: auch die Folgt-Zelle nennt ihre Quelle, sonst wuesste sie bei
-   zwei Nachschlage-Spalten nicht, welcher Wahl sie folgt — der gewaehlte
-   Satz wird darum JE QUELLE gehalten.
-2. **Die Erfassungszeile ist die naechste FREIE Zeile:** direkt unter der
-   letzten Datenzeile, leere Tabelle → Zeile 1 ganz oben. Nicht unten am
-   Tabellenrand hinter den Fuellzeilen.
+## G3 · Die Zelle leitet sich ab, die Tasten geben das Tempo
 
-## G3 · Tastensteuerung (das Tempo)
+**Nutzer-Entscheidung 2026-08-18:** An der Erfassungszeile wird nichts
+mehr eingestellt — keine Rolle je Zelle, keine eigene Quelle je Spalte,
+keine Vorbelegung, keine Lupe in der Zelle. Was eine Zelle tut, steht
+schon in der Bindung der Spalte und in der Verknuepfung des Bausteins
+(die bleibt, wo sie ist: Baustein-Prop `weitereQuellen`, eingestellt im
+Inspector — kein Umzug ins Datencenter, keine zweite Terminologie).
+Die drei Zellenarten und die Uebernahme-Regeln stehen im Wellen-Kopf.
 
-Der komplette Tastenfluss aus dem Wellen-Kopf, an der Erfassungszeile:
-Enter uebernimmt den markierten Vorschlag und springt zur naechsten
-TIPPBAREN Zelle · Tab/Enter ueberspringen Folgt-Zellen und Vorbelegtes ·
-genau EIN moeglicher Treffer fuellt sich selbst · Escape zweistufig
-(erst Liste zu, dann Zelle leeren) · F3-Abfangen mit Echttest-Vorbehalt.
+Dazu der Tastenfluss an der Erfassungszeile: Enter uebernimmt den
+markierten Vorschlag und springt zur naechsten TIPPBAREN Zelle ·
+Tab/Enter ueberspringen, was sich selbst gefuellt hat · genau EIN
+moeglicher Treffer fuellt sich selbst · Escape zweistufig (erst Liste
+zu, dann Zelle leeren) · F3-Abfangen mit Echttest-Vorbehalt.
+
+**Gestrichen, nicht wieder vorschlagen:** die Vorbelegung („Menge 1" per
+Doppelklick in die Zelle) · die Rollen Nachschlagen/Folgt/Frei · die
+Nachschlage-Quelle an der Spalte.
 
 **Enter auf der letzten Zelle laesst die Zeile STEHEN** (Nutzer-Ansage
 2026-08-18, siehe G4): sie wird die Zeile der Position und bleibt

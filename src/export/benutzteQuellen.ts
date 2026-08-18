@@ -57,18 +57,6 @@ export function collectDataSources(
       }
     }
 
-    // Eine Listen-Bedienstelle kann ihre Quelle am EINTRAG halten: jede
-    // Nachschlage-Spalte der Erfassungszeile hat ihre eigene. Ohne sie stuende
-    // die Quelle in keiner SEFILELOOP, SoftEngine schickte ihre Saetze nie und
-    // das Nachschlage-Fenster blieb in der fertigen Maske leer.
-    const bindung = def?.listenBindung
-    const stelle = bindung?.zweiteStelle
-    if (bindung && stelle) {
-      for (const eintrag of listeLesen(node.props[bindung.prop], bindung)) {
-        add(eintrag[stelle.quelleKey])
-      }
-    }
-
     for (const id of quellenIdsInKettenVon(node)) add(id)
     node.childIds.forEach((id) => visit(tree[id]))
   }
@@ -128,21 +116,8 @@ export function benutzteFelderJeQuelle(
         else merke(eigeneQuelle, wert)
       }
 
-      // Die zweite Bedienstelle traegt ihre Quelle AM EINTRAG (jede
-      // Nachschlage-Spalte ihre eigene). Ohne diese Bestellung liefert
-      // SoftEngine die Felder nicht und die Zelle bleibt in der fertigen
-      // Maske leer.
-      const stelle = b.zweiteStelle
-
       for (const eintrag of listeLesen(node.props[b.prop], b)) {
         merkeEintragsFeld(eintrag[b.feldKey])
-        if (stelle) {
-          const eigene = String(eintrag[stelle.quelleKey] ?? '')
-          const gebunden = eintragsFelderLesen(stelle.eintragsWahl, eintrag)
-          for (const zf of eintragsFelderVon(stelle.eintragsWahl, eintrag)) {
-            merke(eigene, gebunden[zf.key])
-          }
-        }
         if (!b.eintragsWahl) continue
         const gebunden = eintragsFelderLesen(b.eintragsWahl, eintrag)
         for (const zf of eintragsFelderVon(b.eintragsWahl, eintrag)) {

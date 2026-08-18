@@ -27,13 +27,19 @@ function schluesselAus(werte: readonly string[]): string {
   return teile.join(SCHLUESSEL_TRENNER)
 }
 
-function weitereAusAttribut(el: HTMLElement): { quelleId: string; keyPairs: SchluesselPaar[] }[] {
+// Die Verknüpfungen dieses Bausteins: je Partner-Quelle die Schlüsselpaare,
+// mit denen die zusammengehörige Zeile gefunden wird („Woran erkennt man die
+// zusammengehörige Zeile?"). Auch die Erfassungszeile der Tabelle liest sie —
+// sie ist die EINE Angabe dazu, eine zweite gibt es nicht.
+export function verknuepfungenVon(
+  el: HTMLElement,
+): { quelleId: string; keyPairs: SchluesselPaar[] }[] {
   return paarListeAusAttribut(el, WEITERE_QUELLEN_ATTR, 'quelleId')
     .map((e) => ({ quelleId: e.id, keyPairs: e.keyPairs }))
 }
 
 export function macheFeldLeser(el: HTMLElement): FeldLeser {
-  const weitere = weitereAusAttribut(el)
+  const weitere = verknuepfungenVon(el)
   if (weitere.length === 0) return (row, wert) => getField(row, zerlegeBindung(wert).code)
 
   const sedata = seGlobal().SEDATA

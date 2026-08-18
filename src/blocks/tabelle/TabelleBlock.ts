@@ -5,6 +5,7 @@ import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
+import { verknuepfungenVon } from '../shared/fremdeQuellen'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
 import { vorschlagStil } from '../shared/vorschlagListe'
 import { chipStyles } from '../shared/statusVariant'
@@ -15,6 +16,7 @@ import {
   type ErfassungsWirt,
 } from './erfassungsBedienung'
 import { ErfassungsLauf } from './erfassungsLauf'
+import type { ErfassungsUmfeld } from './erfassungsZellen'
 import { erfassungStil } from './erfassungStil'
 import {
   leiteZeilenAb,
@@ -261,10 +263,20 @@ export class TabelleBlock extends BasicBlock {
     return {
       baustein: this,
       lauf: this._lauf,
-      spalten: () => this.spaltenListe(),
-      aendere: (l) => this.aendere(l),
+      umfeld: () => this.erfassungsUmfeld(),
       melde: () => this.requestUpdate(),
-      bindungsProp: TabelleBlock.listenBindung.prop,
+    }
+  }
+
+  // Die Erfassungszeile leitet alles aus zwei vorhandenen Angaben ab: der
+  // Bindung jeder Spalte und der Verknuepfung des Bausteins. Beides steht am
+  // Element, also braucht sie keine eigene Einstellung.
+  private erfassungsUmfeld(): ErfassungsUmfeld {
+    const verknuepfungen = verknuepfungenVon(this)
+    return {
+      spalten: this.spaltenListe(),
+      quelleId: this.source,
+      paareZu: (quelleId) => verknuepfungen.find((v) => v.quelleId === quelleId)?.keyPairs ?? [],
     }
   }
 
@@ -300,7 +312,7 @@ export class TabelleBlock extends BasicBlock {
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed)
     if (!this.erfassungAn || this.hasAttribute('data-ff-editor')) return
-    this._lauf.aktualisiereVorschlaege(this.spaltenListe())
+    this._lauf.aktualisiereVorschlaege(this.erfassungsUmfeld())
   }
 
   protected override updated(): void {

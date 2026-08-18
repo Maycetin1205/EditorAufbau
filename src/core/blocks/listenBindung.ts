@@ -15,34 +15,6 @@ export interface ListenBindung {
   eintragsWahl?: EintragsWahl
 
   eintragsZuordnung?: EintragsZuordnung
-
-  zweiteStelle?: ListenStelle
-}
-
-// Eine ZWEITE Bedienstelle an DENSELBEN Eintraegen: die Spalte einer Tabelle
-// wird am KOPF an ein Feld gebunden und in der ERFASSUNGSZEILE mit einer Rolle
-// belegt. Beide Stellen schreiben in dieselbe Liste — zwei parallele Listen
-// liefen beim Anlegen und Entfernen von Spalten auseinander.
-export interface ListenStelle {
-  // Reist im ff-listen-bind mit, damit der Editor weiss, WELCHES Fenster
-  // gemeint ist; ohne den Namen oeffnete der Klick in der Erfassungszeile
-  // den Picker des Spaltenkopfes.
-  stelle: string
-
-  eintragsWahl: EintragsWahl
-
-  // Der Schluessel, in dem der EINTRAG seine Quelle haelt — nicht der
-  // Baustein: jede Spalte der Erfassungszeile schlaegt in ihrer EIGENEN
-  // Quelle nach (Artikelnummer im Artikelstamm, Verabreichungsart in ihrer
-  // IDB-Tabelle). Die Felder ihrer Details kommen aus genau dieser Quelle,
-  // nie aus den Quellen in Reichweite — das sind die des Kopfes.
-  quelleKey: string
-
-  // Schluessel, die nur bei bestimmten Wahlwerten gelten (die Vorbelegung nur
-  // bei „Frei", die Quelle nur bei den nachschlagenden Rollen): der Export
-  // laesst sie sonst weg, damit kein Rest einer verworfenen Rolle in der
-  // Maske landet.
-  nurBeiWahl?: readonly { key: string; wahl: readonly string[] }[]
 }
 
 export interface EintragsZuordnung {
@@ -139,8 +111,10 @@ export function listeLesen(roh: unknown, b: ListenBindung): Record<string, unkno
 }
 
 // Ein Schluessel eines Eintrags, der nur unter einer Bedingung in den Export
-// gehoert. Zwei Stellen (Kopf und Erfassungszeile) bringen je eigene mit,
-// darum sind es Regeln und keine Aufzaehlung von Sonderfaellen.
+// gehoert: das Detail-Buendel nur, solange die gewaehlte Darstellung ueberhaupt
+// Felder hat, die Status-Zuordnung nur bei der Status-Darstellung. Als Regeln
+// und nicht als Aufzaehlung von Sonderfaellen — eine weitere Wahl braucht dann
+// nichts Neues.
 interface BedingterSchluessel {
   key: string
   erlaubt: (eintrag: Record<string, unknown>) => boolean
@@ -159,16 +133,6 @@ function bedingteSchluessel(b: ListenBindung): BedingterSchluessel[] {
     const zuo = b.eintragsZuordnung
     if (zuo) {
       regeln.push({ key: zuo.key, erlaubt: (e) => eintragsWahlWert(wahl, e) === zuo.nurBeiWahl })
-    }
-  }
-  const stelle = b.zweiteStelle
-  if (stelle) {
-    ausWahl(stelle.eintragsWahl)
-    for (const nur of stelle.nurBeiWahl ?? []) {
-      regeln.push({
-        key: nur.key,
-        erlaubt: (e) => nur.wahl.includes(eintragsWahlWert(stelle.eintragsWahl, e)),
-      })
     }
   }
   return regeln

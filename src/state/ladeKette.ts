@@ -16,6 +16,7 @@ import {
 } from './migrations'
 import {
   migrateAnzeigeFeldAufSpalten,
+  migrateErfassungsRollenWeg,
   migrateKanbanVorlage,
   migrateKnopfAusTabelle,
   migrateZeileAufloesen,
@@ -34,6 +35,7 @@ export function sanitizeTree(
   const src = raw as Record<string, { type?: unknown; props?: unknown; childIds?: unknown; events?: unknown }>
   const onDropType = meldungen?.typVerworfen
   migrateAnzeigeFeldAufSpalten(src)
+  migrateErfassungsRollenWeg(src)
   const rohEntfernt = [
     ...migrateKanbanVorlage(src),
     ...migrateKnopfAusTabelle(src),

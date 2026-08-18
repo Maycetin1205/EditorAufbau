@@ -135,6 +135,49 @@ describe('Migration (V0, 2026-08-18: „Angezeigt wird" wird zur ersten Fenster-
   })
 })
 
+describe('Migration (G3, 2026-08-18: die Erfassungszeile stellt nichts mehr je Zelle ein)', () => {
+  const tabStand = (spalten: unknown): unknown => ({
+    tree: {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
+        props: { source: 'q-pos', erfassung: 'ja', spalten },
+      },
+    },
+    selectedId: null,
+  })
+
+  it('raeumt Rolle, eigene Quelle, Uebernahme-Feld und Vorbelegung weg', () => {
+    const ed = load(tabStand([
+      {
+        titel: 'Artikel', feld: '3_18', art: 'text',
+        rolle: 'nachschlagen', rollenQuelle: 'q-art', erfassung: { feld: '3_18' },
+      },
+      { titel: 'Menge', feld: '', art: 'zahl', rolle: 'frei', vorbelegung: '1' },
+    ]))
+    expect(ed.getNode('tab')?.props.spalten).toEqual([
+      { titel: 'Artikel', feld: '3_18', art: 'text' },
+      { titel: 'Menge', feld: '', art: 'zahl' },
+    ])
+  })
+
+  it('eine gespeicherte Maske aus G2 wird geladen und NICHT abgelehnt', () => {
+    // Ohne die Migration vermisst die Verlustpruefung die vier Schluessel:
+    // sie stecken IM Spalten-Eintrag, `normalizeProps` wirft sie also nicht
+    // weg — `alsSpalte` schon. Die Maske landete als „Verlust" im Aus.
+    const ed = load(tabStand([{
+      titel: 'Gabe', feld: 'q-gabe::5_4', art: 'text',
+      rolle: 'folgt', rollenQuelle: 'q-gabe', erfassung: { feld: '5_4' },
+      vorbelegung: 'weg',
+    }]))
+    expect(ed.getNode('tab')).toBeDefined()
+    expect(ed.getNode('tab')?.props.erfassung).toBe('ja')
+    // Die Bindung der Spalte bleibt — aus ihr leitet die Zelle jetzt alles ab.
+    expect(ed.getNode('tab')?.props.spalten)
+      .toEqual([{ titel: 'Gabe', feld: 'q-gabe::5_4', art: 'text' }])
+  })
+})
+
 describe('Migration (2026-07-16: alte Karten-Demo-Werte werden geleert)', () => {
   it('leert exakt die früheren Werkswerte, echte Eingaben bleiben', () => {
     const ed = load({

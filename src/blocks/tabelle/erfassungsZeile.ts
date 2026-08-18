@@ -1,22 +1,21 @@
 import { html, nothing, type TemplateResult } from 'lit'
 import { styleMap } from 'lit/directives/style-map.js'
-import { lupeZeichen } from '../shared/lupeZeichen'
 import { vorschlagListeTpl, type Vorschlag } from '../shared/vorschlagListe'
 import { spaltenArt } from './spaltenArten'
-import {
-  ROLLE_FOLGT,
-  ROLLE_FREI,
-  ROLLE_NACHSCHLAGEN,
-  rolleVon,
-} from './erfassungsRollen'
+import { zellenzielVon } from './erfassungsZellen'
 import { ZELLE_PLATZHALTER, type Spalte } from './spalten'
 
-// Die naechste freie Zeile der Tabelle. Sie ist eine FAEHIGKEIT der Tabelle
-// und kein eigener Baustein: ohne den Schalter gibt es sie nicht, und eine
-// Tabelle ohne sie exportiert wie zuvor.
+// Die nächste freie Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und
+// kein eigener Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle
+// ohne sie exportiert wie zuvor. Einzustellen ist an ihr nichts — was eine
+// Zelle tut, leitet erfassungsZellen aus der Bindung der Spalte ab.
 
 export interface ErfassungsLage {
   spalten: readonly Spalte[]
+
+  // Die EINE Quelle der Tabelle — sie entscheidet, ob das Feld einer Spalte
+  // ihr eigenes ist oder das einer verknüpften Quelle.
+  quelleId: string
 
   cols: Readonly<Record<string, string>>
 
@@ -25,46 +24,25 @@ export interface ErfassungsLage {
   // Was in der Zelle steht (Laufzeit).
   wert: (index: number) => string
 
-  // Die offene Vorschlagsliste gehoert zu GENAU EINER Zelle.
+  // Die offene Vorschlagsliste gehört zu GENAU EINER Zelle.
   tippSpalte: number
   vorschlaege: readonly Vorschlag[]
   marke: number
 
   // Nach OBEN aufklappen. Der Rumpf schneidet ab, was aus ihm herausragt:
-  // steht die Zeile ganz unten, waere eine Liste nach unten unerreichbar.
+  // steht die Zeile ganz unten, wäre eine Liste nach unten unerreichbar.
   // Ist unter ihr noch Platz (leere Tabelle → Zeile 1 ganz oben), klappt sie
-  // nach unten — dorthin waechst auch der Rollbereich des Rumpfes mit.
+  // nach unten — dorthin wächst auch der Rollbereich des Rumpfes mit.
   listeNachOben: boolean
 }
 
 export interface ErfassungsHandeln {
-  // Editor: Klick stellt die Rolle, Doppelklick tippt die Vorbelegung.
-  klickZelle: (e: MouseEvent, index: number) => void
-  dblklickZelle: (e: MouseEvent, index: number) => void
-
   tippen: (index: number, text: string) => void
   taste: (index: number, e: KeyboardEvent) => void
   verlassen: (index: number) => void
-  lupe: (index: number, e: MouseEvent) => void
 
   waehleVorschlag: (listenIndex: number) => void
   setzeMarke: (listenIndex: number) => void
-}
-
-function editorZelle(spalte: Spalte, rolle: string): TemplateResult | string {
-  if (rolle === ROLLE_NACHSCHLAGEN) {
-    // Keine neue Symbolsprache: die Nachschlage-Zelle traegt die Lupe, die es
-    // am Formularfeld schon gibt. Sonst Striche — der Editor erfindet nie
-    // Daten (Regel 7).
-    return html`<span class="erf-strich">${ZELLE_PLATZHALTER}</span><span class="erf-lupe-zeichen">${
-      lupeZeichen()
-    }</span>`
-  }
-  if (rolle === ROLLE_FREI) {
-    const vorbelegt = spalte.vorbelegung ?? ''
-    return vorbelegt !== '' ? vorbelegt : ZELLE_PLATZHALTER
-  }
-  return ZELLE_PLATZHALTER
 }
 
 function eingabe(
@@ -82,24 +60,20 @@ function eingabe(
   />`
 }
 
+// Eine gebundene Zelle kann eine Vorschlagsliste zeigen und braucht dafür
+// einen Halter; eine freie Zelle ist nur ein Eingabefeld. Eine Lupe hat hier
+// keine mehr: Enter in der leeren Zelle öffnet das große Fenster
+// (Nutzer-Entscheidung 2026-08-18). Die Lupe am Formularfeld bleibt.
 function laufzeitZelle(
   lage: ErfassungsLage,
   tun: ErfassungsHandeln,
   index: number,
-  rolle: string,
-): TemplateResult | string {
-  if (rolle === ROLLE_FOLGT) return lage.wert(index)
-  if (rolle === ROLLE_FREI) return eingabe(lage, tun, index)
+  frei: boolean,
+): TemplateResult {
+  if (frei) return eingabe(lage, tun, index)
   const liste = lage.tippSpalte === index && lage.vorschlaege.length > 0
-  return html`<div class=${lage.listeNachOben ? 'erf-nachschlag nach-oben' : 'erf-nachschlag'}>
+  return html`<div class=${lage.listeNachOben ? 'erf-halter nach-oben' : 'erf-halter'}>
     ${eingabe(lage, tun, index)}
-    <button
-      class="lupe"
-      type="button"
-      aria-label="Nachschlagen"
-      title="Nachschlagen"
-      @click=${(e: MouseEvent) => tun.lupe(index, e)}
-    >${lupeZeichen()}</button>
     ${liste ? vorschlagListeTpl({
       eintraege: lage.vorschlaege,
       marke: lage.marke,
@@ -115,24 +89,16 @@ export function erfassungsZeileTpl(
 ): TemplateResult {
   return html`<div class="zeile erfassung" role="row" style=${styleMap(lage.cols)}>
     ${lage.spalten.map((spalte, i) => {
-      const rolle = rolleVon(spalte)
-      const art = spaltenArt(spalte.art)
-      const klassen = `${art.klasse} erf-${rolle}`.trim()
-      if (!lage.imEditor) {
-        return html`<div class=${klassen} role="cell">${
-          laufzeitZelle(lage, tun, i, rolle)
-        }</div>`
+      const klasse = spaltenArt(spalte.art).klasse
+      // Im Editor gibt es keine Daten und keine Eingaben, sondern Striche —
+      // der Editor erfindet nie Daten (Regel 7).
+      if (lage.imEditor) {
+        return html`<div class=${klasse} role="cell">${ZELLE_PLATZHALTER}</div>`
       }
-      // data-ff-editable nur an der Frei-Zelle: nur dort tippt der
-      // Doppelklick wirklich Text (die Vorbelegung). An den anderen waere der
-      // Schreib-Zeiger eine Luege.
-      return html`<div
-        class=${klassen}
-        role="cell"
-        ?data-ff-editable=${rolle === ROLLE_FREI}
-        @click=${(e: MouseEvent) => tun.klickZelle(e, i)}
-        @dblclick=${(e: MouseEvent) => tun.dblklickZelle(e, i)}
-      >${editorZelle(spalte, rolle)}</div>`
+      const frei = zellenzielVon(spalte, lage.quelleId).art === 'frei'
+      return html`<div class=${klasse} role="cell">${
+        laufzeitZelle(lage, tun, i, frei)
+      }</div>`
     })}
   </div>`
 }

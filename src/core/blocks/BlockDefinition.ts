@@ -40,7 +40,6 @@ export {
   type EintragsWahlOption,
   type EintragsZuordnung,
   type ListenBindung,
-  type ListenStelle,
   type ZuordnungZeile,
 } from './listenBindung'
 import type { ListenBindung } from './listenBindung'

@@ -3,7 +3,6 @@ import { starteUmbenennen } from '../shared/umbenennen'
 import {
   SPALTEN_MAX,
   SPALTEN_MIN,
-  ZELLE_PLATZHALTER,
   neueSpalte,
   type Spalte,
 } from './spalten'
@@ -72,35 +71,6 @@ export function benenneSpalteUm(
   })
 }
 
-// Die Vorbelegung einer Frei-Zelle wird IN die Zelle getippt (Doppelklick),
-// nicht in einem Fenster gewaehlt: derselbe Griff wie beim Spaltentitel. Leer
-// getippt heisst „keine Vorbelegung" — anders als beim Titel ist Leeren also
-// eine gueltige Eingabe, und der Schluessel faellt weg.
-export function tippeVorbelegung(
-  e: MouseEvent,
-  index: number,
-  liste: () => Spalte[],
-  aendere: (spalten: Spalte[]) => void,
-): void {
-  const ziel = e.currentTarget as HTMLElement | null
-  if (!ziel) return
-  e.stopPropagation()
-  e.preventDefault()
-  starteUmbenennen(ziel, (neu, original) => {
-    if (neu === original.trim()) return false
-    const l = liste()
-    if (index >= l.length) return false
-    const spalte = { ...l[index] }
-    // Der Strich ist die Anzeige einer LEEREN Vorbelegung, kein Wert.
-    const wert = neu === ZELLE_PLATZHALTER ? '' : neu
-    if (wert === '') delete spalte.vorbelegung
-    else spalte.vorbelegung = wert
-    l[index] = spalte
-    aendere(l)
-    return true
-  })
-}
-
 const DOPPELKLICK_FENSTER = 220
 
 const wartenderPicker = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>()
@@ -115,11 +85,6 @@ export function feldPickerAbbestellen(baustein: HTMLElement): void {
 export interface FeldPickerRuf {
   prop: string
   index: number
-
-  // Welche Bedienstelle des Eintrags gemeint ist: leer = der Kopf (Feld
-  // binden), 'erfassung' = die Rolle in der Erfassungszeile. Ohne den Namen
-  // oeffnete der Klick in der Erfassungszeile den Picker des Kopfes.
-  stelle?: string
 
   // Der gerade ANGEZEIGTE Stand reist mit: der Editor braucht ihn als
   // Rückfallebene, wenn die Eigenschaft selbst noch leer ist (Automatik-
@@ -144,7 +109,6 @@ export function oeffneFeldPicker(
           index: ruf.index,
           top: rect.bottom + 4,
           left: rect.left,
-          ...(ruf.stelle === undefined ? {} : { stelle: ruf.stelle }),
           ...(ruf.liste ? { liste: ruf.liste() } : {}),
         },
         bubbles: true,

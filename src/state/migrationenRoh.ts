@@ -144,3 +144,26 @@ export function migrateAnzeigeFeldAufSpalten(src: Record<string, RohKnoten>): vo
     delete props.anzeigeTitel
   }
 }
+
+// G3 (2026-08-18): Die Erfassungszeile stellt nichts mehr je Zelle ein — was
+// eine Zelle tut, leitet sie aus der Bindung der Spalte und der Verknuepfung
+// des Bausteins ab. Die vier alten Zellen-Angaben fallen weg; sie muessen AUS
+// DEN ROHDATEN raus, sonst vermisst die Verlustpruefung sie beim Laden: sie
+// stecken IM Spalten-Eintrag und nicht in einer eigenen Prop, `normalizeProps`
+// wirft sie darum nicht weg — `alsSpalte` schon.
+export function migrateErfassungsRollenWeg(src: Record<string, RohKnoten>): void {
+  for (const node of Object.values(src)) {
+    if (!node || typeof node !== 'object' || node.type !== 'tabelle') continue
+    if (!node.props || typeof node.props !== 'object') continue
+    const spalten = rohProps(node).spalten
+    if (!Array.isArray(spalten)) continue
+    for (const eintrag of spalten) {
+      if (!eintrag || typeof eintrag !== 'object') continue
+      const e = eintrag as Record<string, unknown>
+      delete e.rolle
+      delete e.rollenQuelle
+      delete e.erfassung
+      delete e.vorbelegung
+    }
+  }
+}

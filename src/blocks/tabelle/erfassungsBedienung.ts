@@ -5,80 +5,59 @@ import {
   oeffneNachschlagen,
 } from '../formfeld/nachschlagen'
 import type { ErfassungsLauf } from './erfassungsLauf'
-import {
-  ERFASSUNG_STELLE,
-  fensterSpaltenFuer,
-  ROLLE_FREI,
-  rolleVon,
-  rollenFeldVon,
-  rollenQuelleVon,
-} from './erfassungsRollen'
+import { fensterSpaltenIn, zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import { erfassungsZeileTpl } from './erfassungsZeile'
-import { feldPickerAbbestellen, oeffneFeldPicker, tippeVorbelegung } from './spaltenBearbeiten'
-import type { Spalte } from './spalten'
 
 // Was die Zellen der Erfassungszeile tun. Getrennt vom Baustein, weil der
-// sonst ueber seinen Zeilen-Deckel liefe — und weil die Bedienung so nur
-// ueber diese schmale Naht an ihn kommt.
+// sonst über seinen Zeilen-Deckel liefe — und weil die Bedienung so nur über
+// diese schmale Naht an ihn kommt.
 export interface ErfassungsWirt {
-  baustein: HTMLElement & { editable: boolean }
+  baustein: HTMLElement
 
   lauf: ErfassungsLauf
 
-  spalten: () => Spalte[]
-
-  aendere: (spalten: Spalte[]) => void
+  umfeld: () => ErfassungsUmfeld
 
   melde: () => void
-
-  // Die Eigenschaft, in der die Spalten stehen — der Rollen-Picker schreibt
-  // in DIESELBE Liste wie der Spaltenkopf.
-  bindungsProp: string
 }
 
 function waehle(wirt: ErfassungsWirt, index: number, listenIndex: number): void {
   const treffer = wirt.lauf.vorschlaege[listenIndex]
-  const spalte = wirt.spalten()[index]
-  if (treffer === undefined || spalte === undefined) return
-  wirt.lauf.uebernimm(index, spalte, treffer.satz)
+  if (treffer === undefined) return
+  wirt.lauf.uebernimm(wirt.umfeld(), index, treffer.satz)
   wirt.melde()
 }
 
-// Das grosse Fenster zeigt GENAU dieselben Saetze wie die Liste daneben: die
-// Eintraege reisen fertig mit, damit keine zweite Wahrheit entsteht. Ohne sie
-// legte das Fenster die Auswahl-Folgen der TABELLEN-Quelle auf die
-// Nachschlage-Saetze und liesse keinen uebrig.
-function fenster(
-  wirt: ErfassungsWirt,
-  index: number,
-  rueckFokus: HTMLElement | null,
-): void {
-  const spalten = wirt.spalten()
-  const spalte = spalten[index]
-  if (spalte === undefined) return
+// Das große Fenster zeigt GENAU dieselben Sätze wie die Liste daneben: die
+// Einträge reisen fertig mit, damit keine zweite Wahrheit entsteht. Ohne sie
+// legte das Fenster die Auswahl-Folgen der TABELLE auf diese Sätze und ließe
+// keinen übrig.
+function fenster(wirt: ErfassungsWirt, index: number): void {
+  const umfeld = wirt.umfeld()
+  const spalte = umfeld.spalten[index]
+  const ziel = zielIn(umfeld, index)
+  if (spalte === undefined || ziel.quelleId === '' || ziel.code === '') return
   oeffneNachschlagen({
     el: wirt.baustein,
-    // Die Quelle dieser SPALTE, nicht der Tabelle.
-    quelleId: rollenQuelleVon(spalte),
-    speicherFeld: rollenFeldVon(spalte),
+    // Die Quelle DIESER Spalte: die der Tabelle oder eine verknüpfte.
+    quelleId: ziel.quelleId,
+    speicherFeld: ziel.code,
     speicherTitel: spalte.titel,
-    spalten: fensterSpaltenFuer(spalten, spalte),
+    spalten: fensterSpaltenIn(umfeld, index),
     titel: spalte.titel,
     breite: FENSTER_BREITE,
     hoehe: FENSTER_HOEHE,
-    eintraege: wirt.lauf.eintraege(spalten, spalte),
-    rueckFokus,
+    eintraege: wirt.lauf.eintraege(umfeld, index),
+    rueckFokus: null,
     onUebernehmen: (_anzeige, _wert, satz) => {
-      wirt.lauf.uebernimm(index, spalte, satz)
+      wirt.lauf.uebernimm(wirt.umfeld(), index, satz)
       wirt.melde()
     },
   })
 }
 
 function taste(wirt: ErfassungsWirt, index: number, e: KeyboardEvent): void {
-  const spalte = wirt.spalten()[index]
-  if (spalte === undefined) return
-  const folge = wirt.lauf.entscheideTaste(index, e.key, spalte)
+  const folge = wirt.lauf.entscheideTaste(wirt.umfeld(), index, e.key)
   if (folge === 'nichts') {
     // Enter darf trotzdem kein Formular abschicken.
     if (e.key === 'Enter') e.preventDefault()
@@ -86,7 +65,7 @@ function taste(wirt: ErfassungsWirt, index: number, e: KeyboardEvent): void {
   }
   e.preventDefault()
   if (folge === 'uebernehmen') waehle(wirt, index, wirt.lauf.marke)
-  else if (folge === 'fenster') fenster(wirt, index, null)
+  else if (folge === 'fenster') fenster(wirt, index)
   wirt.melde()
 }
 
@@ -95,42 +74,20 @@ export function erfassungsZeileFuer(
   cols: Readonly<Record<string, string>>,
   listeNachOben: boolean,
 ): TemplateResult {
-  const spalten = wirt.spalten()
+  const umfeld = wirt.umfeld()
   return erfassungsZeileTpl({
-    spalten,
+    spalten: umfeld.spalten,
+    quelleId: umfeld.quelleId,
     cols,
     imEditor: wirt.baustein.hasAttribute('data-ff-editor'),
-    wert: (i) => {
-      const spalte = spalten[i]
-      return spalte === undefined ? '' : wirt.lauf.wertVon(i, spalte)
-    },
+    wert: (i) => wirt.lauf.wertVon(umfeld, i),
     tippSpalte: wirt.lauf.tippSpalte,
     vorschlaege: wirt.lauf.vorschlaege,
     marke: wirt.lauf.marke,
     listeNachOben,
   }, {
-    // Klick stellt die Rolle, Doppelklick tippt die Vorbelegung — derselbe
-    // Griff wie am Spaltenkopf.
-    klickZelle: (e, i) => {
-      if (!wirt.baustein.editable) return
-      oeffneFeldPicker(wirt.baustein, e, {
-        prop: wirt.bindungsProp,
-        index: i,
-        stelle: ERFASSUNG_STELLE,
-        liste: () => wirt.spalten(),
-      })
-    },
-    dblklickZelle: (e, i) => {
-      if (!wirt.baustein.editable) return
-      feldPickerAbbestellen(wirt.baustein)
-      const spalte = wirt.spalten()[i]
-      // Nur die Frei-Zelle hat eine Vorbelegung; die anderen holen ihren Wert
-      // aus dem nachgeschlagenen Satz.
-      if (spalte === undefined || rolleVon(spalte) !== ROLLE_FREI) return
-      tippeVorbelegung(e, i, () => wirt.spalten(), wirt.aendere)
-    },
-    // Was der Bediener tippt, gehoert der Zeile — kein Daten-Push raeumt es
-    // weg (das tut nur ein Zweckwechsel des Bausteins).
+    // Was der Bediener tippt, gehört der Zeile — kein Daten-Push räumt es weg
+    // (das tut nur ein Zweckwechsel des Bausteins).
     tippen: (i, text) => {
       wirt.lauf.tippe(i, text)
       wirt.melde()
@@ -140,7 +97,6 @@ export function erfassungsZeileFuer(
       wirt.lauf.verlasse(i)
       wirt.melde()
     },
-    lupe: (i, e) => fenster(wirt, i, e.currentTarget as HTMLElement),
     waehleVorschlag: (listenIndex) => waehle(wirt, wirt.lauf.tippSpalte, listenIndex),
     setzeMarke: (listenIndex) => {
       wirt.lauf.setzeMarke(listenIndex)

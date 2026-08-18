@@ -126,89 +126,51 @@ describe('Tabelle (Fahrplan 4)', () => {
   })
 })
 
-describe('Tabelle: Erfassungszeile (G2)', () => {
+describe('Tabelle: Erfassungszeile (G3)', () => {
   it('ohne Erfassungszeile aendert sich am Export NICHTS', () => {
     const tag = tabelleTag(exportMask(tabelleBaum({})).html)
     expect(tag).not.toMatch(/erfassung/i)
     expect(spaltenAusHtml(exportMask(tabelleBaum({})).html)).toEqual(standardTestSpalten)
   })
 
-  it('der Schalter ueberlebt den Export — eine Quelle an der TABELLE gibt es nicht', () => {
+  it('der Schalter ueberlebt den Export — mehr wird nicht eingestellt', () => {
     const html = exportMask(tabelleBaum({ erfassung: 'ja' })).html
     expect(tabelleTag(html)).toMatch(/\serfassung="ja"/i)
 
-    // Die Nachschlage-Quelle haengt an der SPALTE (Nutzer-Korrektur
-    // 2026-08-18); eine tabellenweite Eigenschaft darf es nicht geben.
+    // Weder an der Tabelle noch an der Zelle steht eine eigene Angabe: was
+    // eine Zelle tut, leitet sie aus der Bindung der Spalte und der
+    // Verknuepfung des Bausteins ab (G3).
     expect(tabelleTag(html)).not.toMatch(/erfassungquelle=/i)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Rolle, eigene Quelle und Feld reisen JE SPALTE mit', () => {
-    // Zwei Nachschlage-Spalten mit VERSCHIEDENEN Quellen — genau der Fall,
-    // an dem eine tabellenweite Quelle scheitern wuerde.
+  it('eine Spalte auf einer VERKNUEPFTEN Quelle reist unversehrt', () => {
+    // Genau die Bindung, aus der die Erfassungszelle ihre Einschraenkung
+    // ableitet: Quelle::Feldcode statt nacktem Feldcode.
     const spalten = [
-      {
-        titel: 'Artikel', feld: '', art: 'text',
-        rolle: 'nachschlagen', rollenQuelle: 'q-art', erfassung: { feld: '3_18' },
-      },
-      {
-        titel: 'Bezeichnung', feld: '', art: 'text',
-        rolle: 'folgt', rollenQuelle: 'q-art', erfassung: { feld: '30_40' },
-      },
-      { titel: 'Menge', feld: '', art: 'zahl', rolle: 'frei', vorbelegung: '1' },
-      {
-        titel: 'Gabe', feld: '', art: 'text',
-        rolle: 'nachschlagen', rollenQuelle: 'q-gabe', erfassung: { feld: '5_4' },
-      },
+      { titel: 'Artikel', feld: '3_18', art: 'text' },
+      { titel: 'Menge', feld: '', art: 'zahl' },
+      { titel: 'Gabe', feld: 'q-tier::5_4', art: 'text' },
     ]
     const html = exportMask(tabelleBaum({ erfassung: 'ja', spalten })).html
     expect(spaltenAusHtml(html)).toEqual(spalten)
+    expect(coerceSpalten(spaltenAusHtml(html))).toEqual(spalten)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Reste einer verworfenen Rolle reisen NICHT mit', () => {
-    // Erst „Nachschlagen" gestellt, dann auf „Frei" zurueck: weder Quelle
-    // noch Feld duerfen in der Maske landen. Umgekehrt genauso: eine
-    // Vorbelegung gilt nur bei „Frei".
-    const spalten = [
-      {
-        titel: 'Artikel', feld: '', art: 'text',
-        rolle: 'frei', rollenQuelle: 'q-art', erfassung: { feld: '3_18' },
-        vorbelegung: 'X',
-      },
-      {
-        titel: 'Bezeichnung', feld: '', art: 'text',
-        rolle: 'folgt', rollenQuelle: 'q-art', erfassung: { feld: '30_40' },
-        vorbelegung: 'weg',
-      },
-    ]
-    const tree = tabelleBaum({ erfassung: 'ja', spalten })
-    expect(spaltenAusHtml(exportMask(tree).html)).toEqual([
-      { titel: 'Artikel', feld: '', art: 'text', rolle: 'frei', vorbelegung: 'X' },
-      {
-        titel: 'Bezeichnung', feld: '', art: 'text',
-        rolle: 'folgt', rollenQuelle: 'q-art', erfassung: { feld: '30_40' },
-      },
-    ])
-
-    // Der Baum selbst bleibt unangetastet — der Export putzt nur seine Kopie.
-    expect(tree.tab.props.spalten).toBe(spalten)
-    expect(spalten[0].erfassung).toEqual({ feld: '3_18' })
-    expect(spalten[0].rollenQuelle).toBe('q-art')
-  })
-
-  it('coerceSpalten faengt kaputte Rollen-Angaben ab', () => {
-    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', rolle: '' }]))
-      .toEqual([{ titel: 'A', feld: '', art: 'text' }])
-
-    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', erfassung: { feld: 7 } }]))
-      .toEqual([{ titel: 'A', feld: '', art: 'text' }])
-
-    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', rollenQuelle: 'q-art' }]))
-      .toEqual([{ titel: 'A', feld: '', art: 'text', rollenQuelle: 'q-art' }])
-
-    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', vorbelegung: '1' }]))
-      .toEqual([{ titel: 'A', feld: '', art: 'text', vorbelegung: '1' }])
+  it('die vier alten Zellen-Angaben ueberleben den Round-Trip NICHT', () => {
+    // Ein Stand aus G2. Die Tabelle liest ihre Spalten ueber coerceSpalten —
+    // dort fallen Rolle, eigene Quelle, Uebernahme-Feld und Vorbelegung weg,
+    // die Bindung der Spalte bleibt. (Aus einer GESPEICHERTEN Maske raeumt sie
+    // die Migration weg, s. state/migrationen.test.ts.)
+    const spalten = [{
+      titel: 'Artikel', feld: '3_18', art: 'text',
+      rolle: 'nachschlagen', rollenQuelle: 'q-art', erfassung: { feld: '3_18' },
+      vorbelegung: '1',
+    }]
+    const html = exportMask(tabelleBaum({ erfassung: 'ja', spalten })).html
+    expect(coerceSpalten(spaltenAusHtml(html)))
+      .toEqual([{ titel: 'Artikel', feld: '3_18', art: 'text' }])
   })
 })
 

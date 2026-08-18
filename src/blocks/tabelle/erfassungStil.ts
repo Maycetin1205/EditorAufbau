@@ -10,17 +10,17 @@ export const erfassungStil = css`
         border-top: var(--se-border) solid var(--se-line);
       }
 
+      /* Die Liste haengt aus der Zelle heraus; ohne sichtbaren Ueberlauf
+         schnitte die Zelle sie ab. Gilt fuer jede Zelle, weil jede gebundene
+         Spalte eine Liste zeigen kann. */
       .zeile.erfassung > div {
         padding: 0 4px;
         display: flex;
         align-items: center;
+        overflow: visible;
       }
 
-      /* Die Liste haengt nach OBEN aus der Zelle heraus (die Zeile steht
-         unten); ohne sichtbaren Ueberlauf schnitte die Zelle sie ab. */
-      .zeile.erfassung > div.erf-nachschlagen { overflow: visible; }
-
-      .erf-nachschlag {
+      .erf-halter {
         position: relative;
         display: flex;
         align-items: center;
@@ -28,7 +28,7 @@ export const erfassungStil = css`
         min-width: 0;
       }
 
-      .erf-nachschlag.nach-oben .vorschlaege {
+      .erf-halter.nach-oben .vorschlaege {
         top: auto;
         bottom: 100%;
         margin: 0 0 2px;
@@ -52,38 +52,6 @@ export const erfassungStil = css`
         border-color: var(--se-accent);
       }
 
-      .erf-nachschlag .erf-eingabe { padding-right: 26px; }
-
-      .erf-nachschlag .lupe {
-        position: absolute;
-        right: 2px;
-        display: grid;
-        place-items: center;
-        width: 22px;
-        height: calc(var(--zeilen-hoehe) - 10px);
-        padding: 0;
-        border: none;
-        border-radius: var(--se-r-sm);
-        background: transparent;
-        color: var(--se-muted);
-        cursor: pointer;
-      }
-      .erf-nachschlag .lupe:hover { background: var(--se-accent-soft); color: var(--se-ink); }
-      .erf-nachschlag .lupe:focus-visible { outline: 2px solid var(--se-accent); outline-offset: -2px; }
-
-      /* Im Editor zeigt die Zelle keine Eingabe, sondern was sie WIRD:
-         Striche, die Vorbelegung oder die Lupe. */
-      .zeile.erfassung > div.erf-frei,
-      .zeile.erfassung > div.erf-folgt,
-      .zeile.erfassung > div.erf-nachschlagen { color: var(--se-muted); }
-
-      :host([data-ff-editor]) .zeile.erfassung > div { cursor: pointer; }
-
-      .erf-lupe-zeichen {
-        display: inline-grid;
-        place-items: center;
-        margin-left: auto;
-        color: var(--se-muted);
-      }
-      .erf-strich { color: var(--se-muted); }
+      /* Im Editor zeigt die Zelle keine Eingabe, sondern Striche. */
+      :host([data-ff-editor]) .zeile.erfassung > div { color: var(--se-muted); }
 `

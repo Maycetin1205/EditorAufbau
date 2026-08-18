@@ -12,34 +12,30 @@ import {
   type TastenFolge,
 } from '../shared/vorschlagListe'
 import {
-  anzeigeFeldDerZeile,
-  ROLLE_FOLGT,
-  ROLLE_FREI,
-  ROLLE_NACHSCHLAGEN,
-  rolleVon,
-  rollenFeldVon,
-  rollenQuelleVon,
-} from './erfassungsRollen'
-import type { Spalte } from './spalten'
+  anzeigeSpalteIn,
+  passendeSaetze,
+  verknuepfteQuellenIn,
+  zellenzielVon,
+  zielIn,
+  type ErfassungsUmfeld,
+} from './erfassungsZellen'
 
 // Der Stand EINER Erfassungszeile zur Laufzeit: was in den Zellen steht,
-// welcher Satz je Quelle nachgeschlagen wurde, welche Zelle gerade tippt. Als
-// eigene Klasse, weil er sich so ohne Browser pruefen laesst — und weil der
-// Tabellen-Baustein sonst ueber seinen Zeilen-Deckel liefe.
+// welcher Satz je Quelle gewählt wurde, welche Zelle gerade tippt. Als eigene
+// Klasse, weil er sich so ohne Browser prüfen lässt — und weil der
+// Tabellen-Baustein sonst über seinen Zeilen-Deckel liefe.
 //
-// In G2 schreibt die Zeile NICHT ins ERP und veroeffentlicht ihre Wahl NICHT
-// als globale Auswahl: die Geber-Kennung der Tabelle gehoert ihrer
-// Zeilenauswahl, und ein Baustein kann heute Geber fuer genau EINE Quelle
-// sein. Die Folgt-Zellen lesen den Satz direkt von hier.
+// Die Zeile schreibt NICHT ins ERP und veröffentlicht ihre Wahl NICHT als
+// globale Auswahl: die Geber-Kennung der Tabelle gehört ihrer Zeilenauswahl,
+// und ein Baustein kann heute Geber für genau EINE Quelle sein. Geschrieben
+// wird erst in G4 über einen Knopf.
 export class ErfassungsLauf {
   // Getippt je Spalte. Eine Map und kein Array: sie bleibt richtig, wenn
   // Spalten dazukommen oder wegfallen.
   private getippt = new Map<number, string>()
 
-  // Der gewaehlte Satz JE QUELLE. Jede Nachschlage-Spalte hat ihre eigene
-  // Quelle (Nutzer-Korrektur 2026-08-18), also kann eine Zeile mehrere Saetze
-  // tragen: den Artikel UND die Verabreichungsart. Eine Folgt-Zelle findet
-  // ueber ihre Quelle den Satz, dem sie folgt.
+  // Der gewählte Satz JE QUELLE. Eine Zeile kann mehrere tragen: den Artikel
+  // aus der Tabellen-Quelle UND die Tierart aus der verknüpften.
   private gewaehlt = new Map<string, unknown>()
 
   private _tippSpalte = -1
@@ -62,22 +58,15 @@ export class ErfassungsLauf {
     return this._vorschlaege
   }
 
-  // Was in der Zelle steht: frei getippt bzw. vorbelegt · nachgeschlagen der
-  // uebernommene Wert (bis jemand darin tippt) · gefolgt immer aus dem Satz.
-  wertVon(index: number, spalte: Spalte): string {
-    const rolle = rolleVon(spalte)
-    if (rolle === ROLLE_FOLGT) return this.ausSatz(spalte)
+  // Was in der Zelle steht: das Getippte, solange es da ist — sonst der Wert
+  // aus dem gewählten Satz ihrer Quelle. Eine freie Zelle hat nur Getipptes.
+  wertVon(umfeld: ErfassungsUmfeld, index: number): string {
     const getippt = this.getippt.get(index)
     if (getippt !== undefined) return getippt
-    if (rolle === ROLLE_FREI) return spalte.vorbelegung ?? ''
-    return this.ausSatz(spalte)
-  }
-
-  private ausSatz(spalte: Spalte): string {
-    const feld = rollenFeldVon(spalte)
-    const satz = this.gewaehlt.get(rollenQuelleVon(spalte))
-    if (satz === undefined || feld === '') return ''
-    return getField(satz, feld)
+    const ziel = zielIn(umfeld, index)
+    if (ziel.quelleId === '' || ziel.code === '') return ''
+    const satz = this.gewaehlt.get(ziel.quelleId)
+    return satz === undefined ? '' : getField(satz, ziel.code)
   }
 
   tippe(index: number, text: string): void {
@@ -87,7 +76,7 @@ export class ErfassungsLauf {
     this._listeZu = false
   }
 
-  // Der Sprung in eine andere Zelle raeumt die offene Liste ab; das Getippte
+  // Der Sprung in eine andere Zelle räumt die offene Liste ab; das Getippte
   // bleibt stehen, damit ein halb getippter Wert nicht beim Fokuswechsel
   // verschwindet.
   verlasse(index: number): void {
@@ -97,11 +86,13 @@ export class ErfassungsLauf {
     this._marke = 0
   }
 
-  entscheideTaste(index: number, taste: string, spalte: Spalte): TastenFolge {
-    if (rolleVon(spalte) !== ROLLE_NACHSCHLAGEN) return 'nichts'
+  entscheideTaste(umfeld: ErfassungsUmfeld, index: number, taste: string): TastenFolge {
+    // Eine freie Zelle hat keine Liste und kein Fenster — dort ist jede Taste
+    // einfach Text.
+    if (zielIn(umfeld, index).art === 'frei') return 'nichts'
     const folge = tastenFolge(taste, {
       listeOffen: this._tippSpalte === index && this._vorschlaege.length > 0,
-      feldLeer: this.wertVon(index, spalte) === '',
+      feldLeer: this.wertVon(umfeld, index) === '',
     })
     if (folge === 'marke-hoch') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, -1)
     else if (folge === 'marke-runter') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, 1)
@@ -113,17 +104,49 @@ export class ErfassungsLauf {
     this._marke = marke
   }
 
-  // Die Uebernahme: der Satz gilt fuer alle Zellen DIESER Quelle, ihre
-  // Folgt-Zellen lesen ihn sofort. Das Getippte der Nachschlage-Zelle faellt
-  // weg, damit dort der uebernommene Wert steht und nicht das Suchwort.
-  uebernimm(index: number, spalte: Spalte, satz: unknown): void {
-    const quelleId = rollenQuelleVon(spalte)
-    if (quelleId === '') return
-    this.gewaehlt.set(quelleId, satz)
-    this.getippt.delete(index)
+  // Die Übernahme: der Satz gilt für alle Zellen DIESER Quelle, sie zeigen ihn
+  // sofort. Ist es ein Satz der Tabellen-Quelle, hängen die verknüpften Sätze
+  // an ihm — sie werden gelöst und neu bestimmt.
+  uebernimm(umfeld: ErfassungsUmfeld, index: number, satz: unknown): void {
+    const ziel = zielIn(umfeld, index)
+    if (ziel.quelleId === '') return
+    this.setze(umfeld, ziel.quelleId, satz)
+    if (ziel.art === 'eigen') {
+      for (const id of [...this.gewaehlt.keys()]) {
+        if (id !== ziel.quelleId) this.setze(umfeld, id, undefined)
+      }
+      this.fuelleVerknuepfte(umfeld)
+    }
     this._tippSpalte = -1
     this._marke = 0
     this._listeZu = false
+  }
+
+  // Ein Satz gilt immer für die ganze Quelle. Das Getippte ihrer Zellen fällt
+  // dabei weg: sonst stünde dort das Suchwort und nicht der übernommene Wert.
+  private setze(umfeld: ErfassungsUmfeld, quelleId: string, satz: unknown): void {
+    if (satz === undefined) this.gewaehlt.delete(quelleId)
+    else this.gewaehlt.set(quelleId, satz)
+    for (let i = 0; i < umfeld.spalten.length; i++) {
+      if (zellenzielVon(umfeld.spalten[i], umfeld.quelleId).quelleId === quelleId) {
+        this.getippt.delete(i)
+      }
+    }
+  }
+
+  // Genau EIN passender Satz füllt sich selbst — und mit ihm alle Felder
+  // derselben verknüpften Quelle. Bei mehreren entscheidet der Bediener; die
+  // Zelle bietet ihm dann nur noch diese an.
+  private fuelleVerknuepfte(umfeld: ErfassungsUmfeld): void {
+    const basis = this.gewaehlt.get(umfeld.quelleId)
+    if (basis === undefined) return
+    for (const quelleId of verknuepfteQuellenIn(umfeld)) {
+      if (this.gewaehlt.has(quelleId)) continue
+      const rows = quellenZeilen(quelleId)
+      if (rows === null) continue
+      const passend = passendeSaetze(umfeld.paareZu(quelleId), basis, rows)
+      if (passend.length === 1) this.setze(umfeld, quelleId, passend[0])
+    }
   }
 
   zuruecksetzen(): void {
@@ -135,31 +158,32 @@ export class ErfassungsLauf {
     this._vorschlaege = []
   }
 
-  // Wie in G1 einmal je Darstellung berechnet: Tastatur und Anzeige muessen
+  // Wie in G1 einmal je Darstellung berechnet: Tastatur und Anzeige müssen
   // DENSELBEN Stand sehen, zwei Berechnungen liefen auseinander.
-  aktualisiereVorschlaege(spalten: readonly Spalte[]): void {
-    this._vorschlaege = this.berechne(spalten)
+  aktualisiereVorschlaege(umfeld: ErfassungsUmfeld): void {
+    this._vorschlaege = this.berechne(umfeld)
     this._marke = gueltigeMarke(this._marke, this._vorschlaege.length)
   }
 
-  private berechne(spalten: readonly Spalte[]): Eintrag[] {
+  private berechne(umfeld: ErfassungsUmfeld): Eintrag[] {
     const index = this._tippSpalte
-    const spalte = spalten[index]
-    if (spalte === undefined || this._listeZu) return []
+    if (this._listeZu || zielIn(umfeld, index).art === 'frei') return []
     const getippt = this.getippt.get(index) ?? ''
     if (getippt === '') return []
-    return passendeVorschlaege(this.eintraege(spalten, spalte), getippt)
+    return passendeVorschlaege(this.eintraege(umfeld, index), getippt)
   }
 
-  // Dieselben Eintraege fuer die Liste UND das grosse Fenster: eine zweite
-  // Quelle waere eine zweite Wahrheit. Angezeigt wird das Feld der ersten
-  // Folgt-Spalte DERSELBEN Quelle, gesucht wird in Anzeige UND Wert.
-  eintraege(spalten: readonly Spalte[], spalte: Spalte): Eintrag[] {
-    const quelleId = rollenQuelleVon(spalte)
-    const wertFeld = rollenFeldVon(spalte)
-    if (quelleId === '' || wertFeld === '') return []
-    const rows = quellenZeilen(quelleId)
+  // Dieselben Einträge für die Liste UND das große Fenster: eine zweite
+  // Quelle wäre eine zweite Wahrheit. Eine verknüpfte Zelle bekommt nur die
+  // Sätze, deren Schlüssel zum gewählten Satz der Tabellen-Quelle passen.
+  eintraege(umfeld: ErfassungsUmfeld, index: number): Eintrag[] {
+    const ziel = zielIn(umfeld, index)
+    if (ziel.quelleId === '' || ziel.code === '') return []
+    const rows = quellenZeilen(ziel.quelleId)
     if (rows === null) return []
-    return nachschlagEintraege(rows, anzeigeFeldDerZeile(spalten, quelleId), wertFeld)
+    const saetze = ziel.art === 'verknuepft'
+      ? passendeSaetze(umfeld.paareZu(ziel.quelleId), this.gewaehlt.get(umfeld.quelleId), rows)
+      : rows
+    return nachschlagEintraege(saetze, anzeigeSpalteIn(umfeld, index)?.code ?? '', ziel.code)
   }
 }

@@ -156,45 +156,37 @@ describe('exportMask: FELDER-Bestellung', () => {
     ])
   })
 
-  it('bestellt die Felder jeder Erfassungs-Spalte bei DEREN eigener Quelle (G2)', () => {
+  it('bestellt auch die Felder einer VERKNUEPFTEN Quelle (G3)', () => {
+    // Die Erfassungszeile schlaegt in genau den Quellen nach, an die ihre
+    // Spalten gebunden sind. Eine Spalte auf einer verknuepften Quelle muss
+    // deren Feld mitbestellen: ohne das schickte SoftEngine die Saetze nie
+    // und die Zelle bliebe in der fertigen Maske leer.
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
       tab: {
         id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
         props: {
           source: 'pos', suche: 'nein', erfassung: 'ja',
+          weitereQuellen: [{
+            quelleId: 'gaben',
+            keyPairs: [{ fromField: '40_4', toField: '2_4' }],
+          }],
           spalten: [
-            {
-              titel: 'Artikel', feld: '11_6', art: 'text',
-              rolle: 'nachschlagen', rollenQuelle: 'artikel', erfassung: { feld: '3_18' },
-            },
-            {
-              titel: 'Bezeichnung', feld: '18_25', art: 'text',
-              rolle: 'folgt', rollenQuelle: 'artikel', erfassung: { feld: '30_40' },
-            },
-            {
-              titel: 'Gabe', feld: '', art: 'text',
-              rolle: 'nachschlagen', rollenQuelle: 'gaben', erfassung: { feld: '5_4' },
-            },
+            { titel: 'Artikel', feld: '11_6', art: 'text' },
+            { titel: 'Menge', feld: '', art: 'zahl' },
+            { titel: 'Gabe', feld: 'gaben::5_4', art: 'text' },
           ],
         },
       },
     }
-    // Drei IDB-Quellen: nur dort ist die Bestellung eine AUSWAHL von Feldern
+    // Zwei IDB-Quellen: nur dort ist die Bestellung eine AUSWAHL von Feldern
     // (ein Stamm bestellt ohnehin alle) — hier wuerde ein Fehler sichtbar.
     const sources = [
       {
         id: 'pos', name: 'Positionen', kind: 'idb' as const, idbId: 'IDBID0002',
         fields: [
           { code: '11_6', label: 'Artikelnummer' },
-          { code: '18_25', label: 'Bezeichnung' },
-        ],
-      },
-      {
-        id: 'artikel', name: 'Artikel', kind: 'idb' as const, idbId: 'IDBID0003',
-        fields: [
-          { code: '3_18', label: 'Nummer' },
-          { code: '30_40', label: 'Bezeichnung' },
+          { code: '40_4', label: 'Tierart' },
           { code: '99_10', label: 'Preis' },
         ],
       },
@@ -202,19 +194,19 @@ describe('exportMask: FELDER-Bestellung', () => {
         id: 'gaben', name: 'Gaben', kind: 'idb' as const, idbId: 'IDBID0001',
         fields: [
           { code: '5_4', label: 'Kuerzel' },
+          { code: '2_4', label: 'Tierart' },
           { code: '9_20', label: 'Klartext' },
         ],
       },
     ]
 
-    // Beide Nachschlage-Quellen stehen in der SEFILELOOP — ohne das schickte
-    // SoftEngine ihre Saetze nie und das Fenster blieb leer. Jedes Rollen-Feld
-    // ist bei SEINER Quelle bestellt; das unbenutzte Preis-Feld nicht.
+    // Beide Quellen stehen in der SEFILELOOP; bestellt sind das gebundene Feld
+    // und die beiden Schluesselfelder der Verknuepfung — das unbenutzte
+    // Preis-Feld und der Klartext nicht.
     const loops = JSON.parse(exportMask(tree, 'Maske', sources).sevariablen).SEFILELOOP
     expect(loops).toEqual([
-      { INDEX_NR: 0, ALIAS: 'Positionen', ID: 'IDBID0002', FELDER: '11_6,18_25' },
-      { INDEX_NR: 0, ALIAS: 'Artikel', ID: 'IDBID0003', FELDER: '3_18,30_40' },
-      { INDEX_NR: 0, ALIAS: 'Gaben', ID: 'IDBID0001', FELDER: '5_4' },
+      { INDEX_NR: 0, ALIAS: 'Positionen', ID: 'IDBID0002', FELDER: '11_6,40_4' },
+      { INDEX_NR: 0, ALIAS: 'Gaben', ID: 'IDBID0001', FELDER: '5_4,2_4' },
     ])
   })
 
