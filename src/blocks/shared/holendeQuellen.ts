@@ -3,7 +3,13 @@ import { QUELLE_PROP } from '../../core/blocks/treeQuery'
 import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, isRecord } from '../../softengine/data'
 import { ladeZeilenPerRelation } from '../../softengine/relationLader'
-import { aufAuswahlHoeren, auswahlFuer, merkmalVon } from './auswahl'
+import {
+  aufAuswahlHoeren,
+  auswahlFuer,
+  auswahlNummer,
+  beimAuswahlZuruecksetzen,
+  merkmalVon,
+} from './auswahl'
 
 const letzterAbdruck = new Map<string, string>()
 let verdrahtet = false
@@ -17,15 +23,30 @@ export function quelleAttrJeTag(): Map<string, string> {
   return map
 }
 
-function gewaehlteZeileDerQuelle(quelleId: string, attrJeTag: Map<string, string>): unknown {
-  if (quelleId === '' || typeof document === 'undefined') return undefined
-  for (const el of Array.from(document.querySelectorAll('[data-ff-id]'))) {
+// Der letzte Klick gewinnt: zeigen mehrere Bausteine dieselbe Quelle, gilt die
+// juengste Auswahl. Frueher nahm diese Stelle den ersten Baustein in
+// DOM-Reihenfolge — damit bestimmte bei zwei Tabellen derselben Quelle der
+// Zufall des Aufbaus, welche Zeile geholt wurde. Wird die juengste Wahl
+// abgewaehlt, faellt sie auf die naechstjuengere zurueck (ihr Eintrag ist weg).
+// Die Wurzel ist uebergebbar wie bei applyPopupStep — so ist die Auswahl ohne
+// Fenster pruefbar; im Produkt sucht sie im Dokument.
+export function gewaehlteZeileDerQuelle(
+  quelleId: string,
+  attrJeTag: Map<string, string>,
+  wurzel: ParentNode | undefined = typeof document === 'undefined' ? undefined : document,
+): unknown {
+  if (quelleId === '' || wurzel === undefined) return undefined
+  let juengste: { zeile: unknown; nummer: number } | null = null
+  for (const el of Array.from(wurzel.querySelectorAll('[data-ff-id]'))) {
     const attr = attrJeTag.get(el.tagName.toLowerCase())
     if (attr === undefined || el.getAttribute(attr) !== quelleId) continue
-    const zeile = auswahlFuer(el.getAttribute('data-ff-id') ?? '')
-    if (zeile !== undefined) return zeile
+    const geberId = el.getAttribute('data-ff-id') ?? ''
+    const zeile = auswahlFuer(geberId)
+    if (zeile === undefined) continue
+    const nummer = auswahlNummer(geberId)
+    if (juengste === null || nummer > juengste.nummer) juengste = { zeile, nummer }
   }
-  return undefined
+  return juengste?.zeile
 }
 
 function pruefeHolendeQuellen(): void {
@@ -48,4 +69,7 @@ export function verdrahteHolendeQuellen(): void {
   if (verdrahtet) return
   verdrahtet = true
   aufAuswahlHoeren(pruefeHolendeQuellen)
+  // Faellt die Auswahl komplett weg, muss der Abdruck mit weg: sonst gilt der
+  // alte Stand weiter als "schon geholt" und es wird nichts mehr neu geholt.
+  beimAuswahlZuruecksetzen(() => letzterAbdruck.clear())
 }

@@ -61,8 +61,8 @@ dann `go` (0.3), dann genau EINE Etappe.
   Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
-  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8 ist
-  GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe V9, dann V7.
+  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8 und V9 sind
+  GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe V7.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
   stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
 
@@ -344,7 +344,7 @@ konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
 ~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> ~~V5 (Stellen 1–5; 6–8 s.
-Etappentext)~~ -> ~~V8~~ -> V9 -> V7
+Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> V7
 Nach V7: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
 sind.
@@ -613,7 +613,7 @@ Gebaut wie beschrieben: die vier pointerdown-Stops in Lupe, Spalten-Knoepfen
 und Suchfeld sind weg, die Regel steht als Kommentar bei `ZUG_SCHWELLE`
 (`editor/canvas/rasterMove.ts`) — die Ausnahmen (Anfasser, Fenster) blieben.
 
-## V9 · Hol-Quellen: der Geber wird eindeutig (Nutzer-Befund 2026-08-18)
+## V9 · Hol-Quellen: der Geber wird eindeutig (GEBAUT 2026-08-18)
 
 **Belegtes Problem:** Zeigen ZWEI Bausteine dieselbe Geber-Quelle (zwei
 Beleg-Tabellen), ist „die gewaehlte Zeile der Quelle" mehrdeutig —
@@ -634,6 +634,11 @@ welcher Tabelle. Im selben Zug: `letzterAbdruck` in `holendeQuellen.ts`
 wird bei `setzeAuswahlZurueck` mit geleert (Befund der Analyse: bleibt
 heute stehen und unterdrueckt danach das Neu-Holen).
 **Runtime-Bytes aendern sich bewusst**; SE-Delta in die Gesamtprobe.
+Gebaut wie beschrieben: der Auswahl-Zustand traegt eine Wahl-Nummer
+(`auswahlNummer`), `gewaehlteZeileDerQuelle` nimmt die juengste, und
+`letzterAbdruck` haengt per `beimAuswahlZuruecksetzen` am Zuruecksetzen. Die
+Such-Wurzel ist uebergebbar geworden (Muster `applyPopupStep`), weil ein
+DOM-Test eine neue Testumgebung waere — jsdom gibt es im Projekt nicht.
 
 Nicht in V, sondern in U4/U5: einheitliche Erfolgs-/Fehlermeldungen des
 EDITORS, das Master-Detail-Duplikat im Datencenter, EIN Speicherverhalten,

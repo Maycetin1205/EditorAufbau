@@ -11,8 +11,13 @@ export function merkmalVon(zeile: unknown): string {
   }
 }
 
-const zustand = new Map<string, { zeile: unknown; merkmal: string }>()
+// Die Wahl-Nummer sagt, WANN gewaehlt wurde: zeigen zwei Bausteine dieselbe
+// Quelle, gewinnt die juengste Wahl (s. gewaehlteZeileDerQuelle).
+const zustand = new Map<string, { zeile: unknown; merkmal: string; nummer: number }>()
 const hoerer = new Set<() => void>()
+const zuruecksetzer = new Set<() => void>()
+
+let wahlZaehler = 0
 
 let meldungLaeuft = false
 let nachmeldung = false
@@ -45,6 +50,11 @@ export function auswahlMerkmal(geberId: string): string {
   return zustand.get(geberId)?.merkmal ?? ''
 }
 
+// 0 = dieser Geber hat keine Auswahl. Groesser heisst juenger.
+export function auswahlNummer(geberId: string): number {
+  return zustand.get(geberId)?.nummer ?? 0
+}
+
 export function geberIdVon(el: Element): string {
   return el.getAttribute('data-ff-id') ?? ''
 }
@@ -71,7 +81,7 @@ export function waehleAuswahl(geberId: string, zeile: unknown): void {
   if (merkmal === '') return
   const alt = zustand.get(geberId)
   if (alt && alt.merkmal === merkmal) zustand.delete(geberId)
-  else zustand.set(geberId, { zeile, merkmal })
+  else zustand.set(geberId, { zeile, merkmal, nummer: ++wahlZaehler })
   melde()
 }
 
@@ -80,7 +90,7 @@ export function setzeAuswahl(geberId: string, zeile: unknown): void {
   const merkmal = merkmalVon(zeile)
   if (merkmal === '') return
   if (zustand.get(geberId)?.merkmal === merkmal) return
-  zustand.set(geberId, { zeile, merkmal })
+  zustand.set(geberId, { zeile, merkmal, nummer: ++wahlZaehler })
   melde()
 }
 
@@ -90,8 +100,15 @@ export function klareAuswahl(geberId: string): void {
   melde()
 }
 
+// Wer eigene Spuren zur Auswahl haelt, laesst sie hier mitloeschen.
+export function beimAuswahlZuruecksetzen(cb: () => void): void {
+  zuruecksetzer.add(cb)
+}
+
 export function setzeAuswahlZurueck(): void {
   zustand.clear()
+  wahlZaehler = 0
+  zuruecksetzer.forEach((cb) => cb())
 }
 
 const AUSWAHL_FOLGE_ATTR = AUSWAHL_FOLGE_PROP.toLowerCase()

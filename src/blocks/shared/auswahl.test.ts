@@ -8,7 +8,9 @@ import {
   aufAuswahlHoeren,
   auswahlFuer,
   auswahlMerkmal,
+  auswahlNummer,
   auswahlWiederfinden,
+  beimAuswahlZuruecksetzen,
   ersteZeileNachAuswahl,
   folgenAusAttribut,
   klareAuswahl,
@@ -357,5 +359,34 @@ describe('Auswahl-Folge im Kreis (A7.3)', () => {
     })
 
     expect(gelaufen).toBeGreaterThan(RUNDEN_DECKEL)
+  })
+})
+
+describe('Wahl-Nummer und Zuruecksetzen (V9)', () => {
+  it('jede Wahl ist juenger als die vorige; ohne Auswahl ist die Nummer 0', () => {
+    expect(auswahlNummer('t1')).toBe(0)
+    waehleAuswahl('t1', { '2_8': '10001' })
+    waehleAuswahl('t2', { '2_8': '20002' })
+    expect(auswahlNummer('t2')).toBeGreaterThan(auswahlNummer('t1'))
+
+    setzeAuswahl('t1', { '2_8': '30003' })
+    expect(auswahlNummer('t1')).toBeGreaterThan(auswahlNummer('t2'))
+  })
+
+  it('Abwahl nimmt die Nummer mit', () => {
+    waehleAuswahl('t1', { '2_8': '10001' })
+    klareAuswahl('t1')
+    expect(auswahlNummer('t1')).toBe(0)
+  })
+
+  it('setzeAuswahlZurueck raeumt auch fremde Spuren auf', () => {
+    let geraeumt = 0
+    beimAuswahlZuruecksetzen(() => { geraeumt++ })
+    waehleAuswahl('t1', { '2_8': '10001' })
+
+    setzeAuswahlZurueck()
+
+    expect(geraeumt).toBe(1)
+    expect(auswahlNummer('t1')).toBe(0)
   })
 })
