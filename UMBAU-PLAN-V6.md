@@ -49,10 +49,12 @@ dann `go` (0.3), dann genau EINE Etappe.
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
-- **V1, V0, V3 und V4 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V5.
+- **V1, V0, V3, V4 und V5 Stellen 1–5 sind GEBAUT (2026-08-18).** Offen aus
+  der Welle V: V5 Stellen 6–8 — die brauchen erst eine Nutzer-Entscheidung,
+  s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
@@ -318,7 +320,7 @@ der komplette Diff von Buendel und Referenz gehoert erklaert in den
 Commit. Steht es NICHT dran, muessen Buendel und Referenz byte-gleich
 bleiben — aendern sie sich doch, hast du zu viel angefasst: STOPP.
 
-Erste Etappe: V1.
+Erste Etappe: V8.
 
 Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
   1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
@@ -342,8 +344,9 @@ oeffnen, was tun, was zu sehen sein muss) und was du NICHT pruefen
 konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-V1 -> V0 -> V3 -> V4 -> V5 -> V8 -> V9
-Nach V9: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
+~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> ~~V5 (Stellen 1–5; 6–8 s.
+Etappentext)~~ -> V8 -> V9 -> V7
+Nach V7: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
 sind.
 ```
@@ -491,7 +494,7 @@ Herkunft „gewaehlte Zeile" bereits adressierbar. NICHT im Editor ausloesen
 (`data-ff-editor`-Wache wie ueberall). **Runtime-Bytes aendern sich
 bewusst.**
 
-## V5 · Waehler-Umstellung: die acht Alt-Stellen
+## V5 · Waehler-Umstellung: die acht Alt-Stellen (1–5 GEBAUT 2026-08-18)
 
 Der gemeinsame Waehler (`ui/molecules/waehler.tsx`: `WaehlerKnopf` fuer
 den zugeklappten Knopf, `WaehlerListe` fuer offene Listen; Vorbild:
@@ -520,7 +523,27 @@ Mit der Umstellung sterben die fuenf Leer-Beschriftungen („— keine —" /
 „— keins —" / „— keinem —" / „— Quelle waehlen —" / „— Quelle —") und
 die Kunst-Optionen fuer Geloeschtes von selbst (der Waehler zeigt
 Geloeschtes rot). Editor-only: **Buendel und Referenz bleiben
-byte-gleich.** Gut in zwei Etappen teilbar (1–4 / 5–8).
+byte-gleich.**
+
+**Stand 2026-08-18: Stellen 1–5 gebaut. 6, 7 und 8 sind KEIN mechanischer
+Tausch — sie warten auf eine Nutzer-Entscheidung:**
+- **6 RelationAuswahl:** sucht heute ueber Name, Nummer UND Syntax
+  (`relationMatchesSearch`), hat Lesen/Schreiben-REITER mit Trefferzaehlern,
+  zweizeilige Eintraege (`verb · Nr.`) und Syntax-Tooltip. Der Waehler sucht
+  nur Name + Kennung, zeigt Gruppen statt Reiter, kennt eine Zeile. Umstellen
+  = das alles wegwerfen. Frage an den Nutzer: aufgeben oder Stelle so lassen?
+- **7 FeldUebernahmePicker:** zweistufig (Quelle → Feld, mit „← Quellen“), und
+  im Modus `ziel === 'idb'` ist die QUELLE die Antwort — dort gibt es keine
+  Felder. Der Waehler kennt keine zweite Stufe. Frage: Waehler um eine
+  zweite Stufe erweitern (eigene Etappe) oder Stelle so lassen?
+- **8 FieldPicker `felder`-Block:** technisch blockiert. Der Block sitzt IN
+  einem `AuswahlFenster`; ein `WaehlerKnopf` oeffnet ein ZWEITES als eigenes
+  Portal an `document.body`. Das aeussere schliesst bei jedem `pointerdown`
+  ausserhalb seines Teilbaums (`auswahl-fenster.tsx`, Capture-Phase —
+  `stopPropagation` im inneren Fenster kommt zu spaet), also wuerde ein Klick
+  in die innere Liste den FieldPicker zuklappen und die Wahl verschlucken.
+  Erst muss `AuswahlFenster` verschachtelte Fenster kennen (eigene Etappe,
+  beruehrt alle ~15 Waehler-Stellen).
 
 ## V6 · Popup: Groesser ziehen schafft Platz + Overlay-Bearbeitung
 

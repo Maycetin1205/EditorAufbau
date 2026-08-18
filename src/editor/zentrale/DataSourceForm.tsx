@@ -10,10 +10,12 @@ import {
   kopfsatzFromInput,
   LADE_RELATION_STANDARD,
   QUELLEN_ARTEN,
+  quellenKennung,
   relationNrFromInput,
   type DataSource,
   type DataSourceKind,
 } from '../../core/data/dataSources'
+import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import { useDataSources } from '../../state/useDataSources'
 import { SelectControl } from '../inspector/controls/SelectControl'
 import { FeldListe } from './FeldListe'
@@ -238,14 +240,22 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
                 />
               )}
             </Field>
-            <SelectControl
+            {/* Keine Leer-Option: eine leere Quelle ist hier ein Fehler
+                (geberFehler), also darf sie nicht wählbar sein. */}
+            <WaehlerKnopf
               label="Beleg kommt aus"
-              value={geberQuelleId}
-              options={[
-                { value: '', label: '— Quelle wählen —' },
-                ...geberOptionen.map((s) => ({ value: s.id, label: s.name })),
-              ]}
-              onChange={setGeberQuelleId}
+              bezeichnung="Beleg kommt aus"
+              gruppen={[{
+                key: 'quellen',
+                eintraege: geberOptionen.map((s) => ({
+                  wert: s.id,
+                  name: s.name,
+                  kennung: quellenKennung(s),
+                })),
+              }]}
+              wert={geberQuelleId}
+              platzhalter="— Quelle wählen —"
+              onWaehle={setGeberQuelleId}
             />
             {zeigeFehler && geberFehler !== '' && (
               <p className="min-w-0 break-words text-ui text-destructive">{geberFehler}</p>

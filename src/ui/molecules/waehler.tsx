@@ -145,6 +145,8 @@ interface WaehlerKnopfProps {
   label?: string
   description?: string
 
+  fehler?: ReactNode
+
   bezeichnung: string
   gruppen: readonly WaehlerGruppe[]
   wert: string
@@ -158,6 +160,7 @@ interface WaehlerKnopfProps {
 export function WaehlerKnopf({
   label,
   description,
+  fehler,
   bezeichnung,
   gruppen,
   wert,
@@ -181,11 +184,12 @@ export function WaehlerKnopf({
     })
   }
 
-  const knopf = (id?: string, beschrieben?: string) => (
+  const knopf = (id?: string, beschrieben?: string, ungueltig?: boolean) => (
     <button
       ref={knopfRef}
       id={id}
       aria-describedby={beschrieben}
+      aria-invalid={ungueltig}
       type="button"
       onClick={oeffne}
       className={cn(
@@ -214,11 +218,11 @@ export function WaehlerKnopf({
 
   return (
     <>
-      {label === undefined
+      {label === undefined && fehler === undefined
         ? knopf()
         : (
-          <Field label={label} description={description}>
-            {(f) => knopf(f.id, f['aria-describedby'])}
+          <Field label={label} description={description} error={fehler}>
+            {(f) => knopf(f.id, f['aria-describedby'], f['aria-invalid'])}
           </Field>
         )}
       {offen && (

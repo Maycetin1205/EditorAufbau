@@ -32,7 +32,7 @@ import {
 } from './helfer'
 import { ParameterZeile } from './ParameterZeile'
 import { RelationAuswahl } from './RelationAuswahl'
-import { SchrittSelect } from '@/ui/atoms/schritt-select'
+import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import { useRelations } from '../../state/useRelations'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
@@ -245,22 +245,20 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
       />
 
       {(typ === 'POPUP_OPEN' || typ === 'POPUP_CLOSE') && (
-        <Field label="Popup" error={zeigeFehler ? problem ?? '' : ''}>
-          {(field) => (
-            <SchrittSelect
-              {...field}
-              value={popupId}
-              onChange={(e) => setPopupId(e.target.value)}
-            >
-              <option value="">
-                {popupSeiten.length === 0 ? '(keine Popup-Seite vorhanden)' : '— wählen —'}
-              </option>
-              {popupSeiten.map((seite) => (
-                <option key={seite.id} value={seite.id}>{seite.name}</option>
-              ))}
-            </SchrittSelect>
-          )}
-        </Field>
+        /* Kein Leer-Eintrag: ohne Popup meldet stepProblem "kein Popup" —
+           dieser Zustand darf also nicht waehlbar sein. */
+        <WaehlerKnopf
+          label="Popup"
+          fehler={zeigeFehler ? problem ?? '' : ''}
+          bezeichnung="Popup"
+          gruppen={[{
+            key: 'popups',
+            eintraege: popupSeiten.map((seite) => ({ wert: seite.id, name: seite.name })),
+          }]}
+          wert={popupId}
+          platzhalter={popupSeiten.length === 0 ? '(keine Popup-Seite vorhanden)' : '— wählen —'}
+          onWaehle={setPopupId}
+        />
       )}
 
       {typ === 'START_TOOL' && (
