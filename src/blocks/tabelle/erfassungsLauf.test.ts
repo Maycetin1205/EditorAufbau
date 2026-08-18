@@ -327,3 +327,112 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(u, 3)).toBe('')
   })
 })
+
+// Das Messlatten-Szenario aus dem Wellen-Kopf G (G3c): die Tabelle zeigt die
+// BELEGPOSITIONEN — beim Erfassen gibt es also nie einen gewaehlten Satz der
+// Tabellen-Quelle. Artikel und Tierart sind VERKNUEPFTE Quellen; ihre Paare
+// zeigen auf Felder der (werdenden) Position.
+describe('Messlatte: die Tabelle zeigt Belegpositionen (G3c)', () => {
+  const POS_SPALTEN = [
+    spalte({ titel: 'Artikel', feld: 'q-art::3_18' }),
+    spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40' }),
+    spalte({ titel: 'Tierart', feld: 'q-tier::2_10' }),
+    spalte({ titel: 'Menge', art: 'zahl' }),
+  ]
+
+  // Beide Quellen haengen am selben Positions-Feld 10_8 (Artikelnummer).
+  const POS_PAARE: Record<string, SchluesselPaar[]> = {
+    'q-art': [{ fromField: '10_8', toField: '3_18' }],
+    'q-tier': [{ fromField: '10_8', toField: '1_8' }],
+  }
+
+  const posUmfeld = (): ErfassungsUmfeld => ({
+    spalten: POS_SPALTEN,
+    quelleId: 'q-pos',
+    paareZu: (quelleId) => POS_PAARE[quelleId] ?? [],
+  })
+
+  let lauf: ErfassungsLauf
+
+  beforeEach(() => {
+    const g = seGlobal()
+    g.FF_DATA_SOURCES = [
+      { id: 'q-art', name: 'Artikel', tableId: 'ART', kind: 'art' },
+      { id: 'q-tier', name: 'Tierarten', tableId: 'IDBID0007', kind: 'idb' },
+    ]
+    g.SEDATA = {
+      Daten: {
+        SEFileLoop: [
+          {
+            ALIAS: 'Artikel',
+            Zeilen: [
+              { '3_18': 'ART03045', '30_40': 'Baytril 25mg' },
+              { '3_18': 'ART00778', '30_40': 'Felimazol 5mg' },
+            ],
+          },
+          {
+            ALIAS: 'Tierarten',
+            Zeilen: [
+              { '1_8': 'ART03045', '2_10': 'Hund' },
+              { '1_8': 'ART03045', '2_10': 'Katze' },
+              { '1_8': 'ART00778', '2_10': 'Katze' },
+            ],
+          },
+        ],
+      },
+    }
+    lauf = new ErfassungsLauf()
+  })
+
+  const waehleIn = (index: number, getippt: string): void => {
+    lauf.tippe(index, getippt)
+    lauf.aktualisiereVorschlaege(posUmfeld())
+    lauf.uebernimm(posUmfeld(), index, lauf.vorschlaege[0].satz)
+  }
+
+  it('ohne gewaehlten Positions-Satz schlaegt die Artikel-Spalte im ganzen Stamm nach', () => {
+    expect(lauf.eintraege(posUmfeld(), 0)).toHaveLength(2)
+  })
+
+  it('die Artikelwahl liefert den Schluessel der werdenden Zeile — Tierart schraenkt sich ein', () => {
+    const u = posUmfeld()
+    waehleIn(0, 'bay')
+    expect(lauf.wertVon(u, 0)).toBe('ART03045')
+    expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
+    // Zwei Tierarten passen — angeboten werden NUR sie, gefuellt wird nichts.
+    expect(lauf.eintraege(u, 2).map((e) => e.wert)).toEqual(['Hund', 'Katze'])
+    expect(lauf.wertVon(u, 2)).toBe('')
+  })
+
+  it('genau eine Tierart fuellt sich selbst', () => {
+    const u = posUmfeld()
+    waehleIn(0, 'fel')
+    expect(lauf.wertVon(u, 2)).toBe('Katze')
+    // Selbstgefuelltes ist nicht leer — der Sprung landet auf der Menge.
+    expect(lauf.naechsteLeere(u, 0)).toBe(3)
+  })
+
+  it('ein neuer Artikel bestimmt die Tierart neu', () => {
+    const u = posUmfeld()
+    waehleIn(0, 'fel')
+    expect(lauf.wertVon(u, 2)).toBe('Katze')
+    waehleIn(0, 'bay')
+    // Baytril hat zwei Tierarten: die alte Wahl faellt, gefuellt wird nichts.
+    expect(lauf.wertVon(u, 2)).toBe('')
+  })
+
+  it('Selbstgefuelltes schraenkt die Wahl nicht ein, aus der es kam', () => {
+    waehleIn(0, 'fel')
+    // Die selbstgefuellte Tierart liefert KEINE Schluessel — sonst zeigte die
+    // Artikel-Spalte beim Umentscheiden nur noch den alten Artikel (Kreis).
+    expect(lauf.eintraege(posUmfeld(), 0)).toHaveLength(2)
+  })
+
+  it('eine von Hand gewaehlte Tierart bestimmt den Artikel', () => {
+    const u = posUmfeld()
+    waehleIn(2, 'Hund')
+    // Nur Baytril kennt den Hund — genau EIN Treffer, er fuellt sich selbst.
+    expect(lauf.wertVon(u, 0)).toBe('ART03045')
+    expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
+  })
+})

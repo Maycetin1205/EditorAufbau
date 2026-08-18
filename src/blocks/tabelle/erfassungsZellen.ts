@@ -106,19 +106,23 @@ export function fensterSpaltenIn(umfeld: ErfassungsUmfeld, index: number): Spalt
 
 // Eingeschränkt wird nach demselben Muster wie die Auswahl-Folge
 // (zeilenNachAuswahl in blocks/shared/auswahl.ts): alle Schlüsselpaare müssen
-// stimmen (UND), und ein leerer Schlüssel trifft nichts — kein Partner heißt
+// stimmen (UND). Den Wert eines Schlüssels liefert der Aufrufer — am Satz der
+// Tabellen-Quelle, oder (G3c) abgeleitet aus den schon gewählten verknüpften
+// Sätzen, wenn es den Satz der Tabellen-Quelle beim Erfassen noch nicht gibt.
+// `undefined` heißt UNBEKANNT: ein unbekannter Schlüssel schränkt nicht ein,
+// der Bediener darf die Spalten in beliebiger Reihenfolge füllen. Ein leerer
+// String dagegen ist BEKANNT-LEER und trifft nichts — kein Partner heißt
 // leere Zelle, nie eine verschwundene Zeile (feste Zusage in CLAUDE.md).
-// Ohne Basissatz oder ohne Verknüpfung wird NICHT eingeschränkt: es gibt dann
-// nichts, wogegen man einschränken könnte, und der Bediener soll die Spalten
-// in beliebiger Reihenfolge füllen dürfen.
 export function passendeSaetze(
   paare: readonly SchluesselPaar[],
-  basisSatz: unknown,
+  schluesselWert: (feld: string) => string | undefined,
   kandidaten: readonly unknown[],
 ): unknown[] {
-  if (basisSatz === undefined || paare.length === 0) return [...kandidaten]
-  return kandidaten.filter((satz) => paare.every((p) => {
-    const soll = getField(basisSatz, p.fromField)
-    return soll !== '' && soll === getField(satz, p.toField)
-  }))
+  const bekannte = paare
+    .map((p) => ({ toField: p.toField, soll: schluesselWert(p.fromField) }))
+    .filter((b): b is { toField: string; soll: string } => b.soll !== undefined)
+  if (bekannte.length === 0) return [...kandidaten]
+  return kandidaten.filter((satz) => bekannte.every(
+    (b) => b.soll !== '' && b.soll === getField(satz, b.toField),
+  ))
 }

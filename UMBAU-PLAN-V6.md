@@ -78,8 +78,8 @@ dann `go` (0.3), dann genau EINE Etappe.
   **G3c** (Automatik-Anker — im Zielszenario „Tabelle zeigt
   Belegpositionen" schraenkt heute nichts ein und fuellt sich nichts),
   die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
-  (Entschlanken). **G3b ist GEBAUT (2026-08-18).** Naechste Etappen:
-  G3c → G4 → G5; gebaut wird auf Branch
+  (Entschlanken). **G3b und G3c sind GEBAUT (2026-08-18).** Naechste
+  Etappen: G4 → G5; gebaut wird auf Branch
   `claude/inline-edit-receipt-table-823di6` (dieser Branch fuehrt
   den Erfassungs-Stand weiter — nicht mehr parallel auf
   `claude/softengine-erp-templates-ynqibv` arbeiten).
@@ -845,7 +845,7 @@ Der Tasten-Entscheid bleibt browserfrei pruefbar (`erfassungsLauf` /
 `vorschlagListe.tastenFolge`); nur das Fokus-Setzen selbst lebt in der
 Bedienung. **Runtime-Bytes aendern sich bewusst.**
 
-## G3c · Automatik-Anker: die werdende Zeile liefert die Schluessel
+## G3c · Automatik-Anker: die werdende Zeile liefert die Schluessel (GEBAUT 2026-08-18)
 
 **Befund (Demo-Abnahme 2026-08-18):** Einschraenkung und
 Ein-Treffer-Automatik haengen am gewaehlten Satz der TABELLEN-Quelle
