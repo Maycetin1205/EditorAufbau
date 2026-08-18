@@ -131,7 +131,7 @@ describe('Tabelle: Zeilenklick als Ketten-Ausloeser (V4)', () => {
     const baum = tabelleBaum({})
     baum.tab.events = {
       onRowClick: [{
-        id: 's1', type: 'POPUP_OPEN', resultKey: '', popup: 'Beleg',
+        id: 's1', type: 'POPUP_OPEN', resultKey: '', popupId: 'Beleg',
       }],
     }
     const { html } = exportMask(baum)
@@ -143,7 +143,7 @@ describe('Tabelle: Zeilenklick als Ketten-Ausloeser (V4)', () => {
   it('ein unbekanntes Ereignis faellt weg — nur deklarierte reisen mit', () => {
     const baum = tabelleBaum({})
     baum.tab.events = {
-      onGibtEsNicht: [{ id: 's1', type: 'POPUP_OPEN', resultKey: '', popup: 'Beleg' }],
+      onGibtEsNicht: [{ id: 's1', type: 'POPUP_OPEN', resultKey: '', popupId: 'Beleg' }],
     }
     expect(exportMask(baum).html).not.toContain('onGibtEsNicht')
   })
