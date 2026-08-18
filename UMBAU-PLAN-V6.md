@@ -54,7 +54,7 @@ dann `go` (0.3), dann genau EINE Etappe.
   s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V6 nach Kurzentwurf · V7 · G1–G4 (nach V7, Wellen-Kopf G) · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
@@ -63,6 +63,14 @@ dann `go` (0.3), dann genau EINE Etappe.
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
   Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8 und V9 sind
   GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe V7.
+- **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
+  Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
+  WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
+  Fundament von G), dann G1 → G4. Dazu eine Nutzer-Ansage vom selben
+  Abend, die UEBERALL gilt: **nicht anbauen, wenn Umbauen noetig ist** —
+  muss Bestehendes umgebaut werden, damit das Neue passt, wird umgebaut,
+  statt drumherum zu erweitern („immer weiter aufbauen verursacht nur
+  Wirrwarr").
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
   stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
 
@@ -305,8 +313,8 @@ diesen Text woertlich ein; der Einwurf ist das go fuer so viele Etappen,
 wie SAUBER in die Sitzung passen:**
 
 ```text
-Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0, Abschnitt 3 und den
-Wellen-Kopf V. Pruefe als Erstes `git fetch` + `git status`: ist der
+Lies CLAUDE.md, dann UMBAU-PLAN-V6.md: Abschnitt 0, Abschnitt 3 und die
+Wellen-Koepfe V und G. Pruefe als Erstes `git fetch` + `git status`: ist der
 Arbeitsbaum NICHT sauber, arbeitet dort eine andere Sitzung — dann STOPP
 und sag es dem Nutzer, bevor du irgendetwas anfasst.
 
@@ -319,7 +327,7 @@ der komplette Diff von Buendel und Referenz gehoert erklaert in den
 Commit. Steht es NICHT dran, muessen Buendel und Referenz byte-gleich
 bleiben — aendern sie sich doch, hast du zu viel angefasst: STOPP.
 
-Erste Etappe: V8.
+Erste Etappe: V7.
 
 Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
   1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
@@ -344,9 +352,9 @@ konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
 ~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> ~~V5 (Stellen 1–5; 6–8 s.
-Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> V7
-Nach V7: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
-Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
+Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> V7 -> G1 -> G2 -> G3 -> G4
+Nach G4: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
+Chat braucht (kein Kopier-Auftrag) und V6/E1/E3 die naechsten Kandidaten
 sind.
 ```
 
@@ -646,6 +654,121 @@ Loesch-Regel-Anwendung (U0-3) auf die restlichen confirm()-Stellen.
 
 ---
 
+# Welle G — Belegerfassung in der Tabelle (beschlossen 2026-08-18)
+
+Nutzer-Beschluss vom 2026-08-18 (eigenes Gespraech mit Screenshots der
+echten WinUI-Belegerfassung; Praezisierungen im Analyse-Chat). Ziel:
+Positionen DIREKT in der Tabelle erfassen, wie in der echten
+SoftEngine-Belegerfassung — so schnell wie moeglich, komplett ohne Maus
+moeglich (Maus geht immer). Massstab ist Tempo fuer geuebte Bediener,
+nicht Barrierefreiheit. **V7 kommt zuerst** — es ist woertlich das
+Fundament (ein Nachschlage-Fenster statt zwei, ein Daten-Vorspann).
+
+**Leitsatz (Nutzer):** Alles, was die Maske selbst wissen kann, fuellt
+sie selbst — angehalten wird nur, wo ein Mensch entscheiden muss. Alles
+Automatische bleibt uebersteuerbar: Tab/Enter rauschen darueber hinweg,
+Pfeiltasten und Klick erreichen trotzdem jede Zelle.
+
+**Abgrenzung:** G erfasst POSITIONEN in einen bestehenden Beleg
+(PUT_RELATION 82, belegt im behandlung-Log 2026-08-12, s. CLAUDE.md
+„Neue BELEGPOSITION"). „Beleg anlegen und sofort sehen" (R4) bleibt
+gestrichen. Geschrieben wird NUR ueber die sichtbare Kette am neuen
+Ereignis (dasselbe Muster wie „Karte verschoben" beim Kanban) — kein
+Auto-PUT, die Zusage bleibt.
+
+**Das Bild:** Die Erfassungszeile ist die naechste freie Zeile der
+Tabelle — eine FAEHIGKEIT des Tabellen-Bausteins (Registry-Props), KEIN
+neuer Baustein; eine Tabelle ohne Erfassungszeile exportiert byte-gleich
+wie heute. Jede Zelle hat eine Rolle, eingestellt am Ding: Klick auf die
+Zelle im Editor, dasselbe Muster wie am Spaltenkopf (Anker
+`oeffneFeldPicker` in `blocks/tabelle/spaltenBearbeiten.ts`).
+Standard-Rolle: Frei. KEINE neue Symbolsprache im Editor (Nutzer-Ansage
+2026-08-18, „nicht komplizierter machen"): Nachschlage-Zellen zeigen die
+Lupe, die es am Formularfeld schon gibt — sonst Striche, der Editor
+erfindet nie Daten.
+
+- **Nachschlagen** (z. B. Artikelnummer): tippen → Vorschlagsliste
+  direkt unter der Zelle (bis ~8 Treffer; gesucht wird in Nummer UND
+  Bezeichnung — Profis tippen „bay" fuer Baytril). Enter oder F3 auf
+  LEERER Zelle oeffnet das grosse Stamm-Fenster (das vorhandene
+  Nachschlage-Fenster). Die Wahl setzt die Auswahl der
+  Nachschlage-Quelle (`blocks/shared/auswahl.ts`).
+- **Frei** (z. B. Menge): einfach tippen. Optionale Vorbelegung
+  (z. B. Menge „1"): vorbelegte Zellen werden im Tastenfluss
+  uebersprungen, bleiben aber per Pfeil/Klick aenderbar.
+- **Folgt** (z. B. Bezeichnung, Preis): fuellt sich sofort aus der
+  gewaehlten Zeile der Nachschlage-Quelle — lokal, ohne ERP-Nachfrage
+  (vorhandene Mechanik, Anker `gewaehlteZeileDerQuelle` in
+  `blocks/shared/holendeQuellen.ts`). Haelt den Tastenfluss nie an.
+
+**Tasten (der Kern des Ganzen):** Enter uebernimmt den markierten
+Vorschlag und springt zur naechsten TIPPBAREN Zelle — es oeffnet nie
+erneut · Tab/Enter ueberspringen Folgt-Zellen und Vorbelegtes · genau
+EIN moeglicher Treffer fuellt sich selbst (Ein-Treffer-Automatik) ·
+Escape zweistufig: erst Liste zu, dann Zelle leeren · Enter auf der
+letzten Zelle = „Zeile erfasst" — die Zeile wird normale Position, die
+Erfassung rueckt eine Zeile tiefer, der Cursor steht auf der ersten
+tippbaren Zelle · F3 wird nur abgefangen, solange der Fokus in der
+Maske liegt (sonst Browser-Suche!) — im Echttest bestaetigen, Enter ist
+der Hauptweg.
+
+**Speichern:** je Position einzeln, sofort bei „Zeile erfasst", ueber
+die vom Maskenbauer sichtbar angelegte Kette. Im Hintergrund — die
+Erfassung wartet nie aufs ERP. Dass die frische Position ueber den
+normalen SE-Push in der Tabelle erscheint, ist Echttest-Punkt, kein
+Bau-Punkt.
+
+## G1 · Vorschlagsliste am Formularfeld (der geteilte Kern)
+
+Die Tipp-Vorschlagsliste entsteht EINMAL als geteiltes Teil
+(`blocks/shared/`); das Formularfeld (Typ `nachschlagen`) bekommt sie
+zuerst: Tippen ins Feld zeigt Treffer aus der Quelle, Pfeil hoch/runter
+waehlt, Enter uebernimmt, Escape schliesst; Enter auf LEEREM Feld
+oeffnet das grosse Fenster (heute geht das nur ueber die Lupe). Die
+Uebernahme beim Waehlen ist DIESELBE wie beim Fenster-Zeilenklick
+(Anker `onFeldWahl`/Uebernahme in `blocks/formfeld/nachschlagen.ts`) —
+herausziehen und teilen, nicht kopieren. **Darum zuerst V7:** solange
+das Fenster zweimal gebaut wird, wuerde G1 gegen zwei Fassungen bauen.
+**Runtime-Bytes aendern sich bewusst.**
+
+## G2 · Erfassungszeile: Zeile, Rollen, Befuellen
+
+Der Tabellen-Baustein bekommt den Schalter „Erfassungszeile" und je
+Spalte die Rolle samt Details (Nachschlage-Quelle + Uebernahme-Feld ·
+Vorbelegung · Folgt-Feld) — Registry-Props, kein Sondercode; neue Props
+= Round-Trip-Fall im Export-Test (Regel 9). Editor: Klick auf die
+Erfassungszelle stellt die Rolle (Muster Spaltenkopf). Laufzeit:
+Nachschlage-Zelle nutzt die G1-Liste und das Fenster, Folgt-Zellen
+lesen die Auswahl, Frei-Zellen tippen. In G2 noch OHNE das volle
+Tasten-Ballett und OHNE Schreiben.
+**Runtime-Bytes aendern sich bewusst.**
+
+## G3 · Tastensteuerung (das Tempo)
+
+Der komplette Tastenfluss aus dem Wellen-Kopf, an der Erfassungszeile:
+Enter-Sprung nur auf tippbare Zellen · Ueberspringen von Folgt-/
+Vorbelegtem · Ein-Treffer-Automatik · Escape-Stufen · „Zeile erfasst"
+raeumt die Zeile und fokussiert die erste tippbare Zelle · F3-Abfangen
+mit Echttest-Vorbehalt.
+**Runtime-Bytes aendern sich bewusst.**
+
+## G4 · Ereignis „Zeile erfasst" + Ketten-Wert „aus Erfassungszelle"
+
+Neues Baustein-Ereignis an der Tabelle (Muster `onRowClick`, s. V4) —
+daran haengt der Maskenbauer seine Schreib-Kette. Neuer
+Parameter-Herkunftstyp „Wert aus Erfassungszelle <Spalte>" NUR fuer
+frei getippte Zellen (Menge); Artikel- und Belegwerte nimmt die Kette
+wie heute aus gewaehlten Zeilen (Nutzer-Einwand 2026-08-18: nehmen, was
+da ist — nur das Getippte ist wirklich neu). Nach dem Ausloesen leert
+sich die Zeile; das Erscheinen der Position uebernimmt der SE-Push.
+**Pruefpunkt VOR dem Bau:** die PUT_RELATION-82-Werte am echten Log
+nachlesen (CLAUDE.md „Neue BELEGPOSITION": Reihenfolge belegt, die `0`
+und die Leerstellen UNGEDEUTET) — nachpruefen, nicht raten; liegt das
+Log nicht im Repo, den Nutzer fragen. SE-Echttest durch den Nutzer.
+**Runtime-Bytes aendern sich bewusst.**
+
+---
+
 # Welle E — Der grosse Innenumbau
 
 Erst nach den sichtbaren Vertragsklaerungen, damit die Registry nicht
@@ -859,10 +982,14 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 
 1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung + Koralle-Wort +
    preflight-Mini-Frage.
-2. **Welle V:** V1 → V0 → V3 → V4 → V5 (Opus-Kopier-Auftrag im
-   Wellen-Kopf V) → V6 (Kurzentwurf mit dem Nutzer, dann Bau) → V7.
-3. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf.
-4. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
+2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9~~ (GEBAUT) → V7.
+   V6 braucht zuerst den Kurzentwurf mit dem Nutzer und tritt hinter
+   Welle G zurueck (Nutzer-Prio 2026-08-18).
+3. **Welle G** (direkt nach V7 — V7 ist ihr Fundament): G1 → G2 → G3
+   → G4.
+4. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf; V6 nach
+   Kurzentwurf, sobald der Nutzer ihn will.
+5. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
    → F3.
 
 Etappen aus 2. und 3. duerfen sich mit 4. verzahnen, solange Regel 3.1
