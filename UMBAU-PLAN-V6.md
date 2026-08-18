@@ -722,11 +722,14 @@ tippbaren Zelle · F3 wird nur abgefangen, solange der Fokus in der
 Maske liegt (sonst Browser-Suche!) — im Echttest bestaetigen, Enter ist
 der Hauptweg.
 
-**Speichern:** je Position einzeln, sofort bei „Zeile erfasst", ueber
-die vom Maskenbauer sichtbar angelegte Kette. Im Hintergrund — die
-Erfassung wartet nie aufs ERP. Dass die frische Position ueber den
-normalen SE-Push in der Tabelle erscheint, ist Echttest-Punkt, kein
-Bau-Punkt.
+**Speichern: NICHT je Zeile** (Nutzer-Entscheidung 2026-08-18; hier stand
+bis dahin „je Position einzeln, sofort bei ,Zeile erfasst'"). Der
+Bediener erfasst beliebig viele Zeilen, ohne dass irgendetwas ins ERP
+geht. Geschrieben wird erst auf Knopfdruck — ein normaler
+Knopf-Baustein mit der ueblichen Relations-Kette, die dann einmal je
+erfasster Zeile laeuft (Etappe G4). Dass die frischen Positionen ueber
+den normalen SE-Push in der Tabelle erscheinen, ist Echttest-Punkt,
+kein Bau-Punkt.
 
 ## G1 · Vorschlagsliste am Formularfeld (der geteilte Kern) (GEBAUT 2026-08-18)
 
@@ -771,10 +774,17 @@ jede andere Lesart:**
 ## G3 · Tastensteuerung (das Tempo)
 
 Der komplette Tastenfluss aus dem Wellen-Kopf, an der Erfassungszeile:
-Enter-Sprung nur auf tippbare Zellen · Ueberspringen von Folgt-/
-Vorbelegtem · Ein-Treffer-Automatik · Escape-Stufen · „Zeile erfasst"
-raeumt die Zeile und fokussiert die erste tippbare Zelle · F3-Abfangen
-mit Echttest-Vorbehalt.
+Enter uebernimmt den markierten Vorschlag und springt zur naechsten
+TIPPBAREN Zelle · Tab/Enter ueberspringen Folgt-Zellen und Vorbelegtes ·
+genau EIN moeglicher Treffer fuellt sich selbst · Escape zweistufig
+(erst Liste zu, dann Zelle leeren) · F3-Abfangen mit Echttest-Vorbehalt.
+
+**Enter auf der letzten Zelle laesst die Zeile STEHEN** (Nutzer-Ansage
+2026-08-18, siehe G4): sie wird die Zeile der Position und bleibt
+sichtbar. Die Erfassung rueckt eine Zeile tiefer, der Cursor steht auf
+deren erster tippbarer Zelle. **Kein Raeumen, kein Zuruecksprung in
+dieselbe Zeile** — und weiterhin kein Schreiben und kein Ereignis:
+geschrieben wird erst in G4, ueber den Knopf.
 **Runtime-Bytes aendern sich bewusst.**
 
 ## G4 · Erfasste Zeilen stehen lassen + EIN Knopf schreibt sie
