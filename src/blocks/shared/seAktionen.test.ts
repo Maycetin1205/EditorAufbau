@@ -1,7 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { applyPopupStep } from './seAktionen'
 import { resolveActionParam } from '../../softengine/relations'
+import { meldeFehler } from '../../softengine/meldung'
 import type { ActionParamBinding } from '../../core/data/aktionen'
+
+vi.mock('../../softengine/meldung', () => ({ meldeFehler: vi.fn() }))
+
+function gemeldet(): string[] {
+  return vi.mocked(meldeFehler).mock.calls.map((aufruf) => aufruf[0])
+}
 
 function fakePopup(name: string | null) {
   const attrs = new Map<string, string>(name === null ? [] : [['name', name]])
@@ -20,6 +27,10 @@ function fakeRoot(popups: ReturnType<typeof fakePopup>[]): ParentNode {
 }
 
 describe('applyPopupStep', () => {
+  beforeEach(() => {
+    vi.mocked(meldeFehler).mockClear()
+  })
+
   it('öffnet und schließt genau das Popup mit dem Klarnamen', () => {
     const behandlung = fakePopup('Neue Behandlung')
     const anderes = fakePopup('Anderes')
@@ -39,11 +50,19 @@ describe('applyPopupStep', () => {
     expect(unbenannt.offen()).toBe(true)
   })
 
-  it('leerer Name oder kein Treffer: nichts passiert (still-harmlos)', () => {
+  it('leerer Name: nichts passiert und nichts wird gemeldet (kein Schritt gemeint)', () => {
     const popup = fakePopup('Da')
     applyPopupStep(fakeRoot([popup]), '', true)
+    expect(popup.offen()).toBe(false)
+    expect(gemeldet()).toEqual([])
+  })
+
+  it('kein Treffer: nichts passiert, aber der Bediener erfaehrt das Warum', () => {
+    const popup = fakePopup('Da')
     applyPopupStep(fakeRoot([popup]), 'Gibt es nicht', true)
     expect(popup.offen()).toBe(false)
+    expect(gemeldet()).toHaveLength(1)
+    expect(gemeldet()[0]).toContain('Gibt es nicht')
   })
 
   it('schliesst beim Öffnen jedes andere Popup', () => {
@@ -83,6 +102,7 @@ describe('applyPopupStep', () => {
 
     applyPopupStep(root, 'Gleich', false)
     expect(offen.offen()).toBe(true)
+    expect(gemeldet()).toHaveLength(2)
   })
 })
 

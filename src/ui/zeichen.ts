@@ -44,7 +44,6 @@ export const AlignCenter = zeichenFabrik('text-align-center', KNOTEN.AlignCenter
 export const AlignLeft = zeichenFabrik('text-align-start', KNOTEN.AlignLeft)
 export const AlignRight = zeichenFabrik('text-align-end', KNOTEN.AlignRight)
 export const ArrowDown = zeichenFabrik('arrow-down', KNOTEN.ArrowDown)
-export const ArrowLeft = zeichenFabrik('arrow-left', KNOTEN.ArrowLeft)
 export const ArrowUp = zeichenFabrik('arrow-up', KNOTEN.ArrowUp)
 export const Boxes = zeichenFabrik('boxes', KNOTEN.Boxes)
 export const Check = zeichenFabrik('check', KNOTEN.Check)

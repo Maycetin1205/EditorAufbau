@@ -5,6 +5,7 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { FlowDirection, FlowWidth } from '../../core/blocks/flowLayout'
 import { CardBlock } from '../card/CardBlock'
 import { leerStil, leerZustand } from '../shared/leerZustand'
+import { ZIEL_KLASSE, zielStil } from '../shared/zielStil'
 import { kartenAbstandStil } from './kartenAbstand'
 
 export const ZIMMER_LEER_TEXT = 'frei · hierher ziehen'
@@ -34,6 +35,7 @@ export class KanbanZimmerBlock extends BasicBlock {
     BasicBlock.styles,
     leerStil,
     kartenAbstandStil,
+    zielStil,
     css`
       :host { display: block; }
 
@@ -57,10 +59,8 @@ export class KanbanZimmerBlock extends BasicBlock {
         align-items: stretch;
       }
 
-      :host([data-ff-ziel]) .zimmer {
-        background: var(--se-accent-soft);
+      .zimmer {
         border-radius: var(--se-r-md);
-        outline: var(--se-border) solid var(--se-accent);
       }
     `,
   ]
@@ -77,7 +77,7 @@ export class KanbanZimmerBlock extends BasicBlock {
   }
 
   override render(): TemplateResult {
-    return html`<div class="zimmer">
+    return html`<div class="zimmer ${ZIEL_KLASSE}">
       <div
         class="kopf"
         data-ff-editable

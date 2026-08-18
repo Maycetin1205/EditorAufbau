@@ -73,7 +73,7 @@ export function DtkImportForm({ dateiName, tabellen, pannenGrund, onClose }: Dtk
         {tabellen.length === 0 ? (
           <p className="rounded-md border border-destructive/40 bg-destructive/5 px-2.5 py-2 text-destructive">
             Keine IDB-Tabellen gefunden. Ist das ein SoftEngine-IDB-Export
-            (in SoftEngine: „IDB exportieren", Dateiendung .DTK)?
+            (in SoftEngine: „IDB exportieren“, Dateiendung .DTK)?
             {pannenGrund && <><br />Die Datei liess sich nicht lesen: {pannenGrund}</>}
           </p>
         ) : (

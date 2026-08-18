@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { RelationTemplate } from './relations'
 import {
-  createStep,
   defaultRelationParams,
   ergebnisSchritteVor,
   parseBlockEvents,
@@ -26,15 +25,6 @@ const relation: RelationTemplate = {
 }
 
 describe('Aktionsmodell', () => {
-  it('trennt Werkzeug- und Relationsfelder', () => {
-    expect(createStep('START_TOOL')).toMatchObject({
-      type: 'START_TOOL', toolNr: '', toolParams: [],
-    })
-    expect(createStep('RELATION')).toMatchObject({
-      type: 'RELATION', relationId: '', params: [], extraParams: [],
-    })
-  })
-
   it('transportiert beide Schritttypen ohne Editor-IDs', () => {
     const tool: StartToolStep = {
       id: 'tool', type: 'START_TOOL', resultKey: '', toolNr: '3003', toolParams: ['{PINDEX}'],
@@ -255,11 +245,6 @@ describe('Popup-Schritte (P-B)', () => {
 
     const sanitized = sanitizeBlockEvents(events, ['onClick'])
     expect(sanitized?.onClick[0]).toMatchObject({ type: 'POPUP_OPEN', popupId: 'seite-1' })
-  })
-
-  it('createStep legt einen leeren Popup-Schritt an', () => {
-    const step = createStep('POPUP_CLOSE')
-    expect(step).toMatchObject({ type: 'POPUP_CLOSE', popupId: '', resultKey: '' })
   })
 
   it('stepProblem: Popup-Schritt braucht ein gewähltes, vorhandenes Popup', () => {

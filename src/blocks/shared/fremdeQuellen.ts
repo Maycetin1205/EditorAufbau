@@ -2,6 +2,7 @@ import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { WEITERE_QUELLEN_PROP, type SchluesselPaar } from '../../core/data/sourceLinks'
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
+import { paarListeAusAttribut } from './paarListe'
 
 const WEITERE_QUELLEN_ATTR = WEITERE_QUELLEN_PROP.toLowerCase()
 
@@ -27,31 +28,8 @@ function schluesselAus(werte: readonly string[]): string {
 }
 
 function weitereAusAttribut(el: HTMLElement): { quelleId: string; keyPairs: SchluesselPaar[] }[] {
-  const roh = el.getAttribute(WEITERE_QUELLEN_ATTR) ?? ''
-  if (roh === '') return []
-  try {
-    const parsed: unknown = JSON.parse(roh)
-    if (!Array.isArray(parsed)) return []
-    const acc: { quelleId: string; keyPairs: SchluesselPaar[] }[] = []
-    for (const e of parsed) {
-      if (!e || typeof e !== 'object') continue
-      const ee = e as Record<string, unknown>
-      if (typeof ee.quelleId !== 'string' || ee.quelleId === '') continue
-      const keyPairs: SchluesselPaar[] = []
-      for (const p of Array.isArray(ee.keyPairs) ? ee.keyPairs : []) {
-        if (!p || typeof p !== 'object') continue
-        const pp = p as Record<string, unknown>
-        if (typeof pp.fromField !== 'string' || typeof pp.toField !== 'string') continue
-        if (pp.fromField.trim() === '' || pp.toField.trim() === '') continue
-        keyPairs.push({ fromField: pp.fromField, toField: pp.toField })
-      }
-      if (keyPairs.length === 0) continue
-      acc.push({ quelleId: ee.quelleId, keyPairs })
-    }
-    return acc
-  } catch {
-    return []
-  }
+  return paarListeAusAttribut(el, WEITERE_QUELLEN_ATTR, 'quelleId')
+    .map((e) => ({ quelleId: e.id, keyPairs: e.keyPairs }))
 }
 
 export function macheFeldLeser(el: HTMLElement): FeldLeser {

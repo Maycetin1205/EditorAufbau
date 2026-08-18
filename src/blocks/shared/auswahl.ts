@@ -1,5 +1,6 @@
 import { AUSWAHL_FOLGE_PROP, type AuswahlFolge } from '../../core/data/auswahlFolge'
 import { getField } from '../../softengine/data'
+import { paarListeAusAttribut } from './paarListe'
 
 export function merkmalVon(zeile: unknown): string {
   if (zeile == null) return ''
@@ -96,31 +97,8 @@ export function setzeAuswahlZurueck(): void {
 const AUSWAHL_FOLGE_ATTR = AUSWAHL_FOLGE_PROP.toLowerCase()
 
 export function folgenAusAttribut(el: HTMLElement): AuswahlFolge[] {
-  const roh = el.getAttribute(AUSWAHL_FOLGE_ATTR) ?? ''
-  if (roh === '') return []
-  try {
-    const parsed: unknown = JSON.parse(roh)
-    if (!Array.isArray(parsed)) return []
-    const acc: AuswahlFolge[] = []
-    for (const e of parsed) {
-      if (!e || typeof e !== 'object') continue
-      const ee = e as Record<string, unknown>
-      if (typeof ee.geberId !== 'string' || ee.geberId === '') continue
-      const keyPairs: AuswahlFolge['keyPairs'] = []
-      for (const p of Array.isArray(ee.keyPairs) ? ee.keyPairs : []) {
-        if (!p || typeof p !== 'object') continue
-        const pp = p as Record<string, unknown>
-        if (typeof pp.fromField !== 'string' || typeof pp.toField !== 'string') continue
-        if (pp.fromField.trim() === '' || pp.toField.trim() === '') continue
-        keyPairs.push({ fromField: pp.fromField, toField: pp.toField })
-      }
-      if (keyPairs.length === 0) continue
-      acc.push({ geberId: ee.geberId, keyPairs })
-    }
-    return acc
-  } catch {
-    return []
-  }
+  return paarListeAusAttribut(el, AUSWAHL_FOLGE_ATTR, 'geberId')
+    .map((e) => ({ geberId: e.id, keyPairs: e.keyPairs }))
 }
 
 export function zeilenNachAuswahl(

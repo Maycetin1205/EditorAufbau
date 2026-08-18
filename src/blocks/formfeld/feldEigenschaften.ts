@@ -1,4 +1,5 @@
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
+import { jaNeinProperty } from '../shared/jaNeinProperty'
 
 const NUR_NACHSCHLAGEN = { attributeName: 'fieldType', equals: 'nachschlagen' } as const
 
@@ -53,14 +54,12 @@ export const FELD_EIGENSCHAFTEN: PropertyDescription[] = [
     visibleWhen: NUR_NACHSCHLAGEN,
   },
 
-  {
-    attributeName: 'einzigerTreffer',
-    name: 'Einzigen Treffer übernehmen',
-    description: 'Bleibt in der Maske genau EIN Satz übrig (weil das Feld der Auswahl eines anderen folgt), übernimmt es diesen von selbst — ohne dass der Bediener die Lupe drückt. Nur in ein leeres Feld; die Lupe bleibt daneben bedienbar.',
-    kind: 'segment',
-    options: [{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }],
-    visibleWhen: NUR_NACHSCHLAGEN,
-  },
+  jaNeinProperty(
+    'einzigerTreffer',
+    'Einzigen Treffer übernehmen',
+    'Bleibt in der Maske genau EIN Satz übrig (weil das Feld der Auswahl eines anderen folgt), übernimmt es diesen von selbst — ohne dass der Bediener die Lupe drückt. Nur in ein leeres Feld; die Lupe bleibt daneben bedienbar.',
+    { visibleWhen: NUR_NACHSCHLAGEN },
+  ),
   {
     attributeName: 'valueField',
     name: 'Feld',

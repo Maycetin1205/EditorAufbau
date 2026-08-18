@@ -1,8 +1,8 @@
 const OPTION_COLORS: Record<string, string> = {
-  info: 'var(--se-blue)',      // „Hinweis"
-  success: 'var(--se-green)',  // „Erfolg"
-  warning: 'var(--se-amber)',  // „Warnung"
-  danger: 'var(--se-red)',     // „Fehler"
+  info: 'var(--se-blue)',      // „Hinweis“
+  success: 'var(--se-green)',  // „Erfolg“
+  warning: 'var(--se-amber)',  // „Warnung“
+  danger: 'var(--se-red)',     // „Fehler“
 
   standard: 'var(--se-ink)',
   gedaempft: 'var(--se-muted)',

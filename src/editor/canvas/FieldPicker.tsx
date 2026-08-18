@@ -227,7 +227,7 @@ export function FieldPicker({
                 </select>
                 <button
                   type="button"
-                  aria-label={`${zuordnung.wertLabel} „${z.wert}" entfernen`}
+                  aria-label={`${zuordnung.wertLabel} „${z.wert}“ entfernen`}
                   title="Zeile entfernen"
                   onClick={(e) => {
                     e.stopPropagation()

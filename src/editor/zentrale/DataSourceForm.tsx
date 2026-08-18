@@ -69,9 +69,13 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
   const holenMoeglich = art.relationLadenMoeglich
 
-  const vorsatzEingeben = art.feldVorsatzMoeglich
+  const vorsatz = feldVorsatzFromInput(vorsatzEingabe)
 
-  const vorsatz = vorsatzEingeben ? feldVorsatzFromInput(vorsatzEingabe) : ''
+  // Der Vorsatz steckt in JEDEM Feldcode dieser Quelle. Wer die Art
+  // wechselt, soll ihn deshalb sehen und selbst entfernen — versteckte
+  // ihn das Formular (weil die neue Art keinen vorsieht), fielen die
+  // Codes beim Speichern still auf die Form ohne Vorsatz zurueck.
+  const vorsatzEingeben = art.feldVorsatzMoeglich || vorsatz !== ''
   const holtZeilen = holenMoeglich && zeilenWeg === 'holen'
 
   const geberOptionen = store.list.filter((s) => s.id !== source?.id)

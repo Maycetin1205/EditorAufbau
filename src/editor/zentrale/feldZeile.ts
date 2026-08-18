@@ -1,4 +1,7 @@
-// ausliefern darf (eslint react-refresh) — und weil das Umrechnen zwischen
+// Eigene Datei, weil eine Komponenten-Datei nur Komponenten ausliefern
+// darf (eslint react-refresh) — und weil das Umrechnen zwischen der
+// Eingabezeile (Klarname + Position + Laenge) und dem Feldcode der
+// Quelle an EINER Stelle wohnen soll: hier.
 
 import { fieldCode, type DataSourceField } from '../../core/data/dataSources'
 import { splitFieldCode } from '../../core/data/relations'

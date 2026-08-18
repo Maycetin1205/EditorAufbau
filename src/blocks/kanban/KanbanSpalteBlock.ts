@@ -7,6 +7,7 @@ import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { CardBlock } from '../card/CardBlock'
 import { jaNeinProperty } from '../shared/jaNeinProperty'
 import { leerStil, leerZustand } from '../shared/leerZustand'
+import { ZIEL_KLASSE, zielStil } from '../shared/zielStil'
 import {
   coerceStatusVariant,
   statusVariantProperty,
@@ -67,6 +68,7 @@ export class KanbanSpalteBlock extends BasicBlock {
     BasicBlock.styles,
     leerStil,
     kartenAbstandStil,
+    zielStil,
     css`
 
       :host {
@@ -91,12 +93,6 @@ export class KanbanSpalteBlock extends BasicBlock {
       .col.v-success { --col-strong: var(--se-green); --col-soft: var(--se-green-soft); }
       .col.v-warning { --col-strong: var(--se-amber); --col-soft: var(--se-amber-soft); }
       .col.v-danger { --col-strong: var(--se-red); --col-soft: var(--se-red-soft); }
-
-      :host([data-ff-ziel]) .col {
-        background: var(--se-accent-soft);
-        outline: var(--se-border) solid var(--se-accent);
-        outline-offset: calc(-1 * var(--se-border));
-      }
 
       .head {
         flex: none;
@@ -172,7 +168,7 @@ export class KanbanSpalteBlock extends BasicBlock {
 
   override render(): TemplateResult {
     const v = coerceStatusVariant(this.variant)
-    return html`<div class="col v-${v}">
+    return html`<div class="col ${ZIEL_KLASSE} v-${v}">
       <div class="head">
         <span class="dot"></span>
         <span

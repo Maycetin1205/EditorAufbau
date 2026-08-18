@@ -31,8 +31,8 @@ export function bestaetigeLoeschen(
 ): boolean {
   return window.confirm(
     benutzt
-      ? `„${name}" wird in der Maske BENUTZT. Trotzdem löschen? ${folge}`
-      : `${art} „${name}" löschen?`,
+      ? `„${name}“ wird in der Maske BENUTZT. Trotzdem löschen? ${folge}`
+      : `${art} „${name}“ löschen?`,
   )
 }
 

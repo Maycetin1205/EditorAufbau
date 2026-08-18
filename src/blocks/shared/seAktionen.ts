@@ -47,7 +47,14 @@ export function applyPopupStep(root: ParentNode, name: string, oeffnen: boolean)
   const treffer = alle.filter(
     (el) => (el.getAttribute('name') ?? PopupBlock.defaultProps.name) === name,
   )
-  if (treffer.length !== 1) return
+  if (treffer.length === 0) {
+    meldeFehler('Fenster „' + name + '“ gibt es in dieser Maske nicht.')
+    return
+  }
+  if (treffer.length > 1) {
+    meldeFehler('Fenster „' + name + '“ gibt es mehrfach — keines ist gemeint.')
+    return
+  }
   const ziel = treffer[0]
   if (!oeffnen) {
     ziel.removeAttribute('offen')

@@ -49,9 +49,10 @@ dann `go` (0.3), dann genau EINE Etappe.
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (→ Etappe V0) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
+- **V1 ist GEBAUT (2026-08-18).** Offen aus der Welle V: V0 → V3 → V4 → V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V0/V1/V3/V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V0/V3/V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
@@ -362,7 +363,16 @@ auf den ROHDATEN nach dem Muster in `state/migrationenRoh.ts` (VOR
 `nachschlagen.test.ts`, `export/nachschlagenExport.test.ts`.
 **Runtime-Bytes aendern sich bewusst**; SE-Delta in die Gesamtprobe.
 
-## V1 · Robustheit und Aufraeumen (klein, unsichtbar)
+## V1 · Robustheit und Aufraeumen (GEBAUT 2026-08-18)
+
+Gebaut wie beschrieben, mit drei benannten Abweichungen: `jaNeinProperty`
+wurde zum Umschalter (`kind: 'segment'`, die Mehrheit der drei Stellen) statt
+zur Klappliste — sonst haette die neue gemeinsame Stelle die
+Uneinheitlichkeit einbetoniert · `Eingabesitzung` in `PropControl.tsx` ist
+UMBENANNT (`BearbeitungsRueckrufe`), nicht geloescht: es sind zwei
+verschiedene Dinge mit gleichem Namen, kein Duplikat · der Feld-Vorsatz
+bleibt beim Art-Wechsel sichtbar UND wirksam, bis der Bauer ihn selbst
+leert. `preflight.ts` ist unangetastet (Mini-Frage unbeantwortet).
 
 - **Popup-Schritt meldet Fehlschlag:** findet `applyPopupStep`
   (`blocks/shared/seAktionen.ts`, Anker `treffer.length !== 1`) sein Popup

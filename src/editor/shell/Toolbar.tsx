@@ -101,7 +101,6 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
         onClearAll={handleClear}
         clearDisabled={ed.blockCount === 0}
         onSpeichern={handleSpeichern}
-        speichernDisabled={false}
         onDatei={handleDateiGewaehlt}
       />
 
@@ -157,13 +156,11 @@ function MoreMenu({
   onClearAll,
   clearDisabled,
   onSpeichern,
-  speichernDisabled,
   onDatei,
 }: {
   onClearAll: () => void
   clearDisabled: boolean
   onSpeichern: () => void
-  speichernDisabled: boolean
   onDatei: (datei: File) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -220,7 +217,6 @@ function MoreMenu({
           <button
             role="menuitem"
             type="button"
-            disabled={speichernDisabled}
             onClick={() => {
               setOpen(false)
               onSpeichern()

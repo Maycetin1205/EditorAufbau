@@ -121,17 +121,6 @@ export type PopupStep = PopupOpenStep | PopupCloseStep
 export type ActionStep = StartToolStep | RelationStep | PopupStep
 export type BlockEventsMap = Record<string, ActionStep[]>
 
-export function createStep(typeKey: StepTypeKey): ActionStep {
-  const base = { id: crypto.randomUUID(), resultKey: '' }
-  if (typeKey === 'RELATION') {
-    return { ...base, type: 'RELATION', relationId: '', params: [], extraParams: [] }
-  }
-  if (typeKey === 'POPUP_OPEN' || typeKey === 'POPUP_CLOSE') {
-    return { ...base, type: typeKey, popupId: '' }
-  }
-  return { ...base, type: 'START_TOOL', toolNr: '', toolParams: [] }
-}
-
 export const AKTIONS_PLATZHALTER = ['PINDEX', 'VALUE', 'ZIMMER', 'NOW_DATE'] as const
 
 export function defaultRelationParams(

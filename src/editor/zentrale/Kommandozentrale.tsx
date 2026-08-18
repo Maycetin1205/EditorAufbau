@@ -66,11 +66,9 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
               >
                 <Icon size={14} />
                 <span className="min-w-0 flex-1">{name}</span>
-                {navZahl[key] !== '' && (
-                  <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground">
-                    {navZahl[key]}
-                  </span>
-                )}
+                <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground">
+                  {navZahl[key]}
+                </span>
               </button>
             ))}
           </nav>

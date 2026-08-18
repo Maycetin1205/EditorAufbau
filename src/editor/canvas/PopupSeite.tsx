@@ -132,7 +132,7 @@ export function PopupSeite({ popupId }: { popupId: string }) {
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
           style={{ zIndex: 20 }}
         >
-          <LeerHinweis titel={`Leeres Fenster „${String(node.props.name ?? '')}"`} />
+          <LeerHinweis titel={`Leeres Fenster „${String(node.props.name ?? '')}“`} />
         </div>
       )}
       {selected && (

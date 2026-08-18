@@ -129,7 +129,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
 
           ...(isContainer && def?.containerHint !== false
             ? {
-                border: '1.5px dashed hsl(220 13% 78%)',
+                border: '1.5px dashed hsl(var(--border))',
                 borderRadius: 4,
                 minHeight: 40,
               }

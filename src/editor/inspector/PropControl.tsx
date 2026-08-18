@@ -15,7 +15,11 @@ import { TextControl } from './controls/TextControl'
 import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import { allOptionsHaveColor } from './optionColors'
 
-export interface Eingabesitzung {
+// Die zwei Rueckrufe, die der Inspector durchreicht: sie klammern eine
+// Eingabe zu EINEM Undo-Schritt. Nicht zu verwechseln mit der
+// `Eingabesitzung` in controls/eingabeSitzung — das ist der Hook, der
+// diese Rueckrufe fuer ein einzelnes Eingabefeld auf/zu macht.
+export interface BearbeitungsRueckrufe {
   onBeginBearbeitung: () => void
   onEndeBearbeitung: () => void
 }
@@ -25,7 +29,7 @@ export interface PropControlProps {
   property: PropertyDescription
 
   sourceInReach: DataSource | undefined
-  sitzung: Eingabesitzung
+  sitzung: BearbeitungsRueckrufe
 
   kompakt?: boolean
 }
