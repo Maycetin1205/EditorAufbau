@@ -84,6 +84,12 @@ export const feldStil = css`
   .nachschlag { position: relative; }
   .nachschlag .ctrl { padding-right: 34px; border-style: dashed; }
 
+  /* Die offene Vorschlagsliste haengt unten aus dem Feld heraus. Raster-
+     Kinder stapeln in DOM-Reihenfolge — ohne diesen Vorrang laege die Liste
+     unter dem naechsten Baustein. Nur solange sie offen ist (das Attribut
+     setzt der Baustein in updated()), also ohne Nebenwirkung auf das Raster. */
+  :host([data-ff-liste]) { position: relative; z-index: 5; }
+
   .lupe {
     position: absolute;
     top: var(--feld-rand);

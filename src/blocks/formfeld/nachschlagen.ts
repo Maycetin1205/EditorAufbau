@@ -20,8 +20,13 @@ import {
 export function nachschlagFeldTpl(args: {
   wert: string
   onTippen: (wert: string) => void
+  onTaste: (e: KeyboardEvent) => void
   onVerlassen: () => void
   onLupe: () => void
+
+  // Die Vorschlagsliste (G1) haengt im selben Halter wie die Lupe: sie
+  // steht unter dem Feld und deckt zu, was darunter liegt.
+  liste: TemplateResult | typeof nothing
 }): TemplateResult {
   return html`<div class="nachschlag">
     <input
@@ -29,6 +34,7 @@ export function nachschlagFeldTpl(args: {
       type="text"
       .value=${args.wert}
       @input=${(e: Event) => args.onTippen((e.target as HTMLInputElement).value)}
+      @keydown=${args.onTaste}
       @blur=${() => args.onVerlassen()}
     />
     <button
@@ -41,6 +47,7 @@ export function nachschlagFeldTpl(args: {
       <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
       <line x1="10.4" y1="10.4" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
     </svg></button>
+    ${args.liste}
   </div>`
 }
 

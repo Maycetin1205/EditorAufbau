@@ -9,6 +9,14 @@ import type {
   SatzWahl,
 } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, klareAuswahl, setzeAuswahl } from '../shared/auswahl'
+import {
+  bewegteMarke,
+  gueltigeMarke,
+  passendeVorschlaege,
+  tastenFolge,
+  vorschlagListeTpl,
+  vorschlagStil,
+} from '../shared/vorschlagListe'
 import { FELD_EIGENSCHAFTEN } from './feldEigenschaften'
 import {
   connectField,
@@ -27,6 +35,7 @@ import {
   automatikSpalten,
   coerceNachschlagSpalten,
   einzigenTrefferFinden,
+  type Eintrag,
   folgeBeimVerlassen,
   holeEintraege,
   NACHSCHLAG_SPALTEN_BINDUNG,
@@ -97,7 +106,7 @@ export class FormFeldBlock extends BasicBlock {
 
   static override readonly customProperties = FELD_EIGENSCHAFTEN
 
-  static override styles = [BasicBlock.styles, feldStil]
+  static override styles = [BasicBlock.styles, feldStil, vorschlagStil]
 
   @property() fieldType = 'text'
   @property() placeholder = 'Feldname'
@@ -124,6 +133,18 @@ export class FormFeldBlock extends BasicBlock {
   @state() private anzeige = ''
 
   @state() private getippt: string | null = null
+
+  // Welcher Vorschlag Enter uebernehmen wuerde. Jeder Tastendruck setzt sie
+  // auf den ersten Treffer zurueck.
+  @state() private marke = 0
+
+  // Escape macht die Liste zu, ohne das Getippte anzuruehren; das naechste
+  // Zeichen holt sie zurueck.
+  @state() private listeZu = false
+
+  // In willUpdate berechnet, damit render() und die Tastatur DENSELBEN Stand
+  // sehen — zwei Berechnungen koennten auseinanderlaufen.
+  private vorschlaege: Eintrag[] = []
 
   private satz: unknown = undefined
 
@@ -182,9 +203,20 @@ export class FormFeldBlock extends BasicBlock {
 
         return nachschlagFeldTpl({
           wert: this.getippt ?? this.anzeige,
-          onTippen: (wert) => { this.getippt = wert },
+          onTippen: (wert) => {
+            this.getippt = wert
+            this.marke = 0
+            this.listeZu = false
+          },
+          onTaste: (e) => this.onNachschlagTaste(e),
           onVerlassen: () => this.onNachschlagVerlassen(),
           onLupe: () => this.onLupe(),
+          liste: this.vorschlaege.length === 0 ? nothing : vorschlagListeTpl({
+            eintraege: this.vorschlaege,
+            marke: this.marke,
+            onWaehlen: (i) => this.uebernimmVorschlag(i),
+            onMarke: (i) => { this.marke = i },
+          }),
         })
       default:
 
@@ -216,10 +248,7 @@ export class FormFeldBlock extends BasicBlock {
       breite: this.fensterBreite,
       hoehe: this.fensterHoehe,
 
-      onUebernehmen: (anzeige, wert, satz) => {
-        this.uebernimmSatz(anzeige, wert, satz)
-        this.dispatchEvent(new Event('change'))
-      },
+      onUebernehmen: (anzeige, wert, satz) => this.uebernimmUndMelde(anzeige, wert, satz),
     })
   }
 
@@ -291,6 +320,64 @@ export class FormFeldBlock extends BasicBlock {
     if (changed.has('fieldType') && coerceFeldTyp(this.fieldType) !== 'nachschlagen') {
       this.spaltenDialog = false
     }
+    this.vorschlaege = this.berechneVorschlaege()
+    this.marke = gueltigeMarke(this.marke, this.vorschlaege.length)
+  }
+
+  protected override updated(changed: PropertyValues): void {
+    super.updated(changed)
+    // Die Liste haengt unten aus dem Baustein heraus. Raster-Kinder stapeln
+    // in DOM-Reihenfolge, also muss dieses Feld solange ueber seinen
+    // Nachbarn liegen — sonst verschwindet die Liste unter dem naechsten
+    // Baustein (der Stil dazu steht in feldStil).
+    this.toggleAttribute('data-ff-liste', this.vorschlaege.length > 0)
+  }
+
+  // Die Vorschlaege kommen aus DERSELBEN Quelle wie das grosse Fenster
+  // (holeEintraege: Quelle, Spalten, Folge-Auswahl) — nur gefiltert und auf
+  // acht gekuerzt. Fehlt die Quelle oder „Gespeichert wird", bleibt die Liste
+  // still leer: eine Meldung bei jedem Tastendruck waere unbrauchbar.
+  private berechneVorschlaege(): Eintrag[] {
+    if (this.getippt === null || this.listeZu) return []
+    if (coerceFeldTyp(this.fieldType) !== 'nachschlagen') return []
+    // Im Editor gibt es keine Daten und keine Liste (Regel 7).
+    if (this.hasAttribute('data-ff-editor')) return []
+    const ergebnis = holeEintraege({
+      el: this,
+      quelleId: this.nachschlagQuelle,
+      speicherFeld: this.speicherFeld,
+      spalten: this.nachschlagSpalten,
+    })
+    return ergebnis.ok ? passendeVorschlaege(ergebnis.eintraege, this.getippt) : []
+  }
+
+  // Escape kommt hier NICHT an, wenn ein Dialograhmen mit escape-schliesst
+  // offen ist — der hoert am document in der Abfang-Phase; ein
+  // stopPropagation hier waere zu spaet und wuerde Sicherheit vortaeuschen.
+  private onNachschlagTaste(e: KeyboardEvent): void {
+    if (this.hasAttribute('data-ff-editor')) return
+    const anzahl = this.vorschlaege.length
+    const folge = tastenFolge(e.key, {
+      listeOffen: anzahl > 0,
+      feldLeer: (this.getippt ?? this.anzeige) === '',
+    })
+    if (folge === 'nichts') {
+      // Enter darf trotzdem kein Formular abschicken.
+      if (e.key === 'Enter') e.preventDefault()
+      return
+    }
+    e.preventDefault()
+    if (folge === 'marke-hoch') this.marke = bewegteMarke(this.marke, anzahl, -1)
+    else if (folge === 'marke-runter') this.marke = bewegteMarke(this.marke, anzahl, 1)
+    else if (folge === 'uebernehmen') this.uebernimmVorschlag(this.marke)
+    else if (folge === 'liste-zu') this.listeZu = true
+    else this.onLupe()
+  }
+
+  private uebernimmVorschlag(index: number): void {
+    const treffer = this.vorschlaege[index]
+    if (!treffer) return
+    this.uebernimmUndMelde(treffer.anzeige, treffer.wert, treffer.satz)
   }
 
   private leereNachschlagen(): void {
@@ -298,6 +385,17 @@ export class FormFeldBlock extends BasicBlock {
     this.anzeige = ''
     this.value = ''
     klareAuswahl(geberIdVon(this))
+  }
+
+  // Der EINE Uebernahme-Weg fuer den Bediener: Zeilenklick im grossen
+  // Fenster und Wahl in der Vorschlagsliste landen beide hier (G1). Er
+  // raeumt das Getippte weg, damit im Feld der bestaetigte Text steht.
+  private uebernimmUndMelde(anzeige: string, wert: string, satz: unknown): void {
+    this.getippt = null
+    this.listeZu = false
+    this.marke = 0
+    this.uebernimmSatz(anzeige, wert, satz)
+    this.dispatchEvent(new Event('change'))
   }
 
   private uebernimmSatz(anzeige: string, wert: string, satz: unknown): void {
@@ -312,6 +410,8 @@ export class FormFeldBlock extends BasicBlock {
     if (this.hasAttribute('data-ff-editor')) return
     const folge = folgeBeimVerlassen(this.getippt ?? this.anzeige, this.anzeige, this.value)
     this.getippt = null
+    this.listeZu = false
+    this.marke = 0
     if (folge !== 'leeren') return
     this.leereNachschlagen()
     this.dispatchEvent(new Event('change'))
@@ -319,6 +419,9 @@ export class FormFeldBlock extends BasicBlock {
 
   pruefeEigenenWert(): void {
     if (coerceFeldTyp(this.fieldType) !== 'nachschlagen') return
+    // Trifft der Daten-Push erst nach dem ersten Tastendruck ein, muss die
+    // offene Liste nachziehen — sie entsteht in willUpdate.
+    if (this.getippt !== null) this.requestUpdate()
     if (this.satz !== undefined && !satzPasstZurAuswahl(this, this.satz)) {
       this.leereNachschlagen()
     }

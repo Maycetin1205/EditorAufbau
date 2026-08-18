@@ -54,7 +54,7 @@ dann `go` (0.3), dann genau EINE Etappe.
   s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · G1–G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
+  V6 nach Kurzentwurf · G2–G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
@@ -62,7 +62,8 @@ dann `go` (0.3), dann genau EINE Etappe.
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
   Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9 und V7
-  sind GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe G1.
+  sind GEBAUT (2026-08-18), G1 ebenfalls;** naechster Kopier-Auftrag:
+  Erste Etappe G2.
 - **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
   Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
   WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
@@ -327,7 +328,7 @@ der komplette Diff von Buendel und Referenz gehoert erklaert in den
 Commit. Steht es NICHT dran, muessen Buendel und Referenz byte-gleich
 bleiben — aendern sie sich doch, hast du zu viel angefasst: STOPP.
 
-Erste Etappe: G1.
+Erste Etappe: G2.
 
 Je Etappe, in dieser Reihenfolge und ohne Abkuerzung:
   1. kurze Ansage nach 0.2 in den Chat, VOR dem ersten Code
@@ -352,7 +353,7 @@ konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
 ~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> ~~V5 (Stellen 1–5; 6–8 s.
-Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> ~~V7~~ -> G1 -> G2 -> G3 -> G4
+Etappentext)~~ -> ~~V8~~ -> ~~V9~~ -> ~~V7~~ -> ~~G1~~ -> G2 -> G3 -> G4
 Nach G4: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V6/E1/E3 die naechsten Kandidaten
 sind.
@@ -727,7 +728,7 @@ Erfassung wartet nie aufs ERP. Dass die frische Position ueber den
 normalen SE-Push in der Tabelle erscheint, ist Echttest-Punkt, kein
 Bau-Punkt.
 
-## G1 · Vorschlagsliste am Formularfeld (der geteilte Kern)
+## G1 · Vorschlagsliste am Formularfeld (der geteilte Kern) (GEBAUT 2026-08-18)
 
 Die Tipp-Vorschlagsliste entsteht EINMAL als geteiltes Teil
 (`blocks/shared/`); das Formularfeld (Typ `nachschlagen`) bekommt sie
@@ -995,7 +996,7 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9 → V7~~ (GEBAUT).
    V6 braucht zuerst den Kurzentwurf mit dem Nutzer und tritt hinter
    Welle G zurueck (Nutzer-Prio 2026-08-18).
-3. **Welle G:** G1 → G2 → G3 → G4.
+3. **Welle G:** ~~G1~~ (GEBAUT) → G2 → G3 → G4.
 4. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf; V6 nach
    Kurzentwurf, sobald der Nutzer ihn will.
 5. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
