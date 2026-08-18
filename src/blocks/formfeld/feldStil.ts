@@ -57,6 +57,11 @@ export const feldStil = css`
     right: 25px;
   }
 
+  /* Gleiches Recht wie .ph-select: der Platzhalter endet am Innenrand des
+     Feldes (padding-right 34px) und laesst die 30px-Lupe frei — im Editor
+     ist er klickbar und wuerde sie sonst fast ganz verdecken. */
+  .ph-nachschlag { right: 34px; }
+
   .huelle.leer input[type="date"]:not(:focus)::-webkit-datetime-edit,
   .huelle.leer input[type="time"]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
   .huelle.leer.tippt .ph-nativ { display: none; }

@@ -641,6 +641,11 @@
     right: 25px;
   }
 
+  /* Gleiches Recht wie .ph-select: der Platzhalter endet am Innenrand des
+     Feldes (padding-right 34px) und laesst die 30px-Lupe frei — im Editor
+     ist er klickbar und wuerde sie sonst fast ganz verdecken. */
+  .ph-nachschlag { right: 34px; }
+
   .huelle.leer input[type="date"]:not(:focus)::-webkit-datetime-edit,
   .huelle.leer input[type="time"]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
   .huelle.leer.tippt .ph-nativ { display: none; }
@@ -696,7 +701,7 @@
   :host([fuellt]) .feld,
   :host([fuellt]) .huelle { height: 100%; }
   :host([fuellt]) .huelle .ctrl { height: 100%; }
-`,qr=[`text`,`number`,`textarea`,`select`,`date`,`time`,`checkbox`,`nachschlagen`];function Jr(e){return qr.includes(e)?e:`text`}var Yr=[`text`,`number`,`textarea`,`select`,`nachschlagen`,`date`,`time`],Xr={select:`ph-select`,date:`ph-nativ`,time:`ph-nativ`},Zr=4;function Qr(e){return e??Zr}function $r(e,t,n){return Math.max(1,Math.floor((e-t)/n))}function ei(e,t,n){let r=$r(e,t,n),i=e-t;return i<n?{passen:r,zeilenHoehe:n}:{passen:r,zeilenHoehe:Math.floor(i/r*100)/100}}function ti(e,t){return e===null?null:Math.max(0,e-t)}function ni({sichtbar:e,hatQuelle:t,proSeite:n,wunschSeite:r,platzhalterZeilen:i}){let a=t?Math.max(1,Math.ceil(e.length/n)):1,o=Math.min(Math.max(r,0),a-1);return t?{seiten:a,seite:o,zeilen:[...e.slice(o*n,(o+1)*n)]}:{seiten:a,seite:o,zeilen:Array.from({length:i},()=>null)}}function ri(e,t){let n=t.trim().toLowerCase();return e.find(e=>e.wert.trim().toLowerCase()===n)}var ii=`text`,ai=`status`,oi=`bild`,si=`bild`,ci=`unter`,li=[{wert:ii,name:`Text`,spur:`minmax(0, 1fr)`,klasse:``,zelle:e=>e},{wert:`zahl`,name:`Zahl`,spur:`90px`,klasse:`zahl`,zelle:e=>e},{wert:`datum`,name:`Datum`,spur:`100px`,klasse:`zahl`,zelle:e=>e},{wert:ai,name:`Status`,spur:`120px`,klasse:`status`,zelle:(e,t)=>{let n=ri(t,e);return n?_`<span class="chip v-${Un(n.bedeutung)}">${n.name.trim()===``?e:n.name}</span>`:_`<span class="chip">${e}</span>`}},{wert:oi,name:`Bild + Name`,spur:`minmax(0, 1fr)`,klasse:`bild`,zusatzFelder:[{key:si,label:`Bild`},{key:ci,label:`Unterzeile`}],hoehe:e=>(e[si]??``)!==``||(e[ci]??``)!==``?44:32,zelle:(e,t,n)=>{let r=Qn(n[si]??``),i=n[ci]??``;return _`<div class="bild-name">
+`,qr=[`text`,`number`,`textarea`,`select`,`date`,`time`,`checkbox`,`nachschlagen`];function Jr(e){return qr.includes(e)?e:`text`}var Yr=[`text`,`number`,`textarea`,`select`,`nachschlagen`,`date`,`time`],Xr={select:`ph-select`,date:`ph-nativ`,time:`ph-nativ`,nachschlagen:`ph-nachschlag`},Zr=4;function Qr(e){return e??Zr}function $r(e,t,n){return Math.max(1,Math.floor((e-t)/n))}function ei(e,t,n){let r=$r(e,t,n),i=e-t;return i<n?{passen:r,zeilenHoehe:n}:{passen:r,zeilenHoehe:Math.floor(i/r*100)/100}}function ti(e,t){return e===null?null:Math.max(0,e-t)}function ni({sichtbar:e,hatQuelle:t,proSeite:n,wunschSeite:r,platzhalterZeilen:i}){let a=t?Math.max(1,Math.ceil(e.length/n)):1,o=Math.min(Math.max(r,0),a-1);return t?{seiten:a,seite:o,zeilen:[...e.slice(o*n,(o+1)*n)]}:{seiten:a,seite:o,zeilen:Array.from({length:i},()=>null)}}function ri(e,t){let n=t.trim().toLowerCase();return e.find(e=>e.wert.trim().toLowerCase()===n)}var ii=`text`,ai=`status`,oi=`bild`,si=`bild`,ci=`unter`,li=[{wert:ii,name:`Text`,spur:`minmax(0, 1fr)`,klasse:``,zelle:e=>e},{wert:`zahl`,name:`Zahl`,spur:`90px`,klasse:`zahl`,zelle:e=>e},{wert:`datum`,name:`Datum`,spur:`100px`,klasse:`zahl`,zelle:e=>e},{wert:ai,name:`Status`,spur:`120px`,klasse:`status`,zelle:(e,t)=>{let n=ri(t,e);return n?_`<span class="chip v-${Un(n.bedeutung)}">${n.name.trim()===``?e:n.name}</span>`:_`<span class="chip">${e}</span>`}},{wert:oi,name:`Bild + Name`,spur:`minmax(0, 1fr)`,klasse:`bild`,zusatzFelder:[{key:si,label:`Bild`},{key:ci,label:`Unterzeile`}],hoehe:e=>(e[si]??``)!==``||(e[ci]??``)!==``?44:32,zelle:(e,t,n)=>{let r=Qn(n[si]??``),i=n[ci]??``;return _`<div class="bild-name">
         ${r===void 0?y:_`<span class="bild-zeichen">${r}</span>`}
         <div class="bild-text">
           <div class="bild-titel">${e}</div>
