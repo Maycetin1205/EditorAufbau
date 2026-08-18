@@ -79,10 +79,15 @@ dann `go` (0.3), dann genau EINE Etappe.
   die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
   (Entschlanken). **G3b, G3c, G4, G5 und G5b (Schalter „Kopfzeile") sind
   GEBAUT (2026-08-18). Die Welle G ist damit fertig bis auf die
-  Nutzerprobe.** Gebaut wurde auf Branch
-  `claude/inline-edit-receipt-table-823di6` (dieser Branch fuehrt
-  den Erfassungs-Stand weiter — nicht mehr parallel auf
-  `claude/softengine-erp-templates-ynqibv` arbeiten).
+  Nutzerprobe.**
+  **Branch-Konsolidierung wiederhergestellt (2026-08-18 spaet,
+  Nutzer-Auftrag):** alles ist in `main` zusammengefuehrt, gearbeitet
+  wird wieder DIREKT auf main (Beschluss 2026-08-05, kein Force noetig —
+  main wurde nur vorgespult). Alle `claude/…`-Branches sind geloescht:
+  ihr Inhalt steckt in main, oder es waren ueberholte Altstaende
+  (Welle R und die Plan-Fassungen 1–4 leben laengst in main bzw. in
+  dieser Fassung 6; die Kennungen der geloeschten Staende stehen im
+  Chat-Protokoll der Sitzung).
 - **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
   Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
   WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
