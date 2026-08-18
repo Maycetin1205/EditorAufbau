@@ -37,18 +37,17 @@ dann `go` (0.3), dann genau EINE Etappe.
      N3–N5) plus die Fixe vom 18.08. Dabei: **U10 beobachten**
      (Leerzeichen beim Benennen — Ursache braucht seine Beobachtung,
      nicht weiter im Code suchen, zwei Sitzungen waren erfolglos).
-  2. **Koralle-Frage (U7b/c):** uebernimmt der Editor den Koralle-Akzent
-     der Designsprache? Empfehlung des Analyse-Chats: ja (konsequent zur
-     Fellnase-Ansage; Token-Trennung bleibt technisch hart). Antwort
-     steht aus; angestrichen wird ohnehin erst nach U4/U5.
-  3. **U4-Entwurfssitzung** (Datencenter + Inspector neu) — braucht den
+  2. **U4-Entwurfssitzung** (Datencenter + Inspector neu) — braucht den
      Nutzer live im Chat; Grundlagen liegen bereit (Quellen-FORMEN unten,
      Bauteil-Inventur der Analyse, 45-Bedienwege-Zaehlung).
-  4. Mini-Frage: `preflight.ts` ist seit dem Punkt-Entfernen ohne
+  3. Mini-Frage: `preflight.ts` ist seit dem Punkt-Entfernen ohne
      Aufrufer im Produkt — loeschen (samt Tests) oder behalten?
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
-  (erledigt) · Plan eindampfen JA (erledigt).
+  (erledigt) · Plan eindampfen JA (erledigt) · **Koralle-Frage: JA** —
+  der Editor uebernimmt den Koralle-Akzent der Designsprache
+  (Nutzer-Antwort 2026-08-18 abends; umgesetzt wird das erst in U7b/c
+  nach U4/U5, die Token-Trennung Editor/Maske bleibt technisch hart).
 - **V1, V0, V3, V4 und V5 Stellen 1–5 sind GEBAUT (2026-08-18).** Offen aus
   der Welle V: V5 Stellen 6–8 — die brauchen erst eine Nutzer-Entscheidung,
   s. Etappentext V5.
@@ -1092,8 +1091,8 @@ byte-gleich.
   Entscheidung, wird gefragt. In `designsprache/` einchecken; der Nutzer
   nickt IM BROWSER ab, bevor irgendwer den Editor anfasst.
 - **U7b · Editor-Tokens umstellen** (`src/index.css` auf die abgenickten
-  Werte, Schrift wie die Demo). Offene Nutzer-Frage: Koralle-Akzent
-  uebernehmen? (Empfehlung: ja.)
+  Werte, Schrift wie die Demo). Koralle-Akzent: **JA, uebernehmen**
+  (Nutzer-Entscheidung 2026-08-18, s. 0.1 — nicht erneut fragen).
 - **U7c · Steuerung/Inspector/Palette angleichen**, Stelle fuer Stelle
   gegen den ergaenzten Musterbogen.
 
@@ -1152,8 +1151,8 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 
 ## 5. Reihenfolge
 
-1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung + Koralle-Wort +
-   preflight-Mini-Frage.
+1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung +
+   preflight-Mini-Frage. (Koralle ist beantwortet: JA, s. 0.1.)
 2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9 → V7~~ (GEBAUT).
    V6 braucht zuerst den Kurzentwurf mit dem Nutzer und tritt hinter
    Welle G zurueck (Nutzer-Prio 2026-08-18).
