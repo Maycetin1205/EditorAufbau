@@ -14,7 +14,8 @@ import {
   type Datenbesitz,
 } from './datenBesitz'
 import type { Zeilenmass } from './seitengroesse'
-import { connectTable, disconnectTable } from './seRuntime'
+import { connectTable, disconnectTable, zeilenIndexVon } from './seRuntime'
+import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
 import { zeigtEchteDaten } from './suche'
 import {
   benenneSpalteUm,
@@ -53,6 +54,10 @@ export class TabelleBlock extends BasicBlock {
 
   static readonly satzWahl: SatzWahl = {}
   static readonly kannAuswahlFolgen = true
+
+  static readonly blockEvents = [
+    { key: 'onRowClick', name: 'Zeile gewählt' },
+  ]
 
   static readonly listenBindung: ListenBindung = SPALTEN_BINDUNG
   static readonly defaultProps = {
@@ -201,6 +206,8 @@ export class TabelleBlock extends BasicBlock {
     if (rohzeile === undefined) return
     sendeZeileAktiviert(this, { rohzeile, rohIndex, ansichtIndex })
     this.toggleAuswahl(rohzeile)
+    runEvent(this, 'onRowClick', { PINDEX: zeilenIndexVon(this, rohzeile) })
+      .catch(meldeKettenFehler)
   }
 
   private toggleAuswahl(rohzeile: unknown): void {

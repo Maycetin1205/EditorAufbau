@@ -1,5 +1,5 @@
 import { bindingAttr } from '../../core/blocks/BlockDefinition'
-import { getField, setField } from '../../softengine/data'
+import { satzIndexVon, setField } from '../../softengine/data'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { leseGebundeneStelle } from '../shared/gebundeneStelle'
 import { meldeKettenFehler, runEvent } from '../shared/seAktionen'
@@ -50,7 +50,7 @@ export function hydrateField(field: RuntimeFieldElement): void {
   }
 
   const { zeile, quelle, quelleId, reinerCode, wert } = stelle
-  const pindex = quelle.indexField === '' ? '' : getField(zeile, quelle.indexField)
+  const pindex = satzIndexVon(quelle, zeile)
 
   if (quelleId === '') fieldData.set(field, { row: zeile, code: reinerCode, pindex })
   else fieldData.delete(field)

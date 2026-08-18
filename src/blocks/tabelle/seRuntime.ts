@@ -1,5 +1,5 @@
 import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, rowsFor } from '../../softengine/data'
+import { findRuntimeDataSource, rowsFor, satzIndexVon } from '../../softengine/data'
 import {
   auswahlWiederfinden,
   geberIdVon,
@@ -36,6 +36,17 @@ function zusatzWerte(
     if (code !== '') werte[zf.key] = lies(row, code)
   }
   return werte
+}
+
+// Die Satznummer der angeklickten Zeile — was die Kette als {PINDEX}
+// weitergibt. Steht hier, weil nur die Laufzeit-Seite die Quellenliste
+// kennt; ohne angeschlossene Quelle (geliefertes Fenster) ist sie leer.
+export function zeilenIndexVon(el: HTMLElement, rohzeile: unknown): string {
+  const source = findRuntimeDataSource(
+    seGlobal().FF_DATA_SOURCES,
+    el.getAttribute('source') ?? '',
+  )
+  return source ? satzIndexVon(source, rohzeile) : ''
 }
 
 function hydrateTable(el: RuntimeTableElement): void {

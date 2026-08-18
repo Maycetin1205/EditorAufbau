@@ -1,7 +1,7 @@
 import { bindingAttr } from '../../core/blocks/BlockDefinition'
 import { getAllBlockDefinitions } from '../../core/blocks/blockRegistry'
 import { seGlobal } from '../../softengine/bridge'
-import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
+import { findRuntimeDataSource, getField, rowsFor, satzIndexVon } from '../../softengine/data'
 import { auswahlWiederfinden, geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { macheFeldLeser } from '../shared/fremdeQuellen'
@@ -147,7 +147,7 @@ function hydrate(board: HTMLElement): void {
       }
     }
 
-    const pindex = source.indexField === '' ? '' : getField(row, source.indexField)
+    const pindex = satzIndexVon(source, row)
     cardData.set(card, { row, pindex })
     card.draggable = true
   }

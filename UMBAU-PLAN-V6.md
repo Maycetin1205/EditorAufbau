@@ -49,10 +49,10 @@ dann `go` (0.3), dann genau EINE Etappe.
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
-- **V1, V0 und V3 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V4 → V5.
+- **V1, V0, V3 und V4 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
@@ -464,7 +464,12 @@ Vorbild WOERTLICH: `editor/canvas/PopupSeite.tsx`, Anker `startResize` /
 Konzept, keine Migration (neue Props mit Standard).
 **Runtime-Bytes aendern sich bewusst.**
 
-## V4 · Tabellen-Zeilenklick als Ketten-Ausloeser
+## V4 · Tabellen-Zeilenklick als Ketten-Ausloeser (GEBAUT 2026-08-18)
+
+Gebaut wie beschrieben. Dazu kam, statt einer dritten Kopie: die Formel
+fuer die Satznummer (`{PINDEX}`) stand wortgleich in `feldRuntime` und
+`kanban/seRuntime` und wohnt jetzt als `satzIndexVon` in
+`softengine/data.ts` — alle drei lesen dieselbe.
 
 Die Tabelle ist die einzige Datenanzeige ohne `blockEvents`, obwohl die
 Zeilen-Aktivierung (D1) intern existiert (`blocks/tabelle/

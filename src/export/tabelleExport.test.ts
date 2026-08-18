@@ -125,3 +125,26 @@ describe('Tabelle (Fahrplan 4)', () => {
     expect(coerceSpalten([{ titel: 'X' }])).toEqual([{ titel: 'X', feld: '', art: 'text' }])
   })
 })
+
+describe('Tabelle: Zeilenklick als Ketten-Ausloeser (V4)', () => {
+  it('eine Kette an "Zeile gewaehlt" reist als Ereignis mit', () => {
+    const baum = tabelleBaum({})
+    baum.tab.events = {
+      onRowClick: [{
+        id: 's1', type: 'POPUP_OPEN', resultKey: '', popup: 'Beleg',
+      }],
+    }
+    const { html } = exportMask(baum)
+    expect(tabelleTag(html)).toContain('data-ff-aktionen=')
+    expect(html).toContain('onRowClick')
+    expect(html).toContain('POPUP_OPEN')
+  })
+
+  it('ein unbekanntes Ereignis faellt weg — nur deklarierte reisen mit', () => {
+    const baum = tabelleBaum({})
+    baum.tab.events = {
+      onGibtEsNicht: [{ id: 's1', type: 'POPUP_OPEN', resultKey: '', popup: 'Beleg' }],
+    }
+    expect(exportMask(baum).html).not.toContain('onGibtEsNicht')
+  })
+})
