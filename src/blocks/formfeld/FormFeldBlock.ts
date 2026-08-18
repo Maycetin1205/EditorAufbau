@@ -87,6 +87,9 @@ export class FormFeldBlock extends BasicBlock {
 
     nachschlagSpalten: [] as Spalte[],
 
+    fensterBreite: 520,
+    fensterHoehe: 380,
+
     einzigerTreffer: 'nein',
   }
 
@@ -112,6 +115,8 @@ export class FormFeldBlock extends BasicBlock {
     },
   })
   nachschlagSpalten: Spalte[] = []
+  @property({ type: Number }) fensterBreite = 520
+  @property({ type: Number }) fensterHoehe = 380
   @property() einzigerTreffer = 'nein'
 
   @state() private spaltenDialog = false
@@ -208,6 +213,8 @@ export class FormFeldBlock extends BasicBlock {
       speicherTitel: this.speicherTitel,
       spalten: this.nachschlagSpalten,
       titel: this.placeholder,
+      breite: this.fensterBreite,
+      hoehe: this.fensterHoehe,
 
       onUebernehmen: (anzeige, wert, satz) => {
         this.uebernimmSatz(anzeige, wert, satz)
@@ -227,18 +234,42 @@ export class FormFeldBlock extends BasicBlock {
     })
   }
 
+  // Der EINE Weg, mit dem dieser Baustein eine Eigenschaft an den Editor
+  // meldet. `geste` gesetzt: der Editor klammert alles von 'beginn' bis
+  // 'ende' zu einem Undo-Schritt (Ziehen).
+  private meldeProp(attr: string, value: unknown, geste?: 'beginn' | 'ende'): void {
+    this.dispatchEvent(new CustomEvent('ff-prop-change', {
+      detail: { attr, value, ...(geste === undefined ? {} : { geste }) },
+      bubbles: true,
+      composed: true,
+    }))
+  }
+
   private spaltenDialogTpl(): TemplateResult {
     return spaltenStellenTpl({
       titel: this.placeholder,
       spalten: this.spaltenEffektiv(),
+      breite: this.fensterBreite,
+      hoehe: this.fensterHoehe,
+      onGroesse: (detail) => {
+        // Der Rahmen aendert sich nicht selbst: der Editor speichert und
+        // gibt die neue Groesse als Property zurueck. `geste` klammert den
+        // ganzen Zug zu EINEM Undo-Schritt.
+        const attr = detail.achse === 'breite' ? 'fensterBreite' : 'fensterHoehe'
+        if (detail.geste === 'standard') {
+          this.meldeProp(attr, FormFeldBlock.defaultProps[attr])
+          return
+        }
+        this.meldeProp(
+          attr,
+          detail.wert,
+          detail.geste === 'laeuft' ? undefined : detail.geste,
+        )
+      },
       onAendern: (spalten) => {
         // Vom Baustein selbst gemeldet, damit der Editor sie als normale
         // Eigenschafts-Aenderung speichert (Undo inklusive).
-        this.dispatchEvent(new CustomEvent('ff-prop-change', {
-          detail: { attr: 'nachschlagSpalten', value: spalten },
-          bubbles: true,
-          composed: true,
-        }))
+        this.meldeProp('nachschlagSpalten', spalten)
       },
       onFeldWahl: (detail) => {
         // detail traegt die ANGEZEIGTE Liste mit (auch den Automatik-Stand):

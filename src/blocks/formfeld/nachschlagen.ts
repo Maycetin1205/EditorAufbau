@@ -7,6 +7,7 @@ import { zeilenNachAuswahl } from '../shared/auswahl'
 import {
   DIALOG_RAHMEN_TAG,
   DIALOG_SCHLIESSEN_EVENT,
+  type DialogGroesseDetail,
   type DialogRahmen,
 } from '../shared/DialogRahmen'
 import { ART_TEXT } from '../tabelle/spaltenArten'
@@ -76,6 +77,9 @@ export interface NachschlagenArgs {
 
   spalten: readonly Spalte[]
   titel: string
+
+  breite: number
+  hoehe: number
   onUebernehmen: (anzeige: string, wert: string, satz: unknown) => void
 }
 
@@ -260,8 +264,8 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
 
   dialog.inhaltFest = true
   dialog.titel = args.titel !== '' ? args.titel : 'Nachschlagen'
-  dialog.breite = 520
-  dialog.hoehe = 380
+  dialog.breite = args.breite
+  dialog.hoehe = args.hoehe
   dialog.addEventListener(DIALOG_SCHLIESSEN_EVENT, () => schliesse())
 
   dialog.addEventListener('click', (event) => event.stopPropagation())
@@ -291,7 +295,12 @@ export interface SpaltenStellenArgs {
 
   spalten: readonly Spalte[]
 
+  breite: number
+  hoehe: number
+
   onAendern: (spalten: Spalte[]) => void
+
+  onGroesse: (detail: DialogGroesseDetail) => void
 
   onFeldWahl: (detail: { index: number; top: number; left: number; liste?: Spalte[] }) => void
   onSchliessen: () => void
@@ -309,10 +318,15 @@ export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
     escape-schliesst
     ohne-modal
     inhalt-fest
+    ziehbar
     style="z-index:40"
     .titel=${args.titel !== '' ? args.titel : 'Nachschlagen'}
-    .breite=${520}
-    .hoehe=${380}
+    .breite=${args.breite}
+    .hoehe=${args.hoehe}
+    @ff-dialog-groesse=${(e: Event) => {
+      e.stopPropagation()
+      args.onGroesse((e as CustomEvent<DialogGroesseDetail>).detail)
+    }}
     @ff-dialog-schliessen=${(e: Event) => {
       e.stopPropagation()
       args.onSchliessen()

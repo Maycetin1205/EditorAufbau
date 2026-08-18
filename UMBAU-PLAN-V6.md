@@ -49,10 +49,10 @@ dann `go` (0.3), dann genau EINE Etappe.
 - **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
   STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
   (erledigt) · Plan eindampfen JA (erledigt).
-- **V1 und V0 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V3 → V4 → V5.
+- **V1, V0 und V3 sind GEBAUT (2026-08-18).** Offen aus der Welle V: V4 → V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V3/V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
+  V4/V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
@@ -435,7 +435,22 @@ wurde. Nicht von selbst wieder vorschlagen; die Skizze liegt in der
 git-Historie dieser Datei (Stand 2026-08-18). Kommt nur wieder, wenn der
 Nutzer selbst danach fragt.
 
-## V3 · Nachschlage-Fenster: Groesse am Ding einstellen
+## V3 · Nachschlage-Fenster: Groesse am Ding einstellen (GEBAUT 2026-08-18)
+
+ANDERS gebaut als hier beschrieben — Nutzer-Entscheidung 2026-08-18, nachdem
+der Plantext sich als undurchfuehrbar erwies: `zieheGroesse` braucht die
+Editor-Instanz, das Einstell-Fenster rendert aber der BAUSTEIN in seinem
+Shadow-DOM. Die Anfasser sitzen deshalb im geteilten `DialogRahmen`
+(Eigenschaft `ziehbar`, nur der Editor setzt sie); er meldet
+`ff-dialog-groesse`, das Feld reicht es als `ff-prop-change` weiter. Dafuer
+kennt `ff-prop-change` jetzt `geste: 'beginn' | 'ende'` — `useLitElement`
+klammert damit ueber `editor.oeffneGeste()` einen ganzen Zug zu EINEM
+Undo-Schritt (generisch, fuer jeden Baustein). Preis, den der Weg kostet und
+der benannt gehoert: die Anfasser samt Zieh-Schleife liegen im
+Laufzeit-Buendel (+2,7 KB), obwohl sie zur Laufzeit nie laufen — eine
+Editor-Hilfe im Baustein, gegen den Geist von Regel 1. Wer das aufloest,
+stellt zugleich das Popup auf denselben Anfasser um; dann gibt es wieder
+EINE Zieh-Mechanik statt der heutigen zwei.
 
 Das Fenster ist heute fest 520x380 — an BEIDEN Stellen in
 `blocks/formfeld/nachschlagen.ts`: `oeffneNachschlagen` (Anker

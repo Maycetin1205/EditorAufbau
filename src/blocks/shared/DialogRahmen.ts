@@ -4,7 +4,27 @@ import { property } from 'lit/decorators.js'
 export const DIALOG_RAHMEN_TAG = 'ff-dialog-rahmen'
 export const DIALOG_SCHLIESSEN_EVENT = 'ff-dialog-schliessen'
 
+// Gemeldet beim Ziehen an einem Anfasser: `breite`/`hoehe` in Pixeln, dazu
+// wo im Zug wir stehen. Der Rahmen aendert sich NICHT selbst — er meldet nur,
+// und wer ihn benutzt, speichert und gibt die neue Groesse zurueck. Sonst
+// gaebe es zwei Wahrheiten ueber dieselbe Zahl.
+export const DIALOG_GROESSE_EVENT = 'ff-dialog-groesse'
+
+export interface DialogGroesseDetail {
+  achse: 'breite' | 'hoehe'
+
+  wert: number
+
+  // 'beginn'/'laeuft'/'ende' klammern EINEN Zug. 'standard' ist der
+  // Doppelklick auf den Anfasser: `wert` gilt dann nicht — der Empfaenger
+  // nimmt seinen eigenen Startwert, denn nur er kennt ihn.
+  geste: 'beginn' | 'laeuft' | 'ende' | 'standard'
+}
+
 export const DIALOG_RAND = 24
+
+export const DIALOG_MIN_BREITE = 240
+export const DIALOG_MIN_HOEHE = 160
 
 function pixel(wert: unknown, ersatz: number): number {
   const zahl = Number(wert)
@@ -97,6 +117,30 @@ export class DialogRahmen extends LitElement {
     }
 
     :host([inhalt-fest]) .inhalt { overflow: hidden; }
+
+    .anfasser {
+      position: absolute;
+      border-radius: 4px;
+      background: var(--se-accent);
+      touch-action: none;
+      z-index: 2;
+    }
+    .anfasser.breit {
+      top: 50%;
+      right: -3px;
+      width: 7px;
+      height: 26px;
+      transform: translateY(-50%);
+      cursor: ew-resize;
+    }
+    .anfasser.hoch {
+      left: 50%;
+      bottom: -3px;
+      width: 26px;
+      height: 7px;
+      transform: translateX(-50%);
+      cursor: ns-resize;
+    }
   `
 
   @property() titel = 'Dialog'
@@ -107,6 +151,11 @@ export class DialogRahmen extends LitElement {
 
   @property({ type: Boolean, attribute: 'ohne-modal' }) ohneModal = false
   @property({ type: Boolean, reflect: true, attribute: 'inhalt-fest' }) inhaltFest = false
+
+  // Gesetzt zeigt der Rahmen zwei Anfasser und meldet das Ziehen. Nur der
+  // Editor setzt das — zur Laufzeit hat der Bediener an der Groesse nichts
+  // zu stellen.
+  @property({ type: Boolean, reflect: true }) ziehbar = false
 
   private escapeRegistriert = false
 
@@ -122,6 +171,64 @@ export class DialogRahmen extends LitElement {
     if (sollRegistriert) document.addEventListener('keydown', this.aufTaste, true)
     else document.removeEventListener('keydown', this.aufTaste, true)
     this.escapeRegistriert = sollRegistriert
+  }
+
+  private ziehe(event: PointerEvent, achse: 'breite' | 'hoehe'): void {
+    if (!this.ziehbar) return
+    event.preventDefault()
+    event.stopPropagation()
+
+    const start = achse === 'breite'
+      ? pixel(this.breite, 520)
+      : pixel(this.hoehe, 380)
+    const min = achse === 'breite' ? DIALOG_MIN_BREITE : DIALOG_MIN_HOEHE
+    const startPos = achse === 'breite' ? event.clientX : event.clientY
+
+    // Die Kante wandert nur halb so weit wie der Zeiger: das Fenster steht
+    // mittig, waechst also nach BEIDEN Seiten. Derselbe Faktor 2 wie beim
+    // Popup-Anfasser im Editor.
+    let letzter = Math.max(min, Math.round(start))
+    let gemeldet = false
+
+    const melde = (wert: number, geste: DialogGroesseDetail['geste']): void => {
+      this.dispatchEvent(new CustomEvent<DialogGroesseDetail>(DIALOG_GROESSE_EVENT, {
+        detail: { achse, wert, geste },
+        bubbles: true,
+        composed: true,
+      }))
+    }
+
+    const beiBewegung = (ev: PointerEvent): void => {
+      const pos = achse === 'breite' ? ev.clientX : ev.clientY
+      const naechster = Math.max(min, Math.round(start + (pos - startPos) * 2))
+      if (naechster === letzter) return
+      letzter = naechster
+      melde(naechster, gemeldet ? 'laeuft' : 'beginn')
+      gemeldet = true
+    }
+
+    const beende = (): void => {
+      window.removeEventListener('pointermove', beiBewegung)
+      window.removeEventListener('pointerup', beende)
+      window.removeEventListener('pointercancel', beende)
+      window.removeEventListener('blur', beende)
+      if (gemeldet) melde(letzter, 'ende')
+    }
+
+    window.addEventListener('pointermove', beiBewegung)
+    window.addEventListener('pointerup', beende)
+    window.addEventListener('pointercancel', beende)
+    window.addEventListener('blur', beende)
+  }
+
+  private aufStandard(event: Event, achse: 'breite' | 'hoehe'): void {
+    if (!this.ziehbar) return
+    event.stopPropagation()
+    this.dispatchEvent(new CustomEvent<DialogGroesseDetail>(DIALOG_GROESSE_EVENT, {
+      detail: { achse, wert: 0, geste: 'standard' },
+      bubbles: true,
+      composed: true,
+    }))
   }
 
   private schliesse(): void {
@@ -172,6 +279,20 @@ export class DialogRahmen extends LitElement {
             >✕</button>
           </header>
           <div class="inhalt"><slot></slot></div>
+          ${this.ziehbar ? html`
+            <div
+              class="anfasser breit"
+              title="Breite ziehen · Doppelklick: Standard"
+              @pointerdown=${(e: PointerEvent) => this.ziehe(e, 'breite')}
+              @dblclick=${(e: Event) => this.aufStandard(e, 'breite')}
+            ></div>
+            <div
+              class="anfasser hoch"
+              title="Höhe ziehen · Doppelklick: Standard"
+              @pointerdown=${(e: PointerEvent) => this.ziehe(e, 'hoehe')}
+              @dblclick=${(e: Event) => this.aufStandard(e, 'hoehe')}
+            ></div>
+          ` : nothing}
         </section>
       </div>
     `

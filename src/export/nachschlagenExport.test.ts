@@ -102,6 +102,19 @@ describe('Nachschlage-Feld im Export', () => {
     expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
   })
 
+  it('eine eingestellte Fenstergroesse reist mit, die Standardgroesse nicht', () => {
+    const standard = exportMask(baumMit(KUNDE_PROPS), 'Maske', ADRESSEN).html
+    expect(standard).not.toContain('fensterbreite=')
+    expect(standard).not.toContain('fensterhoehe=')
+
+    const gezogen = exportMask(
+      baumMit({ ...KUNDE_PROPS, fensterBreite: 760, fensterHoehe: 500 }),
+      'Maske', ADRESSEN,
+    ).html
+    expect(gezogen).toContain('fensterbreite="760"')
+    expect(gezogen).toContain('fensterhoehe="500"')
+  })
+
   it('das Feld ist Auswahl-GEBER und traegt data-ff-id — ein Textfeld nicht', () => {
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kunde', 'notiz'] },

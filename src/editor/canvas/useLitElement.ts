@@ -9,12 +9,19 @@ import {
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
+import type { GestenKlammer } from '../../state/history'
 
 const FREMD_ZEICHEN = ' ↗'
 
 interface PropChangeDetail {
   attr: string
   value: unknown
+
+  // Ein Baustein, der eine ZUSAMMENHAENGENDE Handlung meldet (Ziehen), setzt
+  // sie: 'beginn' beim ersten, 'ende' beim letzten Wert. Der Editor klammert
+  // alles dazwischen zu EINEM Undo-Schritt — sonst waere ein Zug ueber 200
+  // Pixel auch 200 Mal Strg+Z.
+  geste?: 'beginn' | 'ende'
 }
 
 interface LitElementArgs {
@@ -41,6 +48,8 @@ export function useLitElement({
 }: LitElementArgs) {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
+  const klammer = useRef<GestenKlammer | null>(null)
+
   const elementRef = useRef<HTMLElement | null>(null)
   const [element, setElement] = useState<HTMLElement | null>(null)
 
@@ -64,11 +73,23 @@ export function useLitElement({
       const ce = e as CustomEvent<PropChangeDetail>
       const detail = ce.detail
       if (!detail || typeof detail.attr !== 'string') return
+      if (detail.geste === 'beginn' && !klammer.current) {
+        klammer.current = editor.oeffneGeste()
+      }
+      klammer.current?.oeffne()
       editor.updateProperty(blockRef.current.id, detail.attr, detail.value)
+      if (detail.geste === 'ende') {
+        klammer.current?.schliesse()
+        klammer.current = null
+      }
     }
     el.addEventListener('ff-prop-change', onPropChange)
 
     return () => {
+      // Stirbt das Element mitten im Zug, bleibt die Klammer sonst offen und
+      // schluckt jede spaetere Aenderung in denselben Undo-Schritt.
+      klammer.current?.schliesse()
+      klammer.current = null
       el.removeEventListener('ff-prop-change', onPropChange)
       if (container.contains(el)) container.removeChild(el)
       elementRef.current = null
