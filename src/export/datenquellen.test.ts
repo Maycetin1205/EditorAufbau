@@ -258,4 +258,45 @@ describe('exportMask: Datenquellen', () => {
       { INDEX_NR: 0, ALIAS: 'Termine', ID: 'IDBID0021', FELDER: '*' },
     ])
   })
+
+  it('bestellt ein DataSet im DATASET-Block, mit Spaltennamen als Feldern', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['liste'] },
+      liste: {
+        id: 'liste', type: TEST_DATA_BOX, props: { source: 'chargen' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [{
+      id: 'chargen', name: 'Chargen', kind: 'dataset' as const, idbId: 'ID0001',
+      fields: [
+        { code: 'Chargennummer', label: 'Chargennummer' },
+        { code: 'Lagerbestand', label: 'Bestand' },
+      ],
+    }]
+
+    const sev = JSON.parse(exportMask(tree, 'Maske', sources).sevariablen)
+    // Die Bestellung landet NICHT in der SEFILELOOP: CHA & Co. gibt es dort
+    // nicht, genau deshalb existiert der DATASET-Weg.
+    expect(sev.SEFILELOOP).toEqual([])
+    expect(sev.DATASET).toEqual([
+      { ID: 'ID0001', ALIAS: 'Chargen', FELDER: 'Chargennummer,Lagerbestand' },
+    ])
+  })
+
+  it('laesst den DATASET-Block weg, solange keine Quelle ihn braucht', () => {
+    const tree: BlockTree = {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['b'] },
+      b: {
+        id: 'b', type: TEST_DATA_BOX, props: { source: 'termine' },
+        parentId: 'root', childIds: [],
+      },
+    }
+    const sources = [{
+      id: 'termine', name: 'Termine', kind: 'idb' as const, idbId: 'IDBID0001', fields: [],
+    }]
+
+    const sev = JSON.parse(exportMask(tree, 'Maske', sources).sevariablen)
+    expect('DATASET' in sev).toBe(false)
+  })
 })

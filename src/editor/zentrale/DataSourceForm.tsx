@@ -58,7 +58,9 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
   const [zeilen, setZeilen] = useState<FeldZeile[]>(
     source && source.fields.length > 0
 
-      ? source.fields.map((f) => zeileFromField(f, source.feldVorsatz ?? ''))
+      ? source.fields.map((f) => zeileFromField(
+          f, source.feldVorsatz ?? '', artFuer(source.kind).spaltenNamen,
+        ))
       : [{ ...LEERE_ZEILE }],
   )
 
@@ -95,7 +97,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
   const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
   const kennungFehler =
-    kennungEingeben && kennungFromInput(kennungEingabe) === ''
+    kennungEingeben && kennungFromInput(kennungEingabe, art.idbKurzform) === ''
       ? `${art.kennungLabel} fehlt (z. B. ${art.kennungBeispiel}).`
       : ''
 
@@ -105,13 +107,21 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
       : ''
   const zeilenFehler = zeilen.map((z) => {
     if (z.label.trim() === '') return 'Klarname fehlt.'
-    if (FELDCODE.test(z.label.trim())) return 'Klarname darf kein Feldcode sein.'
-    if (zeilenCode(z, vorsatz) === '') return 'Position und Länge als Zahlen angeben.'
+    if (!art.spaltenNamen && FELDCODE.test(z.label.trim())) {
+      return 'Klarname darf kein Feldcode sein.'
+    }
+    if (zeilenCode(z, vorsatz, art.spaltenNamen) === '') {
+      return art.spaltenNamen
+        ? 'Spaltenname fehlt (ohne Komma).'
+        : 'Position und Länge als Zahlen angeben.'
+    }
     return ''
   })
-  const codes = zeilen.map((z) => zeilenCode(z, vorsatz))
+  const codes = zeilen.map((z) => zeilenCode(z, vorsatz, art.spaltenNamen))
   const doppeltFehler = codes.some((c, i) => c !== '' && codes.indexOf(c) !== i)
-    ? 'Zwei Felder haben dieselbe Position + Länge.'
+    ? (art.spaltenNamen
+        ? 'Zwei Felder zeigen auf dieselbe Spalte.'
+        : 'Zwei Felder haben dieselbe Position + Länge.')
     : ''
 
   const relationNrFehler = holtZeilen && relationNrFromInput(relationNr) === ''
@@ -134,7 +144,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     const daten: Omit<DataSource, 'id'> = {
       name: name.trim(),
       kind,
-      ...(kennungEingeben ? { idbId: kennungFromInput(kennungEingabe) } : {}),
+      ...(kennungEingeben ? { idbId: kennungFromInput(kennungEingabe, art.idbKurzform) } : {}),
 
       ...(kopfsatzEingeben && kopfsatzFromInput(kopfsatzEingabe) !== ''
         ? { kopfsatzIndex: kopfsatzFromInput(kopfsatzEingabe) }
@@ -156,7 +166,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
           }
         : {}),
       fields: zeilen.map((z) => ({
-        code: zeilenCode(z, vorsatz),
+        code: zeilenCode(z, vorsatz, art.spaltenNamen),
         label: z.label.trim(),
       })),
     }
@@ -281,6 +291,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
         )}
 
         <FeldListe
+          spaltenNamen={art.spaltenNamen}
           zeilen={zeilen}
           setZeilen={setZeilen}
           zeilenFehler={zeilenFehler}

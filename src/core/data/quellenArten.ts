@@ -6,6 +6,7 @@ export type DataSourceKind =
   | 'belegposition'
   | 'datei'
   | 'erpabfrage'
+  | 'dataset'
 
 export interface ArtFeld {
   code: string
@@ -33,7 +34,15 @@ export interface QuellenArt {
 
   varMoeglich: boolean
 
-  bestellBlock: 'sefileloop' | 'erpapicall'
+  bestellBlock: 'sefileloop' | 'erpapicall' | 'dataset'
+
+  // Die Felder dieser Art heissen mit Klarnamen (DataSet-Spalten),
+  // nicht mit Position + Laenge. Steuert Eingabe UND Pruefung.
+  spaltenNamen: boolean
+
+  // 'ID0001' zur IDB-Langform 'IDBID0001' ausschreiben. Bei DataSets
+  // ist 'ID0001' die echte Kennung und darf NICHT umgeschrieben werden.
+  idbKurzform: boolean
 
   feldVorsatzMoeglich: boolean
 
@@ -53,6 +62,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'sefileloop',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: false,
     standardFelder: [],
   },
@@ -68,6 +79,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     relationLadenMoeglich: false,
     varMoeglich: true,
     bestellBlock: 'sefileloop',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: false,
     standardFelder: [],
   },
@@ -83,6 +96,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'sefileloop',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: false,
     standardFelder: [],
   },
@@ -99,6 +114,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     varMoeglich: true,
 
     bestellBlock: 'sefileloop',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: false,
     standardFelder: [
       { code: '0_11', label: 'Satzschlüssel' },
@@ -127,6 +144,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     varMoeglich: true,
 
     bestellBlock: 'sefileloop',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: false,
     standardFelder: [
 
@@ -163,6 +182,8 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'sefileloop',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: false,
     standardFelder: [],
   },
@@ -179,8 +200,27 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'erpapicall',
+    spaltenNamen: false,
+    idbKurzform: true,
     feldVorsatzMoeglich: true,
 
+    standardFelder: [],
+  },
+  dataset: {
+    id: 'dataset',
+    name: 'DataSet',
+    tabellenId: '',
+    felderEinzeln: true,
+    kennungLabel: 'DataSet-ID',
+    kennungBeispiel: 'ID0001',
+    kopfsatzMoeglich: false,
+    kopfsatzStandard: '',
+    relationLadenMoeglich: false,
+    varMoeglich: false,
+    bestellBlock: 'dataset',
+    spaltenNamen: true,
+    idbKurzform: false,
+    feldVorsatzMoeglich: false,
     standardFelder: [],
   },
 }

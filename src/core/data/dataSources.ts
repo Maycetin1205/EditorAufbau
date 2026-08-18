@@ -23,6 +23,7 @@ export {
   kennungFromInput,
   kopfsatzFromInput,
   quellenKennung,
+  spaltenNameFromInput,
 } from './quellenEingabe'
 
 export interface DataSourceField {

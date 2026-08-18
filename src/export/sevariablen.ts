@@ -19,12 +19,20 @@ export function baueSevariablen(
 ): string {
   const bestellbar = used.filter((s) => ladeRelationFor(s) === null)
   const perApi = bestellbar.filter((s) => artFuer(s.kind).bestellBlock === 'erpapicall')
+  const perDataSet = bestellbar.filter((s) => artFuer(s.kind).bestellBlock === 'dataset')
 
   const geordnet = loopReihenfolge(
     bestellbar.filter((s) => artFuer(s.kind).bestellBlock === 'sefileloop'),
   )
 
   const erpapicall = perApi.map((s) => ({
+    ID: tableIdFor(s),
+    ALIAS: s.name,
+    FELDER: felderFor(s, benutzteFelder.get(s.id), holSchluessel.get(s.id) ?? []),
+  }))
+  // DataSets legen ihre Zeilen unter Daten.Tabellen.<ALIAS> ab — dieselbe
+  // Form wie MEMTAB, die rowsFor() schon liest (softengine/data.ts).
+  const dataset = perDataSet.map((s) => ({
     ID: tableIdFor(s),
     ALIAS: s.name,
     FELDER: felderFor(s, benutzteFelder.get(s.id), holSchluessel.get(s.id) ?? []),
@@ -46,6 +54,7 @@ export function baueSevariablen(
       ...(varAbschnitt.length > 0 ? { VAR: varAbschnitt } : {}),
       SEFILELOOP: sefileloop,
       ERPAPICALL: erpapicall,
+      ...(dataset.length > 0 ? { DATASET: dataset } : {}),
     }, null, 2),
   ) + '\n'
 }

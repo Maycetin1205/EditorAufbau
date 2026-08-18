@@ -5,6 +5,7 @@ import { TextInput } from '@/ui/atoms/text-input'
 import { LEERE_ZEILE, type FeldZeile } from './feldZeile'
 
 const SPALTEN = 'grid grid-cols-[minmax(0,1fr)_72px_72px_auto] items-center gap-x-2'
+const SPALTEN_NAMEN = 'grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-2'
 
 interface FeldListeProps {
   zeilen: FeldZeile[]
@@ -12,11 +13,16 @@ interface FeldListeProps {
   zeilenFehler: string[]
   doppeltFehler: string
   zeigeFehler: boolean
+
+  // DataSet-Quellen sprechen ihre Spalten mit Namen an — dann steht hier
+  // ein Namensfeld statt der zwei Zahlenfelder.
+  spaltenNamen?: boolean
 }
 
 export function FeldListe({
-  zeilen, setZeilen, zeilenFehler, doppeltFehler, zeigeFehler,
+  zeilen, setZeilen, zeilenFehler, doppeltFehler, zeigeFehler, spaltenNamen = false,
 }: FeldListeProps) {
+  const raster = spaltenNamen ? SPALTEN_NAMEN : SPALTEN
   const setZeile = (at: number, patch: Partial<FeldZeile>) =>
     setZeilen(zeilen.map((row, i) => (i === at ? { ...row, ...patch } : row)))
 
@@ -29,33 +35,45 @@ export function FeldListe({
         </Button>
       </div>
 
-      <div className={`${SPALTEN} text-[0.6875rem] text-muted-foreground`}>
+      <div className={`${raster} text-[0.6875rem] text-muted-foreground`}>
         <span>Klarname</span>
-        <span>Position</span>
-        <span>Länge</span>
+        {spaltenNamen
+          ? <span>Spalte im DataSet</span>
+          : <><span>Position</span><span>Länge</span></>}
         <span />
       </div>
       {zeilen.map((z, i) => (
         <div key={i} className="flex flex-col gap-1">
-          <div className={SPALTEN}>
+          <div className={raster}>
             <TextInput
               aria-label={`Feld ${i + 1}: Klarname`}
               value={z.label}
               placeholder="z. B. Vorname"
               onChange={(e) => setZeile(i, { label: e.target.value })}
             />
-            <TextInput
-              aria-label={`Feld ${i + 1}: Position`}
-              value={z.pos}
-              placeholder={z.rawCode !== '' ? '—' : '193'}
-              onChange={(e) => setZeile(i, { pos: e.target.value })}
-            />
-            <TextInput
-              aria-label={`Feld ${i + 1}: Länge`}
-              value={z.len}
-              placeholder={z.rawCode !== '' ? '—' : '30'}
-              onChange={(e) => setZeile(i, { len: e.target.value })}
-            />
+            {spaltenNamen ? (
+              <TextInput
+                aria-label={`Feld ${i + 1}: Spalte im DataSet`}
+                value={z.rawCode}
+                placeholder="z. B. Chargennummer"
+                onChange={(e) => setZeile(i, { rawCode: e.target.value })}
+              />
+            ) : (
+              <>
+                <TextInput
+                  aria-label={`Feld ${i + 1}: Position`}
+                  value={z.pos}
+                  placeholder={z.rawCode !== '' ? '—' : '193'}
+                  onChange={(e) => setZeile(i, { pos: e.target.value })}
+                />
+                <TextInput
+                  aria-label={`Feld ${i + 1}: Länge`}
+                  value={z.len}
+                  placeholder={z.rawCode !== '' ? '—' : '30'}
+                  onChange={(e) => setZeile(i, { len: e.target.value })}
+                />
+              </>
+            )}
             <IconButton
               aria-label={`Feld ${i + 1} entfernen`}
               onClick={() => setZeilen(zeilen.filter((_, at) => at !== i))}
