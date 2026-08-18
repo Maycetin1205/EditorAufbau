@@ -55,6 +55,13 @@ dann `go` (0.3), dann genau EINE Etappe.
   V5 · V6 nach Kurzentwurf · V7 · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
+- **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
+  Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
+  bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
+  welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
+  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). Naechster
+  Kopier-Auftrag: Erste Etappe V8, dann V9 (Reihenfolge im Wellen-Kopf V
+  nachgezogen).
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
   stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
 
@@ -335,8 +342,8 @@ oeffnen, was tun, was zu sehen sein muss) und was du NICHT pruefen
 konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
-V1 -> V0 -> V3 -> V4 -> V5
-Nach V5: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
+V1 -> V0 -> V3 -> V4 -> V5 -> V8 -> V9
+Nach V9: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
 sind.
 ```
@@ -548,6 +555,60 @@ Zwei Etappen, ENTWURF VOR BAU (Kurzentwurf im Chat, Nutzer nickt):
   rowsFor → Tagesfilter → Feldleser → Auswahl wiederfinden). EINE geteilte
   Funktion in `shared/`; jede kuenftige Datenanzeige startet damit bei
   drei Zeilen. Runtime aendert sich bewusst; SE-Delta in die Gesamtprobe.
+
+## V8 · Greifen wird zuverlaessig (Nutzer-Befund 2026-08-18: „SO OFT nicht")
+
+**Belegtes Problem:** Das Verschieben im Raster startet nur, wenn der
+pointerdown bis zum CanvasNode-Wrapper durchbubbelt
+(`editor/canvas/CanvasNode.tsx`, Anker `ziehePosition`). Etliche Stellen
+IM Baustein fangen ihn mit `stopPropagation` ab — ob Greifen klappt,
+haengt davon ab, WO im Baustein der Bediener zupackt. Belegte
+Abfang-Stellen: die Lupe (`blocks/formfeld/nachschlagen.ts`, Anker
+`@pointerdown` im `nachschlagFeldTpl`) · die Spalten-Steuerung
+(`blocks/tabelle/spaltenBearbeiten.ts`, Anker `@pointerdown=${stop}`) ·
+die `stop`-Durchreichung der Tabelle (`blocks/tabelle/TabelleBlock.ts` →
+`tabelleAnsicht`/`tabelleKoerper`, jede `@pointerdown`-Verwendung von
+`stop` einzeln pruefen) · weitere `pointerdown`-stops in `blocks/**`
+(greppen: `pointerdown` in blocks/, jede Stelle einzeln ansehen).
+
+**Regel danach (EINE fuer alle Bausteine):** Druecken + Bewegen (ab der
+bestehenden 4-px-Schwelle `ZUG_SCHWELLE` in `editor/canvas/rasterMove.ts`)
+zieht IMMER den Baustein, egal wo gegriffen; Klicken ohne Bewegung bleibt
+Klicken (waehlen, Lupe, Picker — deren Verhalten haengt an CLICK-Handlern
+und bleibt unveraendert). Umsetzung: die `stopPropagation`-Aufrufe auf
+POINTERDOWN in Baustein-Inhalten entfernen (die auf CLICK bleiben!);
+rasterMove schluckt den Folge-Klick ohnehin nur bei echtem Zug.
+AUSNAHMEN, die ihr pointerdown-stop BEHALTEN: die Editor-Anfasser und
+Knoepfe des BlockHost/der PopupSeite (bedienen den Zug selbst) und alles
+im DialogRahmen/AuswahlFenster (Fenster sollen nie ziehen).
+NICHT Teil dieser Etappe: der FLUSS-Zweig (Container-Kinder ziehen per
+nativem HTML5-Drag, `draggable` in CanvasNode) — eigenes Thema, nur
+benennen, nicht mit umbauen.
+Die Lupen-Ueberdeckung durch den Platzhalter ist bereits separat gefixt
+(`.ph-nachschlag`, Commit vom 2026-08-18).
+**Runtime-Bytes aendern sich bewusst** (blocks/-Stellen).
+
+## V9 · Hol-Quellen: der Geber wird eindeutig (Nutzer-Befund 2026-08-18)
+
+**Belegtes Problem:** Zeigen ZWEI Bausteine dieselbe Geber-Quelle (zwei
+Beleg-Tabellen), ist „die gewaehlte Zeile der Quelle" mehrdeutig —
+`gewaehlteZeileDerQuelle` (`blocks/shared/holendeQuellen.ts`) nimmt heute
+still den ERSTEN Baustein in DOM-Reihenfolge, der irgendeine Auswahl
+traegt. Je nach Auswahl-Zustaenden bestimmt mal die eine, mal die andere
+Tabelle, welche Positionen geholt werden — fuer den Bediener
+unvorhersehbar (genau der gemeldete Fall: Tabelle 2 „beeinflusst"
+Tabelle 3, obwohl deren Folge auf Tabelle 1 zeigt).
+
+**Regel danach: der letzte Klick gewinnt.** Der Auswahl-Zustand
+(`blocks/shared/auswahl.ts`, Anker `const zustand = new Map`) merkt sich
+je Eintrag eine laufende Wahl-Nummer; `gewaehlteZeileDerQuelle` nimmt
+unter allen Gebern derselben Quelle die JUENGSTE Auswahl (Abwahl faellt
+auf die naechstjuengere zurueck, keine = leer). Deterministisch und
+intuitiv: die Positionen folgen dem zuletzt angeklickten Beleg, egal in
+welcher Tabelle. Im selben Zug: `letzterAbdruck` in `holendeQuellen.ts`
+wird bei `setzeAuswahlZurueck` mit geleert (Befund der Analyse: bleibt
+heute stehen und unterdrueckt danach das Neu-Holen).
+**Runtime-Bytes aendern sich bewusst**; SE-Delta in die Gesamtprobe.
 
 Nicht in V, sondern in U4/U5: einheitliche Erfolgs-/Fehlermeldungen des
 EDITORS, das Master-Detail-Duplikat im Datencenter, EIN Speicherverhalten,
