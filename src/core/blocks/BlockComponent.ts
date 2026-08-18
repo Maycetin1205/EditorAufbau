@@ -3,6 +3,7 @@ import type {
   BindableSpot,
   BlockEventSpec,
   DefaultChildSpec,
+  ErfassungsFaehigkeit,
   ListenBindung,
   QuellenFaehigkeit,
   SatzWahl,
@@ -46,6 +47,8 @@ export interface BlockComponentStatic {
 
   readonly satzWahl?: SatzWahl
   readonly kannAuswahlFolgen?: boolean
+
+  readonly kannErfassen?: ErfassungsFaehigkeit
 
   readonly bindableSpots?: readonly BindableSpot[]
 

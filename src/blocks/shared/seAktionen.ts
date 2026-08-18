@@ -1,4 +1,5 @@
-import { parseBlockEvents } from '../../core/data/aktionen'
+import { ACTION_VALUE_ID_ATTR, parseBlockEvents, type RuntimeStep } from '../../core/data/aktionen'
+import type { ErfassungsTraegerElement } from '../../core/blocks/BlockDefinition'
 import { auswahlFuer } from './auswahl'
 import { PopupBlock } from '../popup/PopupBlock'
 import {
@@ -73,6 +74,85 @@ export function meldeKettenFehler(fehler: unknown): void {
   meldeFehler('Aktionskette fehlgeschlagen: ' + text)
 }
 
+// Die Tabellen, deren Erfassungszellen die Kette liest — ueber die Parameter
+// der Schritte, nicht ueber einen Bausteintyp (Regel 2).
+function erfassungsTraegerIds(steps: readonly RuntimeStep[]): string[] {
+  const ids = new Set<string>()
+  for (const step of steps) {
+    if (step.type !== 'RELATION') continue
+    for (const binding of [...step.params, ...step.extraParams]) {
+      if (binding.source === 'erfassungszelle' && (binding.blockId ?? '') !== '') {
+        ids.add(binding.blockId ?? '')
+      }
+    }
+  }
+  return [...ids]
+}
+
+function sucheTraeger(
+  root: ParentNode,
+  blockId: string,
+): (HTMLElement & Partial<ErfassungsTraegerElement>) | undefined {
+  return Array.from(root.querySelectorAll<HTMLElement>(`[${ACTION_VALUE_ID_ATTR}]`))
+    .find((el) => el.getAttribute(ACTION_VALUE_ID_ATTR) === blockId)
+}
+
+async function laufeSchritte(
+  el: HTMLElement,
+  steps: readonly RuntimeStep[],
+  context: RelationContext,
+  erfassteZelle: ((blockId: string, spaltenIndex: number) => string) | undefined,
+): Promise<void> {
+  const values: Record<string, string | undefined> = {
+    ...context,
+    NOW_DATE: formatNowDate(new Date()),
+  }
+  let previousResult = ''
+
+  const stepResults: string[] = []
+
+  const rohErgebnisse: unknown[] = []
+  const ohneErgebnis = (): void => {
+    stepResults.push('')
+    rohErgebnisse.push(undefined)
+  }
+  for (const step of steps) {
+    if (step.type === 'START_TOOL') {
+      seStartTool(step.toolNr, resolveParams({ params: step.toolParams }, values))
+      ohneErgebnis()
+      continue
+    }
+    if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
+      applyPopupStep(el.ownerDocument ?? document, step.popup ?? '', step.type === 'POPUP_OPEN')
+      ohneErgebnis()
+      continue
+    }
+    const relation = findRuntimeRelation(seGlobal().FF_RELATIONS, step.relationId)
+    if (!relation) {
+      ohneErgebnis()
+      continue
+    }
+
+    const runtimeValues = {
+      context: values,
+      previousResult,
+      stepResults,
+      stepRohErgebnisse: rohErgebnisse,
+      gewaehlteZeile: auswahlFuer,
+      ...(erfassteZelle ? { erfassteZelle } : {}),
+    }
+    const params = [...step.params, ...step.extraParams]
+      .map((binding) => resolveActionParam(binding, runtimeValues))
+    const antwort = await executeRelation(relation, params)
+    const result = antwort.wert
+    stepResults.push(result)
+    rohErgebnisse.push(antwort.roh)
+
+    if (relation.verb === 'GET_RELATION') previousResult = result
+    if (step.resultKey !== '') values[step.resultKey] = result
+  }
+}
+
 export async function runEvent(
   el: HTMLElement,
   eventKey: string,
@@ -90,53 +170,33 @@ export async function runEvent(
   if (locks.has(eventKey)) return
   locks.add(eventKey)
   try {
-    const values: Record<string, string | undefined> = {
-      ...context,
-      NOW_DATE: formatNowDate(new Date()),
+    const traegerIds = erfassungsTraegerIds(steps)
+    if (traegerIds.length === 0) {
+      await laufeSchritte(el, steps, context, undefined)
+      return
     }
-    let previousResult = ''
-
-    const stepResults: string[] = []
-
-    const rohErgebnisse: unknown[] = []
-    const ohneErgebnis = (): void => {
-      stepResults.push('')
-      rohErgebnisse.push(undefined)
+    // Liest die Kette Erfassungszellen, laeuft sie EINMAL JE ERFASSTER ZEILE
+    // (G4). Zwei Tabellen in einer Kette waeren zwei Zeilen-Listen — welche
+    // gibt den Takt? Darum eine je Kette.
+    if (traegerIds.length > 1) {
+      meldeFehler('Die Kette liest Erfassungszellen aus mehreren Tabellen — nur eine Tabelle je Kette.')
+      return
     }
-    for (const step of steps) {
-      if (step.type === 'START_TOOL') {
-        seStartTool(step.toolNr, resolveParams({ params: step.toolParams }, values))
-        ohneErgebnis()
-        continue
-      }
-      if (step.type === 'POPUP_OPEN' || step.type === 'POPUP_CLOSE') {
-        applyPopupStep(el.ownerDocument ?? document, step.popup ?? '', step.type === 'POPUP_OPEN')
-        ohneErgebnis()
-        continue
-      }
-      const relation = findRuntimeRelation(seGlobal().FF_RELATIONS, step.relationId)
-      if (!relation) {
-        ohneErgebnis()
-        continue
-      }
-
-      const runtimeValues = {
-        context: values,
-        previousResult,
-        stepResults,
-        stepRohErgebnisse: rohErgebnisse,
-        gewaehlteZeile: auswahlFuer,
-      }
-      const params = [...step.params, ...step.extraParams]
-        .map((binding) => resolveActionParam(binding, runtimeValues))
-      const antwort = await executeRelation(relation, params)
-      const result = antwort.wert
-      stepResults.push(result)
-      rohErgebnisse.push(antwort.roh)
-
-      if (relation.verb === 'GET_RELATION') previousResult = result
-      if (step.resultKey !== '') values[step.resultKey] = result
+    const traeger = sucheTraeger(el.ownerDocument ?? document, traegerIds[0])
+    const zeilen = traeger?.erfassteZeilen
+    if (!traeger || !Array.isArray(zeilen)) {
+      meldeFehler('Die Tabelle der Erfassungszellen gibt es in dieser Maske nicht.')
+      return
     }
+    // Keine erfasste Zeile: nichts zu schreiben, kein Lauf. Kein Fehler —
+    // der Bediener sieht in der Tabelle, dass nichts erfasst ist.
+    for (const zeile of zeilen) {
+      await laufeSchritte(el, steps, context, (blockId, spaltenIndex) =>
+        (blockId === traegerIds[0] ? String(zeile[spaltenIndex] ?? '') : ''))
+    }
+    // Geleert wird erst, wenn ALLE Zeilen gelaufen sind — bricht ein Schritt
+    // ab (wirft), bleiben die restlichen Zeilen stehen statt zu verschwinden.
+    if (zeilen.length > 0) traeger.erfassungLeeren?.()
   } finally {
     locks.delete(eventKey)
   }

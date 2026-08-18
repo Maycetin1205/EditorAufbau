@@ -78,8 +78,8 @@ dann `go` (0.3), dann genau EINE Etappe.
   **G3c** (Automatik-Anker — im Zielszenario „Tabelle zeigt
   Belegpositionen" schraenkt heute nichts ein und fuellt sich nichts),
   die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
-  (Entschlanken). **G3b und G3c sind GEBAUT (2026-08-18).** Naechste
-  Etappen: G4 → G5; gebaut wird auf Branch
+  (Entschlanken). **G3b, G3c und G4 sind GEBAUT (2026-08-18).** Naechste
+  Etappe: G5; gebaut wird auf Branch
   `claude/inline-edit-receipt-table-823di6` (dieser Branch fuehrt
   den Erfassungs-Stand weiter — nicht mehr parallel auf
   `claude/softengine-erp-templates-ynqibv` arbeiten).
@@ -869,7 +869,7 @@ Messlatten-Szenario als eigener Fall in `erfassungsLauf.test.ts` —
 Tabellen-Quelle Positionen, Artikel verknuepft, KEIN gewaehlter
 Positions-Satz. **Runtime-Bytes aendern sich bewusst.**
 
-## G4 · Erfasste Zeilen stehen lassen + EIN Knopf schreibt sie
+## G4 · Erfasste Zeilen stehen lassen + EIN Knopf schreibt sie (GEBAUT 2026-08-18)
 
 **Endgueltige Nutzer-Entscheidung 2026-08-18** — sie ersetzt den
 vorherigen G4-Text vollstaendig (der wollte ein Ereignis „Zeile erfasst"

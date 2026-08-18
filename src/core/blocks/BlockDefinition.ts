@@ -105,6 +105,23 @@ export interface SatzWahl {
 
 export type QuellenFaehigkeit = boolean | { wenn: PropertyVisibilityCondition }
 
+// Die Fähigkeit „Erfassungszeile": der Baustein nimmt neue Zeilen entgegen,
+// bevor sie im ERP existieren. `wenn` sagt, an welcher Eigenschaft der
+// Schalter hängt — Editor (Herkunfts-Wähler), Export (data-ff-block-id) und
+// Laufzeit lesen dieselbe Deklaration.
+export interface ErfassungsFaehigkeit {
+  wenn?: PropertyVisibilityCondition
+}
+
+// Der Laufzeit-Vertrag eines Bausteins mit dieser Fähigkeit: die Kette am
+// Knopf liest die erfassten Zeilen (Werte je Spalte, in Spalten-Reihenfolge)
+// und leert sie nach dem Lauf. Rein als Typ — die Laufzeit findet den
+// Baustein über data-ff-block-id, nie über einen Import (Regel 2).
+export interface ErfassungsTraegerElement {
+  erfassteZeilen: readonly (readonly string[])[]
+  erfassungLeeren: () => void
+}
+
 export interface BlockDefinition {
   type: string
   tagName: string
@@ -140,6 +157,8 @@ export interface BlockDefinition {
   satzWahl?: SatzWahl
 
   kannAuswahlFolgen?: boolean
+
+  kannErfassen?: ErfassungsFaehigkeit
 
   bindableSpots?: readonly BindableSpot[]
 

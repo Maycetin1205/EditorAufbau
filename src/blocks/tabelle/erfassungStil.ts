@@ -54,4 +54,12 @@ export const erfassungStil = css`
 
       /* Im Editor zeigt die Zelle keine Eingabe, sondern Striche. */
       :host([data-ff-editor]) .zeile.erfassung > div { color: var(--se-muted); }
+
+      /* Erfasste, noch nicht geschriebene Zeilen (G4): wie Datenzeilen, nur
+         links markiert — erst der Knopf macht aus ihnen echte Positionen. */
+      .zeile.erfasst {
+        flex: none;
+        box-shadow: inset 3px 0 0 var(--se-accent);
+        background: var(--se-accent-soft);
+      }
 `

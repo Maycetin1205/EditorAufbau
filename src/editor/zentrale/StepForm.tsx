@@ -13,7 +13,11 @@ import {
 } from '../../core/data/aktionen'
 import { stepProblem } from '../../core/data/schrittPruefung'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { actionValueTargets, auswahlGeberImBaum } from '../../core/blocks/treeQuery'
+import {
+  actionValueTargets,
+  auswahlGeberImBaum,
+  erfassungsTraegerImBaum,
+} from '../../core/blocks/treeQuery'
 import { relationMatchesSearch } from '../../core/data/relations'
 import { FeldUebernahmePicker } from './FeldUebernahmePicker'
 import {
@@ -28,6 +32,7 @@ import { istFensterSeite } from '../../state/pageOps'
 import {
   auswahlGeberOptionen,
   blockValueKey,
+  erfassungsOptionen,
   type BlockValueOption,
 } from './helfer'
 import { ParameterZeile } from './ParameterZeile'
@@ -70,6 +75,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
 
   const geber = auswahlGeberOptionen(auswahlGeberImBaum(ed.tree), dataSources.list)
   const geberIds = geber.map((g) => g.blockId)
+  const erfassungen = erfassungsOptionen(erfassungsTraegerImBaum(ed.tree), dataSources.list)
   const [typ, setTyp] = useState<StepTypeKey>(step?.type ?? 'START_TOOL')
   const [toolNr, setToolNr] = useState(step?.type === 'START_TOOL' ? step.toolNr : '')
   const [popupId, setPopupId] = useState(
@@ -304,6 +310,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                       dataSources={dataSources.list}
                       blockValues={blockValues}
                       geber={geber}
+                      erfassungen={erfassungen}
                       schritte={ergebnisSchritte}
                       platzhalter={platzhalterFor(raw)}
                       entfernen={{
@@ -370,6 +377,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                   dataSources={dataSources.list}
                   blockValues={blockValues}
                   geber={geber}
+                  erfassungen={erfassungen}
                   schritte={ergebnisSchritte}
                   entfernen={{
                     label: `Zusatzparameter ${index + 1} entfernen`,

@@ -10,6 +10,7 @@ import {
   traegtEigeneQuelle,
 } from '../core/blocks/treeQuery'
 import { ACTION_VALUE_ID_ATTR, serializeBlockEvents } from '../core/data/aktionen'
+import { propertySichtbar } from '../core/blocks/PropertyDescription'
 import { AUSWAHL_FOLGE_PROP } from '../core/data/auswahlFolge'
 import {
   felderHinterSchnitt,
@@ -140,7 +141,12 @@ function nodeToHtml(
 
   const aktionen = serializeBlockEvents(node.events, (def.blockEvents ?? []).map((e) => e.key), popupName)
   const aktionenAttr = aktionen ? ` data-ff-aktionen="${escapeHtmlAttr(aktionen)}"` : ''
-  const actionValueIdAttr = (def.actionValueSpots?.length ?? 0) > 0
+  // Adressierbar fuer Ketten ist, wer Werte-Stellen hat ODER wessen
+  // Erfassungszeile an ist (G4: „Wert aus Erfassungszelle" findet die
+  // Tabelle zur Laufzeit ueber genau dieses Attribut).
+  const kannErfassen = def.kannErfassen !== undefined
+    && propertySichtbar(def.kannErfassen.wenn, node.props)
+  const actionValueIdAttr = (def.actionValueSpots?.length ?? 0) > 0 || kannErfassen
     ? ` ${ACTION_VALUE_ID_ATTR}="${escapeHtmlAttr(node.id)}"`
     : ''
 

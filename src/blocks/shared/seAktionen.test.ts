@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { applyPopupStep } from './seAktionen'
+import { applyPopupStep, runEvent } from './seAktionen'
 import { resolveActionParam } from '../../softengine/relations'
+import { seGlobal } from '../../softengine/bridge'
 import { meldeFehler } from '../../softengine/meldung'
 import type { ActionParamBinding } from '../../core/data/aktionen'
 
@@ -214,6 +215,128 @@ describe('resolveActionParam: „Feld der gewaehlten Zeile" (2026-08-06)', () =>
     }
     expect(resolveActionParam(binding, anderer, {})).toBe('')
 
+    expect(resolveActionParam(binding, { context: {}, previousResult: '' }, {})).toBe('')
+  })
+})
+
+// G4: Liest die Kette „Wert aus Erfassungszelle", laeuft sie einmal je
+// erfasster Zeile der EINEN Tabelle — danach leeren. Die Tabelle wird wie
+// beim Baustein-Wert ueber data-ff-block-id gefunden, nie ueber einen Typ.
+describe('runEvent: einmal je erfasster Zeile (G4)', () => {
+  const KETTE = JSON.stringify({
+    onClick: [{
+      type: 'RELATION',
+      resultKey: '',
+      relationId: 'r-pos',
+      params: [
+        { source: 'erfassungszelle', blockId: 't1', value: '0' },
+        { source: 'erfassungszelle', blockId: 't1', value: '2' },
+        { source: 'fixed', value: 'X' },
+      ],
+      extraParams: [],
+    }],
+  })
+
+  function fakeTabelle(id: string, zeilen: string[][]) {
+    return {
+      geleert: 0,
+      erfassteZeilen: zeilen,
+      erfassungLeeren(): void {
+        this.geleert += 1
+        this.erfassteZeilen = []
+      },
+      getAttribute: (k: string) => (k === 'data-ff-block-id' ? id : null),
+    }
+  }
+
+  function fakeKnopf(aktionen: string, traeger: unknown[]): HTMLElement {
+    return {
+      hasAttribute: () => false,
+      getAttribute: (k: string) => (k === 'data-ff-aktionen' ? aktionen : null),
+      ownerDocument: { querySelectorAll: () => traeger },
+    } as unknown as HTMLElement
+  }
+
+  const gesendet = (): unknown[][] =>
+    vi.mocked(seGlobal().basisHTML_SND_MSG as ReturnType<typeof vi.fn>).mock.calls
+
+  beforeEach(() => {
+    vi.mocked(meldeFehler).mockClear()
+    // executeRelation bootet die Bruecke: window/document und eine sofort
+    // erfolgreiche Anmeldung, damit kein Retry-Timer in andere Tests blutet.
+    vi.stubGlobal('window', { addEventListener: vi.fn() })
+    vi.stubGlobal('document', { title: 'Test' })
+    const g = seGlobal()
+    g.basisHTML_REGISTER = vi.fn()
+    g.FF_RELATIONS = [{ id: 'r-pos', verb: 'PUT_RELATION', nr: '82', params: ['{A}', '{B}', '{C}'] }]
+    g.basisHTML_SND_MSG = vi.fn()
+  })
+
+  it('laeuft je Zeile mit DEREN Zellwerten und leert erst nach der letzten', async () => {
+    const tabelle = fakeTabelle('t1', [['ART1', 'Baytril', '5'], ['ART2', 'Verband', '7']])
+    await runEvent(fakeKnopf(KETTE, [tabelle]), 'onClick', {})
+
+    expect(gesendet().map((aufruf) => aufruf[1])).toEqual([
+      { NR: '82', PARAMS: ['ART1', '5', 'X'] },
+      { NR: '82', PARAMS: ['ART2', '7', 'X'] },
+    ])
+    expect(tabelle.geleert).toBe(1)
+    expect(gemeldet()).toEqual([])
+  })
+
+  it('ohne erfasste Zeilen laeuft nichts und nichts wird geleert', async () => {
+    const tabelle = fakeTabelle('t1', [])
+    await runEvent(fakeKnopf(KETTE, [tabelle]), 'onClick', {})
+
+    expect(gesendet()).toEqual([])
+    expect(tabelle.geleert).toBe(0)
+    expect(gemeldet()).toEqual([])
+  })
+
+  it('zwei Tabellen in einer Kette: Meldung statt Rate-Lauf', async () => {
+    const beide = JSON.stringify({
+      onClick: [{
+        type: 'RELATION',
+        resultKey: '',
+        relationId: 'r-pos',
+        params: [
+          { source: 'erfassungszelle', blockId: 't1', value: '0' },
+          { source: 'erfassungszelle', blockId: 't2', value: '0' },
+        ],
+        extraParams: [],
+      }],
+    })
+    await runEvent(fakeKnopf(beide, [fakeTabelle('t1', [['A']]), fakeTabelle('t2', [['B']])]), 'onClick', {})
+
+    expect(gesendet()).toEqual([])
+    expect(gemeldet().join(' ')).toContain('nur eine Tabelle')
+  })
+
+  it('die Tabelle fehlt in der Maske: Meldung statt stillem Nichtstun', async () => {
+    await runEvent(fakeKnopf(KETTE, []), 'onClick', {})
+
+    expect(gesendet()).toEqual([])
+    expect(gemeldet().join(' ')).toContain('gibt es in dieser Maske nicht')
+  })
+})
+
+describe('resolveActionParam: „Wert aus Erfassungszelle" (G4)', () => {
+  const binding: ActionParamBinding = { source: 'erfassungszelle', blockId: 't1', value: '1' }
+
+  it('liest den Zellwert der Zeile, die die Kette gerade abarbeitet', () => {
+    const values = {
+      context: {},
+      previousResult: '',
+      erfassteZelle: (blockId: string, index: number) =>
+        (blockId === 't1' ? ['ART1', 'Baytril', '5'][index] ?? '' : ''),
+    }
+    expect(resolveActionParam(binding, values, {})).toBe('Baytril')
+    expect(resolveActionParam({ ...binding, blockId: 't9' }, values, {})).toBe('')
+    expect(resolveActionParam({ ...binding, value: 'x' }, values, {})).toBe('')
+    expect(resolveActionParam({ ...binding, value: '-1' }, values, {})).toBe('')
+  })
+
+  it('ausserhalb eines Zeilen-Laufs bleibt der Wert leer', () => {
     expect(resolveActionParam(binding, { context: {}, previousResult: '' }, {})).toBe('')
   })
 })

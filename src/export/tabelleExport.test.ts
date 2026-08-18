@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+// Registriert alle Bausteine — der Knopf-Fall (G4) exportiert sonst nichts.
+import '../blocks/register'
 import { coerceSpalten } from '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
@@ -194,5 +196,44 @@ describe('Tabelle: Zeilenklick als Ketten-Ausloeser (V4)', () => {
       onGibtEsNicht: [{ id: 's1', type: 'POPUP_OPEN', resultKey: '', popupId: 'Beleg' }],
     }
     expect(exportMask(baum).html).not.toContain('onGibtEsNicht')
+  })
+})
+
+// G4: Mit Erfassungszeile wird die Tabelle fuer Ketten adressierbar — die
+// Kette am Knopf findet sie zur Laufzeit ueber data-ff-block-id (dasselbe
+// Attribut wie beim Baustein-Wert). Ohne den Schalter bleibt das Tag sauber.
+describe('Tabelle: adressierbar fuer "Wert aus Erfassungszelle" (G4)', () => {
+  it('erfassung="ja" schreibt data-ff-block-id mit der Baustein-Kennung', () => {
+    const html = exportMask(tabelleBaum({ erfassung: 'ja' })).html
+    expect(tabelleTag(html)).toContain('data-ff-block-id="tab"')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('ohne Erfassungszeile bleibt das Tag ohne data-ff-block-id', () => {
+    expect(tabelleTag(exportMask(tabelleBaum({})).html)).not.toContain('data-ff-block-id')
+  })
+
+  it('eine Knopf-Kette mit Erfassungszellen-Herkunft reist unversehrt', () => {
+    const baum = tabelleBaum({ erfassung: 'ja' })
+    baum.root.childIds = ['tab', 'knopf']
+    baum.knopf = {
+      id: 'knopf', type: 'button', parentId: 'root', childIds: [],
+      props: { label: 'Positionen schreiben' },
+      events: {
+        onClick: [{
+          id: 's1', type: 'RELATION', resultKey: '', relationId: 'r-82',
+          params: [
+            { source: 'erfassungszelle', blockId: 'tab', value: '0' },
+            { source: 'fixed', value: '1' },
+          ],
+          extraParams: [],
+        }],
+      },
+    }
+    const html = exportMask(baum).html
+    const aktionen = /<ff-button[^>]*data-ff-aktionen="([^"]*)"/.exec(html)?.[1] ?? ''
+    expect(aktionen).toContain('erfassungszelle')
+    expect(aktionen).toContain('tab')
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })

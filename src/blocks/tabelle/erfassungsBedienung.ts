@@ -23,6 +23,10 @@ export interface ErfassungsWirt {
   // Setzt den Fokus in die Erfassungszelle der Spalte — NACH dem nächsten
   // Rendern, denn erst dann zeigt die Zelle den neuen Stand.
   fokussiere: (index: number) => void
+
+  // Enter am Zeilenende: die Zeile bleibt stehen, die Erfassung rückt eine
+  // Zeile tiefer (G4). Der Baustein hält die erfassten Zeilen.
+  erfasseZeile: () => void
 }
 
 function waehle(wirt: ErfassungsWirt, index: number, listenIndex: number): void {
@@ -60,11 +64,13 @@ function fenster(wirt: ErfassungsWirt, index: number): void {
   })
 }
 
-// Der Sprung zur nächsten leeren Zelle (G3b). Rechts nichts Leeres mehr →
-// der Fokus bleibt, wo er ist; „Zeile erfasst" kommt erst mit G4.
-function springe(wirt: ErfassungsWirt, index: number): void {
+// Der Sprung zur nächsten leeren Zelle (G3b). Rechts nichts Leeres mehr:
+// Enter erfasst die Zeile (G4, `abschliessen`); Tab lässt den Fokus stehen —
+// eine Taste zum Weiterrücken, EINE zum Abschließen.
+function springe(wirt: ErfassungsWirt, index: number, abschliessen: boolean): void {
   const ziel = wirt.lauf.naechsteLeere(wirt.umfeld(), index)
   if (ziel !== -1) wirt.fokussiere(ziel)
+  else if (abschliessen) wirt.erfasseZeile()
 }
 
 function taste(wirt: ErfassungsWirt, index: number, e: KeyboardEvent): void {
@@ -77,11 +83,12 @@ function taste(wirt: ErfassungsWirt, index: number, e: KeyboardEvent): void {
     return
   }
   e.preventDefault()
+  const abschliessen = e.key === 'Enter'
   if (folge === 'uebernehmen') {
     waehle(wirt, index, wirt.lauf.marke)
-    springe(wirt, index)
+    springe(wirt, index, abschliessen)
   } else if (folge === 'fenster') fenster(wirt, index)
-  else if (folge === 'weiter') springe(wirt, index)
+  else if (folge === 'weiter') springe(wirt, index, abschliessen)
   else if (folge === 'leeren') wirt.lauf.leere(wirt.umfeld(), index)
   wirt.melde()
 }

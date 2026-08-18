@@ -28,6 +28,12 @@ export const ACTION_PARAM_SOURCES = [
   'data_field',
   'block_value',
   'gewaehlte_zeile',
+
+  // „Wert aus Erfassungszelle <Spalte>": liefert je Ketten-Lauf den
+  // sichtbaren Zellwert der jeweiligen erfassten Zeile — Herkunft egal,
+  // gewaehlt oder frei getippt (Formularfeld-Prinzip, G4). blockId = die
+  // Tabelle, value = der Spalten-Index. Die Kette laeuft einmal je Zeile.
+  'erfassungszelle',
   'previous_result',
   'step_result',
   'se_variable',

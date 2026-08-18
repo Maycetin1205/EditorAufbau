@@ -2,6 +2,7 @@ import { Boxes, Database, FileText, Users } from '@/ui/zeichen'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { bausteinName } from '../../core/blocks/bausteinName'
 import type { PropertySelectOption } from '../../core/blocks/PropertyDescription'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { auswahlQuelleIdVon } from '../../core/blocks/treeQuery'
 import type { DataSource, DataSourceField, DataSourceKind } from '../../core/data/dataSources'
 import type { RelationTemplate } from '../../core/data/relations'
@@ -77,6 +78,35 @@ export interface AuswahlGeberOption {
   blockId: string
   label: string
   felder: readonly DataSourceField[]
+}
+
+// Eine Tabelle mit eingeschalteter Erfassungszeile, deren Zellen eine Kette
+// als „Wert aus Erfassungszelle" lesen kann (G4). Die Spalten kommen generisch
+// aus der Listen-Bindung des Bausteins — kein Bausteintyp-Sondercode.
+export interface ErfassungsOption {
+  blockId: string
+  label: string
+  spalten: readonly { index: number; titel: string }[]
+}
+
+export function erfassungsOptionen(
+  traeger: readonly BlockNode[],
+  sources: readonly DataSource[],
+): ErfassungsOption[] {
+  return traeger.map((node) => {
+    const bindung = getBlockDefinition(node.type)?.listenBindung
+    const roh = bindung ? node.props[bindung.prop] : undefined
+    const spalten = bindung && Array.isArray(roh)
+      ? roh.map((eintrag, index) => {
+          const titel = (eintrag as Record<string, unknown>)[bindung.titelKey]
+          return {
+            index,
+            titel: typeof titel === 'string' && titel !== '' ? titel : bindung.standardTitel,
+          }
+        })
+      : []
+    return { blockId: node.id, label: bausteinName(node, sources), spalten }
+  })
 }
 
 export function auswahlGeberOptionen(

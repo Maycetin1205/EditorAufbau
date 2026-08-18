@@ -28,6 +28,10 @@ export interface AnsichtFrage {
   // Die Erfassungszeile belegt eine der gemessenen Zeilen: ohne das rutscht
   // die letzte Datenzeile aus dem Rumpf und der Rumpf scrollt.
   erfassungAn: boolean
+
+  // Erfasste, noch nicht geschriebene Zeilen (G4) belegen genauso je einen
+  // Platz zwischen den Daten und der Erfassungszeile.
+  erfassteAnzahl: number
 }
 
 export interface TabelleAnsicht {
@@ -73,7 +77,7 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
 
   const alleSichtbar = sichtbareIndizes(frage)
 
-  const belegt = frage.erfassungAn ? 1 : 0
+  const belegt = frage.erfassungAn ? 1 + frage.erfassteAnzahl : 0
   const gemessenPassen = frage.gemessen === null
     ? null
     : Math.max(1, frage.gemessen.passen - belegt)

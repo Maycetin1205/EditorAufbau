@@ -3,7 +3,11 @@ import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
-import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
+import type {
+  ErfassungsFaehigkeit,
+  ListenBindung,
+  SatzWahl,
+} from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { verknuepfungenVon } from '../shared/fremdeQuellen'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
@@ -64,6 +68,12 @@ export class TabelleBlock extends BasicBlock {
 
   static readonly satzWahl: SatzWahl = {}
   static readonly kannAuswahlFolgen = true
+
+  // Erfassungszeile an -> die Kette eines Knopfs darf „Wert aus
+  // Erfassungszelle" lesen; der Export schreibt dafuer data-ff-block-id.
+  static readonly kannErfassen: ErfassungsFaehigkeit = {
+    wenn: { attributeName: 'erfassung', equals: 'ja' },
+  }
 
   static readonly blockEvents = [
     { key: 'onRowClick', name: 'Zeile gewählt' },
@@ -134,6 +144,12 @@ export class TabelleBlock extends BasicBlock {
 
   private _lauf = new ErfassungsLauf()
 
+  // Die erfassten, noch nicht geschriebenen Zeilen (Werte je Spalte, in
+  // Spalten-Reihenfolge). Sie stehen sichtbar UEBER der Erfassungszeile und
+  // gehen erst beim Ketten-Lauf des Knopfs (erfassungLeeren) oder beim
+  // Zweckwechsel des Bausteins verloren — nie durch einen Daten-Push.
+  private _erfasste: string[][] = []
+
   get besitz(): Datenbesitz {
     return this._besitz
   }
@@ -179,6 +195,33 @@ export class TabelleBlock extends BasicBlock {
     this._fokusZeile = null
     this._fokusHolen = false
     this._lauf.zuruecksetzen()
+    this._erfasste = []
+  }
+
+  // Der Laufzeit-Vertrag der Faehigkeit kannErfassen (ErfassungsTraegerElement
+  // in core/blocks/BlockDefinition.ts): die Kette am Knopf liest die Zeilen
+  // ueber data-ff-block-id und leert sie nach dem Lauf.
+  get erfassteZeilen(): readonly (readonly string[])[] {
+    return this._erfasste
+  }
+
+  erfassungLeeren(): void {
+    if (this._erfasste.length === 0) return
+    this._erfasste = []
+    this.requestUpdate()
+  }
+
+  // Enter am Zeilenende: genau diese Zeile bleibt sichtbar stehen, die
+  // Erfassung rueckt eine Zeile tiefer, der Cursor auf die erste Zelle.
+  // Geschrieben wird hier NICHTS und kein Ereignis gefeuert (G4).
+  private erfasseZeile(): void {
+    const umfeld = this.erfassungsUmfeld()
+    const werte = umfeld.spalten.map((_, i) => this._lauf.wertVon(umfeld, i))
+    if (werte.every((w) => w === '')) return
+    this._erfasste = [...this._erfasste, werte]
+    this._lauf.zuruecksetzen()
+    this.requestUpdate()
+    this.fokussiereErfassungsZelle(0)
   }
 
   fokussiereSuche(): boolean {
@@ -266,6 +309,7 @@ export class TabelleBlock extends BasicBlock {
       umfeld: () => this.erfassungsUmfeld(),
       melde: () => this.requestUpdate(),
       fokussiere: (index) => this.fokussiereErfassungsZelle(index),
+      erfasseZeile: () => this.erfasseZeile(),
     }
   }
 
@@ -365,6 +409,7 @@ export class TabelleBlock extends BasicBlock {
       wunschSeite: this._seite,
       gemessen: this._mass,
       erfassungAn: this.erfassungAn,
+      erfassteAnzahl: this._erfasste.length,
     })
     return html`<div class="tabelle" style=${styleMap({
       '--takt': `${ansicht.takt}px`,
@@ -389,6 +434,7 @@ export class TabelleBlock extends BasicBlock {
         auswahlIndex: this.auswahlIndex,
         leer: ansicht.leer,
         leerText: this.leerText,
+        erfasste: this._erfasste,
         erfassung: this.erfassungAn
           ? erfassungsZeileFuer(
               this.erfassungsWirt(),

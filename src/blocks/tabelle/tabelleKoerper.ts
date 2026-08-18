@@ -33,6 +33,11 @@ export interface KoerperLage {
   leer: boolean
   leerText: string
 
+  // Erfasste, noch nicht geschriebene Zeilen (G4): sie stehen zwischen der
+  // letzten Datenzeile und der Erfassungszeile, links markiert — erst der
+  // Ketten-Lauf des Knopfs macht aus ihnen echte Positionen.
+  erfasste: readonly (readonly string[])[]
+
   // Die fertige Erfassungszeile. Der Rumpf kennt ihre Rollen nicht — er
   // setzt sie nur an die richtige Stelle: sie ist die naechste FREIE Zeile,
   // also direkt unter der letzten DATENzeile und vor allem, was nur fuellt.
@@ -127,6 +132,14 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             })}
           </div>`
         })}
+        ${lage.erfasste.map((werte) => html`<div class="zeile erfasst" role="row" style=${styleMap(lage.cols)}>
+          ${lage.spalten.map((s, i) => {
+            const art = spaltenArt(s.art)
+            return html`<div class=${art.klasse} role="cell">${
+              art.zelle(werte[i] ?? '', s.zuordnung ?? [], {})
+            }</div>`
+          })}
+        </div>`)}
         ${lage.hatQuelle ? lage.erfassung : nothing}
         ${lineal(lage)}`}
       </div>

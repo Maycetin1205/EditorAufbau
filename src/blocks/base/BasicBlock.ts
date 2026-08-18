@@ -93,6 +93,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       acceptsDataSource: BlockClass.acceptsDataSource,
       satzWahl: BlockClass.satzWahl,
       kannAuswahlFolgen: BlockClass.kannAuswahlFolgen,
+      kannErfassen: BlockClass.kannErfassen,
       bindableSpots: BlockClass.bindableSpots,
       actionValueSpots: BlockClass.actionValueSpots,
       listenBindung: BlockClass.listenBindung,
