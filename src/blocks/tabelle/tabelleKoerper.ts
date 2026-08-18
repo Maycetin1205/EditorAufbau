@@ -43,8 +43,6 @@ export interface KoerperHandeln {
   klickKopf: (e: MouseEvent, index: number) => void
 
   aktiviereZeile: (rohIndex: number | null, ansichtIndex: number) => void
-
-  stop: (e: Event) => void
 }
 
 function lineal(lage: KoerperLage): TemplateResult | typeof nothing {
@@ -69,7 +67,6 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
           placeholder="Tabelle durchsuchen…"
           aria-label="Tabelle durchsuchen"
           .value=${lage.suchtext}
-          @pointerdown=${tun.stop}
           @input=${(e: Event) => tun.setzeSuchtext((e.target as HTMLInputElement).value)}
         />
       </div>` : ''}

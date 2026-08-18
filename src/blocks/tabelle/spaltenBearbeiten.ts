@@ -1,6 +1,8 @@
 import { html, type TemplateResult } from 'lit'
 import { SPALTEN_MAX, SPALTEN_MIN, neueSpalte, type Spalte } from './spalten'
 
+// Kein Stop auf pointerdown (Zug-Regel in editor/canvas/rasterMove.ts) — der
+// Stop auf CLICK bleibt, sonst waehlte jeder Knopfdruck die Tabelle mit aus.
 export function spaltenSteuerung(
   liste: () => Spalte[],
   aendere: (spalten: Spalte[]) => void,
@@ -9,7 +11,6 @@ export function spaltenSteuerung(
   return html`<div class="steuerung">
     <button
       title="Letzte Spalte entfernen"
-      @pointerdown=${stop}
       @click=${(e: Event) => {
         stop(e)
         const l = liste()
@@ -21,7 +22,6 @@ export function spaltenSteuerung(
     >−</button>
     <button
       title="Spalte hinzufügen"
-      @pointerdown=${stop}
       @click=${(e: Event) => {
         stop(e)
         const l = liste()

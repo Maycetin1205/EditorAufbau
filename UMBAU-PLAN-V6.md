@@ -61,9 +61,8 @@ dann `go` (0.3), dann genau EINE Etappe.
   Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
-  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). Naechster
-  Kopier-Auftrag: Erste Etappe V8, dann V9 (Reihenfolge im Wellen-Kopf V
-  nachgezogen).
+  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8 ist
+  GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste Etappe V9, dann V7.
 - **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
   stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
 
@@ -345,7 +344,7 @@ konntest. ALLERLETZTER Schritt: gib diesen Kopier-Auftrag WOERTLICH
 wieder aus — mit der ersten noch nicht gebauten Etappe als „Erste
 Etappe" und den gebauten aus der Reihenfolge gestrichen. Reihenfolge:
 ~~V1~~ -> ~~V0~~ -> ~~V3~~ -> ~~V4~~ -> ~~V5 (Stellen 1–5; 6–8 s.
-Etappentext)~~ -> V8 -> V9 -> V7
+Etappentext)~~ -> ~~V8~~ -> V9 -> V7
 Nach V7: sage dem Nutzer, dass V6 zuerst einen Kurzentwurf mit ihm im
 Chat braucht (kein Kopier-Auftrag) und V7/E1/E3 die naechsten Kandidaten
 sind.
@@ -579,7 +578,7 @@ Zwei Etappen, ENTWURF VOR BAU (Kurzentwurf im Chat, Nutzer nickt):
   Funktion in `shared/`; jede kuenftige Datenanzeige startet damit bei
   drei Zeilen. Runtime aendert sich bewusst; SE-Delta in die Gesamtprobe.
 
-## V8 · Greifen wird zuverlaessig (Nutzer-Befund 2026-08-18: „SO OFT nicht")
+## V8 · Greifen wird zuverlaessig (GEBAUT 2026-08-18)
 
 **Belegtes Problem:** Das Verschieben im Raster startet nur, wenn der
 pointerdown bis zum CanvasNode-Wrapper durchbubbelt
@@ -610,6 +609,9 @@ benennen, nicht mit umbauen.
 Die Lupen-Ueberdeckung durch den Platzhalter ist bereits separat gefixt
 (`.ph-nachschlag`, Commit vom 2026-08-18).
 **Runtime-Bytes aendern sich bewusst** (blocks/-Stellen).
+Gebaut wie beschrieben: die vier pointerdown-Stops in Lupe, Spalten-Knoepfen
+und Suchfeld sind weg, die Regel steht als Kommentar bei `ZUG_SCHWELLE`
+(`editor/canvas/rasterMove.ts`) — die Ausnahmen (Anfasser, Fenster) blieben.
 
 ## V9 · Hol-Quellen: der Geber wird eindeutig (Nutzer-Befund 2026-08-18)
 

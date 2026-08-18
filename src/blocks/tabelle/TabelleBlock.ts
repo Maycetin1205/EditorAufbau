@@ -332,7 +332,6 @@ export class TabelleBlock extends BasicBlock {
           this.klickSortiere(i)
         },
         aktiviereZeile: (rohIndex, ansichtIndex) => this.aktiviereZeile(rohIndex, ansichtIndex),
-        stop,
       })}
       ${ ''}
       ${ansicht.leer ? nothing : tabelleFuss({
@@ -349,7 +348,6 @@ export class TabelleBlock extends BasicBlock {
           this._seite = zu
           this.requestUpdate()
         },
-        stop,
       })}
     </div>`
   }

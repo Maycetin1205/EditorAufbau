@@ -8,6 +8,14 @@ import { flaecheVon } from './rasterFlaeche'
 
 const ZUG_SCHWELLE = 4
 
+// Zug-Regel (eine fuer alle Bausteine): Druecken + Bewegen zieht IMMER den
+// Baustein, egal wo im Baustein gegriffen wird — darum fangen Baustein-Inhalte
+// den pointerdown NICHT mehr ab. Klicken ohne Bewegung bleibt Klicken: der Zug
+// wird erst ab ZUG_SCHWELLE aktiv, und nur dann wird der Folge-Klick
+// geschluckt. Ihren pointerdown behalten allein die Editor-Anfasser
+// (BlockHost/PopupSeite) und die Fenster (DialogRahmen/AuswahlFenster) — die
+// bedienen ihren Zug selbst bzw. sollen nie ziehen.
+
 function schluckeKlick(ev: MouseEvent): void {
   ev.stopPropagation()
   ev.preventDefault()

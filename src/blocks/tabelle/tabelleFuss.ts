@@ -14,8 +14,6 @@ export interface FussLage {
 
 export interface FussHandeln {
   blaettere: (zu: number) => void
-
-  stop: (e: Event) => void
 }
 
 export function tabelleFuss(lage: FussLage, tun: FussHandeln): TemplateResult {
