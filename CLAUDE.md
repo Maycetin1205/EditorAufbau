@@ -53,11 +53,12 @@ dokumentiert im Repo `behandlung-umbau` (bei Bedarf per add_repo).
    **Geändert 2026-08-10 (Nutzer-Ansage):** der Preflight blockt NICHT mehr.
    Bis dahin stand hier „Validator + Preflight blocken" — `preflightMask`
    hielt den Nutzer wiederholt vom Exportieren ab, in Fällen, die er bewusst
-   so gebaut hatte. Der Export läuft jetzt immer. Die Funktion selbst lebt
-   weiter: `Kommandozentrale.tsx` speist damit den Warn-Punkt an
-   „Datenquellen" — sie WARNT also noch, sie BLOCKT nur nicht mehr.
-   (`warnChecks` in `validator.ts` war seitdem ohne Aufrufer im Produkt und ist
-   in U3, 2026-08-12, geloescht.)
+   so gebaut hatte. Der Export läuft jetzt immer.
+   **Nachgezogen 2026-08-18:** der gelbe Warn-Punkt im Datencenter ist auf
+   Nutzer-Entscheidung entfernt — `preflightMask` ist seitdem ohne Aufrufer
+   im Produkt (löschen oder behalten = offene Mini-Entscheidung, s. Plan).
+   (`warnChecks` in `validator.ts` war genauso aufruferlos und ist in U3,
+   2026-08-12, geloescht.)
    Geblieben ist
    `validateMaskHtml` (SE-Marker, LF, reines ASCII) — schlägt die an, würde
    SoftEngine die Datei gar nicht erst laden. Damit ist „nichts scheitert
@@ -440,9 +441,12 @@ Nutzer-Entscheidung anfassen:**
   Anzeige für Preflight-/Bindungs-Warnungen gebaut und keine vorgeschlagen —
   Bedienfehler verantwortet der Nutzer selbst, der Editor soll funktionieren,
   nicht erziehen (dasselbe Muster wie „Aufgefallen unterwegs", s. Kopf).
-  Der Export blockt weiterhin nie. `preflightMask` bleibt lediglich Code;
-  der eine vorhandene gelbe Punkt in der Steuerung bleibt vorerst
-  unangetastet (sein Entfernen wäre eine eigene kleine Entscheidung).
+  Der Export blockt weiterhin nie. Der gelbe Punkt in der Steuerung ist am
+  2026-08-18 auf Nutzer-Entscheidung entfernt; `preflightMask` ist damit
+  aufruferloser Code (Verbleib = offene Mini-Entscheidung, s. Plan).
+  Erfolgs-MELDUNGEN der Maske sind davon unberührt — die hat der Nutzer am
+  2026-08-18 ausdrücklich beauftragt (Welle V im Plan): der Editor erzieht
+  nicht, aber die Maske darf sagen, was sie getan hat.
 - **Der Export-Klick bleibt, wie er ist (Nutzer-Ansage 2026-08-17, „das
   bleibt wie es ist! muss nicht in den Plan").** Dass ein Klick ZWEI
   automatische Downloads auslöst und Chromium beim zweiten nachfragt, nimmt

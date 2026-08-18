@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Database, Link2, X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
-import { preflightMask } from '../../export/preflight'
 import { useDataSources } from '../../state/useDataSources'
-import { useEditor } from '../../state/useEditor'
 import { useRelations } from '../../state/useRelations'
 import { DatenquellenBereich } from './DatenquellenBereich'
 import { RelationenBereich } from './RelationenBereich'
@@ -18,7 +16,6 @@ const BEREICHE: ReadonlyArray<{ key: Bereich; name: string; icon: typeof Databas
 
 export function Kommandozentrale({ onClose }: { onClose: () => void }) {
   const [bereich, setBereich] = useState<Bereich>('datenquellen')
-  const ed = useEditor()
   const sources = useDataSources()
   const relations = useRelations()
 
@@ -29,12 +26,6 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
-
-  const probleme = preflightMask(ed.tree, sources.list, relations.list)
-  const warnt: Record<Bereich, boolean> = {
-    datenquellen: probleme.some((p) => p.name === 'Datenquelle fehlt'),
-    relationen: false,
-  }
 
   const navZahl: Record<Bereich, string> = {
     datenquellen: String(sources.list.length),
@@ -75,7 +66,6 @@ export function Kommandozentrale({ onClose }: { onClose: () => void }) {
               >
                 <Icon size={14} />
                 <span className="min-w-0 flex-1">{name}</span>
-                {warnt[key] && <span className="size-2 shrink-0 rounded-full bg-amber-500" />}
                 {navZahl[key] !== '' && (
                   <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground">
                     {navZahl[key]}
