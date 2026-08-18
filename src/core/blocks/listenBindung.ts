@@ -15,6 +15,34 @@ export interface ListenBindung {
   eintragsWahl?: EintragsWahl
 
   eintragsZuordnung?: EintragsZuordnung
+
+  zweiteStelle?: ListenStelle
+}
+
+// Eine ZWEITE Bedienstelle an DENSELBEN Eintraegen: die Spalte einer Tabelle
+// wird am KOPF an ein Feld gebunden und in der ERFASSUNGSZEILE mit einer Rolle
+// belegt. Beide Stellen schreiben in dieselbe Liste — zwei parallele Listen
+// liefen beim Anlegen und Entfernen von Spalten auseinander.
+export interface ListenStelle {
+  // Reist im ff-listen-bind mit, damit der Editor weiss, WELCHES Fenster
+  // gemeint ist; ohne den Namen oeffnete der Klick in der Erfassungszeile
+  // den Picker des Spaltenkopfes.
+  stelle: string
+
+  eintragsWahl: EintragsWahl
+
+  // Der Schluessel, in dem der EINTRAG seine Quelle haelt — nicht der
+  // Baustein: jede Spalte der Erfassungszeile schlaegt in ihrer EIGENEN
+  // Quelle nach (Artikelnummer im Artikelstamm, Verabreichungsart in ihrer
+  // IDB-Tabelle). Die Felder ihrer Details kommen aus genau dieser Quelle,
+  // nie aus den Quellen in Reichweite — das sind die des Kopfes.
+  quelleKey: string
+
+  // Schluessel, die nur bei bestimmten Wahlwerten gelten (die Vorbelegung nur
+  // bei „Frei", die Quelle nur bei den nachschlagenden Rollen): der Export
+  // laesst sie sonst weg, damit kein Rest einer verworfenen Rolle in der
+  // Maske landet.
+  nurBeiWahl?: readonly { key: string; wahl: readonly string[] }[]
 }
 
 export interface EintragsZuordnung {
@@ -110,27 +138,52 @@ export function listeLesen(roh: unknown, b: ListenBindung): Record<string, unkno
   })
 }
 
-export function listeFuerExport(roh: unknown, b: ListenBindung): unknown {
-  const wahl = b.eintragsWahl
-  if (!Array.isArray(roh) || !wahl) return roh
+// Ein Schluessel eines Eintrags, der nur unter einer Bedingung in den Export
+// gehoert. Zwei Stellen (Kopf und Erfassungszeile) bringen je eigene mit,
+// darum sind es Regeln und keine Aufzaehlung von Sonderfaellen.
+interface BedingterSchluessel {
+  key: string
+  erlaubt: (eintrag: Record<string, unknown>) => boolean
+}
 
-  const bedingt = new Set<string>()
-  if (b.eintragsZuordnung) bedingt.add(b.eintragsZuordnung.key)
-  if (wahl.felderKey) bedingt.add(wahl.felderKey)
-  if (bedingt.size === 0) return roh
+function bedingteSchluessel(b: ListenBindung): BedingterSchluessel[] {
+  const regeln: BedingterSchluessel[] = []
+  const ausWahl = (wahl: EintragsWahl): void => {
+    const key = wahl.felderKey
+    if (key === undefined) return
+    regeln.push({ key, erlaubt: (e) => eintragsFelderVon(wahl, e).length > 0 })
+  }
+  const wahl = b.eintragsWahl
+  if (wahl) {
+    ausWahl(wahl)
+    const zuo = b.eintragsZuordnung
+    if (zuo) {
+      regeln.push({ key: zuo.key, erlaubt: (e) => eintragsWahlWert(wahl, e) === zuo.nurBeiWahl })
+    }
+  }
+  const stelle = b.zweiteStelle
+  if (stelle) {
+    ausWahl(stelle.eintragsWahl)
+    for (const nur of stelle.nurBeiWahl ?? []) {
+      regeln.push({
+        key: nur.key,
+        erlaubt: (e) => nur.wahl.includes(eintragsWahlWert(stelle.eintragsWahl, e)),
+      })
+    }
+  }
+  return regeln
+}
+
+export function listeFuerExport(roh: unknown, b: ListenBindung): unknown {
+  if (!Array.isArray(roh)) return roh
+  const regeln = bedingteSchluessel(b)
+  if (regeln.length === 0) return roh
   return roh.map((x) => {
     if (!x || typeof x !== 'object') return x
     const eintrag = x as Record<string, unknown>
-
-    const erlaubt = new Set<string>()
-    const gewaehlt = eintragsWahlWert(wahl, eintrag)
-    if (b.eintragsZuordnung && gewaehlt === b.eintragsZuordnung.nurBeiWahl) {
-      erlaubt.add(b.eintragsZuordnung.key)
-    }
-    if (wahl.felderKey && eintragsFelderVon(wahl, eintrag).length > 0) {
-      erlaubt.add(wahl.felderKey)
-    }
-    const weg = [...bedingt].filter((k) => !erlaubt.has(k) && k in eintrag)
+    const weg = regeln
+      .filter((r) => r.key in eintrag && !r.erlaubt(eintrag))
+      .map((r) => r.key)
     if (weg.length === 0) return x
     const kopie = { ...eintrag }
     for (const k of weg) delete kopie[k]

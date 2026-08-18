@@ -1,4 +1,4 @@
-import { html, nothing, type TemplateResult } from 'lit'
+import { html, nothing, type PropertyValues, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
@@ -6,8 +6,16 @@ import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type { ListenBindung, SatzWahl } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
+import { vorschlagStil } from '../shared/vorschlagListe'
 import { chipStyles } from '../shared/statusVariant'
+import { schliesseNachschlagenFuer } from '../formfeld/nachschlagen'
 import { beobachteRumpf, gemessenesMass } from './rumpfMessung'
+import {
+  erfassungsZeileFuer,
+  type ErfassungsWirt,
+} from './erfassungsBedienung'
+import { ErfassungsLauf } from './erfassungsLauf'
+import { erfassungStil } from './erfassungStil'
 import {
   leiteZeilenAb,
   type BereitgestellteZeile,
@@ -66,6 +74,8 @@ export class TabelleBlock extends BasicBlock {
     spalten: standardSpalten(),
     suche: 'ja',
 
+    erfassung: 'nein',
+
     tagField: '',
 
     leerText: LEER_TEXT_STANDARD,
@@ -86,6 +96,8 @@ export class TabelleBlock extends BasicBlock {
   @property() source = ''
 
   @property() suche = 'ja'
+
+  @property() erfassung = 'nein'
 
   @property() leerText = LEER_TEXT_STANDARD
 
@@ -117,6 +129,8 @@ export class TabelleBlock extends BasicBlock {
   private _fokusHolen = false
 
   private _besitz: Datenbesitz = 'softengine'
+
+  private _lauf = new ErfassungsLauf()
 
   get besitz(): Datenbesitz {
     return this._besitz
@@ -162,6 +176,7 @@ export class TabelleBlock extends BasicBlock {
     this._taktGemessen = 0
     this._fokusZeile = null
     this._fokusHolen = false
+    this._lauf.zuruecksetzen()
   }
 
   fokussiereSuche(): boolean {
@@ -236,6 +251,23 @@ export class TabelleBlock extends BasicBlock {
     this.requestUpdate()
   }
 
+  private get erfassungAn(): boolean {
+    return this.erfassung === 'ja'
+  }
+
+  // Der Baustein haelt nur den Stand; was die Zellen tun, steht in
+  // erfassungsBedienung — sonst laeuft diese Datei ueber ihren Deckel.
+  private erfassungsWirt(): ErfassungsWirt {
+    return {
+      baustein: this,
+      lauf: this._lauf,
+      spalten: () => this.spaltenListe(),
+      aendere: (l) => this.aendere(l),
+      melde: () => this.requestUpdate(),
+      bindungsProp: TabelleBlock.listenBindung.prop,
+    }
+  }
+
   private aendere(spalten: Spalte[]): void {
     this.dispatchEvent(
       new CustomEvent('ff-prop-change', {
@@ -262,6 +294,15 @@ export class TabelleBlock extends BasicBlock {
     this.beobachte()
   }
 
+  // Wie beim Nachschlage-Feld (G1): einmal je Darstellung berechnet, damit
+  // Tastatur und Anzeige DENSELBEN Stand sehen. Im Editor gibt es keine Daten
+  // und keine Liste (Regel 7).
+  protected override willUpdate(changed: PropertyValues): void {
+    super.willUpdate(changed)
+    if (!this.erfassungAn || this.hasAttribute('data-ff-editor')) return
+    this._lauf.aktualisiereVorschlaege(this.spaltenListe())
+  }
+
   protected override updated(): void {
     if (this._taktGemessen !== this.zeilenHoehe) this.messeRumpf()
     if (!this._fokusHolen) return
@@ -274,10 +315,18 @@ export class TabelleBlock extends BasicBlock {
     feldPickerAbbestellen(this)
     this._beobachter?.disconnect()
     this._beobachter = null
+    schliesseNachschlagenFuer(this)
     disconnectTable(this)
   }
 
-  static override styles = [BasicBlock.styles, chipStyles, leerStil, tabelleStil]
+  static override styles = [
+    BasicBlock.styles,
+    chipStyles,
+    leerStil,
+    tabelleStil,
+    vorschlagStil,
+    erfassungStil,
+  ]
 
   override render(): TemplateResult {
     const spalten = this.spaltenListe()
@@ -293,6 +342,7 @@ export class TabelleBlock extends BasicBlock {
       sortAuf: this._sortAuf,
       wunschSeite: this._seite,
       gemessen: this._mass,
+      erfassungAn: this.erfassungAn,
     })
     return html`<div class="tabelle" style=${styleMap({
       '--takt': `${ansicht.takt}px`,
@@ -317,6 +367,15 @@ export class TabelleBlock extends BasicBlock {
         auswahlIndex: this.auswahlIndex,
         leer: ansicht.leer,
         leerText: this.leerText,
+        erfassung: this.erfassungAn
+          ? erfassungsZeileFuer(
+              this.erfassungsWirt(),
+              ansicht.cols,
+              // Kein Lineal mehr uebrig heisst: die Zeile ist die letzte im
+              // Rumpf, unter ihr ist kein Platz fuer die Liste.
+              (ansicht.linealTakte ?? 1) <= 0,
+            )
+          : nothing,
       }, {
         setzeSuchtext: (text) => this.setzeSuchtext(text),
         dblklickKopf: (e, i) => {
@@ -327,7 +386,11 @@ export class TabelleBlock extends BasicBlock {
         },
         klickKopf: (e, i) => {
           if (this.editable) {
-            oeffneFeldPicker(this, e, TabelleBlock.listenBindung.prop, i, () => this.spaltenListe())
+            oeffneFeldPicker(this, e, {
+              prop: TabelleBlock.listenBindung.prop,
+              index: i,
+              liste: () => this.spaltenListe(),
+            })
           }
           this.klickSortiere(i)
         },

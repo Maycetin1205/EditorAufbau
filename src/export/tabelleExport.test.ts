@@ -126,6 +126,92 @@ describe('Tabelle (Fahrplan 4)', () => {
   })
 })
 
+describe('Tabelle: Erfassungszeile (G2)', () => {
+  it('ohne Erfassungszeile aendert sich am Export NICHTS', () => {
+    const tag = tabelleTag(exportMask(tabelleBaum({})).html)
+    expect(tag).not.toMatch(/erfassung/i)
+    expect(spaltenAusHtml(exportMask(tabelleBaum({})).html)).toEqual(standardTestSpalten)
+  })
+
+  it('der Schalter ueberlebt den Export — eine Quelle an der TABELLE gibt es nicht', () => {
+    const html = exportMask(tabelleBaum({ erfassung: 'ja' })).html
+    expect(tabelleTag(html)).toMatch(/\serfassung="ja"/i)
+
+    // Die Nachschlage-Quelle haengt an der SPALTE (Nutzer-Korrektur
+    // 2026-08-18); eine tabellenweite Eigenschaft darf es nicht geben.
+    expect(tabelleTag(html)).not.toMatch(/erfassungquelle=/i)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Rolle, eigene Quelle und Feld reisen JE SPALTE mit', () => {
+    // Zwei Nachschlage-Spalten mit VERSCHIEDENEN Quellen — genau der Fall,
+    // an dem eine tabellenweite Quelle scheitern wuerde.
+    const spalten = [
+      {
+        titel: 'Artikel', feld: '', art: 'text',
+        rolle: 'nachschlagen', rollenQuelle: 'q-art', erfassung: { feld: '3_18' },
+      },
+      {
+        titel: 'Bezeichnung', feld: '', art: 'text',
+        rolle: 'folgt', rollenQuelle: 'q-art', erfassung: { feld: '30_40' },
+      },
+      { titel: 'Menge', feld: '', art: 'zahl', rolle: 'frei', vorbelegung: '1' },
+      {
+        titel: 'Gabe', feld: '', art: 'text',
+        rolle: 'nachschlagen', rollenQuelle: 'q-gabe', erfassung: { feld: '5_4' },
+      },
+    ]
+    const html = exportMask(tabelleBaum({ erfassung: 'ja', spalten })).html
+    expect(spaltenAusHtml(html)).toEqual(spalten)
+    expect(failedChecks(validateMaskHtml(html))).toEqual([])
+  })
+
+  it('Reste einer verworfenen Rolle reisen NICHT mit', () => {
+    // Erst „Nachschlagen" gestellt, dann auf „Frei" zurueck: weder Quelle
+    // noch Feld duerfen in der Maske landen. Umgekehrt genauso: eine
+    // Vorbelegung gilt nur bei „Frei".
+    const spalten = [
+      {
+        titel: 'Artikel', feld: '', art: 'text',
+        rolle: 'frei', rollenQuelle: 'q-art', erfassung: { feld: '3_18' },
+        vorbelegung: 'X',
+      },
+      {
+        titel: 'Bezeichnung', feld: '', art: 'text',
+        rolle: 'folgt', rollenQuelle: 'q-art', erfassung: { feld: '30_40' },
+        vorbelegung: 'weg',
+      },
+    ]
+    const tree = tabelleBaum({ erfassung: 'ja', spalten })
+    expect(spaltenAusHtml(exportMask(tree).html)).toEqual([
+      { titel: 'Artikel', feld: '', art: 'text', rolle: 'frei', vorbelegung: 'X' },
+      {
+        titel: 'Bezeichnung', feld: '', art: 'text',
+        rolle: 'folgt', rollenQuelle: 'q-art', erfassung: { feld: '30_40' },
+      },
+    ])
+
+    // Der Baum selbst bleibt unangetastet — der Export putzt nur seine Kopie.
+    expect(tree.tab.props.spalten).toBe(spalten)
+    expect(spalten[0].erfassung).toEqual({ feld: '3_18' })
+    expect(spalten[0].rollenQuelle).toBe('q-art')
+  })
+
+  it('coerceSpalten faengt kaputte Rollen-Angaben ab', () => {
+    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', rolle: '' }]))
+      .toEqual([{ titel: 'A', feld: '', art: 'text' }])
+
+    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', erfassung: { feld: 7 } }]))
+      .toEqual([{ titel: 'A', feld: '', art: 'text' }])
+
+    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', rollenQuelle: 'q-art' }]))
+      .toEqual([{ titel: 'A', feld: '', art: 'text', rollenQuelle: 'q-art' }])
+
+    expect(coerceSpalten([{ titel: 'A', feld: '', art: 'text', vorbelegung: '1' }]))
+      .toEqual([{ titel: 'A', feld: '', art: 'text', vorbelegung: '1' }])
+  })
+})
+
 describe('Tabelle: Zeilenklick als Ketten-Ausloeser (V4)', () => {
   it('eine Kette an "Zeile gewaehlt" reist als Ereignis mit', () => {
     const baum = tabelleBaum({})

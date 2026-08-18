@@ -1,10 +1,8 @@
 import { html, nothing, type TemplateResult } from 'lit'
 import { styleMap } from 'lit/directives/style-map.js'
 import { leerZustand } from '../shared/leerZustand'
-import type { Spalte } from './spalten'
+import { ZELLE_PLATZHALTER, type Spalte } from './spalten'
 import { spaltenArt } from './spaltenArten'
-
-const PLATZHALTER = '—'
 
 export interface KoerperLage {
   spalten: readonly Spalte[]
@@ -34,6 +32,13 @@ export interface KoerperLage {
 
   leer: boolean
   leerText: string
+
+  // Die fertige Erfassungszeile. Der Rumpf kennt ihre Rollen nicht — er
+  // setzt sie nur an die richtige Stelle: sie ist die naechste FREIE Zeile,
+  // also direkt unter der letzten DATENzeile und vor allem, was nur fuellt.
+  // Ohne echte Daten (Editor, leere Quelle) ist das Zeile 1 ganz oben —
+  // nicht unten hinter den Platzhalter-Strichen.
+  erfassung: TemplateResult | typeof nothing
 }
 
 export interface KoerperHandeln {
@@ -86,6 +91,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
+        ${lage.hatQuelle ? nothing : lage.erfassung}
         ${lage.zeilen.map((rohIndex, ansichtIndex) => {
           const aktivierbar = rohIndex !== null && !lage.imEditor
           return html`<div
@@ -110,7 +116,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               const art = spaltenArt(s.art)
               const wert = rohIndex !== null
                 ? (lage.datenzeilen[rohIndex]?.[i] ?? '')
-                : PLATZHALTER
+                : ZELLE_PLATZHALTER
 
               const zusatz = rohIndex !== null
                 ? (lage.zusatzzeilen[rohIndex]?.[i] ?? {})
@@ -121,6 +127,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             })}
           </div>`
         })}
+        ${lage.hatQuelle ? lage.erfassung : nothing}
         ${lineal(lage)}`}
       </div>
     `

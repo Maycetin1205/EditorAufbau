@@ -54,16 +54,16 @@ dann `go` (0.3), dann genau EINE Etappe.
   s. Etappentext V5.
 - **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
   fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · G2–G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
+  V6 nach Kurzentwurf · G3–G4 (Wellen-Kopf G) · E1 · E3 · U7a · A10
   (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3 (nach U5/U7).
   V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf Nutzer-Ansage GEPARKT.
 - **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
   Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
   bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
   welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
-  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9 und V7
-  sind GEBAUT (2026-08-18), G1 ebenfalls;** naechster Kopier-Auftrag:
-  Erste Etappe G2.
+  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9, V7, G1
+  und G2 sind GEBAUT (2026-08-18);** naechster Kopier-Auftrag: Erste
+  Etappe G3.
 - **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
   Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
   WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
@@ -742,7 +742,7 @@ kopieren. V7 ist gebaut: das Fenster hat EIN Geruest (`fensterTpl`),
 G1 baut dagegen, nicht gegen zwei Fassungen.
 **Runtime-Bytes aendern sich bewusst.**
 
-## G2 · Erfassungszeile: Zeile, Rollen, Befuellen
+## G2 · Erfassungszeile: Zeile, Rollen, Befuellen (GEBAUT 2026-08-18)
 
 Der Tabellen-Baustein bekommt den Schalter „Erfassungszeile" und je
 Spalte die Rolle samt Details (Nachschlage-Quelle + Uebernahme-Feld ·

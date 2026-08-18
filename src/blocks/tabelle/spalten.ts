@@ -8,7 +8,24 @@ export interface Spalte {
   zuordnung?: Zuordnung[]
 
   felder?: Record<string, string>
+
+  // Erfassungszeile (Welle G): die Rolle dieser Zelle, ihre EIGENE
+  // Nachschlage-Quelle, das Feld daraus und die Vorbelegung bei „Frei". Alle
+  // fehlen, solange niemand sie gestellt hat — dann exportiert die Spalte
+  // wie zuvor.
+  rolle?: string
+
+  rollenQuelle?: string
+
+  erfassung?: Record<string, string>
+
+  vorbelegung?: string
 }
+
+// Der Strich, den eine Zelle ohne Wert zeigt: der Editor erfindet nie Daten
+// (Regel 7). Eine Stelle, weil Datenzeile und Erfassungszeile denselben
+// zeigen muessen.
+export const ZELLE_PLATZHALTER = '—'
 
 export const SPALTEN_MIN = 1
 export const SPALTEN_MAX = 8
@@ -53,6 +70,7 @@ function alsSpalte(x: unknown, index: number): Spalte {
     const o = x as Record<string, unknown>
     const zuordnung = alsZuordnung(o.zuordnung)
     const felder = alsFelder(o.felder)
+    const erfassung = alsFelder(o.erfassung)
     return {
       titel: typeof o.titel === 'string' ? o.titel : standardTitelFuer(index),
       feld: typeof o.feld === 'string' ? o.feld : '',
@@ -61,6 +79,18 @@ function alsSpalte(x: unknown, index: number): Spalte {
       ...(zuordnung.length > 0 ? { zuordnung } : {}),
 
       ...(Object.keys(felder).length > 0 ? { felder } : {}),
+
+      ...(typeof o.rolle === 'string' && o.rolle !== '' ? { rolle: o.rolle } : {}),
+
+      ...(typeof o.rollenQuelle === 'string' && o.rollenQuelle !== ''
+        ? { rollenQuelle: o.rollenQuelle }
+        : {}),
+
+      ...(Object.keys(erfassung).length > 0 ? { erfassung } : {}),
+
+      ...(typeof o.vorbelegung === 'string' && o.vorbelegung !== ''
+        ? { vorbelegung: o.vorbelegung }
+        : {}),
     }
   }
 

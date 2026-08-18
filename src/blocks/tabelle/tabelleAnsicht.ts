@@ -24,6 +24,10 @@ export interface AnsichtFrage {
   wunschSeite: number
 
   gemessen: Zeilenmass | null
+
+  // Die Erfassungszeile belegt eine der gemessenen Zeilen: ohne das rutscht
+  // die letzte Datenzeile aus dem Rumpf und der Rumpf scrollt.
+  erfassungAn: boolean
 }
 
 export interface TabelleAnsicht {
@@ -61,17 +65,25 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
 
   const hatQuelle = frage.hatQuelle
 
-  const leer = zeigtLeerzustand(hatQuelle, frage.datenGeliefert, frage.datenzeilen.length)
+  // Mit Erfassungszeile gibt es keinen Leerzustand: die Zeile IST der Inhalt,
+  // und die zentrierte Tafel schoebe sie an den Rumpf-Rand.
+  const leer = frage.erfassungAn
+    ? false
+    : zeigtLeerzustand(hatQuelle, frage.datenGeliefert, frage.datenzeilen.length)
 
   const alleSichtbar = sichtbareIndizes(frage)
 
-  const proSeite = frage.gemessen?.passen ?? OHNE_MESSUNG
+  const belegt = frage.erfassungAn ? 1 : 0
+  const gemessenPassen = frage.gemessen === null
+    ? null
+    : Math.max(1, frage.gemessen.passen - belegt)
+  const proSeite = gemessenPassen ?? Math.max(1, OHNE_MESSUNG - belegt)
   const { seiten, seite, zeilen } = seitenAufteilung({
     sichtbar: alleSichtbar,
     hatQuelle,
     proSeite,
     wunschSeite: frage.wunschSeite,
-    platzhalterZeilen: platzhalterZeilen(frage.gemessen?.passen ?? null),
+    platzhalterZeilen: platzhalterZeilen(gemessenPassen),
   })
   return {
     cols,
@@ -84,6 +96,6 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
     seite,
     zeilen,
 
-    linealTakte: linealTakte(frage.gemessen?.passen ?? null, zeilen.length),
+    linealTakte: linealTakte(gemessenPassen, zeilen.length),
   }
 }

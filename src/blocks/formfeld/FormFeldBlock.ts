@@ -36,6 +36,8 @@ import {
   coerceNachschlagSpalten,
   einzigenTrefferFinden,
   type Eintrag,
+  FENSTER_BREITE,
+  FENSTER_HOEHE,
   folgeBeimVerlassen,
   holeEintraege,
   NACHSCHLAG_SPALTEN_BINDUNG,
@@ -96,8 +98,8 @@ export class FormFeldBlock extends BasicBlock {
 
     nachschlagSpalten: [] as Spalte[],
 
-    fensterBreite: 520,
-    fensterHoehe: 380,
+    fensterBreite: FENSTER_BREITE,
+    fensterHoehe: FENSTER_HOEHE,
 
     einzigerTreffer: 'nein',
   }
@@ -124,8 +126,8 @@ export class FormFeldBlock extends BasicBlock {
     },
   })
   nachschlagSpalten: Spalte[] = []
-  @property({ type: Number }) fensterBreite = 520
-  @property({ type: Number }) fensterHoehe = 380
+  @property({ type: Number }) fensterBreite = FENSTER_BREITE
+  @property({ type: Number }) fensterHoehe = FENSTER_HOEHE
   @property() einzigerTreffer = 'nein'
 
   @state() private spaltenDialog = false

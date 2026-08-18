@@ -10,6 +10,11 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
     { requiresDataSource: true },
   ),
 
+  jaNeinProperty(
+    'erfassung',
+    'Erfassungszeile',
+    'Zeigt als nächste freie Zeile eine leere Zeile, in der der Bediener eine neue Position tippt. Was eine Zelle dort tut, wird an ihr eingestellt: Klick auf die Zelle wählt die Rolle (Frei, Nachschlagen, Folgt) und bei den nachschlagenden ihre eigene Quelle samt Feld; Doppelklick auf eine Frei-Zelle tippt ihre Vorbelegung.',
+  ),
   {
     attributeName: 'tagField',
     name: 'Tag filtern nach',

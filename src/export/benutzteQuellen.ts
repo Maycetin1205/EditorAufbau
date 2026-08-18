@@ -50,9 +50,22 @@ export function collectDataSources(
       }
     }
 
-    for (const prop of getBlockDefinition(node.type)?.customProperties ?? []) {
+    const def = getBlockDefinition(node.type)
+    for (const prop of def?.customProperties ?? []) {
       if (prop.kind === 'quelle' && propertySichtbar(prop.visibleWhen, node.props)) {
         add(node.props[prop.attributeName])
+      }
+    }
+
+    // Eine Listen-Bedienstelle kann ihre Quelle am EINTRAG halten: jede
+    // Nachschlage-Spalte der Erfassungszeile hat ihre eigene. Ohne sie stuende
+    // die Quelle in keiner SEFILELOOP, SoftEngine schickte ihre Saetze nie und
+    // das Nachschlage-Fenster blieb in der fertigen Maske leer.
+    const bindung = def?.listenBindung
+    const stelle = bindung?.zweiteStelle
+    if (bindung && stelle) {
+      for (const eintrag of listeLesen(node.props[bindung.prop], bindung)) {
+        add(eintrag[stelle.quelleKey])
       }
     }
 
@@ -115,8 +128,21 @@ export function benutzteFelderJeQuelle(
         else merke(eigeneQuelle, wert)
       }
 
+      // Die zweite Bedienstelle traegt ihre Quelle AM EINTRAG (jede
+      // Nachschlage-Spalte ihre eigene). Ohne diese Bestellung liefert
+      // SoftEngine die Felder nicht und die Zelle bleibt in der fertigen
+      // Maske leer.
+      const stelle = b.zweiteStelle
+
       for (const eintrag of listeLesen(node.props[b.prop], b)) {
         merkeEintragsFeld(eintrag[b.feldKey])
+        if (stelle) {
+          const eigene = String(eintrag[stelle.quelleKey] ?? '')
+          const gebunden = eintragsFelderLesen(stelle.eintragsWahl, eintrag)
+          for (const zf of eintragsFelderVon(stelle.eintragsWahl, eintrag)) {
+            merke(eigene, gebunden[zf.key])
+          }
+        }
         if (!b.eintragsWahl) continue
         const gebunden = eintragsFelderLesen(b.eintragsWahl, eintrag)
         for (const zf of eintragsFelderVon(b.eintragsWahl, eintrag)) {

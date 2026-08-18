@@ -4,6 +4,7 @@ import { seGlobal } from '../../softengine/bridge'
 import { findRuntimeDataSource, getField, rowsFor } from '../../softengine/data'
 import { meldeFehler } from '../../softengine/meldung'
 import { zeilenNachAuswahl } from '../shared/auswahl'
+import { lupeZeichen } from '../shared/lupeZeichen'
 import {
   DIALOG_RAHMEN_TAG,
   type DialogGroesseDetail,
@@ -16,6 +17,12 @@ import {
   ZEILE_AKTIVIERT_EVENT,
   type ZeileAktiviertDetail,
 } from '../tabelle/zeilenAktivierung'
+
+// Das Startmass des Nachschlage-Fensters. Geteilt, weil die Erfassungszeile
+// der Tabelle dasselbe Fenster oeffnet und zwei getrennte Zahlen sofort
+// auseinanderliefen.
+export const FENSTER_BREITE = 520
+export const FENSTER_HOEHE = 380
 
 export function nachschlagFeldTpl(args: {
   wert: string
@@ -43,10 +50,7 @@ export function nachschlagFeldTpl(args: {
       aria-label="Nachschlagen"
       title="Nachschlagen"
       @click=${() => args.onLupe()}
-    ><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-      <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
-      <line x1="10.4" y1="10.4" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></line>
-    </svg></button>
+    >${lupeZeichen()}</button>
     ${args.liste}
   </div>`
 }
@@ -86,6 +90,14 @@ export interface NachschlagenArgs {
   breite: number
   hoehe: number
   onUebernehmen: (anzeige: string, wert: string, satz: unknown) => void
+
+  // Gesetzt: der Aufrufer hat seine Eintraege schon (Erfassungszeile) — dann
+  // zeigt das Fenster GENAU dieselben Saetze wie die Vorschlagsliste daneben.
+  eintraege?: readonly Eintrag[]
+
+  // Wohin der Fokus nach dem Schliessen zurueckgeht. Ohne Angabe die erste
+  // Lupe des Bausteins; die Erfassungszeile hat mehrere und nennt ihre.
+  rueckFokus?: HTMLElement | null
 }
 
 export interface Eintrag {
@@ -151,13 +163,23 @@ export type EintraegeErgebnis =
   | { ok: true; eintraege: Eintrag[] }
   | { ok: false; grund: 'unvollstaendig' | 'quelleFehlt' }
 
+// Die Saetze EINER Bibliotheks-Quelle zur Laufzeit, ungefiltert. Getrennt von
+// holeEintraege, weil die Erfassungszeile der Tabelle dieselben Saetze braucht,
+// aber NICHT die Auswahl-Folgen ihres Bausteins: die gehoeren dort zur Quelle
+// der Tabelle, nicht zur Nachschlage-Quelle, und wuerden mit deren Feldcodes
+// jeden Nachschlage-Satz wegfiltern.
+export function quellenZeilen(quelleId: string): unknown[] | null {
+  const quelle = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, quelleId)
+  if (!quelle) return null
+  return rowsFor(seGlobal().SEDATA, quelle.name, quelle.tableId)
+}
+
 export function holeEintraege(e: NachschlagEinstellung): EintraegeErgebnis {
   if (e.quelleId === '' || e.speicherFeld === '') {
     return { ok: false, grund: 'unvollstaendig' }
   }
-  const quelle = findRuntimeDataSource(seGlobal().FF_DATA_SOURCES, e.quelleId)
-  if (!quelle) return { ok: false, grund: 'quelleFehlt' }
-  const rows = rowsFor(seGlobal().SEDATA, quelle.name, quelle.tableId)
+  const rows = quellenZeilen(e.quelleId)
+  if (rows === null) return { ok: false, grund: 'quelleFehlt' }
   const anzeigeFeld = anzeigeFeldVon(coerceNachschlagSpalten([...e.spalten]), e.speicherFeld)
   return { ok: true, eintraege: fensterEintraege(e.el, rows, anzeigeFeld, e.speicherFeld) }
 }
@@ -300,14 +322,17 @@ function laufzeitTabelleTpl(args: NachschlagenArgs, eintraege: readonly Eintrag[
 }
 
 export function oeffneNachschlagen(args: NachschlagenArgs): void {
-  const ergebnis = holeEintraege(args)
-  if (!ergebnis.ok) {
-    meldeFehler(ergebnis.grund === 'unvollstaendig'
-      ? 'Nachschlagen braucht an diesem Feld eine Quelle und „Gespeichert wird".'
-      : 'Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.')
-    return
+  let eintraege = args.eintraege
+  if (eintraege === undefined) {
+    const ergebnis = holeEintraege(args)
+    if (!ergebnis.ok) {
+      meldeFehler(ergebnis.grund === 'unvollstaendig'
+        ? 'Nachschlagen braucht an diesem Feld eine Quelle und „Gespeichert wird".'
+        : 'Die Nachschlage-Quelle dieses Feldes ist in der Maske nicht vorhanden.')
+      return
+    }
+    eintraege = ergebnis.eintraege
   }
-  const eintraege = ergebnis.eintraege
 
   schliesse(false)
 
@@ -333,7 +358,7 @@ export function oeffneNachschlagen(args: NachschlagenArgs): void {
     args.onUebernehmen(eintrag.anzeige, eintrag.wert, eintrag.satz)
   })
 
-  rueckFokus = lupeVon(args.el)
+  rueckFokus = args.rueckFokus ?? lupeVon(args.el)
   document.body.appendChild(halter)
   offen = halter
   offenFuer = args.el

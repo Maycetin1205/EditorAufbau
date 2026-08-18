@@ -104,6 +104,10 @@ export function useFeldBindung({
     top: number
     left: number
 
+    // Welche Bedienstelle geklickt wurde: leer = der Kopf (Feld binden),
+    // sonst der Name der zweiten Stelle (Rolle stellen).
+    stelle?: string
+
     liste?: unknown
   } | null>(null)
   const closeListenPicker = useCallback(() => setListenPicker(null), [])
@@ -128,6 +132,7 @@ export function useFeldBindung({
         index?: number
         top?: number
         left?: number
+        stelle?: string
         liste?: unknown
       }
 
@@ -136,6 +141,7 @@ export function useFeldBindung({
         index: detail.index,
         top: Math.max(8, detail.top ?? 0),
         left: Math.max(8, Math.min(detail.left ?? 0, window.innerWidth - 248)),
+        ...(typeof detail.stelle === 'string' ? { stelle: detail.stelle } : {}),
         ...(Array.isArray(detail.liste) ? { liste: detail.liste } : {}),
       })
     }
@@ -169,6 +175,32 @@ export function useFeldBindung({
     )
   }
 
+  // Solange die Eigenschaft leer ist (Automatik), gilt die vom Baustein
+  // mitgeschickte Anzeige-Liste — erst das Wählen schreibt sie als richtige
+  // Eigenschaft fest. Beide Bedienstellen lesen und schreiben DIESELBE Liste.
+  type PickerStand = { index: number; liste?: unknown }
+
+  const eintraegeVon = (picker: PickerStand): Record<string, unknown>[] => {
+    if (!listenBindung) return []
+    const ausProps = listeLesen(block.props[listenBindung.prop], listenBindung)
+    return ausProps.length > 0 ? ausProps : listeLesen(picker.liste, listenBindung)
+  }
+
+  // Nimmt ein GANZES Paket von Schluesseln: `block.props` ist der Stand des
+  // letzten Rendervorgangs und aendert sich innerhalb desselben nicht — zwei
+  // Aufrufe hintereinander laesen beide denselben alten Stand, und der zweite
+  // ueberschriebe den ersten. Ein Aufruf ist zugleich EIN Undo-Schritt.
+  const schreibeInEintrag = (picker: PickerStand, teil: Record<string, unknown>): void => {
+    if (!listenBindung) return
+    const next = eintraegeVon(picker)
+    const ziel = next[picker.index]
+    if (!ziel) return
+    Object.assign(ziel, teil)
+    editor.updateProperty(block.id, listenBindung.prop, next)
+  }
+
+  const zweiteStelle = listenBindung?.zweiteStelle
+
   const pickers = (
     <>
       {selected && picker && hatAngebot && (
@@ -193,14 +225,74 @@ export function useFeldBindung({
           onClose={closePicker}
         />
       )}
-      {selected && listenPicker && listenBindung && listenPickerHatFelder && (() => {
-        // Solange die Eigenschaft leer ist (Automatik), gilt die vom
-        // Baustein mitgeschickte Anzeige-Liste — erst das Wählen eines
-        // Feldes schreibt sie als richtige Eigenschaft fest.
-        const listeJetzt = (): Record<string, unknown>[] => {
-          const ausProps = listeLesen(block.props[listenBindung.prop], listenBindung)
-          return ausProps.length > 0 ? ausProps : listeLesen(listenPicker.liste, listenBindung)
-        }
+      {selected && listenPicker && zweiteStelle && zweiteStelle.stelle === listenPicker.stelle && (() => {
+        const eintrag = eintraegeVon(listenPicker)[listenPicker.index]
+        if (!eintrag) return null
+        const wahl = zweiteStelle.eintragsWahl
+        // Die Quelle steht am EINTRAG: jede Nachschlage-Spalte hat ihre
+        // eigene. Nackte Feldcodes EINER Quelle (quelleId ''), wie am
+        // Nachschlage-Fenster. Ohne gewaehlte Quelle bleibt die Feldliste
+        // leer — die Rolle laesst sich trotzdem stellen, die Quelle kommt
+        // danach, das Feld zuletzt.
+        const stellenQuelleId = String(eintrag[zweiteStelle.quelleKey] ?? '')
+        const stellenQuelle = bibliothek.find((q) => q.id === stellenQuelleId)
+        const gebunden = eintragsFelderLesen(wahl, eintrag)
+        const felderKey = wahl.felderKey
+        return (
+          <FieldPicker
+            spotLabel={String(eintrag[listenBindung?.titelKey ?? 'titel'] ?? '')}
+            titel={`${wahl.label}: ${String(eintrag[listenBindung?.titelKey ?? 'titel'] ?? '')}`}
+            gruppen={stellenQuelle === undefined ? [] : [{
+              quelleId: '',
+              name: stellenQuelle.name,
+              kennung: quellenKennung(stellenQuelle),
+              fields: stellenQuelle.fields,
+            }]}
+            wahl={{
+              label: wahl.label,
+              optionen: wahl.optionen,
+              aktuell: eintragsWahlWert(wahl, eintrag),
+              onWaehle: (wert) => schreibeInEintrag(listenPicker, { [wahl.key]: wert }),
+            }}
+            quelle={eintragsFelderVon(wahl, eintrag).length === 0 ? undefined : {
+              label: 'Quelle',
+              optionen: bibliothek.map((q) => ({
+                id: q.id,
+                name: q.name,
+                kennung: quellenKennung(q),
+              })),
+              aktuell: stellenQuelleId,
+              onWaehle: (id) => {
+                // Ein Feldcode der ALTEN Quelle bedeutet in der neuen nichts —
+                // er faellt im selben Schreibvorgang weg, sonst bliebe ein Feld
+                // stehen, das es dort gar nicht gibt.
+                schreibeInEintrag(listenPicker, {
+                  [zweiteStelle.quelleKey]: id,
+                  ...(felderKey === undefined ? {} : { [felderKey]: {} }),
+                })
+              },
+            }}
+            felder={eintragsFelderVon(wahl, eintrag).map((zf) => ({
+              key: zf.key,
+              label: zf.label,
+              aktuell: gebunden[zf.key] ?? '',
+              onWaehle: (wert) => {
+                if (felderKey === undefined) return
+                const next = { ...gebunden }
+                if (wert === '') delete next[zf.key]
+                else next[zf.key] = wert
+                schreibeInEintrag(listenPicker, { [felderKey]: next })
+              },
+            }))}
+            top={listenPicker.top}
+            left={listenPicker.left}
+            onClose={closeListenPicker}
+          />
+        )
+      })()}
+      {selected && listenPicker && listenPicker.stelle === undefined
+        && listenBindung && listenPickerHatFelder && (() => {
+        const listeJetzt = (): Record<string, unknown>[] => eintraegeVon(listenPicker)
         const liste = listeJetzt()
         const eintrag = liste[listenPicker.index]
         if (!eintrag) return null
@@ -219,14 +311,6 @@ export function useFeldBindung({
         const wahl = listenBindung.eintragsWahl
         const zuo = listenBindung.eintragsZuordnung
 
-        const schreibeInEintrag = (key: string, wert: unknown): void => {
-          const next = listeJetzt()
-          const ziel = next[listenPicker.index]
-          if (!ziel) return
-          ziel[key] = wert
-          editor.updateProperty(block.id, listenBindung.prop, next)
-        }
-
         const zeigeZuordnung = zuo !== undefined
           && wahl !== undefined
           && eintragsWahlWert(wahl, eintrag) === zuo.nurBeiWahl
@@ -239,7 +323,7 @@ export function useFeldBindung({
           const next = { ...gebundeneFelder }
           if (wert === '') delete next[key]
           else next[key] = wert
-          schreibeInEintrag(wahl.felderKey, next)
+          schreibeInEintrag(listenPicker, { [wahl.felderKey]: next })
         }
         return (
           <FieldPicker
@@ -249,7 +333,7 @@ export function useFeldBindung({
               label: wahl.label,
               optionen: wahl.optionen,
               aktuell: eintragsWahlWert(wahl, eintrag),
-              onWaehle: (wert) => schreibeInEintrag(wahl.key, wert),
+              onWaehle: (wert) => schreibeInEintrag(listenPicker, { [wahl.key]: wert }),
             }}
             felder={zusatzFelder.map((zf) => ({
               key: zf.key,
@@ -264,7 +348,7 @@ export function useFeldBindung({
               bedeutungLabel: zuo.bedeutungLabel,
               bedeutungen: zuo.bedeutungen,
               zeilen: eintragsZuordnungLesen(zuo, eintrag),
-              onAendern: (zeilen) => schreibeInEintrag(zuo.key, zeilen),
+              onAendern: (zeilen) => schreibeInEintrag(listenPicker, { [zuo.key]: zeilen }),
               sitzung: tippSitzung,
             } : undefined}
             current={String(eintrag[listenBindung.feldKey] ?? '')}
