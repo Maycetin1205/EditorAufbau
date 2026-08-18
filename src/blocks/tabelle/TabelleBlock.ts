@@ -265,7 +265,17 @@ export class TabelleBlock extends BasicBlock {
       lauf: this._lauf,
       umfeld: () => this.erfassungsUmfeld(),
       melde: () => this.requestUpdate(),
+      fokussiere: (index) => this.fokussiereErfassungsZelle(index),
     }
+  }
+
+  // Erst NACH dem Rendern fokussieren: die Zellen zeigen dann den neuen
+  // Stand, und das Ziel existiert sicher.
+  private fokussiereErfassungsZelle(index: number): void {
+    void this.updateComplete.then(() => {
+      const felder = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.zeile.erfassung .erf-eingabe')
+      felder?.[index]?.focus()
+    })
   }
 
   // Die Erfassungszeile leitet alles aus zwei vorhandenen Angaben ab: der

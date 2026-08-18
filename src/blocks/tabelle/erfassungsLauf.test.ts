@@ -213,7 +213,7 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(umfeldMit(), 4)).toBe('Salbe')
   })
 
-  it('Tasten: Pfeile markieren, Enter uebernimmt, Escape macht nur die Liste zu', () => {
+  it('Tasten: Pfeile markieren, Enter uebernimmt, Escape ist zweistufig', () => {
     const u = umfeldMit()
     lauf.tippe(0, 'ART0')
     lauf.aktualisiereVorschlaege(u)
@@ -230,24 +230,77 @@ describe('ErfassungsLauf', () => {
     expect(lauf.entscheideTaste(u, 0, 'Escape')).toBe('liste-zu')
     lauf.aktualisiereVorschlaege(u)
     expect(lauf.vorschlaege).toEqual([])
-    // Das Getippte bleibt stehen.
+    // Stufe 1: das Getippte bleibt stehen.
     expect(lauf.wertVon(u, 0)).toBe('ART0')
+
+    // Stufe 2: die naechste Escape leert die Zelle.
+    expect(lauf.entscheideTaste(u, 0, 'Escape')).toBe('leeren')
+    lauf.leere(u, 0)
+    expect(lauf.wertVon(u, 0)).toBe('')
+    expect(lauf.entscheideTaste(u, 0, 'Escape')).toBe('nichts')
   })
 
-  it('Enter in der LEEREN Zelle oeffnet das grosse Fenster, in der freien nie', () => {
+  it('Enter in der LEEREN Zelle oeffnet das grosse Fenster, in der freien geht es weiter', () => {
     const u = umfeldMit()
     expect(lauf.entscheideTaste(u, 0, 'Enter')).toBe('fenster')
     expect(lauf.entscheideTaste(u, 3, 'Enter')).toBe('fenster')
 
-    // Die freie Zelle hat weder Liste noch Fenster — dort ist jede Taste Text.
-    expect(lauf.entscheideTaste(u, 2, 'Enter')).toBe('nichts')
+    // Die freie Zelle hat weder Liste noch Fenster — Enter springt weiter,
+    // alles andere ist Text.
+    expect(lauf.entscheideTaste(u, 2, 'Enter')).toBe('weiter')
     expect(lauf.entscheideTaste(u, 2, 'ArrowDown')).toBe('nichts')
 
-    // Getippt ohne Treffer tut Enter absichtlich nichts: sonst spraenge das
-    // Fenster ueber den Tippfehler und verdeckte ihn.
+    // Getippt ohne Treffer haelt Enter absichtlich an: sonst rauscht der
+    // Fluss ueber den Tippfehler hinweg.
     lauf.tippe(0, 'gibtsnicht')
     lauf.aktualisiereVorschlaege(u)
     expect(lauf.entscheideTaste(u, 0, 'Enter')).toBe('nichts')
+  })
+
+  it('Tab uebernimmt bei offener Liste und springt sonst weiter', () => {
+    const u = umfeldMit()
+    expect(lauf.entscheideTaste(u, 0, 'Tab')).toBe('weiter')
+
+    lauf.tippe(0, 'bay')
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.entscheideTaste(u, 0, 'Tab')).toBe('uebernehmen')
+
+    // Ueber den Tippfehler, an dem Enter anhaelt, traegt Tab hinweg.
+    lauf.tippe(0, 'gibtsnicht')
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.entscheideTaste(u, 0, 'Enter')).toBe('nichts')
+    expect(lauf.entscheideTaste(u, 0, 'Tab')).toBe('weiter')
+  })
+
+  it('Enter geht auf gewaehlten Werten weiter statt anzuhalten', () => {
+    const u = umfeldMit()
+    waehle(0, 'bay')
+    expect(lauf.entscheideTaste(u, 0, 'Enter')).toBe('weiter')
+  })
+
+  it('kein einziger moeglicher Satz: Enter springt weiter statt ins Fenster', () => {
+    const u = umfeldMit()
+    // Die Spritze traegt Tierart VOGEL — keine Gabe passt zu ihr.
+    waehle(0, 'Spritze')
+    expect(lauf.eintraege(u, 3)).toEqual([])
+    expect(lauf.entscheideTaste(u, 3, 'Enter')).toBe('weiter')
+  })
+
+  it('leeren loest den gewaehlten Satz — die Schwesterspalten leeren mit', () => {
+    const u = umfeldMit()
+    waehle(0, 'bay')
+    expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
+    lauf.leere(u, 0)
+    expect(lauf.wertVon(u, 0)).toBe('')
+    expect(lauf.wertVon(u, 1)).toBe('')
+  })
+
+  it('naechsteLeere ueberspringt Gefuelltes', () => {
+    const u = umfeldMit()
+    // Verband (KATZ) hat genau eine Gabe: 3 und 4 fuellen sich selbst.
+    waehle(0, 'Verband')
+    expect(lauf.naechsteLeere(u, 0)).toBe(2)
+    expect(lauf.naechsteLeere(u, 2)).toBe(-1)
   })
 
   it('ohne Quelle oder ohne Feld bleibt die Liste still leer', () => {

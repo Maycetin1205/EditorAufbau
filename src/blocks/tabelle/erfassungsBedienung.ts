@@ -19,6 +19,10 @@ export interface ErfassungsWirt {
   umfeld: () => ErfassungsUmfeld
 
   melde: () => void
+
+  // Setzt den Fokus in die Erfassungszelle der Spalte — NACH dem nächsten
+  // Rendern, denn erst dann zeigt die Zelle den neuen Stand.
+  fokussiere: (index: number) => void
 }
 
 function waehle(wirt: ErfassungsWirt, index: number, listenIndex: number): void {
@@ -56,7 +60,16 @@ function fenster(wirt: ErfassungsWirt, index: number): void {
   })
 }
 
+// Der Sprung zur nächsten leeren Zelle (G3b). Rechts nichts Leeres mehr →
+// der Fokus bleibt, wo er ist; „Zeile erfasst" kommt erst mit G4.
+function springe(wirt: ErfassungsWirt, index: number): void {
+  const ziel = wirt.lauf.naechsteLeere(wirt.umfeld(), index)
+  if (ziel !== -1) wirt.fokussiere(ziel)
+}
+
 function taste(wirt: ErfassungsWirt, index: number, e: KeyboardEvent): void {
+  // Rückwärts (Shift+Tab) bleibt Browser-Sache — jede Zelle ist erreichbar.
+  if (e.key === 'Tab' && e.shiftKey) return
   const folge = wirt.lauf.entscheideTaste(wirt.umfeld(), index, e.key)
   if (folge === 'nichts') {
     // Enter darf trotzdem kein Formular abschicken.
@@ -64,8 +77,12 @@ function taste(wirt: ErfassungsWirt, index: number, e: KeyboardEvent): void {
     return
   }
   e.preventDefault()
-  if (folge === 'uebernehmen') waehle(wirt, index, wirt.lauf.marke)
-  else if (folge === 'fenster') fenster(wirt, index)
+  if (folge === 'uebernehmen') {
+    waehle(wirt, index, wirt.lauf.marke)
+    springe(wirt, index)
+  } else if (folge === 'fenster') fenster(wirt, index)
+  else if (folge === 'weiter') springe(wirt, index)
+  else if (folge === 'leeren') wirt.lauf.leere(wirt.umfeld(), index)
   wirt.melde()
 }
 

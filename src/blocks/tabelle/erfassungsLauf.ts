@@ -20,6 +20,11 @@ import {
   type ErfassungsUmfeld,
 } from './erfassungsZellen'
 
+// Der Tastenentscheid der Erfassungszeile: die geteilten Folgen der
+// Vorschlagsliste plus die zwei, die nur die Zeile kennt — weiterspringen
+// (G3b) und die zweite Escape-Stufe.
+export type ErfassungsTaste = TastenFolge | 'weiter' | 'leeren'
+
 // Der Stand EINER Erfassungszeile zur Laufzeit: was in den Zellen steht,
 // welcher Satz je Quelle gewählt wurde, welche Zelle gerade tippt. Als eigene
 // Klasse, weil er sich so ohne Browser prüfen lässt — und weil der
@@ -86,18 +91,55 @@ export class ErfassungsLauf {
     this._marke = 0
   }
 
-  entscheideTaste(umfeld: ErfassungsUmfeld, index: number, taste: string): TastenFolge {
-    // Eine freie Zelle hat keine Liste und kein Fenster — dort ist jede Taste
-    // einfach Text.
-    if (zielIn(umfeld, index).art === 'frei') return 'nichts'
-    const folge = tastenFolge(taste, {
-      listeOffen: this._tippSpalte === index && this._vorschlaege.length > 0,
-      feldLeer: this.wertVon(umfeld, index) === '',
-    })
+  entscheideTaste(umfeld: ErfassungsUmfeld, index: number, taste: string): ErfassungsTaste {
+    const listeOffen = this._tippSpalte === index && this._vorschlaege.length > 0
+    // Tab ist die Weiter-Taste: mit offener Liste übernimmt sie wie Enter,
+    // sonst springt sie — auch dort, wo Enter absichtlich anhält (Tippfehler).
+    if (taste === 'Tab') {
+      if (!listeOffen) return 'weiter'
+      taste = 'Enter'
+    }
+    const wert = this.wertVon(umfeld, index)
+    // Escape-Stufe 2: keine Liste (mehr) offen → die Zelle leert sich.
+    if (taste === 'Escape' && !listeOffen) return wert === '' ? 'nichts' : 'leeren'
+    // Eine freie Zelle hat keine Liste und kein Fenster; Enter geht weiter.
+    if (zielIn(umfeld, index).art === 'frei') return taste === 'Enter' ? 'weiter' : 'nichts'
+    const folge = tastenFolge(taste, { listeOffen, feldLeer: wert === '' })
     if (folge === 'marke-hoch') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, -1)
     else if (folge === 'marke-runter') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, 1)
     else if (folge === 'liste-zu') this._listeZu = true
+    // Kein einziger möglicher Satz (kein Partner): Enter bleibt nicht hängen.
+    else if (folge === 'fenster' && this.eintraege(umfeld, index).length === 0) return 'weiter'
+    // Auf einem gewählten Wert geht Enter weiter. Getipptes ohne Treffer hält
+    // dagegen bewusst an (G1: sonst rauscht der Fluss über den Tippfehler) —
+    // wer trotzdem weiter will, nimmt Tab.
+    else if (folge === 'nichts' && taste === 'Enter' && wert !== '' && this.getippt.get(index) === undefined) return 'weiter'
     return folge
+  }
+
+  // Die nächste Zelle, in der noch nichts steht. Selbstgefülltes wird damit
+  // automatisch übersprungen (es ist nicht leer). -1 = rechts ist nichts
+  // Leeres mehr; was dann passiert, entscheidet der Aufrufer (ab G4: Zeile
+  // erfasst).
+  naechsteLeere(umfeld: ErfassungsUmfeld, ab: number): number {
+    for (let i = ab + 1; i < umfeld.spalten.length; i++) {
+      if (this.wertVon(umfeld, i) === '') return i
+    }
+    return -1
+  }
+
+  // Escape-Stufe 2: die Zelle wird wirklich leer. Bei einer gebundenen Zelle
+  // muss dafür der gewählte Satz ihrer Quelle gehen — sonst stünde der Wert
+  // beim nächsten Rendern wieder da. Mit ihm leeren sich die Schwesterzellen
+  // derselben Quelle; das ist gewollt: ein Satz gilt immer ganz.
+  leere(umfeld: ErfassungsUmfeld, index: number): void {
+    this.getippt.delete(index)
+    const ziel = zielIn(umfeld, index)
+    if (ziel.quelleId !== '' && this.gewaehlt.has(ziel.quelleId)) {
+      this.setze(umfeld, ziel.quelleId, undefined)
+    }
+    this._listeZu = false
+    this._marke = 0
   }
 
   setzeMarke(marke: number): void {
