@@ -51,6 +51,7 @@ export const erfassungStil = css`
         outline: none;
         border-color: var(--se-accent);
       }
+      .erf-eingabe::placeholder { color: var(--se-faint); }
 
       /* Im Editor zeigt die Zelle keine Eingabe, sondern Striche. */
       :host([data-ff-editor]) .zeile.erfassung > div { color: var(--se-muted); }

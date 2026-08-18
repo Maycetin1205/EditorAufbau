@@ -197,6 +197,17 @@ export const tabelleStil = css`
         line-height: 1.35;
       }
 
+      /* Schlank (G5, Nutzer-Entscheidung): kein Tafel-Rahmen, engere
+         Polster — die Tabelle liegt buendig auf der Maske. */
+      .tabelle.schlank {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+      .tabelle.schlank .kopf > div,
+      .tabelle.schlank .zeile > div { padding: 0 6px; }
+      .tabelle.schlank .suchzeile { padding: 4px 6px; }
+
       .fusszeile {
         display: flex;
         align-items: center;

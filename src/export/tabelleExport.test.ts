@@ -237,3 +237,12 @@ describe('Tabelle: adressierbar fuer "Wert aus Erfassungszelle" (G4)', () => {
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })
+
+// G5: der Schalter „Schlank" ist ein normaler Registry-Prop — Standard
+// reist nicht, Bestandsmasken exportieren byte-gleich.
+describe('Tabelle: Schalter Schlank (G5)', () => {
+  it('schlank="ja" reist mit, der Standard laesst das Tag sauber', () => {
+    expect(tabelleTag(exportMask(tabelleBaum({ schlank: 'ja' })).html)).toMatch(/\sschlank="ja"/i)
+    expect(tabelleTag(exportMask(tabelleBaum({})).html)).not.toMatch(/schlank=/i)
+  })
+})

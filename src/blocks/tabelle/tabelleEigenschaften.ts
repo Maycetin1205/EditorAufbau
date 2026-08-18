@@ -13,7 +13,13 @@ export const TABELLE_EIGENSCHAFTEN: PropertyDescription[] = [
   jaNeinProperty(
     'erfassung',
     'Erfassungszeile',
-    'Zeigt als nächste freie Zeile eine leere Zeile, in der der Bediener eine neue Position tippt. Was eine Zelle dort tut, wird an ihr eingestellt: Klick auf die Zelle wählt die Rolle (Frei, Nachschlagen, Folgt) und bei den nachschlagenden ihre eigene Quelle samt Feld; Doppelklick auf eine Frei-Zelle tippt ihre Vorbelegung.',
+    'Zeigt als nächste freie Zeile eine leere Zeile, in der der Bediener neue Positionen tippt. Eingestellt wird an ihr nichts: Was eine Zelle tut, ergibt sich aus der Bindung ihrer Spalte (Spaltenkopf) und der Verknüpfung des Bausteins. Enter am Zeilenende lässt die Zeile stehen; geschrieben wird über einen Knopf, dessen Kette „Wert aus Erfassungszelle“ liest — einmal je Zeile.',
+  ),
+
+  jaNeinProperty(
+    'schlank',
+    'Schlank',
+    'Nimmt den Rahmen der Tafel weg und macht die Polster enger — die Tabelle liegt bündig auf der Maske. Die Fußzeile erscheint ohnehin nur noch, wenn geblättert wird oder ein Filter greift.',
   ),
   {
     attributeName: 'tagField',

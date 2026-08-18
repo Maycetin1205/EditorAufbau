@@ -50,9 +50,12 @@ function eingabe(
   tun: ErfassungsHandeln,
   index: number,
 ): TemplateResult {
+  // Der Spaltenname steht blass IN der leeren Zelle (G5): wer reinklickt,
+  // sieht sofort, was reingehört — der Klarname ist die Vorschau.
   return html`<input
     class="erf-eingabe"
     type="text"
+    placeholder=${lage.spalten[index]?.titel ?? ''}
     .value=${lage.wert(index)}
     @input=${(e: Event) => tun.tippen(index, (e.target as HTMLInputElement).value)}
     @keydown=${(e: KeyboardEvent) => tun.taste(index, e)}

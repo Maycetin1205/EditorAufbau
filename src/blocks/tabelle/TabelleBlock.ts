@@ -88,6 +88,8 @@ export class TabelleBlock extends BasicBlock {
 
     erfassung: 'nein',
 
+    schlank: 'nein',
+
     tagField: '',
 
     leerText: LEER_TEXT_STANDARD,
@@ -110,6 +112,8 @@ export class TabelleBlock extends BasicBlock {
   @property() suche = 'ja'
 
   @property() erfassung = 'nein'
+
+  @property() schlank = 'nein'
 
   @property() leerText = LEER_TEXT_STANDARD
 
@@ -300,6 +304,12 @@ export class TabelleBlock extends BasicBlock {
     return this.erfassung === 'ja'
   }
 
+  // Die Fusszeile nur, wenn sie etwas zu sagen hat: geblaettert werden muss
+  // oder ein Filter greift (G5). Sonst gehoert der Platz den Zeilen.
+  private fussNoetig(seiten: number): boolean {
+    return seiten > 1 || this._suchtext.trim() !== '' || this.durchAuswahlGefiltert
+  }
+
   // Der Baustein haelt nur den Stand; was die Zellen tun, steht in
   // erfassungsBedienung — sonst laeuft diese Datei ueber ihren Deckel.
   private erfassungsWirt(): ErfassungsWirt {
@@ -411,7 +421,7 @@ export class TabelleBlock extends BasicBlock {
       erfassungAn: this.erfassungAn,
       erfassteAnzahl: this._erfasste.length,
     })
-    return html`<div class="tabelle" style=${styleMap({
+    return html`<div class=${this.schlank === 'ja' ? 'tabelle schlank' : 'tabelle'} style=${styleMap({
       '--takt': `${ansicht.takt}px`,
       '--zeilen-hoehe': `${ansicht.zeilenHoehe}px`,
     })}>
@@ -465,7 +475,7 @@ export class TabelleBlock extends BasicBlock {
         aktiviereZeile: (rohIndex, ansichtIndex) => this.aktiviereZeile(rohIndex, ansichtIndex),
       })}
       ${ ''}
-      ${ansicht.leer ? nothing : tabelleFuss({
+      ${ansicht.leer || !this.fussNoetig(ansicht.seiten) ? nothing : tabelleFuss({
         hatQuelle: ansicht.hatQuelle,
         sichtbar: ansicht.gesamt,
         gesamt: this.datenzeilen.length,

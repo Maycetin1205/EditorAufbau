@@ -78,8 +78,9 @@ dann `go` (0.3), dann genau EINE Etappe.
   **G3c** (Automatik-Anker — im Zielszenario „Tabelle zeigt
   Belegpositionen" schraenkt heute nichts ein und fuellt sich nichts),
   die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
-  (Entschlanken). **G3b, G3c und G4 sind GEBAUT (2026-08-18).** Naechste
-  Etappe: G5; gebaut wird auf Branch
+  (Entschlanken). **G3b, G3c, G4 und G5 sind GEBAUT (2026-08-18; G5 ohne
+  „Kopfzeile aus", s. Etappentext). Die Welle G ist damit fertig bis auf
+  die Nutzerprobe.** Gebaut wurde auf Branch
   `claude/inline-edit-receipt-table-823di6` (dieser Branch fuehrt
   den Erfassungs-Stand weiter — nicht mehr parallel auf
   `claude/softengine-erp-templates-ynqibv` arbeiten).
@@ -901,7 +902,14 @@ keine Relation fest. Die Deutung der `0` und der Leerstellen (CLAUDE.md
 SE-Echttest, nicht zum Code dieser Etappe. SE-Echttest durch den
 Nutzer. **Runtime-Bytes aendern sich bewusst.**
 
-## G5 · Entschlanken (erst NACH dem Funktionskern G3b/G3c/G4)
+## G5 · Entschlanken (GEBAUT 2026-08-18 — OHNE „Kopfzeile aus")
+
+Gebaut: Schalter „Schlank" · Fusszeile nur bei Bedarf · Spaltenname als
+Platzhalter in leeren Erfassungszellen · Inspector-Text berichtigt.
+**„Kopfzeile aus" ist bewusst NICHT gebaut** (die unten benannte
+Bedien-Antwort steht aus): die Platzhalter decken den Wunsch „da steht,
+was reingehoert" ab — kommt der Schalter doch, ist er eine eigene
+Mini-Etappe mit der Feld-Picker-Antwort.
 
 Nutzer-Wunsch, an der Demo gesehen und abgenommen (2026-08-18):
 
