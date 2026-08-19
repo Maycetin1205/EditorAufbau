@@ -44,12 +44,13 @@ function fenster(wirt: ErfassungsWirt, index: number): void {
   const umfeld = wirt.umfeld()
   const spalte = umfeld.spalten[index]
   const ziel = zielIn(umfeld, index)
-  if (spalte === undefined || ziel.quelleId === '' || ziel.code === '') return
+  if (spalte === undefined || ziel.suchQuelleId === '') return
   oeffneNachschlagen({
     el: wirt.baustein,
-    // Die Quelle DIESER Spalte: die der Tabelle oder eine verknüpfte.
-    quelleId: ziel.quelleId,
-    speicherFeld: ziel.code,
+    // Gesucht wird da, wo die Spalte es sagt — nicht zwangsläufig dort, woher
+    // der Zellwert kommt (eine Zelle ohne Schlüsselpaar sucht, ohne zu lesen).
+    quelleId: ziel.suchQuelleId,
+    speicherFeld: ziel.quelleId === ziel.suchQuelleId ? ziel.code : '',
     speicherTitel: spalte.titel,
     spalten: fensterSpaltenIn(umfeld, index),
     titel: spalte.titel,

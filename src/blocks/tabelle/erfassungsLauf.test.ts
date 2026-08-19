@@ -228,6 +228,27 @@ describe('ErfassungsLauf', () => {
     expect(lauf.eintraege(u, 3).map((e) => e.wert)).toEqual(['ORAL', 'INJ', 'SALB'])
   })
 
+  it('sucht auch, wo kein Schluesselpaar den Wert liefert', () => {
+    // Die Menge ist ein eigenes Feld OHNE Paar zu den Gaben — sucht aber laut
+    // Spaltenkopf dort. Dann liefert die Liste keinen Zellwert; sie waehlt den
+    // Satz fuer die ZEILE, und die Anzeige-Spalte zeigt ihn. Das Getippte der
+    // Zelle bleibt stehen, weil es ihr eigener Wert ist.
+    const u = umfeldMit([
+      spalte({ titel: 'Menge', feld: '11_6', art: 'zahl', suchtIn: 'q-gabe' }),
+      GABE_TEXT,
+    ])
+    expect(zielIn(u, 0))
+      .toEqual({ art: 'eigen', quelleId: '', code: '11_6', suchQuelleId: 'q-gabe' })
+    expect(lauf.eintraege(u, 0).map((e) => e.anzeige)).toEqual(['oral', 'Injektion', 'Salbe'])
+
+    lauf.tippe(0, 'inj')
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.vorschlaege).toHaveLength(1)
+    lauf.uebernimm(u, 0, lauf.vorschlaege[0].satz)
+    expect(lauf.wertVon(u, 0)).toBe('inj')
+    expect(lauf.wertVon(u, 1)).toBe('Injektion')
+  })
+
   it('eine Sucht-in-Wahl ohne Verknuepfung sucht nirgends', () => {
     // Die Wahl am Spaltenkopf zeigt auf eine Quelle, die am Baustein nicht
     // (mehr) verknuepft ist. Dann gibt es kein Schluesselpaar, an dem die

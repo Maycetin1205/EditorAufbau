@@ -43,11 +43,11 @@ export interface KoerperLage {
   // Ketten-Lauf des Knopfs macht aus ihnen echte Positionen.
   erfasste: readonly (readonly string[])[]
 
-  // Die fertige Erfassungszeile. Der Rumpf kennt ihre Rollen nicht — er
-  // setzt sie nur an die richtige Stelle: sie ist die naechste FREIE Zeile,
-  // also direkt unter der letzten DATENzeile und vor allem, was nur fuellt.
-  // Ohne echte Daten (Editor, leere Quelle) ist das Zeile 1 ganz oben —
-  // nicht unten hinter den Platzhalter-Strichen.
+  // Die fertige Erfassungszeile. Der Rumpf setzt sie nur an ihre Stelle: sie
+  // ist die LETZTE Zeile der Tabelle — unter den Datenzeilen, unter den
+  // erfassten Zeilen, vor dem Lineal (Nutzer-Entscheidung 2026-08-19). Bis
+  // dahin sass sie ohne echte Daten ganz OBEN, wo sie im Editor nicht von
+  // den Strich-Zeilen zu unterscheiden war.
   erfassung: TemplateResult | typeof nothing
 }
 
@@ -101,7 +101,6 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>` : nothing}
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
-        ${lage.hatQuelle ? nothing : lage.erfassung}
         ${lage.zeilen.map((rohIndex, ansichtIndex) => {
           const aktivierbar = rohIndex !== null && !lage.imEditor
           return html`<div
@@ -154,7 +153,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             }</div>`
           })}
         </div>`)}
-        ${lage.hatQuelle ? lage.erfassung : nothing}
+        ${lage.erfassung}
         ${lineal(lage)}`}
       </div>
     `

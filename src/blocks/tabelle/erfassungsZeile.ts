@@ -5,11 +5,10 @@ import { spaltenArt } from './spaltenArten'
 import { zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import { ZELLE_PLATZHALTER } from './spalten'
 
-// Die nächste freie Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und
-// kein eigener Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle
-// ohne sie exportiert wie zuvor. Einzustellen ist an ihr nichts — was eine
-// Zelle tut, leitet erfassungsZellen aus der Bindung der Spalte und der
-// Verknüpfung des Bausteins ab.
+// Die LETZTE Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und kein
+// eigener Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle ohne
+// sie exportiert wie zuvor. Was eine Zelle tut, steht an ihrer Spalte (Feld +
+// „Sucht beim Erfassen in") — an der Zeile selbst wird nichts eingestellt.
 
 export interface ErfassungsLage {
   // Spalten, Tabellen-Quelle und Verknüpfungen — dieselbe Sicht, aus der auch
@@ -34,10 +33,10 @@ export interface ErfassungsLage {
   vorschlaege: readonly Vorschlag[]
   marke: number
 
-  // Nach OBEN aufklappen. Der Rumpf schneidet ab, was aus ihm herausragt:
-  // steht die Zeile ganz unten, wäre eine Liste nach unten unerreichbar.
-  // Ist unter ihr noch Platz (leere Tabelle → Zeile 1 ganz oben), klappt sie
-  // nach unten — dorthin wächst auch der Rollbereich des Rumpfes mit.
+  // Nach OBEN aufklappen. Der Rumpf schneidet ab, was aus ihm herausragt
+  // (`.koerper { overflow: auto }`): steht die Zeile am unteren Rand, wäre eine
+  // Liste nach unten unerreichbar. Ist unter ihr noch Platz (das Lineal füllt
+  // den Rest), klappt sie nach unten — dorthin wächst der Rollbereich mit.
   listeNachOben: boolean
 }
 
@@ -68,10 +67,11 @@ function eingabe(
   />`
 }
 
-// Eine Auswahl-Zelle kann eine Vorschlagsliste zeigen und braucht dafür
-// einen Halter; eine Zelle ohne Auswahl-Quelle ist nur ein Eingabefeld. Eine
-// Lupe hat hier keine mehr: Enter in der leeren Zelle öffnet das große
-// Fenster (Nutzer-Entscheidung 2026-08-18). Die Lupe am Formularfeld bleibt.
+// Eine SUCHENDE Zelle kann eine Vorschlagsliste zeigen und braucht dafür einen
+// Halter; eine Zelle, die nirgends sucht („frei"), ist nur ein Eingabefeld —
+// auch dann, wenn sie einen Wert aus einem gewählten Satz ANZEIGT. Eine Lupe
+// hat hier keine mehr: Enter in der leeren Zelle öffnet das große Fenster
+// (Nutzer-Entscheidung 2026-08-18). Die Lupe am Formularfeld bleibt.
 function laufzeitZelle(
   lage: ErfassungsLage,
   tun: ErfassungsHandeln,
@@ -109,7 +109,7 @@ export function erfassungsZeileTpl(
           @click=${griff ? (e: MouseEvent) => griff(e, i) : nothing}
         >${ZELLE_PLATZHALTER}</div>`
       }
-      const mitListe = zielIn(lage.umfeld, i).art === 'auswahl'
+      const mitListe = zielIn(lage.umfeld, i).suchQuelleId !== ''
       return html`<div class=${klasse} role="cell">${
         laufzeitZelle(lage, tun, i, mitListe)
       }</div>`
