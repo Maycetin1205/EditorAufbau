@@ -60,6 +60,15 @@ export function traegtEigeneQuelle(node: BlockNode | undefined): boolean {
   return kann === true || propertySichtbar(kann.wenn, node.props)
 }
 
+// Traegt dieser Baustein Kopfzeilen im Inspector? Genau dann, wenn er eine
+// eigene Datenquelle fuehren kann oder Ereignisse mit Aktionsketten hat.
+// Inspector und Kopfzeilen-Leiste lesen dieselbe Antwort.
+export function traegtInspectorZeilen(node: BlockNode | undefined): boolean {
+  if (!node) return false
+  if (traegtEigeneQuelle(node)) return true
+  return (getBlockDefinition(node.type)?.blockEvents ?? []).length > 0
+}
+
 export function bindbareStellenVon(node: BlockNode | undefined): readonly BindableSpot[] {
   if (!node) return []
   const stellen = getBlockDefinition(node.type)?.bindableSpots ?? []

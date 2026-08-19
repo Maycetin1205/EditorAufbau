@@ -4,7 +4,7 @@ import { bindingProp } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { propertySichtbar, type PropertyDescription } from '../../core/blocks/PropertyDescription'
-import { darfAuswahlFolgen, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
+import { traegtInspectorZeilen } from '../../core/blocks/treeQuery'
 import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -12,10 +12,8 @@ import { Field } from '@/ui/molecules/field'
 import { SidePanel } from '@/ui/molecules/side-panel'
 import { cn } from '@/lib/utils'
 import { bausteinName } from '../../core/blocks/bausteinName'
-import { AktionenSektion } from './AktionenSektion'
-import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
+import { BausteinZeilen } from './BausteinZeilen'
 import { PropControl } from './PropControl'
-import { QuellenListe } from './QuellenListe'
 
 interface InspectorZeile {
   row?: string
@@ -105,8 +103,10 @@ export function Inspector() {
   )
   const generalProps = visibleProps.filter((p) => !dataProps.includes(p))
 
-  const showDataSection = traegtEigeneQuelle(block)
-    || dataProps.some((p) => p.quelleProp !== undefined || sourceInReach !== undefined)
+  const showDataSection = dataProps.length > 0
+    && dataProps.some((p) => p.quelleProp !== undefined || sourceInReach !== undefined)
+
+  const zeilen = traegtInspectorZeilen(block)
 
   return (
     <SidePanel
@@ -124,8 +124,10 @@ export function Inspector() {
     >
 
       <div className="flex flex-col">
+        <BausteinZeilen key={block.id} block={block} def={def} />
+
         {generalProps.length > 0 && (
-          <div className="flex flex-col gap-3">
+          <div className={cn('flex flex-col gap-3', zeilen && 'mt-4')}>
 
             {inspectorZeilen(generalProps).map((zeile) =>
               zeile.row ? (
@@ -147,33 +149,11 @@ export function Inspector() {
           <div
             className={cn(
               'flex flex-col gap-3',
-              generalProps.length > 0 && 'mt-4 border-t border-border pt-4',
+              (zeilen || generalProps.length > 0) && 'mt-4 border-t border-border pt-4',
             )}
           >
 
-            {traegtEigeneQuelle(block) && <QuellenListe block={block} />}
             {dataProps.map((p) => propControl(p))}
-          </div>
-        )}
-
-        {darfAuswahlFolgen(block) && (
-          <AuswahlFolgeSektion
-            block={block}
-            mitTrenner={generalProps.length > 0 || showDataSection}
-          />
-        )}
-
-        {def.blockEvents && def.blockEvents.length > 0 && (
-          <div
-            className={cn(
-              'flex flex-col gap-3',
-              (generalProps.length > 0 || showDataSection) && 'mt-4 border-t border-border pt-4',
-            )}
-          >
-            <AktionenSektion
-              block={block}
-              events={def.blockEvents}
-            />
           </div>
         )}
 
@@ -181,8 +161,7 @@ export function Inspector() {
           <p
             className={cn(
               'text-xs leading-relaxed text-muted-foreground',
-              (generalProps.length > 0 || showDataSection
-                || (def.blockEvents && def.blockEvents.length > 0)) && 'mt-3',
+              (zeilen || generalProps.length > 0 || showDataSection) && 'mt-3',
             )}
           >
             {hinweis}
