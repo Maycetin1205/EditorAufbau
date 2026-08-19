@@ -9,23 +9,22 @@ import { getField } from '../../softengine/data'
 import { ART_TEXT } from './spaltenArten'
 import type { Spalte } from './spalten'
 
-// Was eine Zelle der Erfassungszeile tut, wird ABGELEITET — eingestellt wird
-// daran nichts (Nutzer-Entscheidung 2026-08-18, geschärft 2026-08-19: die
-// Spalte IST das Feld der werdenden Zeile). Zwei Angaben, die es beide schon
-// gibt, sagen alles: die Spalte ist am Kopf an ein Feld gebunden, und wo zwei
-// Quellen zusammengehören, steht das in der Verknüpfung des Bausteins
-// („Woran erkennt man die zusammengehörige Zeile?").
+// Was eine Zelle der Erfassungszeile tut, steht in zwei Angaben ihrer Spalte —
+// beide am Spaltenkopf gewählt, keine abgeleitet (Nutzer 2026-08-19):
 //
-//   nichts gebunden                     → frei tippen
-//   eigenes Feld ohne Schlüsselpaar     → frei tippen (die Menge — die
-//                                         Datenzeile zeigt dasselbe Feld)
-//   eigenes Feld in einem Schlüsselpaar → Auswahl aus der gekoppelten Quelle:
-//                                         die Artikelnummer der Position
-//                                         wählt im Artikelstamm
-//   Feld einer verknüpften Quelle       → Auswahl aus ihr, nur passende Sätze
+//   Feld    → woher der Wert kommt (die Spalte IST ein Feld der werdenden
+//             Zeile; ein Feld einer verknüpften Quelle zeigt nur an)
+//   Sucht in → wo die Zelle beim Erfassen sucht („frei" = keine Liste)
+//
+//   nichts gebunden               → frei tippen
+//   eigenes Feld, „frei"          → frei tippen (die Menge)
+//   eigenes Feld, sucht in X      → Liste aus X; der gewählte Satz liefert den
+//                                   Wert über das Schlüsselpaar der
+//                                   Verknüpfung (Artikelnummer aus dem Stamm)
+//   Feld von X, „frei"            → zeigt, was der in X gewählte Satz liefert
+//   Feld von X, sucht in X        → dasselbe, und sucht selbst
 //
 // Die Ableitung selbst (`erfassungsZielVon`) liegt in core/data/sourceLinks:
-// Inspector und Feld-Wähler ZEIGEN sie dem Nutzer in Klartext an, und
 // generischer Editor-Code darf keinen Baustein importieren (Regel 2).
 export type Zellenart = ErfassungsZielArt
 
@@ -54,20 +53,32 @@ export function zellenzielVon(
   tabellenQuelleId: string,
   verknuepfungen: readonly BausteinQuelle[],
 ): Zellenziel {
-  return erfassungsZielVon(spalte?.feld ?? '', tabellenQuelleId, verknuepfungen)
+  return erfassungsZielVon(
+    spalte?.feld ?? '',
+    spalte?.suchtIn ?? '',
+    tabellenQuelleId,
+    verknuepfungen,
+  )
 }
 
 export function zielIn(umfeld: ErfassungsUmfeld, index: number): Zellenziel {
   return zellenzielVon(umfeld.spalten[index], umfeld.quelleId, umfeld.verknuepfungen)
 }
 
-// Alle Quellen, in denen diese Zeile wählt, jede einmal.
+// Alle Quellen, aus denen diese Zeile einen Satz halten kann, jede einmal:
+// die, aus denen eine Zelle ihren Wert LIEST, und die, in denen eine Zelle
+// SUCHT. Beides kann auseinanderfallen (eine Anzeige-Spalte liest ohne zu
+// suchen, eine Zelle ohne Schlüsselpaar sucht ohne zu lesen), und die
+// Schlüssel-Auflösung braucht beide.
 export function auswahlQuellenIn(umfeld: ErfassungsUmfeld): string[] {
   const raus: string[] = []
+  const merke = (id: string): void => {
+    if (id !== '' && !raus.includes(id)) raus.push(id)
+  }
   for (let i = 0; i < umfeld.spalten.length; i++) {
     const ziel = zielIn(umfeld, i)
-    if (ziel.art !== 'auswahl' || ziel.quelleId === '') continue
-    if (!raus.includes(ziel.quelleId)) raus.push(ziel.quelleId)
+    if (ziel.art === 'auswahl') merke(ziel.quelleId)
+    merke(ziel.suchQuelleId)
   }
   return raus
 }
@@ -82,12 +93,13 @@ export function anzeigeSpalteIn(
   index: number,
 ): { titel: string; code: string } | undefined {
   const ziel = zielIn(umfeld, index)
-  if (ziel.art !== 'auswahl' || ziel.code === '') return undefined
+  if (ziel.suchQuelleId === '') return undefined
+  const eigenerCode = ziel.quelleId === ziel.suchQuelleId ? ziel.code : ''
   for (let i = 0; i < umfeld.spalten.length; i++) {
     if (i === index) continue
     const anderes = zielIn(umfeld, i)
-    if (anderes.art !== 'auswahl' || anderes.quelleId !== ziel.quelleId) continue
-    if (anderes.code === '' || anderes.code === ziel.code) continue
+    if (anderes.art !== 'auswahl' || anderes.quelleId !== ziel.suchQuelleId) continue
+    if (anderes.code === '' || anderes.code === eigenerCode) continue
     return { titel: umfeld.spalten[i].titel, code: anderes.code }
   }
   return undefined
@@ -99,11 +111,15 @@ export function anzeigeSpalteIn(
 export function fensterSpaltenIn(umfeld: ErfassungsUmfeld, index: number): Spalte[] {
   const spalte = umfeld.spalten[index]
   const anzeige = anzeigeSpalteIn(umfeld, index)
+  const ziel = zielIn(umfeld, index)
   if (spalte === undefined || anzeige === undefined) return []
-  return [
-    { titel: anzeige.titel, feld: anzeige.code, art: ART_TEXT },
-    { titel: spalte.titel, feld: zielIn(umfeld, index).code, art: ART_TEXT },
-  ]
+  // Ohne eigenen Wert (kein Schlüsselpaar) bleibt es bei der Anzeige-Spalte:
+  // eine leere zweite Spalte wäre nur eine Strichspalte.
+  const wertCode = ziel.quelleId === ziel.suchQuelleId ? ziel.code : ''
+  const anzeigeSpalte = { titel: anzeige.titel, feld: anzeige.code, art: ART_TEXT }
+  return wertCode === ''
+    ? [anzeigeSpalte]
+    : [anzeigeSpalte, { titel: spalte.titel, feld: wertCode, art: ART_TEXT }]
 }
 
 // Eingeschränkt wird nach demselben Muster wie die Auswahl-Folge

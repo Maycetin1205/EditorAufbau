@@ -35,6 +35,10 @@ export type ErfassungsTaste = TastenFolge | 'weiter' | 'leeren'
 // ist gestrichen, 2026-08-19). Die eigenen Felder kommen getippt oder über
 // die Kopplung aus den gewählten Sätzen der verknüpften Quellen.
 //
+// WO eine Zelle sucht, sagt die Sucht-in-Wahl ihrer Spalte (`suchQuelleId`),
+// WOHER ihr Wert kommt, ihre Bindung (`art`/`quelleId`). Beides kann
+// auseinanderfallen, darum fragt dieser Lauf getrennt danach.
+//
 // Die Zeile schreibt NICHT ins ERP und veröffentlicht ihre Wahl NICHT als
 // globale Auswahl: die Geber-Kennung der Tabelle gehört ihrer Zeilenauswahl,
 // und ein Baustein kann heute Geber für genau EINE Quelle sein. Geschrieben
@@ -122,9 +126,9 @@ export class ErfassungsLauf {
     const wert = this.wertVon(umfeld, index)
     // Escape-Stufe 2: keine Liste (mehr) offen → die Zelle leert sich.
     if (taste === 'Escape' && !listeOffen) return wert === '' ? 'nichts' : 'leeren'
-    // Eine Zelle ohne Auswahl-Quelle (frei oder ungekoppeltes eigenes Feld)
-    // hat keine Liste und kein Fenster; Enter geht weiter.
-    if (zielIn(umfeld, index).art !== 'auswahl') return taste === 'Enter' ? 'weiter' : 'nichts'
+    // Eine Zelle, die nirgends sucht („frei"), hat keine Liste und kein
+    // Fenster; Enter geht weiter.
+    if (zielIn(umfeld, index).suchQuelleId === '') return taste === 'Enter' ? 'weiter' : 'nichts'
     const folge = tastenFolge(taste, { listeOffen, feldLeer: wert === '' })
     if (folge === 'marke-hoch') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, -1)
     else if (folge === 'marke-runter') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, 1)
@@ -156,8 +160,10 @@ export class ErfassungsLauf {
   leere(umfeld: ErfassungsUmfeld, index: number): void {
     this.getippt.delete(index)
     const ziel = zielIn(umfeld, index)
-    if (ziel.quelleId !== '' && this.gewaehlt.has(ziel.quelleId)) {
-      this.setze(umfeld, ziel.quelleId, undefined)
+    for (const quelleId of [ziel.quelleId, ziel.suchQuelleId]) {
+      if (quelleId !== '' && this.gewaehlt.has(quelleId)) {
+        this.setze(umfeld, quelleId, undefined)
+      }
     }
     this._listeZu = false
     this._marke = 0
@@ -171,11 +177,11 @@ export class ErfassungsLauf {
   // wählen — auch die gekoppelten eigenen Zellen zeigen ihn sofort. Danach
   // gleicht sich die Zeile ab (G3c): jede Wahl kann Abhängiges neu bestimmen.
   uebernimm(umfeld: ErfassungsUmfeld, index: number, satz: unknown): void {
-    const ziel = zielIn(umfeld, index)
-    if (ziel.art !== 'auswahl') return
-    this.setze(umfeld, ziel.quelleId, satz)
+    const such = zielIn(umfeld, index).suchQuelleId
+    if (such === '') return
+    this.setze(umfeld, such, satz)
     this._wahlZaehler += 1
-    this.vonHand.set(ziel.quelleId, this._wahlZaehler)
+    this.vonHand.set(such, this._wahlZaehler)
     this.gleicheAb(umfeld)
     this._tippSpalte = -1
     this._marke = 0
@@ -303,7 +309,7 @@ export class ErfassungsLauf {
 
   private berechne(umfeld: ErfassungsUmfeld): Eintrag[] {
     const index = this._tippSpalte
-    if (this._listeZu || zielIn(umfeld, index).art !== 'auswahl') return []
+    if (this._listeZu || zielIn(umfeld, index).suchQuelleId === '') return []
     const getippt = this.getippt.get(index) ?? ''
     if (getippt === '') return []
     return passendeVorschlaege(this.eintraege(umfeld, index), getippt)
@@ -315,14 +321,18 @@ export class ErfassungsLauf {
   // passen — beim Umentscheiden nur die der Wahlen VOR der eigenen.
   eintraege(umfeld: ErfassungsUmfeld, index: number): Eintrag[] {
     const ziel = zielIn(umfeld, index)
-    if (ziel.art !== 'auswahl' || ziel.quelleId === '' || ziel.code === '') return []
-    const rows = quellenZeilen(ziel.quelleId)
+    const such = ziel.suchQuelleId
+    if (such === '') return []
+    const rows = quellenZeilen(such)
     if (rows === null) return []
-    const eigene = this.vonHand.get(ziel.quelleId) ?? Infinity
+    const eigene = this.vonHand.get(such) ?? Infinity
+    // Der Wert der Zelle im gewählten Satz — nur, wenn sie AUS der Such-Quelle
+    // liest. Ohne Schlüsselpaar bleibt es bei der Anzeige-Spalte; hat die Zelle
+    // beides nicht, liefert nachschlagEintraege von sich aus nichts.
     return nachschlagEintraege(
-      this.moegliche(umfeld, ziel.quelleId, rows, (wahl) => wahl < eigene),
+      this.moegliche(umfeld, such, rows, (wahl) => wahl < eigene),
       anzeigeSpalteIn(umfeld, index)?.code ?? '',
-      ziel.code,
+      ziel.quelleId === such ? ziel.code : '',
     )
   }
 }

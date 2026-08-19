@@ -31,11 +31,13 @@ export interface ActionValueSpot {
 export {
   eintragsFelderLesen,
   eintragsFelderVon,
+  eintragsQuellenWahlWert,
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listenStandardTitel,
   listeFuerExport,
   listeLesen,
+  type EintragsQuellenWahl,
   type EintragsWahl,
   type EintragsWahlOption,
   type EintragsZuordnung,

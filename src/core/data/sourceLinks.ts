@@ -84,47 +84,68 @@ export function paarKlartext(
     .join(' + ')
 }
 
-// Was eine Erfassungszelle mit dieser Feld-Bindung tut, ABGELEITET aus zwei
-// vorhandenen Angaben: der Bindung selbst und den Verknüpfungen des
-// Bausteins (Nutzer-Modell 2026-08-19: die Spalte IST das Feld der werdenden
-// Zeile). Liegt hier und nicht beim Tabellen-Baustein, damit Inspector und
-// Feld-Wähler dieselbe Ableitung ZEIGEN können, ohne einen Baustein zu
-// importieren (Regel 2); die Erfassungszeile benutzt sie über
-// blocks/tabelle/erfassungsZellen.
+// Was eine Erfassungszelle tut, aus zwei Angaben am Spalten-Eintrag: der
+// Feld-Bindung (WOHER der Wert kommt) und der Sucht-in-Wahl (WO die Zelle beim
+// Erfassen sucht). Die Sucht-in-Wahl trifft der Nutzer am Spaltenkopf selbst —
+// bis 2026-08-19 wurde sie aus den Schluesselpaaren ABGELEITET, was niemand
+// vorhersagen konnte (Nutzer-Befund: „nichts wird abgeleitet oder verordnet").
+//
+// Liegt hier und nicht beim Tabellen-Baustein, damit generischer Editor-Code
+// sie ohne Baustein-Import benutzen darf (Regel 2); die Erfassungszeile
+// benutzt sie ueber blocks/tabelle/erfassungsZellen.
 export type ErfassungsZielArt = 'frei' | 'eigen' | 'auswahl'
 
 export interface ErfassungsZiel {
+  // Woher der WERT der Zelle kommt:
+  //   frei    — nichts gebunden, nur Getipptes
+  //   eigen   — ein Feld der eigenen Quelle, getippt
+  //   auswahl — aus dem gewaehlten Satz von `quelleId`, Feld `code`
   art: ErfassungsZielArt
 
-  // Die Quelle, in der die Zelle WÄHLT. Nur bei „auswahl" gefüllt.
   quelleId: string
 
-  // Bei „auswahl" der Feldcode IN dieser Quelle; bei „eigen" das eigene Feld
-  // der werdenden Zeile; leer bei „frei".
   code: string
+
+  // Wo die Zelle beim Erfassen SUCHT — leer heisst: keine Liste, frei tippen.
+  // Getrennt von `quelleId`, weil beides auseinanderfallen kann: eine
+  // Anzeige-Spalte (Bezeichnung aus dem Stamm) LIEST aus dem gewaehlten Satz,
+  // ohne selbst zu suchen.
+  suchQuelleId: string
 }
 
 export function erfassungsZielVon(
   feldBindung: string,
+  suchtIn: string,
   tabellenQuelleId: string,
   verknuepfungen: readonly BausteinQuelle[],
 ): ErfassungsZiel {
   const feld = feldBindung.trim()
-  if (feld === '') return { art: 'frei', quelleId: '', code: '' }
+  // Gesucht wird nur in einer Quelle, die wirklich verknuepft ist: eine
+  // geloeschte Verknuepfung darf keine Geisterliste hinterlassen.
+  const gewuenscht = suchtIn.trim()
+  const verknuepfung = gewuenscht === '' || gewuenscht === tabellenQuelleId
+    ? undefined
+    : verknuepfungen.find((v) => v.quelleId === gewuenscht && quelleBrauchbar(v))
+  const sucht = verknuepfung?.quelleId ?? ''
+
+  if (feld === '') return { art: 'frei', quelleId: '', code: '', suchQuelleId: sucht }
   const { quelleId, code } = zerlegeBindung(feld)
+
+  // Ein Feld einer verknuepften Quelle liest immer aus deren gewaehltem Satz —
+  // das ist die Bedeutung der Bindung, keine Einstellung.
   if (quelleId !== '' && quelleId !== tabellenQuelleId) {
-    return { art: 'auswahl', quelleId, code }
+    return { art: 'auswahl', quelleId, code, suchQuelleId: sucht }
   }
-  // Ein eigenes Feld, das in einem Schlüsselpaar steht, wählt in der
-  // gekoppelten Quelle: sein Wert IST deren Partner-Feld. Koppeln mehrere
-  // Verknüpfungen dasselbe Feld, zählt die zuerst eingestellte.
-  for (const v of verknuepfungen) {
-    if (v.quelleId === '' || v.quelleId === tabellenQuelleId) continue
-    for (const paar of vollstaendigePaare(v)) {
+
+  // Ein eigenes Feld bekommt seinen Wert aus der Such-Quelle, wenn ein
+  // Schluesselpaar sagt, welches Feld dort dasselbe bedeutet: der gewaehlte
+  // Artikel LIEFERT die Artikelnummer der werdenden Position.
+  if (verknuepfung) {
+    for (const paar of vollstaendigePaare(verknuepfung)) {
       if (paar.fromField === code) {
-        return { art: 'auswahl', quelleId: v.quelleId, code: paar.toField }
+        return { art: 'auswahl', quelleId: sucht, code: paar.toField, suchQuelleId: sucht }
       }
     }
   }
-  return { art: 'eigen', quelleId: '', code }
+  return { art: 'eigen', quelleId: '', code, suchQuelleId: sucht }
 }

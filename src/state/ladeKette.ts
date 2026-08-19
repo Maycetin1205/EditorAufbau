@@ -11,6 +11,7 @@ import {
   migrateRasterBreitenReparatur,
   migrateRasterHoehenReset,
   migrateRootKanbanToViewportFill,
+  migrateSuchtInAusKopplung,
   putzeAlteKartenDemos,
   weggefalleneProps,
 } from './migrations'
@@ -132,6 +133,8 @@ export function baumAusRohdaten(parsed: {
   if (schemaVersion < 5) schemaAdvanced = migrateRasterHoehenReset(tree) || schemaAdvanced
 
   if (schemaVersion < 6) schemaAdvanced = migratePopupInhaltAufRaster(tree) || schemaAdvanced
+
+  if (schemaVersion < 7) schemaAdvanced = migrateSuchtInAusKopplung(tree) || schemaAdvanced
 
   const selectedId =
     typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID

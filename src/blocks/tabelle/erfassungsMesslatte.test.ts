@@ -11,12 +11,14 @@ const spalte = (teil: Partial<Spalte>): Spalte => ({
 
 // Das Messlatten-Szenario aus dem Wellen-Kopf G (G3c), im Nutzer-Modell
 // (2026-08-19): die Artikel-Spalte ist das POSITIONS-Feld 10_8; Artikel und
-// Tierart sind verknuepfte Quellen, beide haengen an diesem Feld.
+// Tierart sind verknuepfte Quellen, beide haengen an diesem Feld. Gesucht wird
+// dort, wo die Spalte es sagt (Sucht-in-Wahl am Spaltenkopf) — die Bezeichnung
+// zeigt nur an und gibt der Liste ihren Suchtext.
 describe('Messlatte: die Tabelle zeigt Belegpositionen (G3c)', () => {
   const POS_SPALTEN = [
-    spalte({ titel: 'Artikel', feld: '10_8' }),
+    spalte({ titel: 'Artikel', feld: '10_8', suchtIn: 'q-art' }),
     spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40' }),
-    spalte({ titel: 'Tierart', feld: 'q-tier::2_10' }),
+    spalte({ titel: 'Tierart', feld: 'q-tier::2_10', suchtIn: 'q-tier' }),
     spalte({ titel: 'Menge', feld: '11_6', art: 'zahl' }),
   ]
 

@@ -5,6 +5,7 @@ import {
   bindingProp,
   eintragsFelderLesen,
   eintragsFelderVon,
+  eintragsQuellenWahlWert,
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listenStandardTitel,
@@ -13,6 +14,8 @@ import {
   type ListenBindung,
 } from '../../core/blocks/BlockDefinition'
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
+import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { propertySichtbar } from '../../core/blocks/PropertyDescription'
 import { quellenKennung } from '../../core/data/dataSources'
 import { paarKlartext, type QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
@@ -189,7 +192,13 @@ export function useFeldBindung({
     const next = eintraegeVon(picker)
     const ziel = next[picker.index]
     if (!ziel) return
-    Object.assign(ziel, teil)
+    // Ein leerer Text heisst „nicht gesetzt": der Schluessel fliegt raus,
+    // statt als '' mitzureisen (dieselbe Konvention wie beim Lesen der Liste,
+    // und der Export traegt keine leeren Angaben).
+    for (const [key, wert] of Object.entries(teil)) {
+      if (wert === '') delete ziel[key]
+      else ziel[key] = wert
+    }
     editor.updateProperty(block.id, listenBindung.prop, next)
   }
 
@@ -236,6 +245,19 @@ export function useFeldBindung({
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
         const wahl = listenBindung.eintragsWahl
         const zuo = listenBindung.eintragsZuordnung
+        const quellenWahl = listenBindung.eintragsQuellenWahl
+
+        // Die Wahl unter den Verknuepfungen zeigt nur, wenn die Registry sie
+        // deklariert UND die Erfassungs-Faehigkeit des Bausteins gerade an ist
+        // (nurBeiErfassung) — ohne Erfassung hat sie keine Wirkung.
+        const erfasst = (() => {
+          const kann = getBlockDefinition(block.type)?.kannErfassen
+          return kann !== undefined && propertySichtbar(kann.wenn, block.props)
+        })()
+        const zeigeQuellenWahl = quellenWahl !== undefined
+          && !proQuelle
+          && (quellenWahl.nurBeiErfassung !== true || erfasst)
+          && quellen.length > 1
 
         const zeigeZuordnung = zuo !== undefined
           && wahl !== undefined
@@ -261,6 +283,15 @@ export function useFeldBindung({
               aktuell: eintragsWahlWert(wahl, eintrag),
               onWaehle: (wert) => schreibeInEintrag(listenPicker, { [wahl.key]: wert }),
             }}
+            quellenWahl={zeigeQuellenWahl && quellenWahl ? {
+              label: quellenWahl.label,
+              leerName: quellenWahl.leerName,
+              // Die Verknuepfungen des Bausteins — die erste Quelle ist die
+              // eigene und keine Verknuepfung.
+              optionen: quellen.slice(1).map((q) => ({ wert: q.source.id, name: q.source.name })),
+              aktuell: eintragsQuellenWahlWert(quellenWahl, eintrag),
+              onWaehle: (wert) => schreibeInEintrag(listenPicker, { [quellenWahl.key]: wert }),
+            } : undefined}
             felder={zusatzFelder.map((zf) => ({
               key: zf.key,
               label: zf.label,

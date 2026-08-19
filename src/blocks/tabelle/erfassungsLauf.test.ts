@@ -11,16 +11,19 @@ const spalte = (teil: Partial<Spalte>): Spalte => ({
 })
 
 // Das Nutzer-Modell (2026-08-19): die Tabelle zeigt die BELEGPOSITIONEN, und
-// jede schreibende Spalte ist ein FELD DER POSITION. Dass die Artikel-Spalte
-// beim Erfassen im Stamm wählen kann, steht NICHT an der Spalte — es kommt
-// aus der Verknüpfung des Bausteins (Schlüsselpaar Position.Artikelnummer ↔
-// Stamm.Artikelnummer). Reine Anzeige-Spalten (Bezeichnung, Gabe) dürfen
-// weiter auf eine verknüpfte Quelle zeigen; sie geben der Vorschlagsliste
-// ihren Suchtext.
-const ARTIKEL = spalte({ titel: 'Artikel', feld: '10_8' })
-const BEZEICHNUNG = spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40' })
+// jede schreibende Spalte ist ein FELD DER POSITION. WO eine Zelle beim
+// Erfassen sucht, WÄHLT der Nutzer am Spaltenkopf („Sucht beim Erfassen in") —
+// abgeleitet wird das seit dem 19.08. nicht mehr. Welchen Wert der gewählte
+// Satz liefert, sagt weiter die Verknüpfung (Schlüsselpaar
+// Position.Artikelnummer ↔ Stamm.Artikelnummer).
+//
+// Der Bogen mischt darum absichtlich beides: Spalten, die suchen (Artikel,
+// Bezeichnung, Gabe), und eine reine Anzeige-Spalte, die nur zeigt, was der
+// gewählte Satz liefert (Gabe im Klartext).
+const ARTIKEL = spalte({ titel: 'Artikel', feld: '10_8', suchtIn: 'q-art' })
+const BEZEICHNUNG = spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40', suchtIn: 'q-art' })
 const MENGE = spalte({ titel: 'Menge', feld: '11_6', art: 'zahl' })
-const GABE = spalte({ titel: 'Gabe', feld: 'q-gabe::5_4' })
+const GABE = spalte({ titel: 'Gabe', feld: 'q-gabe::5_4', suchtIn: 'q-gabe' })
 const GABE_TEXT = spalte({ titel: 'Gabe im Klartext', feld: 'q-gabe::9_20' })
 const NOTIZ = spalte({ titel: 'Notiz' })
 
@@ -79,27 +82,34 @@ function quellenStellen(): void {
 }
 
 describe('Zellen der Erfassungszeile', () => {
-  it('leitet die Art der Zelle aus Bindung UND Verknüpfung ab', () => {
+  it('nimmt Feld UND Sucht-in-Wahl der Spalte, leitet nichts ab', () => {
     const u = umfeldMit()
     // Kein Feld gebunden: frei tippen.
-    expect(zielIn(u, 5)).toEqual({ art: 'frei', quelleId: '', code: '' })
-    // Eigenes Feld ohne Schlüsselpaar: frei tippen — die Menge gehört der
-    // Position, die Datenzeile zeigt dasselbe Feld.
-    expect(zielIn(u, 2)).toEqual({ art: 'eigen', quelleId: '', code: '11_6' })
-    // Eigenes Feld IM Schlüsselpaar: die Zelle wählt in der gekoppelten
-    // Quelle — Artikelnummer der Position wählt im Artikelstamm.
-    expect(zielIn(u, 0)).toEqual({ art: 'auswahl', quelleId: 'q-art', code: '3_18' })
-    // Feld einer verknüpften Quelle: Auswahl aus ihr.
-    expect(zielIn(u, 3)).toEqual({ art: 'auswahl', quelleId: 'q-gabe', code: '5_4' })
+    expect(zielIn(u, 5)).toEqual({ art: 'frei', quelleId: '', code: '', suchQuelleId: '' })
+    // Eigenes Feld ohne Sucht-in: frei tippen — die Menge gehört der Position,
+    // die Datenzeile zeigt dasselbe Feld.
+    expect(zielIn(u, 2))
+      .toEqual({ art: 'eigen', quelleId: '', code: '11_6', suchQuelleId: '' })
+    // Eigenes Feld MIT Sucht-in: die Zelle sucht dort, und das Schlüsselpaar
+    // sagt, welches Feld des gewählten Satzes ihr Wert ist.
+    expect(zielIn(u, 0))
+      .toEqual({ art: 'auswahl', quelleId: 'q-art', code: '3_18', suchQuelleId: 'q-art' })
+    // Feld einer verknüpften Quelle: der Wert kommt aus ihrem gewählten Satz.
+    expect(zielIn(u, 3))
+      .toEqual({ art: 'auswahl', quelleId: 'q-gabe', code: '5_4', suchQuelleId: 'q-gabe' })
+    // Ohne Sucht-in zeigt dieselbe Bindung nur an — sie sucht nicht.
+    expect(zielIn(u, 4))
+      .toEqual({ art: 'auswahl', quelleId: 'q-gabe', code: '9_20', suchQuelleId: '' })
     // Die eigene Quelle ausdrücklich davor ändert nichts.
     expect(zielIn(umfeldMit([spalte({ feld: 'q-pos::11_6' })]), 0))
-      .toEqual({ art: 'eigen', quelleId: '', code: '11_6' })
-    // Ohne Verknüpfung ist auch die Artikelnummer nur ein freies Tippfeld.
+      .toEqual({ art: 'eigen', quelleId: '', code: '11_6', suchQuelleId: '' })
+    // Eine Sucht-in-Wahl auf eine Quelle, die nicht (mehr) verknüpft ist,
+    // hinterlässt keine Geisterliste.
     expect(zielIn(umfeldMit(ZEILE, []), 0))
-      .toEqual({ art: 'eigen', quelleId: '', code: '10_8' })
+      .toEqual({ art: 'eigen', quelleId: '', code: '10_8', suchQuelleId: '' })
   })
 
-  it('angezeigt und mitdurchsucht wird die erste ANDERE Spalte derselben Auswahl-Quelle', () => {
+  it('angezeigt und mitdurchsucht wird die erste ANDERE Spalte derselben Such-Quelle', () => {
     const u = umfeldMit()
     expect(anzeigeSpalteIn(u, 0)).toEqual({ titel: 'Bezeichnung', code: '30_40' })
     expect(anzeigeSpalteIn(u, 3)).toEqual({ titel: 'Gabe im Klartext', code: '9_20' })
@@ -216,12 +226,17 @@ describe('ErfassungsLauf', () => {
   it('ohne gewaehlten Satz wird NICHT eingeschraenkt', () => {
     const u = umfeldMit()
     expect(lauf.eintraege(u, 3).map((e) => e.wert)).toEqual(['ORAL', 'INJ', 'SALB'])
+  })
 
-    // Und ohne eingestellte Verknuepfung ebenso wenig: dann gibt es nichts,
-    // wogegen man einschraenken koennte.
+  it('eine Sucht-in-Wahl ohne Verknuepfung sucht nirgends', () => {
+    // Die Wahl am Spaltenkopf zeigt auf eine Quelle, die am Baustein nicht
+    // (mehr) verknuepft ist. Dann gibt es kein Schluesselpaar, an dem die
+    // Zeile haengen koennte — eine Liste waere eine Geisterliste ueber einer
+    // Quelle, die mit dieser Tabelle nichts zu tun hat.
     waehle(0, 'bay')
-    expect(lauf.eintraege(umfeldMit(ZEILE, []), 3).map((e) => e.wert))
-      .toEqual(['ORAL', 'INJ', 'SALB'])
+    const ohne = umfeldMit(ZEILE, [])
+    expect(lauf.eintraege(ohne, 3)).toEqual([])
+    expect(lauf.entscheideTaste(ohne, 3, 'Enter')).toBe('weiter')
   })
 
   it('kein Partner: die Zelle bleibt leer, nichts verschwindet', () => {
@@ -299,7 +314,7 @@ describe('ErfassungsLauf', () => {
     expect(lauf.entscheideTaste(u, 0, 'Enter')).toBe('fenster')
     expect(lauf.entscheideTaste(u, 3, 'Enter')).toBe('fenster')
 
-    // Menge (eigenes Feld ohne Kopplung) und Notiz (ungebunden) haben weder
+    // Menge (eigenes Feld ohne Sucht-in) und Notiz (ungebunden) haben weder
     // Liste noch Fenster — Enter springt weiter, alles andere ist Text.
     expect(lauf.entscheideTaste(u, 2, 'Enter')).toBe('weiter')
     expect(lauf.entscheideTaste(u, 2, 'ArrowDown')).toBe('nichts')

@@ -15,6 +15,35 @@ export interface ListenBindung {
   eintragsWahl?: EintragsWahl
 
   eintragsZuordnung?: EintragsZuordnung
+
+  eintragsQuellenWahl?: EintragsQuellenWahl
+}
+
+// Eine Wahl je Eintrag unter den VERKNUEPFUNGEN des Bausteins. Sie braucht
+// eine eigene Angabe neben EintragsWahl, weil ihre Optionen NICHT in der
+// Registry stehen koennen: welche Quellen verknuepft sind, entscheidet der
+// Nutzer am Baustein. Gespeichert wird die Quellen-Kennung, leer = die erste
+// Option (`leerName`).
+export interface EintragsQuellenWahl {
+  key: string
+
+  label: string
+
+  // Der Name der leeren Wahl — z. B. „frei" (nicht gesucht wird).
+  leerName: string
+
+  // Nur zeigen, solange die Erfassungs-Faehigkeit des Bausteins aktiv ist
+  // (kannErfassen). Ohne Erfassung hat die Wahl keine Wirkung und der
+  // Spaltenkopf bleibt leer geraeumt.
+  nurBeiErfassung?: true
+}
+
+export function eintragsQuellenWahlWert(
+  w: EintragsQuellenWahl,
+  eintrag: Record<string, unknown>,
+): string {
+  const roh = eintrag[w.key]
+  return typeof roh === 'string' ? roh : ''
 }
 
 export interface EintragsZuordnung {

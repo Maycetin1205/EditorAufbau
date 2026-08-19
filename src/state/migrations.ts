@@ -1,5 +1,12 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
+import { zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import { QUELLE_PROP } from '../core/blocks/treeQuery'
+import {
+  vollstaendigePaare,
+  WEITERE_QUELLEN_PROP,
+  weitereQuellenAus,
+} from '../core/data/sourceLinks'
 import {
   RASTER,
   parseRasterPos,
@@ -9,7 +16,7 @@ import {
 import { istSeitenBaustein, istFlaechenSeite } from './pageOps'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
-export const CURRENT_SCHEMA_VERSION = 6
+export const CURRENT_SCHEMA_VERSION = 7
 
 export const DEMO_CLEANUP_BEFORE_SCHEMA = 5
 
@@ -204,4 +211,53 @@ export function migrateRasterHoehenReset(tree: BlockTree): boolean {
     }
   }
   return migrated
+}
+
+// Schemastufe 7 (2026-08-19): WO eine Erfassungszelle sucht, waehlt der Nutzer
+// jetzt selbst am Spaltenkopf („Sucht beim Erfassen in"). Bis dahin leitete der
+// Editor es aus den Schluesselpaaren ab. Damit gespeicherte Masken sich weiter
+// genauso verhalten, schreibt diese Stufe die alte Ableitung EINMAL als Wahl
+// fest: ein Feld einer verknuepften Quelle sucht in ihr, ein eigenes Feld in
+// der ersten Verknuepfung, die es ueber ein Schluesselpaar koppelt.
+//
+// Generisch ueber die Listen-Bindung der Registry (prop/feldKey und der
+// Schluessel der Quellen-Wahl) — kein Bausteintyp kommt vor (Regel 2).
+export function migrateSuchtInAusKopplung(tree: BlockTree): boolean {
+  let migriert = false
+  for (const node of Object.values(tree)) {
+    const bindung = getBlockDefinition(node.type)?.listenBindung
+    const wahl = bindung?.eintragsQuellenWahl
+    if (!bindung || !wahl || bindung.quelleProp !== undefined) continue
+    const liste = node.props[bindung.prop]
+    if (!Array.isArray(liste)) continue
+    const eigene = typeof node.props[QUELLE_PROP] === 'string' ? node.props[QUELLE_PROP] : ''
+    const verknuepfungen = weitereQuellenAus(node.props[WEITERE_QUELLEN_PROP])
+      .filter((v) => v.quelleId !== '' && v.quelleId !== eigene)
+    if (verknuepfungen.length === 0) continue
+
+    let geaendert = false
+    const next = liste.map((x) => {
+      if (!x || typeof x !== 'object' || Array.isArray(x)) return x
+      const eintrag = x as Record<string, unknown>
+      if (typeof eintrag[wahl.key] === 'string') return x
+      const roh = eintrag[bindung.feldKey]
+      const feld = typeof roh === 'string' ? roh.trim() : ''
+      if (feld === '') return x
+      const { quelleId, code } = zerlegeBindung(feld)
+      const fremd = quelleId !== '' && quelleId !== eigene
+        && verknuepfungen.some((v) => v.quelleId === quelleId)
+      const such = fremd
+        ? quelleId
+        : verknuepfungen.find(
+            (v) => vollstaendigePaare(v).some((paar) => paar.fromField === code),
+          )?.quelleId ?? ''
+      if (such === '') return x
+      geaendert = true
+      return { ...eintrag, [wahl.key]: such }
+    })
+    if (!geaendert) continue
+    node.props = { ...node.props, [bindung.prop]: next }
+    migriert = true
+  }
+  return migriert
 }

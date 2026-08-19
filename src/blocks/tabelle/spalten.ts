@@ -5,10 +5,17 @@ export interface Spalte {
   feld: string
   art: string
 
+  // Die Quelle, in der die Erfassungszelle dieser Spalte SUCHT — die Kennung
+  // einer Verknuepfung des Bausteins. Fehlt sie, wird frei getippt. Am
+  // Spaltenkopf gewaehlt, nie abgeleitet (Nutzer 2026-08-19).
+  suchtIn?: string
+
   zuordnung?: Zuordnung[]
 
   felder?: Record<string, string>
 }
+
+export const SUCHT_IN_KEY = 'suchtIn'
 
 // Der Strich, den eine Zelle ohne Wert zeigt: der Editor erfindet nie Daten
 // (Regel 7). Eine Stelle, weil Datenzeile und Erfassungszeile denselben
@@ -58,10 +65,15 @@ function alsSpalte(x: unknown, index: number): Spalte {
     const o = x as Record<string, unknown>
     const zuordnung = alsZuordnung(o.zuordnung)
     const felder = alsFelder(o.felder)
+    const suchtIn = typeof o.suchtIn === 'string' ? o.suchtIn.trim() : ''
     return {
       titel: typeof o.titel === 'string' ? o.titel : standardTitelFuer(index),
       feld: typeof o.feld === 'string' ? o.feld : '',
       art: typeof o.art === 'string' ? o.art : ART_TEXT,
+
+      // Leer wird nicht gespeichert: „frei" ist die Abwesenheit der Wahl,
+      // sonst traegt jede Spalte im Export ein leeres Feld mit.
+      ...(suchtIn !== '' ? { suchtIn } : {}),
 
       ...(zuordnung.length > 0 ? { zuordnung } : {}),
 

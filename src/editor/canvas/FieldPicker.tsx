@@ -26,6 +26,17 @@ export interface PickerWahl {
   onWaehle: (wert: string) => void
 }
 
+// Eine Wahl unter den verknuepften Quellen (z. B. „Sucht beim Erfassen in").
+// Dieselbe Chip-Reihe wie PickerWahl, aber mit einer leeren Option: „frei"
+// ist ein echter Zustand und muss anwaehlbar sein.
+export interface PickerQuellenWahl {
+  label: string
+  leerName: string
+  optionen: readonly { wert: string; name: string }[]
+  aktuell: string
+  onWaehle: (wert: string) => void
+}
+
 export interface PickerFeld {
   key: string
   label: string
@@ -53,6 +64,8 @@ interface FieldPickerProps {
 
   wahl?: PickerWahl
 
+  quellenWahl?: PickerQuellenWahl
+
   felder?: readonly PickerFeld[]
 
   zuordnung?: PickerZuordnung
@@ -70,6 +83,7 @@ export function FieldPicker({
   spotLabel,
   gruppen,
   wahl,
+  quellenWahl,
   felder,
   zuordnung,
   current,
@@ -103,7 +117,9 @@ export function FieldPicker({
       onClose={onClose}
       imBildHalten
       escapeAbfangen
-      className={zuordnung || (felder && felder.length > 0) ? 'max-h-96 w-80' : 'max-h-80 w-64'}
+      className={zuordnung || quellenWahl || (felder && felder.length > 0)
+        ? 'max-h-96 w-80'
+        : 'max-h-80 w-64'}
     >
 
       {wahl && (
@@ -122,6 +138,33 @@ export function FieldPicker({
                 }}
                 className={`rounded-sm border px-2 py-1 text-xs ${
                   o.wert === wahl.aktuell
+                    ? 'border-primary bg-primary/10 font-semibold text-foreground'
+                    : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                {o.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {quellenWahl && (
+        <div className="mb-1 border-b border-border pb-1">
+          <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {quellenWahl.label}
+          </p>
+          <div className="flex flex-wrap gap-1 px-1">
+            {[{ wert: '', name: quellenWahl.leerName }, ...quellenWahl.optionen].map((o) => (
+              <button
+                key={o.wert === '' ? '__frei__' : o.wert}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  quellenWahl.onWaehle(o.wert)
+                }}
+                className={`rounded-sm border px-2 py-1 text-xs ${
+                  o.wert === quellenWahl.aktuell
                     ? 'border-primary bg-primary/10 font-semibold text-foreground'
                     : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
