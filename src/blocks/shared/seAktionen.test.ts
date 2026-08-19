@@ -219,9 +219,10 @@ describe('resolveActionParam: „Feld der gewaehlten Zeile" (2026-08-06)', () =>
   })
 })
 
-// G4: Liest die Kette „Wert aus Erfassungszelle", laeuft sie einmal je
-// erfasster Zeile der EINEN Tabelle — danach leeren. Die Tabelle wird wie
-// beim Baustein-Wert ueber data-ff-block-id gefunden, nie ueber einen Typ.
+// G4/Etappe B: Liest die Kette Felder einer Quelle, die eine Tabelle ERFASST,
+// laeuft sie einmal je erfasster Zeile — danach leeren. Die Tabelle wird ueber
+// data-ff-block-id und ihren Laufzeit-Vertrag gefunden, nie ueber einen Typ;
+// welche Quellen sie erfasst, sagt sie selbst (erfassteQuellen).
 describe('runEvent: einmal je erfasster Zeile (G4)', () => {
   const KETTE = JSON.stringify({
     onClick: [{
@@ -229,21 +230,25 @@ describe('runEvent: einmal je erfasster Zeile (G4)', () => {
       resultKey: '',
       relationId: 'r-pos',
       params: [
-        { source: 'erfassungszelle', blockId: 't1', value: '0' },
-        { source: 'erfassungszelle', blockId: 't1', value: '2' },
+        { source: 'data_field', dataSourceId: 'q-pos', value: '10_8' },
+        { source: 'data_field', dataSourceId: 'q-pos', value: '11_6' },
         { source: 'fixed', value: 'X' },
       ],
       extraParams: [],
     }],
   })
 
-  function fakeTabelle(id: string, zeilen: string[][]) {
+  const satz = (artikel: string, menge: string) =>
+    ({ 'q-pos': { '10_8': artikel, '11_6': menge } })
+
+  function fakeTabelle(id: string, saetze: Record<string, Record<string, string>>[], quelle = 'q-pos') {
     return {
       geleert: 0,
-      erfassteZeilen: zeilen,
+      erfassteQuellen: [quelle],
+      erfassteSaetze: saetze,
       erfassungLeeren(): void {
         this.geleert += 1
-        this.erfassteZeilen = []
+        this.erfassteSaetze = []
       },
       getAttribute: (k: string) => (k === 'data-ff-block-id' ? id : null),
     }
@@ -273,7 +278,7 @@ describe('runEvent: einmal je erfasster Zeile (G4)', () => {
   })
 
   it('laeuft je Zeile mit DEREN Zellwerten und leert erst nach der letzten', async () => {
-    const tabelle = fakeTabelle('t1', [['ART1', 'Baytril', '5'], ['ART2', 'Verband', '7']])
+    const tabelle = fakeTabelle('t1', [satz('ART1', '5'), satz('ART2', '7')])
     await runEvent(fakeKnopf(KETTE, [tabelle]), 'onClick', {})
 
     expect(gesendet().map((aufruf) => aufruf[1])).toEqual([
@@ -293,47 +298,41 @@ describe('runEvent: einmal je erfasster Zeile (G4)', () => {
     expect(gemeldet()).toEqual([])
   })
 
-  it('zwei Tabellen in einer Kette: Meldung statt Rate-Lauf', async () => {
-    const beide = JSON.stringify({
-      onClick: [{
-        type: 'RELATION',
-        resultKey: '',
-        relationId: 'r-pos',
-        params: [
-          { source: 'erfassungszelle', blockId: 't1', value: '0' },
-          { source: 'erfassungszelle', blockId: 't2', value: '0' },
-        ],
-        extraParams: [],
-      }],
-    })
-    await runEvent(fakeKnopf(beide, [fakeTabelle('t1', [['A']]), fakeTabelle('t2', [['B']])]), 'onClick', {})
+  it('zwei Tabellen derselben Quelle: Meldung statt Rate-Lauf', async () => {
+    const beide = [fakeTabelle('t1', [satz('A', '1')]), fakeTabelle('t2', [satz('B', '2')])]
+    await runEvent(fakeKnopf(KETTE, beide), 'onClick', {})
 
     expect(gesendet()).toEqual([])
     expect(gemeldet().join(' ')).toContain('nur eine Tabelle')
   })
 
-  it('die Tabelle fehlt in der Maske: Meldung statt stillem Nichtstun', async () => {
-    await runEvent(fakeKnopf(KETTE, []), 'onClick', {})
+  // Eine Tabelle, die eine ANDERE Quelle erfasst, gibt diesen Takt nicht: die
+  // Kette laeuft einmal, und die Parameter holen sich ihre Werte auf dem
+  // normalen Weg (angeklickte Zeile, sonst PINDEX/erste Zeile — hier nichts).
+  it('erfasst niemand diese Quelle, laeuft die Kette EINMAL', async () => {
+    const fremd = fakeTabelle('t9', [satz('A', '1')], 'q-andere')
+    await runEvent(fakeKnopf(KETTE, [fremd]), 'onClick', {})
 
-    expect(gesendet()).toEqual([])
-    expect(gemeldet().join(' ')).toContain('gibt es in dieser Maske nicht')
+    expect(gesendet().map((aufruf) => aufruf[1])).toEqual([{ NR: '82', PARAMS: ['', '', 'X'] }])
+    expect(fremd.geleert).toBe(0)
+    expect(gemeldet()).toEqual([])
   })
 })
 
-describe('resolveActionParam: „Wert aus Erfassungszelle" (G4)', () => {
-  const binding: ActionParamBinding = { source: 'erfassungszelle', blockId: 't1', value: '1' }
+describe('resolveActionParam: die Zeile, die eine Quelle gerade gibt (Etappe B)', () => {
+  const binding: ActionParamBinding = { source: 'data_field', dataSourceId: 'q-pos', value: '10_8' }
 
-  it('liest den Zellwert der Zeile, die die Kette gerade abarbeitet', () => {
+  it('liest das Feld der Zeile, die die Quelle gerade gibt', () => {
     const values = {
       context: {},
       previousResult: '',
-      erfassteZelle: (blockId: string, index: number) =>
-        (blockId === 't1' ? ['ART1', 'Baytril', '5'][index] ?? '' : ''),
+      zeileDerQuelle: (quelleId: string) =>
+        (quelleId === 'q-pos' ? { '10_8': 'ART1', '11_6': '5' } : undefined),
     }
-    expect(resolveActionParam(binding, values, {})).toBe('Baytril')
-    expect(resolveActionParam({ ...binding, blockId: 't9' }, values, {})).toBe('')
-    expect(resolveActionParam({ ...binding, value: 'x' }, values, {})).toBe('')
-    expect(resolveActionParam({ ...binding, value: '-1' }, values, {})).toBe('')
+    expect(resolveActionParam(binding, values, {})).toBe('ART1')
+    expect(resolveActionParam({ ...binding, value: '11_6' }, values, {})).toBe('5')
+    // Eine andere Quelle gibt hier nichts — kein Raten.
+    expect(resolveActionParam({ ...binding, dataSourceId: 'q-andere' }, values, {})).toBe('')
   })
 
   it('ausserhalb eines Zeilen-Laufs bleibt der Wert leer', () => {

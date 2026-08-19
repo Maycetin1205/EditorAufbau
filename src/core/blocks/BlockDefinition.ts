@@ -115,12 +115,26 @@ export interface ErfassungsFaehigkeit {
   wenn?: PropertyVisibilityCondition
 }
 
+// Eine erfasste Zeile, wie eine Kette sie liest: je Datenquelle EIN Satz
+// {Feldcode: Wert}. Die Zellwerte allein sagen nicht, welches Feld welcher
+// Quelle sie füllen — das weiß nur der Baustein (jede seiner Spalten IST ein
+// Feld einer Quelle), darum liefert er es fertig. So kommt die Kette mit
+// „Datenquelle → Feld" an sie heran und braucht keine Spalten-Indizes.
+export type ErfassterSatz = Readonly<Record<string, Readonly<Record<string, string>>>>
+
 // Der Laufzeit-Vertrag eines Bausteins mit dieser Fähigkeit: die Kette am
-// Knopf liest die erfassten Zeilen (Werte je Spalte, in Spalten-Reihenfolge)
-// und leert sie nach dem Lauf. Rein als Typ — die Laufzeit findet den
-// Baustein über data-ff-block-id, nie über einen Import (Regel 2).
+// Knopf liest die erfassten Zeilen und leert sie nach dem Lauf. Rein als Typ —
+// die Laufzeit findet den Baustein über data-ff-block-id, nie über einen
+// Import (Regel 2).
 export interface ErfassungsTraegerElement {
-  erfassteZeilen: readonly (readonly string[])[]
+  // Die Quellen, die eine erfasste Zeile hier füllen KANN — unabhängig davon,
+  // ob schon etwas erfasst ist. Daran erkennt die Kette, dass dieser Baustein
+  // ihren Takt gibt: eine leere Erfassung heißt „nichts zu schreiben", nicht
+  // „es gibt keine Erfassung" (sonst liefe die Kette einmal mit fremden
+  // Werten). Leer = die Erfassung ist ausgeschaltet.
+  erfassteQuellen: readonly string[]
+
+  erfassteSaetze: readonly ErfassterSatz[]
   erfassungLeeren: () => void
 }
 

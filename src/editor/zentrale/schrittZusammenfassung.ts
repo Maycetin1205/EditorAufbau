@@ -105,11 +105,6 @@ function herkunftText(
       const knoten = binding.blockId ? tree[binding.blockId] : undefined
       return knoten ? `Baustein „${bausteinName(knoten, quellen)}“` : ''
     }
-    case 'erfassungszelle': {
-      const knoten = binding.blockId ? tree[binding.blockId] : undefined
-      const wer = knoten ? bausteinName(knoten, quellen) : 'Erfassungszelle'
-      return `Erfassungszelle · ${wer}`
-    }
     default:
       return ''
   }

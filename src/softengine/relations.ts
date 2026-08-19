@@ -280,9 +280,11 @@ export interface RuntimeActionValues {
 
   gewaehlteZeile?: (geberId: string) => unknown
 
-  // Gesetzt, wenn die Kette gerade eine erfasste Zeile abarbeitet (G4):
-  // liefert den Zellwert der Spalte dieser einen Zeile.
-  erfassteZelle?: (blockId: string, spaltenIndex: number) => string
+  // Die Zeile, die eine Datenquelle GERADE gibt: die erfasste Zeile, die die
+  // Kette in diesem Durchlauf abarbeitet (G4), sonst die angeklickte Zeile
+  // (Auswahl geben). `undefined` heisst: keine — dann gilt der alte Weg ueber
+  // PINDEX bzw. die erste Zeile.
+  zeileDerQuelle?: (quelleId: string) => unknown
 }
 
 function resolveBlockValue(binding: ActionParamBinding, runtime: unknown): string {
@@ -314,14 +316,15 @@ export function resolveActionParam(
     return extractRelationFeld(values.stepRohErgebnisse?.[idx], feld)
   }
   if (binding.source === 'block_value') return resolveBlockValue(binding, runtime)
-  if (binding.source === 'erfassungszelle') {
-    const index = Number(binding.value)
-    if (!Number.isInteger(index) || index < 0) return ''
-    return values.erfassteZelle?.(binding.blockId ?? '', index) ?? ''
-  }
   if (binding.source === 'gewaehlte_zeile') {
     const zeile = values.gewaehlteZeile?.(binding.blockId ?? '')
     return zeile === undefined ? '' : getField(zeile, binding.value)
+  }
+  if (binding.source === 'data_field') {
+    // Die Zeile, die diese Quelle gerade GIBT (erfasst oder angeklickt),
+    // schlaegt den alten Weg ueber PINDEX/erste Zeile.
+    const gegeben = values.zeileDerQuelle?.(binding.dataSourceId ?? '')
+    if (gegeben !== undefined) return getField(gegeben, binding.value)
   }
   if (!isRecord(runtime)) return ''
 

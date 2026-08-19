@@ -15,7 +15,6 @@ import {
   blockValueKey,
   type AuswahlGeberOption,
   type BlockValueOption,
-  type ErfassungsOption,
 } from './helfer'
 import { PLATZHALTER_KLARTEXT } from './helfer'
 
@@ -31,10 +30,12 @@ const QUELLEN_NAMEN: Record<ActionParamSource, string> = {
   data_field: 'Datenfeld',
   block_value: 'Baustein',
   gewaehlte_zeile: 'Gewählte Zeile',
-  erfassungszelle: 'Erfassungszelle',
   previous_result: 'Vorheriger Schritt',
   step_result: 'Ergebnis von Schritt',
   se_variable: 'SE VAR-Array',
+
+  // Nur noch fuer Staende, die vor der Schemastufe 8 gespeichert wurden.
+  erfassungszelle: 'Erfassungszelle (alt)',
 
   aus: 'Weggelassen',
 }
@@ -44,7 +45,6 @@ function BindingValue({
   dataSources,
   blockValues,
   geber,
-  erfassungen,
   schritte,
   platzhalter,
   onChange,
@@ -53,7 +53,6 @@ function BindingValue({
   dataSources: readonly DataSource[]
   blockValues: readonly BlockValueOption[]
   geber: readonly AuswahlGeberOption[]
-  erfassungen: readonly ErfassungsOption[]
   schritte: readonly ErgebnisSchritt[]
   platzhalter?: string
   onChange: (binding: ActionParamBinding) => void
@@ -134,6 +133,9 @@ function BindingValue({
     )
   }
   if (binding.source === 'data_field') {
+    // Erst die Quelle, dann das Feld — derselbe Weg wie ueberall (Klarnamen).
+    // Zur Laufzeit liefert die Zeile, die diese Quelle GERADE gibt: die gerade
+    // erfasste oder die angeklickte (resolveActionParam).
     const gewaehlteQuelle = dataSources.find((s) => s.id === binding.dataSourceId)
     return (
       <div className="grid grid-cols-2 gap-1">
@@ -203,37 +205,6 @@ function BindingValue({
       </div>
     )
   }
-  if (binding.source === 'erfassungszelle') {
-    const tabelle = erfassungen.find((t) => t.blockId === binding.blockId)
-    const tabellenEintraege: WaehlerEintrag[] = erfassungen.map((t) => ({ wert: t.blockId, name: t.label }))
-    if (binding.blockId && !tabelle) {
-      tabellenEintraege.push({ wert: binding.blockId, name: '(gelöschter Baustein)' })
-    }
-    return (
-      <div className="grid grid-cols-2 gap-1">
-        <WaehlerKnopf
-          bezeichnung="Tabelle mit Erfassungszeile"
-          gruppen={[{ key: 'tabellen', eintraege: tabellenEintraege }]}
-          wert={binding.blockId ?? ''}
-          platzhalter="— Tabelle —"
-          onWaehle={(id) => onChange({ ...binding, blockId: id, value: '' })}
-        />
-        <WaehlerKnopf
-          bezeichnung="Spalte der Erfassungszeile"
-          gruppen={[{
-            key: 'spalten',
-            eintraege: (tabelle?.spalten ?? []).map((s) => ({
-              wert: String(s.index),
-              name: s.titel,
-            })),
-          }]}
-          wert={binding.value}
-          platzhalter="— Spalte —"
-          onWaehle={(index) => onChange({ ...binding, value: index })}
-        />
-      </div>
-    )
-  }
   if (binding.source === 'block_value') {
     const current = binding.blockId ? blockValueKey(binding.blockId, binding.value) : ''
     return (
@@ -270,7 +241,6 @@ export function ParameterZeile({
   dataSources,
   blockValues,
   geber,
-  erfassungen,
   schritte,
   platzhalter,
   entfernen,
@@ -283,7 +253,6 @@ export function ParameterZeile({
   dataSources: readonly DataSource[]
   blockValues: readonly BlockValueOption[]
   geber: readonly AuswahlGeberOption[]
-  erfassungen: readonly ErfassungsOption[]
   schritte: readonly ErgebnisSchritt[]
 
   platzhalter?: string
@@ -304,10 +273,6 @@ export function ParameterZeile({
       onChange({ source, blockId: geber[0].blockId, value: '' })
       return
     }
-    if (source === 'erfassungszelle' && erfassungen.length === 1) {
-      onChange({ source, blockId: erfassungen[0].blockId, value: '' })
-      return
-    }
     const value = source === 'context'
       ? 'VALUE'
 
@@ -323,12 +288,17 @@ export function ParameterZeile({
     deaktiviert: (source === 'data_field' && dataSources.length === 0)
       || (source === 'block_value' && blockValues.length === 0)
       || (source === 'gewaehlte_zeile' && geber.length === 0)
-      || (source === 'erfassungszelle' && erfassungen.length === 0)
       || (source === 'step_result' && schritte.length === 0),
   }))
 
-  if (binding.source === 'aus') {
-    herkunft.push({ wert: 'aus', name: QUELLEN_NAMEN.aus, deaktiviert: true })
+  // Ein Wert, den man nicht mehr WAEHLEN kann, muss trotzdem ANZEIGBAR sein —
+  // sonst stuende der Waehler leer und die Einstellung waere unsichtbar.
+  if (binding.source === 'aus' || binding.source === 'erfassungszelle') {
+    herkunft.push({
+      wert: binding.source,
+      name: QUELLEN_NAMEN[binding.source],
+      deaktiviert: true,
+    })
   }
 
   return (
@@ -356,7 +326,6 @@ export function ParameterZeile({
           dataSources={dataSources}
           blockValues={blockValues}
           geber={geber}
-          erfassungen={erfassungen}
           schritte={schritte}
           platzhalter={platzhalter}
           onChange={onChange}

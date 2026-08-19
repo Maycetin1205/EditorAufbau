@@ -45,10 +45,26 @@ dann `go` (0.3), dann genau EINE Etappe.
      Eintrag unter den Verknuepfungen des Bausteins, nicht in der Registry
      aufgezaehlt. Schemastufe 7 schreibt die alte Ableitung einmal als Wahl
      fest, damit gespeicherte Masken sich nicht anders verhalten.
-  **Offen aus demselben Auftrag, je mit eigener Ansage:** Erfassungszeile
-  nach UNTEN samt Suchliste und Enter-Fluss · Ketten-Parameter Quelle→Feld
-  statt Spalten-Index (Etappe B). **Etappe C** unveraendert offen: „Schlank"
-  ERSETZT den Kopfzeile-Schalter von G5b.
+  4. **Erfassungszeile ist die LETZTE Zeile**: sie steht immer unter den
+     Datenzeilen und den erfassten Zeilen (vorher ohne echte Daten ganz oben,
+     im Editor nicht von den Strich-Zeilen zu unterscheiden). Dazu zogen zwei
+     Stellen mit der Sucht-in-Wahl nach: den Listen-Halter und das grosse
+     Fenster bekommt jetzt, wer SUCHT — nicht, wer einen Wert liest.
+  5. **Ketten-Parameter Quelle→Feld (Etappe B)**: die Herkunft „Wert aus
+     Erfassungszelle" mit ihrem Spalten-INDEX ist gestrichen. Ein Parameter
+     waehlt ueberall „Datenquelle → Feld" (Klarnamen) — und `data_field`
+     liefert zur Laufzeit die Zeile, die diese Quelle GERADE gibt: die
+     erfasste, sonst die angeklickte, sonst wie bisher PINDEX/erste Zeile.
+     Die erfasste Zeile gibt der Baustein dafuer als Saetze JE QUELLE heraus
+     (`erfassteSaetze`), und er sagt, welche Quellen er erfasst
+     (`erfassteQuellen`) — daran erkennt die Kette ihren Takt, auch wenn noch
+     nichts erfasst ist. Schemastufe 8 wandelt alte Parameter um.
+     **Verhaltensaenderung, bewusst:** die Meldung „Die Tabelle der
+     Erfassungszellen gibt es in dieser Maske nicht" ist weg — der Parameter
+     nennt keine Tabelle mehr. Erfasst niemand die gelesene Quelle, laeuft die
+     Kette EINMAL mit den Werten, die die Quelle sonst gibt.
+  **Offen, je mit eigener Ansage:** **Etappe C** — „Schlank" ERSETZT den
+  Kopfzeile-Schalter von G5b.
 - **Stand 2026-08-18:** Gesamtanalyse des ganzen Repos (zwei Lese-Trupps +
   Kernlektuere). Urteil: das Fundament traegt (Store, Registry, Export,
   SE-Schicht sauber); die Schwaechen sassen in der Bedienschicht. Sechs

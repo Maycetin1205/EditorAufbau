@@ -10,6 +10,7 @@ import {
   migratePopupInhaltAufRaster,
   migrateRasterBreitenReparatur,
   migrateRasterHoehenReset,
+  migrateErfassungszelleAufQuellenFeld,
   migrateRootKanbanToViewportFill,
   migrateSuchtInAusKopplung,
   putzeAlteKartenDemos,
@@ -135,6 +136,10 @@ export function baumAusRohdaten(parsed: {
   if (schemaVersion < 6) schemaAdvanced = migratePopupInhaltAufRaster(tree) || schemaAdvanced
 
   if (schemaVersion < 7) schemaAdvanced = migrateSuchtInAusKopplung(tree) || schemaAdvanced
+
+  if (schemaVersion < 8) {
+    schemaAdvanced = migrateErfassungszelleAufQuellenFeld(tree) || schemaAdvanced
+  }
 
   const selectedId =
     typeof parsed.selectedId === 'string' && tree[parsed.selectedId] && parsed.selectedId !== ROOT_ID

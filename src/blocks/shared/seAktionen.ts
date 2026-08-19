@@ -1,6 +1,7 @@
 import { ACTION_VALUE_ID_ATTR, parseBlockEvents, type RuntimeStep } from '../../core/data/aktionen'
-import type { ErfassungsTraegerElement } from '../../core/blocks/BlockDefinition'
+import type { ErfassterSatz, ErfassungsTraegerElement } from '../../core/blocks/BlockDefinition'
 import { auswahlFuer } from './auswahl'
+import { gewaehlteZeileDerQuelle, quelleAttrJeTag } from './holendeQuellen'
 import { PopupBlock } from '../popup/PopupBlock'
 import {
   formatNowDate,
@@ -74,34 +75,54 @@ export function meldeKettenFehler(fehler: unknown): void {
   meldeFehler('Aktionskette fehlgeschlagen: ' + text)
 }
 
-// Die Tabellen, deren Erfassungszellen die Kette liest — ueber die Parameter
-// der Schritte, nicht ueber einen Bausteintyp (Regel 2).
-function erfassungsTraegerIds(steps: readonly RuntimeStep[]): string[] {
+// Die Datenquellen, aus denen die Kette Felder liest („Datenquelle → Feld").
+// Sie sagen, WELCHE erfasste Zeile den Takt gibt — ueber die Parameter der
+// Schritte, nicht ueber einen Bausteintyp (Regel 2).
+function gelesenQuellen(steps: readonly RuntimeStep[]): Set<string> {
   const ids = new Set<string>()
   for (const step of steps) {
     if (step.type !== 'RELATION') continue
     for (const binding of [...step.params, ...step.extraParams]) {
-      if (binding.source === 'erfassungszelle' && (binding.blockId ?? '') !== '') {
-        ids.add(binding.blockId ?? '')
-      }
+      const id = binding.dataSourceId ?? ''
+      if (binding.source === 'data_field' && id !== '') ids.add(id)
     }
   }
-  return [...ids]
+  return ids
 }
 
-function sucheTraeger(
-  root: ParentNode,
-  blockId: string,
-): (HTMLElement & Partial<ErfassungsTraegerElement>) | undefined {
+type Traeger = HTMLElement & Partial<ErfassungsTraegerElement>
+
+// Die Bausteine, die eine der gelesenen Quellen ERFASSEN — gefragt wird nach
+// der Faehigkeit (erfassteQuellen), nicht nach dem Inhalt: eine leere
+// Erfassung heisst „nichts zu schreiben", nicht „es gibt keine Erfassung".
+// Gefunden ueber data-ff-block-id und den Laufzeit-Vertrag, nie ueber einen Typ.
+function traegerFuer(root: ParentNode, quellen: ReadonlySet<string>): Traeger[] {
+  if (quellen.size === 0) return []
   return Array.from(root.querySelectorAll<HTMLElement>(`[${ACTION_VALUE_ID_ATTR}]`))
-    .find((el) => el.getAttribute(ACTION_VALUE_ID_ATTR) === blockId)
+    .filter((el) => {
+      const eigene = (el as Traeger).erfassteQuellen
+      return Array.isArray(eigene) && eigene.some((id) => quellen.has(id))
+    })
+}
+
+// Die Zeile, die eine Quelle gerade GIBT: erst die erfasste Zeile dieses
+// Durchlaufs, dann die angeklickte (Auswahl geben). Ein Konzept, zwei Zulieferer
+// — die Kette fragt nur nach der Quelle (Etappe B, Nutzer 2026-08-19).
+function zeileGeber(satz: ErfassterSatz | undefined): (quelleId: string) => unknown {
+  const attrJeTag = quelleAttrJeTag()
+  return (quelleId) => {
+    if (quelleId === '') return undefined
+    const erfasst = satz?.[quelleId]
+    if (erfasst !== undefined) return erfasst
+    return gewaehlteZeileDerQuelle(quelleId, attrJeTag)
+  }
 }
 
 async function laufeSchritte(
   el: HTMLElement,
   steps: readonly RuntimeStep[],
   context: RelationContext,
-  erfassteZelle: ((blockId: string, spaltenIndex: number) => string) | undefined,
+  satz: ErfassterSatz | undefined,
 ): Promise<void> {
   const values: Record<string, string | undefined> = {
     ...context,
@@ -139,7 +160,7 @@ async function laufeSchritte(
       stepResults,
       stepRohErgebnisse: rohErgebnisse,
       gewaehlteZeile: auswahlFuer,
-      ...(erfassteZelle ? { erfassteZelle } : {}),
+      zeileDerQuelle: zeileGeber(satz),
     }
     const params = [...step.params, ...step.extraParams]
       .map((binding) => resolveActionParam(binding, runtimeValues))
@@ -170,33 +191,27 @@ export async function runEvent(
   if (locks.has(eventKey)) return
   locks.add(eventKey)
   try {
-    const traegerIds = erfassungsTraegerIds(steps)
-    if (traegerIds.length === 0) {
+    // Fuellt eine erfasste Zeile eine der gelesenen Quellen, laeuft die Kette
+    // EINMAL JE ZEILE (G4). Sonst laeuft sie einmal — dann liefern die
+    // angeklickten Zeilen die Werte.
+    const traeger = traegerFuer(el.ownerDocument ?? document, gelesenQuellen(steps))
+    if (traeger.length === 0) {
       await laufeSchritte(el, steps, context, undefined)
       return
     }
-    // Liest die Kette Erfassungszellen, laeuft sie EINMAL JE ERFASSTER ZEILE
-    // (G4). Zwei Tabellen in einer Kette waeren zwei Zeilen-Listen — welche
-    // gibt den Takt? Darum eine je Kette.
-    if (traegerIds.length > 1) {
-      meldeFehler('Die Kette liest Erfassungszellen aus mehreren Tabellen — nur eine Tabelle je Kette.')
+    // Zwei Tabellen waeren zwei Zeilen-Listen — welche gibt den Takt? Darum
+    // eine je Kette.
+    if (traeger.length > 1) {
+      meldeFehler('Die Kette liest erfasste Zeilen aus mehreren Tabellen — nur eine Tabelle je Kette.')
       return
     }
-    const traeger = sucheTraeger(el.ownerDocument ?? document, traegerIds[0])
-    const zeilen = traeger?.erfassteZeilen
-    if (!traeger || !Array.isArray(zeilen)) {
-      meldeFehler('Die Tabelle der Erfassungszellen gibt es in dieser Maske nicht.')
-      return
-    }
-    // Keine erfasste Zeile: nichts zu schreiben, kein Lauf. Kein Fehler —
-    // der Bediener sieht in der Tabelle, dass nichts erfasst ist.
-    for (const zeile of zeilen) {
-      await laufeSchritte(el, steps, context, (blockId, spaltenIndex) =>
-        (blockId === traegerIds[0] ? String(zeile[spaltenIndex] ?? '') : ''))
+    const saetze = traeger[0].erfassteSaetze ?? []
+    for (const satz of saetze) {
+      await laufeSchritte(el, steps, context, satz)
     }
     // Geleert wird erst, wenn ALLE Zeilen gelaufen sind — bricht ein Schritt
     // ab (wirft), bleiben die restlichen Zeilen stehen statt zu verschwinden.
-    if (zeilen.length > 0) traeger.erfassungLeeren?.()
+    if (saetze.length > 0) traeger[0].erfassungLeeren?.()
   } finally {
     locks.delete(eventKey)
   }

@@ -35,7 +35,10 @@ export function gewaehlteZeileDerQuelle(
   attrJeTag: Map<string, string>,
   wurzel: ParentNode | undefined = typeof document === 'undefined' ? undefined : document,
 ): unknown {
+  // Eine Wurzel ohne querySelectorAll gibt es ausserhalb des Browsers (und im
+  // Test); sie hat keine Bausteine, also auch keine Auswahl.
   if (quelleId === '' || wurzel === undefined) return undefined
+  if (typeof wurzel.querySelectorAll !== 'function') return undefined
   let juengste: { zeile: unknown; nummer: number } | null = null
   for (const el of Array.from(wurzel.querySelectorAll('[data-ff-id]'))) {
     const attr = attrJeTag.get(el.tagName.toLowerCase())

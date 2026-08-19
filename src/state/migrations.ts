@@ -1,6 +1,7 @@
 import { ROOT_ID, type BlockNode, type BlockTree } from '../core/blocks/BlockData'
 import { zerlegeBindung } from '../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../core/blocks/blockRegistry'
+import type { ActionParamBinding, ActionStep } from '../core/data/aktionen'
 import { QUELLE_PROP } from '../core/blocks/treeQuery'
 import {
   vollstaendigePaare,
@@ -16,7 +17,7 @@ import {
 import { istSeitenBaustein, istFlaechenSeite } from './pageOps'
 import { createEmptyTree, normalizeProps } from './treeOps'
 
-export const CURRENT_SCHEMA_VERSION = 7
+export const CURRENT_SCHEMA_VERSION = 8
 
 export const DEMO_CLEANUP_BEFORE_SCHEMA = 5
 
@@ -257,6 +258,79 @@ export function migrateSuchtInAusKopplung(tree: BlockTree): boolean {
     })
     if (!geaendert) continue
     node.props = { ...node.props, [bindung.prop]: next }
+    migriert = true
+  }
+  return migriert
+}
+
+// Ein Spalten-Index in „Wert aus Erfassungszelle" zeigt auf eine Spalte; die
+// Spalte IST ein Feld einer Quelle. Genau das wird die neue Bindung.
+function quellenFeldAusSpalte(
+  tabelle: BlockNode | undefined,
+  index: number,
+): { dataSourceId: string; code: string } | null {
+  if (!tabelle || !Number.isInteger(index) || index < 0) return null
+  const bindung = getBlockDefinition(tabelle.type)?.listenBindung
+  if (!bindung) return null
+  const liste = tabelle.props[bindung.prop]
+  const eintrag = Array.isArray(liste) ? liste[index] : undefined
+  if (!eintrag || typeof eintrag !== 'object') return null
+  const roh = (eintrag as Record<string, unknown>)[bindung.feldKey]
+  const feld = typeof roh === 'string' ? roh.trim() : ''
+  if (feld === '') return null
+  const { quelleId, code } = zerlegeBindung(feld)
+  const eigene = typeof tabelle.props[QUELLE_PROP] === 'string'
+    ? (tabelle.props[QUELLE_PROP] as string)
+    : ''
+  const dataSourceId = quelleId === '' ? eigene : quelleId
+  if (dataSourceId === '' || code === '') return null
+  return { dataSourceId, code }
+}
+
+function gewandelteBindung(
+  binding: ActionParamBinding,
+  tree: BlockTree,
+): ActionParamBinding | null {
+  if (binding.source !== 'erfassungszelle') return null
+  const ziel = quellenFeldAusSpalte(
+    binding.blockId === undefined ? undefined : tree[binding.blockId],
+    Number(binding.value),
+  )
+  // Laesst sich die Spalte nicht mehr auflesen (Tabelle geloescht, Spalte weg,
+  // Feld nie gebunden), bleibt ein LEERER fester Wert stehen: sichtbar leer und
+  // von Hand nachstellbar. Eine geratene Quelle waere schlimmer.
+  return ziel === null
+    ? { source: 'fixed', value: '' }
+    : { source: 'data_field', dataSourceId: ziel.dataSourceId, value: ziel.code }
+}
+
+// Schemastufe 8 (2026-08-19, Etappe B): Ketten-Parameter waehlen ueberall
+// „Datenquelle → Feld" — die Herkunft „Wert aus Erfassungszelle" mit ihrem
+// Spalten-INDEX ist gestrichen. Weil `data_field` zur Laufzeit jetzt auch die
+// gerade erfasste Zeile liest (resolveActionParam), traegt die gewandelte
+// Bindung dasselbe Verhalten: derselbe Zellwert, nur ueber Quelle und Feldcode
+// benannt statt ueber die Spaltennummer.
+export function migrateErfassungszelleAufQuellenFeld(tree: BlockTree): boolean {
+  let migriert = false
+  for (const node of Object.values(tree)) {
+    if (!node.events) continue
+    let geaendert = false
+    const events: Record<string, ActionStep[]> = {}
+    for (const [key, kette] of Object.entries(node.events)) {
+      events[key] = kette.map((step) => {
+        if (step.type !== 'RELATION') return step
+        const wandle = (liste: readonly ActionParamBinding[]): ActionParamBinding[] =>
+          liste.map((b) => {
+            const neu = gewandelteBindung(b, tree)
+            if (neu === null) return b
+            geaendert = true
+            return neu
+          })
+        return { ...step, params: wandle(step.params), extraParams: wandle(step.extraParams) }
+      })
+    }
+    if (!geaendert) continue
+    node.events = events
     migriert = true
   }
   return migriert

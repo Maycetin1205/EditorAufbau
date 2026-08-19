@@ -28,18 +28,24 @@ export const ACTION_PARAM_SOURCES = [
   'data_field',
   'block_value',
   'gewaehlte_zeile',
-
-  // „Wert aus Erfassungszelle <Spalte>": liefert je Ketten-Lauf den
-  // sichtbaren Zellwert der jeweiligen erfassten Zeile — Herkunft egal,
-  // gewaehlt oder frei getippt (Formularfeld-Prinzip, G4). blockId = die
-  // Tabelle, value = der Spalten-Index. Die Kette laeuft einmal je Zeile.
-  'erfassungszelle',
   'previous_result',
   'step_result',
   'se_variable',
 ] as const
 
-export const GESPEICHERTE_PARAM_QUELLEN = [...ACTION_PARAM_SOURCES, 'aus'] as const
+// „Wert aus Erfassungszelle <Spalte>" ist am 2026-08-19 gestrichen (Etappe B):
+// die Wahl lief ueber den Spalten-INDEX der Tabelle, waehrend die Kette
+// ueberall sonst mit „Datenquelle → Feld" arbeitet. Seither liefert
+// `data_field` auch die erfasste Zeile (s. resolveActionParam). Der alte Wert
+// bleibt LESBAR, damit gespeicherte Staende nicht als kaputt gelten —
+// Schemastufe 8 wandelt ihn beim Laden um.
+export const ALTE_PARAM_QUELLEN = ['erfassungszelle'] as const
+
+export const GESPEICHERTE_PARAM_QUELLEN = [
+  ...ACTION_PARAM_SOURCES,
+  ...ALTE_PARAM_QUELLEN,
+  'aus',
+] as const
 
 export type ActionParamSource = (typeof GESPEICHERTE_PARAM_QUELLEN)[number]
 

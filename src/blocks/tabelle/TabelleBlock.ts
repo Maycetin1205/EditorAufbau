@@ -4,6 +4,7 @@ import { styleMap } from 'lit/directives/style-map.js'
 import { BasicBlock } from '../base/BasicBlock'
 import type { BlockCategory } from '../../core/blocks/BlockComponent'
 import type {
+  ErfassterSatz,
   ErfassungsFaehigkeit,
   ListenBindung,
   SatzWahl,
@@ -18,7 +19,7 @@ import {
   erfassungsZeileFuer,
   type ErfassungsWirt,
 } from './erfassungsBedienung'
-import { ErfassungsAnschluss } from './erfassungsAnschluss'
+import { erfassbareQuellen, ErfassungsAnschluss } from './erfassungsAnschluss'
 import type { ErfassungsUmfeld } from './erfassungsZellen'
 import { erfassungStil } from './erfassungStil'
 import {
@@ -203,8 +204,14 @@ export class TabelleBlock extends BasicBlock {
   // Der Laufzeit-Vertrag der Faehigkeit kannErfassen (ErfassungsTraegerElement
   // in core/blocks/BlockDefinition.ts): die Kette am Knopf liest die Zeilen
   // ueber data-ff-block-id und leert sie nach dem Lauf.
-  get erfassteZeilen(): readonly (readonly string[])[] {
-    return this._erfassung.zeilen
+  get erfassteSaetze(): readonly ErfassterSatz[] {
+    return this._erfassung.saetze
+  }
+
+  // Ausgeschaltete Erfassung gibt keinen Takt: die Kette laeuft dann einmal
+  // und liest, was die Quellen sonst geben.
+  get erfassteQuellen(): readonly string[] {
+    return this.erfassungAn ? erfassbareQuellen(this.erfassungsUmfeld()) : []
   }
 
   erfassungLeeren(): void {

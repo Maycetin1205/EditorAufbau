@@ -110,21 +110,6 @@ export function auswahlGeberImBaum(tree: BlockTree): BlockNode[] {
   return result
 }
 
-// Bausteine, deren Erfassungszeile gerade AN ist (Faehigkeit kannErfassen,
-// Regel 2: gelesen aus der Registry, kein Bausteintyp-Sondercode). Nur ihre
-// Zellen kann eine Kette als „Wert aus Erfassungszelle" lesen.
-export function erfassungsTraegerImBaum(tree: BlockTree): BlockNode[] {
-  const result: BlockNode[] = []
-  const visit = (node: BlockNode | undefined): void => {
-    if (!node) return
-    const kann = getBlockDefinition(node.type)?.kannErfassen
-    if (kann && propertySichtbar(kann.wenn, node.props)) result.push(node)
-    for (const childId of node.childIds) visit(tree[childId])
-  }
-  visit(tree[ROOT_ID])
-  return result
-}
-
 export function firstDescendantOfType(
   tree: BlockTree,
   rootId: string,

@@ -213,7 +213,10 @@ describe('Tabelle: adressierbar fuer "Wert aus Erfassungszelle" (G4)', () => {
     expect(tabelleTag(exportMask(tabelleBaum({})).html)).not.toContain('data-ff-block-id')
   })
 
-  it('eine Knopf-Kette mit Erfassungszellen-Herkunft reist unversehrt', () => {
+  // Etappe B (2026-08-19): der Parameter nennt die QUELLE und ihr FELD, nicht
+  // mehr Tabelle und Spalten-Index. Zur Laufzeit liefert die erfasste Zeile den
+  // Wert, weil die Tabelle genau diese Quelle erfasst (erfassteQuellen).
+  it('eine Knopf-Kette mit Quelle-und-Feld reist unversehrt', () => {
     const baum = tabelleBaum({ erfassung: 'ja' })
     baum.root.childIds = ['tab', 'knopf']
     baum.knopf = {
@@ -223,7 +226,7 @@ describe('Tabelle: adressierbar fuer "Wert aus Erfassungszelle" (G4)', () => {
         onClick: [{
           id: 's1', type: 'RELATION', resultKey: '', relationId: 'r-82',
           params: [
-            { source: 'erfassungszelle', blockId: 'tab', value: '0' },
+            { source: 'data_field', dataSourceId: 'q-pos', value: '10_8' },
             { source: 'fixed', value: '1' },
           ],
           extraParams: [],
@@ -232,8 +235,8 @@ describe('Tabelle: adressierbar fuer "Wert aus Erfassungszelle" (G4)', () => {
     }
     const html = exportMask(baum).html
     const aktionen = /<ff-button[^>]*data-ff-aktionen="([^"]*)"/.exec(html)?.[1] ?? ''
-    expect(aktionen).toContain('erfassungszelle')
-    expect(aktionen).toContain('tab')
+    expect(aktionen).toContain('data_field')
+    expect(aktionen).toContain('10_8')
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 })
