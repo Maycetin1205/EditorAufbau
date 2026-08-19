@@ -20,6 +20,12 @@ export interface ErfassungsLage {
 
   imEditor: boolean
 
+  // Ohne Kopfzeile übernimmt im Editor auch die Erfassungszelle den
+  // Kopf-Griff (Klick öffnet den Feld-Picker der Spalte) — sie sieht aus wie
+  // die Strich-Zeilen darunter und muss sich gleich anfassen lassen
+  // (Nutzer-Befund 2026-08-19). Gesetzt nur im Editor bei Kopf aus.
+  zellenGriff?: (e: MouseEvent, index: number) => void
+
   // Was in der Zelle steht (Laufzeit).
   wert: (index: number) => string
 
@@ -95,7 +101,13 @@ export function erfassungsZeileTpl(
       // Im Editor gibt es keine Daten und keine Eingaben, sondern Striche —
       // der Editor erfindet nie Daten (Regel 7).
       if (lage.imEditor) {
-        return html`<div class=${klasse} role="cell">${ZELLE_PLATZHALTER}</div>`
+        const griff = lage.zellenGriff
+        return html`<div
+          class=${klasse}
+          role="cell"
+          data-ff-editable=${griff ? '' : nothing}
+          @click=${griff ? (e: MouseEvent) => griff(e, i) : nothing}
+        >${ZELLE_PLATZHALTER}</div>`
       }
       const mitListe = zielIn(lage.umfeld, i).art === 'auswahl'
       return html`<div class=${klasse} role="cell">${

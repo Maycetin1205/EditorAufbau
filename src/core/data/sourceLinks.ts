@@ -1,3 +1,4 @@
+import { zerlegeBindung } from '../blocks/BlockDefinition'
 import type { DataSource } from './dataSources'
 
 export interface SchluesselPaar {
@@ -81,4 +82,49 @@ export function paarKlartext(
     .map((p) => erste?.fields.find((f) => f.code === p.fromField)?.label ?? '')
     .filter((n) => n !== '')
     .join(' + ')
+}
+
+// Was eine Erfassungszelle mit dieser Feld-Bindung tut, ABGELEITET aus zwei
+// vorhandenen Angaben: der Bindung selbst und den Verknüpfungen des
+// Bausteins (Nutzer-Modell 2026-08-19: die Spalte IST das Feld der werdenden
+// Zeile). Liegt hier und nicht beim Tabellen-Baustein, damit Inspector und
+// Feld-Wähler dieselbe Ableitung ZEIGEN können, ohne einen Baustein zu
+// importieren (Regel 2); die Erfassungszeile benutzt sie über
+// blocks/tabelle/erfassungsZellen.
+export type ErfassungsZielArt = 'frei' | 'eigen' | 'auswahl'
+
+export interface ErfassungsZiel {
+  art: ErfassungsZielArt
+
+  // Die Quelle, in der die Zelle WÄHLT. Nur bei „auswahl" gefüllt.
+  quelleId: string
+
+  // Bei „auswahl" der Feldcode IN dieser Quelle; bei „eigen" das eigene Feld
+  // der werdenden Zeile; leer bei „frei".
+  code: string
+}
+
+export function erfassungsZielVon(
+  feldBindung: string,
+  tabellenQuelleId: string,
+  verknuepfungen: readonly BausteinQuelle[],
+): ErfassungsZiel {
+  const feld = feldBindung.trim()
+  if (feld === '') return { art: 'frei', quelleId: '', code: '' }
+  const { quelleId, code } = zerlegeBindung(feld)
+  if (quelleId !== '' && quelleId !== tabellenQuelleId) {
+    return { art: 'auswahl', quelleId, code }
+  }
+  // Ein eigenes Feld, das in einem Schlüsselpaar steht, wählt in der
+  // gekoppelten Quelle: sein Wert IST deren Partner-Feld. Koppeln mehrere
+  // Verknüpfungen dasselbe Feld, zählt die zuerst eingestellte.
+  for (const v of verknuepfungen) {
+    if (v.quelleId === '' || v.quelleId === tabellenQuelleId) continue
+    for (const paar of vollstaendigePaare(v)) {
+      if (paar.fromField === code) {
+        return { art: 'auswahl', quelleId: v.quelleId, code: paar.toField }
+      }
+    }
+  }
+  return { art: 'eigen', quelleId: '', code }
 }

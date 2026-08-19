@@ -1,7 +1,8 @@
-import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
 import {
-  vollstaendigePaare,
+  erfassungsZielVon,
   type BausteinQuelle,
+  type ErfassungsZiel,
+  type ErfassungsZielArt,
   type SchluesselPaar,
 } from '../../core/data/sourceLinks'
 import { getField } from '../../softengine/data'
@@ -23,20 +24,12 @@ import type { Spalte } from './spalten'
 //                                         wählt im Artikelstamm
 //   Feld einer verknüpften Quelle       → Auswahl aus ihr, nur passende Sätze
 //
-// Dass die Ableitung reicht, zeigt die DATENzeile: sie liest ein verknüpftes
-// Feld längst von allein (seRuntime → macheFeldLeser in shared/fremdeQuellen).
-export type Zellenart = 'frei' | 'eigen' | 'auswahl'
+// Die Ableitung selbst (`erfassungsZielVon`) liegt in core/data/sourceLinks:
+// Inspector und Feld-Wähler ZEIGEN sie dem Nutzer in Klartext an, und
+// generischer Editor-Code darf keinen Baustein importieren (Regel 2).
+export type Zellenart = ErfassungsZielArt
 
-export interface Zellenziel {
-  art: Zellenart
-
-  // Die Quelle, in der die Zelle WÄHLT. Nur bei „auswahl" gefüllt.
-  quelleId: string
-
-  // Bei „auswahl" der Feldcode IN dieser Quelle; bei „eigen" das eigene Feld
-  // der werdenden Zeile; leer bei „frei".
-  code: string
-}
+export type Zellenziel = ErfassungsZiel
 
 // Was die Zeile über ihre Umgebung wissen muss. Als Bündel, weil damit
 // derselbe Lauf ohne Browser prüfbar ist: die Verknüpfungen kommen im Produkt
@@ -61,24 +54,7 @@ export function zellenzielVon(
   tabellenQuelleId: string,
   verknuepfungen: readonly BausteinQuelle[],
 ): Zellenziel {
-  const feld = (spalte?.feld ?? '').trim()
-  if (feld === '') return { art: 'frei', quelleId: '', code: '' }
-  const { quelleId, code } = zerlegeBindung(feld)
-  if (quelleId !== '' && quelleId !== tabellenQuelleId) {
-    return { art: 'auswahl', quelleId, code }
-  }
-  // Ein eigenes Feld, das in einem Schlüsselpaar steht, wählt in der
-  // gekoppelten Quelle: sein Wert IST deren Partner-Feld. Koppeln mehrere
-  // Verknüpfungen dasselbe Feld, zählt die zuerst eingestellte.
-  for (const v of verknuepfungen) {
-    if (v.quelleId === '' || v.quelleId === tabellenQuelleId) continue
-    for (const paar of vollstaendigePaare(v)) {
-      if (paar.fromField === code) {
-        return { art: 'auswahl', quelleId: v.quelleId, code: paar.toField }
-      }
-    }
-  }
-  return { art: 'eigen', quelleId: '', code }
+  return erfassungsZielVon(spalte?.feld ?? '', tabellenQuelleId, verknuepfungen)
 }
 
 export function zielIn(umfeld: ErfassungsUmfeld, index: number): Zellenziel {

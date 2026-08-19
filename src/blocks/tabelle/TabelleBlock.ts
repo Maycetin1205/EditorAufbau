@@ -436,6 +436,16 @@ export class TabelleBlock extends BasicBlock {
               // Kein Lineal mehr uebrig heisst: die Zeile ist die letzte im
               // Rumpf, unter ihr ist kein Platz fuer die Liste.
               (ansicht.linealTakte ?? 1) <= 0,
+              // Ohne Kopfzeile traegt im Editor auch die Erfassungszelle den
+              // Kopf-Griff — dieselbe Bedingung wie fuer die Zellen des
+              // Rumpfs (tabelleKoerper).
+              this.hasAttribute('data-ff-editor') && this.editable && this.kopfzeile !== 'ja'
+                ? (e, i) => oeffneFeldPicker(this, e, {
+                    prop: TabelleBlock.listenBindung.prop,
+                    index: i,
+                    liste: () => this.spaltenListe(),
+                  })
+                : undefined,
             )
           : nothing,
       }, {

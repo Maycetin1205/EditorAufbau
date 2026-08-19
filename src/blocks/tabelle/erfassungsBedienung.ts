@@ -97,12 +97,14 @@ export function erfassungsZeileFuer(
   wirt: ErfassungsWirt,
   cols: Readonly<Record<string, string>>,
   listeNachOben: boolean,
+  zellenGriff?: (e: MouseEvent, index: number) => void,
 ): TemplateResult {
   const umfeld = wirt.umfeld()
   return erfassungsZeileTpl({
     umfeld,
     cols,
     imEditor: wirt.baustein.hasAttribute('data-ff-editor'),
+    ...(zellenGriff ? { zellenGriff } : {}),
     wert: (i) => wirt.lauf.wertVon(umfeld, i),
     tippSpalte: wirt.lauf.tippSpalte,
     vorschlaege: wirt.lauf.vorschlaege,

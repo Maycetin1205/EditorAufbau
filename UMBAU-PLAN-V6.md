@@ -31,7 +31,15 @@ dann `go` (0.3), dann genau EINE Etappe.
   Umentscheiden verliert immer die AELTERE Wahl (Wahl-Reihenfolge in
   `erfassungsLauf.ts`). Liegt auf Branch `claude/code-review-refactor-0bw6rv`
   (dieselbe Sitzung faehrt parallel die grosse Bestandsaufnahme;
-  Zusammenfuehren nach main entscheidet der Nutzer). Beschlossen und OFFEN,
+  Zusammenfuehren nach main entscheidet der Nutzer).
+  **Nachgezogen am selben Tag (A2, Nutzer-Befund):** die Ableitung ist jetzt
+  SICHTBAR — der Inspector zeigt je Spalte Klartext (Feld aus X · waehlt im Y
+  · frei tippen · Anzeige aus Z), der Feld-Waehler markiert gekoppelte
+  Felder („waehlt im …"), und ohne Kopfzeile traegt auch die Erfassungszeile
+  den Zellen-Griff (vorher war die oberste Strich-Zeile als einzige NICHT
+  klickbar — G5b-Baufehler). Die Ableitung wohnt dafuer in
+  `core/data/sourceLinks.ts` (`erfassungsZielVon`), damit Editor-Code sie
+  ohne Baustein-Import zeigen darf. Beschlossen und OFFEN,
   je mit eigener Ansage + go: **Etappe B** — die Ketten-Parameter KOMPLETT
   umbauen (Nutzer 2026-08-19: „unsauber gewachsen"; Wahl kuenftig ueber das
   Positions-FELD mit Klarnamen statt ueber den Spalten-Index) · **Etappe C**

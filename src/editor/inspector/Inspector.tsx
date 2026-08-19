@@ -16,6 +16,7 @@ import { AktionenSektion } from './AktionenSektion'
 import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
 import { PropControl } from './PropControl'
 import { QuellenListe } from './QuellenListe'
+import { SpaltenKlartext } from './SpaltenKlartext'
 
 interface InspectorZeile {
   row?: string
@@ -152,6 +153,7 @@ export function Inspector() {
           >
 
             {traegtEigeneQuelle(block) && <QuellenListe block={block} />}
+            {traegtEigeneQuelle(block) && <SpaltenKlartext block={block} />}
             {dataProps.map((p) => propControl(p))}
           </div>
         )}
