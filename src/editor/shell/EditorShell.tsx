@@ -16,7 +16,7 @@ export function EditorShell() {
   const [datencenterOffen, setDatencenterOffen] = useState(false)
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-background text-foreground">
+    <div className="flex h-full w-full flex-col bg-background text-foreground">
       <header className="grid h-10 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-border bg-card px-2">
         <div className="flex min-w-0 items-center gap-2 pl-1">
           <span

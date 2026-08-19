@@ -17,11 +17,6 @@ export interface PickerGruppe {
 
   hinweis?: string
   fields: readonly DataSourceField[]
-
-  // Klartext je Feldcode, sichtbar am Eintrag (z. B. „wählt im Artikelstamm"
-  // an einem gekoppelten Positions-Feld) — die Ableitung der Erfassungszeile
-  // soll beim Binden ablesbar sein, nicht Merkwissen (Nutzer 2026-08-19).
-  feldHinweise?: Readonly<Record<string, string>>
 }
 
 export interface PickerWahl {
@@ -93,14 +88,11 @@ export function FieldPicker({
     name: g.name,
     kennung: g.kennung,
     hinweis: g.hinweis === undefined || g.hinweis === '' ? undefined : `über ${g.hinweis}`,
-    eintraege: g.fields.map((f) => {
-      const zusatz = g.feldHinweise?.[f.code]
-      return {
-        wert: bindungMitQuelle(g.quelleId, f.code),
-        name: f.label,
-        kennung: zusatz === undefined ? f.code : `${f.code} · ${zusatz}`,
-      }
-    }),
+    eintraege: g.fields.map((f) => ({
+      wert: bindungMitQuelle(g.quelleId, f.code),
+      name: f.label,
+      kennung: f.code,
+    })),
   }))
 
   return (

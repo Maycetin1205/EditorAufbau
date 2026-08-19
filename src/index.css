@@ -41,6 +41,19 @@
     border-color: hsl(var(--border));
   }
 
+  /* Der Editor ist eine feste Flaeche: die SEITE scrollt nie, gescrollt wird
+     innen in den Panels. Ohne diese drei Hoehen endet die Hoehen-Kette im
+     Nichts — html/body/#root waeren auto-hoch, und dann laesst jede
+     Ueberlaufstelle (ein Klapp-Menue, das aus seiner Leiste haengt; eine
+     Leiste, deren Inhalt einen Hauch hoeher ist als ihre feste Hoehe; ein
+     100vw-Kasten neben einem Rollbalken) das DOKUMENT wachsen statt ein
+     Panel. Sichtbar war das als leere Flaeche unter dem Editor. */
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
   html {
     font-size: 90%;
   }
@@ -48,5 +61,10 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden;
   }
 }

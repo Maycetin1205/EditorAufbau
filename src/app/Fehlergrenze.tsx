@@ -24,7 +24,7 @@ export class Fehlergrenze extends Component<FehlergrenzeProps, FehlergrenzeState
     const { fehler } = this.state
     if (!fehler) return this.props.children
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background p-6">
+      <div className="flex h-full w-full items-center justify-center bg-background p-6">
         <div className="max-w-md space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
           <h1 className="text-base font-semibold text-foreground">
             Der Editor ist auf einen Fehler gelaufen.

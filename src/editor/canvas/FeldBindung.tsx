@@ -13,8 +13,6 @@ import {
   type ListenBindung,
 } from '../../core/blocks/BlockDefinition'
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
-import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { propertySichtbar } from '../../core/blocks/PropertyDescription'
 import { quellenKennung } from '../../core/data/dataSources'
 import { paarKlartext, type QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
@@ -63,25 +61,6 @@ function klarnameVon(wert: string, quellen: readonly QuelleInReichweite[]): stri
     ? quellen[0]?.source
     : quellen.find((q) => q.source.id === quelleId)?.source
   return quelle?.fields.find((f) => f.code === code)?.label ?? ''
-}
-
-// Gekoppelte eigene Felder bekommen im Spalten-Picker den Klartext dazu:
-// wer die Artikelnummer der Position bindet, sieht sofort, dass die Zelle
-// beim Erfassen im Stamm wählt — die Ableitung ist ablesbar, kein Merkwissen
-// (Nutzer 2026-08-19). Koppeln mehrere Verknüpfungen dasselbe Feld, zählt
-// die zuerst eingestellte (dieselbe Regel wie erfassungsZielVon).
-function kopplungsHinweise(
-  quellen: readonly QuelleInReichweite[],
-): Record<string, string> | undefined {
-  const raus: Record<string, string> = {}
-  for (const q of quellen.slice(1)) {
-    for (const paar of q.paare ?? []) {
-      if (raus[paar.fromField] === undefined) {
-        raus[paar.fromField] = `wählt im ${q.source.name}`
-      }
-    }
-  }
-  return Object.keys(raus).length > 0 ? raus : undefined
 }
 
 export function useFeldBindung({
@@ -246,10 +225,6 @@ export function useFeldBindung({
 
         // quelleProp-Modus: eine Gruppe, nackte Feldcodes (quelleId '').
         const proQuelle = quelleAusProp !== undefined
-        const kannErfassen = getBlockDefinition(block.type)?.kannErfassen
-        const hinweise = kannErfassen && propertySichtbar(kannErfassen.wenn, block.props)
-          ? kopplungsHinweise(quellen)
-          : undefined
         const listenGruppen: PickerGruppe[] = proQuelle
           ? [{
               quelleId: '',
@@ -257,7 +232,7 @@ export function useFeldBindung({
               kennung: quellenKennung(quelleAusProp),
               fields: quelleAusProp.fields,
             }]
-          : gruppen.map((g, i) => (i === 0 && hinweise ? { ...g, feldHinweise: hinweise } : g))
+          : gruppen
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
         const wahl = listenBindung.eintragsWahl
         const zuo = listenBindung.eintragsZuordnung
