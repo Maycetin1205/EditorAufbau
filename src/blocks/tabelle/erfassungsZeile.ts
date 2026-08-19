@@ -2,20 +2,19 @@ import { html, nothing, type TemplateResult } from 'lit'
 import { styleMap } from 'lit/directives/style-map.js'
 import { vorschlagListeTpl, type Vorschlag } from '../shared/vorschlagListe'
 import { spaltenArt } from './spaltenArten'
-import { zellenzielVon } from './erfassungsZellen'
-import { ZELLE_PLATZHALTER, type Spalte } from './spalten'
+import { zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
+import { ZELLE_PLATZHALTER } from './spalten'
 
 // Die nächste freie Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und
 // kein eigener Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle
 // ohne sie exportiert wie zuvor. Einzustellen ist an ihr nichts — was eine
-// Zelle tut, leitet erfassungsZellen aus der Bindung der Spalte ab.
+// Zelle tut, leitet erfassungsZellen aus der Bindung der Spalte und der
+// Verknüpfung des Bausteins ab.
 
 export interface ErfassungsLage {
-  spalten: readonly Spalte[]
-
-  // Die EINE Quelle der Tabelle — sie entscheidet, ob das Feld einer Spalte
-  // ihr eigenes ist oder das einer verknüpften Quelle.
-  quelleId: string
+  // Spalten, Tabellen-Quelle und Verknüpfungen — dieselbe Sicht, aus der auch
+  // der Lauf seine Ableitungen zieht.
+  umfeld: ErfassungsUmfeld
 
   cols: Readonly<Record<string, string>>
 
@@ -55,7 +54,7 @@ function eingabe(
   return html`<input
     class="erf-eingabe"
     type="text"
-    placeholder=${lage.spalten[index]?.titel ?? ''}
+    placeholder=${lage.umfeld.spalten[index]?.titel ?? ''}
     .value=${lage.wert(index)}
     @input=${(e: Event) => tun.tippen(index, (e.target as HTMLInputElement).value)}
     @keydown=${(e: KeyboardEvent) => tun.taste(index, e)}
@@ -63,17 +62,17 @@ function eingabe(
   />`
 }
 
-// Eine gebundene Zelle kann eine Vorschlagsliste zeigen und braucht dafür
-// einen Halter; eine freie Zelle ist nur ein Eingabefeld. Eine Lupe hat hier
-// keine mehr: Enter in der leeren Zelle öffnet das große Fenster
-// (Nutzer-Entscheidung 2026-08-18). Die Lupe am Formularfeld bleibt.
+// Eine Auswahl-Zelle kann eine Vorschlagsliste zeigen und braucht dafür
+// einen Halter; eine Zelle ohne Auswahl-Quelle ist nur ein Eingabefeld. Eine
+// Lupe hat hier keine mehr: Enter in der leeren Zelle öffnet das große
+// Fenster (Nutzer-Entscheidung 2026-08-18). Die Lupe am Formularfeld bleibt.
 function laufzeitZelle(
   lage: ErfassungsLage,
   tun: ErfassungsHandeln,
   index: number,
-  frei: boolean,
+  mitListe: boolean,
 ): TemplateResult {
-  if (frei) return eingabe(lage, tun, index)
+  if (!mitListe) return eingabe(lage, tun, index)
   const liste = lage.tippSpalte === index && lage.vorschlaege.length > 0
   return html`<div class=${lage.listeNachOben ? 'erf-halter nach-oben' : 'erf-halter'}>
     ${eingabe(lage, tun, index)}
@@ -91,16 +90,16 @@ export function erfassungsZeileTpl(
   tun: ErfassungsHandeln,
 ): TemplateResult {
   return html`<div class="zeile erfassung" role="row" style=${styleMap(lage.cols)}>
-    ${lage.spalten.map((spalte, i) => {
+    ${lage.umfeld.spalten.map((spalte, i) => {
       const klasse = spaltenArt(spalte.art).klasse
       // Im Editor gibt es keine Daten und keine Eingaben, sondern Striche —
       // der Editor erfindet nie Daten (Regel 7).
       if (lage.imEditor) {
         return html`<div class=${klasse} role="cell">${ZELLE_PLATZHALTER}</div>`
       }
-      const frei = zellenzielVon(spalte, lage.quelleId).art === 'frei'
+      const mitListe = zielIn(lage.umfeld, i).art === 'auswahl'
       return html`<div class=${klasse} role="cell">${
-        laufzeitZelle(lage, tun, i, frei)
+        laufzeitZelle(lage, tun, i, mitListe)
       }</div>`
     })}
   </div>`

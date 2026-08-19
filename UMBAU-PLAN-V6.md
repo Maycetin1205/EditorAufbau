@@ -21,6 +21,22 @@ dann `go` (0.3), dann genau EINE Etappe.
 
 <!-- Nach JEDER fertigen Etappe aktualisieren. Zeiger, keine Chronik. -->
 
+- **Stand 2026-08-19: Spalten-Modell der Erfassung umgebaut (Nutzer-Modell,
+  Etappe A).** Eine schreibende Spalte IST ein Feld der Tabellen-Quelle
+  (Belegposition): steht ihr Feld in einem Schluesselpaar der Verknuepfung,
+  waehlt die Erfassungszelle in der gekoppelten Quelle (Artikelnummer →
+  Artikelstamm), ungekoppelt tippt sie frei (Menge) — Anzeige-Spalten
+  (Bezeichnung aus dem Stamm) bleiben moeglich und geben der Liste den
+  Suchtext. Das fruehere Ankern an alte Zeilen ist ersatzlos raus; beim
+  Umentscheiden verliert immer die AELTERE Wahl (Wahl-Reihenfolge in
+  `erfassungsLauf.ts`). Liegt auf Branch `claude/code-review-refactor-0bw6rv`
+  (dieselbe Sitzung faehrt parallel die grosse Bestandsaufnahme;
+  Zusammenfuehren nach main entscheidet der Nutzer). Beschlossen und OFFEN,
+  je mit eigener Ansage + go: **Etappe B** — die Ketten-Parameter KOMPLETT
+  umbauen (Nutzer 2026-08-19: „unsauber gewachsen"; Wahl kuenftig ueber das
+  Positions-FELD mit Klarnamen statt ueber den Spalten-Index) · **Etappe C**
+  — „Schlank" ERSETZT den Kopfzeile-Schalter von G5b (ein Schalter:
+  schlank = kein Rahmen UND keine Titelzeile).
 - **Stand 2026-08-18:** Gesamtanalyse des ganzen Repos (zwei Lese-Trupps +
   Kernlektuere). Urteil: das Fundament traegt (Store, Registry, Export,
   SE-Schicht sauber); die Schwaechen sassen in der Bedienschicht. Sechs

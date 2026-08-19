@@ -13,9 +13,9 @@ import {
 } from '../shared/vorschlagListe'
 import {
   anzeigeSpalteIn,
+  auswahlQuellenIn,
+  paareZu,
   passendeSaetze,
-  verknuepfteQuellenIn,
-  zellenzielVon,
   zielIn,
   type ErfassungsUmfeld,
 } from './erfassungsZellen'
@@ -30,24 +30,35 @@ export type ErfassungsTaste = TastenFolge | 'weiter' | 'leeren'
 // Klasse, weil er sich so ohne Browser prüfen lässt — und weil der
 // Tabellen-Baustein sonst über seinen Zeilen-Deckel liefe.
 //
+// Erfasst wird eine NEUE Zeile der Tabellen-Quelle; einen gewählten Satz der
+// eigenen Quelle gibt es dabei nie (das frühere „Ankern" an eine alte Zeile
+// ist gestrichen, 2026-08-19). Die eigenen Felder kommen getippt oder über
+// die Kopplung aus den gewählten Sätzen der verknüpften Quellen.
+//
 // Die Zeile schreibt NICHT ins ERP und veröffentlicht ihre Wahl NICHT als
 // globale Auswahl: die Geber-Kennung der Tabelle gehört ihrer Zeilenauswahl,
 // und ein Baustein kann heute Geber für genau EINE Quelle sein. Geschrieben
-// wird erst in G4 über einen Knopf.
+// wird erst über den Knopf (G4).
 export class ErfassungsLauf {
   // Getippt je Spalte. Eine Map und kein Array: sie bleibt richtig, wenn
   // Spalten dazukommen oder wegfallen.
   private getippt = new Map<number, string>()
 
   // Der gewählte Satz JE QUELLE. Eine Zeile kann mehrere tragen: den Artikel
-  // aus der Tabellen-Quelle UND die Tierart aus der verknüpften.
+  // aus dem Stamm UND die Gabe aus einer zweiten verknüpften Quelle.
   private gewaehlt = new Map<string, unknown>()
 
   // Welche Wahl der Bediener SELBST getroffen hat (Übernahme per Liste oder
-  // Fenster). Nur Hand-Wahlen liefern Schlüsselwerte für andere Quellen —
-  // sonst schränkte eine selbstgefüllte Tierart die Artikelwahl ein, aus der
-  // sie gerade erst abgeleitet wurde (Kreis).
-  private vonHand = new Set<string>()
+  // Fenster), samt Reihenfolge. Nur Hand-Wahlen liefern Schlüsselwerte für
+  // andere Quellen — sonst schränkte eine selbstgefüllte Tierart die
+  // Artikelwahl ein, aus der sie gerade erst abgeleitet wurde (Kreis). Die
+  // Reihenfolge löst denselben Kreis beim UMENTSCHEIDEN: die Vorschlagsliste
+  // einer schon gewählten Quelle hört nur auf Wahlen, die VOR ihrer eigenen
+  // da waren — was auf ihr aufbaute (die Gabe zum Artikel), hält sie nicht
+  // fest. Und im Abgleich fällt bei Widerspruch immer die ältere Wahl.
+  private vonHand = new Map<string, number>()
+
+  private _wahlZaehler = 0
 
   private _tippSpalte = -1
 
@@ -70,12 +81,15 @@ export class ErfassungsLauf {
   }
 
   // Was in der Zelle steht: das Getippte, solange es da ist — sonst der Wert
-  // aus dem gewählten Satz ihrer Quelle. Eine freie Zelle hat nur Getipptes.
+  // aus dem gewählten Satz ihrer Auswahl-Quelle. Eine gekoppelte eigene Zelle
+  // liest dabei das Partner-Feld: der gewählte Artikel LIEFERT die
+  // Artikelnummer der werdenden Position. Freie und ungekoppelte Zellen haben
+  // nur Getipptes.
   wertVon(umfeld: ErfassungsUmfeld, index: number): string {
     const getippt = this.getippt.get(index)
     if (getippt !== undefined) return getippt
     const ziel = zielIn(umfeld, index)
-    if (ziel.quelleId === '' || ziel.code === '') return ''
+    if (ziel.art !== 'auswahl' || ziel.code === '') return ''
     const satz = this.gewaehlt.get(ziel.quelleId)
     return satz === undefined ? '' : getField(satz, ziel.code)
   }
@@ -108,8 +122,9 @@ export class ErfassungsLauf {
     const wert = this.wertVon(umfeld, index)
     // Escape-Stufe 2: keine Liste (mehr) offen → die Zelle leert sich.
     if (taste === 'Escape' && !listeOffen) return wert === '' ? 'nichts' : 'leeren'
-    // Eine freie Zelle hat keine Liste und kein Fenster; Enter geht weiter.
-    if (zielIn(umfeld, index).art === 'frei') return taste === 'Enter' ? 'weiter' : 'nichts'
+    // Eine Zelle ohne Auswahl-Quelle (frei oder ungekoppeltes eigenes Feld)
+    // hat keine Liste und kein Fenster; Enter geht weiter.
+    if (zielIn(umfeld, index).art !== 'auswahl') return taste === 'Enter' ? 'weiter' : 'nichts'
     const folge = tastenFolge(taste, { listeOffen, feldLeer: wert === '' })
     if (folge === 'marke-hoch') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, -1)
     else if (folge === 'marke-runter') this._marke = bewegteMarke(this._marke, this._vorschlaege.length, 1)
@@ -125,7 +140,7 @@ export class ErfassungsLauf {
 
   // Die nächste Zelle, in der noch nichts steht. Selbstgefülltes wird damit
   // automatisch übersprungen (es ist nicht leer). -1 = rechts ist nichts
-  // Leeres mehr; was dann passiert, entscheidet der Aufrufer (ab G4: Zeile
+  // Leeres mehr; was dann passiert, entscheidet der Aufrufer (G4: Zeile
   // erfasst).
   naechsteLeere(umfeld: ErfassungsUmfeld, ab: number): number {
     for (let i = ab + 1; i < umfeld.spalten.length; i++) {
@@ -134,7 +149,7 @@ export class ErfassungsLauf {
     return -1
   }
 
-  // Escape-Stufe 2: die Zelle wird wirklich leer. Bei einer gebundenen Zelle
+  // Escape-Stufe 2: die Zelle wird wirklich leer. Bei einer Auswahl-Zelle
   // muss dafür der gewählte Satz ihrer Quelle gehen — sonst stünde der Wert
   // beim nächsten Rendern wieder da. Mit ihm leeren sich die Schwesterzellen
   // derselben Quelle; das ist gewollt: ein Satz gilt immer ganz.
@@ -152,21 +167,15 @@ export class ErfassungsLauf {
     this._marke = marke
   }
 
-  // Die Übernahme: der Satz gilt für alle Zellen DIESER Quelle, sie zeigen ihn
-  // sofort. Ein Satz der Tabellen-Quelle ist der Anker — die verknüpften
-  // Sätze hingen an ihm und werden gelöst. Danach gleicht sich die Zeile ab
-  // (G3c): jede Wahl kann Abhängiges neu bestimmen, auch die Wahl in einer
-  // verknüpften Spalte.
+  // Die Übernahme: der Satz gilt für alle Zellen, die in DIESER Quelle
+  // wählen — auch die gekoppelten eigenen Zellen zeigen ihn sofort. Danach
+  // gleicht sich die Zeile ab (G3c): jede Wahl kann Abhängiges neu bestimmen.
   uebernimm(umfeld: ErfassungsUmfeld, index: number, satz: unknown): void {
     const ziel = zielIn(umfeld, index)
-    if (ziel.quelleId === '') return
+    if (ziel.art !== 'auswahl') return
     this.setze(umfeld, ziel.quelleId, satz)
-    this.vonHand.add(ziel.quelleId)
-    if (ziel.art === 'eigen') {
-      for (const id of [...this.gewaehlt.keys()]) {
-        if (id !== ziel.quelleId) this.setze(umfeld, id, undefined)
-      }
-    }
+    this._wahlZaehler += 1
+    this.vonHand.set(ziel.quelleId, this._wahlZaehler)
     this.gleicheAb(umfeld)
     this._tippSpalte = -1
     this._marke = 0
@@ -181,28 +190,32 @@ export class ErfassungsLauf {
       this.vonHand.delete(quelleId)
     } else this.gewaehlt.set(quelleId, satz)
     for (let i = 0; i < umfeld.spalten.length; i++) {
-      if (zellenzielVon(umfeld.spalten[i], umfeld.quelleId).quelleId === quelleId) {
+      if (zielIn(umfeld, i).quelleId === quelleId) {
         this.getippt.delete(i)
       }
     }
   }
 
   // Der Schlüsselwert der WERDENDEN Zeile — hier hängt das Messlatten-
-  // Szenario (G3c): Gibt es den Satz der Tabellen-Quelle, trägt ER die Felder
-  // (so liest ihn auch die Datenzeile). Beim Erfassen einer NEUEN Zeile gibt
-  // es ihn nicht — dann liefern die von Hand gewählten verknüpften Sätze den
-  // Wert über ihre Paare: der gewählte Artikel liefert die Artikelnummer der
-  // Position, bevor es die Position gibt. Selbstgefülltes liefert nichts
-  // (s. vonHand), und `ausser` nimmt die fragende Quelle aus der Suche —
-  // ein Satz rechtfertigt sich nicht mit den eigenen Schlüsseln.
-  private schluesselWert(umfeld: ErfassungsUmfeld, feld: string, ausser: string): string | undefined {
-    const basis = this.gewaehlt.get(umfeld.quelleId)
-    if (basis !== undefined) return getField(basis, feld)
-    for (const quelleId of verknuepfteQuellenIn(umfeld)) {
-      if (quelleId === ausser || !this.vonHand.has(quelleId)) continue
+  // Szenario (G3c): die von Hand gewählten Sätze liefern ihn über ihre
+  // Paare. Der gewählte Artikel liefert die Artikelnummer der Position,
+  // bevor es die Position gibt. Selbstgefülltes liefert nichts (s. vonHand),
+  // und `ausser` nimmt die fragende Quelle aus der Suche — ein Satz
+  // rechtfertigt sich nicht mit den eigenen Schlüsseln. Über `zaehlt` grenzt
+  // der Aufrufer auf ältere oder neuere Wahlen ein (s. vonHand).
+  private schluesselWert(
+    umfeld: ErfassungsUmfeld,
+    feld: string,
+    ausser: string,
+    zaehlt: (wahl: number) => boolean = () => true,
+  ): string | undefined {
+    for (const quelleId of auswahlQuellenIn(umfeld)) {
+      if (quelleId === ausser) continue
+      const wahl = this.vonHand.get(quelleId)
+      if (wahl === undefined || !zaehlt(wahl)) continue
       const satz = this.gewaehlt.get(quelleId)
       if (satz === undefined) continue
-      for (const paar of umfeld.paareZu(quelleId)) {
+      for (const paar of paareZu(umfeld, quelleId)) {
         if (paar.fromField !== feld) continue
         const wert = getField(satz, paar.toField)
         if (wert !== '') return wert
@@ -211,12 +224,17 @@ export class ErfassungsLauf {
     return undefined
   }
 
-  // Die möglichen Sätze einer verknüpften Quelle, eingeschränkt über die
+  // Die möglichen Sätze einer Auswahl-Quelle, eingeschränkt über die
   // bekannten Schlüsselwerte der werdenden Zeile.
-  private moegliche(umfeld: ErfassungsUmfeld, quelleId: string, rows: readonly unknown[]): unknown[] {
+  private moegliche(
+    umfeld: ErfassungsUmfeld,
+    quelleId: string,
+    rows: readonly unknown[],
+    zaehlt?: (wahl: number) => boolean,
+  ): unknown[] {
     return passendeSaetze(
-      umfeld.paareZu(quelleId),
-      (feld) => this.schluesselWert(umfeld, feld, quelleId),
+      paareZu(umfeld, quelleId),
+      (feld) => this.schluesselWert(umfeld, feld, quelleId, zaehlt),
       rows,
     )
   }
@@ -227,17 +245,23 @@ export class ErfassungsLauf {
   // lassen, wählt er sich selbst (Ein-Treffer-Automatik). Die Automatik
   // greift nur, wenn mindestens ein Schlüsselwert bekannt ist: sonst wählte
   // sich in einem Ein-Satz-Stamm der Satz ungefragt von selbst.
+  //
+  // Beim Abgleich verliert immer die ÄLTERE Wahl: ein Satz fällt nur, wenn
+  // er einer NEUEREN Wahl widerspricht — die letzte Entscheidung des
+  // Bedieners steht. Selbstgefülltes hat keine Wahl-Nummer und weicht jeder
+  // Hand-Wahl.
   private gleicheAb(umfeld: ErfassungsUmfeld): void {
-    const quellen = verknuepfteQuellenIn(umfeld)
+    const quellen = auswahlQuellenIn(umfeld)
     for (let runde = 0; runde <= quellen.length; runde++) {
       let bewegt = false
       for (const quelleId of quellen) {
-        const paare = umfeld.paareZu(quelleId)
+        const paare = paareZu(umfeld, quelleId)
         if (paare.length === 0) continue
         const satz = this.gewaehlt.get(quelleId)
         if (satz !== undefined) {
+          const eigene = this.vonHand.get(quelleId) ?? -Infinity
           const passt = paare.every((p) => {
-            const soll = this.schluesselWert(umfeld, p.fromField, quelleId)
+            const soll = this.schluesselWert(umfeld, p.fromField, quelleId, (wahl) => wahl > eigene)
             return soll === undefined || (soll !== '' && soll === getField(satz, p.toField))
           })
           if (!passt) {
@@ -279,23 +303,26 @@ export class ErfassungsLauf {
 
   private berechne(umfeld: ErfassungsUmfeld): Eintrag[] {
     const index = this._tippSpalte
-    if (this._listeZu || zielIn(umfeld, index).art === 'frei') return []
+    if (this._listeZu || zielIn(umfeld, index).art !== 'auswahl') return []
     const getippt = this.getippt.get(index) ?? ''
     if (getippt === '') return []
     return passendeVorschlaege(this.eintraege(umfeld, index), getippt)
   }
 
   // Dieselben Einträge für die Liste UND das große Fenster: eine zweite
-  // Quelle wäre eine zweite Wahrheit. Eine verknüpfte Zelle bekommt nur die
-  // Sätze, deren Schlüssel zu den bekannten Werten der werdenden Zeile passen.
+  // Quelle wäre eine zweite Wahrheit. Jede Auswahl-Zelle bekommt nur die
+  // Sätze, deren Schlüssel zu den bekannten Werten der werdenden Zeile
+  // passen — beim Umentscheiden nur die der Wahlen VOR der eigenen.
   eintraege(umfeld: ErfassungsUmfeld, index: number): Eintrag[] {
     const ziel = zielIn(umfeld, index)
-    if (ziel.quelleId === '' || ziel.code === '') return []
+    if (ziel.art !== 'auswahl' || ziel.quelleId === '' || ziel.code === '') return []
     const rows = quellenZeilen(ziel.quelleId)
     if (rows === null) return []
-    const saetze = ziel.art === 'verknuepft'
-      ? this.moegliche(umfeld, ziel.quelleId, rows)
-      : rows
-    return nachschlagEintraege(saetze, anzeigeSpalteIn(umfeld, index)?.code ?? '', ziel.code)
+    const eigene = this.vonHand.get(ziel.quelleId) ?? Infinity
+    return nachschlagEintraege(
+      this.moegliche(umfeld, ziel.quelleId, rows, (wahl) => wahl < eigene),
+      anzeigeSpalteIn(umfeld, index)?.code ?? '',
+      ziel.code,
+    )
   }
 }

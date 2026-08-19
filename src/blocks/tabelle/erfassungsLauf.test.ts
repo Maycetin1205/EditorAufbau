@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { SchluesselPaar } from '../../core/data/sourceLinks'
+import type { BausteinQuelle } from '../../core/data/sourceLinks'
 import { seGlobal } from '../../softengine/bridge'
+import { ErfassungsAnschluss } from './erfassungsAnschluss'
 import { ErfassungsLauf } from './erfassungsLauf'
 import { anzeigeSpalteIn, fensterSpaltenIn, zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import type { Spalte } from './spalten'
@@ -9,38 +10,48 @@ const spalte = (teil: Partial<Spalte>): Spalte => ({
   titel: 'Spalte', feld: '', art: 'text', ...teil,
 })
 
-// Eine Belegposition aus ZWEI Quellen: der Artikel kommt aus der Quelle der
-// Tabelle, die Gabe aus einer verknuepften. Eingestellt wird an der
-// Erfassungszeile nichts — was eine Zelle tut, steht schon in der Bindung der
-// Spalte und in der Verknuepfung des Bausteins.
-const ARTIKEL = spalte({ titel: 'Artikel', feld: '3_18' })
-const BEZEICHNUNG = spalte({ titel: 'Bezeichnung', feld: '30_40' })
-const MENGE = spalte({ titel: 'Menge', art: 'zahl' })
+// Das Nutzer-Modell (2026-08-19): die Tabelle zeigt die BELEGPOSITIONEN, und
+// jede schreibende Spalte ist ein FELD DER POSITION. Dass die Artikel-Spalte
+// beim Erfassen im Stamm wählen kann, steht NICHT an der Spalte — es kommt
+// aus der Verknüpfung des Bausteins (Schlüsselpaar Position.Artikelnummer ↔
+// Stamm.Artikelnummer). Reine Anzeige-Spalten (Bezeichnung, Gabe) dürfen
+// weiter auf eine verknüpfte Quelle zeigen; sie geben der Vorschlagsliste
+// ihren Suchtext.
+const ARTIKEL = spalte({ titel: 'Artikel', feld: '10_8' })
+const BEZEICHNUNG = spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40' })
+const MENGE = spalte({ titel: 'Menge', feld: '11_6', art: 'zahl' })
 const GABE = spalte({ titel: 'Gabe', feld: 'q-gabe::5_4' })
 const GABE_TEXT = spalte({ titel: 'Gabe im Klartext', feld: 'q-gabe::9_20' })
+const NOTIZ = spalte({ titel: 'Notiz' })
 
-const ZEILE = [ARTIKEL, BEZEICHNUNG, MENGE, GABE, GABE_TEXT]
+const ZEILE = [ARTIKEL, BEZEICHNUNG, MENGE, GABE, GABE_TEXT, NOTIZ]
 
-// „Woran erkennt man die zusammengehoerige Zeile?" — dieselbe Angabe, die die
-// Datenzeile laengst benutzt (weitereQuellen am Baustein): die Tierart des
-// Artikels trifft die Tierart der Gabe.
-const PAARE: SchluesselPaar[] = [{ fromField: '40_4', toField: '2_4' }]
+// „Woran erkennt man die zusammengehörige Zeile?" — dieselbe Angabe, die die
+// Datenzeile längst benutzt (weitereQuellen am Baustein). Der gewählte
+// Artikel liefert der werdenden Position Artikelnummer UND Tierart; an der
+// Tierart hängt die Gabe.
+const VERKNUEPFUNGEN: BausteinQuelle[] = [
+  {
+    quelleId: 'q-art',
+    keyPairs: [
+      { fromField: '10_8', toField: '3_18' },
+      { fromField: '12_4', toField: '40_4' },
+    ],
+  },
+  { quelleId: 'q-gabe', keyPairs: [{ fromField: '12_4', toField: '2_4' }] },
+]
 
 function umfeldMit(
   spalten: readonly Spalte[] = ZEILE,
-  paare: readonly SchluesselPaar[] = PAARE,
+  verknuepfungen: readonly BausteinQuelle[] = VERKNUEPFUNGEN,
 ): ErfassungsUmfeld {
-  return {
-    spalten,
-    quelleId: 'q-art',
-    paareZu: (quelleId) => (quelleId === 'q-gabe' ? paare : []),
-  }
+  return { spalten, quelleId: 'q-pos', verknuepfungen }
 }
 
 function quellenStellen(): void {
   const g = seGlobal()
   g.FF_DATA_SOURCES = [
-    { id: 'q-art', name: 'Artikel', tableId: 'IDBID0003', kind: 'idb' },
+    { id: 'q-art', name: 'Artikel', tableId: 'ART', kind: 'art' },
     { id: 'q-gabe', name: 'Gaben', tableId: 'IDBID0001', kind: 'idb' },
   ]
   g.SEDATA = {
@@ -68,17 +79,27 @@ function quellenStellen(): void {
 }
 
 describe('Zellen der Erfassungszeile', () => {
-  it('leitet die Art der Zelle aus der Bindung der Spalte ab', () => {
+  it('leitet die Art der Zelle aus Bindung UND Verknüpfung ab', () => {
     const u = umfeldMit()
-    // Kein Feld gebunden: frei tippen — das ist der Weg fuer die Menge.
-    expect(zielIn(u, 2)).toEqual({ art: 'frei', quelleId: '', code: '' })
-    // Nackter Feldcode: das Feld der Tabellen-Quelle.
-    expect(zielIn(u, 0)).toEqual({ art: 'eigen', quelleId: 'q-art', code: '3_18' })
-    // Mit Quelle davor: das Feld einer verknuepften Quelle.
-    expect(zielIn(u, 3)).toEqual({ art: 'verknuepft', quelleId: 'q-gabe', code: '5_4' })
+    // Kein Feld gebunden: frei tippen.
+    expect(zielIn(u, 5)).toEqual({ art: 'frei', quelleId: '', code: '' })
+    // Eigenes Feld ohne Schlüsselpaar: frei tippen — die Menge gehört der
+    // Position, die Datenzeile zeigt dasselbe Feld.
+    expect(zielIn(u, 2)).toEqual({ art: 'eigen', quelleId: '', code: '11_6' })
+    // Eigenes Feld IM Schlüsselpaar: die Zelle wählt in der gekoppelten
+    // Quelle — Artikelnummer der Position wählt im Artikelstamm.
+    expect(zielIn(u, 0)).toEqual({ art: 'auswahl', quelleId: 'q-art', code: '3_18' })
+    // Feld einer verknüpften Quelle: Auswahl aus ihr.
+    expect(zielIn(u, 3)).toEqual({ art: 'auswahl', quelleId: 'q-gabe', code: '5_4' })
+    // Die eigene Quelle ausdrücklich davor ändert nichts.
+    expect(zielIn(umfeldMit([spalte({ feld: 'q-pos::11_6' })]), 0))
+      .toEqual({ art: 'eigen', quelleId: '', code: '11_6' })
+    // Ohne Verknüpfung ist auch die Artikelnummer nur ein freies Tippfeld.
+    expect(zielIn(umfeldMit(ZEILE, []), 0))
+      .toEqual({ art: 'eigen', quelleId: '', code: '10_8' })
   })
 
-  it('angezeigt und mitdurchsucht wird die erste ANDERE Spalte derselben Quelle', () => {
+  it('angezeigt und mitdurchsucht wird die erste ANDERE Spalte derselben Auswahl-Quelle', () => {
     const u = umfeldMit()
     expect(anzeigeSpalteIn(u, 0)).toEqual({ titel: 'Bezeichnung', code: '30_40' })
     expect(anzeigeSpalteIn(u, 3)).toEqual({ titel: 'Gabe im Klartext', code: '9_20' })
@@ -112,7 +133,16 @@ describe('ErfassungsLauf', () => {
 
   it('eine freie Zelle nimmt nur Getipptes und zeigt nie eine Liste', () => {
     const u = umfeldMit()
-    expect(lauf.wertVon(u, 2)).toBe('')
+    expect(lauf.wertVon(u, 5)).toBe('')
+    lauf.tippe(5, 'nüchtern bringen')
+    expect(lauf.wertVon(u, 5)).toBe('nüchtern bringen')
+
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.vorschlaege).toEqual([])
+  })
+
+  it('ein ungekoppeltes eigenes Feld tippt genauso frei — die Menge', () => {
+    const u = umfeldMit()
     lauf.tippe(2, '3')
     expect(lauf.wertVon(u, 2)).toBe('3')
 
@@ -120,7 +150,7 @@ describe('ErfassungsLauf', () => {
     expect(lauf.vorschlaege).toEqual([])
   })
 
-  it('sucht in Nummer UND Bezeichnung der eigenen Quelle', () => {
+  it('die gekoppelte Zelle sucht in Nummer UND Bezeichnung des Stamms', () => {
     const u = umfeldMit()
     lauf.tippe(0, 'bay')
     lauf.aktualisiereVorschlaege(u)
@@ -132,9 +162,11 @@ describe('ErfassungsLauf', () => {
     expect(lauf.vorschlaege.map((v) => v.wert)).toEqual(['ART00112'])
   })
 
-  it('die Uebernahme fuellt ALLE Spalten derselben Quelle', () => {
+  it('die Uebernahme fuellt ALLE Spalten, die in derselben Quelle waehlen', () => {
     waehle(0, 'bay')
     const u = umfeldMit()
+    // Die Artikel-Zelle traegt den Wert des PARTNER-Felds: das ist die
+    // Artikelnummer der werdenden Position.
     expect(lauf.wertVon(u, 0)).toBe('ART03045')
     expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
 
@@ -165,10 +197,12 @@ describe('ErfassungsLauf', () => {
     expect(lauf.vorschlaege.map((v) => v.wert)).toEqual(['Baytril 25mg'])
   })
 
-  it('eine verknuepfte Spalte bietet nur die passenden Saetze an', () => {
+  it('eine zweite Auswahl-Quelle bietet nur die passenden Saetze an', () => {
     waehle(0, 'bay')
 
     // Baytril ist ein Hunde-Artikel: die Katzen-Salbe steht nicht zur Wahl.
+    // Den Schluessel liefert der gewaehlte Artikel ueber sein zweites Paar
+    // (Tierart der werdenden Position).
     expect(lauf.eintraege(umfeldMit(), 3).map((e) => e.wert)).toEqual(['ORAL', 'INJ'])
   })
 
@@ -179,7 +213,7 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(u, 4)).toBe('Salbe')
   })
 
-  it('ohne gewaehlten Basissatz wird NICHT eingeschraenkt', () => {
+  it('ohne gewaehlten Satz wird NICHT eingeschraenkt', () => {
     const u = umfeldMit()
     expect(lauf.eintraege(u, 3).map((e) => e.wert)).toEqual(['ORAL', 'INJ', 'SALB'])
 
@@ -199,7 +233,7 @@ describe('ErfassungsLauf', () => {
     expect(lauf.eintraege(u, 3)).toEqual([])
   })
 
-  it('ein neuer Satz der Tabellen-Quelle bestimmt die verknuepften neu', () => {
+  it('ein neuer Artikel bestimmt die abhaengigen Quellen neu', () => {
     waehle(0, 'bay')
     // Zwei moegliche Gaben — der Bediener entscheidet.
     lauf.tippe(3, 'inj')
@@ -211,6 +245,26 @@ describe('ErfassungsLauf', () => {
     waehle(0, 'Verband')
     expect(lauf.wertVon(umfeldMit(), 3)).toBe('SALB')
     expect(lauf.wertVon(umfeldMit(), 4)).toBe('Salbe')
+  })
+
+  it('Umentscheiden: eine SPAETERE Wahl haelt den Artikel nicht fest', () => {
+    waehle(0, 'bay')
+    waehle(3, 'inj')
+    // Die Gabe wurde NACH dem Artikel gewaehlt und hing an ihm — beim
+    // Neu-Tippen im Artikel darf sie ihn nicht auf Hunde-Artikel
+    // einschraenken, sonst kaeme man aus der eigenen Wahl nie wieder heraus.
+    lauf.tippe(0, 'Verband')
+    lauf.aktualisiereVorschlaege(umfeldMit())
+    expect(lauf.vorschlaege.map((v) => v.wert)).toEqual(['ART00112'])
+  })
+
+  it('eine FRUEHERE Wahl filtert dagegen: erst die Gabe, dann der Artikel', () => {
+    waehle(3, 'inj')
+    // Injektion ist eine Hunde-Gabe: die Artikel-Spalte bietet danach nur
+    // noch Hunde-Artikel an — genau der gewollte Zeilen-Filter.
+    lauf.tippe(0, 'ART0')
+    lauf.aktualisiereVorschlaege(umfeldMit())
+    expect(lauf.vorschlaege.map((v) => v.wert)).toEqual(['ART03045'])
   })
 
   it('Tasten: Pfeile markieren, Enter uebernimmt, Escape ist zweistufig', () => {
@@ -240,15 +294,16 @@ describe('ErfassungsLauf', () => {
     expect(lauf.entscheideTaste(u, 0, 'Escape')).toBe('nichts')
   })
 
-  it('Enter in der LEEREN Zelle oeffnet das grosse Fenster, in der freien geht es weiter', () => {
+  it('Enter in der LEEREN Auswahl-Zelle oeffnet das grosse Fenster, sonst geht es weiter', () => {
     const u = umfeldMit()
     expect(lauf.entscheideTaste(u, 0, 'Enter')).toBe('fenster')
     expect(lauf.entscheideTaste(u, 3, 'Enter')).toBe('fenster')
 
-    // Die freie Zelle hat weder Liste noch Fenster — Enter springt weiter,
-    // alles andere ist Text.
+    // Menge (eigenes Feld ohne Kopplung) und Notiz (ungebunden) haben weder
+    // Liste noch Fenster — Enter springt weiter, alles andere ist Text.
     expect(lauf.entscheideTaste(u, 2, 'Enter')).toBe('weiter')
     expect(lauf.entscheideTaste(u, 2, 'ArrowDown')).toBe('nichts')
+    expect(lauf.entscheideTaste(u, 5, 'Enter')).toBe('weiter')
 
     // Getippt ohne Treffer haelt Enter absichtlich an: sonst rauscht der
     // Fluss ueber den Tippfehler hinweg.
@@ -300,17 +355,12 @@ describe('ErfassungsLauf', () => {
     // Verband (KATZ) hat genau eine Gabe: 3 und 4 fuellen sich selbst.
     waehle(0, 'Verband')
     expect(lauf.naechsteLeere(u, 0)).toBe(2)
-    expect(lauf.naechsteLeere(u, 2)).toBe(-1)
+    expect(lauf.naechsteLeere(u, 2)).toBe(5)
+    expect(lauf.naechsteLeere(u, 5)).toBe(-1)
   })
 
-  it('ohne Quelle oder ohne Feld bleibt die Liste still leer', () => {
+  it('eine unbekannte Quelle laesst die Liste still leer', () => {
     lauf.tippe(0, 'bay')
-
-    // Die Tabelle hat (noch) keine Quelle.
-    lauf.aktualisiereVorschlaege({ ...umfeldMit(), quelleId: '' })
-    expect(lauf.vorschlaege).toEqual([])
-
-    // Die gebundene Quelle steht nicht in der Maske.
     lauf.aktualisiereVorschlaege(umfeldMit([spalte({ feld: 'gibt-es-nicht::3_18' })]))
     expect(lauf.vorschlaege).toEqual([])
   })
@@ -326,113 +376,18 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(u, 2)).toBe('')
     expect(lauf.wertVon(u, 3)).toBe('')
   })
-})
 
-// Das Messlatten-Szenario aus dem Wellen-Kopf G (G3c): die Tabelle zeigt die
-// BELEGPOSITIONEN — beim Erfassen gibt es also nie einen gewaehlten Satz der
-// Tabellen-Quelle. Artikel und Tierart sind VERKNUEPFTE Quellen; ihre Paare
-// zeigen auf Felder der (werdenden) Position.
-describe('Messlatte: die Tabelle zeigt Belegpositionen (G3c)', () => {
-  const POS_SPALTEN = [
-    spalte({ titel: 'Artikel', feld: 'q-art::3_18' }),
-    spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40' }),
-    spalte({ titel: 'Tierart', feld: 'q-tier::2_10' }),
-    spalte({ titel: 'Menge', art: 'zahl' }),
-  ]
-
-  // Beide Quellen haengen am selben Positions-Feld 10_8 (Artikelnummer).
-  const POS_PAARE: Record<string, SchluesselPaar[]> = {
-    'q-art': [{ fromField: '10_8', toField: '3_18' }],
-    'q-tier': [{ fromField: '10_8', toField: '1_8' }],
-  }
-
-  const posUmfeld = (): ErfassungsUmfeld => ({
-    spalten: POS_SPALTEN,
-    quelleId: 'q-pos',
-    paareZu: (quelleId) => POS_PAARE[quelleId] ?? [],
-  })
-
-  let lauf: ErfassungsLauf
-
-  beforeEach(() => {
-    const g = seGlobal()
-    g.FF_DATA_SOURCES = [
-      { id: 'q-art', name: 'Artikel', tableId: 'ART', kind: 'art' },
-      { id: 'q-tier', name: 'Tierarten', tableId: 'IDBID0007', kind: 'idb' },
-    ]
-    g.SEDATA = {
-      Daten: {
-        SEFileLoop: [
-          {
-            ALIAS: 'Artikel',
-            Zeilen: [
-              { '3_18': 'ART03045', '30_40': 'Baytril 25mg' },
-              { '3_18': 'ART00778', '30_40': 'Felimazol 5mg' },
-            ],
-          },
-          {
-            ALIAS: 'Tierarten',
-            Zeilen: [
-              { '1_8': 'ART03045', '2_10': 'Hund' },
-              { '1_8': 'ART03045', '2_10': 'Katze' },
-              { '1_8': 'ART00778', '2_10': 'Katze' },
-            ],
-          },
-        ],
-      },
-    }
-    lauf = new ErfassungsLauf()
-  })
-
-  const waehleIn = (index: number, getippt: string): void => {
-    lauf.tippe(index, getippt)
-    lauf.aktualisiereVorschlaege(posUmfeld())
-    lauf.uebernimm(posUmfeld(), index, lauf.vorschlaege[0].satz)
-  }
-
-  it('ohne gewaehlten Positions-Satz schlaegt die Artikel-Spalte im ganzen Stamm nach', () => {
-    expect(lauf.eintraege(posUmfeld(), 0)).toHaveLength(2)
-  })
-
-  it('die Artikelwahl liefert den Schluessel der werdenden Zeile — Tierart schraenkt sich ein', () => {
-    const u = posUmfeld()
-    waehleIn(0, 'bay')
-    expect(lauf.wertVon(u, 0)).toBe('ART03045')
-    expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
-    // Zwei Tierarten passen — angeboten werden NUR sie, gefuellt wird nichts.
-    expect(lauf.eintraege(u, 2).map((e) => e.wert)).toEqual(['Hund', 'Katze'])
-    expect(lauf.wertVon(u, 2)).toBe('')
-  })
-
-  it('genau eine Tierart fuellt sich selbst', () => {
-    const u = posUmfeld()
-    waehleIn(0, 'fel')
-    expect(lauf.wertVon(u, 2)).toBe('Katze')
-    // Selbstgefuelltes ist nicht leer — der Sprung landet auf der Menge.
-    expect(lauf.naechsteLeere(u, 0)).toBe(3)
-  })
-
-  it('ein neuer Artikel bestimmt die Tierart neu', () => {
-    const u = posUmfeld()
-    waehleIn(0, 'fel')
-    expect(lauf.wertVon(u, 2)).toBe('Katze')
-    waehleIn(0, 'bay')
-    // Baytril hat zwei Tierarten: die alte Wahl faellt, gefuellt wird nichts.
-    expect(lauf.wertVon(u, 2)).toBe('')
-  })
-
-  it('Selbstgefuelltes schraenkt die Wahl nicht ein, aus der es kam', () => {
-    waehleIn(0, 'fel')
-    // Die selbstgefuellte Tierart liefert KEINE Schluessel — sonst zeigte die
-    // Artikel-Spalte beim Umentscheiden nur noch den alten Artikel (Kreis).
-    expect(lauf.eintraege(posUmfeld(), 0)).toHaveLength(2)
-  })
-
-  it('eine von Hand gewaehlte Tierart bestimmt den Artikel', () => {
-    const u = posUmfeld()
-    waehleIn(2, 'Hund')
-    // Nur Baytril kennt den Hund — genau EIN Treffer, er fuellt sich selbst.
-    expect(lauf.wertVon(u, 0)).toBe('ART03045')
-    expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
+  it('die erfasste Zeile traegt Getipptes UND Gekoppeltes — das liest der Knopf', () => {
+    const anschluss = new ErfassungsAnschluss()
+    const u = umfeldMit()
+    anschluss.lauf.tippe(0, 'bay')
+    anschluss.lauf.aktualisiereVorschlaege(u)
+    anschluss.lauf.uebernimm(u, 0, anschluss.lauf.vorschlaege[0].satz)
+    anschluss.lauf.tippe(2, '2')
+    expect(anschluss.erfasse(u)).toBe(true)
+    // Artikelnummer aus der Kopplung, Menge von Hand; die Gabe blieb offen
+    // (zwei Treffer), Notiz leer.
+    expect(anschluss.zeilen[0]).toEqual(['ART03045', 'Baytril 25mg', '2', '', '', ''])
   })
 })
+

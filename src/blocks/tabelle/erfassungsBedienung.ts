@@ -100,8 +100,7 @@ export function erfassungsZeileFuer(
 ): TemplateResult {
   const umfeld = wirt.umfeld()
   return erfassungsZeileTpl({
-    spalten: umfeld.spalten,
-    quelleId: umfeld.quelleId,
+    umfeld,
     cols,
     imEditor: wirt.baustein.hasAttribute('data-ff-editor'),
     wert: (i) => wirt.lauf.wertVon(umfeld, i),

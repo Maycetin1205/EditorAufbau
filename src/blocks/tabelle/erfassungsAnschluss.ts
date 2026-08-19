@@ -22,12 +22,7 @@ export class ErfassungsAnschluss {
   // Bindung jeder Spalte und der Verknuepfung des Bausteins (Attribut am
   // Element) — sie braucht keine eigene Einstellung.
   umfeld(el: HTMLElement, spalten: readonly Spalte[], quelleId: string): ErfassungsUmfeld {
-    const verknuepfungen = verknuepfungenVon(el)
-    return {
-      spalten,
-      quelleId,
-      paareZu: (id) => verknuepfungen.find((v) => v.quelleId === id)?.keyPairs ?? [],
-    }
+    return { spalten, quelleId, verknuepfungen: verknuepfungenVon(el) }
   }
 
   // Enter am Zeilenende: die Zeile bleibt stehen, die Erfassung beginnt leer

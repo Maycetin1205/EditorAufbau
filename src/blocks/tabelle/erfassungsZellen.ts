@@ -1,37 +1,45 @@
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
-import type { SchluesselPaar } from '../../core/data/sourceLinks'
+import {
+  vollstaendigePaare,
+  type BausteinQuelle,
+  type SchluesselPaar,
+} from '../../core/data/sourceLinks'
 import { getField } from '../../softengine/data'
 import { ART_TEXT } from './spaltenArten'
 import type { Spalte } from './spalten'
 
 // Was eine Zelle der Erfassungszeile tut, wird ABGELEITET — eingestellt wird
-// daran nichts (Nutzer-Entscheidung 2026-08-18). Zwei Angaben, die es beide
-// schon gibt, sagen alles: die Spalte ist am Kopf an ein Feld gebunden, und wo
-// zwei Quellen zusammengehören, steht das in der Verknüpfung des Bausteins
+// daran nichts (Nutzer-Entscheidung 2026-08-18, geschärft 2026-08-19: die
+// Spalte IST das Feld der werdenden Zeile). Zwei Angaben, die es beide schon
+// gibt, sagen alles: die Spalte ist am Kopf an ein Feld gebunden, und wo zwei
+// Quellen zusammengehören, steht das in der Verknüpfung des Bausteins
 // („Woran erkennt man die zusammengehörige Zeile?").
 //
-//   nichts gebunden                → frei tippen (die Menge)
-//   Feld der Tabellen-Quelle       → tippen, Vorschläge aus ihr
-//   Feld einer verknüpften Quelle  → nur die passenden Sätze
+//   nichts gebunden                     → frei tippen
+//   eigenes Feld ohne Schlüsselpaar     → frei tippen (die Menge — die
+//                                         Datenzeile zeigt dasselbe Feld)
+//   eigenes Feld in einem Schlüsselpaar → Auswahl aus der gekoppelten Quelle:
+//                                         die Artikelnummer der Position
+//                                         wählt im Artikelstamm
+//   Feld einer verknüpften Quelle       → Auswahl aus ihr, nur passende Sätze
 //
 // Dass die Ableitung reicht, zeigt die DATENzeile: sie liest ein verknüpftes
 // Feld längst von allein (seRuntime → macheFeldLeser in shared/fremdeQuellen).
-// Nur die Erfassungszeile wusste davon nichts.
-export type Zellenart = 'frei' | 'eigen' | 'verknuepft'
+export type Zellenart = 'frei' | 'eigen' | 'auswahl'
 
 export interface Zellenziel {
   art: Zellenart
 
-  // Die Quelle, aus der die Zelle ihren Wert nimmt. Leer bei „frei" — und
-  // solange die Tabelle selbst keine Quelle hat.
+  // Die Quelle, in der die Zelle WÄHLT. Nur bei „auswahl" gefüllt.
   quelleId: string
 
-  // Der reine Feldcode IN dieser Quelle.
+  // Bei „auswahl" der Feldcode IN dieser Quelle; bei „eigen" das eigene Feld
+  // der werdenden Zeile; leer bei „frei".
   code: string
 }
 
 // Was die Zeile über ihre Umgebung wissen muss. Als Bündel, weil damit
-// derselbe Lauf ohne Browser prüfbar ist: die Schlüsselpaare kommen im Produkt
+// derselbe Lauf ohne Browser prüfbar ist: die Verknüpfungen kommen im Produkt
 // vom Baustein-Attribut, im Test aus einer Zeile Testdaten.
 export interface ErfassungsUmfeld {
   spalten: readonly Spalte[]
@@ -39,54 +47,72 @@ export interface ErfassungsUmfeld {
   // Die EINE Quelle der Tabelle.
   quelleId: string
 
-  // Die Schlüsselpaare zu einer verknüpften Quelle. Leer = keine Verknüpfung
-  // eingestellt; dann wird nicht eingeschränkt.
-  paareZu: (quelleId: string) => readonly SchluesselPaar[]
+  // Die Verknüpfungen des Bausteins (weitereQuellen): je Partner-Quelle die
+  // Schlüsselpaare. Leer = keine Verknüpfung eingestellt.
+  verknuepfungen: readonly BausteinQuelle[]
+}
+
+export function paareZu(umfeld: ErfassungsUmfeld, quelleId: string): readonly SchluesselPaar[] {
+  return umfeld.verknuepfungen.find((v) => v.quelleId === quelleId)?.keyPairs ?? []
 }
 
 export function zellenzielVon(
   spalte: Spalte | undefined,
   tabellenQuelleId: string,
+  verknuepfungen: readonly BausteinQuelle[],
 ): Zellenziel {
   const feld = (spalte?.feld ?? '').trim()
   if (feld === '') return { art: 'frei', quelleId: '', code: '' }
   const { quelleId, code } = zerlegeBindung(feld)
-  if (quelleId === '') return { art: 'eigen', quelleId: tabellenQuelleId, code }
-  return { art: 'verknuepft', quelleId, code }
+  if (quelleId !== '' && quelleId !== tabellenQuelleId) {
+    return { art: 'auswahl', quelleId, code }
+  }
+  // Ein eigenes Feld, das in einem Schlüsselpaar steht, wählt in der
+  // gekoppelten Quelle: sein Wert IST deren Partner-Feld. Koppeln mehrere
+  // Verknüpfungen dasselbe Feld, zählt die zuerst eingestellte.
+  for (const v of verknuepfungen) {
+    if (v.quelleId === '' || v.quelleId === tabellenQuelleId) continue
+    for (const paar of vollstaendigePaare(v)) {
+      if (paar.fromField === code) {
+        return { art: 'auswahl', quelleId: v.quelleId, code: paar.toField }
+      }
+    }
+  }
+  return { art: 'eigen', quelleId: '', code }
 }
 
 export function zielIn(umfeld: ErfassungsUmfeld, index: number): Zellenziel {
-  return zellenzielVon(umfeld.spalten[index], umfeld.quelleId)
+  return zellenzielVon(umfeld.spalten[index], umfeld.quelleId, umfeld.verknuepfungen)
 }
 
-// Alle verknüpften Quellen dieser Zeile, jede einmal.
-export function verknuepfteQuellenIn(umfeld: ErfassungsUmfeld): string[] {
+// Alle Quellen, in denen diese Zeile wählt, jede einmal.
+export function auswahlQuellenIn(umfeld: ErfassungsUmfeld): string[] {
   const raus: string[] = []
-  for (const spalte of umfeld.spalten) {
-    const ziel = zellenzielVon(spalte, umfeld.quelleId)
-    if (ziel.art !== 'verknuepft' || ziel.quelleId === '') continue
+  for (let i = 0; i < umfeld.spalten.length; i++) {
+    const ziel = zielIn(umfeld, i)
+    if (ziel.art !== 'auswahl' || ziel.quelleId === '') continue
     if (!raus.includes(ziel.quelleId)) raus.push(ziel.quelleId)
   }
   return raus
 }
 
 // Was die Vorschlagsliste als Anzeige zeigt und mitdurchsucht: die erste
-// ANDERE Spalte DERSELBEN Quelle. Damit findet „bay" den Baytril, ohne dass
-// jemand ein zweites Feld einstellt — in einer Belegerfassung ist das die
-// Bezeichnung. Ohne solche Spalte bleibt es beim Wert selbst.
+// ANDERE Spalte, die in DERSELBEN Quelle wählt. Damit findet „bay" den
+// Baytril, ohne dass jemand ein zweites Feld einstellt — in einer
+// Belegerfassung ist das die Bezeichnung. Ohne solche Spalte bleibt es beim
+// Wert selbst.
 export function anzeigeSpalteIn(
   umfeld: ErfassungsUmfeld,
   index: number,
 ): { titel: string; code: string } | undefined {
   const ziel = zielIn(umfeld, index)
-  if (ziel.quelleId === '' || ziel.code === '') return undefined
+  if (ziel.art !== 'auswahl' || ziel.code === '') return undefined
   for (let i = 0; i < umfeld.spalten.length; i++) {
     if (i === index) continue
-    const spalte = umfeld.spalten[i]
-    const anderes = zellenzielVon(spalte, umfeld.quelleId)
-    if (anderes.quelleId !== ziel.quelleId) continue
+    const anderes = zielIn(umfeld, i)
+    if (anderes.art !== 'auswahl' || anderes.quelleId !== ziel.quelleId) continue
     if (anderes.code === '' || anderes.code === ziel.code) continue
-    return { titel: spalte.titel, code: anderes.code }
+    return { titel: umfeld.spalten[i].titel, code: anderes.code }
   }
   return undefined
 }
@@ -106,9 +132,8 @@ export function fensterSpaltenIn(umfeld: ErfassungsUmfeld, index: number): Spalt
 
 // Eingeschränkt wird nach demselben Muster wie die Auswahl-Folge
 // (zeilenNachAuswahl in blocks/shared/auswahl.ts): alle Schlüsselpaare müssen
-// stimmen (UND). Den Wert eines Schlüssels liefert der Aufrufer — am Satz der
-// Tabellen-Quelle, oder (G3c) abgeleitet aus den schon gewählten verknüpften
-// Sätzen, wenn es den Satz der Tabellen-Quelle beim Erfassen noch nicht gibt.
+// stimmen (UND). Den Wert eines Schlüssels liefert der Aufrufer — abgeleitet
+// aus den schon gewählten Sätzen der werdenden Zeile (G3c).
 // `undefined` heißt UNBEKANNT: ein unbekannter Schlüssel schränkt nicht ein,
 // der Bediener darf die Spalten in beliebiger Reihenfolge füllen. Ein leerer
 // String dagegen ist BEKANNT-LEER und trifft nichts — kein Partner heißt
