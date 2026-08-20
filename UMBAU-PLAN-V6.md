@@ -63,6 +63,13 @@ dann `go` (0.3), dann genau EINE Etappe.
      Erfassungszellen gibt es in dieser Maske nicht" ist weg — der Parameter
      nennt keine Tabelle mehr. Erfasst niemand die gelesene Quelle, laeuft die
      Kette EINMAL mit den Werten, die die Quelle sonst gibt.
+  6. **Nachtrag (Nutzer-Befund):** ein offenes Klappmenue ging nicht zu, wenn
+     man erneut auf seinen Ausloeser klickte — der Zeigerdruck schloss es, der
+     Klick oeffnete es im selben Atemzug neu. Geloest in der Huelle
+     (`ui/molecules/auswahl-fenster`): sie kennt ihren `ausloeser` und
+     schluckt nach einem Druck darauf genau EINEN Klick. Gilt damit ueberall
+     (Spaltenkopf, Daten-Fenster, Ketten-Formular, Feld-Waehler,
+     Feld-Uebernahme); Doppelklick bleibt heil.
   **Offen, je mit eigener Ansage:** **Etappe C** — „Schlank" ERSETZT den
   Kopfzeile-Schalter von G5b.
 - **Stand 2026-08-18:** Gesamtanalyse des ganzen Repos (zwei Lese-Trupps +
