@@ -45,6 +45,15 @@ export interface PickerFeld {
   onWaehle: (wert: string) => void
 }
 
+// Mehrere Felder EINER Quelle ankreuzen — was beim Suchen zu sehen ist.
+// Nichts angekreuzt = Automatik (der Baustein entscheidet).
+export interface PickerFelderWahl {
+  label: string
+  optionen: readonly { feld: string; titel: string }[]
+  gewaehlt: readonly string[]
+  onUmschalten: (feld: string, titel: string, an: boolean) => void
+}
+
 export interface PickerZuordnung {
   label: string
   wertLabel: string
@@ -68,6 +77,8 @@ interface FieldPickerProps {
 
   felder?: readonly PickerFeld[]
 
+  felderWahl?: PickerFelderWahl
+
   zuordnung?: PickerZuordnung
 
   current?: string
@@ -89,6 +100,7 @@ export function FieldPicker({
   wahl,
   quellenWahl,
   felder,
+  felderWahl,
   zuordnung,
   current,
   top,
@@ -123,7 +135,7 @@ export function FieldPicker({
       onClose={onClose}
       imBildHalten
       escapeAbfangen
-      className={zuordnung || quellenWahl || (felder && felder.length > 0)
+      className={zuordnung || quellenWahl || felderWahl || (felder && felder.length > 0)
         ? 'max-h-96 w-80'
         : 'max-h-80 w-64'}
     >
@@ -179,6 +191,41 @@ export function FieldPicker({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {felderWahl && felderWahl.optionen.length > 0 && (
+        <div className="mb-1 border-b border-border pb-1">
+          <p className="px-2 pb-1 pt-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {felderWahl.label}
+          </p>
+          <div className="flex flex-wrap gap-1 px-1">
+            {felderWahl.optionen.map((o) => {
+              const an = felderWahl.gewaehlt.includes(o.feld)
+              return (
+                <button
+                  key={o.feld}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    felderWahl.onUmschalten(o.feld, o.titel, !an)
+                  }}
+                  className={`rounded-sm border px-2 py-1 text-xs ${
+                    an
+                      ? 'border-primary bg-primary/10 font-semibold text-foreground'
+                      : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  }`}
+                >
+                  {o.titel}
+                </button>
+              )
+            })}
+          </div>
+          {felderWahl.gewaehlt.length === 0 && (
+            <p className="px-2 pt-1 text-[0.625rem] text-muted-foreground">
+              Nichts gewählt: die Liste zeigt automatisch den Wert und die Nachbarspalte.
+            </p>
+          )}
         </div>
       )}
 

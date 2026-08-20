@@ -142,10 +142,14 @@ describe('preflightMask', () => {
     expect(namen(tabelle([{ titel: 'Notiz', feld: 'tiere::128_350' }])))
       .toContain('Verbindung fehlt')
 
+    // Geaendert 2026-08-20: eine verknuepfte Quelle OHNE fertiges Feldpaar
+    // gilt nicht mehr als fehlende Verbindung — sie ist in Reichweite und man
+    // kann in ihr suchen, sie verbindet nur nichts (s. quelleBrauchbar).
+    // Gemeldet wird weiter, wenn die Quelle gar nicht am Baustein haengt.
     expect(namen(tabelle(
       [{ titel: 'Notiz', feld: 'tiere::128_350' }],
       [{ quelleId: 'tiere', keyPairs: [{ fromField: '10_8', toField: '' }] }],
-    ))).toContain('Verbindung fehlt')
+    ))).toEqual([])
 
     expect(namen(tabelle([{ titel: 'X', feld: 'gibtsnicht::1_2' }])))
       .toContain('Datenquelle unbekannt')

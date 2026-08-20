@@ -1,6 +1,6 @@
 import type { ListenBindung } from '../../core/blocks/BlockDefinition'
 import { STATUS_BEDEUTUNGEN } from '../shared/statusVariant'
-import { STANDARD_TITEL, SUCHT_IN_KEY } from './spalten'
+import { STANDARD_TITEL, SUCH_FELDER_KEY, SUCHT_IN_KEY } from './spalten'
 import {
   ART_STATUS,
   ART_TEXT,
@@ -13,6 +13,11 @@ export const SPALTEN_BINDUNG: ListenBindung = {
   titelKey: 'titel',
   feldKey: 'feld',
   standardTitel: STANDARD_TITEL,
+
+  // Unter „Feld" stehen nur die Felder der Tabellen-Quelle: eine Spalte ist
+  // ein Feld der Zeile, die entsteht. Was aus einer Hilfstabelle zu sehen sein
+  // soll, waehlt „Zeigt beim Suchen" (Nutzer-Ansage 2026-08-20).
+  nurEigeneQuelle: true,
 
   eintragsWahl: {
     key: 'art',
@@ -29,6 +34,14 @@ export const SPALTEN_BINDUNG: ListenBindung = {
     key: SUCHT_IN_KEY,
     label: 'Sucht beim Erfassen in',
     leerName: 'frei',
+    nurBeiErfassung: true,
+  },
+
+  // Was beim Suchen zu sehen ist — je Spalte gewaehlt, nicht abgeleitet.
+  eintragsFelderWahl: {
+    key: SUCH_FELDER_KEY,
+    label: 'Zeigt beim Suchen',
+    quelleAusKey: SUCHT_IN_KEY,
     nurBeiErfassung: true,
   },
 

@@ -4,6 +4,7 @@ import type { BlockNode } from '../../core/blocks/BlockData'
 import type { BlockDefinition, BlockEventSpec } from '../../core/blocks/BlockDefinition'
 import { propertySichtbar } from '../../core/blocks/PropertyDescription'
 import {
+  darfAuswahlFolgen,
   QUELLE_PROP,
   traegtEigeneQuelle,
   traegtInspectorZeilen,
@@ -47,27 +48,34 @@ export function BausteinZeilen({ block, def }: BausteinZeilenProps) {
   const events = def.blockEvents ?? []
   const schritteVon = (eventKey: string) => ed.tree[block.id]?.events?.[eventKey]?.length ?? 0
 
+  // Was die EINE Datenzeile sagt. Bis 2026-08-20 waren es zwei Knoepfe
+  // („Zeigt" und „Erfassen"), die BEIDE dasselbe Fenster oeffneten — zwei
+  // Wege zu einem Ziel, ohne Unterschied. Der Stand nennt jetzt der Reihe
+  // nach, was der Baustein an Daten hat; was er nicht hat, faellt weg statt
+  // als „0" oder „aus" dazustehen.
+  const datenStand = (): string => {
+    const teile: string[] = []
+    // Ein Baustein OHNE eigene Quelle (die Karte) zeigt die gewaehlte Zeile
+    // eines anderen — „keine Datenquelle" waere dort schlicht falsch.
+    if (hatQuelle) teile.push(quelleFehlt ? quelleId : (quelle?.name ?? '— keine Datenquelle —'))
+    else teile.push('folgt einer Auswahl')
+    if (def.kannErfassen !== undefined && erfassenAn) teile.push('Erfassen an')
+    if (verknuepfungen > 0) {
+      teile.push(`${verknuepfungen} ${verknuepfungen === 1 ? 'Verknüpfung' : 'Verknüpfungen'}`)
+    }
+    return teile.join(' · ')
+  }
+
   if (!traegtInspectorZeilen(block)) return null
 
   return (
     <div className="flex flex-col gap-1.5">
-      {hatQuelle && (
+      {(hatQuelle || darfAuswahlFolgen(block)) && (
         <ZeilenKnopf
-          name="Zeigt"
-          stand={quelleFehlt ? quelleId : (quelle?.name ?? '— keine Datenquelle —')}
+          name="Daten"
+          stand={datenStand()}
           standWarnung={quelleFehlt}
           bezeichnung="Daten dieses Bausteins"
-          onClick={() => setDatenOffen(true)}
-        />
-      )}
-
-      {hatQuelle && def.kannErfassen !== undefined && (
-        <ZeilenKnopf
-          name="Erfassen"
-          stand={`${erfassenAn ? 'an' : 'aus'} · ${verknuepfungen} ${
-            verknuepfungen === 1 ? 'Verknüpfung' : 'Verknüpfungen'
-          }`}
-          bezeichnung="Erfassen und Verknüpfungen"
           onClick={() => setDatenOffen(true)}
         />
       )}

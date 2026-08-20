@@ -91,9 +91,14 @@ export function Inspector() {
   const klarnameProps = new Set<string>(
     def.customProperties.map((p) => p.klarnameProp).filter((n): n is string => n !== undefined),
   )
+  // Der Erfassen-Schalter lebt seit 2026-08-20 im Daten-Fenster (Zone
+  // „Erfassen") — hier waere er ein zweites Mal dasselbe.
+  const erfassenAttribut = def.kannErfassen?.wenn?.attributeName
+
   const visibleProps = def.customProperties.filter((p) => {
     if (amBausteinGebunden.has(p.attributeName)) return false
     if (klarnameProps.has(p.attributeName)) return false
+    if (erfassenAttribut !== undefined && p.attributeName === erfassenAttribut) return false
 
     return propertySichtbar(p.visibleWhen, block.props)
   })

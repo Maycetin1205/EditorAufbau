@@ -10,12 +10,40 @@ export interface Spalte {
   // Spaltenkopf gewaehlt, nie abgeleitet (Nutzer 2026-08-19).
   suchtIn?: string
 
+  // Welche Felder der Such-Quelle beim Tippen und im Nachschlage-Fenster
+  // erscheinen. Leer = Automatik wie bisher (s. anzeigeSpalteIn).
+  // Der Klarname reist MIT: die Laufzeit kennt nur Feldcodes
+  // (RuntimeDataSource hat keine Feldliste), und im Fenster soll ein Name
+  // stehen, kein `51_60` (Regel 3).
+  suchFelder?: SuchFeld[]
+
   zuordnung?: Zuordnung[]
 
   felder?: Record<string, string>
 }
 
 export const SUCHT_IN_KEY = 'suchtIn'
+
+export interface SuchFeld {
+  feld: string
+  titel: string
+}
+
+export const SUCH_FELDER_KEY = 'suchFelder'
+
+function alsSuchFelder(v: unknown): SuchFeld[] {
+  if (!Array.isArray(v)) return []
+  return v
+    .map((x) => {
+      if (typeof x === 'string') return { feld: x.trim(), titel: x.trim() }
+      if (!x || typeof x !== 'object') return { feld: '', titel: '' }
+      const o = x as Record<string, unknown>
+      const feld = typeof o.feld === 'string' ? o.feld.trim() : ''
+      const titel = typeof o.titel === 'string' && o.titel.trim() !== '' ? o.titel.trim() : feld
+      return { feld, titel }
+    })
+    .filter((f) => f.feld !== '')
+}
 
 // Der Strich, den eine Zelle ohne Wert zeigt: der Editor erfindet nie Daten
 // (Regel 7). Eine Stelle, weil Datenzeile und Erfassungszeile denselben
@@ -66,6 +94,7 @@ function alsSpalte(x: unknown, index: number): Spalte {
     const zuordnung = alsZuordnung(o.zuordnung)
     const felder = alsFelder(o.felder)
     const suchtIn = typeof o.suchtIn === 'string' ? o.suchtIn.trim() : ''
+    const suchFelder = alsSuchFelder(o.suchFelder)
     return {
       titel: typeof o.titel === 'string' ? o.titel : standardTitelFuer(index),
       feld: typeof o.feld === 'string' ? o.feld : '',
@@ -74,6 +103,8 @@ function alsSpalte(x: unknown, index: number): Spalte {
       // Leer wird nicht gespeichert: „frei" ist die Abwesenheit der Wahl,
       // sonst traegt jede Spalte im Export ein leeres Feld mit.
       ...(suchtIn !== '' ? { suchtIn } : {}),
+
+      ...(suchFelder.length > 0 ? { suchFelder } : {}),
 
       ...(zuordnung.length > 0 ? { zuordnung } : {}),
 

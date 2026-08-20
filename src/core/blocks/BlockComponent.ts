@@ -46,7 +46,9 @@ export interface BlockComponentStatic {
   readonly acceptsDataSource?: QuellenFaehigkeit
 
   readonly satzWahl?: SatzWahl
-  readonly kannAuswahlFolgen?: boolean
+  // Ausnahme statt Erlaubnis: nur Bausteine OHNE Datenbezug (Navi,
+  // Trennlinie) setzen das. Alle anderen duerfen einer Auswahl folgen.
+  readonly ohneDaten?: boolean
 
   readonly kannErfassen?: ErfassungsFaehigkeit
 

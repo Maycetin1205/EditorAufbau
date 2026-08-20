@@ -59,16 +59,32 @@ describe('quellenAufloesen', () => {
     expect(quellenAufloesen('', [weitere()], bibliothek)).toEqual([])
   })
 
-  it('laesst Halbfertiges aus, statt damit zu verbinden', () => {
+  // Geaendert 2026-08-20 (Nutzer-Ansage „wenn Datenquelle 2 keine Verknuepfung
+  // braucht, muss ich auch nichts eingeben"): eine Quelle OHNE vollstaendiges
+  // Feldpaar ist jetzt in Reichweite — man kann in ihr suchen. Nur verbinden
+  // kann sie nichts: `paare` bleibt leer, die Partner-Suche findet nichts,
+  // die Anzeige bleibt leer. Vorher fiel die ganze Quelle weg.
+  it('nimmt eine Quelle ohne fertiges Feldpaar auf — aber ohne Paare', () => {
     const halb = weitere({ keyPairs: [{ fromField: '10_8', toField: '' }] })
-    expect(quellenAufloesen('terminplaner', [halb], bibliothek).map((q) => q.source.id))
-      .toEqual(['terminplaner'])
+    const raus = quellenAufloesen('terminplaner', [halb], bibliothek)
+    expect(raus.map((q) => q.source.id)).toEqual(['terminplaner', 'kundenhaustiere'])
+    expect(raus[1].paare).toEqual([])
   })
 
   it('laesst eine geloeschte Quelle aus (der Preflight meldet sie)', () => {
     const weg = weitere({ quelleId: 'gibtsnicht' })
     expect(quellenAufloesen('terminplaner', [weg], bibliothek).map((q) => q.source.id))
       .toEqual(['terminplaner'])
+  })
+
+  // 2026-08-20: eine Verknuepfung, deren „Haengt an" ins Leere zeigt
+  // (geloescht, umbenannt, im Ring), faellt auf die EIGENE Quelle des
+  // Bausteins zurueck statt zu verschwinden. Vorher blieb im Feld-Waehler
+  // nur die eigene Quelle stehen, ohne jeden Hinweis.
+  it('haengt an einer Quelle, die es nicht gibt — faellt auf die eigene zurueck', () => {
+    const q = weitere({ quelleId: 'kundenhaustiere', vonQuelleId: 'gibtsnicht' })
+    expect(quellenAufloesen('terminplaner', [q], bibliothek).map((x) => x.source.id))
+      .toEqual(['terminplaner', 'kundenhaustiere'])
   })
 
   it('nimmt dieselbe Quelle nur EINMAL — auch nicht als Kopie der ersten', () => {

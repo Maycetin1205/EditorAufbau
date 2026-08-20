@@ -74,7 +74,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
         ...RASTER_DEFAULTS,
         ...(BlockClass.acceptsDataSource ? QUELLEN_DEFAULTS : null),
 
-        ...(BlockClass.kannAuswahlFolgen ? AUSWAHL_FOLGE_DEFAULTS : null),
+        ...(BlockClass.ohneDaten ? null : AUSWAHL_FOLGE_DEFAULTS),
         ...BlockClass.defaultProps,
       },
       customProperties: BlockClass.customProperties,
@@ -92,7 +92,7 @@ export abstract class BasicBlock extends LitElement implements BlockComponent {
       addChildButton: BlockClass.addChildButton,
       acceptsDataSource: BlockClass.acceptsDataSource,
       satzWahl: BlockClass.satzWahl,
-      kannAuswahlFolgen: BlockClass.kannAuswahlFolgen,
+      ohneDaten: BlockClass.ohneDaten,
       kannErfassen: BlockClass.kannErfassen,
       bindableSpots: BlockClass.bindableSpots,
       actionValueSpots: BlockClass.actionValueSpots,

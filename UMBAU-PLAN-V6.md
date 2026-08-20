@@ -21,6 +21,16 @@ dann `go` (0.3), dann genau EINE Etappe.
 
 <!-- Nach JEDER fertigen Etappe aktualisieren. Zeiger, keine Chronik. -->
 
+- **Stand 2026-08-20: ZUERST Welle S lesen (ganz unten in dieser Datei).**
+  Der Nutzer baut eine Belegpositions-Erfassungsmaske; zwei echte
+  SoftEngine-Debug-Logs sind ausgewertet.
+  **S1.8 ist GEBAUT (Verknuepfungen ueber mehrere Stufen):** `vonQuelleId` an
+  `BausteinQuelle` — eine Verknuepfung darf an einer ANDEREN verknuepften
+  Quelle haengen statt an der eigenen. Damit haengt die Tierart am
+  Artikelstamm. Die Zusage „nur EINE Stufe" (2026-07-25) ist damit aufgehoben.
+  Naechste Etappe ist **S2.0** (Doppel-Lieferung abstellen).
+  Alles darunter ist aelterer Stand.
+
 - **Stand 2026-08-19: Tabelle — Erfassung als Option, EIN Bedienmuster.**
   Der Nutzer hat die A2-Bedienoberflaeche ABGELEHNT (Inspector mit
   Klartext-Zeilen vollgepackt, Feld-Waehler mit Zusaetzen, weitere Quellen als
@@ -1340,3 +1350,157 @@ Begruendungen in voller Laenge: git-Historie (Plan-Fassung vor dem
   Ketten — Nutzer-Ansage 2026-08-18 „muss nicht sein", bevor gebaut
   wurde. Kommt nur wieder, wenn der Nutzer selbst danach fragt; Skizze
   in der git-Historie dieser Datei.
+
+---
+
+## Welle S — Belegerfassung: Tempo, Erfassung, Optik (aufgenommen 2026-08-20)
+
+**Anlass:** Nutzer baut eine Belegpositions-Erfassungsmaske. Zwei Debug-Logs
+seiner echten SoftEngine-Installation liegen vor (`Desktop\debug.txt` = unsere
+Maske, 36 009 Zeilen / 21,6 s zum Oeffnen; `Desktop\softenginedebug.txt` = die
+native SE-Maske, 2 236 Zeilen / 3,1 s). Dazu die echten SE-Masken in
+`Desktop\Belegerfassung\LAYOUTRAHMEN` + `INTERNEOPTIONSMASKEN`.
+
+### S.0 Befunde aus den Logs (gemessen, nicht vermutet)
+
+1. **11 906 von 36 009 Zeilen sind `GET_RELATION[1911]`** (Bild zum Artikel).
+   Wir rufen 1911 NIRGENDS auf (kein Treffer in `src/`) — SoftEngine macht das
+   von selbst fuer jeden gelieferten Wert eines 25-Zeichen-Feldes.
+   5 953 verschiedene Werte: 5 166 `ART0…`, 621 `LST…`, 154 `SB…`.
+   Treiber sind unsere Feldlisten: `ART 1_25`, `CHA 1_25`+`26_25`,
+   `IDBID0001 110_25`, `IDBID0010 55_25`.
+2. **Alles wird ZWEIMAL geliefert.** Die 1911-Aufrufe kommen in zwei sauberen
+   Wellen: 09:02:47–09:02:55 (~5 953) und nach 3 s Pause 09:02:58–09:03:06
+   (~5 953), identische Werte. Das ist die HAELFTE der Ladezeit ohne
+   Gegenwert. Hauptverdacht: die seit 2026-07-28 notierte Beobachtung
+   „CONECT wird ZWEIMAL gesendet" (CLAUDE.md, Regel 5) — doppelte Anmeldung,
+   also baut SoftEngine den Datensatz zweimal. NICHT bewiesen, zuerst messen.
+3. **Unsere Bestellung: 6x `SEFILELOOP` mit `INDEX_NR: 0`** = sechs komplette
+   Dateien (BEL, IDBID0001, ART, ADR, IDBID0010, CHA).
+   **SoftEngines eigene Bestellung: EIN `SEFILELOOP`** (`POS` mit
+   `KOPFSATZ_INDEX: BEL_0_11`), alles andere ueber `VAR` (Felder des
+   aktuellen Satzes), `GET_RELATION` mit `ALIAS`, `REFRESH`, `MASKE`.
+   **Wichtig (Nutzer-Klarstellung 2026-08-20):** ihre Maske ist NICHT der
+   Massstab — sie zeigt nur Belegpositionen, hat KEINE Hilfstabellen, und
+   nachgeschlagen wird dort im nativen SE-Fenster (`SendBWTool`), an das wir
+   nicht rankommen. Ihre 3 Sekunden sind mit gleicher Funktion nicht
+   erreichbar. Uebernommen wird nur, was auch bei uns Funktion behaelt.
+4. **Neue SE-Kontrakte, in den Referenzmasken belegt** (noch nicht gebaut):
+   - `REFRESH`-Block: `{ID, ALIAS, PK: "BEL_197_8", PKLEN, TRENNER: " : ",
+     FORMAT}` — SoftEngine loest einen Schluessel zu `Nummer : Klarname` auf,
+     OHNE dass eine Zeile geliefert wird. Der billige Weg fuer Anzeige und
+     fuer den Einziger-Treffer-Fall.
+   - `MASKE`-Block + `selib.Json.AddJSONDataToModule(id, {json, maskedit:"true"})`:
+     SE liefert eine interne Optionsmaske als JSON und rendert sie selbst
+     editierbar, mit Speichern-Knopf. Installations-intern (`1211S5OPT44`),
+     fuer uns NICHT nachbaubar. Nur als Wissen notiert.
+   - `WINDOW_VARIABLE` als VAR-ID: fertige Anzeigetexte der laufenden Maske
+     (`BELERF_26300_100`).
+   - `GET_RELATION[01!<ADRNR>!<pos>!<len>]` liest EIN Adressfeld eines
+     EINZELNEN Satzes. Das Gegenstueck fuer ART ist unbekannt — **nicht
+     raten**, Echttest des Nutzers noetig.
+   - SE Framework V2 ist Lit (minifiziertes Bundle in `Rahmen10001`). Keine
+     Technik-Kollision mit unseren Bausteinen.
+   - Im Log der nativen Belegerfassung steht **kein einziges `PUT_RELATION`** —
+     SE schreibt intern. Von SE ist kein Schreibweg abzuschauen; unser
+     `PUT_RELATION 82` je Zeile bleibt der einzige belegte Weg.
+
+### S.1 Was der Nutzer HEUTE schon kann (nur nicht findet)
+
+Kein Bau noetig, aber der Grund fuer vier verlorene Tage — deshalb hier
+festgehalten:
+
+- **Welches Feld eine Spalte zeigt:** Tabelle auswaehlen, dann EINFACHER Klick
+  auf den Spaltenkopf → Feld-Waehler (`TabelleBlock.ts:466` → `oeffneFeldPicker`
+  → Event `ff-listen-bind` → `editor/canvas/FeldBindung.tsx:151`).
+  DOPPELKLICK auf denselben Kopf benennt dagegen um (`TabelleBlock.ts:460`).
+  Der Waehler wartet 220 ms (`DOPPELKLICK_FENSTER`), bevor er aufgeht.
+- **Ohne Kopfzeile** traegt die Erfassungszelle denselben Griff
+  (`TabelleBlock.ts:449`).
+- **Hilfstabelle je Spalte:** im selben Waehler „Sucht beim Erfassen in"
+  (`spaltenBindung.ts:29`) — sichtbar NUR bei eingeschalteter Erfassung
+  (`nurBeiErfassung: true`).
+- **Warum eine Spalte auf eine FREMDE Quelle leer bleibt** (Nutzer-Fall
+  „Tierart"): die Optionen von „Sucht beim Erfassen in" sind die
+  **Verknuepfungen des Bausteins**. Ohne vollstaendiges Schluesselpaar
+  (`vollstaendigePaare`, `benutzteQuellen.ts`) taucht die Quelle dort gar
+  nicht auf und die Spalte bleibt leer.
+
+**Daraus die Bau-Lehre:** das ist kein fehlendes Feature, sondern eine
+unauffindbare Bedienung. S2.1 macht sie sichtbar.
+
+### S.2 Etappen — in dieser Reihenfolge
+
+**S2.0 — Doppel-Lieferung abstellen.** Zuerst MESSEN (wo wird die Anmeldung
+zweimal ausgeloest — `src/softengine/bridge`), dann genau einmal anmelden.
+Erwartung: 36 009 → ~18 000 Zeilen, 21,6 → ~11 s. Keine Funktionsaenderung.
+Sichtbar: neuer Debug des Nutzers, eine Welle statt zwei.
+
+**S2.1 — Die Spalten-Einstellung auffindbar machen.** Der Spaltenkopf muss im
+Editor ansehen lassen, dass er anfassbar ist, und der Waehler muss zeigen,
+WELCHE Quelle er gerade anbietet. Dazu: wenn eine Spalte ein Feld einer
+fremden Quelle traegt, aber keine Verknuepfung dafuer existiert, sagt der
+Waehler das in Klartext (keine Warn-Anzeige an der Maske — Sperrliste gilt;
+das hier ist der EDITOR).
+
+**S2.2 — Lieferform je Quelle** (neue Eigenschaft in `core/data/quellenArten.ts`,
+Regel 2): `satz` → `VAR` · `zeilen` → `SEFILELOOP` · `nachschlagen`.
+BEL/ADR einer Belegmaske sind `satz`. Erwartung: zwei Datei-Schleifen weg.
+
+**S2.3 — Strenger schneiden** (`export/benutzteQuellen.ts`): nur liefern, was
+eine sichtbare Spalte oder Bindung wirklich braucht. Und: **kein 25-Zeichen-
+Feld in einer Liefer-Liste, wo es nicht sein muss** — jeder solche Wert kostet
+einen Bild-Nachschlag je Zeile (S.0/1).
+
+**S2.4 — Belegpositionen mit `KOPFSATZ_INDEX`** statt Vollast. `kopfsatzIndex`
+existiert bereits (`export/datenquellen.test.ts:132`).
+
+**S2.5 — F5: Doppelbuchung.** `seAktionen.ts:210` leert die Erfassung erst,
+wenn ALLE Zeilen durch sind. Bricht Zeile 3 ab, sind Zeile 1+2 in SoftEngine
+geschrieben, stehen aber weiter in der Liste — der naechste Kettenlauf schreibt
+sie ein zweites Mal. **Der einzige echte Datenfehler.** Soll: jede Zeile faellt
+raus, sobald IHR eigener Durchlauf sauber war. Der Kommentar dort behauptet das
+Gegenteil und muss mit.
+
+**S2.6 — F2: Tipp-Zustand je Zeile.** `ErfassungsLauf` haelt heute genau EINE
+Zeile (`getippt`/`gewaehlt`/`tippSpalte`/`marke`). Traegt S2.7 und S2.8.
+
+**S2.7 — F1/F4: erfasste Zeile wieder anfassen und einzeln loeschen.**
+Heute schiebt `erfasse()` die Zeile nach `_zeilen` und sie ist tot; der einzige
+Ausweg `leeren()` wirft ALLE weg (`erfassungsAnschluss.ts:83`).
+
+**S2.8 — F3: Navigation.** `naechsteLeere` sucht nur rechts und nur Leeres;
+Shift+Tab ist an den Browser abgegeben (`erfassungsBedienung.ts:79`), Pfeile
+fehlen ganz. Soll: Pfeile/Tab erreichen JEDE Zelle auch ueber Zeilengrenzen,
+Enter ueberspringt Gefuelltes (Komfort, nie Sperre).
+
+**S2.9 — PUT_RELATION 82 je Zeile.** Laeuft bereits einmal je erfasster Zeile
+(`seAktionen.ts:205`, `for (const satz of saetze)`), muss nur mit S2.5
+zusammenpassen. Kontrakt aus dem behandlung-Log, s. CLAUDE.md.
+
+**S2.10 — Nachschlagen ohne Vollast.** `REFRESH` fuer „Nummer → Klarname";
+Einzel-Lese-Relation fuer ART macht ART zur *holenden* Quelle (Konzept
+existiert: `export/datenquellen.test.ts:123`, heute nur Belegpositionen ueber
+Relation 69). **Blockiert:** Relationsnummer fuer ART fehlt, Echttest noetig.
+Ohne Such-Relation bleibt fuer die Vorschlagsliste ein einmaliges Laden — dann
+aber nur fuer echte Hilfstabellen und nur EINMAL (S2.0).
+
+**S2.11 — Optik.** SoftEngine gibt eigene CSS-Variablen mit (`--SERahmen2`,
+`--SESchrift`, benutzt in `INTERNEOPTIONSMASKEN/PGBED1`). Unsere Tokens
+bekommen sie als Quelle mit unserem Wert als Rueckfall
+(`--se-flaeche: var(--SERahmen2, <unser Wert>)`) — in SoftEngine sieht die
+Maske aus wie die Installation, im Editor wie bisher. Das Framework-CSS selbst
+liegt auf dem Server (`SeHtmlFrameworkV2_Files`) und ist NICHT abzumalen:
+Zeilenhoehe, Gitterlinien, Kopfzeile, markierte Zeile, aktive Zelle kommen aus
+einem Screenshot des Nutzers. **Nichts davon erfinden** (Memory:
+„Optik: Vorbild statt Beschreibung").
+Was BESSER wird als SE, entschieden 2026-08-20: aktive Zelle immer sichtbar
+umrandet · Spaltenbreite nach Art (springt beim Blaettern nicht) · gefuellte
+Zellen sehen anders aus als zu tippende · keine Bilder in der
+Erfassungstabelle (jedes Bild = ein `GET_RELATION 1911`).
+
+### S.3 Was blockiert ist
+
+- **S2.10** wartet auf die ART-Einzel-Lese-Relationsnummer (Echttest Nutzer).
+- **S2.11** wartet auf einen Screenshot der SE-Belegpositionen-Tabelle.
+- Beide blockieren S2.0–S2.9 NICHT.

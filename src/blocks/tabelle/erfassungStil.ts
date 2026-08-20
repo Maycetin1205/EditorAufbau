@@ -7,7 +7,7 @@ export const erfassungStil = css`
       .zeile.erfassung {
         flex: none;
         background: var(--se-panel-2);
-        border-top: var(--se-border) solid var(--se-line);
+        border-bottom: var(--se-border) solid var(--se-line);
       }
 
       /* Die Liste haengt aus der Zelle heraus; ohne sichtbaren Ueberlauf

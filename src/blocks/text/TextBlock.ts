@@ -54,7 +54,6 @@ export class TextBlock extends BasicBlock {
   static readonly category: BlockCategory = 'anzeige'
   static readonly acceptsDataSource = true
 
-  static readonly kannAuswahlFolgen = true
 
   static readonly bindableSpots: BindableSpotsFor<typeof TextBlock.defaultProps> = [
     { prop: 'text', label: 'Text' },

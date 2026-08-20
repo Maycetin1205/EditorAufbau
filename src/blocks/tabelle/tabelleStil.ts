@@ -103,6 +103,15 @@ export const tabelleStil = css`
         transition: background-color var(--se-move);
       }
 
+      /* Eine Zeile ohne Satz traegt KEINEN Grund — sie sieht aus wie das
+         Lineal darunter, nur mit Strichen in den Zellen. So macht es
+         SoftEngine auch: leere Zeilen heben sich nicht wie volle ab
+         (Nutzer-Ansage 2026-08-20). */
+      .zeile.ohne-satz,
+      .koerper > .zeile.ohne-satz:hover {
+        background: transparent;
+      }
+
       .koerper > .zeile:hover {
         background: var(--se-bg);
       }
@@ -197,16 +206,24 @@ export const tabelleStil = css`
         line-height: 1.35;
       }
 
-      /* Schlank (G5, Nutzer-Entscheidung): kein Tafel-Rahmen, engere
-         Polster — die Tabelle liegt buendig auf der Maske. */
-      .tabelle.schlank {
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-      }
+      /* Schlank: keine Kopfzeile und engere Polster — mehr nicht. Der
+         Tafel-Rahmen BLEIBT (Nutzer-Ansage 2026-08-20): ohne ihn franste die
+         Tabelle auf der Maske aus. Bis dahin nahm schlank hier auch
+         border: 0 und background: transparent. */
       .tabelle.schlank .kopf > div,
       .tabelle.schlank .zeile > div { padding: 0 6px; }
       .tabelle.schlank .suchzeile { padding: 4px 6px; }
+
+      /* Der Spaltenname, wo es keine Kopfzeile gibt: in der ersten Zeile des
+         Editors und in der leeren Erfassungszelle. Dieselbe Farbe wie der
+         Platzhalter der Eingabe, damit im Editor dasselbe zu lesen ist wie
+         spaeter in der Maske. */
+      .spalten-name {
+        color: var(--se-faint);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
       .fusszeile {
         display: flex;

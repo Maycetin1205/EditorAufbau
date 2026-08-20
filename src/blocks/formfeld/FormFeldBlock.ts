@@ -20,7 +20,6 @@ import {
 import { FELD_EIGENSCHAFTEN } from './feldEigenschaften'
 import {
   connectField,
-  dateValueToInput,
   disconnectField,
   inputValueToDate,
 } from './feldRuntime'
@@ -48,6 +47,8 @@ import {
   spaltenStellenTpl,
 } from './nachschlagen'
 import type { Spalte } from '../tabelle/spalten'
+import { ankreuzfeldTpl, hakenWert, istAngehakt } from './ankreuzfeld'
+import { auswahlListeTpl, eingabeFeldTpl, mehrzeilerTpl } from './auswahlliste'
 
 export class FormFeldBlock extends BasicBlock {
   static readonly blockType = 'formfeld'
@@ -59,7 +60,6 @@ export class FormFeldBlock extends BasicBlock {
     wenn: { attributeName: 'fieldType', notEquals: 'nachschlagen' },
   }
 
-  static readonly kannAuswahlFolgen = true
 
   static readonly satzWahl: SatzWahl = {
     quelleProp: 'nachschlagQuelle',
@@ -72,7 +72,12 @@ export class FormFeldBlock extends BasicBlock {
     {
       prop: 'value',
       label: 'Wert',
-      wenn: { attributeName: 'fieldType', keinesVon: ['checkbox', 'nachschlagen'] satisfies readonly FeldTyp[] },
+      // Das Ankreuzfeld ist seit 2026-08-20 bindbar: der SE-Wert-Kontrakt ist
+      // belegt (Format `AJN`, 1 Zeichen, Werte `J`/`N` — 21 Vorkommen in der
+      // echten SE-Datei DatasetServer.xml des Nutzers). Damit faellt die
+      // Sperre aus CLAUDE.md. `nachschlagen` bleibt aussen vor: sein Wert
+      // entsteht durch das Waehlen, eine Bindung waere die zweite Wahrheit.
+      wenn: { attributeName: 'fieldType', keinesVon: ['nachschlagen'] satisfies readonly FeldTyp[] },
 
       vorschauProp: 'placeholder',
     },
@@ -150,8 +155,6 @@ export class FormFeldBlock extends BasicBlock {
 
   private satz: unknown = undefined
 
-  @state() private angehakt = false
-
   @state() private imSteuerelement = false
 
   private onInput(e: Event): void {
@@ -180,27 +183,30 @@ export class FormFeldBlock extends BasicBlock {
     this.setzeHaken(!this.angehakt)
   }
 
+  // Der Haken IST der Wert — kein zweiter Stand daneben, sonst waere er weder
+  // bindbar noch schreibbar (Uebersetzung: blocks/formfeld/ankreuzfeld.ts).
+  private get angehakt(): boolean {
+    return istAngehakt(this.value)
+  }
+
   private setzeHaken(an: boolean): void {
-    if (this.angehakt === an) return
-    this.angehakt = an
+    const neu = hakenWert(an)
+    if (this.value === neu) return
+    this.value = neu
     this.dispatchEvent(new Event('change'))
   }
 
   private controlTpl(typ: FeldTyp): TemplateResult {
     switch (typ) {
       case 'textarea':
-        return html`<textarea class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onChange}></textarea>`
-      case 'select': {
-        const eintraege = this.options.split(',').map((o) => o.trim()).filter((o) => o !== '')
-        const fremdwert = this.value !== '' && !eintraege.includes(this.value)
-        return html`<select class="ctrl" .value=${this.value} @input=${this.onInput} @change=${this.onChange}>
-          <option value="" disabled hidden></option>
-          ${fremdwert ? html`<option value=${this.value} hidden>${this.value}</option>` : nothing}
-          ${eintraege.length === 0
-            ? html`<option disabled>(keine Optionen)</option>`
-            : eintraege.map((o) => html`<option value=${o}>${o}</option>`)}
-        </select>`
-      }
+        return mehrzeilerTpl({ wert: this.value, onInput: this.onInput, onChange: this.onChange })
+      case 'select':
+        return auswahlListeTpl({
+          wert: this.value,
+          optionen: this.options,
+          onInput: this.onInput,
+          onChange: this.onChange,
+        })
       case 'nachschlagen':
 
         return nachschlagFeldTpl({
@@ -221,16 +227,13 @@ export class FormFeldBlock extends BasicBlock {
           }),
         })
       default:
-
-        return html`<input
-          class="ctrl"
-          type=${typ}
-          .value=${typ === 'date' ? dateValueToInput(this.value) : this.value}
-          @input=${this.onInput}
-          @change=${this.onChange}
-          @focus=${() => { this.imSteuerelement = true }}
-          @blur=${() => { this.imSteuerelement = false }}
-        />`
+        return eingabeFeldTpl({
+          typ,
+          wert: this.value,
+          onInput: this.onInput,
+          onChange: this.onChange,
+          onFokus: (drin) => { this.imSteuerelement = drin },
+        })
     }
   }
 
@@ -446,17 +449,12 @@ export class FormFeldBlock extends BasicBlock {
   override render(): TemplateResult {
     const typ = coerceFeldTyp(this.fieldType)
     if (typ === 'checkbox') {
-      return html`<div class="feld">
-        <div class="zeile">
-          <input
-            class="ctrl"
-            type="checkbox"
-            .checked=${this.angehakt}
-            @change=${(e: Event) => this.setzeHaken((e.target as HTMLInputElement).checked)}
-          />
-          ${this.textTpl('text')}
-        </div>
-      </div>`
+      return ankreuzfeldTpl({
+        angehakt: this.angehakt,
+        gebunden: this.valueField !== '',
+        onAendern: (an) => this.setzeHaken(an),
+        text: this.textTpl('text'),
+      })
     }
 
     const wertBindbar = typ !== 'nachschlagen'

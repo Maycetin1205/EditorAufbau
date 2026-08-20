@@ -12,6 +12,7 @@ import { useDataSources } from '../../state/useDataSources'
 import { useEditor } from '../../state/useEditor'
 import { KettenFenster } from '../zentrale/KettenFenster'
 import { AuswahlFolgeSektion } from './AuswahlFolgeSektion'
+import { PropControl } from './PropControl'
 import { VerknuepfungenZone } from './VerknuepfungenZone'
 
 function Zone({ name, children }: { name: string; children: ReactNode }) {
@@ -43,6 +44,18 @@ export function DatenFenster({ block, onClose }: { block: BlockNode; onClose: ()
   const fehlt = quelleId !== '' && !bibliothek.some((s) => s.id === quelleId)
 
   const leser = lesendeKetten(ed.tree, block.id)
+
+  // Die Erfassen-Zone zeigt GENAU die Eigenschaft, an der die Registry das
+  // Erfassen festmacht (`kannErfassen.wenn`) — kein Bausteintyp im Code
+  // (Regel 2). Heute hat nur die Tabelle diese Faehigkeit, also gibt es die
+  // Zone auch nur dort. Bis 2026-08-20 stand der Schalter in der allgemeinen
+  // Eigenschaftsliste, waehrend die Inspector-Zeile „Erfassen" auf dieses
+  // Fenster zeigte — der Schalter war also nie da, wo er angekuendigt wurde.
+  const erfassenAttribut = getBlockDefinition(block.type)?.kannErfassen?.wenn?.attributeName
+  const erfassenEigenschaft = erfassenAttribut === undefined
+    ? undefined
+    : getBlockDefinition(block.type)?.customProperties
+      .find((p) => p.attributeName === erfassenAttribut)
 
   const sprungBlock = sprung ? ed.tree[sprung.blockId] : undefined
   const sprungEvent = sprungBlock && sprung
@@ -87,6 +100,20 @@ export function DatenFenster({ block, onClose }: { block: BlockNode; onClose: ()
           <Zone name="Verknüpfungen">
             <VerknuepfungenZone block={block} />
           </Zone>
+
+          {erfassenEigenschaft && (
+            <Zone name="Erfassen">
+              <PropControl
+                block={block}
+                property={erfassenEigenschaft}
+                sourceInReach={ed.dataSourceFor(block.id)}
+                sitzung={{
+                  onBeginBearbeitung: () => ed.beginTransaction(),
+                  onEndeBearbeitung: () => ed.endTransaction(),
+                }}
+              />
+            </Zone>
+          )}
 
           <Zone name="Schreibt über">
             {leser.length === 0 && (

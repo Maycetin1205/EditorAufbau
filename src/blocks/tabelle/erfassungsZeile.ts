@@ -5,7 +5,7 @@ import { spaltenArt } from './spaltenArten'
 import { zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import { ZELLE_PLATZHALTER } from './spalten'
 
-// Die LETZTE Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und kein
+// Die ERSTE Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und kein
 // eigener Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle ohne
 // sie exportiert wie zuvor. Was eine Zelle tut, steht an ihrer Spalte (Feld +
 // „Sucht beim Erfassen in") — an der Zeile selbst wird nichts eingestellt.
@@ -102,12 +102,18 @@ export function erfassungsZeileTpl(
       // der Editor erfindet nie Daten (Regel 7).
       if (lage.imEditor) {
         const griff = lage.zellenGriff
+        // Hat die Zelle den Kopf-Griff, gibt es KEINE Kopfzeile — dann traegt
+        // sie auch deren Namen, blass, wie der Platzhalter, den der Bediener
+        // spaeter an dieser Stelle sieht. Sonst stuende im Editor eine Tabelle
+        // ganz ohne Beschriftung (Nutzer-Befund 2026-08-20).
         return html`<div
           class=${klasse}
           role="cell"
           data-ff-editable=${griff ? '' : nothing}
           @click=${griff ? (e: MouseEvent) => griff(e, i) : nothing}
-        >${ZELLE_PLATZHALTER}</div>`
+        >${griff
+          ? html`<span class="spalten-name">${spalte.titel}</span>`
+          : ZELLE_PLATZHALTER}</div>`
       }
       const mitListe = zielIn(lage.umfeld, i).suchQuelleId !== ''
       return html`<div class=${klasse} role="cell">${

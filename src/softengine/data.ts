@@ -163,6 +163,12 @@ export function rowsFor(seData: unknown, alias: string, idbId: string): unknown[
     }
   }
 
+  // Hier landen auch DataSets: der SEvariablen-Befehl DATASET speist ein in
+  // SoftEngine konfiguriertes DataSet als MEMTAB ein, und die Zeilen stehen
+  // unter `Daten.Tabellen.<ALIAS>` — dasselbe Format wie eine MemTab
+  // (SoftENGINE-Wiki 47889, realisiert ab V8 Rev. 127025). Es braucht dafuer
+  // KEINEN eigenen Zweig; genau das meint der Wiki-Satz „vorhandene Bausteine,
+  // die MEMTAB/TABELLE verarbeiten, funktionieren unveraendert".
   const tab = daten.Tabellen
   if (isRecord(tab)) {
     const keys = [alias, alias.toUpperCase(), alias.toLowerCase(), idbId]

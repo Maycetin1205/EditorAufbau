@@ -103,3 +103,32 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
     linealTakte: linealTakte(gemessenPassen, zeilen.length),
   }
 }
+
+// Zeigt die Tabelle eine Kopfzeile? Das entscheidet „Schlank“ (Nutzer-Ansage
+// 2026-08-20). Den eigenen Schalter „Kopfzeile“ gab es bis dahin daneben — er
+// tat bei eingeschaltetem Schlank nichts mehr und ist deshalb GELOESCHT, nicht
+// nur versteckt.
+//
+// Schlank nimmt den Kopf IMMER — er darf nicht davon abhaengen, ob die
+// Erfassungszeile an ist. Genau das war er kurzzeitig, und eine frisch
+// gezogene Tabelle (Erfassung aus) behielt ihren Kopf: derselbe Schalter tat
+// zwei verschiedene Dinge, je nach einem zweiten (Nutzer-Befund 2026-08-20).
+//
+// Die Namen sind trotzdem nie ALLE weg: im Editor traegt sie die erste Zeile
+// blass (dort stehen ohnehin nur Striche, s. tabelleKoerper), in der Maske die
+// leeren Erfassungszellen — wie der Platzhalter am Formularfeld.
+export function zeigtKopfzeile(schlank: string): boolean {
+  return schlank !== 'ja'
+}
+
+// Ein Klick auf einen Spaltenkopf: dieselbe Spalte dreht die Richtung um, eine
+// andere sortiert neu und faengt aufsteigend an.
+export function naechsteSortierung(
+  spalteJetzt: number,
+  aufJetzt: boolean,
+  geklickt: number,
+): { spalte: number; auf: boolean } {
+  return spalteJetzt === geklickt
+    ? { spalte: geklickt, auf: !aufJetzt }
+    : { spalte: geklickt, auf: true }
+}

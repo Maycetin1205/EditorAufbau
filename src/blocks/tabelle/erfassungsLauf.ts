@@ -14,6 +14,7 @@ import {
 import {
   anzeigeSpalteIn,
   auswahlQuellenIn,
+  elternZu,
   paareZu,
   passendeSaetze,
   zielIn,
@@ -214,7 +215,20 @@ export class ErfassungsLauf {
     feld: string,
     ausser: string,
     zaehlt: (wahl: number) => boolean = () => true,
+    inQuelle: string = umfeld.quelleId,
   ): string | undefined {
+    // Zweite Stufe: haengt die fragende Verknuepfung an einer ANDEREN Quelle
+    // (Tierart am Artikelstamm), steht ihr Schluessel im dort gewaehlten Satz —
+    // nicht in der werdenden Zeile. Ohne gewaehlten Satz ist er UNBEKANNT und
+    // schraenkt nicht ein (s. passendeSaetze).
+    if (inQuelle !== umfeld.quelleId) {
+      if (inQuelle === ausser || inQuelle === '') return undefined
+      const satz = this.gewaehlt.get(inQuelle)
+      if (satz === undefined) return undefined
+      const wahl = this.vonHand.get(inQuelle)
+      if (wahl !== undefined && !zaehlt(wahl)) return undefined
+      return getField(satz, feld)
+    }
     for (const quelleId of auswahlQuellenIn(umfeld)) {
       if (quelleId === ausser) continue
       const wahl = this.vonHand.get(quelleId)
@@ -240,7 +254,7 @@ export class ErfassungsLauf {
   ): unknown[] {
     return passendeSaetze(
       paareZu(umfeld, quelleId),
-      (feld) => this.schluesselWert(umfeld, feld, quelleId, zaehlt),
+      (feld) => this.schluesselWert(umfeld, feld, quelleId, zaehlt, elternZu(umfeld, quelleId)),
       rows,
     )
   }
@@ -267,7 +281,9 @@ export class ErfassungsLauf {
         if (satz !== undefined) {
           const eigene = this.vonHand.get(quelleId) ?? -Infinity
           const passt = paare.every((p) => {
-            const soll = this.schluesselWert(umfeld, p.fromField, quelleId, (wahl) => wahl > eigene)
+            const soll = this.schluesselWert(
+              umfeld, p.fromField, quelleId, (wahl) => wahl > eigene, elternZu(umfeld, quelleId),
+            )
             return soll === undefined || (soll !== '' && soll === getField(satz, p.toField))
           })
           if (!passt) {
@@ -276,7 +292,10 @@ export class ErfassungsLauf {
           }
           continue
         }
-        if (!paare.some((p) => this.schluesselWert(umfeld, p.fromField, quelleId) !== undefined)) continue
+        const eltern = elternZu(umfeld, quelleId)
+        if (!paare.some(
+          (p) => this.schluesselWert(umfeld, p.fromField, quelleId, undefined, eltern) !== undefined,
+        )) continue
         const rows = quellenZeilen(quelleId)
         if (rows === null) continue
         const passend = this.moegliche(umfeld, quelleId, rows)

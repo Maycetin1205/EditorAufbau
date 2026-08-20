@@ -14,6 +14,9 @@ function coerceRichtung(v: unknown): Richtung {
 
 export class TrennerBlock extends BasicBlock {
   static readonly blockType = 'trenner'
+
+  // Kein Datenbezug: folgt keiner Auswahl (s. ohneDaten in BlockDefinition).
+  static readonly ohneDaten = true
   static readonly tagName = 'ff-trenner'
   static readonly displayName = 'Trennlinie'
   static readonly category: BlockCategory = 'layout'

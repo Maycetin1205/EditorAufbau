@@ -66,6 +66,11 @@ export function traegtEigeneQuelle(node: BlockNode | undefined): boolean {
 export function traegtInspectorZeilen(node: BlockNode | undefined): boolean {
   if (!node) return false
   if (traegtEigeneQuelle(node)) return true
+  // Auch wer KEINE eigene Quelle fuehrt, aber einer Auswahl folgen darf,
+  // braucht die Datenzeile — sonst gaebe es die Einstellung, aber keinen Weg
+  // zu ihr (Nutzer-Befund 2026-08-20, direkt nach der Umstellung auf
+  // `ohneDaten`: die Karte durfte folgen und kam nicht an das Fenster).
+  if (darfAuswahlFolgen(node)) return true
   return (getBlockDefinition(node.type)?.blockEvents ?? []).length > 0
 }
 
@@ -93,10 +98,22 @@ export function istAuswahlGeber(node: BlockNode | undefined): boolean {
   return auswahlQuelleIdVon(node) !== ''
 }
 
+// Wer darf der Auswahl eines anderen Bausteins folgen? Jeder, ausser den
+// Bausteinen ohne Datenbezug (Navi, Trennlinie). Die zweite Bedingung von
+// frueher — „muss eine eigene Quelle haben" — ist WEG: ein Baustein OHNE
+// eigene Quelle folgt, indem er die gewaehlte Zeile selbst zeigt (Bild, Knopf,
+// Datum); einer MIT eigener Quelle schraenkt seine Zeilen ueber die
+// Schluesselpaare ein (Tabelle, Kanban, Formularfeld). Zwei Bedeutungen,
+// dieselbe Einstellung — kein Sondercode je Bausteintyp (Regel 2).
 export function darfAuswahlFolgen(node: BlockNode | undefined): boolean {
   if (!node) return false
-  if (getBlockDefinition(node.type)?.kannAuswahlFolgen !== true) return false
-  return auswahlQuelleIdVon(node) !== ''
+  if (getBlockDefinition(node.type)?.ohneDaten === true) return false
+  // Folgen kann, wer Daten ZEIGT — sonst waere die Einstellung eine Anzeige
+  // ohne Wirkung und reiste als toter Attributwert in den Export. Zwei Wege
+  // dorthin, und beide zaehlen: eine eigene Quelle (dann schraenkt die
+  // gewaehlte Zeile die eigenen Zeilen ein) oder eine bindbare Stelle (dann
+  // IST die gewaehlte Zeile die Zeile des Bausteins).
+  return auswahlQuelleIdVon(node) !== '' || bindbareStellenVon(node).length > 0
 }
 
 export function auswahlGeberImBaum(tree: BlockTree): BlockNode[] {

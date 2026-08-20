@@ -3,6 +3,7 @@ import {
   bindingProp,
   eintragsFelderLesen,
   eintragsFelderVon,
+  eintragsFelderWahlWerte,
   listeLesen,
   zerlegeBindung,
 } from '../core/blocks/BlockDefinition'
@@ -18,6 +19,7 @@ import {
 import { AUSWAHL_FOLGE_PROP, auswahlFolgenAus, folgeBrauchbar } from '../core/data/auswahlFolge'
 import { ladeRelationFor, type DataSource } from '../core/data/dataSources'
 import {
+  elternQuelleVon,
   quelleBrauchbar,
   vollstaendigePaare,
   WEITERE_QUELLEN_PROP,
@@ -118,6 +120,19 @@ export function benutzteFelderJeQuelle(
 
       for (const eintrag of listeLesen(node.props[b.prop], b)) {
         merkeEintragsFeld(eintrag[b.feldKey])
+
+        // Die Felder, die der Nutzer je Eintrag zum ANZEIGEN BEIM SUCHEN
+        // gewaehlt hat. Sie gehoeren NICHT der Quelle des Bausteins, sondern
+        // der, die derselbe Eintrag nennt (bei der Tabelle: „Sucht beim
+        // Erfassen in"). Ohne diese Zeilen bestellt der Export die Felder der
+        // Hilfstabelle gar nicht — in SoftEngine ging dann das Such-Fenster
+        // zwar auf, blieb aber leer (Nutzer-Befund 2026-08-20).
+        if (b.eintragsFelderWahl) {
+          const w = b.eintragsFelderWahl
+          const suchQuelle = String(eintrag[w.quelleAusKey] ?? '')
+          for (const gf of eintragsFelderWahlWerte(w, eintrag)) merke(suchQuelle, gf.feld)
+        }
+
         if (!b.eintragsWahl) continue
         const gebunden = eintragsFelderLesen(b.eintragsWahl, eintrag)
         for (const zf of eintragsFelderVon(b.eintragsWahl, eintrag)) {
@@ -141,8 +156,11 @@ export function benutzteFelderJeQuelle(
       const erste = typeof node.props.source === 'string' ? node.props.source : ''
       for (const q of weitereQuellenAus(node.props[WEITERE_QUELLEN_PROP])) {
         if (!quelleBrauchbar(q)) continue
+        // Die `fromField` gehoeren der Quelle, an der die Verknuepfung HAENGT —
+        // das ist nicht immer die eigene Quelle des Bausteins (vonQuelleId).
+        const eltern = elternQuelleVon(q, erste)
         for (const paar of vollstaendigePaare(q)) {
-          merke(erste, paar.fromField)
+          merke(eltern, paar.fromField)
           merke(q.quelleId, paar.toField)
         }
       }

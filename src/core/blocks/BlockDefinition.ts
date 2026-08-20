@@ -31,13 +31,16 @@ export interface ActionValueSpot {
 export {
   eintragsFelderLesen,
   eintragsFelderVon,
+  eintragsFelderWahlWerte,
   eintragsQuellenWahlWert,
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listenStandardTitel,
   listeFuerExport,
   listeLesen,
+  type EintragsFelderWahl,
   type EintragsQuellenWahl,
+  type GewaehltesFeld,
   type EintragsWahl,
   type EintragsWahlOption,
   type EintragsZuordnung,
@@ -172,7 +175,15 @@ export interface BlockDefinition {
 
   satzWahl?: SatzWahl
 
-  kannAuswahlFolgen?: boolean
+  // Umgedreht am 2026-08-20 (Nutzer-Ansage „jeder Baustein soll jedem folgen
+  // koennen, ausser Navi und Trennlinie"): FOLGEN ist die Grundfaehigkeit,
+  // deklariert wird nur noch die AUSNAHME. Vorher hiess das Merkmal
+  // `kannAuswahlFolgen` und stand an genau drei von fuenfzehn Bausteinen —
+  // Karte, Kanban, Bild, Datum, Knopf und der Rest konnten es nie.
+  //
+  // `ohneDaten` heisst: dieser Baustein hat mit Daten nichts zu tun. Er folgt
+  // keiner Auswahl und taucht in keiner Datenliste auf.
+  ohneDaten?: boolean
 
   kannErfassen?: ErfassungsFaehigkeit
 

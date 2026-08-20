@@ -11,6 +11,9 @@ const EINTRAG = NaviEintragBlock.blockType
 
 export class NaviBlock extends BasicBlock {
   static readonly blockType = 'navi'
+
+  // Kein Datenbezug: folgt keiner Auswahl (s. ohneDaten in BlockDefinition).
+  static readonly ohneDaten = true
   static readonly tagName = 'ff-navi'
   static readonly displayName = 'Navi'
   static readonly category: BlockCategory = 'layout'

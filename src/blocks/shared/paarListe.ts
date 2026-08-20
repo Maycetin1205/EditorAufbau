@@ -8,6 +8,10 @@ import type { SchluesselPaar } from '../../core/data/sourceLinks'
 export interface PaarEintrag {
   id: string
 
+  // Optional: die Id, an der dieser Eintrag haengt (nur „weitere Quellen",
+  // s. vonQuelleId in core/data/sourceLinks). Leer = die eigene Quelle.
+  von?: string
+
   keyPairs: SchluesselPaar[]
 }
 
@@ -15,6 +19,7 @@ export function paarListeAusAttribut(
   el: HTMLElement,
   attributName: string,
   idFeld: string,
+  vonFeld?: string,
 ): PaarEintrag[] {
   const roh = el.getAttribute(attributName) ?? ''
   if (roh === '') return []
@@ -36,7 +41,12 @@ export function paarListeAusAttribut(
         keyPairs.push({ fromField: pp.fromField, toField: pp.toField })
       }
       if (keyPairs.length === 0) continue
-      acc.push({ id, keyPairs })
+      const von = vonFeld === undefined ? '' : ee[vonFeld]
+      acc.push({
+        id,
+        ...(typeof von === 'string' && von.trim() !== '' && von !== id ? { von: von.trim() } : {}),
+        keyPairs,
+      })
     }
     return acc
   } catch {

@@ -39,7 +39,7 @@ import {
 } from './spaltenBearbeiten'
 import { zeilenHoeheFuer } from './spaltenArten'
 import { SPALTEN_BINDUNG } from './spaltenBindung'
-import { tabelleAnsicht } from './tabelleAnsicht'
+import { tabelleAnsicht, naechsteSortierung, zeigtKopfzeile } from './tabelleAnsicht'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
 import { tabelleKoerper } from './tabelleKoerper'
@@ -67,7 +67,6 @@ export class TabelleBlock extends BasicBlock {
   static readonly acceptsDataSource = true
 
   static readonly satzWahl: SatzWahl = {}
-  static readonly kannAuswahlFolgen = true
 
   // Erfassungszeile an -> die Kette eines Knopfs darf „Wert aus
   // Erfassungszelle" lesen; der Export schreibt dafuer data-ff-block-id.
@@ -90,7 +89,6 @@ export class TabelleBlock extends BasicBlock {
 
     schlank: 'nein',
 
-    kopfzeile: 'ja',
 
     tagField: '',
 
@@ -117,7 +115,10 @@ export class TabelleBlock extends BasicBlock {
 
   @property() schlank = 'nein'
 
-  @property() kopfzeile = 'ja'
+
+  private get zeigtKopf(): boolean {
+    return zeigtKopfzeile(this.schlank)
+  }
 
   @property() leerText = LEER_TEXT_STANDARD
 
@@ -288,12 +289,9 @@ export class TabelleBlock extends BasicBlock {
   private klickSortiere(index: number): void {
     if (this.editable) return
     this.merkeZeilenFokus()
-    if (this._sortSpalte === index) {
-      this._sortAuf = !this._sortAuf
-    } else {
-      this._sortSpalte = index
-      this._sortAuf = true
-    }
+    const naechste = naechsteSortierung(this._sortSpalte, this._sortAuf, index)
+    this._sortSpalte = naechste.spalte
+    this._sortAuf = naechste.auf
     this._seite = 0
     this.requestUpdate()
   }
@@ -421,7 +419,7 @@ export class TabelleBlock extends BasicBlock {
         cols: ansicht.cols,
         editable: this.editable,
         imEditor: this.hasAttribute('data-ff-editor'),
-        zeigeKopf: this.kopfzeile === 'ja',
+        zeigeKopf: this.zeigtKopf,
         auswahlSemantik: geberIdVon(this) !== '',
         zeigeSuche: this.suche === 'ja',
         suchtext: this._suchtext,
@@ -440,13 +438,13 @@ export class TabelleBlock extends BasicBlock {
           ? erfassungsZeileFuer(
               this.erfassungsWirt(),
               ansicht.cols,
-              // Kein Lineal mehr uebrig heisst: die Zeile ist die letzte im
-              // Rumpf, unter ihr ist kein Platz fuer die Liste.
-              (ansicht.linealTakte ?? 1) <= 0,
+              // Die Zeile steht ganz oben — unter ihr liegt der ganze Rumpf,
+              // die Liste klappt immer nach unten auf.
+              false,
               // Ohne Kopfzeile traegt im Editor auch die Erfassungszelle den
               // Kopf-Griff — dieselbe Bedingung wie fuer die Zellen des
               // Rumpfs (tabelleKoerper).
-              this.hasAttribute('data-ff-editor') && this.editable && this.kopfzeile !== 'ja'
+              this.hasAttribute('data-ff-editor') && this.editable && !this.zeigtKopf
                 ? (e, i) => oeffneFeldPicker(this, e, {
                     prop: TabelleBlock.listenBindung.prop,
                     index: i,

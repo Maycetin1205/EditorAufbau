@@ -15,6 +15,9 @@ const TOENE: readonly { wert: string; name: string }[] = [
 
 export class NaviEintragBlock extends BasicBlock {
   static readonly blockType = 'navi-eintrag'
+
+  // Gehoert zur Navi: kein Datenbezug (s. ohneDaten in BlockDefinition).
+  static readonly ohneDaten = true
   static readonly tagName = 'ff-navi-eintrag'
   static readonly displayName = 'Navi-Eintrag'
   static readonly category: BlockCategory = 'layout'

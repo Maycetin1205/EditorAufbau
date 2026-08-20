@@ -251,9 +251,12 @@ describe('Tabelle: Schalter Schlank (G5)', () => {
 })
 
 // G5b: der Schalter „Kopfzeile" — Standard 'ja' reist nicht, 'nein' schon.
-describe('Tabelle: Schalter Kopfzeile (G5b)', () => {
-  it('kopfzeile="nein" reist mit, der Standard laesst das Tag sauber', () => {
-    expect(tabelleTag(exportMask(tabelleBaum({ kopfzeile: 'nein' })).html)).toMatch(/\skopfzeile="nein"/i)
+// Der Schalter „Kopfzeile" ist am 2026-08-20 GELOESCHT — „Schlank" nimmt die
+// Kopfzeile mit weg, daneben tat er nichts mehr (Nutzer-Ansage „dann weg mit
+// dem Button"). Geprueft bleibt, dass das Tag ohne ihn sauber bleibt.
+describe('Tabelle: schlank nimmt die Kopfzeile mit (G5b)', () => {
+  it('schlank="ja" reist mit, der Standard laesst das Tag sauber', () => {
+    expect(tabelleTag(exportMask(tabelleBaum({ schlank: 'ja' })).html)).toMatch(/\sschlank="ja"/i)
     expect(tabelleTag(exportMask(tabelleBaum({})).html)).not.toMatch(/kopfzeile=/i)
   })
 })

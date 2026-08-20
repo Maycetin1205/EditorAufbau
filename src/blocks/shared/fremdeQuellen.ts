@@ -12,6 +12,12 @@ interface Nachschlag {
   nachSchluessel: Map<string, unknown>
 
   hierFelder: string[]
+
+  // Leer = die Schluesselwerte stehen in der Zeile selbst. Gesetzt = sie
+  // stehen im Partnersatz DIESER Quelle (zweite Stufe, s. vonQuelleId):
+  // die Tierart haengt am Artikelstamm, also liefert erst der gefundene
+  // Artikel den Schluessel, mit dem die Tierart gefunden wird.
+  von: string
 }
 
 const SCHLUESSEL_TRENNER = '\x01'
@@ -33,9 +39,13 @@ function schluesselAus(werte: readonly string[]): string {
 // sie ist die EINE Angabe dazu, eine zweite gibt es nicht.
 export function verknuepfungenVon(
   el: HTMLElement,
-): { quelleId: string; keyPairs: SchluesselPaar[] }[] {
-  return paarListeAusAttribut(el, WEITERE_QUELLEN_ATTR, 'quelleId')
-    .map((e) => ({ quelleId: e.id, keyPairs: e.keyPairs }))
+): { quelleId: string; vonQuelleId?: string; keyPairs: SchluesselPaar[] }[] {
+  return paarListeAusAttribut(el, WEITERE_QUELLEN_ATTR, 'quelleId', 'vonQuelleId')
+    .map((e) => ({
+      quelleId: e.id,
+      ...(e.von === undefined ? {} : { vonQuelleId: e.von }),
+      keyPairs: e.keyPairs,
+    }))
 }
 
 export function macheFeldLeser(el: HTMLElement): FeldLeser {
@@ -59,17 +69,29 @@ export function macheFeldLeser(el: HTMLElement): FeldLeser {
     nachschlag.set(q.quelleId, {
       nachSchluessel,
       hierFelder: q.keyPairs.map((p) => p.fromField),
+      von: q.vonQuelleId ?? '',
     })
+  }
+
+  // Der Satz einer verknuepften Quelle zu DIESER Zeile. Haengt die
+  // Verknuepfung an einer anderen (zweite Stufe), wird erst deren Satz
+  // gesucht und DER liefert die Schluesselwerte. `tiefe` bricht einen Ring
+  // ab, den der Editor zwar nicht bauen laesst, ein von Hand veraendertes
+  // Attribut aber schon.
+  const partnerVon = (row: unknown, quelleId: string, tiefe: number): unknown => {
+    const eintrag = nachschlag.get(quelleId)
+    if (!eintrag || tiefe > weitere.length) return undefined
+    const basis = eintrag.von === '' ? row : partnerVon(row, eintrag.von, tiefe + 1)
+    if (basis === undefined) return undefined
+    const key = schluesselAus(eintrag.hierFelder.map((f) => getField(basis, f)))
+    if (key === '') return undefined
+    return eintrag.nachSchluessel.get(key)
   }
 
   return (row, wert) => {
     const { quelleId, code } = zerlegeBindung(wert)
     if (quelleId === '') return getField(row, code)
-    const eintrag = nachschlag.get(quelleId)
-    if (!eintrag) return ''
-    const key = schluesselAus(eintrag.hierFelder.map((f) => getField(row, f)))
-    if (key === '') return ''
-    const partner = eintrag.nachSchluessel.get(key)
+    const partner = partnerVon(row, quelleId, 0)
     return partner === undefined ? '' : getField(partner, code)
   }
 }

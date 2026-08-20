@@ -1,4 +1,5 @@
 import {
+  elternQuelleVon,
   erfassungsZielVon,
   type BausteinQuelle,
   type ErfassungsZiel,
@@ -7,7 +8,7 @@ import {
 } from '../../core/data/sourceLinks'
 import { getField } from '../../softengine/data'
 import { ART_TEXT } from './spaltenArten'
-import type { Spalte } from './spalten'
+import type { Spalte, SuchFeld } from './spalten'
 
 // Was eine Zelle der Erfassungszeile tut, steht in zwei Angaben ihrer Spalte —
 // beide am Spaltenkopf gewählt, keine abgeleitet (Nutzer 2026-08-19):
@@ -46,6 +47,13 @@ export interface ErfassungsUmfeld {
 
 export function paareZu(umfeld: ErfassungsUmfeld, quelleId: string): readonly SchluesselPaar[] {
   return umfeld.verknuepfungen.find((v) => v.quelleId === quelleId)?.keyPairs ?? []
+}
+
+// An welcher Quelle die Verknuepfung dieser Quelle haengt — dort stehen ihre
+// `fromField`. Ohne Angabe: die Quelle der Tabelle (der alte, einzige Fall).
+export function elternZu(umfeld: ErfassungsUmfeld, quelleId: string): string {
+  const v = umfeld.verknuepfungen.find((x) => x.quelleId === quelleId)
+  return v === undefined ? umfeld.quelleId : elternQuelleVon(v, umfeld.quelleId)
 }
 
 export function zellenzielVon(
@@ -94,6 +102,10 @@ export function anzeigeSpalteIn(
 ): { titel: string; code: string } | undefined {
   const ziel = zielIn(umfeld, index)
   if (ziel.suchQuelleId === '') return undefined
+  // Hat der Nutzer Felder gewaehlt, ist das ERSTE die Anzeige der
+  // Vorschlagsliste — seine Wahl schlaegt die Automatik.
+  const erstes = gewaehlteSuchFelder(umfeld, index)[0]
+  if (erstes !== undefined) return { titel: erstes.titel, code: erstes.feld }
   const eigenerCode = ziel.quelleId === ziel.suchQuelleId ? ziel.code : ''
   for (let i = 0; i < umfeld.spalten.length; i++) {
     if (i === index) continue
@@ -105,14 +117,27 @@ export function anzeigeSpalteIn(
   return undefined
 }
 
+// Die vom Nutzer gewaehlten Felder der Such-Quelle („Zeigt beim Suchen").
+// Leer = er hat nichts gewaehlt, dann gilt die Automatik darunter.
+function gewaehlteSuchFelder(umfeld: ErfassungsUmfeld, index: number): readonly SuchFeld[] {
+  return umfeld.spalten[index]?.suchFelder ?? []
+}
+
 // Die Spalten des großen Fensters: Anzeige und Wert — genau das, was die
-// Vorschlagsliste daneben zeigt. Ohne eigene Anzeige-Spalte bleibt es bei der
-// Automatik des Fensters (eine Spalte).
+// Vorschlagsliste daneben zeigt. Hat der Nutzer Felder gewaehlt, sind es
+// GENAU die; sonst bleibt es bei der Automatik (Anzeige-Spalte + Wert).
 export function fensterSpaltenIn(umfeld: ErfassungsUmfeld, index: number): Spalte[] {
   const spalte = umfeld.spalten[index]
+  if (spalte === undefined) return []
+
+  const gewaehlt = gewaehlteSuchFelder(umfeld, index)
+  if (gewaehlt.length > 0) {
+    return gewaehlt.map((f) => ({ titel: f.titel, feld: f.feld, art: ART_TEXT }))
+  }
+
   const anzeige = anzeigeSpalteIn(umfeld, index)
   const ziel = zielIn(umfeld, index)
-  if (spalte === undefined || anzeige === undefined) return []
+  if (anzeige === undefined) return []
   // Ohne eigenen Wert (kein Schlüsselpaar) bleibt es bei der Anzeige-Spalte:
   // eine leere zweite Spalte wäre nur eine Strichspalte.
   const wertCode = ziel.quelleId === ziel.suchQuelleId ? ziel.code : ''

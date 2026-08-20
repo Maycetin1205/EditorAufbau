@@ -205,11 +205,18 @@ describe('Nachschlage-Feld im Export', () => {
     expect(preflightMask(tree, BEIDE, [])).toEqual([])
   })
 
-  it('Ankreuzfeld: eine alte Bindung bleibt ebenso daheim (U6, 2026-08-12)', () => {
+  // Umgekehrt seit 2026-08-20: das Ankreuzfeld IST bindbar, seit sein
+  // SE-Wert-Kontrakt belegt ist (Format `AJN`, 1 Zeichen, `J`/`N`). Bis dahin
+  // blieb eine Bindung daheim, weil die Maske sonst einen Schreib-Eintrag fuer
+  // einen Wert angelegt haette, den niemand deuten konnte.
+  it('Ankreuzfeld: die Bindung reist mit und laedt ihre Quelle (2026-08-20)', () => {
     const tree = baumMit({ ...TEXT_PROPS, fieldType: 'checkbox', source: 'q-tiere', valueField: '18_30' })
-    const tag = /<ff-formfeld[^>]*/.exec(exportMask(tree, 'Maske', BEIDE).html)?.[0] ?? ''
+    const { html, sevariablen } = exportMask(tree, 'Maske', BEIDE)
+    const tag = /<ff-formfeld[^>]*/.exec(html)?.[0] ?? ''
     expect(tag).toContain('fieldtype="checkbox"')
-    expect(tag).not.toContain('valuefield=')
+    expect(tag).toContain('valuefield="18_30"')
+    expect(JSON.parse(sevariablen).SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS))
+      .toEqual(['Kundenhaustiere'])
   })
 
   it('Gegenprobe Textfeld: dieselbe Bindung reist mit und laedt ihre Quelle', () => {

@@ -12,11 +12,70 @@ export interface ListenBindung {
   // Quellen in Reichweite. Eintraege speichern den nackten Feldcode.
   quelleProp?: string
 
+  // Gesetzt: die Feld-Auswahl eines Eintrags zeigt nur die EIGENE Quelle des
+  // Bausteins, nicht auch die verknuepften. Anlass (Nutzer-Ansage 2026-08-20):
+  // eine Tabellenspalte ist ein Feld der Zeile, die entsteht — was aus einer
+  // Hilfstabelle zu sehen sein soll, waehlt „Zeigt beim Suchen". Mit allen
+  // Quellen in der Liste standen dieselben Felder zweimal im selben Fenster.
+  //
+  // Anders als `quelleProp` blendet es nichts aus, was schon GESETZT ist: eine
+  // Spalte, die auf eine verknuepfte Quelle zeigt, behaelt ihre Gruppe, sonst
+  // verschwaende ihre Bindung lautlos aus der Anzeige.
+  nurEigeneQuelle?: true
+
   eintragsWahl?: EintragsWahl
 
   eintragsZuordnung?: EintragsZuordnung
 
   eintragsQuellenWahl?: EintragsQuellenWahl
+
+  eintragsFelderWahl?: EintragsFelderWahl
+}
+
+// MEHRERE Felder je Eintrag, aus einer Quelle, die der Eintrag selbst nennt.
+// Anlass (Nutzer 2026-08-20): beim Tippen in einer Erfassungszelle soll nicht
+// die ganze Hilfstabelle erscheinen, sondern die Felder, die der Nutzer je
+// Spalte ausgewaehlt hat. Vorher leitete die Vorschlagsliste ihre Anzeige ab
+// (Wert + erste Nachbarspalte derselben Quelle) — waehlbar war nichts.
+//
+// Leer bleibt die Automatik: wer nichts ankreuzt, sieht wie bisher.
+export interface EintragsFelderWahl {
+  key: string
+
+  label: string
+
+  // Der Eintrags-Schluessel, in dem die Quelle steht, deren Felder zur Wahl
+  // stehen (bei der Tabelle: „Sucht beim Erfassen in").
+  quelleAusKey: string
+
+  nurBeiErfassung?: true
+}
+
+// Gespeichert wird Feldcode UND Klarname: die laufende Maske kennt keine
+// Feldliste mehr, im Fenster soll aber ein Name stehen (Regel 3).
+export interface GewaehltesFeld {
+  feld: string
+  titel: string
+}
+
+export function eintragsFelderWahlWerte(
+  w: EintragsFelderWahl,
+  eintrag: Record<string, unknown>,
+): GewaehltesFeld[] {
+  const roh = eintrag[w.key]
+  if (!Array.isArray(roh)) return []
+  const raus: GewaehltesFeld[] = []
+  for (const x of roh) {
+    if (typeof x === 'string' && x.trim() !== '') raus.push({ feld: x.trim(), titel: x.trim() })
+    else if (x && typeof x === 'object') {
+      const o = x as Record<string, unknown>
+      const feld = typeof o.feld === 'string' ? o.feld.trim() : ''
+      if (feld === '') continue
+      const titel = typeof o.titel === 'string' && o.titel.trim() !== '' ? o.titel.trim() : feld
+      raus.push({ feld, titel })
+    }
+  }
+  return raus
 }
 
 // Eine Wahl je Eintrag unter den VERKNUEPFUNGEN des Bausteins. Sie braucht

@@ -44,10 +44,11 @@ export interface KoerperLage {
   erfasste: readonly (readonly string[])[]
 
   // Die fertige Erfassungszeile. Der Rumpf setzt sie nur an ihre Stelle: sie
-  // ist die LETZTE Zeile der Tabelle — unter den Datenzeilen, unter den
-  // erfassten Zeilen, vor dem Lineal (Nutzer-Entscheidung 2026-08-19). Bis
-  // dahin sass sie ohne echte Daten ganz OBEN, wo sie im Editor nicht von
-  // den Strich-Zeilen zu unterscheiden war.
+  // ist die ERSTE Zeile der Tabelle, direkt unter dem Kopf (Nutzer-Ansage
+  // 2026-08-20). Sie sass dort schon einmal und wanderte am 2026-08-19 nach
+  // unten — mit der Begruendung, sie sei oben nicht von den Strich-Zeilen zu
+  // unterscheiden. Das traegt nicht: sie hat eigenen Grund und eine Kante, und
+  // im Editor stehen jetzt die Spaltennamen in ihren Zellen.
   erfassung: TemplateResult | typeof nothing
 }
 
@@ -101,10 +102,12 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>` : nothing}
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
+        ${lage.erfassung}
         ${lage.zeilen.map((rohIndex, ansichtIndex) => {
           const aktivierbar = rohIndex !== null && !lage.imEditor
           return html`<div
-            class="zeile${rohIndex !== null && lage.hatQuelle ? ' waehlbar' : ''}${
+            class="zeile${rohIndex === null ? ' ohne-satz' : ''}${
+              rohIndex !== null && lage.hatQuelle ? ' waehlbar' : ''}${
               rohIndex !== null && rohIndex === lage.auswahlIndex ? ' gewaehlt' : ''}"
             role="row"
             data-ff-roh=${rohIndex ?? nothing}
@@ -134,13 +137,20 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               // Klick oeffnet den Feld-Picker der Spalte. Umbenennen laeuft
               // ueber das kurze Einschalten der Kopfzeile (Inspector).
               const kopfGriff = lage.imEditor && !lage.zeigeKopf && lage.editable
+              // Ohne Kopfzeile traegt im Editor die ERSTE Zeile die Namen —
+              // blass, an der Stelle, an der sonst nur ein Strich steht. Sonst
+              // baute man an einer Tabelle ohne jede Beschriftung. Nur im
+              // Editor und nur in der ersten Zeile: darunter bleiben Striche,
+              // und in der Maske stehen dort echte Daten.
+              const zeigtName = lage.imEditor && !lage.zeigeKopf && ansichtIndex === 0
               return html`<div
                 class=${art.klasse}
                 role="cell"
                 data-ff-editable=${kopfGriff ? '' : nothing}
                 @click=${kopfGriff ? (e: MouseEvent) => tun.klickKopf(e, i) : nothing}
-              >${
-                art.zelle(wert, s.zuordnung ?? [], zusatz)
+              >${zeigtName
+                ? html`<span class="spalten-name">${s.titel}</span>`
+                : art.zelle(wert, s.zuordnung ?? [], zusatz)
               }</div>`
             })}
           </div>`
@@ -153,7 +163,6 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             }</div>`
           })}
         </div>`)}
-        ${lage.erfassung}
         ${lineal(lage)}`}
       </div>
     `

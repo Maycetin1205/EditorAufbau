@@ -7,6 +7,7 @@ import type { BlockNode } from '../../core/blocks/BlockData'
 import { QUELLE_PROP } from '../../core/blocks/treeQuery'
 import { quellenKennung } from '../../core/data/dataSources'
 import {
+  elternQuelleVon,
   vollstaendigePaare,
   WEITERE_QUELLEN_PROP,
   weitereQuellenAus,
@@ -34,6 +35,10 @@ export function VerknuepfungenZone({ block }: { block: BlockNode }) {
   const quelleVon = (id: string) => bibliothek.find((s) => s.id === id)
   const felderVon = (id: string) => quelleVon(id)?.fields ?? []
   const nameVon = (id: string) => quelleVon(id)?.name ?? id
+  const kennungVon = (id: string) => {
+    const s = quelleVon(id)
+    return s === undefined ? '' : quellenKennung(s)
+  }
   const feldName = (quelleId: string, code: string) =>
     felderVon(quelleId).find((f) => f.code === code)?.label ?? code
 
@@ -50,15 +55,30 @@ export function VerknuepfungenZone({ block }: { block: BlockNode }) {
     setOffen(null)
   }
 
-  // „<Quelle> — <Feld> = <Feld>". Fehlt etwas, sagt die Zeile genau das.
+  // „<Quelle> — <Feld> = <Feld>". Haengt sie an einer anderen Verknuepfung
+  // statt an der eigenen Quelle, steht das dabei — sonst waere nicht zu sehen,
+  // WORAN die Zeile gefunden wird.
   function klartext(q: BausteinQuelle): string {
     if (q.quelleId === '') return 'Noch keine Datenquelle gewählt'
+    const eltern = elternQuelleVon(q, erste)
     const paare = vollstaendigePaare(q)
     if (paare.length === 0) return `${nameVon(q.quelleId)} — noch kein Feldpaar`
     const teile = paare.map(
-      (p) => `${feldName(erste, p.fromField)} = ${feldName(q.quelleId, p.toField)}`,
+      (p) => `${feldName(eltern, p.fromField)} = ${feldName(q.quelleId, p.toField)}`,
     )
-    return `${nameVon(q.quelleId)} — ${teile.join(' · ')}`
+    const anhang = eltern === erste ? '' : ` (an „${nameVon(eltern)}“)`
+    return `${nameVon(q.quelleId)}${anhang} — ${teile.join(' · ')}`
+  }
+
+  // Woran eine Verknuepfung haengen KANN: jede ANDERE verknuepfte Quelle.
+  // Leer („— keine —") ist der Normalfall und heisst: sie haengt an der
+  // eigenen Quelle des Bausteins. Der Nutzer muss hier nichts waehlen
+  // (Nutzer-Ansage 2026-08-20: „das will ich nicht muessen").
+  // Die eigene Quelle steht NICHT zur Wahl — das waere dasselbe wie leer.
+  function elternOptionen(eigene: string) {
+    return [...weitere.map((w) => w.quelleId)]
+      .filter((id, i, alle) => id !== '' && id !== eigene && id !== erste && alle.indexOf(id) === i)
+      .map((id) => ({ wert: id, name: nameVon(id), kennung: kennungVon(id) }))
   }
 
   // Schon verknuepfte Quellen tauchen nicht zweimal auf.
@@ -109,12 +129,36 @@ export function VerknuepfungenZone({ block }: { block: BlockNode }) {
                 leerText="— keine —"
                 onWaehle={(v) => aendere(i, { quelleId: v })}
               />
+              {elternOptionen(q.quelleId).length > 0 && (
+                <WaehlerKnopf
+                  label="Hängt an"
+                  bezeichnung="Hängt an"
+                  gruppen={[{ key: 'eltern', eintraege: elternOptionen(q.quelleId) }]}
+                  wert={q.vonQuelleId ?? ''}
+                  leerText="— keine —"
+
+                  onWaehle={(v) => {
+                    const neuerEltern = v
+                    // Nur bei echtem WECHSEL anfassen: derselbe Wert noch einmal
+                    // angeklickt darf die schon gesetzten Feldpaare nicht
+                    // wegwerfen (Nutzer-Befund 2026-08-20).
+                    if (neuerEltern === (q.vonQuelleId ?? '')) return
+                    aendere(i, {
+                      // Nach dem Wechsel zeigen die linken Felder auf eine
+                      // andere Quelle — lieber leer als falsch.
+                      vonQuelleId: neuerEltern,
+                      keyPairs: [{ fromField: '', toField: '' }],
+                    })
+                  }}
+                />
+              )}
               <SchluesselPaarZeilen
                 frage="Woran erkennt man die zusammengehörige Zeile?"
                 paare={q.keyPairs}
-                linkeFelder={felderVon(erste)}
+                linkeFelder={felderVon(elternQuelleVon(q, erste))}
                 rechteFelder={felderVon(q.quelleId)}
-                linkeBezeichnung={(at) => `Feld ${at + 1} in „${nameVon(erste)}“`}
+                linkeBezeichnung={(at) =>
+                  `Feld ${at + 1} in „${nameVon(elternQuelleVon(q, erste))}“`}
                 rechteBezeichnung={(at) => `Feld ${at + 1} in „${nameVon(q.quelleId)}“`}
                 entfernenBezeichnung={(at) => `Feldpaar ${at + 1} entfernen`}
                 onAendern={(keyPairs) => aendere(i, { keyPairs })}

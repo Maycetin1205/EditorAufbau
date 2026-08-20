@@ -8,12 +8,14 @@ export function platzhalterZeilen(gemessen: number | null): number {
   return gemessen ?? PLATZHALTER_OHNE_MESSUNG
 }
 
+// `festeHoehe` = alles im Rumpf, was keine Datenzeile ist (Kopf- und
+// Erfassungszeile zusammen).
 export function passendeZeilen(
   rumpfHoehe: number,
-  kopfHoehe: number,
+  festeHoehe: number,
   zeilenHoehe: number,
 ): number {
-  return Math.max(1, Math.floor((rumpfHoehe - kopfHoehe) / zeilenHoehe))
+  return Math.max(1, Math.floor((rumpfHoehe - festeHoehe) / zeilenHoehe))
 }
 
 export interface Zeilenmass {
@@ -24,11 +26,11 @@ export interface Zeilenmass {
 
 export function zeilenmass(
   rumpfHoehe: number,
-  kopfHoehe: number,
+  festeHoehe: number,
   takt: number,
 ): Zeilenmass {
-  const passen = passendeZeilen(rumpfHoehe, kopfHoehe, takt)
-  const platz = rumpfHoehe - kopfHoehe
+  const passen = passendeZeilen(rumpfHoehe, festeHoehe, takt)
+  const platz = rumpfHoehe - festeHoehe
   if (platz < takt) return { passen, zeilenHoehe: takt }
   return { passen, zeilenHoehe: Math.floor((platz / passen) * 100) / 100 }
 }

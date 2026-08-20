@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { alsDatum, alsZahl, erkenneArt, sortiereIndizes } from './sortierung'
+import { zeigtKopfzeile } from './tabelleAnsicht'
 
 // Test-Helfer: die Werte-Form der Index-Sortierung (das Produkt arbeitet
 // nur mit den Indizes, s. tabelleAnsicht).
@@ -106,4 +107,11 @@ describe('sortiereIndizes (Zeilen-Identitaet fuer die Auswahl, 2026-08-05)', () 
     expect(sortiereIndizes(zeilen, -1, true)).toEqual([0, 1, 2, 3])
   })
 
+})
+
+describe('Kopfzeile bei Schlank', () => {
+  it('nimmt den Kopf immer weg — unabhaengig von jedem zweiten Schalter', () => {
+    expect(zeigtKopfzeile('ja')).toBe(false)
+    expect(zeigtKopfzeile('nein')).toBe(true)
+  })
 })

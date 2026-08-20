@@ -5,12 +5,14 @@ import {
   bindingProp,
   eintragsFelderLesen,
   eintragsFelderVon,
+  eintragsFelderWahlWerte,
   eintragsQuellenWahlWert,
   eintragsWahlWert,
   eintragsZuordnungLesen,
   listenStandardTitel,
   listeLesen,
   type BindableSpot,
+  type GewaehltesFeld,
   type ListenBindung,
 } from '../../core/blocks/BlockDefinition'
 import { zerlegeBindung } from '../../core/blocks/BlockDefinition'
@@ -41,7 +43,10 @@ interface FeldBindungArgs {
 }
 
 function pickerGruppen(quellen: readonly QuelleInReichweite[]): PickerGruppe[] {
-  const erste = quellen[0]?.source
+  // Der Hinweis nennt die Felder, an denen die Quelle haengt — die stehen in
+  // der Quelle, an der sie haengt, nicht zwangslaeufig in der eigenen
+  // (zweite Stufe: die Tierart haengt am Artikelstamm).
+  const quelleMit = (id: string) => quellen.find((x) => x.source.id === id)?.source
   return quellen.map((q, i) => (i === 0
     ? {
         quelleId: '',
@@ -53,7 +58,10 @@ function pickerGruppen(quellen: readonly QuelleInReichweite[]): PickerGruppe[] {
         quelleId: q.source.id,
         name: q.source.name,
         kennung: quellenKennung(q.source),
-        hinweis: paarKlartext(q.paare ?? [], erste),
+        hinweis: paarKlartext(
+          q.paare ?? [],
+          q.vonQuelleId === undefined ? quellen[0]?.source : quelleMit(q.vonQuelleId),
+        ),
         fields: q.source.fields,
       }))
 }
@@ -241,7 +249,7 @@ export function useFeldBindung({
 
         // quelleProp-Modus: eine Gruppe, nackte Feldcodes (quelleId '').
         const proQuelle = quelleAusProp !== undefined
-        const listenGruppen: PickerGruppe[] = proQuelle
+        const alleGruppen: PickerGruppe[] = proQuelle
           ? [{
               quelleId: '',
               name: quelleAusProp.name,
@@ -249,6 +257,15 @@ export function useFeldBindung({
               fields: quelleAusProp.fields,
             }]
           : gruppen
+        // `nurEigeneQuelle`: die erste Gruppe ist die eigene Quelle. Die Gruppe
+        // einer schon GESETZTEN Bindung bleibt daneben stehen — sonst waere
+        // nicht mehr zu sehen, worauf die Spalte zeigt.
+        const gesetzteQuelle = zerlegeBindung(
+          String(eintrag[listenBindung.feldKey] ?? ''),
+        ).quelleId
+        const listenGruppen: PickerGruppe[] = listenBindung.nurEigeneQuelle === true
+          ? alleGruppen.filter((g, i) => i === 0 || g.quelleId === gesetzteQuelle)
+          : alleGruppen
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
         const wahl = listenBindung.eintragsWahl
         const zuo = listenBindung.eintragsZuordnung
@@ -265,6 +282,23 @@ export function useFeldBindung({
           && !proQuelle
           && (quellenWahl.nurBeiErfassung !== true || erfasst)
           && quellen.length > 1
+
+        // „Zeigt beim Suchen": die Felder der Quelle, die dieser Eintrag unter
+        // `quelleAusKey` nennt (bei der Tabelle die Sucht-in-Wahl). Ohne
+        // gewaehlte Quelle gibt es nichts anzukreuzen.
+        const felderWahl = listenBindung.eintragsFelderWahl
+        const suchQuelleId = felderWahl === undefined
+          ? ''
+          : String(eintrag[felderWahl.quelleAusKey] ?? '')
+        const suchQuelle = suchQuelleId === ''
+          ? undefined
+          : quellen.find((q) => q.source.id === suchQuelleId)?.source
+        const zeigeFelderWahl = felderWahl !== undefined
+          && suchQuelle !== undefined
+          && (felderWahl.nurBeiErfassung !== true || erfasst)
+        const gewaehlteFelder: GewaehltesFeld[] = felderWahl === undefined
+          ? []
+          : eintragsFelderWahlWerte(felderWahl, eintrag)
 
         const zeigeZuordnung = zuo !== undefined
           && wahl !== undefined
@@ -298,6 +332,17 @@ export function useFeldBindung({
               optionen: quellen.slice(1).map((q) => ({ wert: q.source.id, name: q.source.name })),
               aktuell: eintragsQuellenWahlWert(quellenWahl, eintrag),
               onWaehle: (wert) => schreibeInEintrag(listenPicker, { [quellenWahl.key]: wert }),
+            } : undefined}
+            felderWahl={zeigeFelderWahl && felderWahl && suchQuelle ? {
+              label: felderWahl.label,
+              optionen: suchQuelle.fields.map((f) => ({ feld: f.code, titel: f.label })),
+              gewaehlt: gewaehlteFelder.map((g) => g.feld),
+              onUmschalten: (feld, titel, an) => {
+                const rest = gewaehlteFelder.filter((g) => g.feld !== feld)
+                schreibeInEintrag(listenPicker, {
+                  [felderWahl.key]: an ? [...rest, { feld, titel }] : rest,
+                })
+              },
             } : undefined}
             felder={zusatzFelder.map((zf) => ({
               key: zf.key,
