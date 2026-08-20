@@ -11,7 +11,7 @@ import type {
 } from '../../core/blocks/BlockDefinition'
 import { geberIdVon, waehleAuswahl } from '../shared/auswahl'
 import { LEER_TEXT_STANDARD, leerStil } from '../shared/leerZustand'
-import { vorschlagStil } from '../shared/vorschlagListe'
+import { setzeListenLage, vorschlagStil } from '../shared/vorschlagListe'
 import { chipStyles } from '../shared/statusVariant'
 import { schliesseNachschlagenFuer } from '../formfeld/nachschlagen'
 import { beobachteRumpf, gemessenesMass } from './rumpfMessung'
@@ -368,6 +368,7 @@ export class TabelleBlock extends BasicBlock {
 
   protected override updated(): void {
     if (this._taktGemessen !== this.zeilenHoehe) this.messeRumpf()
+    if (this.shadowRoot) setzeListenLage(this.shadowRoot)
     if (!this._fokusHolen) return
     this._fokusHolen = false
     stelleZeilenFokusHer(this.shadowRoot, this._fokusZeile)

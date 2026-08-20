@@ -105,6 +105,54 @@ export function vorschlagListeTpl(args: {
     }</li>`)}</ul>`
 }
 
+// Wie hoch die Liste hoechstens wird — dieselbe Zahl wie im Stil unten, weil
+// die Lage-Rechnung sie kennen muss.
+const LISTE_MAX = 240
+
+// Die Liste haengt aus ihrem Baustein HERAUS. Solange sie `absolute` im
+// Rumpf lag, schnitt die Tabelle sie ab (`overflow: hidden` an der Tafel,
+// `auto` am Koerper) — sichtbar wurde das, als die tippbaren Zeilen nach
+// unten wanderten: der Vorschlag verschwand im Rahmen (Nutzer-Befund
+// 2026-08-20). Darum liegt sie `fixed` am Bildschirm und wird nach jedem
+// Rendern an ihr Eingabefeld gesetzt. Oben oder unten entscheidet der Platz,
+// nicht eine feste Annahme.
+export function setzeListenLage(wurzel: ParentNode): void {
+  const liste = wurzel.querySelector<HTMLElement>('.vorschlaege')
+  if (liste === null) return
+  folgeBeimRollen(wurzel, liste)
+  const anker = liste.previousElementSibling ?? liste.parentElement
+  if (!(anker instanceof HTMLElement)) return
+  const r = anker.getBoundingClientRect()
+  const unten = window.innerHeight - r.bottom
+  const nachOben = unten < LISTE_MAX + 8 && r.top > unten
+  const platz = Math.max(80, Math.min(LISTE_MAX, (nachOben ? r.top : unten) - 8))
+  liste.style.position = 'fixed'
+  liste.style.left = `${r.left}px`
+  liste.style.width = `${r.width}px`
+  liste.style.right = 'auto'
+  liste.style.maxHeight = `${platz}px`
+  liste.style.top = nachOben ? 'auto' : `${r.bottom + 2}px`
+  liste.style.bottom = nachOben ? `${window.innerHeight - r.top + 2}px` : 'auto'
+}
+
+
+// Eine `fixed` liegende Liste wandert beim Rollen NICHT mit — sie bliebe im
+// Raum stehen, waehrend die Zeile darunter wegrollt. Darum haengt sich an den
+// naechsten rollenden Vorfahren einmalig ein Horcher, der sie nachsetzt.
+const rollend = new WeakSet<HTMLElement>()
+
+function folgeBeimRollen(wurzel: ParentNode, liste: HTMLElement): void {
+  for (let el = liste.parentElement; el !== null; el = el.parentElement) {
+    const art = getComputedStyle(el).overflowY
+    if (art !== 'auto' && art !== 'scroll') continue
+    if (!rollend.has(el)) {
+      rollend.add(el)
+      el.addEventListener('scroll', () => setzeListenLage(wurzel), { passive: true })
+    }
+    return
+  }
+}
+
 // Der Halter der Liste braucht `position: relative` und muss ueber seinen
 // Nachbarn liegen — das steht beim jeweiligen Baustein, weil nur er weiss,
 // welches Element sein Halter ist.
