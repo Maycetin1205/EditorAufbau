@@ -168,6 +168,7 @@ export function erfassungsZeilenFuer(
       vorschlaege: aktiv ? lauf.vorschlaege : [],
       marke: lauf.marke,
       listeNachOben,
+      nummer: zeile + 1,
     }, {
       // Was der Bediener tippt, gehört der Zeile — kein Daten-Push räumt es
       // weg (das tut nur ein Zweckwechsel des Bausteins).
@@ -182,6 +183,9 @@ export function erfassungsZeilenFuer(
         wirt.melde()
       },
       betreten: () => {
+        if (wirt.anschluss.waehle(zeile)) wirt.melde()
+      },
+      waehleZeile: () => {
         if (wirt.anschluss.waehle(zeile)) wirt.melde()
       },
       waehleVorschlag: (listenIndex) => waehle(wirt, zeile, lauf.tippSpalte, listenIndex),

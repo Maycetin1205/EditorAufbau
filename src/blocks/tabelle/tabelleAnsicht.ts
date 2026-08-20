@@ -1,4 +1,5 @@
 import { spaltenArt, zeilenHoeheFuer } from './spaltenArten'
+import { GRIFF_SPUR } from './zeilenGriff'
 import {
   linealTakte,
   OHNE_MESSUNG,
@@ -57,8 +58,12 @@ function sichtbareIndizes(frage: AnsichtFrage): number[] {
 }
 
 export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
+  // Die Nummernspalte ist die erste Spur — sie gibt es nur mit Erfassung
+  // (s. zeilenGriff). Kopf, Datenzeile, tippbare Zeile UND Lineal muessen
+  // dieselbe Spur-Liste tragen, sonst rutschen die Zellen gegeneinander.
+  const spuren = frage.spalten.map((s) => spaltenArt(s.art).spur)
   const cols = {
-    gridTemplateColumns: frage.spalten.map((s) => spaltenArt(s.art).spur).join(' '),
+    gridTemplateColumns: (frage.erfassungsZeilen > 0 ? [GRIFF_SPUR, ...spuren] : spuren).join(' '),
   }
 
   const takt = zeilenHoeheFuer(frage.spalten)

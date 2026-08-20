@@ -10,6 +10,10 @@ export const erfassungStil = css`
         border-bottom: var(--se-border) solid var(--se-line);
       }
 
+      /* Der Zeilengriff traegt keine Eingabe: er behaelt die Polster der
+         Nummernspalte, nicht die der Erfassungszellen. */
+      .zeile.erfassung > div.griff { padding: 0; }
+
       /* Die Liste haengt aus der Zelle heraus; ohne sichtbaren Ueberlauf
          schnitte die Zelle sie ab. Gilt fuer jede Zelle, weil jede gebundene
          Spalte eine Liste zeigen kann. */

@@ -449,6 +449,11 @@ export class TabelleBlock extends BasicBlock {
                 : undefined,
             )
           : [],
+        // Die Nummernspalte gibt es genau mit der Erfassung. `griffAb` laesst
+        // die Nummern der Datenzeilen hinter den tippbaren weiterlaufen: auf
+        // dem Schirm zaehlt es durch.
+        mitGriff: this.erfassungAn,
+        griffAb: this.erfassungAn ? this._erfassung.anzahl : 0,
       }, {
         setzeSuchtext: (text) => this.setzeSuchtext(text),
         dblklickKopf: (e, i) => {

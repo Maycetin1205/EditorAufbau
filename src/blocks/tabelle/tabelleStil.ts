@@ -257,6 +257,34 @@ export const tabelleStil = css`
         cursor: default;
       }
 
+      /* Der Zeilengriff: die Nummernspalte links. Es gibt sie nur mit
+         Erfassung (s. zeilenGriff), und sie ist der GRIFF der Zeile — die
+         Demo des Nutzers zeigt daran, welche Zeile gemeint ist. Zweistellige
+         Nummer mit Tabellenziffern, damit die Spalte nicht springt. */
+      .kopf > div.griff,
+      .zeile > div.griff,
+      .lineal > div.griff {
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--se-fs-xs);
+        font-variant-numeric: tabular-nums;
+        color: var(--se-faint);
+        background: var(--se-panel-2);
+        border-right: var(--se-border) solid var(--se-line);
+        user-select: none;
+      }
+      /* Der Kopf hat oben links nichts zu klicken: sonst zeigte der Zeiger
+         dort eine Sortierung an, die es nicht gibt. */
+      .kopf > div.griff { cursor: default; }
+      .zeile.erfassung > div.griff { cursor: pointer; }
+      .zeile.erfassung > div.griff.aktiv {
+        color: var(--se-accent);
+        background: var(--se-accent-soft);
+        font-weight: 600;
+      }
+
       .steuerung { display: none; }
       :host([data-ff-editor]) .steuerung {
         position: absolute;

@@ -4,6 +4,7 @@ import { vorschlagListeTpl, type Vorschlag } from '../shared/vorschlagListe'
 import { spaltenArt } from './spaltenArten'
 import { zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import { ZELLE_PLATZHALTER } from './spalten'
+import { zeilenGriffTpl } from './zeilenGriff'
 
 // EINE tippbare Zeile. Es gibt sie mehrmals: jede noch nicht geschriebene
 // Position ist so eine Zeile, und die letzte ist die leere, in der es
@@ -33,6 +34,11 @@ export interface ErfassungsLage {
   // markiert — erst der Knopf macht daraus einen ERP-Satz.
   gefuellt: boolean
 
+  // Was im Zeilengriff steht. Eine tippbare Zeile hat immer einen: die
+  // Nummernspalte gibt es genau dann, wenn es die Erfassung gibt
+  // (s. zeilenGriff).
+  nummer: number
+
   // Ohne Kopfzeile übernimmt im Editor auch die Erfassungszelle den
   // Kopf-Griff (Klick öffnet den Feld-Picker der Spalte) — sie sieht aus wie
   // die Strich-Zeilen darunter und muss sich gleich anfassen lassen
@@ -59,6 +65,9 @@ export interface ErfassungsHandeln {
   tippen: (index: number, text: string) => void
   taste: (index: number, e: KeyboardEvent) => void
   verlassen: (index: number) => void
+
+  // Klick auf den Zeilengriff: diese Zeile ist gemeint.
+  waehleZeile: () => void
 
   // Der Fokus wandert in diese Zelle — auch per Maus oder Shift+Tab. Damit
   // wird ihre Zeile die aktive, ohne dass jemand tippt.
@@ -129,6 +138,11 @@ export function erfassungsZeileTpl(
     data-erf-zeile=${lage.zeile}
     style=${styleMap(lage.cols)}
   >
+    ${zeilenGriffTpl({
+      nummer: lage.nummer,
+      aktiv: lage.aktiv,
+      aufKlick: () => tun.waehleZeile(),
+    })}
     ${lage.umfeld.spalten.map((spalte, i) => {
       const klasse = spaltenArt(spalte.art).klasse
       // Im Editor gibt es keine Daten und keine Eingaben, sondern Striche —

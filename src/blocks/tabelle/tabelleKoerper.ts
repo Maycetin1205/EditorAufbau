@@ -3,6 +3,7 @@ import { styleMap } from 'lit/directives/style-map.js'
 import { leerZustand } from '../shared/leerZustand'
 import { ZELLE_PLATZHALTER, type Spalte } from './spalten'
 import { spaltenArt } from './spaltenArten'
+import { leererGriffTpl, zeilenGriffTpl } from './zeilenGriff'
 
 export interface KoerperLage {
   spalten: readonly Spalte[]
@@ -49,6 +50,12 @@ export interface KoerperLage {
   // Zeile, die LETZTE ist die leere, in der es weitergeht (S2.6). Leer =
   // Erfassung ausgeschaltet.
   erfassungsZeilen: readonly TemplateResult[]
+
+  // Die Nummernspalte links (nur mit Erfassung, s. zeilenGriff). `griffAb` ist
+  // die Zahl der tippbaren Zeilen darueber: die Datenzeilen zaehlen weiter,
+  // damit die Nummern auf dem Schirm durchlaufen.
+  mitGriff: boolean
+  griffAb: number
 }
 
 export interface KoerperHandeln {
@@ -70,6 +77,7 @@ function lineal(lage: KoerperLage): TemplateResult | typeof nothing {
         height: `calc(var(--zeilen-hoehe) * ${lage.linealTakte})`,
       }
   return html`<div class="lineal" role="presentation" style=${styleMap(stil)}>
+          ${lage.mitGriff ? leererGriffTpl() : nothing}
           ${lage.spalten.map(() => html`<div></div>`)}
         </div>`
 }
@@ -87,6 +95,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>` : ''}
       <div class="koerper" role=${lage.leer ? nothing : 'table'} tabindex="-1">
       ${lage.zeigeKopf ? html`<div class="kopf" role="row" style=${styleMap(lage.cols)}>
+        ${lage.mitGriff ? leererGriffTpl() : nothing}
         ${lage.spalten.map(
           (s, i) => html`<div
             class=${spaltenArt(s.art).klasse}
@@ -122,7 +131,10 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
               tun.aktiviereZeile(rohIndex, ansichtIndex)
             }}
           >
-            ${ ''}
+            ${lage.mitGriff ? zeilenGriffTpl({
+              nummer: rohIndex === null ? null : lage.griffAb + ansichtIndex + 1,
+              aktiv: false,
+            }) : nothing}
             ${lage.spalten.map((s, i) => {
               const art = spaltenArt(s.art)
               const wert = rohIndex !== null
