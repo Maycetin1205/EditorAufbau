@@ -17,6 +17,7 @@ import {
   elternZu,
   paareZu,
   passendeSaetze,
+  uebernahmeFeldIn,
   zielIn,
   type ErfassungsUmfeld,
 } from './erfassungsZellen'
@@ -202,15 +203,31 @@ export class ErfassungsLauf {
 
   // Ein Satz gilt immer für die ganze Quelle. Das Getippte ihrer Zellen fällt
   // dabei weg: sonst stünde dort das Suchwort und nicht der übernommene Wert.
+  //
+  // Und die zweite Haelfte, ohne die das Waehlen ins Leere lief
+  // (Nutzer-Befund 2026-08-20): eine Zelle mit EIGENEM Feld, die in dieser
+  // Quelle sucht, bekommt vom gewaehlten Satz nichts geliefert — kein
+  // Schluesselpaar sagt, welches Feld dort dasselbe bedeutet. Bis dahin blieb
+  // in ihr das SUCHWORT stehen, und genau das lief in den Beleg. Jetzt nimmt
+  // sie das Feld, das der Nutzer unter „Zeigt beim Suchen" gewaehlt hat —
+  // welches das ist, sagt `uebernahmeFeldIn`, und OHNE eigene Wahl bleibt es
+  // beim Getippten.
   private setze(umfeld: ErfassungsUmfeld, quelleId: string, satz: unknown): void {
     if (satz === undefined) {
       this.gewaehlt.delete(quelleId)
       this.vonHand.delete(quelleId)
     } else this.gewaehlt.set(quelleId, satz)
     for (let i = 0; i < umfeld.spalten.length; i++) {
-      if (zielIn(umfeld, i).quelleId === quelleId) {
+      const ziel = zielIn(umfeld, i)
+      if (ziel.quelleId === quelleId) {
         this.getippt.delete(i)
+        continue
       }
+      if (ziel.suchQuelleId !== quelleId) continue
+      const feld = uebernahmeFeldIn(umfeld, i)
+      if (feld === '') continue
+      if (satz === undefined) this.getippt.delete(i)
+      else this.getippt.set(i, getField(satz, feld))
     }
   }
 

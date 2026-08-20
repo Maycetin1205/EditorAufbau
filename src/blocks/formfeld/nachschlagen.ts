@@ -135,15 +135,21 @@ export function nachschlagEintraege(
 ): Eintrag[] {
   const anzeigeCode = anzeigeFeld.trim()
   const eintraege: Eintrag[] = []
-  const einspaltig = nurEineSpalte(anzeigeFeld, speicherFeld)
+  // Doppelte fallen weg, wo nur EINE Spalte zu sehen ist — dazu gehört auch
+  // der Fall ohne Speicherfeld: eine Spalte, die ein Feld ihrer Hilfstabelle
+  // nur ANZEIGT (die Tierart aus dem Artikelstamm), listete sonst jeden
+  // Artikel einzeln und damit dieselbe Tierart hundertmal.
+  const einspaltig = nurEineSpalte(anzeigeFeld, speicherFeld) || speicherFeld.trim() === ''
   const gesehen = new Set<string>()
   for (const row of rows) {
     const wert = getField(row, speicherFeld).trim()
     const anzeige = anzeigeCode === '' ? wert : getField(row, anzeigeCode).trim()
     if (anzeige === '' && wert === '') continue
     if (einspaltig) {
-      if (gesehen.has(wert)) continue
-      gesehen.add(wert)
+      // Ohne Speicherfeld ist die Anzeige das einzige Unterscheidungsmerkmal.
+      const schluessel = wert !== '' ? wert : anzeige
+      if (gesehen.has(schluessel)) continue
+      gesehen.add(schluessel)
     }
     eintraege.push({ anzeige, wert, satz: row })
   }

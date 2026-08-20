@@ -1,85 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { BausteinQuelle } from '../../core/data/sourceLinks'
-import { seGlobal } from '../../softengine/bridge'
+import {
+  ARTIKEL,
+  GABE_TEXT,
+  MENGE,
+  quellenStellen,
+  spalte,
+  umfeldMit,
+  ZEILE,
+} from '../../test/erfassungsBogen'
 import { ErfassungsAnschluss } from './erfassungsAnschluss'
 import { ErfassungsLauf } from './erfassungsLauf'
-import { anzeigeSpalteIn, fensterSpaltenIn, zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
-import type { Spalte } from './spalten'
-
-const spalte = (teil: Partial<Spalte>): Spalte => ({
-  titel: 'Spalte', feld: '', art: 'text', ...teil,
-})
-
-// Das Nutzer-Modell (2026-08-19): die Tabelle zeigt die BELEGPOSITIONEN, und
-// jede schreibende Spalte ist ein FELD DER POSITION. WO eine Zelle beim
-// Erfassen sucht, WÄHLT der Nutzer am Spaltenkopf („Sucht beim Erfassen in") —
-// abgeleitet wird das seit dem 19.08. nicht mehr. Welchen Wert der gewählte
-// Satz liefert, sagt weiter die Verknüpfung (Schlüsselpaar
-// Position.Artikelnummer ↔ Stamm.Artikelnummer).
-//
-// Der Bogen mischt darum absichtlich beides: Spalten, die suchen (Artikel,
-// Bezeichnung, Gabe), und eine reine Anzeige-Spalte, die nur zeigt, was der
-// gewählte Satz liefert (Gabe im Klartext).
-const ARTIKEL = spalte({ titel: 'Artikel', feld: '10_8', suchtIn: 'q-art' })
-const BEZEICHNUNG = spalte({ titel: 'Bezeichnung', feld: 'q-art::30_40', suchtIn: 'q-art' })
-const MENGE = spalte({ titel: 'Menge', feld: '11_6', art: 'zahl' })
-const GABE = spalte({ titel: 'Gabe', feld: 'q-gabe::5_4', suchtIn: 'q-gabe' })
-const GABE_TEXT = spalte({ titel: 'Gabe im Klartext', feld: 'q-gabe::9_20' })
-const NOTIZ = spalte({ titel: 'Notiz' })
-
-const ZEILE = [ARTIKEL, BEZEICHNUNG, MENGE, GABE, GABE_TEXT, NOTIZ]
-
-// „Woran erkennt man die zusammengehörige Zeile?" — dieselbe Angabe, die die
-// Datenzeile längst benutzt (weitereQuellen am Baustein). Der gewählte
-// Artikel liefert der werdenden Position Artikelnummer UND Tierart; an der
-// Tierart hängt die Gabe.
-const VERKNUEPFUNGEN: BausteinQuelle[] = [
-  {
-    quelleId: 'q-art',
-    keyPairs: [
-      { fromField: '10_8', toField: '3_18' },
-      { fromField: '12_4', toField: '40_4' },
-    ],
-  },
-  { quelleId: 'q-gabe', keyPairs: [{ fromField: '12_4', toField: '2_4' }] },
-]
-
-function umfeldMit(
-  spalten: readonly Spalte[] = ZEILE,
-  verknuepfungen: readonly BausteinQuelle[] = VERKNUEPFUNGEN,
-): ErfassungsUmfeld {
-  return { spalten, quelleId: 'q-pos', verknuepfungen }
-}
-
-function quellenStellen(): void {
-  const g = seGlobal()
-  g.FF_DATA_SOURCES = [
-    { id: 'q-art', name: 'Artikel', tableId: 'ART', kind: 'art' },
-    { id: 'q-gabe', name: 'Gaben', tableId: 'IDBID0001', kind: 'idb' },
-  ]
-  g.SEDATA = {
-    Daten: {
-      SEFileLoop: [
-        {
-          ALIAS: 'Artikel',
-          Zeilen: [
-            { '3_18': 'ART03045', '30_40': 'Baytril 25mg', '40_4': 'HUND' },
-            { '3_18': 'ART00112', '30_40': 'Verband klein', '40_4': 'KATZ' },
-            { '3_18': 'ART00999', '30_40': 'Spritze 5ml', '40_4': 'VOGEL' },
-          ],
-        },
-        {
-          ALIAS: 'Gaben',
-          Zeilen: [
-            { '5_4': 'ORAL', '9_20': 'oral', '2_4': 'HUND' },
-            { '5_4': 'INJ', '9_20': 'Injektion', '2_4': 'HUND' },
-            { '5_4': 'SALB', '9_20': 'Salbe', '2_4': 'KATZ' },
-          ],
-        },
-      ],
-    },
-  }
-}
+import { anzeigeSpalteIn, fensterSpaltenIn, zielIn } from './erfassungsZellen'
 
 describe('Zellen der Erfassungszeile', () => {
   it('nimmt Feld UND Sucht-in-Wahl der Spalte, leitet nichts ab', () => {
@@ -411,6 +342,27 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(u, 1)).toBe('')
     expect(lauf.wertVon(u, 2)).toBe('')
     expect(lauf.wertVon(u, 3)).toBe('')
+  })
+
+  it('ohne Schluesselpaar landet in der Zelle, WAS IN DER LISTE STAND', () => {
+    // Der Nutzer-Fall 2026-08-20: die Spalte zeigt ein Feld der Belegposition
+    // (20_4), sucht aber im Artikelstamm — und fuer 20_4 gibt es KEIN
+    // Schluesselpaar. Vorher blieb nach dem Waehlen das Suchwort stehen, und
+    // genau das lief in den Beleg.
+    const TIERART = spalte({
+      titel: 'Tierart',
+      feld: '20_4',
+      suchtIn: 'q-art',
+      suchFelder: [{ feld: '40_4', titel: 'Tierart' }],
+    })
+    const u = umfeldMit([TIERART, MENGE])
+    expect(zielIn(u, 0).art).toBe('eigen')
+
+    lauf.tippe(0, 'HUN')
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.vorschlaege.map((v) => v.anzeige)).toEqual(['HUND'])
+    lauf.uebernimm(u, 0, lauf.vorschlaege[0].satz)
+    expect(lauf.wertVon(u, 0)).toBe('HUND')
   })
 
   it('genau EIN Treffer beim Tippen fuellt sich selbst — ab dem zweiten Zeichen', () => {

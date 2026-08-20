@@ -168,3 +168,19 @@ export function passendeSaetze(
     (b) => b.soll !== '' && b.soll === getField(satz, b.toField),
   ))
 }
+
+// Welches Feld der Such-Quelle in die ZELLE kommt, wenn dort ein Satz gewählt
+// wird und die Spalte selbst kein Feld dieser Quelle liest (kein
+// Schlüsselpaar). Das ist genau das, was der Nutzer unter „Zeigt beim Suchen"
+// ZUERST gewählt hat — hat er dort ein Feld bestimmt, will er dessen Wert in
+// der Zelle stehen sehen (Nutzer-Befund 2026-08-20: „ich wähle Datenquelle B
+// und das Feld dazu und drücke Enter, aber das wird nicht übernommen").
+//
+// OHNE eigene Wahl bleibt das Getippte stehen: dann sucht die Zelle nur, um
+// den Satz für die ZEILE zu bestimmen, und die Nachbarspalte zeigt ihn. Eine
+// Menge, die in den Gaben sucht, darf nicht plötzlich „Injektion" heißen.
+export function uebernahmeFeldIn(umfeld: ErfassungsUmfeld, index: number): string {
+  const ziel = zielIn(umfeld, index)
+  if (ziel.art !== 'eigen' || ziel.suchQuelleId === '') return ''
+  return gewaehlteSuchFelder(umfeld, index)[0]?.feld ?? ''
+}
