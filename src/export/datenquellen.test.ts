@@ -277,10 +277,14 @@ describe('exportMask: Datenquellen', () => {
 
     const sev = JSON.parse(exportMask(tree, 'Maske', sources).sevariablen)
     // Die Bestellung landet NICHT in der SEFILELOOP: CHA & Co. gibt es dort
-    // nicht, genau deshalb existiert der DATASET-Weg.
-    expect(sev.SEFILELOOP).toEqual([])
+    // nicht, genau deshalb existiert der DATASET-Weg. Ohne SEFILELOOP-Quelle
+    // faellt der Block ganz weg — leere Bloecke schreibt keine echte Maske.
+    expect('SEFILELOOP' in sev).toBe(false)
+    // FELDER bleibt '*': die Spaltenauswahl trifft die DataSet-Definition in
+    // SoftEngine, und die gelieferten Zeilen tragen andere Schluessel als die
+    // Spaltennamen (s. sevariablen.ts).
     expect(sev.DATASET).toEqual([
-      { ID: 'ID0001', ALIAS: 'Chargen', FELDER: 'Chargennummer,Lagerbestand' },
+      { ID: 'ID0001', ALIAS: 'Chargen', FELDER: '*' },
     ])
   })
 

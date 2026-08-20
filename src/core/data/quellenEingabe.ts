@@ -10,9 +10,15 @@ export function fieldCode(pos: string, len: string, vorsatz = ''): string {
 
 const VORSATZ_FORM = /^[A-Za-z0-9_]+$/
 
+// Der Trenner gehoert dazu und wird ergaenzt, wenn er fehlt. Anlass
+// (Nutzer-Fall 2026-08-20): eingetippt war „ART", herausgekommen ist
+// `ART1_25` statt `ART_1_25`. SoftEngine meldet das NICHT — es liefert
+// Saetze ohne Inhalt zurueck (`TFELD: ""`, hunderte leere Zeilen), und wer
+// das sieht, sucht den Fehler ueberall, nur nicht im Vorsatz.
 export function feldVorsatzFromInput(raw: string): string {
   const t = raw.trim()
-  return t !== '' && VORSATZ_FORM.test(t) ? t : ''
+  if (t === '' || !VORSATZ_FORM.test(t)) return ''
+  return t.endsWith('_') ? t : `${t}_`
 }
 
 const KENNUNG_IDB_KURZ = /^(?:IDB)?ID(\d{1,4})$/i

@@ -146,9 +146,11 @@ describe('exportMask', () => {
     expect(html).toContain('&#xDC;bersicht')
   })
 
-  it('SEvariablen-JSON ist das leere, gültige Gerüst', () => {
+  // Leer heisst LEER: keine einzige echte SoftEngine-Maske schreibt je einen
+  // leeren Block (nachgezaehlt an allen 19, 2026-08-20) — eine schreibt `{}`.
+  it('SEvariablen-JSON ist ohne Quelle das leere Objekt', () => {
     const { sevariablen } = exportMask(demoTree())
-    expect(JSON.parse(sevariablen)).toEqual({ SEFILELOOP: [], ERPAPICALL: [] })
+    expect(JSON.parse(sevariablen)).toEqual({})
   })
 
   it('ohne Rand-Baustein bleibt die Wurzel-Regel unveraendert (N2.1)', () => {

@@ -116,7 +116,7 @@ describe('exportMask: Kopfsatz und VAR', () => {
     ]
 
     const { sevariablen } = exportMask(tree, 'Maske', sources)
-    expect(Object.keys(JSON.parse(sevariablen))).toEqual(['SEFILELOOP', 'ERPAPICALL'])
+    expect(Object.keys(JSON.parse(sevariablen))).toEqual(['SEFILELOOP'])
   })
 
   it.todo('bestellt den offenen Satz im VAR-Abschnitt, die Liste bleibt in der SEFILELOOP', () => {
@@ -153,7 +153,6 @@ describe('exportMask: Kopfsatz und VAR', () => {
           KOPFSATZ_INDEX: 'BEL_0_11', FELDER: '18_25',
         },
       ],
-      ERPAPICALL: [],
     })
 
     expect(html).toContain('"tableId":"BEL","indexField":"","offenerSatz":true')

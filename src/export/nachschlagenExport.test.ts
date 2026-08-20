@@ -239,7 +239,7 @@ describe('Nachschlage-Feld im Export', () => {
   it('zurueckgestellter Feldtyp laesst die Nachschlage-Quelle daheim', () => {
     const tree = baumMit({ ...KUNDE_PROPS, fieldType: 'text', speicherFeld: '999_9' })
     const { sevariablen } = exportMask(tree, 'Maske', ADRESSEN)
-    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([])
+    expect('SEFILELOOP' in JSON.parse(sevariablen)).toBe(false)
     expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
   })
 })
