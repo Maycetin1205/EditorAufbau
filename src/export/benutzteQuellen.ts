@@ -64,10 +64,12 @@ export function collectDataSources(
     // KEINER Verknuepfung (seit 2026-08-20) und stuende sonst in keiner
     // Bestellung: SoftEngine liefert sie nicht, die Liste bliebe leer.
     const listen = def?.listenBindung
-    if (listen?.eintragsQuellenWahl) {
+    if (listen) {
       const wahl = listen.eintragsQuellenWahl
       for (const eintrag of listeLesen(node.props[listen.prop], listen)) {
-        add(eintragsQuellenWahlWert(wahl, eintrag))
+        if (wahl) add(eintragsQuellenWahlWert(wahl, eintrag))
+        // Und die Quelle, die eine Spalte in ihrer Bindung beim Namen nennt.
+        add(zerlegeBindung(String(eintrag[listen.feldKey] ?? '')).quelleId)
       }
     }
 
@@ -103,10 +105,17 @@ export function benutzteFelderJeQuelle(
     const merkeBindung = (wert: unknown): void => {
       if (typeof wert !== 'string' || wert === '') return
       const { quelleId, code } = zerlegeBindung(wert)
-      const ziel = quelleId === ''
-        ? inReichweite()[0]
-        : inReichweite().find((q) => q.source.id === quelleId)
-      if (ziel) merke(ziel.source.id, code)
+      if (quelleId === '') {
+        const eigene = inReichweite()[0]
+        if (eigene) merke(eigene.source.id, code)
+        return
+      }
+      // Nennt die Bindung ihre Quelle beim Namen, gilt sie — auch wenn diese
+      // nicht in Reichweite haengt. Eine Spalte darf zeigen, was der in einer
+      // Hilfstabelle gewaehlte Satz liefert, ohne Verknuepfung dorthin
+      // (Nutzer-Fall 2026-08-20); ohne diese Zeile bestellte der Export ihr
+      // Feld nicht und die Spalte bliebe in SoftEngine leer.
+      if (sources.some((s) => s.id === quelleId)) merke(quelleId, code)
     }
 
     for (const spot of bindbareStellenVon(node)) {

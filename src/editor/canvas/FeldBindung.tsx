@@ -263,13 +263,39 @@ export function useFeldBindung({
         const gesetzteQuelle = zerlegeBindung(
           String(eintrag[listenBindung.feldKey] ?? ''),
         ).quelleId
-        const listenGruppen: PickerGruppe[] = listenBindung.nurEigeneQuelle === true
-          ? alleGruppen.filter((g, i) => i === 0 || g.quelleId === gesetzteQuelle)
-          : alleGruppen
+        // Und die Quelle, in der DIESER Eintrag beim Erfassen sucht, gehoert
+        // dazu: eine Spalte darf zeigen, was der dort gewaehlte Satz liefert —
+        // die Tierart des Artikels, obwohl die Belegposition gar kein Feld
+        // dafuer hat (Nutzer-Fall 2026-08-20). Ohne sie blieb nur der Umweg
+        // ueber eine Verknuepfung, und die braucht ein Schluesselpaar, das es
+        // in der Position nicht gibt.
+        const quellenWahl = listenBindung.eintragsQuellenWahl
+        const gesuchteQuelleId = quellenWahl === undefined
+          ? ''
+          : eintragsQuellenWahlWert(quellenWahl, eintrag)
+        const nachgereicht = proQuelle
+          || gesuchteQuelleId === ''
+          || alleGruppen.some((g) => g.quelleId === gesuchteQuelleId)
+          ? undefined
+          : bibliothek.find((s) => s.id === gesuchteQuelleId)
+        const listenGruppen: PickerGruppe[] = [
+          ...(listenBindung.nurEigeneQuelle === true
+            ? alleGruppen.filter(
+              (g, i) => i === 0
+                || g.quelleId === gesetzteQuelle
+                || g.quelleId === gesuchteQuelleId,
+            )
+            : alleGruppen),
+          ...(nachgereicht === undefined ? [] : [{
+            quelleId: nachgereicht.id,
+            name: nachgereicht.name,
+            kennung: quellenKennung(nachgereicht),
+            fields: nachgereicht.fields,
+          }]),
+        ]
         const titelJetzt = String(eintrag[listenBindung.titelKey] ?? '')
         const wahl = listenBindung.eintragsWahl
         const zuo = listenBindung.eintragsZuordnung
-        const quellenWahl = listenBindung.eintragsQuellenWahl
 
         // Die Wahl unter den Verknuepfungen zeigt nur, wenn die Registry sie
         // deklariert UND die Erfassungs-Faehigkeit des Bausteins gerade an ist
