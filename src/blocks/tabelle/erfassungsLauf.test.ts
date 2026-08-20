@@ -404,7 +404,7 @@ describe('ErfassungsLauf', () => {
     expect(saetze[0]['q-pos']).toEqual({ '10_8': 'ART03045', '11_6': '2' })
   })
 
-  it('erfasste Zeilen bleiben anfassbar — weiter, duplizieren, einzeln loeschen (S2.6/S2.7)', () => {
+  it('die Erfassungszeile bleibt OBEN — Enter schiebt die fertige Zeile nach unten', () => {
     const anschluss = new ErfassungsAnschluss()
     const u = umfeldMit()
     const erste = anschluss.lauf(0)
@@ -413,30 +413,42 @@ describe('ErfassungsLauf', () => {
     erste.uebernimm(u, 0, erste.vorschlaege[0].satz)
     erste.tippe(2, '2')
 
-    // Enter am Zeilenende: die getippte Zeile BLEIBT und wird nicht zu totem
-    // Text — eine neue leere kommt darunter.
+    // Enter am Zeilenende: die Tippstelle bleibt Zeile 0, die fertige Zeile
+    // steht darunter — sie wandert, nicht der Cursor.
     expect(anschluss.anzahl).toBe(1)
-    expect(anschluss.weiter(u, 0)).toBe(1)
+    expect(anschluss.weiter(u, 0)).toBe(0)
     expect(anschluss.anzahl).toBe(2)
-    expect(anschluss.aktiv).toBe(1)
-    anschluss.lauf(0).tippe(2, '5')
-    expect(anschluss.werte(u, 0)[2]).toBe('5')
+    expect(anschluss.aktiv).toBe(0)
+    expect(anschluss.istLeer(u, 0)).toBe(true)
+    expect(anschluss.werte(u, 1)[2]).toBe('2')
 
-    // Eine leere letzte Zeile legt keine weitere an: sonst wuechse die Liste
-    // beim Enter-Halten.
-    expect(anschluss.weiter(u, 1)).toBe(1)
+    // Die erfasste Zeile ist nicht tot: sie laesst sich weiter aendern.
+    anschluss.lauf(1).tippe(2, '5')
+    expect(anschluss.werte(u, 1)[2]).toBe('5')
+
+    // Eine leere Erfassungszeile legt nichts an: sonst wuechse der Stapel beim
+    // Enter-Halten.
+    expect(anschluss.weiter(u, 0)).toBe(null)
     expect(anschluss.anzahl).toBe(2)
 
-    // Duplizieren traegt den gewaehlten Satz mit, nicht nur den Text: die
-    // Kopie zeigt die gekoppelte Bezeichnung genauso.
-    expect(anschluss.doppelt(0)).toBe(1)
+    // Aus einer erfassten Zeile fuehrt Enter zurueck nach oben.
+    expect(anschluss.weiter(u, 1)).toBe(0)
+
+    // Duplizieren traegt den gewaehlten Satz mit, nicht nur den Text.
+    expect(anschluss.doppelt(1)).toBe(2)
     expect(anschluss.anzahl).toBe(3)
-    expect(anschluss.werte(u, 1)).toEqual(anschluss.werte(u, 0))
+    expect(anschluss.werte(u, 2)).toEqual(anschluss.werte(u, 1))
 
     // Es faellt genau EINE Zeile, nicht die ganze Erfassung.
-    anschluss.loesche(1)
+    anschluss.loesche(2)
     expect(anschluss.anzahl).toBe(2)
-    expect(anschluss.werte(u, 0)[0]).toBe('ART03045')
+    expect(anschluss.werte(u, 1)[0]).toBe('ART03045')
+
+    // Die Erfassungszeile selbst faellt nie weg — sie wird nur leer.
+    anschluss.lauf(0).tippe(2, '9')
+    expect(anschluss.loesche(0)).toBe(true)
+    expect(anschluss.anzahl).toBe(2)
+    expect(anschluss.istLeer(u, 0)).toBe(true)
 
     // Leere Zeilen sind keine Positionen — der Knopf sieht nur die gefuellte.
     expect(anschluss.saetze(u)).toHaveLength(1)

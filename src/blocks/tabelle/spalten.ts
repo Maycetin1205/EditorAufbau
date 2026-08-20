@@ -51,7 +51,10 @@ function alsSuchFelder(v: unknown): SuchFeld[] {
 export const ZELLE_PLATZHALTER = '—'
 
 export const SPALTEN_MIN = 1
-export const SPALTEN_MAX = 8
+// Der Deckel ist kein Fachwert, sondern ein Schutz gegen eine kaputte
+// gespeicherte Maske. Er lag bis 2026-08-20 bei 8 — genau der Spaltenzahl der
+// Demo, an der der Nutzer damit sofort anstand.
+export const SPALTEN_MAX = 16
 
 export const STANDARD_TITEL = 'Spalte {n}'
 

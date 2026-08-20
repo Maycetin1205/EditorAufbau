@@ -9,19 +9,22 @@ export function gemessenesMass(ziel: MessZiel, takt: number): Zeilenmass | null 
   if (!ziel.hasAttribute('fuellt')) return null
   const rumpf = ziel.renderRoot.querySelector('.koerper')
   if (!(rumpf instanceof HTMLElement)) return null
-  // Abgezogen wird ALLES im Rumpf, was keine Datenzeile ist: die Kopfzeile
-  // und die Erfassungszeile. Fehlt eine davon, ist sie schlicht 0 hoch.
+  // Abgezogen wird die KOPFZEILE — und nur sie. Fehlt sie, ist sie 0 hoch.
   //
-  // Die Erfassungszeile fehlte hier bis 2026-08-20, und mit Kopfzeile fiel das
-  // nicht auf: der Kopf war genauso hoch und hat den Platz zufaellig
-  // freigehalten. Schlank nimmt den Kopf weg — und damit passte genau eine
-  // Zeile zu viel in den Rumpf, die Tabelle bekam einen Scrollbalken, egal wie
-  // gross man sie zog (Nutzer-Befund 2026-08-20).
+  // Die tippbaren Zeilen zieht `tabelleAnsicht` ueber `belegt` von der
+  // Zeilenzahl ab. Sie hier NOCH einmal abzuziehen war ein doppelter Abzug: es
+  // blieb unten genau eine Zeilenhoehe Platz uebrig — das leere Band ohne
+  // Linien am Boden (Nutzer-Befund 2026-08-20: „es gibt eine leere letzte
+  // Zeile OHNE Linien oder sonst was"). Beide Abzuege kamen am selben Tag und
+  // wollten denselben Scrollbalken verhindern; einer davon reicht.
+  //
+  // `passen` heisst damit: wie viele Zeilen ausser dem Kopf in den Rumpf
+  // gehen, die tippbaren eingeschlossen.
   const hoeheVon = (auswahl: string): number => {
     const el = ziel.renderRoot.querySelector(auswahl)
     return el instanceof HTMLElement ? el.offsetHeight : 0
   }
-  return zeilenmass(rumpf.clientHeight, hoeheVon('.kopf') + hoeheVon('.zeile.erfassung'), takt)
+  return zeilenmass(rumpf.clientHeight, hoeheVon('.kopf'), takt)
 }
 
 export function beobachteRumpf(ziel: MessZiel, beiAenderung: () => void): ResizeObserver | null {

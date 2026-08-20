@@ -6,9 +6,9 @@ import { zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import { ZELLE_PLATZHALTER } from './spalten'
 import { zeilenGriffTpl } from './zeilenGriff'
 
-// EINE tippbare Zeile. Es gibt sie mehrmals: jede noch nicht geschriebene
-// Position ist so eine Zeile, und die letzte ist die leere, in der es
-// weitergeht (S2.6). Sie ist eine FÄHIGKEIT der Tabelle und kein eigener
+// EINE tippbare Zeile. Es gibt sie mehrmals: die erste ist die
+// Erfassungszeile (immer oben), darunter steht jede noch nicht geschriebene
+// Position als eigene, weiter anfassbare Zeile (S2.6). Sie ist eine FÄHIGKEIT der Tabelle und kein eigener
 // Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle ohne sie
 // exportiert wie zuvor. Was eine Zelle tut, steht an ihrer Spalte (Feld +
 // „Sucht beim Erfassen in") — an der Zeile selbst wird nichts eingestellt.

@@ -88,13 +88,15 @@ function springe(
     wirt.fokussiere(zeile, rechts)
     return
   }
+  // Enter erfasst und bleibt oben (s. ErfassungsAnschluss.weiter); Tab laeuft
+  // stur in die naechste Zeile und erfasst nichts.
   const naechste = taste === 'enter'
     ? wirt.anschluss.weiter(umfeld, zeile)
-    : Math.min(zeile + 1, wirt.anschluss.anzahl - 1)
-  if (naechste === zeile) return
+    : (zeile + 1 < wirt.anschluss.anzahl ? zeile + 1 : null)
+  if (naechste === null) return
   if (taste === 'tab') wirt.anschluss.waehle(naechste)
-  // In der neuen Zeile beginnt es wieder bei der ersten LEEREN Zelle — bei
-  // einer duplizierten Zeile ist das nicht die erste.
+  // In der Zielzeile beginnt es bei der ersten LEEREN Zelle — bei einer
+  // erfassten oder duplizierten Zeile ist das nicht die erste.
   const leer = wirt.anschluss.lauf(naechste).naechsteLeere(umfeld, -1)
   wirt.fokussiere(naechste, taste === 'enter' && leer !== -1 ? leer : 0)
 }
@@ -138,9 +140,10 @@ function taste(wirt: ErfassungsWirt, zeile: number, index: number, e: KeyboardEv
   wirt.melde()
 }
 
-// Alle tippbaren Zeilen. Die letzte ist die leere, in der es weitergeht; die
-// darüber sind erfasste Positionen, die noch niemand geschrieben hat — und
-// die deshalb weiter anfassbar bleiben (S2.7).
+// Alle tippbaren Zeilen. Die ERSTE ist die Erfassungszeile — sie steht immer
+// oben und wandert nicht mit; darunter stehen die erfassten Positionen, die
+// noch niemand geschrieben hat, und die deshalb weiter anfassbar bleiben
+// (S2.7).
 export function erfassungsZeilenFuer(
   wirt: ErfassungsWirt,
   cols: Readonly<Record<string, string>>,

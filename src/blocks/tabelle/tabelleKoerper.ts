@@ -46,8 +46,8 @@ export interface KoerperLage {
   // haben eigenen Grund und eine Kante, und im Editor stehen die Spaltennamen
   // in ihren Zellen).
   //
-  // Es sind MEHRERE: jede noch nicht geschriebene Position ist eine tippbare
-  // Zeile, die LETZTE ist die leere, in der es weitergeht (S2.6). Leer =
+  // Es sind MEHRERE: die ERSTE ist die Erfassungszeile (immer oben, wandert
+  // nicht mit), darunter stehen die erfassten Positionen (S2.6). Leer =
   // Erfassung ausgeschaltet.
   erfassungsZeilen: readonly TemplateResult[]
 
