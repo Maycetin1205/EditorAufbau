@@ -362,7 +362,7 @@ export class TabelleBlock extends BasicBlock {
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed)
     if (!this.erfassungAn || this.hasAttribute('data-ff-editor')) return
-    this._erfassung.aktiverLauf.aktualisiereVorschlaege(this.erfassungsUmfeld())
+    this._erfassung.haltVorschlaegeAktuell(this.erfassungsUmfeld())
   }
 
   protected override updated(): void {

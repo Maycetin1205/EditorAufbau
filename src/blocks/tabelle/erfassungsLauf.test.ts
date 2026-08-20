@@ -413,6 +413,29 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(u, 3)).toBe('')
   })
 
+  it('genau EIN Treffer beim Tippen fuellt sich selbst — ab dem zweiten Zeichen', () => {
+    const u = umfeldMit()
+    // Ein Zeichen: „y" trifft nur den Baytril, aber die Automatik haelt sich
+    // zurueck — beim ersten Buchstaben ist ein Alleintreffer Zufall.
+    lauf.tippe(0, 'y')
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.vorschlaege).toHaveLength(1)
+    expect(lauf.nimmEinzigenTreffer(u)).toBe(false)
+    expect(lauf.wertVon(u, 0)).toBe('y')
+
+    // Ab dem zweiten Zeichen nimmt die Zeile den Alleintreffer von selbst —
+    // samt der gekoppelten Bezeichnung, ohne Enter.
+    lauf.tippe(0, 'bay')
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.nimmEinzigenTreffer(u)).toBe(true)
+    expect(lauf.wertVon(u, 0)).toBe('ART03045')
+    expect(lauf.wertVon(u, 1)).toBe('Baytril 25mg')
+
+    // Und nicht zweimal: was schon da steht, uebernimmt sich nicht neu.
+    lauf.aktualisiereVorschlaege(u)
+    expect(lauf.nimmEinzigenTreffer(u)).toBe(false)
+  })
+
   it('die erfasste Zeile traegt Getipptes UND Gekoppeltes — das liest der Knopf', () => {
     const anschluss = new ErfassungsAnschluss()
     const u = umfeldMit()

@@ -181,6 +181,17 @@ export class ErfassungsAnschluss {
     this._aktiv = 0
   }
 
+  // Einmal je Darstellung: die Liste der AKTIVEN Zeile neu rechnen und einen
+  // einzigen Treffer gleich nehmen. Nur die aktive Zeile tippt, also braucht
+  // keine andere eine Liste. Nach dem Uebernehmen ist die Liste eine andere —
+  // darum ein zweites Mal rechnen, sonst zeigte die Zelle noch den Treffer an,
+  // den sie gerade verbraucht hat.
+  haltVorschlaegeAktuell(umfeld: ErfassungsUmfeld): void {
+    const lauf = this.aktiverLauf
+    lauf.aktualisiereVorschlaege(umfeld)
+    if (lauf.nimmEinzigenTreffer(umfeld)) lauf.aktualisiereVorschlaege(umfeld)
+  }
+
   // Die Erfassungszeile leitet alles aus zwei vorhandenen Angaben ab: der
   // Bindung jeder Spalte und der Verknuepfung des Bausteins (Attribut am
   // Element) — sie braucht keine eigene Einstellung.

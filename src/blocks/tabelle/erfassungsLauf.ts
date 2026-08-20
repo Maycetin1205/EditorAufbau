@@ -21,6 +21,12 @@ import {
   type ErfassungsUmfeld,
 } from './erfassungsZellen'
 
+// Ab dem zweiten getippten Zeichen fuellt sich ein einziger Treffer selbst.
+// Beim ERSTEN Buchstaben ist ein einziger Treffer meistens Zufall, und ein
+// Feld, das sich beim ersten Tastendruck selbst fuellt, fuehlt sich wie ein
+// Fehler an. Dieselbe Schwelle wie in der Demo des Nutzers (`autoSingle`).
+const AUTO_AB_ZEICHEN = 2
+
 // Der Tastenentscheid der Erfassungszeile: die geteilten Folgen der
 // Vorschlagsliste plus die zwei, die nur die Zeile kennt — weiterspringen
 // (G3b) und die zweite Escape-Stufe.
@@ -322,6 +328,25 @@ export class ErfassungsLauf {
     this._marke = 0
     this._listeZu = false
     this._vorschlaege = []
+  }
+
+  // Genau EIN Treffer beim Tippen fuellt sich selbst — so macht es die Demo
+  // des Nutzers, und das ist der halbe Tempogewinn: wer „bay" tippt, hat den
+  // Baytril schon, ohne Enter. Getrennt von `aktualisiereVorschlaege`
+  // gehalten, damit „was steht in der Liste" und „was nimmt sich die Zeile"
+  // zwei Fragen bleiben — sonst koennte man das eine nicht pruefen, ohne das
+  // andere auszuloesen.
+  nimmEinzigenTreffer(umfeld: ErfassungsUmfeld): boolean {
+    const index = this._tippSpalte
+    if (index < 0 || this._vorschlaege.length !== 1) return false
+    const getippt = (this.getippt.get(index) ?? '').trim()
+    if (getippt.length < AUTO_AB_ZEICHEN) return false
+    const treffer = this._vorschlaege[0]
+    // Steht der Treffer schon genau da, ist nichts zu tun: sonst uebernaehme
+    // sich die Zelle bei jedem Rendern neu.
+    if (treffer.wert === getippt) return false
+    this.uebernimm(umfeld, index, treffer.satz)
+    return true
   }
 
   // Wie in G1 einmal je Darstellung berechnet: Tastatur und Anzeige müssen
