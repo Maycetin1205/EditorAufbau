@@ -102,8 +102,8 @@ function springe(
 }
 
 // Die Pfeile hoch/runter, wenn keine Liste offen ist: dieselbe Spalte, eine
-// Zeile weiter. Über das Ende hinaus wird NICHTS angelegt — Zeilen entstehen
-// nur durch Enter oder das Werkzeug, sonst wächst die Liste beim Umsehen.
+// Zeile weiter. Über das Ende hinaus wird NICHTS angelegt — die naechste
+// Zeile haengt sich an, sobald in der letzten etwas steht, nicht beim Umsehen.
 function zeilenSprung(
   wirt: ErfassungsWirt,
   zeile: number,
@@ -140,13 +140,14 @@ function taste(wirt: ErfassungsWirt, zeile: number, index: number, e: KeyboardEv
   wirt.melde()
 }
 
-// Alle tippbaren Zeilen. Die ERSTE ist die Erfassungszeile — sie steht immer
-// oben und wandert nicht mit; darunter stehen die erfassten Positionen, die
-// noch niemand geschrieben hat, und die deshalb weiter anfassbar bleiben
-// (S2.7).
+// Alle tippbaren Zeilen. Sie stehen UNTER den gelieferten Daten, die letzte
+// ist immer leer, und der Zeiger wandert in ihnen — es gibt keine
+// Erfassungszeile mehr (Nutzer-Ansage 2026-08-20). `nummerAb` ist die Zahl
+// der Datenzeilen darueber, damit die Nummernspalte durchzaehlt.
 export function erfassungsZeilenFuer(
   wirt: ErfassungsWirt,
   cols: Readonly<Record<string, string>>,
+  nummerAb: number,
   listeNachOben: boolean,
   zellenGriff?: (e: MouseEvent, index: number) => void,
 ): TemplateResult[] {
@@ -171,7 +172,7 @@ export function erfassungsZeilenFuer(
       vorschlaege: aktiv ? lauf.vorschlaege : [],
       marke: lauf.marke,
       listeNachOben,
-      nummer: zeile + 1,
+      nummer: nummerAb + zeile + 1,
     }, {
       // Was der Bediener tippt, gehört der Zeile — kein Daten-Push räumt es
       // weg (das tut nur ein Zweckwechsel des Bausteins).

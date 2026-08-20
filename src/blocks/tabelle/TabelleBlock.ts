@@ -362,6 +362,7 @@ export class TabelleBlock extends BasicBlock {
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed)
     if (!this.erfassungAn || this.hasAttribute('data-ff-editor')) return
+    this._erfassung.haltLeerzeileFrei(this.erfassungsUmfeld())
     this._erfassung.haltVorschlaegeAktuell(this.erfassungsUmfeld())
   }
 
@@ -434,9 +435,10 @@ export class TabelleBlock extends BasicBlock {
           ? erfassungsZeilenFuer(
               this.erfassungsWirt(),
               ansicht.cols,
-              // Die Zeilen stehen ganz oben — unter ihnen liegt der ganze
-              // Rumpf, die Liste klappt immer nach unten auf.
-              false,
+              ansicht.zeilen.length,
+              // Die Zeilen stehen ganz unten — die Liste klappt nach OBEN auf,
+              // sonst haengt sie unter dem Rand der Tafel.
+              true,
               // Ohne Kopfzeile traegt im Editor auch die Erfassungszelle den
               // Kopf-Griff — dieselbe Bedingung wie fuer die Zellen des
               // Rumpfs (tabelleKoerper).
@@ -449,11 +451,8 @@ export class TabelleBlock extends BasicBlock {
                 : undefined,
             )
           : [],
-        // Die Nummernspalte gibt es genau mit der Erfassung. `griffAb` laesst
-        // die Nummern der Datenzeilen hinter den tippbaren weiterlaufen: auf
-        // dem Schirm zaehlt es durch.
+        // Die Nummernspalte gibt es genau mit der Erfassung.
         mitGriff: this.erfassungAn,
-        griffAb: this.erfassungAn ? this._erfassung.anzahl : 0,
       }, {
         setzeSuchtext: (text) => this.setzeSuchtext(text),
         dblklickKopf: (e, i) => {

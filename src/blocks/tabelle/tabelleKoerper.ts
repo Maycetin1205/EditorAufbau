@@ -40,22 +40,16 @@ export interface KoerperLage {
   leerText: string
 
   // Die tippbaren Zeilen, fertig gerendert — der Rumpf setzt sie nur an ihre
-  // Stelle: DIREKT UNTER DEN KOPF (Nutzer-Ansage 2026-08-20; sie sassen dort
-  // schon einmal und wanderten am 2026-08-19 nach unten, weil sie oben nicht
-  // von den Strich-Zeilen zu unterscheiden waren — das traegt nicht mehr: sie
-  // haben eigenen Grund und eine Kante, und im Editor stehen die Spaltennamen
-  // in ihren Zellen).
-  //
-  // Es sind MEHRERE: die ERSTE ist die Erfassungszeile (immer oben, wandert
-  // nicht mit), darunter stehen die erfassten Positionen (S2.6). Leer =
-  // Erfassung ausgeschaltet.
+  // Stelle: UNTER DIE GELIEFERTEN DATEN. So steht die naechste freie Zeile da,
+  // wo eine Erfassung sie erwartet: hinter dem, was schon im Beleg steht
+  // (Vorbild ist die handgebaute Maske des Nutzers, Nutzer-Ansage 2026-08-20).
+  // Leer = Erfassung ausgeschaltet.
   erfassungsZeilen: readonly TemplateResult[]
 
-  // Die Nummernspalte links (nur mit Erfassung, s. zeilenGriff). `griffAb` ist
-  // die Zahl der tippbaren Zeilen darueber: die Datenzeilen zaehlen weiter,
-  // damit die Nummern auf dem Schirm durchlaufen.
+  // Die Nummernspalte links (nur mit Erfassung, s. zeilenGriff). Die
+  // Datenzeilen zaehlen ab 1, die tippbaren dahinter weiter — auf dem Schirm
+  // laeuft eine einzige Nummernfolge durch.
   mitGriff: boolean
-  griffAb: number
 }
 
 export interface KoerperHandeln {
@@ -110,7 +104,6 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>` : nothing}
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
-        ${lage.erfassungsZeilen}
         ${lage.zeilen.map((rohIndex, ansichtIndex) => {
           const aktivierbar = rohIndex !== null && !lage.imEditor
           return html`<div
@@ -132,7 +125,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             }}
           >
             ${lage.mitGriff ? zeilenGriffTpl({
-              nummer: rohIndex === null ? null : lage.griffAb + ansichtIndex + 1,
+              nummer: rohIndex === null ? null : ansichtIndex + 1,
               aktiv: false,
             }) : nothing}
             ${lage.spalten.map((s, i) => {
@@ -166,6 +159,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             })}
           </div>`
         })}
+        ${lage.erfassungsZeilen}
         ${lineal(lage)}`}
       </div>
     `

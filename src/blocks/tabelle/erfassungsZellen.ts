@@ -181,6 +181,14 @@ export function passendeSaetze(
 // Menge, die in den Gaben sucht, darf nicht plötzlich „Injektion" heißen.
 export function uebernahmeFeldIn(umfeld: ErfassungsUmfeld, index: number): string {
   const ziel = zielIn(umfeld, index)
-  if (ziel.art !== 'eigen' || ziel.suchQuelleId === '') return ''
-  return gewaehlteSuchFelder(umfeld, index)[0]?.feld ?? ''
+  if (ziel.art === 'auswahl' || ziel.suchQuelleId === '') return ''
+  const gewaehlt = gewaehlteSuchFelder(umfeld, index)[0]?.feld ?? ''
+  if (gewaehlt !== '') return gewaehlt
+  // Eine Spalte GANZ OHNE eigenes Feld hat nichts, was stehenbleiben koennte.
+  // Dort faellt der Wert der Liste in die Zelle — sonst waehlt der Bediener
+  // einen Satz und die Zelle bleibt leer (Nutzer-Befund 2026-08-20: „ich
+  // waehle Verbrauchsart aus, die Hilfstabelle geht auf, aber die Zeile zeigt
+  // das nicht an"). Bei 'eigen' bleibt es beim Getippten: eine Menge, die in
+  // den Gaben sucht, darf nicht ploetzlich „Injektion" heissen.
+  return ziel.art === 'frei' ? (anzeigeSpalteIn(umfeld, index)?.code ?? '') : ''
 }

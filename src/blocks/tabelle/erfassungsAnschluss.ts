@@ -57,14 +57,16 @@ export function erfassbareQuellen(umfeld: ErfassungsUmfeld): string[] {
 // ihren eigenen Lauf, also auch ihre gewaehlten Saetze — deshalb ist sie
 // wieder betippbar, einzeln loeschbar und duplizierbar (S2.6/S2.7).
 //
-// ZEILE 0 IST DIE ERFASSUNGSZEILE. Sie steht immer oben und wandert nicht
-// mit (Nutzer-Ansage 2026-08-20): Enter am Zeilenende schiebt die fertige
-// Zeile nach UNTEN in den Stapel, oben wird wieder leer, und der Bediener
-// tippt an derselben Stelle weiter. Die Zeilen 1..n sind die erfassten, noch
-// nicht geschriebenen Positionen — in der Reihenfolge, in der sie entstanden.
+// ES GIBT KEINE ERFASSUNGSZEILE MEHR (Nutzer-Ansage 2026-08-20, Vorbild ist
+// seine handgebaute Maske): getippt wird in der Zeile, in der der Zeiger
+// steht, und er wandert mit. Die Zeilen stehen UNTER den gelieferten Daten,
+// in der Reihenfolge, in der sie entstanden.
 //
-// Es gibt immer mindestens eine Zeile: eine Erfassung ohne Zeile waere eine
-// Tabelle, in die man nichts eintippen kann.
+// Die letzte Zeile ist immer eine leere: sobald in ihr etwas steht, haengt
+// sich die naechste von selbst an (`haltLeerzeileFrei`). Damit gibt es keinen
+// Knopf „Zeile anhaengen" — und es gibt immer mindestens eine Zeile, denn
+// eine Erfassung ohne Zeile waere eine Tabelle, in die man nichts eintippen
+// kann.
 export class ErfassungsAnschluss {
   private _laeufe: ErfassungsLauf[] = [new ErfassungsLauf()]
 
@@ -125,63 +127,29 @@ export class ErfassungsAnschluss {
     return raus
   }
 
-  // Eine neue leere Zeile hinter `nach`. Gibt ihren Index zurueck; sie wird
-  // die aktive, denn wer eine Zeile einfuegt, will in ihr tippen. Nie an
-  // Stelle 0: dort steht die Erfassungszeile.
-  fuegeEin(nach: number): number {
-    const ziel = Math.max(1, Math.min(Math.max(nach, -1), this._laeufe.length - 1) + 1)
-    this._laeufe.splice(ziel, 0, new ErfassungsLauf())
-    this._aktiv = ziel
-    return ziel
-  }
-
-  // Die Kopie traegt die gewaehlten Saetze mit, nicht nur die Zellwerte:
-  // sonst waere die duplizierte Zeile eine Handvoll Text ohne Herkunft und
-  // ihre Automatik liefe ins Leere.
-  doppelt(zeile: number): number {
-    const i = Math.min(Math.max(zeile, 0), this._laeufe.length - 1)
-    const ziel = i + 1
-    this._laeufe.splice(ziel, 0, this._laeufe[i].kopie())
-    this._aktiv = ziel
-    return ziel
-  }
-
-  // Die Erfassungszeile wird nicht geloescht, sondern geleert: ohne sie gaebe
-  // es kein Feld mehr, in das der Bediener klicken koennte.
-  loesche(zeile: number): boolean {
-    const i = Math.min(Math.max(zeile, 0), this._laeufe.length - 1)
-    if (i === 0) {
-      this._laeufe[0] = new ErfassungsLauf()
-      this._aktiv = 0
-      return true
-    }
-    this._laeufe.splice(i, 1)
-    this._aktiv = Math.min(i, this._laeufe.length - 1)
-    return true
-  }
-
-  // Wohin die Weiter-Taste am Zeilenende geht — die Antwort ist fast immer
-  // ZEILE 0, denn dort wird getippt.
-  //
-  // Aus der Erfassungszeile: ihr Lauf wandert ans Ende des Stapels (die
-  // erfasste Position), oben beginnt ein frischer. Die Tippstelle bleibt
-  // damit stehen, wo sie war. `null` = nichts zu tun: eine leere
-  // Erfassungszeile legt keine Position an, sonst wuechse der Stapel beim
-  // Enter-Halten.
-  //
-  // Aus einer erfassten Zeile (jemand hat sie nachtraeglich angefasst) geht es
-  // zurueck nach oben: dort wartet die naechste Position.
+  // Wohin die Weiter-Taste am Zeilenende geht: eine Zeile tiefer. Steht der
+  // Zeiger schon in der letzten, haengt sich eine neue an — aber nur, wenn in
+  // der letzten etwas steht. `null` = nichts zu tun: sonst wuechse der Stapel
+  // beim Enter-Halten ins Leere.
   weiter(umfeld: ErfassungsUmfeld, zeile: number): number | null {
     const i = Math.min(Math.max(zeile, 0), this._laeufe.length - 1)
-    if (i > 0) {
-      this._aktiv = 0
-      return 0
+    if (i < this._laeufe.length - 1) {
+      this._aktiv = i + 1
+      return this._aktiv
     }
-    if (this.istLeer(umfeld, 0)) return null
-    this._laeufe.push(this._laeufe[0])
-    this._laeufe[0] = new ErfassungsLauf()
-    this._aktiv = 0
-    return 0
+    if (this.istLeer(umfeld, i)) return null
+    this._laeufe.push(new ErfassungsLauf())
+    this._aktiv = this._laeufe.length - 1
+    return this._aktiv
+  }
+
+  // Einmal je Darstellung: unter der letzten belegten Zeile steht immer eine
+  // leere. Das ist das „Zeile anhaengen" der Vorlage — es passiert von selbst,
+  // waehrend getippt wird, nicht auf Knopfdruck.
+  haltLeerzeileFrei(umfeld: ErfassungsUmfeld): boolean {
+    if (this.istLeer(umfeld, this._laeufe.length - 1)) return false
+    this._laeufe.push(new ErfassungsLauf())
+    return true
   }
 
   // Nach dem Ketten-Lauf: die geschriebenen Zeilen sind weg, eine leere
