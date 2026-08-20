@@ -114,6 +114,11 @@ export class ErfassungsLauf {
     this._tippSpalte = -1
     this._listeZu = false
     this._marke = 0
+    // Die Liste geht mit: eine Zeile, in der niemand tippt, darf keine
+    // stehengebliebenen Vorschlaege halten — sonst haelt sie eine offene
+    // Liste vor, wenn der Bediener spaeter in sie zurueckkommt (S2.6: es
+    // gibt jetzt mehrere Laeufe, und nur der aktive wird neu berechnet).
+    this._vorschlaege = []
   }
 
   entscheideTaste(umfeld: ErfassungsUmfeld, index: number, taste: string): ErfassungsTaste {
@@ -353,5 +358,28 @@ export class ErfassungsLauf {
       anzeigeSpalteIn(umfeld, index)?.code ?? '',
       ziel.quelleId === such ? ziel.code : '',
     )
+  }
+
+  // Unberuehrt = nichts getippt, nichts gewaehlt. Woran der Anschluss
+  // erkennt, dass eine einzelne leere Zeile schon der Grundzustand ist und
+  // ein Leeren nichts mehr zu tun hat.
+  get istUnberuehrt(): boolean {
+    return this.getippt.size === 0 && this.gewaehlt.size === 0
+  }
+
+  // Eine zweite Zeile mit demselben Stand (Werkzeug „duplizieren"). Kopiert
+  // werden auch die GEWAEHLTEN SAETZE und die Reihenfolge der Hand-Wahlen —
+  // ohne sie waere die neue Zeile nur Text ohne Herkunft: ihre Automatik
+  // liefe ins Leere und ein Umentscheiden verhielte sich anders als in der
+  // Zeile, aus der sie kam. Der Tipp-Zustand (welche Zelle gerade tippt,
+  // welche Liste offen ist) wird NICHT kopiert: getippt wird in der neuen
+  // Zeile von vorn.
+  kopie(): ErfassungsLauf {
+    const neu = new ErfassungsLauf()
+    neu.getippt = new Map(this.getippt)
+    neu.gewaehlt = new Map(this.gewaehlt)
+    neu.vonHand = new Map(this.vonHand)
+    neu._wahlZaehler = this._wahlZaehler
+    return neu
   }
 }

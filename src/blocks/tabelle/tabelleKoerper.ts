@@ -38,18 +38,17 @@ export interface KoerperLage {
   leer: boolean
   leerText: string
 
-  // Erfasste, noch nicht geschriebene Zeilen (G4): sie stehen zwischen der
-  // letzten Datenzeile und der Erfassungszeile, links markiert — erst der
-  // Ketten-Lauf des Knopfs macht aus ihnen echte Positionen.
-  erfasste: readonly (readonly string[])[]
-
-  // Die fertige Erfassungszeile. Der Rumpf setzt sie nur an ihre Stelle: sie
-  // ist die ERSTE Zeile der Tabelle, direkt unter dem Kopf (Nutzer-Ansage
-  // 2026-08-20). Sie sass dort schon einmal und wanderte am 2026-08-19 nach
-  // unten — mit der Begruendung, sie sei oben nicht von den Strich-Zeilen zu
-  // unterscheiden. Das traegt nicht: sie hat eigenen Grund und eine Kante, und
-  // im Editor stehen jetzt die Spaltennamen in ihren Zellen.
-  erfassung: TemplateResult | typeof nothing
+  // Die tippbaren Zeilen, fertig gerendert — der Rumpf setzt sie nur an ihre
+  // Stelle: DIREKT UNTER DEN KOPF (Nutzer-Ansage 2026-08-20; sie sassen dort
+  // schon einmal und wanderten am 2026-08-19 nach unten, weil sie oben nicht
+  // von den Strich-Zeilen zu unterscheiden waren — das traegt nicht mehr: sie
+  // haben eigenen Grund und eine Kante, und im Editor stehen die Spaltennamen
+  // in ihren Zellen).
+  //
+  // Es sind MEHRERE: jede noch nicht geschriebene Position ist eine tippbare
+  // Zeile, die LETZTE ist die leere, in der es weitergeht (S2.6). Leer =
+  // Erfassung ausgeschaltet.
+  erfassungsZeilen: readonly TemplateResult[]
 }
 
 export interface KoerperHandeln {
@@ -102,7 +101,7 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
       </div>` : nothing}
         ${ ''}
         ${lage.leer ? leerZustand(lage.leerText, true) : html`
-        ${lage.erfassung}
+        ${lage.erfassungsZeilen}
         ${lage.zeilen.map((rohIndex, ansichtIndex) => {
           const aktivierbar = rohIndex !== null && !lage.imEditor
           return html`<div
@@ -155,14 +154,6 @@ export function tabelleKoerper(lage: KoerperLage, tun: KoerperHandeln): Template
             })}
           </div>`
         })}
-        ${lage.erfasste.map((werte) => html`<div class="zeile erfasst" role="row" style=${styleMap(lage.cols)}>
-          ${lage.spalten.map((s, i) => {
-            const art = spaltenArt(s.art)
-            return html`<div class=${art.klasse} role="cell">${
-              art.zelle(werte[i] ?? '', s.zuordnung ?? [], {})
-            }</div>`
-          })}
-        </div>`)}
         ${lineal(lage)}`}
       </div>
     `

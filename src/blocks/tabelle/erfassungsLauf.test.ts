@@ -416,14 +416,60 @@ describe('ErfassungsLauf', () => {
   it('die erfasste Zeile traegt Getipptes UND Gekoppeltes — das liest der Knopf', () => {
     const anschluss = new ErfassungsAnschluss()
     const u = umfeldMit()
-    anschluss.lauf.tippe(0, 'bay')
-    anschluss.lauf.aktualisiereVorschlaege(u)
-    anschluss.lauf.uebernimm(u, 0, anschluss.lauf.vorschlaege[0].satz)
-    anschluss.lauf.tippe(2, '2')
-    expect(anschluss.erfasse(u)).toBe(true)
+    const l = anschluss.lauf(0)
+    l.tippe(0, 'bay')
+    l.aktualisiereVorschlaege(u)
+    l.uebernimm(u, 0, l.vorschlaege[0].satz)
+    l.tippe(2, '2')
     // Artikelnummer aus der Kopplung, Menge von Hand; die Gabe blieb offen
     // (zwei Treffer), Notiz leer.
-    expect(anschluss.zeilen[0]).toEqual(['ART03045', 'Baytril 25mg', '2', '', '', ''])
+    expect(anschluss.werte(u, 0)).toEqual(['ART03045', 'Baytril 25mg', '2', '', '', ''])
+    const saetze = anschluss.saetze(u)
+    expect(saetze).toHaveLength(1)
+    expect(saetze[0]['q-pos']).toEqual({ '10_8': 'ART03045', '11_6': '2' })
+  })
+
+  it('erfasste Zeilen bleiben anfassbar — weiter, duplizieren, einzeln loeschen (S2.6/S2.7)', () => {
+    const anschluss = new ErfassungsAnschluss()
+    const u = umfeldMit()
+    const erste = anschluss.lauf(0)
+    erste.tippe(0, 'bay')
+    erste.aktualisiereVorschlaege(u)
+    erste.uebernimm(u, 0, erste.vorschlaege[0].satz)
+    erste.tippe(2, '2')
+
+    // Enter am Zeilenende: die getippte Zeile BLEIBT und wird nicht zu totem
+    // Text — eine neue leere kommt darunter.
+    expect(anschluss.anzahl).toBe(1)
+    expect(anschluss.weiter(u, 0)).toBe(1)
+    expect(anschluss.anzahl).toBe(2)
+    expect(anschluss.aktiv).toBe(1)
+    anschluss.lauf(0).tippe(2, '5')
+    expect(anschluss.werte(u, 0)[2]).toBe('5')
+
+    // Eine leere letzte Zeile legt keine weitere an: sonst wuechse die Liste
+    // beim Enter-Halten.
+    expect(anschluss.weiter(u, 1)).toBe(1)
+    expect(anschluss.anzahl).toBe(2)
+
+    // Duplizieren traegt den gewaehlten Satz mit, nicht nur den Text: die
+    // Kopie zeigt die gekoppelte Bezeichnung genauso.
+    expect(anschluss.doppelt(0)).toBe(1)
+    expect(anschluss.anzahl).toBe(3)
+    expect(anschluss.werte(u, 1)).toEqual(anschluss.werte(u, 0))
+
+    // Es faellt genau EINE Zeile, nicht die ganze Erfassung.
+    anschluss.loesche(1)
+    expect(anschluss.anzahl).toBe(2)
+    expect(anschluss.werte(u, 0)[0]).toBe('ART03045')
+
+    // Leere Zeilen sind keine Positionen — der Knopf sieht nur die gefuellte.
+    expect(anschluss.saetze(u)).toHaveLength(1)
+
+    // Nach dem Ketten-Lauf bleibt eine leere Zeile stehen, in der es weitergeht.
+    expect(anschluss.leeren()).toBe(true)
+    expect(anschluss.anzahl).toBe(1)
+    expect(anschluss.saetze(u)).toEqual([])
+    expect(anschluss.leeren()).toBe(false)
   })
 })
-

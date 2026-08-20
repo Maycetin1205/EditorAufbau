@@ -5,9 +5,11 @@ import { spaltenArt } from './spaltenArten'
 import { zielIn, type ErfassungsUmfeld } from './erfassungsZellen'
 import { ZELLE_PLATZHALTER } from './spalten'
 
-// Die ERSTE Zeile der Tabelle. Sie ist eine FÄHIGKEIT der Tabelle und kein
-// eigener Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle ohne
-// sie exportiert wie zuvor. Was eine Zelle tut, steht an ihrer Spalte (Feld +
+// EINE tippbare Zeile. Es gibt sie mehrmals: jede noch nicht geschriebene
+// Position ist so eine Zeile, und die letzte ist die leere, in der es
+// weitergeht (S2.6). Sie ist eine FÄHIGKEIT der Tabelle und kein eigener
+// Baustein: ohne den Schalter gibt es sie nicht, und eine Tabelle ohne sie
+// exportiert wie zuvor. Was eine Zelle tut, steht an ihrer Spalte (Feld +
 // „Sucht beim Erfassen in") — an der Zeile selbst wird nichts eingestellt.
 
 export interface ErfassungsLage {
@@ -19,6 +21,18 @@ export interface ErfassungsLage {
 
   imEditor: boolean
 
+  // Welche der tippbaren Zeilen das ist. Steht am Element (`data-erf-zeile`),
+  // damit der Baustein nach dem Rendern genau diese Zelle fokussieren kann.
+  zeile: number
+
+  // Die Zeile, in der der Bediener gerade arbeitet: sie traegt die Marke, und
+  // die Zeilen-Werkzeuge meinen sie.
+  aktiv: boolean
+
+  // Steht etwas in ihr, ist sie eine werdende Position und wird links
+  // markiert — erst der Knopf macht daraus einen ERP-Satz.
+  gefuellt: boolean
+
   // Ohne Kopfzeile übernimmt im Editor auch die Erfassungszelle den
   // Kopf-Griff (Klick öffnet den Feld-Picker der Spalte) — sie sieht aus wie
   // die Strich-Zeilen darunter und muss sich gleich anfassen lassen
@@ -28,7 +42,8 @@ export interface ErfassungsLage {
   // Was in der Zelle steht (Laufzeit).
   wert: (index: number) => string
 
-  // Die offene Vorschlagsliste gehört zu GENAU EINER Zelle.
+  // Die offene Vorschlagsliste gehört zu GENAU EINER Zelle EINER Zeile: in
+  // einer Zeile, die nicht die aktive ist, steht hier -1.
   tippSpalte: number
   vorschlaege: readonly Vorschlag[]
   marke: number
@@ -45,6 +60,10 @@ export interface ErfassungsHandeln {
   taste: (index: number, e: KeyboardEvent) => void
   verlassen: (index: number) => void
 
+  // Der Fokus wandert in diese Zelle — auch per Maus oder Shift+Tab. Damit
+  // wird ihre Zeile die aktive, ohne dass jemand tippt.
+  betreten: (index: number) => void
+
   waehleVorschlag: (listenIndex: number) => void
   setzeMarke: (listenIndex: number) => void
 }
@@ -59,10 +78,12 @@ function eingabe(
   return html`<input
     class="erf-eingabe"
     type="text"
+    data-spalte=${index}
     placeholder=${lage.umfeld.spalten[index]?.titel ?? ''}
     .value=${lage.wert(index)}
     @input=${(e: Event) => tun.tippen(index, (e.target as HTMLInputElement).value)}
     @keydown=${(e: KeyboardEvent) => tun.taste(index, e)}
+    @focus=${() => tun.betreten(index)}
     @blur=${() => tun.verlassen(index)}
   />`
 }
@@ -91,11 +112,23 @@ function laufzeitZelle(
   </div>`
 }
 
+function klassen(lage: ErfassungsLage): string {
+  return ['zeile', 'erfassung']
+    .concat(lage.aktiv ? ['aktiv'] : [])
+    .concat(lage.gefuellt ? ['gefuellt'] : [])
+    .join(' ')
+}
+
 export function erfassungsZeileTpl(
   lage: ErfassungsLage,
   tun: ErfassungsHandeln,
 ): TemplateResult {
-  return html`<div class="zeile erfassung" role="row" style=${styleMap(lage.cols)}>
+  return html`<div
+    class=${klassen(lage)}
+    role="row"
+    data-erf-zeile=${lage.zeile}
+    style=${styleMap(lage.cols)}
+  >
     ${lage.umfeld.spalten.map((spalte, i) => {
       const klasse = spaltenArt(spalte.art).klasse
       // Im Editor gibt es keine Daten und keine Eingaben, sondern Striche —

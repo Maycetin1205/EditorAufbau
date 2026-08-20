@@ -25,13 +25,10 @@ export interface AnsichtFrage {
 
   gemessen: Zeilenmass | null
 
-  // Die Erfassungszeile belegt eine der gemessenen Zeilen: ohne das rutscht
-  // die letzte Datenzeile aus dem Rumpf und der Rumpf scrollt.
-  erfassungAn: boolean
-
-  // Erfasste, noch nicht geschriebene Zeilen (G4) belegen genauso je einen
-  // Platz zwischen den Daten und der Erfassungszeile.
-  erfassteAnzahl: number
+  // Wie viele tippbare Zeilen es gibt (0 = Erfassung aus). Jede belegt eine
+  // der gemessenen Zeilen: ohne das rutscht die letzte Datenzeile aus dem
+  // Rumpf und der Rumpf scrollt.
+  erfassungsZeilen: number
 }
 
 export interface TabelleAnsicht {
@@ -71,13 +68,13 @@ export function tabelleAnsicht(frage: AnsichtFrage): TabelleAnsicht {
 
   // Mit Erfassungszeile gibt es keinen Leerzustand: die Zeile IST der Inhalt,
   // und die zentrierte Tafel schoebe sie an den Rumpf-Rand.
-  const leer = frage.erfassungAn
+  const leer = frage.erfassungsZeilen > 0
     ? false
     : zeigtLeerzustand(hatQuelle, frage.datenGeliefert, frage.datenzeilen.length)
 
   const alleSichtbar = sichtbareIndizes(frage)
 
-  const belegt = frage.erfassungAn ? 1 + frage.erfassteAnzahl : 0
+  const belegt = frage.erfassungsZeilen
   const gemessenPassen = frage.gemessen === null
     ? null
     : Math.max(1, frage.gemessen.passen - belegt)

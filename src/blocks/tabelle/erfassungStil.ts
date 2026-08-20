@@ -56,11 +56,17 @@ export const erfassungStil = css`
       /* Im Editor zeigt die Zelle keine Eingabe, sondern Striche. */
       :host([data-ff-editor]) .zeile.erfassung > div { color: var(--se-muted); }
 
-      /* Erfasste, noch nicht geschriebene Zeilen (G4): wie Datenzeilen, nur
-         links markiert — erst der Knopf macht aus ihnen echte Positionen. */
-      .zeile.erfasst {
-        flex: none;
+      /* Eine tippbare Zeile MIT INHALT ist eine werdende Position: links
+         markiert — erst der Knopf macht daraus einen echten ERP-Satz. Bis
+         2026-08-20 war das eine eigene, tote Zeilenart (.erfasst); jetzt ist
+         es dieselbe Zeile, nur gefuellt (S2.7). */
+      .zeile.erfassung.gefuellt {
         box-shadow: inset 3px 0 0 var(--se-accent);
+      }
+
+      /* Die Zeile, in der gerade gearbeitet wird — sie ist gemeint, wenn ein
+         Zeilen-Werkzeug drueckt. */
+      .zeile.erfassung.aktiv {
         background: var(--se-accent-soft);
       }
 `

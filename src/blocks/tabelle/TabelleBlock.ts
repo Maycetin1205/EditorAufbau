@@ -16,7 +16,7 @@ import { chipStyles } from '../shared/statusVariant'
 import { schliesseNachschlagenFuer } from '../formfeld/nachschlagen'
 import { beobachteRumpf, gemessenesMass } from './rumpfMessung'
 import {
-  erfassungsZeileFuer,
+  erfassungsZeilenFuer,
   type ErfassungsWirt,
 } from './erfassungsBedienung'
 import { erfassbareQuellen, ErfassungsAnschluss } from './erfassungsAnschluss'
@@ -206,7 +206,7 @@ export class TabelleBlock extends BasicBlock {
   // in core/blocks/BlockDefinition.ts): die Kette am Knopf liest die Zeilen
   // ueber data-ff-block-id und leert sie nach dem Lauf.
   get erfassteSaetze(): readonly ErfassterSatz[] {
-    return this._erfassung.saetze
+    return this._erfassung.saetze(this.erfassungsUmfeld())
   }
 
   // Ausgeschaltete Erfassung gibt keinen Takt: die Kette laeuft dann einmal
@@ -217,14 +217,6 @@ export class TabelleBlock extends BasicBlock {
 
   erfassungLeeren(): void {
     if (this._erfassung.leeren()) this.requestUpdate()
-  }
-
-  // Enter am Zeilenende (G4): die Zeile bleibt stehen, die Erfassung rueckt
-  // tiefer, der Cursor auf die erste Zelle. Geschrieben wird hier NICHTS.
-  private erfasseZeile(): void {
-    if (!this._erfassung.erfasse(this.erfassungsUmfeld())) return
-    this.requestUpdate()
-    this.fokussiereErfassungsZelle(0)
   }
 
   fokussiereSuche(): boolean {
@@ -311,20 +303,26 @@ export class TabelleBlock extends BasicBlock {
   private erfassungsWirt(): ErfassungsWirt {
     return {
       baustein: this,
-      lauf: this._erfassung.lauf,
+      anschluss: this._erfassung,
       umfeld: () => this.erfassungsUmfeld(),
       melde: () => this.requestUpdate(),
-      fokussiere: (index) => this.fokussiereErfassungsZelle(index),
-      erfasseZeile: () => this.erfasseZeile(),
+      fokussiere: (zeile, spalte) => this.fokussiereZelle(zeile, spalte),
     }
   }
 
   // Erst NACH dem Rendern fokussieren: die Zellen zeigen dann den neuen
-  // Stand, und das Ziel existiert sicher.
-  private fokussiereErfassungsZelle(index: number): void {
+  // Stand, und das Ziel existiert sicher. Gesucht wird ueber Zeile UND Spalte,
+  // weil es seit S2.6 mehrere tippbare Zeilen gibt — ein Zaehler ueber alle
+  // Eingaben griffe nach dem Anlegen oder Loeschen einer Zeile daneben.
+  // Markiert wird der Inhalt mit: wer in eine gefuellte Zelle springt, will
+  // sie ueberschreiben, nicht hinter dem Wert weitertippen.
+  private fokussiereZelle(zeile: number, spalte: number): void {
     void this.updateComplete.then(() => {
-      const felder = this.shadowRoot?.querySelectorAll<HTMLInputElement>('.zeile.erfassung .erf-eingabe')
-      felder?.[index]?.focus()
+      const feld = this.shadowRoot?.querySelector<HTMLInputElement>(
+        `.zeile.erfassung[data-erf-zeile="${zeile}"] .erf-eingabe[data-spalte="${spalte}"]`,
+      )
+      feld?.focus()
+      feld?.select()
     })
   }
 
@@ -364,7 +362,7 @@ export class TabelleBlock extends BasicBlock {
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed)
     if (!this.erfassungAn || this.hasAttribute('data-ff-editor')) return
-    this._erfassung.lauf.aktualisiereVorschlaege(this.erfassungsUmfeld())
+    this._erfassung.aktiverLauf.aktualisiereVorschlaege(this.erfassungsUmfeld())
   }
 
   protected override updated(): void {
@@ -406,8 +404,7 @@ export class TabelleBlock extends BasicBlock {
       sortAuf: this._sortAuf,
       wunschSeite: this._seite,
       gemessen: this._mass,
-      erfassungAn: this.erfassungAn,
-      erfassteAnzahl: this._erfassung.zeilen.length,
+      erfassungsZeilen: this.erfassungAn ? this._erfassung.anzahl : 0,
     })
     return html`<div class=${this.schlank === 'ja' ? 'tabelle schlank' : 'tabelle'} style=${styleMap({
       '--takt': `${ansicht.takt}px`,
@@ -433,13 +430,12 @@ export class TabelleBlock extends BasicBlock {
         auswahlIndex: this.auswahlIndex,
         leer: ansicht.leer,
         leerText: this.leerText,
-        erfasste: this._erfassung.zeilen,
-        erfassung: this.erfassungAn
-          ? erfassungsZeileFuer(
+        erfassungsZeilen: this.erfassungAn
+          ? erfassungsZeilenFuer(
               this.erfassungsWirt(),
               ansicht.cols,
-              // Die Zeile steht ganz oben — unter ihr liegt der ganze Rumpf,
-              // die Liste klappt immer nach unten auf.
+              // Die Zeilen stehen ganz oben — unter ihnen liegt der ganze
+              // Rumpf, die Liste klappt immer nach unten auf.
               false,
               // Ohne Kopfzeile traegt im Editor auch die Erfassungszelle den
               // Kopf-Griff — dieselbe Bedingung wie fuer die Zellen des
@@ -452,7 +448,7 @@ export class TabelleBlock extends BasicBlock {
                   })
                 : undefined,
             )
-          : nothing,
+          : [],
       }, {
         setzeSuchtext: (text) => this.setzeSuchtext(text),
         dblklickKopf: (e, i) => {
