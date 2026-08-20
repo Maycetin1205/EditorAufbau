@@ -4,6 +4,7 @@ import {
   eintragsFelderLesen,
   eintragsFelderVon,
   eintragsFelderWahlWerte,
+  eintragsQuellenWahlWert,
   listeLesen,
   zerlegeBindung,
 } from '../core/blocks/BlockDefinition'
@@ -56,6 +57,17 @@ export function collectDataSources(
     for (const prop of def?.customProperties ?? []) {
       if (prop.kind === 'quelle' && propertySichtbar(prop.visibleWhen, node.props)) {
         add(node.props[prop.attributeName])
+      }
+    }
+
+    // Die Hilfstabelle, in der eine Spalte beim Erfassen sucht. Sie haengt an
+    // KEINER Verknuepfung (seit 2026-08-20) und stuende sonst in keiner
+    // Bestellung: SoftEngine liefert sie nicht, die Liste bliebe leer.
+    const listen = def?.listenBindung
+    if (listen?.eintragsQuellenWahl) {
+      const wahl = listen.eintragsQuellenWahl
+      for (const eintrag of listeLesen(node.props[listen.prop], listen)) {
+        add(eintragsQuellenWahlWert(wahl, eintrag))
       }
     }
 

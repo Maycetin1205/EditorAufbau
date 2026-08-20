@@ -34,10 +34,11 @@ describe('Zellen der Erfassungszeile', () => {
     // Die eigene Quelle ausdrücklich davor ändert nichts.
     expect(zielIn(umfeldMit([spalte({ feld: 'q-pos::11_6' })]), 0))
       .toEqual({ art: 'eigen', quelleId: '', code: '11_6', suchQuelleId: '' })
-    // Eine Sucht-in-Wahl auf eine Quelle, die nicht (mehr) verknüpft ist,
-    // hinterlässt keine Geisterliste.
+    // Ganz ohne Verknüpfung sucht dieselbe Spalte trotzdem dort: eine
+    // Hilfstabelle ist eine Nachschlage-Liste. Nur den Zellwert liefert dann
+    // kein Schlüsselpaar mehr — die Zelle behält ihr eigenes Feld.
     expect(zielIn(umfeldMit(ZEILE, []), 0))
-      .toEqual({ art: 'eigen', quelleId: '', code: '10_8', suchQuelleId: '' })
+      .toEqual({ art: 'eigen', quelleId: '', code: '10_8', suchQuelleId: 'q-art' })
   })
 
   it('angezeigt und mitdurchsucht wird die erste ANDERE Spalte derselben Such-Quelle', () => {
@@ -180,15 +181,16 @@ describe('ErfassungsLauf', () => {
     expect(lauf.wertVon(u, 1)).toBe('Injektion')
   })
 
-  it('eine Sucht-in-Wahl ohne Verknuepfung sucht nirgends', () => {
-    // Die Wahl am Spaltenkopf zeigt auf eine Quelle, die am Baustein nicht
-    // (mehr) verknuepft ist. Dann gibt es kein Schluesselpaar, an dem die
-    // Zeile haengen koennte — eine Liste waere eine Geisterliste ueber einer
-    // Quelle, die mit dieser Tabelle nichts zu tun hat.
+  it('eine Sucht-in-Wahl ohne Verknuepfung sucht trotzdem — die ganze Liste', () => {
+    // Die Wahl am Spaltenkopf zeigt auf eine Quelle, die am Baustein NICHT
+    // verknuepft ist. Genau das ist der Normalfall einer Hilfstabelle: sie ist
+    // eine Nachschlage-Liste, keine Verknuepfung. Bis 2026-08-20 blieb die
+    // Liste hier leer, und der Nutzer sah eine eingestellte Quelle ohne einen
+    // einzigen Satz. Ohne Schluesselpaar schraenkt der gewaehlte Artikel sie
+    // nur nicht mehr ein — sie steht vollstaendig da.
     waehle(0, 'bay')
     const ohne = umfeldMit(ZEILE, [])
-    expect(lauf.eintraege(ohne, 3)).toEqual([])
-    expect(lauf.entscheideTaste(ohne, 3, 'Enter')).toBe('weiter')
+    expect(lauf.eintraege(ohne, 3).map((e) => e.wert)).toEqual(['ORAL', 'INJ', 'SALB'])
   })
 
   it('kein Partner: die Zelle bleibt leer, nichts verschwindet', () => {

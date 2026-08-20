@@ -278,10 +278,16 @@ export function useFeldBindung({
           const kann = getBlockDefinition(block.type)?.kannErfassen
           return kann !== undefined && propertySichtbar(kann.wenn, block.props)
         })()
+        // Zur Wahl steht die ganze Bibliothek ausser der eigenen Quelle. Eine
+        // Hilfstabelle ist eine Nachschlage-Liste, keine Verknuepfung: bis
+        // 2026-08-20 standen hier nur die Verknuepfungen des Bausteins, und wer
+        // keine eingestellt hatte, konnte gar keine waehlen.
+        const eigeneQuelleId = quellen[0]?.source.id ?? ''
+        const suchQuellen = bibliothek.filter((s) => s.id !== eigeneQuelleId)
         const zeigeQuellenWahl = quellenWahl !== undefined
           && !proQuelle
           && (quellenWahl.nurBeiErfassung !== true || erfasst)
-          && quellen.length > 1
+          && suchQuellen.length > 0
 
         // „Zeigt beim Suchen": die Felder der Quelle, die dieser Eintrag unter
         // `quelleAusKey` nennt (bei der Tabelle die Sucht-in-Wahl). Ohne
@@ -327,9 +333,7 @@ export function useFeldBindung({
             quellenWahl={zeigeQuellenWahl && quellenWahl ? {
               label: quellenWahl.label,
               leerName: quellenWahl.leerName,
-              // Die Verknuepfungen des Bausteins — die erste Quelle ist die
-              // eigene und keine Verknuepfung.
-              optionen: quellen.slice(1).map((q) => ({ wert: q.source.id, name: q.source.name })),
+              optionen: suchQuellen.map((s) => ({ wert: s.id, name: s.name })),
               aktuell: eintragsQuellenWahlWert(quellenWahl, eintrag),
               onWaehle: (wert) => schreibeInEintrag(listenPicker, { [quellenWahl.key]: wert }),
             } : undefined}

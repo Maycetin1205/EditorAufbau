@@ -196,13 +196,18 @@ export function erfassungsZielVon(
   verknuepfungen: readonly BausteinQuelle[],
 ): ErfassungsZiel {
   const feld = feldBindung.trim()
-  // Gesucht wird nur in einer Quelle, die wirklich verknuepft ist: eine
-  // geloeschte Verknuepfung darf keine Geisterliste hinterlassen.
+  // Gesucht wird in der Quelle, die am Spaltenkopf steht — OHNE Bedingung.
+  // Bis 2026-08-20 musste dieselbe Quelle zusaetzlich als Verknuepfung am
+  // Baustein haengen, sonst blieb `sucht` leer und die Spalte zeigte gar
+  // keine Liste: der Nutzer sah eine eingestellte Hilfstabelle und trotzdem
+  // keine Artikel. Eine Hilfstabelle ist aber nur eine Nachschlage-Liste,
+  // keine Verknuepfung — die beantwortet eine andere Frage (welches Feld des
+  // gewaehlten Satzes in die Zelle faellt) und bleibt darum unten optional.
   const gewuenscht = suchtIn.trim()
-  const verknuepfung = gewuenscht === '' || gewuenscht === tabellenQuelleId
+  const sucht = gewuenscht === tabellenQuelleId ? '' : gewuenscht
+  const verknuepfung = sucht === ''
     ? undefined
-    : verknuepfungen.find((v) => v.quelleId === gewuenscht && quelleBrauchbar(v))
-  const sucht = verknuepfung?.quelleId ?? ''
+    : verknuepfungen.find((v) => v.quelleId === sucht && quelleBrauchbar(v))
 
   if (feld === '') return { art: 'frei', quelleId: '', code: '', suchQuelleId: sucht }
   const { quelleId, code } = zerlegeBindung(feld)
