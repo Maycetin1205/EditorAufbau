@@ -14,6 +14,9 @@ interface FeldUebernahmePickerProps {
   current: string
   top: number
   left: number
+
+  // Der Knopf, aus dem der Waehler kam — ein Klick darauf schliesst ihn.
+  ausloeser?: Element | null
   onPick: (sourceId: string, code: string) => void
   onClose: () => void
 }
@@ -25,6 +28,7 @@ export function FeldUebernahmePicker({
   current,
   top,
   left,
+  ausloeser,
   onPick,
   onClose,
 }: FeldUebernahmePickerProps) {
@@ -56,6 +60,7 @@ export function FeldUebernahmePicker({
       bezeichnung="Feld übernehmen"
       oben={top}
       links={left}
+      ausloeser={ausloeser}
       onClose={onClose}
       imBildHalten
       escapeAbfangen

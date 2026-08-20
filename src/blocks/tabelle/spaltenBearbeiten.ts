@@ -98,7 +98,10 @@ export function oeffneFeldPicker(
   ruf: FeldPickerRuf,
 ): void {
   e.stopPropagation()
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  // Die angeklickte Stelle reist mit: der Waehler schliesst sich beim naechsten
+  // Klick auf SIE, statt sich neu zu oeffnen (AuswahlFenster/ausloeser).
+  const ausloeser = e.currentTarget as HTMLElement
+  const rect = ausloeser.getBoundingClientRect()
   feldPickerAbbestellen(baustein)
   wartenderPicker.set(baustein, setTimeout(() => {
     wartenderPicker.delete(baustein)
@@ -109,6 +112,7 @@ export function oeffneFeldPicker(
           index: ruf.index,
           top: rect.bottom + 4,
           left: rect.left,
+          ausloeser,
           ...(ruf.liste ? { liste: ruf.liste() } : {}),
         },
         bubbles: true,

@@ -107,6 +107,10 @@ export function useFeldBindung({
     top: number
     left: number
 
+    // Die Stelle, aus der der Waehler kam (Spaltenkopf, Erfassungszelle) — ein
+    // Klick darauf schliesst ihn wieder.
+    ausloeser: Element | null
+
     liste?: unknown
   } | null>(null)
   const closeListenPicker = useCallback(() => setListenPicker(null), [])
@@ -131,6 +135,7 @@ export function useFeldBindung({
         index?: number
         top?: number
         left?: number
+        ausloeser?: unknown
         liste?: unknown
       }
 
@@ -139,6 +144,7 @@ export function useFeldBindung({
         index: detail.index,
         top: Math.max(8, detail.top ?? 0),
         left: Math.max(8, Math.min(detail.left ?? 0, window.innerWidth - 248)),
+        ausloeser: detail.ausloeser instanceof Element ? detail.ausloeser : null,
         ...(Array.isArray(detail.liste) ? { liste: detail.liste } : {}),
       })
     }
@@ -211,6 +217,7 @@ export function useFeldBindung({
           current={bindingCode(block.props, picker.spot)}
           top={picker.top}
           left={picker.left}
+          ausloeser={picker.el}
           onPick={(wert) => {
             const prop = bindingProp(picker.spot.prop)
             if (bibliotheksAngebot) {
@@ -311,6 +318,7 @@ export function useFeldBindung({
             current={String(eintrag[listenBindung.feldKey] ?? '')}
             top={listenPicker.top}
             left={listenPicker.left}
+            ausloeser={listenPicker.ausloeser}
             onPick={(roh) => {
               editor.transaktion(() => {
                 // Im quelleProp-Modus ist roh schon der nackte Feldcode —

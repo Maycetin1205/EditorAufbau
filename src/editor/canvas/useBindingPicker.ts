@@ -28,7 +28,14 @@ export function useBindingPicker({
   hatAngebot,
   onSelect,
 }: BindingPickerArgs) {
-  const [picker, setPicker] = useState<{ spot: BindableSpot; top: number; left: number } | null>(null)
+  const [picker, setPicker] = useState<{
+    spot: BindableSpot
+    top: number
+    left: number
+
+    // Die angeklickte Stelle: ein Klick darauf schliesst den Waehler wieder.
+    el: HTMLElement
+  } | null>(null)
   const pickerTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearPickerTimer = () => {
@@ -83,14 +90,14 @@ export function useBindingPicker({
     const pos = pickerPos(hit.el)
 
     if (bindingCode(blockRef.current.props, hit.spot) !== '') {
-      setPicker({ spot: hit.spot, ...pos })
+      setPicker({ spot: hit.spot, el: hit.el, ...pos })
       return
     }
 
     pickerTimer.current = setTimeout(() => {
       pickerTimer.current = null
       if (editor.selectedId === blockRef.current.id) {
-        setPicker({ spot: hit.spot, ...pos })
+        setPicker({ spot: hit.spot, el: hit.el, ...pos })
       }
     }, 300)
   }
@@ -101,7 +108,7 @@ export function useBindingPicker({
     const hit = spotAt(e)
     if (!hit || bindingCode(blockRef.current.props, hit.spot) === '') return
     e.stopPropagation()
-    setPicker({ spot: hit.spot, ...pickerPos(hit.el) })
+    setPicker({ spot: hit.spot, el: hit.el, ...pickerPos(hit.el) })
   }
 
   return {

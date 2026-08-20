@@ -382,7 +382,15 @@ export interface SpaltenStellenArgs {
 
   onGroesse: (detail: DialogGroesseDetail) => void
 
-  onFeldWahl: (detail: { index: number; top: number; left: number; liste?: Spalte[] }) => void
+  // `ausloeser` = die angeklickte Stelle in der Tabelle des Dialogs; sie reist
+  // bis zum Editor durch, damit ein Klick darauf den Waehler wieder schliesst.
+  onFeldWahl: (detail: {
+    index: number
+    top: number
+    left: number
+    ausloeser?: Element
+    liste?: Spalte[]
+  }) => void
   onSchliessen: () => void
 }
 
@@ -418,6 +426,7 @@ export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
           index?: number
           top?: number
           left?: number
+          ausloeser?: Element
           liste?: Spalte[]
         }>).detail
         if (typeof d?.index !== 'number') return
@@ -425,6 +434,7 @@ export function spaltenStellenTpl(args: SpaltenStellenArgs): TemplateResult {
           index: d.index,
           top: d.top ?? 0,
           left: d.left ?? 0,
+          ...(d.ausloeser instanceof Element ? { ausloeser: d.ausloeser } : {}),
           ...(Array.isArray(d.liste) ? { liste: d.liste } : {}),
         })
       }}

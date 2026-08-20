@@ -95,7 +95,11 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
   const [suche, setSuche] = useState('')
   const [zeigeFehler, setZeigeFehler] = useState(false)
   const [pickerZiel, setPickerZiel] = useState<FeldUebernahmeZiel | null>(null)
-  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 })
+  const [pickerPosition, setPickerPosition] = useState<{
+    top: number
+    left: number
+    ausloeser: Element | null
+  }>({ top: 0, left: 0, ausloeser: null })
   const [uebernahmeBestaetigung, setUebernahmeBestaetigung] = useState('')
 
   const relation = relations.get(relationId)
@@ -137,7 +141,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
 
   function oeffneUebernahmePicker(ziel: FeldUebernahmeZiel, anchor: HTMLElement) {
     const rect = anchor.getBoundingClientRect()
-    setPickerPosition({ top: rect.bottom + 4, left: rect.left })
+    setPickerPosition({ top: rect.bottom + 4, left: rect.left, ausloeser: anchor })
     setPickerZiel(ziel)
   }
 
@@ -346,6 +350,7 @@ export function StepForm({ step, kette, onSave, onClose }: StepFormProps) {
                   current={currentUebernahmeCode}
                   top={pickerPosition.top}
                   left={pickerPosition.left}
+                  ausloeser={pickerPosition.ausloeser}
                   onPick={uebernehmeFeld}
                   onClose={() => setPickerZiel(null)}
                 />

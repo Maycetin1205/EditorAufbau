@@ -75,6 +75,10 @@ interface FieldPickerProps {
   top: number
   left: number
 
+  // Die Stelle, aus der der Waehler kam (Bindungs-Stelle oder Spaltenkopf) —
+  // ein Klick darauf schliesst ihn wieder.
+  ausloeser?: Element | null
+
   onPick: (wert: string) => void
   onClose: () => void
 }
@@ -89,6 +93,7 @@ export function FieldPicker({
   current,
   top,
   left,
+  ausloeser,
   onPick,
   onClose,
 }: FieldPickerProps) {
@@ -114,6 +119,7 @@ export function FieldPicker({
       bezeichnung={`Feld für ${spotLabel}`}
       oben={top}
       links={left}
+      ausloeser={ausloeser}
       onClose={onClose}
       imBildHalten
       escapeAbfangen

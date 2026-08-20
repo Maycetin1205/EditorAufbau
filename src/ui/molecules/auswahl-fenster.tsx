@@ -4,11 +4,54 @@ import { cn } from '@/lib/utils'
 
 const RAND = 8
 
+// Ein Zeigerdruck ausserhalb schliesst das Fenster — der Ausloeser liegt
+// ausserhalb. Ohne weiteres Zutun oeffnet der Klick, der auf denselben Druck
+// folgt, es sofort wieder: es wirkt, als ginge es nicht zu (Nutzer-Befund
+// 2026-08-19). Also wird nach einem Druck AUF DEN AUSLOESER genau EIN Klick
+// verschluckt.
+//
+// Der Schlucker wohnt modulweit, weil er das Fenster UEBERLEBEN muss: der
+// Druck schliesst es (die Komponente verschwindet), der Klick kommt erst
+// danach. Er verfaellt beim naechsten Zeigerdruck — sonst bliebe er liegen,
+// wo kein Klick folgt (Touch, Wegziehen).
+let klickSchlucker: (() => void) | null = null
+
+function schluckeNaechstenKlick(): void {
+  klickSchlucker?.()
+  const ab = (): void => {
+    document.removeEventListener('click', schlucke, true)
+    document.removeEventListener('pointerdown', ab, true)
+    if (klickSchlucker === ab) klickSchlucker = null
+  }
+  const schlucke = (e: Event): void => {
+    // Haelt den Klick vor JEDEM anderen Horcher an — auch vor React (das an
+    // #root horcht) und vor dem @click eines Bausteins in seinem Schatten.
+    e.stopImmediatePropagation()
+    ab()
+  }
+  document.addEventListener('click', schlucke, true)
+  // Waehrend eines laufenden pointerdown angemeldet, hoert dieser Horcher erst
+  // den NAECHSTEN — genau das ist gewollt.
+  document.addEventListener('pointerdown', ab, true)
+  klickSchlucker = ab
+}
+
+// Der Ausloeser kann im Schatten eines Bausteins liegen; dort zeigt e.target
+// auf den Wirt. Der zusammengesetzte Pfad kennt ihn trotzdem.
+function aufAusloeser(e: Event, ausloeser: Element): boolean {
+  if (typeof e.composedPath === 'function' && e.composedPath().includes(ausloeser)) return true
+  return e.target instanceof Node && ausloeser.contains(e.target)
+}
+
 interface AuswahlFensterProps {
   bezeichnung: string
 
   oben: number
   links: number
+
+  // Der Knopf oder die Zelle, aus der dieses Fenster kam. Gesetzt, schliesst
+  // ein Klick darauf das Fenster statt es neu zu oeffnen.
+  ausloeser?: Element | null
 
   className: string
   imBildHalten?: boolean
@@ -21,6 +64,7 @@ export function AuswahlFenster({
   bezeichnung,
   oben,
   links,
+  ausloeser,
   className,
   imBildHalten = false,
   escapeAbfangen = false,
@@ -53,7 +97,9 @@ export function AuswahlFenster({
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+      if (!ref.current || ref.current.contains(e.target as Node)) return
+      if (ausloeser != null && aufAusloeser(e, ausloeser)) schluckeNaechstenKlick()
+      onClose()
     }
     const onScroll = (e: Event) => {
       if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return
@@ -77,7 +123,7 @@ export function AuswahlFenster({
       document.removeEventListener('scroll', onScroll, true)
       tastenZiel.removeEventListener('keydown', onKeyDown, true)
     }
-  }, [onClose, escapeAbfangen])
+  }, [onClose, escapeAbfangen, ausloeser])
 
   return createPortal(
     <div

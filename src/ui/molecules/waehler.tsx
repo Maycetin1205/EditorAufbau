@@ -169,18 +169,24 @@ export function WaehlerKnopf({
   className,
   onWaehle,
 }: WaehlerKnopfProps) {
-  const [offen, setOffen] = useState<{ top: number; left: number } | null>(null)
+  const [offen, setOffen] = useState<{
+    top: number
+    left: number
+    ausloeser: Element
+  } | null>(null)
   const knopfRef = useRef<HTMLButtonElement | null>(null)
 
   const treffer = gruppen.flatMap((g) => g.eintraege).find((e) => e.wert === wert)
   const unbekannt = wert !== '' && treffer === undefined
 
   const oeffne = () => {
-    const r = knopfRef.current?.getBoundingClientRect()
-    if (!r) return
+    const knopf = knopfRef.current
+    const r = knopf?.getBoundingClientRect()
+    if (!knopf || !r) return
     setOffen({
       top: Math.max(8, r.bottom + 4),
       left: Math.max(8, Math.min(r.left, window.innerWidth - 272)),
+      ausloeser: knopf,
     })
   }
 
@@ -230,6 +236,7 @@ export function WaehlerKnopf({
           bezeichnung={bezeichnung}
           oben={offen.top}
           links={offen.left}
+          ausloeser={offen.ausloeser}
           className={FENSTER_KLASSE}
           imBildHalten
           escapeAbfangen
