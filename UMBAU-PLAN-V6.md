@@ -21,6 +21,36 @@ dann `go` (0.3), dann genau EINE Etappe.
 
 <!-- Nach JEDER fertigen Etappe aktualisieren. Zeiger, keine Chronik. -->
 
+- **Stand 2026-08-20, nachmittags: die Belegtabelle-Demo des Nutzers ist das
+  Vorbild der Erfassung** (`Downloads/Belegtabelle.dc.html`, Design-Canvas).
+  Uebernommen wird ihre BEDIENUNG und ihre STRUKTUR, nicht ihre Palette (die
+  Maske laeuft weiter auf `--se-*`; die Demo traegt Linear-Farben).
+  Gebaut in dieser Sitzung, je mit eigenem Commit:
+  1. S1.8 des Vorchats gesichert (lag unfestgeschrieben im Arbeitsbaum).
+  2. **Lauf JE ZEILE** — S2.6/S2.7/S2.8 zusammen: jede erfasste Zeile behaelt
+     ihren `ErfassungsLauf`, ist also weiter betippbar, duplizierbar und
+     einzeln loeschbar; Pfeile/Tab laufen ueber Zeilengrenzen. Die tote
+     Zeilenart `.zeile.erfasst` ist weg.
+  3. **Nummernspalte als Zeilengriff** (nur bei Erfassung an) — dort haengen
+     spaeter die Werkzeuge.
+  4. **Ein-Treffer-Automatik beim Tippen** ab dem zweiten Zeichen.
+  5. **Das gewaehlte Feld der Hilfstabelle landet in der Zelle** — war der
+     Blocker: ohne Schluesselpaar blieb das Suchwort stehen und lief in den
+     Beleg. Regel: was der Nutzer unter „Zeigt beim Suchen" gewaehlt hat.
+  6. **Erfassungszeile bleibt OBEN** (Zeile 0, wandert nicht mit) · doppelter
+     Hoehen-Abzug weg (das leere Band am Boden) · `SPALTEN_MAX` 8 → 16.
+  **Offen aus der Demo:** Werkzeugleiste (Nutzer-Ansage: spaeter, „einiges
+  geht ja inline"; zwei der sieben Knoepfe sind schon Inspector-Schalter) ·
+  Spaltenbreite ziehen (Muster: der Anfasser von `DialogRahmen`, nicht die
+  eigene mousemove-Schleife der Demo) · Pflichtfeld-Merkmal (generisch am
+  Listen-Eintrag, dann kann es das Formfeld auch) · Dichte kompakt (soll
+  „Schlank" machen). **Summen sind gestrichen** — werden nicht gebraucht.
+  **Vier Tasten-Abweichungen** von der Demo stehen im Chat und warten auf ein
+  Wort des Nutzers: Enter haelt am Tippfehler an (G1) · Enter im leeren Feld
+  oeffnet das grosse Fenster (2026-08-18) · Escape zweistufig · Liste erst
+  beim Tippen, nicht beim Reinklicken (G1; geteilt mit dem Formfeld).
+  **S2.0 (Doppel-Lieferung) ist NICHT angefasst.**
+
 - **Stand 2026-08-20: ZUERST Welle S lesen (ganz unten in dieser Datei).**
   Der Nutzer baut eine Belegpositions-Erfassungsmaske; zwei echte
   SoftEngine-Debug-Logs sind ausgewertet.
