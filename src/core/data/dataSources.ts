@@ -80,9 +80,23 @@ export function felderFor(
   benutzt?: ReadonlySet<string>,
   holSchluessel: readonly string[] = [],
 ): string {
+  // Die Schluesselfelder, die eine HOLENDE Quelle aus der Zeile DIESER Quelle
+  // liest (Belegart, Belegnummer, Jahr, Archiv fuer Relation 69). Sie gehoeren
+  // dieser Quelle, tragen also auch ihren Feld-Vorsatz.
+  //
+  // Bis 2026-08-21 wurden sie NACKT angehaengt: an einer ERP-Abfrage mit
+  // Vorsatz stand dann `...,BEL_631_12,2_1,3_8,0_1,1_1` — vier Codes, die
+  // SoftEngine in einer BEL-Abfrage nicht kennt. Es lieferte sie nicht, der
+  // Positions-Lader fand keine Belegart, und weil er bei leerer Belegart
+  // sofort abbricht und die Quelle leert (relationLader.ts), blieben die
+  // Positionstabellen LEER — ohne eine einzige Meldung. Der Fehler steckte
+  // von Anfang an drin und fiel erst auf, als die erste Quelle Zeilen per
+  // Relation holte.
+  const vorsatz = source.feldVorsatz ?? ''
   const mitSchluesseln = (codes: string[]): string[] => {
     for (const code of holSchluessel) {
-      if (!codes.includes(code)) codes.push(code)
+      const voll = vorsatz === '' ? code : `${vorsatz}${code}`
+      if (!codes.includes(voll)) codes.push(voll)
     }
     return codes
   }
