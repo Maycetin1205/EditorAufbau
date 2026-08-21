@@ -827,6 +827,23 @@ Beides rutscht durch `check:regeln`, weil der Waechter nur `===`, `!==`,
   *Weg:* ein Merkmal `nameProp` in der `BlockDefinition`, das jeder Baustein
   selbst deklariert.
 
+**GEBAUT 2026-08-21** (`6892123`), beides. **Abweichung vom Bauauftrag, mit
+Grund:** die Merkmale liegen nicht in der `BlockDefinition`/am Lit-Baustein,
+sondern in `EditorAngaben` (`core/blocks/editorAngaben.ts`, je Baustein
+angemeldet aus `blocks/<baustein>/editorAngaben.ts`). Statische Felder am
+Lit-Baustein reisen im Runtime-Buendel mit und kosten JEDE exportierte Maske
+Bytes fuer Wissen, das nur der Editor braucht — und sie haetten den Export
+veraendert, also einen SE-Echttest erzwungen. So bleibt `ff-runtime.js`
+unveraendert. Der Kanal ist derselbe, den Palette-Symbol und Inspector-Hinweis
+schon benutzen. Preis, ehrlich benannt: er muss geladen werden (im Produkt tut
+das `main.tsx`); ein Test, der ihn vergisst, sieht nur den Art-Namen — genau
+das ist in `preflight.test.ts` passiert und dort mit einer Import-Zeile
+behoben.
+
+Beim Zweiten fiel eine Doppelung mit: die Popup-Mindestmasse standen im
+Canvas ein zweites Mal neben denen des Dialog-Rahmens. Sie kommen jetzt von
+dort.
+
 ---
 
 ## R10 · Registry — Faehigkeiten und Defaults (= die alte Welle E)
