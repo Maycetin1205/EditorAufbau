@@ -132,6 +132,24 @@ describe('Gesten-Token: oeffnet einmal, schliesst einmal (A7.2)', () => {
     expect(ed.getNode(a.id)?.props.name).toBe(nameA)
   })
 
+  it('Anfassen ohne Aendern erzeugt keinen leeren Rueckgaengig-Schritt', () => {
+    const { ed, id } = editorMitBaustein()
+    ed.updateProperty(id, 'text', 'A')
+    const schritteVorher = ed.canUndo
+
+    // Genau das tut ein Zahlenfeld beim Verlassen: Klammer auf, denselben
+    // Wert schreiben, Klammer zu.
+    const klammer = ed.oeffneGeste()
+    klammer.oeffne()
+    ed.updateProperty(id, 'text', 'A')
+    klammer.schliesse()
+
+    expect(schritteVorher).toBe(true)
+    ed.undo()
+    // Ein leerer Schritt haette hier noch 'A' stehen lassen.
+    expect(ed.getNode(id)?.props.text).toBe(STANDARD)
+  })
+
   it('eine nie geoeffnete Klammer schliesst keine fremde', () => {
     const { ed, id } = editorMitBaustein()
     const laufende = ed.oeffneGeste()
