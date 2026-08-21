@@ -64,6 +64,7 @@ export function BlockHost({ block, selected, onSelect, raster = false, children 
     selected,
     bindableSpots,
     quellen,
+    bibliothek,
     raster,
   })
 
