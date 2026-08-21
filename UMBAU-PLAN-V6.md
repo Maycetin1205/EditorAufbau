@@ -39,7 +39,12 @@ Grundlage ist eine Gesamtanalyse vom 2026-08-21 in drei Stufen:
    37 Funde, **keiner widerlegt**, 17 als Doppelnennung ausgesondert,
    20 bestaetigt.
 
-**Naechste Etappe: R1** (die Bestellung an SoftEngine). Danach R2.
+**GEBAUT 2026-08-21:** R1 (drei Commits: Plan, Feldbestellung,
+Satzschluessel) und R2 (drei von vier Fehlern der SE-Schicht).
+**Naechste Etappe: R4** (Kommandozentrale) — R3 und R5 danach.
+Die Tabellen-Pakete R5/R7/R8 beruehren `blocks/tabelle/`; der Nutzer
+entwirft dort parallel eine Referenz-Tabelle (2026-08-21, ausserhalb des
+Repos). Vor dem Anfassen dieser Dateien nachfragen.
 
 **Was diese Analyse NICHT geprueft hat** (ehrliche Restluecke, Regel 9):
 kein einziger Fund wurde im Browser oder in SoftEngine nachgestellt -- alle
@@ -411,7 +416,20 @@ Drei Funde, eine Ursachenkette. Bringt als einziges Paket messbare Sekunden.
   Loesung: Standard-Satzschluessel in die Arten-Tabelle
   (`core/data/quellenArten.ts`) aufnehmen, das Formular liest ihn von dort.
 
-**Vor dem Commit:** dem Nutzer die neue SEvariablen seiner Maske Feld fuer
+**GEBAUT 2026-08-21** (Commits `12f4132`, `7727f53`). Gemessen an der
+echten Maske des Nutzers: **81 -> 58 Felder** (POS 21->9, Artikelstamm
+14->3). Die zwei IDB-Quellen bleiben bei 34 und 12, weil der Nutzer dort
+„sucht in X" gesetzt hat, aber KEIN Suchfeld — dann weiss der Editor
+nichts, und geraten wird nicht. Setzt er die Suchfelder (wie bei
+Bezeichnung und Artikelnummer schon geschehen), fallen die beiden auf
+je ~3. Daraus folgt ein eigener Punkt fuer R4: dass man „sucht in"
+setzen kann, ohne ein Suchfeld zu waehlen, und nichts darauf hinweist,
+ist ein Mangel der Bedienung — vom Nutzer selbst benannt.
+Von den drei im Log gemessenen Bild-Nachschlag-Treibern verschwindet
+damit noch KEINER: `ART_1_25` ist ein gewaehltes Suchfeld und muss
+bleiben, `IDB_110_25` und `IDB_55_25` fallen unter „kein Wissen".
+
+**Vor dem Commit war zugesagt:** dem Nutzer die neue SEvariablen seiner Maske Feld fuer
 Feld gegen die alte legen. Erst wenn er sagt, dass nichts fehlt, wird
 committet. **Risiko:** ein nur mittelbar gebrauchtes Feld (Suchfeld der
 Automatik, Schluessel einer Verknuepfung) koennte durch den Filter fallen —
@@ -465,6 +483,31 @@ weil diese Schicht ausschliesslich im ERP laeuft.
   `/\{([A-Z_]+)\}/g`, ersetzt wird zur Laufzeit aber mit
   `/\{([A-Za-z0-9_]+)\}/g`. Alles mit Ziffern oder Kleinbuchstaben rutscht
   durch die Pruefung und geht leer hinaus.
+
+**GEBAUT 2026-08-21** (Commit `58e5c32`): die drei Punkte oben —
+leeres RESULT gilt als Antwort, der Lader unterscheidet Ende / keine
+Antwort / Deckel, und der Rohsatz darf unter RESULT stehen.
+
+**OFFEN und eine ENTSCHEIDUNG, kein Bauauftrag: die Zuordnung von Frage
+und Antwort** (`relations.ts:210`). Laeuft ein Auftrag in die
+Zeitueberschreitung und startet der naechste, kann dessen Horcher die
+verspaetete Antwort des ersten annehmen — in einer Kette „neue Satznummer
+holen, dann mit dieser Nummer schreiben" schreibt der Schreibschritt dann
+in den FALSCHEN Satz.
+Eine Zuordnung braucht ein Merkmal, das die Antwort mitbringt. In keiner
+belegten Antwortform steht eines: `{"RESULT":"…"}` traegt weder die
+Relationsnummer noch eine Auftragskennung. Eines zu erfinden verbietet
+Regel 5. Der erste Punkt entschaerft die Lage deutlich, weil damit die
+haeufigste Ursache fuer Zeitueberschreitungen wegfaellt.
+Zwei Wege, beide brauchen den Nutzer:
+1. **Echttest:** in einem SE-Log nachsehen, ob die Antwort doch etwas
+   mitfuehrt (Relationsnummer, Message-Nummer, laufende Nummer). Dann ist
+   die Zuordnung eine kleine Aenderung.
+2. **Entscheidung:** eine Kette bricht bei Zeitueberschreitung AB statt
+   weiterzulaufen. Kostet nichts an SE-Wissen, aendert aber Verhalten —
+   eine halb gelaufene Kette ist etwas anderes als eine mit falschen
+   Werten weitergelaufene. Sicherer, aber sichtbar.
+Nicht selbst entscheiden, nicht stillschweigend bauen.
 
 **SE-Echttest Pflicht.**
 
