@@ -39,9 +39,9 @@ Grundlage ist eine Gesamtanalyse vom 2026-08-21 in drei Stufen:
    37 Funde, **keiner widerlegt**, 17 als Doppelnennung ausgesondert,
    20 bestaetigt.
 
-**GEBAUT 2026-08-21:** R1 (drei Commits: Plan, Feldbestellung,
-Satzschluessel) und R2 (drei von vier Fehlern der SE-Schicht).
-**Naechste Etappe: R4** (Kommandozentrale) — R3 und R5 danach.
+**GEBAUT 2026-08-21:** R1 (Feldbestellung + Satzschluessel), R2 (drei von
+vier Fehlern der SE-Schicht), R4 (alle sechs Funde, fuenf Commits).
+**Naechste Etappe: R3** (WYSIWYG-Brueche) — R5 danach.
 Die Tabellen-Pakete R5/R7/R8 beruehren `blocks/tabelle/`; der Nutzer
 entwirft dort parallel eine Referenz-Tabelle (2026-08-21, ausserhalb des
 Repos). Vor dem Anfassen dieser Dateien nachfragen.
@@ -579,6 +579,21 @@ Vier Stellen, an denen Editor und Export/Laufzeit VERSCHIEDEN rechnen.
   Warnung geloescht.
 
 ---
+
+**GEBAUT 2026-08-21**, fuenf Commits (`8ed3a95`, `2082fec`, `3fbb9f7`,
+`eb6bb26`, `75d0311`). Alle sechs Funde behoben. Dazu gekommen, weil
+derselben Ursache: `DatenquellenBereich` bekam `key` und das Festhalten
+der Auswahl mit, obwohl der Hauptfehler dort nicht greift.
+**Offen geblieben und nach R8 verschoben:** `nutztQuelle` (state) und
+`collectDataSources` (export) beantworten weiter zwei aehnliche Fragen an
+zwei Stellen — absichtlich, weil sie sich im Punkt „unvollstaendige
+Verknuepfung" unterscheiden muessen. Der Kommentar an der Stelle sagt es.
+**Neu aufgenommen (Nutzer-Befund 2026-08-21):** man kann an einer
+Tabellenspalte „sucht in <Hilfstabelle>" setzen, OHNE ein Suchfeld zu
+waehlen. Dann weiss der Editor nicht, was er bestellen soll (s. R1), die
+Vorschlagsliste bleibt leer, und nichts weist darauf hin. Was hier
+richtig ist, ist eine Bedien-Entscheidung des Nutzers — Pflichtfeld?
+Vorgabe? Hinweis? — nicht selbst festlegen.
 
 ## R5 · Erfassung und Nachschlagen
 
