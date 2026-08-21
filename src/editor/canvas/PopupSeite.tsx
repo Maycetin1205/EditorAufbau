@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { DIALOG_RAND, DIALOG_SCHLIESSEN_EVENT } from '../../blocks/shared/DialogRahmen'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
+import { editorAngabenVon } from '../../core/blocks/editorAngaben'
 import { rasterItemStyle } from '../../core/blocks/rasterLayout'
 import { useEditor } from '../../state/useEditor'
 import { BlockHost } from './BlockHost'
@@ -11,9 +12,6 @@ import { commitDrop, useDnd } from './dndState'
 import { rasterZiel } from './rasterDnd'
 import { flaecheIn } from './rasterFlaeche'
 import { zieheGroesse } from './zieheGroesse'
-
-const POPUP_MIN_BREITE = 240
-const POPUP_MIN_HOEHE = 160
 
 function popupZahl(v: unknown, fallback: number): number {
   const n = Number(v)
@@ -50,30 +48,39 @@ export function PopupSeite({ popupId }: { popupId: string }) {
   const node = ed.getNode(popupId)
   if (!node) return null
   const selected = ed.selectedId === node.id
-  const breite = popupZahl(node.props.breite, 520)
-  const hoehe = popupZahl(node.props.hoehe, 380)
-
-  const sichtbareBreite = stage ? Math.min(breite, Math.max(40, stage.b - DIALOG_RAND)) : breite
-  const sichtbareHoehe = stage ? Math.min(hoehe, Math.max(40, stage.h - DIALOG_RAND)) : hoehe
-
-  const startResize = (
-    e: ReactPointerEvent<HTMLDivElement>,
-    prop: 'breite' | 'hoehe',
-    start: number,
-    min: number,
-  ) => {
-    zieheGroesse(ed, e, {
-      achse: prop === 'breite' ? 'x' : 'y',
-      prop,
-      getId: () => node.id,
-      start,
-      min,
-      faktor: 2,
-    })
-  }
 
   const def = getBlockDefinition(node.type)
   const standard = def?.defaultProps ?? {}
+
+  // Wie dieser Seiten-Baustein gezogen wird, sagt er selbst. Diese Datei
+  // rendert JEDE Fenster-Seitenart — Canvas.tsx entscheidet nur ueber
+  // `istFlaeche` — und darf die Eigenschaftsnamen eines einzelnen Bausteins
+  // nicht auswendig kennen (Regel 2). Bis 2026-08-21 standen hier `breite`,
+  // `hoehe` und die vier Masse 240/160/520/380 direkt im Code, die zwei
+  // Mindestmasse ein zweites Mal neben denen des Dialog-Rahmens.
+  const zieh = editorAngabenVon(node.type).ziehbareGroesse
+
+  const gesetzteGroesse = (prop: string, min: number): number =>
+    popupZahl(node.props[prop], popupZahl(standard[prop], min))
+  const aufFlaecheGeklemmt = (mass: number, flaeche: number | undefined): number =>
+    flaeche === undefined ? mass : Math.min(mass, Math.max(40, flaeche - DIALOG_RAND))
+
+  const sichtbareBreite = zieh
+    ? aufFlaecheGeklemmt(gesetzteGroesse(zieh.breiteProp, zieh.minBreite), stage?.b)
+    : 0
+  const sichtbareHoehe = zieh
+    ? aufFlaecheGeklemmt(gesetzteGroesse(zieh.hoeheProp, zieh.minHoehe), stage?.h)
+    : 0
+
+  const startResize = (
+    e: ReactPointerEvent<HTMLDivElement>,
+    achse: 'x' | 'y',
+    prop: string,
+    min: number,
+    start: number,
+  ) => {
+    zieheGroesse(ed, e, { achse, prop, getId: () => node.id, start, min, faktor: zieh?.faktor })
+  }
 
   const rumpf = (): HTMLElement | null =>
     flaecheIn(def ? wrapRef.current?.querySelector(def.tagName) : null)
@@ -135,16 +142,17 @@ export function PopupSeite({ popupId }: { popupId: string }) {
           <LeerHinweis titel={`Leeres Fenster „${String(node.props.name ?? '')}“`} />
         </div>
       )}
-      {selected && (
+      {selected && zieh && (
         <>
           <div
             draggable={false}
             data-ff-editor-helper
-            onPointerDown={(e) => startResize(e, 'breite', sichtbareBreite, POPUP_MIN_BREITE)}
+            onPointerDown={(e) =>
+              startResize(e, 'x', zieh.breiteProp, zieh.minBreite, sichtbareBreite)}
             onDragStart={(e) => e.preventDefault()}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              ed.updateProperty(node.id, 'breite', standard.breite ?? 520)
+              ed.updateProperty(node.id, zieh.breiteProp, standard[zieh.breiteProp] ?? zieh.minBreite)
             }}
             title="Breite ziehen · Doppelklick: Standard"
             style={{
@@ -163,11 +171,12 @@ export function PopupSeite({ popupId }: { popupId: string }) {
           <div
             draggable={false}
             data-ff-editor-helper
-            onPointerDown={(e) => startResize(e, 'hoehe', sichtbareHoehe, POPUP_MIN_HOEHE)}
+            onPointerDown={(e) =>
+              startResize(e, 'y', zieh.hoeheProp, zieh.minHoehe, sichtbareHoehe)}
             onDragStart={(e) => e.preventDefault()}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              ed.updateProperty(node.id, 'hoehe', standard.hoehe ?? 380)
+              ed.updateProperty(node.id, zieh.hoeheProp, standard[zieh.hoeheProp] ?? zieh.minHoehe)
             }}
             title="Höhe ziehen · Doppelklick: Standard"
             style={{

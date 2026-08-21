@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest'
 import '../blocks/popup/PopupBlock'
 import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/tabelle/TabelleBlock'
+// Welche Eigenschaft einen Baustein benennt, steht in seinen Editor-Angaben
+// (nicht am Lit-Baustein — das reiste sonst im Export-Buendel mit). Im Produkt
+// laedt main.tsx sie alle; ein Test muss sie mitnehmen, sonst heisst jeder
+// Baustein nur nach seiner Art.
+import '../blocks/formfeld/editorAngaben'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
 import { preflightMask } from './preflight'

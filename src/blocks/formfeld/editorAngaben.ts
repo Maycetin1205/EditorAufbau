@@ -4,4 +4,5 @@ import { FormFeldBlock } from './FormFeldBlock'
 
 ergaenzeEditorAngaben(FormFeldBlock.blockType, {
   symbol: ZeichenFormularfeld,
+  nameProps: ['placeholder'],
 })

@@ -1,18 +1,20 @@
 import type { BlockNode } from './BlockData'
 import { bindingProp } from './BlockDefinition'
 import { getBlockDefinition } from './blockRegistry'
+import { editorAngabenVon } from './editorAngaben'
 import { bindbareStellenVon, QUELLE_PROP } from './treeQuery'
 import { feldKlarname, type DataSource } from '../data/dataSources'
 
-const TEXT_PROPS = ['label', 'heading', 'title', 'text', 'placeholder'] as const
-
 const MAX_LAENGE = 28
 
+// Welche Eigenschaften einen Baustein benennen, sagt der Baustein selbst
+// (EditorAngaben.nameProps). Hier wird nur ausgewaehlt.
 export function eigenerText(
+  nameProps: readonly string[],
   props: Record<string, unknown>,
   defaults?: Record<string, unknown>,
 ): string {
-  for (const key of TEXT_PROPS) {
+  for (const key of nameProps) {
     const value = props[key]
     if (typeof value !== 'string' || value.trim() === '') continue
     if (defaults && value === defaults[key]) continue
@@ -35,7 +37,11 @@ function gebundenerAlias(node: BlockNode, quellen: readonly DataSource[]): strin
 
 export function bausteinName(node: BlockNode, quellen: readonly DataSource[]): string {
   const def = getBlockDefinition(node.type)
-  const text = eigenerText(node.props, def?.defaultProps)
+  const text = eigenerText(
+    editorAngabenVon(node.type).nameProps ?? [],
+    node.props,
+    def?.defaultProps,
+  )
   if (text !== '') return text
   const alias = gebundenerAlias(node, quellen)
   if (alias !== '') return alias

@@ -4,4 +4,5 @@ import { ButtonBlock } from './ButtonBlock'
 
 ergaenzeEditorAngaben(ButtonBlock.blockType, {
   symbol: ZeichenSchaltflaeche,
+  nameProps: ['label'],
 })

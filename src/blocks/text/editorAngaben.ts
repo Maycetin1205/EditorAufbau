@@ -4,4 +4,5 @@ import { TextBlock } from './TextBlock'
 
 ergaenzeEditorAngaben(TextBlock.blockType, {
   symbol: ZeichenText,
+  nameProps: ['text'],
 })
