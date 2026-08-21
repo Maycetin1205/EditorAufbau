@@ -30,6 +30,17 @@ export interface QuellenArt {
 
   kopfsatzStandard: string
 
+  // Das Feld, das die SATZNUMMER dieser Art traegt — die Laufzeit liest es
+  // als {PINDEX}, also die Nummer, in die eine Aktionskette schreibt.
+  // Bis 2026-08-21 setzte das Formular fuer JEDE neue Quelle hart '0_10',
+  // den Satzschluessel einer IDB-Tabelle: ein Beleg bekam ihn genauso wie
+  // ein Artikelstamm, der ueberhaupt keinen hat. Leer heisst „diese Art hat
+  // keine Satznummer" — dann wird auch keine bestellt.
+  // Die Werte stammen aus den `standardFelder` derselben Art (dort stehen
+  // sie mit Klarnamen „Satzschluessel"/„Satznummer"), nicht aus einer
+  // Annahme ueber SoftEngine (Regel 5).
+  satzSchluesselStandard: string
+
   relationLadenMoeglich: boolean
 
   varMoeglich: boolean
@@ -59,6 +70,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: 'ID0001',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '0_10',
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'sefileloop',
@@ -76,6 +88,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: true,
     bestellBlock: 'sefileloop',
@@ -93,6 +106,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'sefileloop',
@@ -110,6 +124,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '0_11',
     relationLadenMoeglich: false,
     varMoeglich: true,
 
@@ -139,6 +154,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: '',
     kopfsatzMoeglich: true,
     kopfsatzStandard: 'BEL_0_11',
+    satzSchluesselStandard: '645_10',
     relationLadenMoeglich: true,
 
     varMoeglich: true,
@@ -179,6 +195,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: 'SERPOS',
     kopfsatzMoeglich: true,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'sefileloop',
@@ -197,6 +214,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: 'LIEFERADRESSE.GET',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'erpapicall',
@@ -215,6 +233,7 @@ const ARTEN: Record<DataSourceKind, QuellenArt> = {
     kennungBeispiel: 'ID0001',
     kopfsatzMoeglich: false,
     kopfsatzStandard: '',
+    satzSchluesselStandard: '',
     relationLadenMoeglich: false,
     varMoeglich: false,
     bestellBlock: 'dataset',

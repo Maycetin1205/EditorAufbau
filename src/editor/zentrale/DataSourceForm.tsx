@@ -152,9 +152,18 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
       ...(vorsatz !== '' ? { feldVorsatz: vorsatz } : {}),
 
+      // Der Satzschluessel einer NEUEN Quelle kommt aus der Arten-Tabelle.
+      // Bis 2026-08-21 stand hier fest '0_10' — der Satzschluessel einer
+      // IDB-Tabelle. Ein Beleg bekam ihn genauso wie ein Artikelstamm, der
+      // gar keinen hat, und weil das Feld im Formular nirgends auftaucht,
+      // war es danach auch nie mehr zu korrigieren.
+      // Bestehende Quellen behalten ihren gespeicherten Wert: ihn hier
+      // umzuschreiben waere ein stiller Eingriff in Nutzerbestand (3.2).
       ...(source
         ? (source.indexField ? { indexField: source.indexField } : {})
-        : { indexField: '0_10' }),
+        : (art.satzSchluesselStandard !== ''
+          ? { indexField: art.satzSchluesselStandard }
+          : {})),
 
       ...(holtZeilen
         ? {
