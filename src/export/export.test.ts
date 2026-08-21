@@ -11,6 +11,7 @@ import '../blocks/trenner/TrennerBlock'
 import '../blocks/formfeld/FormFeldBlock'
 
 import '../blocks/kanban/KanbanBlock'
+import '../blocks/tabelle/TabelleBlock'
 
 import type { BlockTree } from '../core/blocks/BlockData'
 import type { DataSource } from '../core/data/dataSources'
@@ -202,6 +203,40 @@ describe('Runtime-Bündel', () => {
 
     expect(runtimeJsRaw, 'npm run build:runtime ausführen — Diagnose-Textarea ist abgeschafft')
       .not.toContain('ff-se-diagnose')
+
+    expect(
+      runtimeJsRaw,
+      'npm run build:runtime ausführen — die Tierbilder gehören NICHT ins Bündel: '
+      + 'sie sind 29,7 KB Daten und lagen damit in JEDER Maske. Der Export gibt sie '
+      + 'nur mit, wenn ein Baustein sie laut Registry zeigt (export/tierbilder.ts).',
+    ).not.toContain('data:image/png;base64,')
+  })
+})
+
+describe('Tierbilder als Daten (nur wenn ein Baustein sie zeigt)', () => {
+  function baumMitSpaltenArt(art: string): BlockTree {
+    return {
+      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+      tab: {
+        id: 'tab', type: 'tabelle',
+        props: { spalten: [{ titel: 'Tierart', feld: '412_30', art }] },
+        parentId: 'root', childIds: [],
+      },
+    }
+  }
+
+  it('Spaltenart „Bild + Name": die Bilder reisen mit', () => {
+    const { html } = exportMask(baumMitSpaltenArt('bild'))
+    expect(html).toContain('window.FF_TIER_BILDER = {')
+    expect(html).toContain('data:image/png;base64,')
+  })
+
+  it('nur Textspalten: kein Byte Bilddaten', () => {
+    const { html } = exportMask(baumMitSpaltenArt('text'))
+    /* Der NAME steht im Buendel: die Laufzeit liest das Global. Fehlen muss
+       die Zuweisung mit den Daten. */
+    expect(html).not.toContain('window.FF_TIER_BILDER = {')
+    expect(html).not.toContain('data:image/png;base64,')
   })
 })
 

@@ -58,6 +58,10 @@ export interface BlockComponentStatic {
 
   readonly listenBindung?: ListenBindung
 
+  /* Zeigt dieser Baustein mit DIESEN Props Tierbilder? Der Export gibt die
+     Bilddaten nur dann mit -- sonst traegt jede Maske 29,7 KB umsonst. */
+  readonly brauchtTierbilder?: (props: Record<string, unknown>) => boolean
+
   readonly blockEvents?: readonly BlockEventSpec[]
 
   readonly pageBlock?: boolean

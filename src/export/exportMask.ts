@@ -43,6 +43,7 @@ import { baueSevariablen } from './sevariablen'
 import { vorschauRoh, vorschauStellenVon } from './bindungsVorschau'
 import { styleAttr } from './knotenStil'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
+import { tierbilderJs } from './tierbilder'
 import {
   escapeHtmlAttr,
   escapeHtmlText,
@@ -231,6 +232,10 @@ export function exportMask(
     })) + ';',
   ))
 
+  /* Bilddaten nur, wenn ein Baustein im Baum sie laut Registry zeigt —
+     sonst traegt jede Maske 29,7 KB umsonst (s. export/tierbilder.ts). */
+  const bilderJs = guardScriptContent(escapeNonAsciiJs(tierbilderJs(tree)))
+
   const relationsJs = guardScriptContent(escapeNonAsciiJs(
     'window.FF_RELATIONS = ' + JSON.stringify(usedRelations.map((r) => ({
       id: r.id,
@@ -271,6 +276,7 @@ export function exportMask(
     '<script>',
     sourcesJs,
     relationsJs,
+    ...(bilderJs === '' ? [] : [bilderJs]),
     runtimeJs,
     '</script>',
     '</body>',

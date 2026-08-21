@@ -193,6 +193,11 @@ export interface BlockDefinition {
 
   listenBindung?: ListenBindung
 
+  /* Braucht dieser Baustein die Tierbilder in der Laufzeit? Wird mit den
+     Props des einzelnen Bausteins gefragt (eine Tabelle ohne Bild-Spalte
+     braucht sie nicht) -- der Export bestellt die Daten nur dann. */
+  brauchtTierbilder?: (props: Record<string, unknown>) => boolean
+
   blockEvents?: readonly BlockEventSpec[]
 
   pageBlock?: boolean

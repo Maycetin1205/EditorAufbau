@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { tierBildName } from './tierIcon'
-import { TIER_BILDER } from './tierBilder'
+import { TIER_BILDER } from '../../core/data/tierBilder'
 
 describe('tierBildName', () => {
   it('trifft die zehn Arten an echten Freitext-Werten', () => {

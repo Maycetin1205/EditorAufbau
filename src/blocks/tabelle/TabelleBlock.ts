@@ -38,7 +38,7 @@ import {
   spaltenSteuerung,
 } from './spaltenBearbeiten'
 import { zeilenHoeheFuer } from './spaltenArten'
-import { SPALTEN_BINDUNG } from './spaltenBindung'
+import { SPALTEN_BINDUNG, spaltenBrauchenTierbilder } from './spaltenBindung'
 import { tabelleAnsicht, naechsteSortierung, zeigtKopfzeile } from './tabelleAnsicht'
 import { TABELLE_EIGENSCHAFTEN } from './tabelleEigenschaften'
 import { tabelleFuss } from './tabelleFuss'
@@ -79,6 +79,8 @@ export class TabelleBlock extends BasicBlock {
   ]
 
   static readonly listenBindung: ListenBindung = SPALTEN_BINDUNG
+  static readonly brauchtTierbilder = spaltenBrauchenTierbilder
+
   static readonly defaultProps = {
     width: 'fill',
     source: '',

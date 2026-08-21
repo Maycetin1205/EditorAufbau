@@ -49,6 +49,12 @@ export class CardBlock extends BasicBlock {
     chipTextField: '',
   }
 
+  /* Der Avatar zeigt ein Tierbild (tierIcon), sonst die Pfote. Welcher WERT
+     ankommt, weiss erst die Laufzeit -- gefragt wird darum nur, ob die Stelle
+     ueberhaupt belegt ist. */
+  static readonly brauchtTierbilder = (props: Record<string, unknown>): boolean =>
+    String(props.avatar ?? '').trim() !== '' || String(props.avatarField ?? '').trim() !== ''
+
   static readonly bindableSpots: BindableSpotsFor<typeof CardBlock.defaultProps> = [
     { prop: 'time', label: 'Zeit' },
     { prop: 'date', label: 'Datum' },

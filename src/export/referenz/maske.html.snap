@@ -122,6 +122,7 @@ body { background: var(--se-bg); font-family: var(--se-font); font-size: var(--s
 <script>
 window.FF_DATA_SOURCES = [{"id":"q-termine","name":"Terminplaner","tableId":"IDBID0004","indexField":"0_10"},{"id":"q-adressen","name":"Adre\u00DFstamm","tableId":"ADR","indexField":""}];
 window.FF_RELATIONS = [{"id":"rel-put","verb":"PUT_RELATION","nr":"0174","params":["{PINDEX}","","{VALUE}"],"allowExtraParams":true}];
+/* window.FF_TIER_BILDER herausgeschnitten (30137 Zeichen Bilddaten) */
 /* Runtime-Buendel herausgeschnitten - bewacht von check:runtime + export.test.ts */
 </script>
 </body>
