@@ -742,14 +742,31 @@ Vorgabe? Hinweis? — nicht selbst festlegen.
 
 ## R7 · Toter Code
 
+**Stand 2026-08-21: der erste Teil ist gebaut** (Commit s. `git log`) —
+alles, was den Export nicht anfasst: der Preflight und die zwei nie
+benutzten Eigenschafts-Arten. `ff-runtime.js` blieb unveraendert.
+**Offen und je ein eigenes Paket:**
+- Alles unter `blocks/` und `softengine/` (Kanban-Kartenzaehler,
+  `nachschlagen.ts:310`, `feldEigenschaften.ts:54`, die
+  Tabellen-Fundstellen) aendert das Laufzeit-Buendel und damit die
+  exportierte Datei → **erst nach einem SoftEngine-Echttest des Nutzers
+  committen.**
+- `core/data/dataSources.ts:69` (`istOffenerSatz` & Co.) bleibt liegen: das
+  ist laut Fund selbst eine ENTSCHEIDUNG des Nutzers (fertig bauen oder
+  gemeinsam entfernen), keine Aufraeumarbeit.
+- Drei Funde der Liste sind widerlegt, s. unten.
+
 Rund zwoelf Fundstellen. Kein Fehler, aber alles davon sieht aus wie
 lebender Code und kostet bei jedem Umbau Lesezeit.
 
-- **`export/preflight.ts` (286 Zeilen) + `preflight.test.ts` (205)** — kein
-  Aufrufer im Produkt, nur Tests; ausserdem 33 `preflightMask`-Zeilen in fuenf
-  weiteren Export-Tests. Zweimal unabhaengig bestaetigt. Der Nutzer hat
-  Warn-Anzeigen zweimal abbestellt (2026-08-10 und -18) — dieses Ergebnis
-  kann ihn gar nicht mehr erreichen.
+- ~~**`export/preflight.ts` (286 Zeilen) + `preflight.test.ts` (205)**~~
+  **GELOESCHT 2026-08-21.** Kein Aufrufer im Produkt, nur Tests. Mit ihm
+  fielen 17 Tests, die ausschliesslich ihn pruefen, und 12 einzelne
+  Zusicherungen in fuenf Export-Tests. Auch die Eigenschafts-Arten
+  `'textarea'` und `'relation'` sind weg (unten in dieser Liste) — sie waren
+  vollstaendig verdrahtet und von keinem Baustein deklariert. Damit ist die
+  Mini-Entscheidung „preflightMask loeschen oder behalten" aus CLAUDE.md
+  beantwortet: geloescht, die git-Historie hat ihn.
 - **`core/data/dataSources.ts:69`** — `istOffenerSatz`, `sanitizeDataSources`,
   `sanitizeRelationTemplates`: null Aufrufer. Dazu haengt ein halbfertiges
   Feature: `DataSource.lieferung` schreibt kein Formular je, und das
@@ -757,17 +774,26 @@ lebender Code und kostet bei jedem Umbau Lesezeit.
   nirgends gelesen. **Als Paket entscheiden:** fertig bauen oder gemeinsam
   entfernen (der `it.todo` in `datenquellen.test.ts` haengt daran, s.
   Sperrliste „Offener Satz per VAR").
-- `softengine/geholteZeilen.ts:12` — `setzeGeholteZeilenZurueck`, nur Test.
-- `state/meldungen.ts:33` — `meldungen.leere()`, nur Test.
-- `blocks/shared/auswahl.ts:104` — `beimAuswahlZuruecksetzen` /
-  `setzeAuswahlZurueck`, nur Test.
+- ~~`softengine/geholteZeilen.ts:12` — `setzeGeholteZeilenZurueck`~~ ·
+  ~~`state/meldungen.ts:33` — `meldungen.leere()`~~ ·
+  ~~`blocks/shared/auswahl.ts:104` — `beimAuswahlZuruecksetzen` /
+  `setzeAuswahlZurueck`~~ — **diese drei Funde sind WIDERLEGT (2026-08-21,
+  am Code nachgezaehlt).** „Nur Test" ist nicht dasselbe wie tot: alle drei
+  setzen ein Modul-Singleton zurueck, damit Tests sich nicht gegenseitig
+  vergiften (`meldungen.leere()` steht in VIER `beforeEach`).
+  `beimAuswahlZuruecksetzen` wird ausserdem im Produkt benutzt
+  (`blocks/shared/holendeQuellen.ts:77`) — der Fund war einfach falsch.
+  Nicht anfassen.
 - **`blocks/tabelle/erfassungsLauf.ts:419`** — `kopie()` hat keinen Aufrufer,
   **und fuenf Kommentare versprechen Zeilen-Werkzeuge, die es nicht gibt**
   (`erfassungsAnschluss.ts:58` „einzeln loeschbar und duplizierbar", `:74`).
 - `blocks/tabelle/TabelleBlock.ts:237` — die Mechanik „Zeilen-Fokus merken und
   wiederherstellen" laeuft nie an.
-- `editor/inspector/PropControl.tsx:83` — die Eigenschafts-Arten `textarea`
-  und `relation` benutzt kein einziger Baustein.
+- ~~`editor/inspector/PropControl.tsx:83` — die Eigenschafts-Arten `textarea`
+  und `relation`~~ **GELOESCHT 2026-08-21**, mit `TextareaControl.tsx`, dem
+  Relations-Waehler, den beiden Gliedern der `PropertyKind`-Union, der
+  Einordnung in `Inspector.tsx` und der toten Haelfte von
+  `treeQuery.relationIdsVon`.
 - `blocks/kanban/KanbanSpalteBlock.ts:165` — der Kartenzaehler filtert nach
   `data-ff-editor-helper`, das an Karten nie gesetzt wird.
 - `blocks/formfeld/nachschlagen.ts:310` — zweispaltiger Zweig unerreichbar,
