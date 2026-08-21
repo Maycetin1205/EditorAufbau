@@ -57,6 +57,16 @@ export function BlockPalette() {
     return undefined
   }
 
+  const einfuegen = (type: string): void => {
+    const ziel = insertParentFor(type)
+    // Weicht der Baustein auf die Hauptseite aus, weil die offene Seite ihn
+    // nicht aufnehmen kann, muss der BLICK mitgehen. Sonst legt der
+    // Palette-Klick ihn unsichtbar woanders ab, und es wirkt, als haette der
+    // Knopf nichts getan.
+    if (ziel === ROOT_ID && ed.rootId !== ROOT_ID) ed.setActivePage(ROOT_ID)
+    ed.addBlock(type, ziel)
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <label className="relative flex items-center">
@@ -95,7 +105,7 @@ export function BlockPalette() {
                 <PaletteCard
                   key={def.type}
                   def={def}
-                  onAdd={() => ed.addBlock(def.type, insertParentFor(def.type))}
+                  onAdd={() => einfuegen(def.type)}
                 />
               ))}
             </div>
