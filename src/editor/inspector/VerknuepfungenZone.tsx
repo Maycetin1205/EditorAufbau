@@ -50,8 +50,27 @@ export function VerknuepfungenZone({ block }: { block: BlockNode }) {
     setzeWeitere(weitere.map((q, i) => (i === index ? { ...q, ...teil } : q)))
   }
 
+  // Haengt eine ANDERE Verknuepfung an dieser, muss ihr Bezug mit aufgeloest
+  // werden. Bis 2026-08-21 blieb `vonQuelleId` auf eine Quelle stehen, die
+  // nicht mehr verknuepft war: der Editor zeigte die Zeile weiter als heil an
+  // (`klartext` schreibt brav „(an ,Artikelstamm')"), aber ihre linken Felder
+  // lasen aus einer Quelle, die es an diesem Baustein nicht mehr gibt — und in
+  // SoftEngine blieb die Spalte leer, ohne dass irgendwo etwas kaputt aussah.
+  //
+  // Dieselbe Regel wie beim Wechsel des „Haengt an" darunter: nach dem Wegfall
+  // zeigen die linken Felder auf etwas anderes, also lieber LEER als falsch.
+  function ohneBezugAuf(liste: BausteinQuelle[], entfallen: string): BausteinQuelle[] {
+    if (entfallen === '') return liste
+    return liste.map((q) => (
+      q.vonQuelleId === entfallen
+        ? { ...q, vonQuelleId: '', keyPairs: [{ fromField: '', toField: '' }] }
+        : q
+    ))
+  }
+
   function entferne(index: number): void {
-    setzeWeitere(weitere.filter((_, i) => i !== index))
+    const entfallen = weitere[index]?.quelleId ?? ''
+    setzeWeitere(ohneBezugAuf(weitere.filter((_, i) => i !== index), entfallen))
     setOffen(null)
   }
 
@@ -127,7 +146,16 @@ export function VerknuepfungenZone({ block }: { block: BlockNode }) {
                 }]}
                 wert={q.quelleId}
                 leerText="— keine —"
-                onWaehle={(v) => aendere(i, { quelleId: v })}
+                onWaehle={(v) => {
+                  // Wechselt die Quelle dieser Zeile, haengt eine andere
+                  // moeglicherweise an der ALTEN — derselbe Fall wie beim
+                  // Loeschen, s. `ohneBezugAuf`.
+                  if (v === q.quelleId) return
+                  setzeWeitere(ohneBezugAuf(
+                    weitere.map((x, ix) => (ix === i ? { ...x, quelleId: v } : x)),
+                    q.quelleId,
+                  ))
+                }}
               />
               {elternOptionen(q.quelleId).length > 0 && (
                 <WaehlerKnopf
