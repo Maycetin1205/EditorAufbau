@@ -1,5 +1,6 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { Editor } from '../../state/Editor'
+import { schluckeKlickNachZug, vergissKlickSchlucker } from './klickNachZug'
 
 export interface ZiehAuftrag {
   achse: 'x' | 'y'
@@ -29,6 +30,7 @@ export function zieheGroesse(
   const startPos = auftrag.achse === 'x' ? e.clientX : e.clientY
 
   let letzter = Math.max(auftrag.min, Math.round(auftrag.start))
+  let gezogen = false
 
   const klammer = editor.oeffneGeste()
   const onMove = (ev: PointerEvent) => {
@@ -41,6 +43,7 @@ export function zieheGroesse(
     const next = Math.max(auftrag.min, Math.round(auftrag.start + delta))
     if (next === letzter) return
     letzter = next
+    gezogen = true
     klammer.oeffne()
     if (auftrag.anwenden) auftrag.anwenden(auftrag.getId(), next)
     else editor.updateProperty(auftrag.getId(), auftrag.prop, next)
@@ -52,6 +55,11 @@ export function zieheGroesse(
     window.removeEventListener('pointerup', beende)
     window.removeEventListener('pointercancel', beende)
     window.removeEventListener('blur', beende)
+    vergissKlickSchlucker()
+    // Der Anfasser liegt IM Baustein: der Klick nach dem Ziehen stieg bis zum
+    // Baustein-Rahmen auf und warf die Auswahl weg. Nur nach echtem Zug —
+    // sonst kann man den Anfasser nicht mehr antippen.
+    if (gezogen) schluckeKlickNachZug()
   }
   window.addEventListener('pointermove', onMove)
   window.addEventListener('pointerup', beende)

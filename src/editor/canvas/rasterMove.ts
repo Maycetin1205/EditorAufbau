@@ -3,6 +3,7 @@ import type { BlockNode } from '../../core/blocks/BlockData'
 import { RASTER, parseRasterPos } from '../../core/blocks/rasterLayout'
 import type { Editor } from '../../state/Editor'
 import type { DndState } from './dndState'
+import { schluckeKlickNachZug, vergissKlickSchlucker } from './klickNachZug'
 import { zelleAusZeiger } from './rasterDnd'
 import { flaecheVon } from './rasterFlaeche'
 
@@ -15,11 +16,6 @@ const ZUG_SCHWELLE = 4
 // geschluckt. Ihren pointerdown behalten allein die Editor-Anfasser
 // (BlockHost/PopupSeite) und die Fenster (DialogRahmen/AuswahlFenster) — die
 // bedienen ihren Zug selbst bzw. sollen nie ziehen.
-
-function schluckeKlick(ev: MouseEvent): void {
-  ev.stopPropagation()
-  ev.preventDefault()
-}
 
 function inTextBearbeitung(e: ReactPointerEvent<HTMLElement>): boolean {
   for (const t of e.nativeEvent.composedPath()) {
@@ -58,7 +54,7 @@ export function ziehePosition(
     window.removeEventListener('pointercancel', onCancel)
     window.removeEventListener('blur', onCancel)
 
-    window.removeEventListener('click', schluckeKlick, { capture: true })
+    vergissKlickSchlucker()
   }
 
   const onMove = (ev: PointerEvent): void => {
@@ -78,13 +74,7 @@ export function ziehePosition(
     aufraeumen()
     if (aktiv && letztes) {
       editor.moveNodeToCell(id, parentId, letztes.x, letztes.y)
-      // Der Klick unmittelbar nach dem Ziehen wird geschluckt. Folgt KEIN
-      // Klick (Maus ausserhalb losgelassen), raeumt der Timeout auf —
-      // sonst fraesse der once-Listener den naechsten Klick irgendwo.
-      window.addEventListener('click', schluckeKlick, { capture: true, once: true })
-      setTimeout(() => {
-        window.removeEventListener('click', schluckeKlick, { capture: true })
-      }, 0)
+      schluckeKlickNachZug()
     }
     dnd.reset()
   }
