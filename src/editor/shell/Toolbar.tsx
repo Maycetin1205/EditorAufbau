@@ -16,6 +16,7 @@ import { dataSourceStore } from '../../state/DataSourceStore'
 import { uebernehmeMaske } from '../../state/maskeUebernehmen'
 import { packeMaske, packeMaskeAus } from '../../state/maskenDatei'
 import { meldungen } from '../../state/meldungen'
+import { istFensterSeite } from '../../state/pageOps'
 import { meldeVerworfeneTypen } from '../../state/persistence'
 import { relationStore } from '../../state/RelationStore'
 import { useEditor } from '../../state/useEditor'
@@ -27,12 +28,19 @@ export function Toolbar({ onDatencenter }: { onDatencenter: () => void }) {
 
   const handleClear = () => {
     if (ed.blockCount === 0) return
-    const popups = ed.pages.filter((p) => !p.istHauptseite).length
-    const zusatz = popups === 0
+    // Es gibt ZWEI Arten weiterer Seiten: Popups (Fenster) und Ansichten
+    // (Flächen). Die Rückfrage nannte beide „Popup-Seite" — wer eine Ansicht
+    // hatte, wurde falsch gewarnt.
+    const weitere = ed.pages.filter((p) => !p.istHauptseite)
+    const fenster = weitere.filter(istFensterSeite).length
+    const ansichten = weitere.length - fenster
+    const teile = [
+      fenster === 1 ? 'die Popup-Seite' : fenster > 1 ? `die ${fenster} Popup-Seiten` : '',
+      ansichten === 1 ? 'die Ansicht' : ansichten > 1 ? `die ${ansichten} Ansichten` : '',
+    ].filter((t) => t !== '')
+    const zusatz = teile.length === 0
       ? ''
-      : popups === 1
-        ? ' Die Popup-Seite fällt mit.'
-        : ` Die ${popups} Popup-Seiten fallen mit.`
+      : ` Auch ${teile.join(' und ')} ${weitere.length === 1 ? 'fällt' : 'fallen'} mit.`
     if (!window.confirm(`Alle ${ed.blockCount} Blöcke aller Seiten löschen?${zusatz}`)) return
     ed.clear()
   }
