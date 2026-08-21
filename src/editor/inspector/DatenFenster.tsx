@@ -5,7 +5,7 @@ import { Button } from '@/ui/atoms/button'
 import type { BlockNode } from '../../core/blocks/BlockData'
 import { bausteinName } from '../../core/blocks/bausteinName'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import { darfAuswahlFolgen, QUELLE_PROP } from '../../core/blocks/treeQuery'
+import { darfAuswahlFolgen, QUELLE_PROP, traegtEigeneQuelle } from '../../core/blocks/treeQuery'
 import { quellenKennung } from '../../core/data/dataSources'
 import { lesendeKetten } from '../../core/data/kettenLeser'
 import { useDataSources } from '../../state/useDataSources'
@@ -57,6 +57,8 @@ export function DatenFenster({ block, onClose }: { block: BlockNode; onClose: ()
     : getBlockDefinition(block.type)?.customProperties
       .find((p) => p.attributeName === erfassenAttribut)
 
+  const eigeneQuelleMoeglich = traegtEigeneQuelle(block)
+
   const sprungBlock = sprung ? ed.tree[sprung.blockId] : undefined
   const sprungEvent = sprungBlock && sprung
     ? getBlockDefinition(sprungBlock.type)?.blockEvents?.find((e) => e.key === sprung.eventKey)
@@ -75,7 +77,17 @@ export function DatenFenster({ block, onClose }: { block: BlockNode; onClose: ()
         onClose={onClose}
       >
         <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* Der Waehler „Datenquelle" wird nur gezeigt, wenn der Baustein laut
+              Registry ueberhaupt eine EIGENE Quelle fuehren darf. Bis
+              2026-08-21 stand er immer da — erreichbar ist dieses Fenster
+              aber schon, sobald ein Baustein einer Auswahl folgen kann. Bei
+              einem Baustein ohne eigene Quelle nahm `updateProperty` den Wert
+              gar nicht an: die Wahl verpuffte spurlos, und der Waehler zeigte
+              danach weiter „— keine —". Dasselbe gilt fuer die
+              Verknuepfungen darunter — die haengen an der eigenen Quelle. */}
+          {(eigeneQuelleMoeglich || darfAuswahlFolgen(block)) && (
           <Zone name="Zeigt">
+            {eigeneQuelleMoeglich && (
             <WaehlerKnopf
               label="Datenquelle"
               bezeichnung="Datenquelle"
@@ -94,12 +106,16 @@ export function DatenFenster({ block, onClose }: { block: BlockNode; onClose: ()
                 : undefined}
               onWaehle={(v) => ed.updateProperty(block.id, QUELLE_PROP, v)}
             />
+            )}
             {darfAuswahlFolgen(block) && <AuswahlFolgeSektion block={block} mitTrenner={false} />}
           </Zone>
+          )}
 
-          <Zone name="Verknüpfungen">
-            <VerknuepfungenZone block={block} />
-          </Zone>
+          {eigeneQuelleMoeglich && (
+            <Zone name="Verknüpfungen">
+              <VerknuepfungenZone block={block} />
+            </Zone>
+          )}
 
           {erfassenEigenschaft && (
             <Zone name="Erfassen">
