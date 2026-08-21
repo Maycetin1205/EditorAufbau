@@ -158,7 +158,13 @@ export function DatenquellenBereich() {
           />
         )}
         {modus === 'bearbeiten' && auswahl && (
-          <DataSourceForm source={auswahl} onClose={() => setModus('lesen')} />
+          // `key`: wechselt die bearbeitete Quelle, wird das Formular NEU
+          // aufgebaut statt die alten Eingaben mitzuschleppen. Hier loest
+          // `auswahl` schon aus der vollen Liste auf, der Fehler von
+          // RelationenBereich greift also nicht — aber ohne `key` wuerde ein
+          // Wechsel (etwa weil eine Quelle daneben verschwindet) denselben
+          // Schaden anrichten: Eingaben der einen auf die andere gespeichert.
+          <DataSourceForm key={auswahl.id} source={auswahl} onClose={() => setModus('lesen')} />
         )}
         {modus === 'lesen' && !auswahl && (
           <p className="text-xs text-muted-foreground">Keine Datenquelle gewählt.</p>
@@ -208,7 +214,12 @@ export function DatenquellenBereich() {
             </Gruppe>
 
             <div className="flex gap-2 border-t border-border pt-3">
-              <Button size="sm" onClick={() => setModus('bearbeiten')}>Bearbeiten</Button>
+              <Button
+                size="sm"
+                onClick={() => { setAuswahlId(auswahl.id); setModus('bearbeiten') }}
+              >
+                Bearbeiten
+              </Button>
               <Button variant="outline" size="sm" onClick={() => loeschen(auswahl)}>
                 Löschen…
               </Button>
