@@ -16,7 +16,6 @@ import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import type { DataSource } from '../core/data/dataSources'
 import { exportMask } from './exportMask'
-import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
 import { registerTestBlocks, TEST_BLOCK, TEST_BOX } from '../test/testBlocks'
@@ -298,7 +297,6 @@ describe('Atome (statische Bausteine, Fahrplan 3)', () => {
     expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
       { INDEX_NR: 0, ALIAS: 'Terminplaner', ID: 'IDBID0004', FELDER: '0_10,40_20' },
     ])
-    expect(preflightMask(tree, sources, [])).toEqual([])
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 

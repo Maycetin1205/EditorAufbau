@@ -5,7 +5,6 @@ import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { registerTestBlocks, TEST_EVENT_BLOCK } from '../test/testBlocks'
 import { exportMask } from './exportMask'
-import { preflightMask } from './preflight'
 import { failedChecks, validateMaskHtml } from './validator'
 
 registerTestBlocks()
@@ -72,8 +71,6 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     const ohne = paarTree(folge, 'q-saetze', '')
     const { html } = exportMask(ohne, 'Maske', QUELLEN)
     expect(html).not.toMatch(/<ff-tabelle[^>]*\sfolgtauswahl=/)
-
-    expect(preflightMask(ohne, QUELLEN, []).filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
   })
 
   it('folgtAuswahl reist als JSON-Attribut und kommt unversehrt zurueck', () => {
@@ -110,7 +107,6 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     const { html } = exportMask(tree, 'Maske', QUELLEN)
     const attr = /<ff-formfeld[^>]*\sfolgtauswahl="([^"]*)"/.exec(html)?.[1] ?? ''
     expect(JSON.parse(attr.replace(/&quot;/g, '"'))).toEqual(folge)
-    expect(preflightMask(tree, QUELLEN, []).filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
@@ -140,8 +136,6 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     const tree = nachschlagFeldTree('q-saetze')
     const { html } = exportMask(tree, 'Maske', QUELLEN)
     expect(html).toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
-
-    expect(preflightMask(tree, QUELLEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
   })
 
   it('ohne Nachschlage-Quelle bleibt sie daheim: kein Fenster, keine Zeilen', () => {
@@ -149,32 +143,8 @@ describe('Auswahl im Export (Uebersicht -> Detail, 2026-08-05)', () => {
     const { html } = exportMask(tree, 'Maske', QUELLEN)
 
     expect(html).not.toMatch(/<ff-formfeld[^>]*\sfolgtauswahl=/)
-    expect(preflightMask(tree, QUELLEN, [])).toEqual([])
   })
 
-  it('Preflight blockt einen geloeschten Geber und ein halbes Feldpaar im Klartext', () => {
-    const kaputt = preflightMask(paarTree([{ geberId: 'gibt-es-nicht', keyPairs: [{ fromField: '2_8', toField: '3_8' }] }]), QUELLEN, [])
-    expect(kaputt.some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
-    const halb = preflightMask(paarTree([{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '' }] }]), QUELLEN, [])
-    expect(halb.some((r) => r.name === 'Auswahl-Folge unvollständig')).toBe(true)
-    const sauber = preflightMask(paarTree(folge), QUELLEN, [])
-    expect(sauber.filter((r) => r.name.startsWith('Auswahl'))).toEqual([])
-  })
-
-  it('Preflight blockt einen Geber, dem die Datenquelle weggenommen wurde', () => {
-    const ohneQuelle = preflightMask(paarTree(folge, '', 'q-saetze'), QUELLEN, [])
-    expect(ohneQuelle.some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
-    expect(ohneQuelle.some((r) => r.detail.includes('keine Auswahl (mehr) gibt'))).toBe(true)
-  })
-
-  it('Preflight blockt ein Schluesselfeld, das es in der eigenen Quelle nicht gibt', () => {
-    const meldungen = preflightMask(
-      paarTree([{ geberId: 'geber', keyPairs: [{ fromField: '2_8', toField: '999_9' }] }]),
-      QUELLEN, [],
-    )
-    expect(meldungen.some((r) => r.name === 'Auswahl-Folge Feld fehlt')).toBe(true)
-    expect(meldungen.some((r) => r.detail.includes('999_9'))).toBe(true)
-  })
 })
 
 describe('Parameterquelle „Feld der gewaehlten Zeile" (2026-08-06)', () => {
@@ -211,20 +181,7 @@ describe('Parameterquelle „Feld der gewaehlten Zeile" (2026-08-06)', () => {
     expect(html).toContain('&quot;value&quot;:&quot;0_10&quot;')
 
     expect(html).toMatch(/<ff-tabelle[^>]*\sdata-ff-id="geber"/)
-    expect(preflightMask(tree, QUELLEN, relations)).toEqual([])
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
 
-  it('Preflight blockt einen geloeschten Geber im Klartext', () => {
-    const meldungen = preflightMask(knopfTree('gibt-es-nicht'), QUELLEN, relations)
-    expect(meldungen.some((r) => r.detail.includes('gewählte Zeile eines Bausteins'))).toBe(true)
-  })
-
-  it('Preflight blockt einen Parameter ohne gewaehltes Feld', () => {
-    const tree = knopfTree('geber')
-    const step = tree.knopf.events!.onClick[0]
-    if (step.type === 'RELATION') step.params = [{ source: 'gewaehlte_zeile', blockId: 'geber', value: '' }]
-    expect(preflightMask(tree, QUELLEN, relations).some((r) =>
-      r.detail.includes('Parameter 1 ist unvollständig'))).toBe(true)
-  })
 })

@@ -104,7 +104,7 @@ export function Inspector() {
   })
 
   const dataProps = visibleProps.filter(
-    (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'quelle' || p.kind === 'relation',
+    (p) => p.requiresDataSource || p.kind === 'field' || p.kind === 'quelle',
   )
   const generalProps = visibleProps.filter((p) => !dataProps.includes(p))
 

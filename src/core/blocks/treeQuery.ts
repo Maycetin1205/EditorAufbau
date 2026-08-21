@@ -40,11 +40,6 @@ export function quellenIdsInKettenVon(node: BlockNode): string[] {
 export function relationIdsVon(node: BlockNode): string[] {
   const def = getBlockDefinition(node.type)
   const ids: string[] = []
-  for (const prop of def?.customProperties ?? []) {
-    if (prop.kind !== 'relation') continue
-    const wert = node.props[prop.attributeName]
-    if (typeof wert === 'string' && wert !== '') ids.push(wert)
-  }
   for (const event of def?.blockEvents ?? []) {
     for (const step of node.events?.[event.key] ?? []) {
       if (step.type === 'RELATION' && step.relationId !== '') ids.push(step.relationId)

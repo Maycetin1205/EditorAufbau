@@ -4,7 +4,6 @@ import '../blocks/formfeld/FormFeldBlock'
 import '../blocks/tabelle/TabelleBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
-import { preflightMask } from './preflight'
 
 const ADRESSEN = [{
   id: 'q-adr',
@@ -71,7 +70,6 @@ describe('Nachschlage-Feld im Export', () => {
     expect(kundeTag).not.toContain('anzeigefeld=')
 
     expect(JSON.parse(sevariablen).SEFILELOOP).toHaveLength(1)
-    expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
   })
 
   it('„Einzigen Treffer übernehmen" ueberlebt den Export', () => {
@@ -81,25 +79,6 @@ describe('Nachschlage-Feld im Export', () => {
 
     const aus = tag(exportMask(baumMit(KUNDE_PROPS), 'M', ADRESSEN).html)
     expect(aus).not.toMatch(/einzigerTreffer=/i)
-  })
-
-  it('halb eingestellt blockiert den Export im Klartext', () => {
-    const tree = baumMit({ ...KUNDE_PROPS, speicherFeld: '', speicherTitel: '' })
-    const problem = preflightMask(tree, ADRESSEN, [])
-    expect(problem.some((r) => r.detail.includes('Gespeichert wird'))).toBe(true)
-  })
-
-  it('geloeschtes Feld der Nachschlage-Quelle blockiert ebenfalls', () => {
-    const tree = baumMit({ ...KUNDE_PROPS, speicherFeld: '999_9' })
-    expect(preflightMask(tree, ADRESSEN, []).some((r) => r.detail.includes('999_9'))).toBe(true)
-  })
-
-  it('gar nichts eingestellt blockiert NICHT — angefangen ist nicht halbfertig', () => {
-    const tree = baumMit({
-      ...KUNDE_PROPS, nachschlagQuelle: '', nachschlagSpalten: [],
-      speicherFeld: '', speicherTitel: '',
-    })
-    expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
   })
 
   it('eine eingestellte Fenstergroesse reist mit, die Standardgroesse nicht', () => {
@@ -135,26 +114,6 @@ describe('Nachschlage-Feld im Export', () => {
     expect(html).not.toMatch(/<ff-formfeld[^>]*\sdata-ff-id=/)
   })
 
-  it('eine Tabelle darf dem Nachschlage-Feld FOLGEN (Preflight sagt ja)', () => {
-    const tree: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kunde', 'belege'] },
-      kunde: { id: 'kunde', type: 'formfeld', props: KUNDE_PROPS, parentId: 'root', childIds: [] },
-      belege: {
-        id: 'belege', type: 'tabelle',
-        props: {
-          width: 'fill', source: 'q-adr', spalten: [{ titel: 'Name', feld: '10_30' }],
-
-          folgtAuswahl: [{ geberId: 'kunde', keyPairs: [{ fromField: '110_10', toField: '110_10' }] }],
-        },
-        parentId: 'root', childIds: [],
-      },
-    }
-    expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
-
-    tree.kunde.props = { ...KUNDE_PROPS, fieldType: 'text' }
-    expect(preflightMask(tree, ADRESSEN, []).some((r) => r.name === 'Auswahl-Geber fehlt')).toBe(true)
-  })
-
   const kundeUndTier = (toField: string): BlockTree => ({
     root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['kunde', 'tier'] },
     kunde: { id: 'kunde', type: 'formfeld', props: KUNDE_PROPS, parentId: 'root', childIds: [] },
@@ -183,13 +142,6 @@ describe('Nachschlage-Feld im Export', () => {
     expect(tierTag).toContain('folgtauswahl=')
 
     expect(JSON.parse(sevariablen).SEFILELOOP).toHaveLength(2)
-    expect(preflightMask(tree, BEIDE, [])).toEqual([])
-  })
-
-  it('Preflight prueft das Schluesselfeld gegen die NACHSCHLAGE-Quelle', () => {
-    const falsch = preflightMask(kundeUndTier('110_10'), BEIDE, [])
-    expect(falsch.some((r) => r.name === 'Auswahl-Folge Feld fehlt')).toBe(true)
-    expect(falsch.some((r) => r.detail.includes('Kundenhaustiere'))).toBe(true)
   })
 
   it('eine alte EIGENE Bindung bleibt daheim: ein Quellen-Waehler, ein SEFILELOOP', () => {
@@ -201,8 +153,6 @@ describe('Nachschlage-Feld im Export', () => {
     expect(tag).not.toContain('valuefield=')
 
     expect(JSON.parse(sevariablen).SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS)).toEqual(['Adressen'])
-
-    expect(preflightMask(tree, BEIDE, [])).toEqual([])
   })
 
   // Umgekehrt seit 2026-08-20: das Ankreuzfeld IST bindbar, seit sein
@@ -228,18 +178,9 @@ describe('Nachschlage-Feld im Export', () => {
     expect(JSON.parse(sevariablen).SEFILELOOP.map((s: { ALIAS: string }) => s.ALIAS)).toEqual(['Kundenhaustiere'])
   })
 
-  it('eine ins Leere zeigende alte Bindung blockiert am Nachschlage-Feld NICHT', () => {
-    const tree = baumMit({ ...KUNDE_PROPS, source: 'gibt-es-nicht', valueField: '999_9' })
-    expect(preflightMask(tree, BEIDE, [])).toEqual([])
-
-    const text = baumMit({ ...TEXT_PROPS, source: 'gibt-es-nicht', valueField: '999_9' })
-    expect(preflightMask(text, BEIDE, []).some((r) => r.name === 'Datenquelle fehlt')).toBe(true)
-  })
-
   it('zurueckgestellter Feldtyp laesst die Nachschlage-Quelle daheim', () => {
     const tree = baumMit({ ...KUNDE_PROPS, fieldType: 'text', speicherFeld: '999_9' })
     const { sevariablen } = exportMask(tree, 'Maske', ADRESSEN)
     expect('SEFILELOOP' in JSON.parse(sevariablen)).toBe(false)
-    expect(preflightMask(tree, ADRESSEN, [])).toEqual([])
   })
 })

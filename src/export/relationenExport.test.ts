@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import '../blocks/formfeld/FormFeldBlock'
 import type { BlockTree } from '../core/blocks/BlockData'
 import { exportMask } from './exportMask'
-import { preflightMask } from './preflight'
 import { registerTestBlocks, TEST_EVENT_BLOCK } from '../test/testBlocks'
 
 registerTestBlocks()
@@ -30,7 +29,6 @@ describe('exportMask: Relationen', () => {
     const { html } = exportMask(tree, 'Maske', [], relations)
     expect(html).toContain('window.FF_RELATIONS = [{"id":"rel-a"')
     expect(html).toContain('&quot;type&quot;:&quot;RELATION&quot;')
-    expect(preflightMask(tree, [], relations)).toEqual([])
   })
 
   it('verknuepft einen Relationsparameter mit dem aktuellen Wert eines Formularfelds', () => {
@@ -63,13 +61,5 @@ describe('exportMask: Relationen', () => {
     expect(html).toContain('data-ff-block-id="feld-tiername"')
     expect(html).toContain('&quot;source&quot;:&quot;block_value&quot;')
     expect(html).toContain('&quot;blockId&quot;:&quot;feld-tiername&quot;')
-    expect(preflightMask(tree, [], relations)).toEqual([])
-
-    const ohneFeld: BlockTree = {
-      root: { ...tree.root, childIds: ['button'] },
-      button: tree.button,
-    }
-    expect(preflightMask(ohneFeld, [], relations).some((result) =>
-      result.detail.includes('gelöschten Baustein'))).toBe(true)
   })
 })

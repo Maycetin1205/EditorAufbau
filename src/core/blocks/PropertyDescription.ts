@@ -1,6 +1,9 @@
+// Entfernt 2026-08-21: 'textarea' und 'relation'. Beide waren vollstaendig
+// verdrahtet (eigenes Control, Inspector-Einordnung, Sammel-Funktion) und von
+// KEINEM Baustein deklariert — Geruest, das bei jedem Umbau mitgelesen werden
+// musste, ohne je etwas zu tun. In der git-Historie steht alles.
 export type PropertyKind =
   | 'text'
-  | 'textarea'
   | 'select'
   | 'number'
   | 'segment'
@@ -12,7 +15,6 @@ export type PropertyKind =
   // SEFILELOOP; ohne das schickte SoftEngine ihre Daten nie und das Fenster
   // bliebe in der fertigen Maske leer.
   | 'quelle'
-  | 'relation'
   // seite speichert die id einer SEITE DIESER MASKE (Hauptseite oder
   // Ansicht) — waehlbar ist nur, was es in der Maske gibt: keine freien
   // Links, keine externen Ziele (Nutzer-Vorgabe zur Navi, 2026-08-12).

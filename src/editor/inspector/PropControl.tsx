@@ -3,14 +3,12 @@ import { getBlockDefinition } from '../../core/blocks/blockRegistry'
 import type { PropertyDescription } from '../../core/blocks/PropertyDescription'
 import { quellenKennung, type DataSource } from '../../core/data/dataSources'
 import { useDataSources } from '../../state/useDataSources'
-import { useRelations } from '../../state/useRelations'
 import { useEditor } from '../../state/useEditor'
 import { BildControl } from './controls/BildControl'
 import { ColorTileControl } from './controls/ColorTileControl'
 import { NumberControl } from './controls/NumberControl'
 import { SegmentControl } from './controls/SegmentControl'
 import { SelectControl } from './controls/SelectControl'
-import { TextareaControl } from './controls/TextareaControl'
 import { TextControl } from './controls/TextControl'
 import { WaehlerKnopf } from '@/ui/molecules/waehler'
 import { allOptionsHaveColor } from './optionColors'
@@ -43,7 +41,6 @@ export function PropControl({
 }: PropControlProps) {
   const ed = useEditor()
 
-  const relations = useRelations()
 
   const quellen = useDataSources()
   const def = getBlockDefinition(block.type)
@@ -80,9 +77,6 @@ export function PropControl({
   switch (kind) {
     case 'text':
       return <TextControl property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
-    case 'textarea':
-      return <TextareaControl property={property} value={String(value ?? '')} onChange={set} {...sitzung} />
-
     case 'bild':
       return <BildControl property={property} value={String(value ?? '')} onChange={set} />
     case 'number':
@@ -204,25 +198,6 @@ export function PropControl({
       )
     }
 
-    case 'relation':
-      return (
-        <WaehlerKnopf
-          label={property.name}
-          description={property.description}
-          bezeichnung={`Relation für ${property.name}`}
-          gruppen={[{
-            key: 'relationen',
-            eintraege: relations.list.map((r) => ({
-              wert: r.id,
-              name: r.name,
-              kennung: r.nr,
-            })),
-          }]}
-          wert={typeof value === 'string' && relations.get(value) ? value : ''}
-          leerText="— keine —"
-          onWaehle={set}
-        />
-      )
     default:
       return null
   }

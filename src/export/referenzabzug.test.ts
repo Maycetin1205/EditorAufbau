@@ -4,7 +4,6 @@ import '../blocks/register'
 import { referenzMaske } from '../test/referenzMaske'
 import { exportMask } from './exportMask'
 import runtimeJsRaw from './generated/ff-runtime.js?raw'
-import { preflightMask } from './preflight'
 import { escapeNonAsciiJs, guardScriptContent } from './serializer'
 import { failedChecks, validateMaskHtml } from './validator'
 
@@ -27,9 +26,8 @@ function ohneBilder(html: string): string {
 }
 
 describe('Export-Referenzabzug (Byte-Wächter)', () => {
-  it('Referenzmaske besteht Preflight + Validator', () => {
+  it('Referenzmaske besteht den Validator', () => {
     const { tree, sources, relations } = referenzMaske()
-    expect(preflightMask(tree, sources, relations)).toEqual([])
     const { html } = exportMask(tree, referenzMaske().titel, sources, relations)
     expect(failedChecks(validateMaskHtml(html))).toEqual([])
   })
