@@ -40,8 +40,11 @@ Grundlage ist eine Gesamtanalyse vom 2026-08-21 in drei Stufen:
    20 bestaetigt.
 
 **GEBAUT 2026-08-21:** R1 (Feldbestellung + Satzschluessel), R2 (drei von
-vier Fehlern der SE-Schicht), R4 (alle sechs Funde, fuenf Commits).
-**Naechste Etappe: R3** (WYSIWYG-Brueche) — R5 danach.
+vier Fehlern der SE-Schicht), R4 (alle sechs Funde, fuenf Commits),
+R3 (zwei von vier — die anderen zwei sind Entscheidungen, s. dort).
+**Naechste Etappe: R6** (kleine Bedienfehler) oder R7/R8 (toter Code,
+Doppelungen) — beides beruehrt `blocks/tabelle/` nur am Rand. R5 wartet,
+solange der Nutzer an der Referenz-Tabelle entwirft.
 Die Tabellen-Pakete R5/R7/R8 beruehren `blocks/tabelle/`; der Nutzer
 entwirft dort parallel eine Referenz-Tabelle (2026-08-21, ausserhalb des
 Repos). Vor dem Anfassen dieser Dateien nachfragen.
@@ -542,7 +545,37 @@ Vier Stellen, an denen Editor und Export/Laufzeit VERSCHIEDEN rechnen.
   *Loesung (kleinster Eingriff):* nur verborgen exportieren, wenn es in der
   Maske ueberhaupt eine Navigation gibt.
 
-**SE-Echttest Pflicht** (Kanban und Ansicht-Seite).
+**GEBAUT 2026-08-21** (`de0edd7`, `78b9c51`): das Kanban folgt der Auswahl
+(der Filter sitzt jetzt im gemeinsamen Einstieg `holeDatenVorspann`, also
+bekommt ihn auch jeder kuenftige Datenbaustein), und der Editor loest eine
+benannte Bindung in der ganzen Bibliothek auf wie der Export.
+
+**NICHT gebaut, beides eine ENTSCHEIDUNG des Nutzers:**
+
+1. **Die `vorschauProp`-Asymmetrie** (Karte 8 Stellen, Text 1). Der Befund
+   stimmt: der Editor ersetzt bei jeder bindbaren Stelle den Anzeigewert
+   durch den Feld-Klarnamen, der Export nur bei Stellen mit `vorschauProp`.
+   Sichtbar wird das aber NUR, solange keine Daten da sind — kommt eine
+   Zeile, ueberschreibt die Laufzeit den Wert ohnehin. Die eigentliche
+   Frage ist also: **was soll eine gebundene Stelle OHNE Daten in der
+   fertigen Maske zeigen?** Den Klarnamen („Tiername" sieht aus wie ein
+   Wert), den Standardtext („Karte"), einen Strich, oder nichts?
+   Regel 7 sagt fuer den EDITOR „Striche statt Demo-Werte"; fuer die
+   laufende Maske hat das nie jemand entschieden. Nicht selbst festlegen.
+
+2. **Ansicht-Seite ohne Navigation.** Ich habe die Reparatur gebaut und
+   wieder zurueckgenommen, weil sie es schlimmer gemacht haette: auf der
+   Wurzel-Ebene liegen BEIDE — die normalen Bausteine (= Hauptseite) UND
+   die Ansicht-Seiten. Ohne Seitenschalter alle Ansichten zu verstecken
+   heisst also: man sieht die Hauptseite. Das ist richtig. „Die erste
+   Ansicht sichtbar lassen" haette sie ueber die Hauptseite gelegt.
+   Ein einziger Fall bleibt schief: eine Maske, die NUR aus Ansicht-Seiten
+   besteht, ist in SoftEngine leer. Ob das eine Regel wert ist — und
+   welche — ist eine Produktentscheidung. (Der Weg dorthin waere ein
+   Registry-Merkmal `schaltetSeiten` am Navi, damit der Export nicht den
+   Bausteintyp kennen muss; verworfen mit dem Rest.)
+
+**SE-Echttest Pflicht** (Kanban).
 
 ---
 
