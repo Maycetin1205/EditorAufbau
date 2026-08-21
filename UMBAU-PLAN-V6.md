@@ -39,12 +39,37 @@ Grundlage ist eine Gesamtanalyse vom 2026-08-21 in drei Stufen:
    37 Funde, **keiner widerlegt**, 17 als Doppelnennung ausgesondert,
    20 bestaetigt.
 
-**GEBAUT 2026-08-21:** R1 (Feldbestellung + Satzschluessel), R2 (drei von
-vier Fehlern der SE-Schicht), R4 (alle sechs Funde, fuenf Commits),
-R3 (zwei von vier — die anderen zwei sind Entscheidungen, s. dort).
+**Stand 2026-08-21, nach einem Ausfall der echten Maske — bitte GENAU lesen,
+hier war der Plan einen halben Tag lang falsch:**
+
+R1 ging in SoftEngine kaputt. Danach wurde `src/` komplett auf `4ba15e8`
+zurueckgesetzt (`f0beb48`) — damit fielen R1, R2, R3 und R4 gemeinsam weg,
+auch die drei, die nichts damit zu tun hatten. Aus dem Ganzen ueberlebt hat
+nur ein Fix, der im Plan nie stand: `535e6d8` (die Schluesselfelder einer
+holenden Quelle bekommen ihren Feld-Vorsatz) — vom Nutzer in SoftEngine
+bestaetigt, seine Belegpositionen laufen damit.
+
+Danach zurueckgeholt, weil **null Export-Bytes** betroffen sind (`ff-runtime.js`
+unveraendert, Referenzabzug gruen): **R4 vollstaendig** (`8ed3a95`, `2082fec`,
+`3fbb9f7`, `eb6bb26`, `75d0311`) und **die Editor-Haelfte von R3** (`78b9c51`).
+Diese sechs koennen die Maske nicht anfassen.
+
+**Noch draussen, weil sie das Laufzeit-Buendel aendern und darum erst nach
+einem SoftEngine-Echttest des Nutzers wieder hereindarf:**
+`58e5c32` (R2) und `de0edd7` (R3, Kanban folgt der Auswahl). Beide liegen
+fertig in der Historie, beide waren am Ausfall unbeteiligt.
+
+**R1 kommt NICHT unveraendert zurueck** — Begruendung bei R1.
+
 **Naechste Etappe: R6** (kleine Bedienfehler) oder R7/R8 (toter Code,
 Doppelungen) — beides beruehrt `blocks/tabelle/` nur am Rand. R5 wartet,
 solange der Nutzer an der Referenz-Tabelle entwirft.
+
+**Regel, die dieser Ausfall erzwungen hat:** aendert eine Etappe eine Datei
+unter `softengine/`, `blocks/*/seRuntime.ts`, `export/` oder das Buendel
+`ff-runtime.js`, wird **nicht committet, bevor der Nutzer sie in SoftEngine
+geprueft hat**. Vorher war die Reihenfolge umgekehrt, und genau das hat ihn
+Stunden gekostet.
 Die Tabellen-Pakete R5/R7/R8 beruehren `blocks/tabelle/`; der Nutzer
 entwirft dort parallel eine Referenz-Tabelle (2026-08-21, ausserhalb des
 Repos). Vor dem Anfassen dieser Dateien nachfragen.
@@ -419,7 +444,26 @@ Drei Funde, eine Ursachenkette. Bringt als einziges Paket messbare Sekunden.
   Loesung: Standard-Satzschluessel in die Arten-Tabelle
   (`core/data/quellenArten.ts`) aufnehmen, das Formular liest ihn von dort.
 
-**GEBAUT 2026-08-21** (Commits `12f4132`, `7727f53`). Gemessen an der
+**ZURUECKGENOMMEN 2026-08-21 — dieser Bauauftrag ist so FALSCH.**
+`12f4132` hat in der echten Maske des Nutzers die Belege verschwinden
+lassen: die Feldliste der BEL-Quelle schrumpfte auf 3 von 7 Feldern, und im
+ERPAPICALL stand ein nackter `0_10` ohne Vorsatz. Ursache ist nicht ein
+Tippfehler in der Umsetzung, sondern die Annahme darunter: **der Editor
+weiss NICHT verlaesslich, welche Felder eine Maske benutzt.** Er sieht die
+Bindungen der Bausteine, aber nicht jede Verwendung in Ketten,
+Verknuepfungs-Schluesseln, Nachschlage-Spalten und Hol-Relationen. Filtert
+man auf diese unvollstaendige Menge, loescht man Felder, die in Benutzung
+sind — und es faellt erst in SoftEngine auf, still, ohne Meldung.
+
+Wer das wieder anfasst, baut ZUERST die vollstaendige Verwendungs-Erhebung
+(eine Stelle, die JEDE Verwendung eines Feldcodes findet, mit Test je
+Verwendungsart) und filtert erst danach. Ohne diesen Unterbau nicht
+anfangen. Ueberlebt hat aus dieser Etappe nur `535e6d8` (Vorsatz an den
+Schluesselfeldern) — der behebt einen echten Fehler und ist bestaetigt.
+`7727f53` (Satzschluessel aus der Arten-Tabelle) ist harmlos, aber
+mitgefallen; er darf nach einem SE-Test zurueck.
+
+Die Messung von damals, zur Einordnung: gemessen an der
 echten Maske des Nutzers: **81 -> 58 Felder** (POS 21->9, Artikelstamm
 14->3). Die zwei IDB-Quellen bleiben bei 34 und 12, weil der Nutzer dort
 „sucht in X" gesetzt hat, aber KEIN Suchfeld — dann weiss der Editor
@@ -487,9 +531,13 @@ weil diese Schicht ausschliesslich im ERP laeuft.
   `/\{([A-Za-z0-9_]+)\}/g`. Alles mit Ziffern oder Kleinbuchstaben rutscht
   durch die Pruefung und geht leer hinaus.
 
-**GEBAUT 2026-08-21** (Commit `58e5c32`): die drei Punkte oben —
-leeres RESULT gilt als Antwort, der Lader unterscheidet Ende / keine
-Antwort / Deckel, und der Rohsatz darf unter RESULT stehen.
+**GEBAUT und WIEDER DRAUSSEN** (Commit `58e5c32`): leeres RESULT gilt als
+Antwort, der Lader unterscheidet Ende / keine Antwort / Deckel, und der
+Rohsatz darf unter RESULT stehen. Der Commit ist am Ausfall von R1
+unbeteiligt und fiel nur mit dem pauschalen Rueckschnitt `f0beb48`. Er
+liegt fertig in der Historie und wird per `git cherry-pick -x 58e5c32`
+zurueckgeholt — aber erst, wenn der Nutzer Zeit fuer einen SoftEngine-
+Echttest hat, weil er `ff-runtime.js` aendert.
 
 **OFFEN und eine ENTSCHEIDUNG, kein Bauauftrag: die Zuordnung von Frage
 und Antwort** (`relations.ts:210`). Laeuft ein Auftrag in die
@@ -545,10 +593,13 @@ Vier Stellen, an denen Editor und Export/Laufzeit VERSCHIEDEN rechnen.
   *Loesung (kleinster Eingriff):* nur verborgen exportieren, wenn es in der
   Maske ueberhaupt eine Navigation gibt.
 
-**GEBAUT 2026-08-21** (`de0edd7`, `78b9c51`): das Kanban folgt der Auswahl
-(der Filter sitzt jetzt im gemeinsamen Einstieg `holeDatenVorspann`, also
-bekommt ihn auch jeder kuenftige Datenbaustein), und der Editor loest eine
-benannte Bindung in der ganzen Bibliothek auf wie der Export.
+**GEBAUT, halb wieder drin:** der Editor loest eine benannte Bindung in der
+ganzen Bibliothek auf wie der Export (`78b9c51`) — zurueckgeholt, reiner
+Editor, null Export-Bytes.
+**Noch draussen:** das Kanban folgt der Auswahl (`de0edd7`; der Filter sitzt
+dort im gemeinsamen Einstieg `holeDatenVorspann`, also bekaeme ihn auch
+jeder kuenftige Datenbaustein). Aendert `ff-runtime.js` → zurueck per
+`git cherry-pick -x de0edd7`, nach einem SE-Echttest des Nutzers.
 
 **NICHT gebaut, beides eine ENTSCHEIDUNG des Nutzers:**
 
@@ -614,7 +665,8 @@ benannte Bindung in der ganzen Bibliothek auf wie der Export.
 ---
 
 **GEBAUT 2026-08-21**, fuenf Commits (`8ed3a95`, `2082fec`, `3fbb9f7`,
-`eb6bb26`, `75d0311`). Alle sechs Funde behoben. Dazu gekommen, weil
+`eb6bb26`, `75d0311`) — mit `f0beb48` mitgefallen, am selben Tag
+zurueckgeholt. Reiner Editor, null Export-Bytes. Alle sechs Funde behoben. Dazu gekommen, weil
 derselben Ursache: `DatenquellenBereich` bekam `key` und das Festhalten
 der Auswahl mit, obwohl der Hauptfehler dort nicht greift.
 **Offen geblieben und nach R8 verschoben:** `nutztQuelle` (state) und
