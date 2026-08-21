@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from '@/ui/zeichen'
 import { IconButton } from '@/ui/atoms/icon-button'
@@ -15,18 +15,39 @@ interface EditorFensterProps {
   children: ReactNode
 }
 
+// Wer liegt oben? Escape schliesst nur das oberste Fenster. Vorher meldete
+// jedes Fenster einen eigenen Horcher an und hielt die Taste nicht auf: EIN
+// Escape schloss den ganzen Stapel (Datencenter -> Ketten-Fenster) auf
+// einmal. Die Marke ist ein Objekt und damit fuer jedes Fenster eigen.
+const fensterStapel: object[] = []
+
 // Die EINE Huelle aller Editor-Fenster: abgedunkelte Flaeche, Kasten mittig,
 // Kopfzeile mit Schliessen-Kreuz, Escape und Klick daneben schliessen. Vorher
 // stand dieselbe Huelle zweimal im Code (Datencenter und Ketten-Fenster) —
 // wer eine anfasste, aenderte nur das halbe Haus.
 export function EditorFenster({ bezeichnung, titel, onClose, children }: EditorFensterProps) {
+  // onClose kommt von Rendern zu Rendern als neue Funktion. Ueber den Zeiger
+  // gelesen, haengt die Anmeldung im Stapel nicht daran — sonst flog das
+  // Fenster bei jedem Rendern aus dem Stapel und kaeme als OBERSTES zurueck,
+  // auch wenn ein anderes darueber liegt.
+  const schliessen = useRef(onClose)
+  useEffect(() => { schliessen.current = onClose })
+
   useEffect(() => {
+    const marke = {}
+    fensterStapel.push(marke)
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      if (fensterStapel[fensterStapel.length - 1] !== marke) return
+      schliessen.current()
     }
     document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      const stelle = fensterStapel.indexOf(marke)
+      if (stelle >= 0) fensterStapel.splice(stelle, 1)
+    }
+  }, [])
 
   return createPortal(
     <div
