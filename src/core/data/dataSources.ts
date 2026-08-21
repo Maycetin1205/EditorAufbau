@@ -86,12 +86,30 @@ export function felderFor(
     }
     return codes
   }
-  if (artFuer(source.kind).felderEinzeln) {
-    return mitSchluesseln(source.fields.map((f) => f.code)).join(',')
-  }
 
-  if (!benutzt || benutzt.size === 0) return '*'
+  // Arten mit `felderEinzeln` duerfen kein `*` bestellen — sie brauchen eine
+  // Liste. Das heisst aber NICHT „alle Felder": bis 2026-08-21 sprang genau
+  // hier der Rueckgabewert `source.fields` heraus, BEVOR der Benutzt-Filter
+  // unten lief. Weil sieben von acht Arten dieses Merkmal tragen, bestellte
+  // der Export fuer fast jede Quelle ihre gesamte Feldliste — an einer echten
+  // Nutzermaske 81 Felder, von denen die Maske 8 zeigte. Teuer ist das nicht
+  // wegen der Bytes: SoftEngine macht fuer JEDEN gelieferten Wert eines
+  // 25-Zeichen-Feldes einen Bild-Nachschlag (GET_RELATION 1911), und die
+  // Menge bestimmt allein unsere Bestellung.
+  const einzeln = artFuer(source.kind).felderEinzeln
+  const alleFelder = (): string => mitSchluesseln(source.fields.map((f) => f.code)).join(',')
 
+  // Weiss die Maske nichts, wird nicht geraten: `*` wo erlaubt, sonst die
+  // ganze Liste. Eine LEERE Bestellung waere schlimmer als eine zu grosse —
+  // dann liefert SoftEngine fuer diese Quelle gar nichts.
+  if (!benutzt || benutzt.size === 0) return einzeln ? alleFelder() : '*'
+
+  // Der Satzschluessel muss mit, egal ob die Maske ihn anzeigt: die Laufzeit
+  // liest ihn als `{PINDEX}` (softengine/data.ts satzIndexVon) — die
+  // Satznummer, in die eine Aktionskette schreibt. Bis 2026-08-21 stand diese
+  // Zeile hinter dem `felderEinzeln`-Ausstieg und wurde fuer Beleg,
+  // Belegposition und Stammdaten nie erreicht; ein PUT_RELATION aus einem
+  // Zeilenklick waere dort ins Leere gegangen.
   const index = (source.indexField ?? '').trim()
   const codes = index === '' ? [] : [index]
 
@@ -103,6 +121,8 @@ export function felderFor(
   }
 
   mitSchluesseln(codes)
+
+  if (einzeln) return codes.join(',')
 
   return codes.every((code) => POS_LEN.test(code)) ? codes.join(',') : '*'
 }

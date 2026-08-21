@@ -65,6 +65,66 @@ describe('exportMask: FELDER-Bestellung', () => {
     ])
   })
 
+  // Die sechs Faelle darueber und darunter benutzen ALLE `kind: 'idb'` — die
+  // einzige Art ohne `felderEinzeln`. Genau darum blieb bis 2026-08-21
+  // unbemerkt, dass der Benutzt-Filter fuer die anderen SIEBEN Arten nie lief:
+  // `felderFor` sprang vorher heraus und bestellte die ganze Feldliste der
+  // Quelle. Dasselbe Muster wie der Tabellen-Bug 2026-07-24 — ein gruener
+  // Test deckte einen Zweig ab, den das Produkt so nie erreichte.
+  const POS_FELDER = [
+    { code: '2_1', label: 'Belegart' },
+    { code: '3_8', label: 'Belegnummer' },
+    { code: '18_25', label: 'Artikelnummer' },
+    { code: '45_60', label: 'Bezeichnung' },
+    { code: '164_8', label: 'Menge' },
+    { code: '246_9', label: 'Einzelpreis' },
+    { code: '280_12', label: 'Gesamtpreis' },
+    { code: '645_10', label: 'Satznummer' },
+  ]
+
+  const posQuelle = [{
+    id: 'pos', name: 'Positionen', kind: 'belegposition' as const,
+    indexField: '645_10', fields: POS_FELDER,
+  }]
+
+  const tabelleMitSpalten = (spalten: { titel: string; feld: string; art: string }[]): BlockTree => ({
+    root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['tab'] },
+    tab: {
+      id: 'tab', type: 'tabelle', parentId: 'root', childIds: [],
+      props: { source: 'pos', suche: 'nein', spalten },
+    },
+  })
+
+  it('bestellt auch bei einer Einzelfeld-Art nur die benutzten Felder', () => {
+    const tree = tabelleMitSpalten([
+      { titel: 'Artikel', feld: '18_25', art: 'text' },
+      { titel: 'Bezeichnung', feld: '45_60', art: 'text' },
+    ])
+
+    const { sevariablen } = exportMask(tree, 'Maske', posQuelle)
+    expect(JSON.parse(sevariablen).SEFILELOOP).toEqual([
+      {
+        INDEX_NR: 0, ALIAS: 'Positionen', ID: 'POS',
+        // Der Satzschluessel steht VORNE und ist nicht verhandelbar: die
+        // Laufzeit liest ihn als {PINDEX} — die Satznummer, in die eine
+        // Aktionskette schreibt. Ohne ihn ginge ein PUT_RELATION aus einem
+        // Zeilenklick ins Leere.
+        FELDER: '645_10,18_25,45_60',
+      },
+    ])
+  })
+
+  it('bestellt die ganze Liste, wenn die Maske kein Feld der Quelle benutzt', () => {
+    // Kein Wissen heisst NICHT „nichts bestellen": eine leere Bestellung
+    // liesse SoftEngine fuer diese Quelle gar nichts liefern. Geraten wird
+    // hier bewusst nicht — lieber zu viel als eine stumme leere Tabelle.
+    const tree = tabelleMitSpalten([{ titel: 'Spalte 1', feld: '', art: 'text' }])
+
+    const { sevariablen } = exportMask(tree, 'Maske', posQuelle)
+    expect(JSON.parse(sevariablen).SEFILELOOP[0].FELDER)
+      .toBe('2_1,3_8,18_25,45_60,164_8,246_9,280_12,645_10')
+  })
+
   it('zaehlt die Felder der Auswahl-Folge und der gewaehlten Zeile mit', () => {
     const tree: BlockTree = {
       root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['geber', 'folger', 'knopf'] },
