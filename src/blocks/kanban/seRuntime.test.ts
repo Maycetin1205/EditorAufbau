@@ -88,8 +88,30 @@ describe('Relations-Antworten (BWMSG/WWMSG-Callback und SEDATA-Fallback)', () =>
     expect(seMessageKeys(seData)).toEqual(['Message1', 'Message3'])
 
     expect(newSeMessageResult(seData, new Set(['Message1'])))
-      .toEqual({ wert: 'neu', roh: seData.Message3 })
+      .toEqual({ wert: 'neu', roh: seData.Message3, geantwortet: true })
     expect(newSeMessageResult(seData, new Set(['Message1', 'Message3']))).toBeUndefined()
+  })
+
+  // Der Fall, an dem die Maske bis 2026-08-21 sechs Sekunden hing: „nichts
+  // gefunden" kommt als leeres RESULT zurueck. Das ist eine ANTWORT, kein
+  // Ausfall — sonst lief der Auftrag in den Wecker und der Bediener bekam
+  // „SoftEngine hat nicht geantwortet", obwohl SoftEngine sofort geantwortet
+  // hatte. Bei drei solchen Fragen in einer Kette waren das 18 Sekunden.
+  it('ein LEERES RESULT ist die Antwort „nichts gefunden", kein Ausfall', () => {
+    expect(extractRelationResult({ RESULT: '' })).toBe('')
+    expect(extractRelationResult({ result: '' })).toBe('')
+    expect(extractRelationResult({ DATA: { RESULT: '' } })).toBe('')
+    expect(extractRelationResult(JSON.stringify({ RESULT: '' }))).toBe('')
+  })
+
+  // Die Gegenprobe zum Fall darueber: nur RESULT/result gelten leer als
+  // Antwort. Die uebrigen Rueckfall-Schluessel heissen so allgemein (ID, KEY,
+  // INDEX, VALUE), dass eine beliebige Statusmeldung des SE-Interface sonst
+  // eine laufende Anfrage mit einem Leerwert beenden koennte.
+  it('ein leerer Rueckfall-Schluessel gilt NICHT als Antwort', () => {
+    expect(extractRelationResult({ ID: '' })).toBeUndefined()
+    expect(extractRelationResult({ VALUE: '' })).toBeUndefined()
+    expect(extractRelationResult({ status: 'irgendein Event' })).toBeUndefined()
   })
 })
 

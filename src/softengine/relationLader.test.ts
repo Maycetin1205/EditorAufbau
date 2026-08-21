@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getField, rowsFor, type RuntimeLadeRelation } from './data'
 import { geholteZeilenFuer, setzeGeholteZeilenZurueck } from './geholteZeilen'
 import { ladeZeilenPerRelation } from './relationLader'
@@ -86,6 +86,34 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     expect(getField(rows[0], '11_6')).toBe('4711')
     expect(getField(rows[1], '18_25')).toBe('Futter')
     expect(anfragen).toHaveLength(3)
+  })
+
+  // Bis 2026-08-21 war eine AUSGEBLIEBENE Antwort von einer leeren nicht zu
+  // unterscheiden: `frage()` lieferte in beiden Faellen '', und '' IST hier
+  // die Ende-Kennung. Bei einem Zusatzfeld war es noch stiller — die Zeile
+  // wanderte MIT leerem Wert in die Liste und sah vollstaendig aus.
+  it('ein ausgebliebenes Zusatzfeld verwirft die halbe Zeile statt sie leer zu speichern', async () => {
+    vi.useFakeTimers()
+    try {
+      const quelle = { id: 'q-stumm', name: 'Stumm' }
+      ladeZeilenPerRelation(quelle, { ...LADE, zusatzFelder: ['30_20'] }, BELEG)
+      await vi.advanceTimersByTimeAsync(0)
+
+      // Die Positionszeile selbst kommt an ...
+      antworte(satz('4711', 'Wurmkur'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(anfragen).toHaveLength(2)
+      expect(anfragen[1].params[1]).toBe('30')
+
+      // ... die Frage nach dem Zusatzfeld bleibt unbeantwortet.
+      await vi.advanceTimersByTimeAsync(7_000)
+
+      // Keine halbe Zeile, und es wird nicht weitergefragt.
+      expect(geholteZeilenFuer('Stumm')).toEqual([])
+      expect(anfragen).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('Abwahl leert die Quelle sofort und fragt nichts', async () => {
@@ -192,5 +220,30 @@ describe('relationLader (Welle R, Etappe R2)', () => {
     }
     expect(anfragen).toHaveLength(999)
     expect(rowsFor({ Daten: {} }, 'OhneEnde', 'POS')).toHaveLength(999)
+  })
+})
+
+// Befund 2026-08-21: „Feld des Ergebnisses von Schritt N" ging in einer
+// Aktionskette IMMER leer hinaus. Die Stelle, die den Rohsatz sucht, kannte
+// nur SATZNEU/SATZ/RAW — die belegte SoftEngine-Antwortform heisst aber
+// RESULT. Der Positions-Lader oben faellt nicht darauf herein, weil er die
+// Antwort vorher selbst in `{ SATZ: ... }` einwickelt; die Kette tat das nie.
+describe('getField: der Rohsatz darf auch unter RESULT stehen', () => {
+  const roh = satz('4711', 'Wurmkur')
+
+  it('schneidet pos_len aus einer echten GET_RELATION-Antwort', () => {
+    expect(getField({ RESULT: roh }, '11_6')).toBe('4711')
+    expect(getField({ result: roh }, '18_25')).toBe('Wurmkur')
+  })
+
+  it('die alten Schluessel gelten weiter', () => {
+    expect(getField({ SATZ: roh }, '11_6')).toBe('4711')
+    expect(getField({ SATZNEU: roh }, '11_6')).toBe('4711')
+    expect(getField({ RAW: roh }, '11_6')).toBe('4711')
+  })
+
+  it('ohne Rohsatz bleibt es leer — nichts wird erfunden', () => {
+    expect(getField({ RESULT: '' }, '11_6')).toBe('')
+    expect(getField({ etwasAnderes: roh }, '11_6')).toBe('')
   })
 })

@@ -61,7 +61,15 @@ export function getField(row: unknown, code: string): string {
   const m = /^(\d+)_(\d+)$/.exec(key)
   if (!m) return ''
 
-  const rohQuelle = row.SATZNEU ?? row.SATZ ?? row.satzneu ?? row.satz ?? row.RAW ?? row.raw
+  // Der Rohsatz, aus dem `pos_len` schneidet. `RESULT` gehoert seit
+  // 2026-08-21 dazu: das ist die an echten Masken belegte Antwortform von
+  // GET_RELATION ({"RESULT":"…"}). Ohne sie ging in einer Aktionskette
+  // „Feld des Ergebnisses von Schritt N" IMMER leer hinaus — der Parameter
+  // war in der Kommandozentrale waehlbar und hatte zur Laufzeit keine
+  // Wirkung. Dass ein Umverpacken noetig war, zeigte der Positions-Lader:
+  // der wickelt die Antwort genau deshalb vorher in `{ SATZ: … }`.
+  const rohQuelle = row.SATZNEU ?? row.SATZ ?? row.satzneu ?? row.satz
+    ?? row.RAW ?? row.raw ?? row.RESULT ?? row.result
   const raw = rohQuelle == null ? '' : String(rohQuelle)
   if (raw === '') return ''
   const pos = Number(m[1])
