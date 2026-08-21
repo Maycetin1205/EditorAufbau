@@ -3,6 +3,7 @@ import { findRuntimeDataSource, satzIndexVon } from '../../softengine/data'
 import {
   auswahlWiederfinden,
   geberIdVon,
+  zeilenNachAuswahl,
 } from '../shared/auswahl'
 import { macheDatenAnschluss } from '../shared/datenAnschluss'
 import { holeDatenVorspann } from '../shared/datenVorspann'
@@ -55,11 +56,7 @@ function hydrateTable(el: RuntimeTableElement): void {
   }
   const spalten = spaltenVon(el)
 
-  // Gefiltert wird im gemeinsamen Einstieg (shared/datenVorspann) — hier
-  // stand bis 2026-08-21 die einzige Umsetzung, und darum fehlte sie dem
-  // Kanban-Brett.
-  const rows = vorspann.zeilen
-  const gefiltert = vorspann.durchAuswahlGefiltert
+  const { rows, gefiltert } = zeilenNachAuswahl(el, vorspann.zeilen)
 
   const auswahlIndex = auswahlWiederfinden(geberIdVon(el), rows, (r) => r)[0] ?? -1
 

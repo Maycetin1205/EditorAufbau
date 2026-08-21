@@ -7,7 +7,6 @@ import {
   type BindableSpot,
 } from '../../core/blocks/BlockDefinition'
 import { getBlockDefinition } from '../../core/blocks/blockRegistry'
-import type { DataSource } from '../../core/data/dataSources'
 import type { QuelleInReichweite } from '../../core/data/sourceLinks'
 import type { Editor } from '../../state/Editor'
 import type { GestenKlammer } from '../../state/history'
@@ -35,11 +34,6 @@ interface LitElementArgs {
 
   quellen: readonly QuelleInReichweite[]
 
-  // Die GANZE Bibliothek. Gebraucht fuer Bindungen, die ihre Quelle beim
-  // Namen nennen (`quelle::code`) — die gelten auch ohne Verknuepfung, seit
-  // eine Spalte ein Feld einer Hilfstabelle zeigen darf (2026-08-20).
-  bibliothek: readonly DataSource[]
-
   raster: boolean
 }
 
@@ -50,7 +44,6 @@ export function useLitElement({
   selected,
   bindableSpots,
   quellen,
-  bibliothek,
   raster,
 }: LitElementArgs) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -119,16 +112,9 @@ export function useLitElement({
       if (typeof wert !== 'string' || wert === '') continue
 
       const { quelleId, code } = zerlegeBindung(wert)
-      // Nennt die Bindung ihre Quelle beim NAMEN, gilt sie — auch wenn diese
-      // nicht in Reichweite haengt. Bis 2026-08-21 suchte der Editor hier nur
-      // unter den erreichbaren Quellen und LOESCHTE die Bindung am Element,
-      // wenn er nichts fand: er zeigte „nicht gebunden", waehrend der Export
-      // dieselbe Bindung sehr wohl schreibt (export/bindungsVorschau ->
-      // feldKlarname sucht in der ganzen Bibliothek). Der Editor log also
-      // ueber den Zustand — Regel 1.
       const quelle = quelleId === ''
         ? quellen[0]?.source
-        : bibliothek.find((s) => s.id === quelleId)
+        : quellen.find((q) => q.source.id === quelleId)?.source
       const field = quelle?.fields.find((f) => f.code === code)
       if (field) {
         elAny[spot.vorschauProp ?? spot.prop] = field.label
@@ -140,7 +126,7 @@ export function useLitElement({
     elAny.editable = !!selected
 
     el.toggleAttribute('fuellt', !!raster)
-  }, [element, block.type, block.props, selected, bindableSpots, quellen, bibliothek, raster])
+  }, [element, block.type, block.props, selected, bindableSpots, quellen, raster])
 
   return { containerRef, elementRef, element }
 }

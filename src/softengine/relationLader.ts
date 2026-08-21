@@ -28,7 +28,7 @@ async function frage(
   posNr: number,
   pos: string,
   len: string,
-): Promise<{ wert: string; geantwortet: boolean }> {
+): Promise<string> {
   const antwort = await executeRelation(
     { id: 'relation-lader', verb: 'GET_RELATION', nr: lade.nr, params: [] },
     [
@@ -47,10 +47,7 @@ async function frage(
     ],
     { still: true, satzAntwort: true },
   )
-  // `still` unterdrueckt die allgemeine Ausfall-Meldung: der Lauf laeuft
-  // hunderte Male, eine Meldung je Frage waere unbrauchbar. Statt dessen
-  // meldet der Lader unten EINMAL, wo die Liste abgebrochen ist.
-  return { wert: antwort.wert, geantwortet: antwort.geantwortet }
+  return antwort.wert
 }
 
 export function ladeZeilenPerRelation(
@@ -83,33 +80,21 @@ export function ladeZeilenPerRelation(
 
   void (async () => {
     const zeilen: Record<string, string>[] = []
-    // Warum die Liste endet. Bis 2026-08-21 gab es nur „Ende gesehen: ja/nein",
-    // und eine AUSGEBLIEBENE Antwort sah aus wie das Ende: `frage()` lieferte
-    // in beiden Faellen den leeren String, und der leere String IST hier die
-    // Ende-Kennung. Ein Beleg mit 40 Positionen, bei dem SoftEngine auf Zeile 7
-    // einmal nicht rechtzeitig antwortete, zeigte danach 6 Positionen — und die
-    // eingebaute Warnung feuerte genau dann NICHT, weil der Lader glaubte, das
-    // Ende sauber gesehen zu haben.
-    let abbruch: 'ende' | 'keineAntwort' | 'deckel' = 'deckel'
+    let endeGesehen = false
 
     for (let posNr = 1; posNr <= MAX_POSITIONEN; posNr += 1) {
-      const satzAntwort = await frage(lade, schluessel, posNr, SCHNITT_POS, SCHNITT_LEN)
+      const satz = await frage(lade, schluessel, posNr, SCHNITT_POS, SCHNITT_LEN)
       if (generationen.get(quelle.id) !== gen) return
-      if (!satzAntwort.geantwortet) {
-        abbruch = 'keineAntwort'
-        break
-      }
-      const satz = satzAntwort.wert
 
       if (lade.endeFelder.every((feld) => getField({ SATZ: satz }, feld) === '')) {
-        abbruch = 'ende'
+        endeGesehen = true
         break
       }
 
       const zeile: Record<string, string> = { SATZ: satz }
       for (const feld of lade.zusatzFelder) {
         const trenner = feld.indexOf('_')
-        const antwort = await frage(
+        const wert = await frage(
           lade,
           schluessel,
           posNr,
@@ -117,25 +102,12 @@ export function ladeZeilenPerRelation(
           feld.slice(trenner + 1),
         )
         if (generationen.get(quelle.id) !== gen) return
-        if (!antwort.geantwortet) {
-          abbruch = 'keineAntwort'
-          break
-        }
-        zeile[feld] = antwort.wert
+        zeile[feld] = wert
       }
-      // Eine halbe Zeile wird nicht gezeigt: fehlt ein Zusatzfeld, fehlt der
-      // Wert stillschweigend, und die Zeile sieht vollstaendig aus.
-      if (abbruch === 'keineAntwort') break
       zeilen.push(zeile)
     }
 
-    if (abbruch === 'keineAntwort') {
-      meldeFehler(
-        `Positionen laden: SoftEngine hat bei Zeile ${zeilen.length + 1} nicht geantwortet `
-        + `(Relation Nr. ${lade.nr}). Die Liste bricht hier ab — angezeigt werden die `
-        + `${zeilen.length} Zeilen davor, es fehlen möglicherweise weitere.`,
-      )
-    } else if (abbruch === 'deckel') {
+    if (!endeGesehen) {
       meldeFehler(
         `Positionen laden: nach ${MAX_POSITIONEN} Zeilen ohne Ende-Kennung abgebrochen `
         + `(Relation Nr. ${lade.nr}) — die Liste ist wahrscheinlich unvollständig, `

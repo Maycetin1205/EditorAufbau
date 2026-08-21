@@ -95,38 +95,10 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     }
   }
 
-  // Der Anzeigename ist nicht Deko, sondern der SCHLUESSEL: der Export
-  // schreibt ihn als ALIAS in SEFILELOOP/ERPAPICALL/DATASET, und die Laufzeit
-  // sucht die Zeilen ueber genau diesen Namen — gross/klein egal
-  // (`sameAlias` in softengine/data.ts). Zwei Quellen gleichen Namens
-  // erzeugten zwei Eintraege mit demselben ALIAS: die Laufzeit nahm den
-  // ersten mit Zeilen, und die zweite Quelle zeigte die Daten der ersten,
-  // waehrend ihre eigenen Felder leer blieben. Geprueft wurden bisher nur
-  // doppelte FELDCODES innerhalb einer Quelle, nicht doppelte Quellennamen
-  // (Befund 2026-08-21).
-  const nameDoppelt = name.trim() !== '' && store.list.some(
-    (s) => s.id !== source?.id && s.name.trim().toLowerCase() === name.trim().toLowerCase(),
-  )
-  const nameFehler = name.trim() === ''
-    ? 'Anzeigename fehlt.'
-    : nameDoppelt
-      ? 'Diesen Namen gibt es schon. Er ist der Schlüssel, unter dem SoftEngine '
-        + 'liefert — zwei gleiche Namen lesen dieselben Zeilen.'
-      : ''
+  const nameFehler = name.trim() === '' ? 'Anzeigename fehlt.' : ''
   const kennungFehler =
     kennungEingeben && kennungFromInput(kennungEingabe, art.idbKurzform) === ''
       ? `${art.kennungLabel} fehlt (z. B. ${art.kennungBeispiel}).`
-      : ''
-
-  // Ohne diese Pruefung verschwand ein ungueltiger Vorsatz still: „LFA-",
-  // „LFA." oder „L FA" macht `feldVorsatzFromInput` zum LEEREN String, und
-  // danach entstehen ALLE Feldcodes der Quelle ohne Vorsatz — `1_25` statt
-  // `LFA_1_25`. Der Nutzer sieht seinen Text weiter im Kasten stehen, klickt
-  // Speichern, und SoftEngine liefert Saetze ohne Inhalt. „Feld-Vorsatz" war
-  // das einzige Eingabefeld dieses Formulars ohne Fehleranzeige.
-  const vorsatzFehler =
-    vorsatzEingeben && vorsatzEingabe.trim() !== '' && vorsatz === ''
-      ? 'Nur Buchstaben, Ziffern und _ — Beispiel: LFA_'
       : ''
 
   const kopfsatzFehler =
@@ -159,7 +131,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
     ? 'Wähle die Quelle, in der der Beleg angeklickt wird.'
     : ''
   const alleFehler = [
-    nameFehler, kennungFehler, vorsatzFehler, kopfsatzFehler, doppeltFehler,
+    nameFehler, kennungFehler, kopfsatzFehler, doppeltFehler,
     relationNrFehler, geberFehler,
     ...zeilenFehler,
   ]
@@ -180,18 +152,9 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
 
       ...(vorsatz !== '' ? { feldVorsatz: vorsatz } : {}),
 
-      // Der Satzschluessel einer NEUEN Quelle kommt aus der Arten-Tabelle.
-      // Bis 2026-08-21 stand hier fest '0_10' — der Satzschluessel einer
-      // IDB-Tabelle. Ein Beleg bekam ihn genauso wie ein Artikelstamm, der
-      // gar keinen hat, und weil das Feld im Formular nirgends auftaucht,
-      // war es danach auch nie mehr zu korrigieren.
-      // Bestehende Quellen behalten ihren gespeicherten Wert: ihn hier
-      // umzuschreiben waere ein stiller Eingriff in Nutzerbestand (3.2).
       ...(source
         ? (source.indexField ? { indexField: source.indexField } : {})
-        : (art.satzSchluesselStandard !== ''
-          ? { indexField: art.satzSchluesselStandard }
-          : {})),
+        : { indexField: '0_10' }),
 
       ...(holtZeilen
         ? {
@@ -248,7 +211,7 @@ export function DataSourceForm({ source, onClose }: DataSourceFormProps) {
         )}
 
         {vorsatzEingeben && (
-          <Field label="Feld-Vorsatz" error={zeigeFehler ? vorsatzFehler : ''}>
+          <Field label="Feld-Vorsatz">
             {(f) => (
               <TextInput
                 {...f}

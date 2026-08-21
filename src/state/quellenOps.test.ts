@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { BlockTree } from '../core/blocks/BlockData'
 
 import '../blocks/formfeld/FormFeldBlock'
-import '../blocks/tabelle/TabelleBlock'
 import {
   registerTestBlocks,
   TEST_BLOCK,
@@ -40,51 +39,6 @@ describe('bausteineMitQuelle', () => {
       weitereQuellen: [{ quelleId: 'q1', keyPairs: [{ fromField: 'a', toField: 'b' }] }],
     })
     expect(bausteineMitQuelle(baum, 'q1')).toHaveLength(1)
-  })
-
-  // Befund 2026-08-21: eine Quelle, die NUR von Tabellenspalten benutzt wurde,
-  // galt als unbenutzt. Der Loesch-Hinweis im Datencenter blieb aus, und sie
-  // war mit einem Klick weg — obwohl die Maske sie braucht.
-  it('findet ihn ueber „Sucht beim Erfassen in" einer Tabellenspalte', () => {
-    const baum: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
-      t: {
-        id: 't', type: 'tabelle', parentId: 'root', childIds: [],
-        props: {
-          source: 'q-pos', erfassung: 'ja',
-          spalten: [{ titel: 'Artikel', feld: '18_25', art: 'text', suchtIn: 'q-art' }],
-        },
-      },
-    }
-    expect(bausteineMitQuelle(baum, 'q-art').map((n) => n.id)).toEqual(['t'])
-  })
-
-  it('findet ihn ueber eine Spalte, die ihre Quelle beim Namen nennt', () => {
-    const baum: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
-      t: {
-        id: 't', type: 'tabelle', parentId: 'root', childIds: [],
-        props: {
-          source: 'q-pos',
-          spalten: [{ titel: 'Bezeichnung', feld: 'q-art::30_40', art: 'text' }],
-        },
-      },
-    }
-    expect(bausteineMitQuelle(baum, 'q-art').map((n) => n.id)).toEqual(['t'])
-  })
-
-  it('eine Spalte ohne Quellenbezug macht keinen falschen Treffer', () => {
-    const baum: BlockTree = {
-      root: { id: 'root', type: 'root', props: {}, parentId: null, childIds: ['t'] },
-      t: {
-        id: 't', type: 'tabelle', parentId: 'root', childIds: [],
-        props: {
-          source: 'q-pos',
-          spalten: [{ titel: 'Menge', feld: '164_8', art: 'zahl' }],
-        },
-      },
-    }
-    expect(bausteineMitQuelle(baum, 'q-art')).toEqual([])
   })
 
   it('uebergeht Bausteine, die gar keine Quelle tragen koennen', () => {

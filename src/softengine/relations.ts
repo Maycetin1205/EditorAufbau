@@ -17,14 +17,6 @@ export interface RelationAntwort {
   wert: string
 
   roh: unknown
-
-  // Ist ueberhaupt eine Antwort angekommen? `wert: ''` allein sagt das NICHT:
-  // „nichts gefunden" ist eine gueltige Antwort von SoftEngine und kommt als
-  // {"RESULT":""} zurueck. Wer beides verwechselt, haelt eine Zeitueber-
-  // schreitung fuer ein Ergebnis — genau daran endete die Positionsliste des
-  // Laders stillschweigend mitten im Beleg (Befund 2026-08-21).
-  // Bei PUT/PUTADD wird keine Antwort erwartet: dort ist das Feld false.
-  geantwortet: boolean
 }
 
 function fehlertext(error: unknown): string {
@@ -44,11 +36,6 @@ export function findRuntimeRelation(list: unknown, id: string): RuntimeRelation 
   }
   return undefined
 }
-
-// Die an echten Masken BELEGTE Antwortform: {"RESULT": "..."}. Nur fuer
-// diese zwei Schluessel gilt ein leerer Wert als Antwort (s.
-// extractRelationResult) — die Rueckfaelle in RESULT_KEYS sind zu allgemein.
-const SATZ_SCHLUESSEL = ['RESULT', 'result'] as const
 
 const RESULT_KEYS = [
   'RESULT', 'result', 'PINDEX', 'pindex', 'INDEX', 'index',
@@ -100,22 +87,6 @@ export function extractRelationResult(raw: unknown): string | undefined {
     if (!(key in value)) continue
     const found = firstScalar(value[key], 0)
     if (found !== undefined) return found
-
-    // Ein LEERES `RESULT` ist eine ANTWORT — „diese Nummer gibt es nicht" ist
-    // der Normalfall, nicht ein Ausfall. Bis 2026-08-21 fiel er hier durch,
-    // weil `scalar()` den leeren String verwirft: der Auftrag lief dann in den
-    // 6-Sekunden-Wecker und der Bediener bekam „SoftEngine hat nicht
-    // geantwortet", obwohl SoftEngine sofort und richtig geantwortet hatte.
-    // Bei einer Kette mit drei solchen Fragen waren das 18 Sekunden.
-    //
-    // ABSICHTLICH NUR fuer `RESULT`/`result`: das ist die an echten Masken
-    // belegte Antwortform (CLAUDE.md). Die uebrigen Schluessel oben sind
-    // Rueckfaelle mit sehr allgemeinen Namen (ID, KEY, INDEX, VALUE) — wuerde
-    // dort ein leerer Wert als Antwort gelten, koennte eine beliebige
-    // Statusmeldung des Interface eine laufende Anfrage beenden.
-    if ((SATZ_SCHLUESSEL as readonly string[]).includes(key) && typeof value[key] === 'string') {
-      return ''
-    }
   }
   for (const entry of Object.values(value)) {
     if (Array.isArray(entry)) {
@@ -130,6 +101,8 @@ export function extractRelationResult(raw: unknown): string | undefined {
   }
   return undefined
 }
+
+const SATZ_SCHLUESSEL = ['RESULT', 'result'] as const
 
 export function extractSatzAntwort(raw: unknown, tiefe = 0): string | undefined {
   if (tiefe > 12) return undefined
@@ -190,7 +163,7 @@ export function newSeMessageResult(
     .sort((a, b) => Number(b.slice(7)) - Number(a.slice(7)))
   for (const key of keys) {
     const found = satzAntwort ? extractSatzAntwort(seData[key]) : extractRelationResult(seData[key])
-    if (found !== undefined) return { wert: found, roh: seData[key], geantwortet: true }
+    if (found !== undefined) return { wert: found, roh: seData[key] }
   }
   return undefined
 }
@@ -220,18 +193,14 @@ function runNextGet(): void {
   const before = new Set(seMessageKeys(g.SEDATA))
   let settled = false
 
-  // `geantwortet: false` heisst: es kam NICHTS — Zeitueberschreitung, keine
-  // Verbindung, oder das Senden selbst schlug fehl. Das ist etwas anderes als
-  // eine Antwort mit leerem Wert, und nur der Aufrufer kann entscheiden, was
-  // daraus folgt (der Positions-Lader bricht ab, eine Kette liefert leer).
-  const finish = (wert: string, roh: unknown, geantwortet: boolean): void => {
+  const finish = (wert: string, roh: unknown): void => {
     if (settled) return
     settled = true
     unsubscribe()
     clearInterval(poll)
     clearTimeout(timeout)
     getBusy = false
-    job.resolve({ wert, roh, geantwortet })
+    job.resolve({ wert, roh })
 
     queueMicrotask(runNextGet)
   }
@@ -240,26 +209,26 @@ function runNextGet(): void {
 
   const unsubscribe = onSeAntwort((raw) => {
     const result = satzAntwort ? extractSatzAntwort(raw) : extractRelationResult(raw)
-    if (result !== undefined) finish(result, raw, true)
+    if (result !== undefined) finish(result, raw)
   })
 
   const poll = setInterval(() => {
     const antwort = newSeMessageResult(seGlobal().SEDATA, before, satzAntwort)
-    if (antwort !== undefined) finish(antwort.wert, antwort.roh, true)
+    if (antwort !== undefined) finish(antwort.wert, antwort.roh)
   }, GET_POLL_MS)
 
   const timeout = setTimeout(() => {
     if (!job.optionen.still) {
       meldeFehler(`Daten laden: SoftEngine hat nicht geantwortet (Relation Nr. ${job.template.nr}).`)
     }
-    finish('', undefined, false)
+    finish('', undefined)
   }, GET_TIMEOUT_MS)
 
   if (typeof g.basisHTML_SND_MSG !== 'function') {
     if (!job.optionen.still) {
       meldeFehler('Daten laden nicht möglich: keine Verbindung zu SoftEngine.')
     }
-    finish('', undefined, false)
+    finish('', undefined)
     return
   }
   try {
@@ -271,7 +240,7 @@ function runNextGet(): void {
     if (!job.optionen.still) {
       meldeFehler(`Daten laden fehlgeschlagen (Relation Nr. ${job.template.nr}): ${fehlertext(error)}`)
     }
-    finish('', undefined, false)
+    finish('', undefined)
   }
 }
 
@@ -285,7 +254,7 @@ export function executeRelation(
   if (template.verb !== 'GET_RELATION') {
     if (typeof g.basisHTML_SND_MSG !== 'function') {
       meldeFehler('Speichern nicht möglich: keine Verbindung zu SoftEngine. Die Eingabe wurde NICHT übernommen.')
-      return Promise.resolve({ wert: '', roh: undefined, geantwortet: false })
+      return Promise.resolve({ wert: '', roh: undefined })
     }
     try {
       g.basisHTML_SND_MSG(template.verb, { NR: template.nr, PARAMS: [...params] })
@@ -293,7 +262,7 @@ export function executeRelation(
       meldeFehler(`Speichern fehlgeschlagen (Relation Nr. ${template.nr}): ${fehlertext(error)}`)
     }
 
-    return Promise.resolve({ wert: '', roh: undefined, geantwortet: false })
+    return Promise.resolve({ wert: '', roh: undefined })
   }
   return new Promise((resolve) => {
     getQueue.push({ template, params: [...params], resolve, optionen })
