@@ -48,7 +48,20 @@ export function RelationenBereich() {
     ...gruppe,
     label: sucht ? `${gruppe.label} · ${zaehler[gruppe.value as RelationGroup]}` : gruppe.label,
   }))
-  const auswahl = sichtbareRelationen.find((r) => r.id === auswahlId) ?? sichtbareRelationen[0]
+  // Beim BEARBEITEN wird aus der VOLLEN Liste aufgeloest, nicht aus der
+  // gefilterten. Sonst passierte Folgendes (Befund 2026-08-21): Relation A
+  // bearbeiten, dann den Reiter wechseln oder etwas ins Suchfeld tippen, das A
+  // nicht mehr findet. A fiel aus `sichtbareRelationen`, die Auswahl rutschte
+  // auf den Rueckfall `[0]` — also auf B —, das Formular zeigte aber weiter
+  // Name und Syntax von A, weil es ohne `key` nicht neu aufgebaut wird.
+  // Ein Klick auf Speichern schrieb A-Daten auf B: B ueberschrieben, A
+  // unveraendert, und jede Kette, die B benutzt, zeigte danach auf eine
+  // Vorlage mit ganz anderer Parameterzahl.
+  // Im Lese-Modus bleibt der Rueckfall richtig: wer den Reiter wechselt, soll
+  // die erste Relation darin sehen.
+  const auswahl = modus === 'bearbeiten'
+    ? store.list.find((r) => r.id === auswahlId)
+    : sichtbareRelationen.find((r) => r.id === auswahlId) ?? sichtbareRelationen[0]
 
   const verwendungFor = (id: string): string[] =>
     Object.values(ed.tree)
@@ -131,7 +144,9 @@ export function RelationenBereich() {
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4">
         {modus === 'neu' && <RelationForm onClose={() => setModus('lesen')} />}
         {modus === 'bearbeiten' && auswahl && (
-          <RelationForm relation={auswahl} onClose={() => setModus('lesen')} />
+          // `key`: ein Wechsel der bearbeiteten Relation baut das Formular NEU
+          // auf, statt die alten Eingaben mitzuschleppen (s. `auswahl` oben).
+          <RelationForm key={auswahl.id} relation={auswahl} onClose={() => setModus('lesen')} />
         )}
         {modus === 'lesen' && !auswahl && (
           <p className="text-xs text-muted-foreground">
@@ -188,7 +203,15 @@ export function RelationenBereich() {
             </Gruppe>
 
             <div className="flex gap-2 border-t border-border pt-3">
-              <Button size="sm" onClick={() => setModus('bearbeiten')}>Bearbeiten</Button>
+              {/* Die Auswahl wird beim Umschalten FESTGEHALTEN. Ohne das
+                  koennte `auswahl` aus dem Rueckfall `[0]` stammen, und das
+                  Bearbeiten-Formular haette danach keine Relation mehr. */}
+              <Button
+                size="sm"
+                onClick={() => { setAuswahlId(auswahl.id); setModus('bearbeiten') }}
+              >
+                Bearbeiten
+              </Button>
               <Button variant="outline" size="sm" onClick={() => loeschen(auswahl)}>
                 Löschen…
               </Button>
