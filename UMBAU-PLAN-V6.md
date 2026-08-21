@@ -21,175 +21,32 @@ dann `go` (0.3), dann genau EINE Etappe.
 
 <!-- Nach JEDER fertigen Etappe aktualisieren. Zeiger, keine Chronik. -->
 
-- **Stand 2026-08-20, nachmittags: die Belegtabelle-Demo des Nutzers ist das
-  Vorbild der Erfassung** (`Downloads/Belegtabelle.dc.html`, Design-Canvas).
-  Uebernommen wird ihre BEDIENUNG und ihre STRUKTUR, nicht ihre Palette (die
-  Maske laeuft weiter auf `--se-*`; die Demo traegt Linear-Farben).
-  Gebaut in dieser Sitzung, je mit eigenem Commit:
-  1. S1.8 des Vorchats gesichert (lag unfestgeschrieben im Arbeitsbaum).
-  2. **Lauf JE ZEILE** — S2.6/S2.7/S2.8 zusammen: jede erfasste Zeile behaelt
-     ihren `ErfassungsLauf`, ist also weiter betippbar, duplizierbar und
-     einzeln loeschbar; Pfeile/Tab laufen ueber Zeilengrenzen. Die tote
-     Zeilenart `.zeile.erfasst` ist weg.
-  3. **Nummernspalte als Zeilengriff** (nur bei Erfassung an) — dort haengen
-     spaeter die Werkzeuge.
-  4. **Ein-Treffer-Automatik beim Tippen** ab dem zweiten Zeichen.
-  5. **Das gewaehlte Feld der Hilfstabelle landet in der Zelle** — war der
-     Blocker: ohne Schluesselpaar blieb das Suchwort stehen und lief in den
-     Beleg. Regel: was der Nutzer unter „Zeigt beim Suchen" gewaehlt hat.
-  6. **Erfassungszeile bleibt OBEN** (Zeile 0, wandert nicht mit) · doppelter
-     Hoehen-Abzug weg (das leere Band am Boden) · `SPALTEN_MAX` 8 → 16.
-  **Offen aus der Demo:** Werkzeugleiste (Nutzer-Ansage: spaeter, „einiges
-  geht ja inline"; zwei der sieben Knoepfe sind schon Inspector-Schalter) ·
-  Spaltenbreite ziehen (Muster: der Anfasser von `DialogRahmen`, nicht die
-  eigene mousemove-Schleife der Demo) · Pflichtfeld-Merkmal (generisch am
-  Listen-Eintrag, dann kann es das Formfeld auch) · Dichte kompakt (soll
-  „Schlank" machen). **Summen sind gestrichen** — werden nicht gebraucht.
-  **Vier Tasten-Abweichungen** von der Demo stehen im Chat und warten auf ein
-  Wort des Nutzers: Enter haelt am Tippfehler an (G1) · Enter im leeren Feld
-  oeffnet das grosse Fenster (2026-08-18) · Escape zweistufig · Liste erst
-  beim Tippen, nicht beim Reinklicken (G1; geteilt mit dem Formfeld).
-  **S2.0 (Doppel-Lieferung) ist NICHT angefasst.**
+**Stand 2026-08-21: Reinigung VOR Neubau (Nutzer-Ansage).**
+Es wird nichts Neues gebaut, bis Welle R abgearbeitet ist -- „ich will keine
+123239393 Baustellen gleichzeitig". Welle S, Welle U, F3 und E1/E2/E3 warten;
+E1/E2 sind als R10 in die Reinigung eingereiht.
 
-- **Stand 2026-08-20: ZUERST Welle S lesen (ganz unten in dieser Datei).**
-  Der Nutzer baut eine Belegpositions-Erfassungsmaske; zwei echte
-  SoftEngine-Debug-Logs sind ausgewertet.
-  **S1.8 ist GEBAUT (Verknuepfungen ueber mehrere Stufen):** `vonQuelleId` an
-  `BausteinQuelle` — eine Verknuepfung darf an einer ANDEREN verknuepften
-  Quelle haengen statt an der eigenen. Damit haengt die Tierart am
-  Artikelstamm. Die Zusage „nur EINE Stufe" (2026-07-25) ist damit aufgehoben.
-  Naechste Etappe ist **S2.0** (Doppel-Lieferung abstellen).
-  Alles darunter ist aelterer Stand.
+Grundlage ist eine Gesamtanalyse vom 2026-08-21 in drei Stufen:
 
-- **Stand 2026-08-19: Tabelle — Erfassung als Option, EIN Bedienmuster.**
-  Der Nutzer hat die A2-Bedienoberflaeche ABGELEHNT (Inspector mit
-  Klartext-Zeilen vollgepackt, Feld-Waehler mit Zusaetzen, weitere Quellen als
-  nummerierte Kaesten, Ketten-Parameter ueber Spalten-Indizes, Editor-Seite
-  scrollt ins Leere). Das Soll-Bild ist an einer Demo mit ihm abgestimmt und
-  gilt. Gebaut auf Branch `claude/code-review-refactor-0bw6rv`:
-  1. **Rueckbau + Scroll-Fix** (`c489496`): die A2-Anzeigen sind weg
-     (SpaltenKlartext geloescht, keine Zusaetze mehr am Feld-Waehler); die
-     Seite ist fest — html/body/#root tragen Hoehe und `overflow: hidden`,
-     die Schale `h-full` statt `h-screen`.
-  2. **Inspector-Dreizeiler + Daten-Fenster** (`e9d8215`): je Faehigkeit EINE
-     Zeile („Zeigt" · „Erfassen" · „Aktionen"), generisch aus der Registry.
-     Das Daten-Fenster hat drei Zonen (ZEIGT · VERKNUEPFUNGEN · SCHREIBT
-     UEBER); die Fenster-Huelle ist als `ui/molecules/editor-fenster`
-     herausgezogen und wird von Datencenter, Ketten- und Daten-Fenster
-     komponiert. `QuellenListe` und `AktionenSektion` sind geloescht.
-  3. **Spalten-Einstellung am Spaltenkopf**: der Popover traegt jetzt FELD
-     und — nur bei eingeschalteter Erfassung — SUCHT BEIM ERFASSEN IN. Damit
-     ist die Ableitung aus den Schluesselpaaren GESTRICHEN: der Nutzer waehlt
-     pro Spalte selbst. Das Konzept dahinter ist verallgemeinert
-     (`eintragsQuellenWahl` in `core/blocks/listenBindung.ts`) — eine Wahl je
-     Eintrag unter den Verknuepfungen des Bausteins, nicht in der Registry
-     aufgezaehlt. Schemastufe 7 schreibt die alte Ableitung einmal als Wahl
-     fest, damit gespeicherte Masken sich nicht anders verhalten.
-  4. **Erfassungszeile ist die LETZTE Zeile**: sie steht immer unter den
-     Datenzeilen und den erfassten Zeilen (vorher ohne echte Daten ganz oben,
-     im Editor nicht von den Strich-Zeilen zu unterscheiden). Dazu zogen zwei
-     Stellen mit der Sucht-in-Wahl nach: den Listen-Halter und das grosse
-     Fenster bekommt jetzt, wer SUCHT — nicht, wer einen Wert liest.
-  5. **Ketten-Parameter Quelle→Feld (Etappe B)**: die Herkunft „Wert aus
-     Erfassungszelle" mit ihrem Spalten-INDEX ist gestrichen. Ein Parameter
-     waehlt ueberall „Datenquelle → Feld" (Klarnamen) — und `data_field`
-     liefert zur Laufzeit die Zeile, die diese Quelle GERADE gibt: die
-     erfasste, sonst die angeklickte, sonst wie bisher PINDEX/erste Zeile.
-     Die erfasste Zeile gibt der Baustein dafuer als Saetze JE QUELLE heraus
-     (`erfassteSaetze`), und er sagt, welche Quellen er erfasst
-     (`erfassteQuellen`) — daran erkennt die Kette ihren Takt, auch wenn noch
-     nichts erfasst ist. Schemastufe 8 wandelt alte Parameter um.
-     **Verhaltensaenderung, bewusst:** die Meldung „Die Tabelle der
-     Erfassungszellen gibt es in dieser Maske nicht" ist weg — der Parameter
-     nennt keine Tabelle mehr. Erfasst niemand die gelesene Quelle, laeuft die
-     Kette EINMAL mit den Werten, die die Quelle sonst gibt.
-  6. **Nachtrag (Nutzer-Befund):** ein offenes Klappmenue ging nicht zu, wenn
-     man erneut auf seinen Ausloeser klickte — der Zeigerdruck schloss es, der
-     Klick oeffnete es im selben Atemzug neu. Geloest in der Huelle
-     (`ui/molecules/auswahl-fenster`): sie kennt ihren `ausloeser` und
-     schluckt nach einem Druck darauf genau EINEN Klick. Gilt damit ueberall
-     (Spaltenkopf, Daten-Fenster, Ketten-Formular, Feld-Waehler,
-     Feld-Uebernahme); Doppelklick bleibt heil.
-  **Offen, je mit eigener Ansage:** **Etappe C** — „Schlank" ERSETZT den
-  Kopfzeile-Schalter von G5b.
-- **Stand 2026-08-18:** Gesamtanalyse des ganzen Repos (zwei Lese-Trupps +
-  Kernlektuere). Urteil: das Fundament traegt (Store, Registry, Export,
-  SE-Schicht sauber); die Schwaechen sassen in der Bedienschicht. Sechs
-  Fix-Commits sind in `claude/softengine-erp-templates-ynqibv` gepusht
-  (Schritt-Formular-Datenverlust · tote Lesen/Schreiben-Reiter ·
-  Undo-Killer im Feld-Picker · Klick-Schlucker · Nachschlagen-Einstellung
-  · Ankreuzfeld-Bindung), dazu: gelber Punkt im Datencenter entfernt,
-  README angelegt, dieser Plan eingedampft. Pruefbuendel gruen. Die
-  restlichen Befunde stehen als **Welle V** unten — der Nutzer hat ihnen
-  am 2026-08-18 pauschal zugestimmt; je Etappe gilt trotzdem Ansage + go.
-- **WARTET AUF DEN NUTZER (kann kein Chat erledigen):**
-  1. **Die Gesamtprobe** (Browser + SoftEngine) — Liste in Abschnitt 7.0.
-     Sie deckt alles seit dem 12.08. Gebaute ab (Wellen C, D, U8/U9,
-     N3–N5) plus die Fixe vom 18.08. Dabei: **U10 beobachten**
-     (Leerzeichen beim Benennen — Ursache braucht seine Beobachtung,
-     nicht weiter im Code suchen, zwei Sitzungen waren erfolglos).
-  2. **U4-Entwurfssitzung** (Datencenter + Inspector neu) — braucht den
-     Nutzer live im Chat; Grundlagen liegen bereit (Quellen-FORMEN unten,
-     Bauteil-Inventur der Analyse, 45-Bedienwege-Zaehlung).
-  3. Mini-Frage: `preflight.ts` ist seit dem Punkt-Entfernen ohne
-     Aufrufer im Produkt — loeschen (samt Tests) oder behalten?
-- **ENTSCHIEDEN 2026-08-18 (Nutzer):** „Angezeigt wird" beim Nachschlagen
-  STIRBT (Etappe V0, gebaut) · gelber Punkt WEG (erledigt) · README JA
-  (erledigt) · Plan eindampfen JA (erledigt) · **Koralle-Frage: JA** —
-  der Editor uebernimmt den Koralle-Akzent der Designsprache
-  (Nutzer-Antwort 2026-08-18 abends; umgesetzt wird das erst in U7b/c
-  nach U4/U5, die Token-Trennung Editor/Maske bleibt technisch hart).
-- **V1, V0, V3, V4 und V5 Stellen 1–5 sind GEBAUT (2026-08-18).** Offen aus
-  der Welle V: V5 Stellen 6–8 — die brauchen erst eine Nutzer-Entscheidung,
-  s. Etappentext V5.
-- **Baubereit ohne weitere Nutzer-Entscheidung** (je Etappe eigenes go;
-  fuer V1–V5 liegt ein fertiger Opus-Kopier-Auftrag im Wellen-Kopf V):
-  V6 nach Kurzentwurf · G3b → G3c → G4 → G5 (Wellen-Kopf G) · E1 · E3 ·
-  U7a · A10 (Technik-Haelfte) · S5.3 (optional) · E2 (nach E1) · F3
-  (nach U5/U7). V2 (Erfolgs-Meldungen) ist am 2026-08-18 auf
-  Nutzer-Ansage GEPARKT.
-- **Neu 2026-08-18 abends: V8 + V9 eingereiht (Nutzer-Befunde aus der
-  Bedienung):** Greifen im Raster klappt nur je nach Griffstelle (V8) ·
-  bei zwei Tabellen derselben Geber-Quelle bestimmt still die DOM-erste,
-  welche Positionen geholt werden (V9). Die Lupen-Ueberdeckung durch den
-  Editor-Platzhalter ist direkt gefixt (`.ph-nachschlag`). **V8, V9, V7,
-  G1, G2 und G3 sind GEBAUT (2026-08-18).**
-  Mit G3 ist die Erfassungszeile einstellungsfrei geworden — sie leitet
-  alles aus der Bindung der Spalte und der Verknuepfung des Bausteins ab;
-  die Rollen-Maschinerie samt zweiter Bedienstelle am Listen-Eintrag
-  (`ListenStelle`) ist ersatzlos ausgebaut, alte Staende raeumt
-  `migrateErfassungsRollenWeg` beim Laden.
-  **Ehrlichkeits-Korrektur (2026-08-18, spaeter Abend):** G3 ist OHNE
-  den Tastenfluss gebaut — `erfassungsLauf` kennt nur Pfeile,
-  Enter-Uebernahme und Escape=Liste-zu; kein Springen, kein
-  Tab-Verhalten, keine Escape-Stufe 2. Der Tastenfluss stand damit in
-  keiner offenen Etappe mehr; er ist jetzt Etappe **G3b**. Dazu kam aus
-  der Demo-Abnahme des Nutzers (klickbare Attrappe, 2026-08-18 abends):
-  **G3c** (Automatik-Anker — im Zielszenario „Tabelle zeigt
-  Belegpositionen" schraenkt heute nichts ein und fuellt sich nichts),
-  die G4-Praezisierung „Zellwert zaehlt, Herkunft egal" und **G5**
-  (Entschlanken). **G3b, G3c, G4, G5 und G5b (Schalter „Kopfzeile") sind
-  GEBAUT (2026-08-18). Die Welle G ist damit fertig bis auf die
-  Nutzerprobe.**
-  **Branch-Konsolidierung wiederhergestellt (2026-08-18 spaet,
-  Nutzer-Auftrag):** alles ist in `main` zusammengefuehrt, gearbeitet
-  wird wieder DIREKT auf main (Beschluss 2026-08-05, kein Force noetig —
-  main wurde nur vorgespult). Alle `claude/…`-Branches sind geloescht:
-  ihr Inhalt steckt in main, oder es waren ueberholte Altstaende
-  (Welle R und die Plan-Fassungen 1–4 leben laengst in main bzw. in
-  dieser Fassung 6; die Kennungen der geloeschten Staende stehen im
-  Chat-Protokoll der Sitzung).
-- **Neu 2026-08-18 abends: Welle G beschlossen — Belegerfassung in der
-  Tabelle** (eigener Wellen-Kopf zwischen V und E; Vorbild sind die
-  WinUI-Screenshots des Nutzers). Reihenfolge: **V7 zuerst** (V7 ist das
-  Fundament von G), dann G1 → G4. Dazu eine Nutzer-Ansage vom selben
-  Abend, die UEBERALL gilt: **nicht anbauen, wenn Umbauen noetig ist** —
-  muss Bestehendes umgebaut werden, damit das Neue passt, wird umgebaut,
-  statt drumherum zu erweitern („immer weiter aufbauen verursacht nur
-  Wirrwarr").
-- **U0-Entscheidungsliste ist BEANTWORTET** (2026-08-12) — die Antworten
-  stehen konserviert im Wellen-Kopf U unten. Nicht erneut fragen.
+1. eine Bauart-Analyse (Struktur, Waechter, Konfiguration, Repo);
+2. **acht Pruefer, die diese Befunde zu WIDERLEGEN versuchten** -- drei davon
+   erfolgreich (s. „Gekippt" am Ende der Welle R). Die Gegenpruefung war
+   noetig und hat sich gelohnt: der Befund, den die erste Stufe fuer den
+   sichersten hielt, war der schlechteste.
+3. **zehn Pruefer, die die 89 % Code lasen, die Stufe 1 nur ueberflogen hatte**
+   (`editor/`, `blocks/`, `softengine/`, `ui/`, `state/`, `core/`), plus eine
+   Zusammenfuehrung, die jeden Fund an der genannten Zeile nachprueft:
+   37 Funde, **keiner widerlegt**, 17 als Doppelnennung ausgesondert,
+   20 bestaetigt.
 
+**Naechste Etappe: R1** (die Bestellung an SoftEngine). Danach R2.
+
+**Was diese Analyse NICHT geprueft hat** (ehrliche Restluecke, Regel 9):
+kein einziger Fund wurde im Browser oder in SoftEngine nachgestellt -- alle
+Aussagen ueber „was der Bediener sieht" sind aus dem Code abgeleitet, nicht
+beobachtet. Der Export wurde nur punktuell gelesen, nicht als Ganzes. Die
+vier SoftEngine-Funde in R2 und der Kanban-Fund in R3 brauchen einen
+Echttest des Nutzers.
 ### 0.2 Ansage-Pflicht vor jeder Etappe
 
 Nutzer-Ansage 2026-08-10: **Vor dem Start einer Etappe wird angesagt, was
@@ -474,91 +331,6 @@ Chat braucht (kein Kopier-Auftrag) und V6/E1/E3 die naechsten Kandidaten
 sind.
 ```
 
-## V0 · „Angezeigt wird" stirbt (GEBAUT 2026-08-18)
-
-Gebaut wie beschrieben. Zwei Folgeschaeden mussten mit, sonst waere die
-Etappe halb gewesen: der Export bestellte die Felder der
-Nachschlage-SPALTEN gar nicht (`benutzteQuellen.ts`, Listen-Bindung mit
-`quelleProp` wurde ueber die Quellen in Reichweite aufgeloest statt ueber
-die benannte Quelle — seit D4 so, jetzt scharf, weil die Anzeige daran
-haengt), und der Preflight meldete dieselben Spalten als „Bindung ohne
-Datenquelle". `feldRuntime.ts` blieb unangetastet: es ueberspringt
-Nachschlage-Felder ohnehin (`hydrateField`, fruehes return).
-
-Das Nachschlage-Feld verliert die Eigenschaften `anzeigeFeld`/`anzeigeTitel`;
-im Feld erscheint kuenftig der Wert der ERSTEN Spalte des Fensters, in der
-Steuerung bleibt nur „Gespeichert wird". Automatik ohne eigene Spalten:
-eine Spalte = „Gespeichert wird". Migration: traegt ein gespeicherter Stand
-ein `anzeigeFeld` und KEINE eigenen Spalten, wird es beim Laden zur ersten
-Fenster-Spalte (kein stiller Verlust). „Einzigen Treffer uebernehmen" zeigt
-danach ebenfalls Spalte 1.
-
-Fundstellen (Anker): `blocks/formfeld/FormFeldBlock.ts` — defaultProps +
-@property `anzeigeFeld`/`anzeigeTitel`, `onLupe`, `uebernimmSatz`,
-`spaltenEffektiv` · `blocks/formfeld/nachschlagen.ts` — `nurEineSpalte`,
-`automatikSpalten`, `NachschlagenArgs`, `nachschlagEintraege`,
-`holeEintraege` · `blocks/formfeld/feldEigenschaften.ts` — die Eintraege
-„Angezeigt wird (optional)" (faellt) und „Gespeichert wird" ·
-`blocks/formfeld/feldRuntime.ts` — Hydrierung des Anzeigewerts · Migration
-auf den ROHDATEN nach dem Muster in `state/migrationenRoh.ts` (VOR
-`normalizeProps`, das unbekannte Props sonst still wegwirft) · Tests:
-`nachschlagen.test.ts`, `export/nachschlagenExport.test.ts`.
-**Runtime-Bytes aendern sich bewusst**; SE-Delta in die Gesamtprobe.
-
-## V1 · Robustheit und Aufraeumen (GEBAUT 2026-08-18)
-
-Gebaut wie beschrieben, mit drei benannten Abweichungen: `jaNeinProperty`
-wurde zum Umschalter (`kind: 'segment'`, die Mehrheit der drei Stellen) statt
-zur Klappliste — sonst haette die neue gemeinsame Stelle die
-Uneinheitlichkeit einbetoniert · `Eingabesitzung` in `PropControl.tsx` ist
-UMBENANNT (`BearbeitungsRueckrufe`), nicht geloescht: es sind zwei
-verschiedene Dinge mit gleichem Namen, kein Duplikat · der Feld-Vorsatz
-bleibt beim Art-Wechsel sichtbar UND wirksam, bis der Bauer ihn selbst
-leert. `preflight.ts` ist unangetastet (Mini-Frage unbeantwortet).
-
-- **Popup-Schritt meldet Fehlschlag:** findet `applyPopupStep`
-  (`blocks/shared/seAktionen.ts`, Anker `treffer.length !== 1`) sein Popup
-  nicht (umbenannt) oder zweimal, kommt kuenftig `meldeFehler` mit dem
-  Warum statt stillem Nichtstun.
-  ⚠ Widerspruchs-Vermerk: die C3.2-Ansage (2026-08-16) sagte „keine
-  Laufzeitmeldung, nichts tun"; der Nutzer hat dem Melde-Vorschlag am
-  2026-08-18 zugestimmt. Die Etappen-Ansage nennt diesen Widerspruch
-  ausdruecklich, damit die Entscheidung bewusst faellt.
-- **Kleinkopien zusammenziehen:** die Ja/Nein-Optionsliste dreimal in zwei
-  Reihenfolgen — `blocks/tabelle/tabelleEigenschaften.ts` (Anker
-  `[{ value: 'ja'`) und `blocks/formfeld/feldEigenschaften.ts` (Eintrag
-  „Einzigen Treffer uebernehmen") stellen auf `shared/jaNeinProperty` um,
-  dessen Reihenfolge gilt · die zeilengleichen Parser `folgenAusAttribut`
-  (`blocks/shared/auswahl.ts`) und `weitereAusAttribut`
-  (`blocks/shared/fremdeQuellen.ts`) werden EIN gemeinsamer Parser (nur
-  der ID-Feldname unterscheidet sie) · die kopierte Ziel-Hervorhebung
-  `data-ff-ziel` in `KanbanSpalteBlock.ts` und `KanbanZimmerBlock.ts`
-  wird ein geteilter Stil. (Die zeichengleichen Dialoghuellen von
-  Kommandozentrale/KettenFenster NICHT anfassen — sie sterben in U4/U5.)
-- **Restposten:** tote Props am `ui/molecules/side-panel.tsx` (`onBack`,
-  `backLabel`, `description` — kein Aufrufer uebergibt sie) · doppelte
-  Schnittstelle `Eingabesitzung` in `editor/inspector/PropControl.tsx`
-  (die echte wohnt in `controls/eingabeSitzung.ts`) · unbenutztes
-  `createStep` in `core/data/aktionen.ts` · fest verdrahtetes
-  `speichernDisabled={false}` in `editor/shell/Toolbar.tsx` · wirkungslose
-  Bedingung `navZahl[key] !== ''` in `editor/zentrale/Kommandozentrale.tsx`
-  · abgerissener Kommentar-Halbsatz in `editor/zentrale/feldZeile.ts`
-  (Zeile 1) · in Nutzertexten schliesst ein GERADES Maschinen-Zeichen
-  (U+0022) statt des deutschen schliessenden Anfuehrungszeichens (U+201C,
-  wie ueberall sonst im Editor — Vorbild: `schrittZusammenfassung.ts`);
-  betroffen: `optionColors.ts`, `FieldPicker.tsx`, `Canvas.tsx`,
-  `PopupSeite.tsx`, `zentrale/helfer.ts`, `DtkImportForm.tsx` · rohe
-  Farbe `hsl(220 13% 78%)` in `editor/canvas/BlockHost.tsx` auf ein
-  Editor-Token · Feld-Vorsatz beim Art-Wechsel in
-  `editor/zentrale/DataSourceForm.tsx` (Anker `waehleArt`): heute geht er
-  still verloren — kuenftig sichtbar behalten oder mit Meldung entfernen.
-- Falls der Nutzer die Mini-Frage aus 0.1 mit „loeschen" beantwortet:
-  `export/preflight.ts` + `preflight.test.ts` entfernen (ohne Aufrufer im
-  Produkt seit dem Punkt-Entfernen; gleiche Gattung wie `warnChecks`, U3).
-
-**Runtime-Bytes aendern sich bewusst** (jaNein/Parser/Ziel-Stil/
-Popup-Meldung liegen in `blocks/`); die Editor-Restposten nicht.
-
 ## V2 · GEPARKT — Erfolgs-Meldungen (Nutzer-Ansage 2026-08-18: „muss
 nicht sein")
 
@@ -567,106 +339,6 @@ Hier stand der Bau von gruenem Meldebalken + Meldungs-Schritt in Ketten
 wurde. Nicht von selbst wieder vorschlagen; die Skizze liegt in der
 git-Historie dieser Datei (Stand 2026-08-18). Kommt nur wieder, wenn der
 Nutzer selbst danach fragt.
-
-## V3 · Nachschlage-Fenster: Groesse am Ding einstellen (GEBAUT 2026-08-18)
-
-ANDERS gebaut als hier beschrieben — Nutzer-Entscheidung 2026-08-18, nachdem
-der Plantext sich als undurchfuehrbar erwies: `zieheGroesse` braucht die
-Editor-Instanz, das Einstell-Fenster rendert aber der BAUSTEIN in seinem
-Shadow-DOM. Die Anfasser sitzen deshalb im geteilten `DialogRahmen`
-(Eigenschaft `ziehbar`, nur der Editor setzt sie); er meldet
-`ff-dialog-groesse`, das Feld reicht es als `ff-prop-change` weiter. Dafuer
-kennt `ff-prop-change` jetzt `geste: 'beginn' | 'ende'` — `useLitElement`
-klammert damit ueber `editor.oeffneGeste()` einen ganzen Zug zu EINEM
-Undo-Schritt (generisch, fuer jeden Baustein). Preis, den der Weg kostet und
-der benannt gehoert: die Anfasser samt Zieh-Schleife liegen im
-Laufzeit-Buendel (+2,7 KB), obwohl sie zur Laufzeit nie laufen — eine
-Editor-Hilfe im Baustein, gegen den Geist von Regel 1. Wer das aufloest,
-stellt zugleich das Popup auf denselben Anfasser um; dann gibt es wieder
-EINE Zieh-Mechanik statt der heutigen zwei.
-
-Das Fenster ist heute fest 520x380 — an BEIDEN Stellen in
-`blocks/formfeld/nachschlagen.ts`: `oeffneNachschlagen` (Anker
-`dialog.breite = 520`) und `spaltenStellenTpl` (Anker `.breite=${520}`).
-Neu: zwei Feld-Eigenschaften (defaultProps + @property am
-`FormFeldBlock`, Standard 520/380 — Export schreibt automatisch nur
-Abweichungen, Mechanik „Standard reist nicht"); beide Fenster-Wege lesen
-sie; im Editor-Einstellfenster dieselben zwei Anfasser wie am Popup —
-Vorbild WOERTLICH: `editor/canvas/PopupSeite.tsx`, Anker `startResize` /
-`zieheGroesse` (die EINE Zieh-Mechanik, nicht neu erfinden). Kein neues
-Konzept, keine Migration (neue Props mit Standard).
-**Runtime-Bytes aendern sich bewusst.**
-
-## V4 · Tabellen-Zeilenklick als Ketten-Ausloeser (GEBAUT 2026-08-18)
-
-Gebaut wie beschrieben. Dazu kam, statt einer dritten Kopie: die Formel
-fuer die Satznummer (`{PINDEX}`) stand wortgleich in `feldRuntime` und
-`kanban/seRuntime` und wohnt jetzt als `satzIndexVon` in
-`softengine/data.ts` — alle drei lesen dieselbe.
-
-Die Tabelle ist die einzige Datenanzeige ohne `blockEvents`, obwohl die
-Zeilen-Aktivierung (D1) intern existiert (`blocks/tabelle/
-zeilenAktivierung.ts`, Anker `ZEILE_AKTIVIERT_EVENT`). Neu: `static
-blockEvents = [{ key: 'onRowClick', name: 'Zeile gewaehlt' }]` am
-`TabelleBlock` — und die Stelle, die die Aktivierung ausloest, ruft
-zusaetzlich `runEvent`. Vorbild WOERTLICH: wie das Kanban seine
-Karten-Ereignisse deklariert (`KanbanBlock.ts`, Anker `blockEvents`) und
-ausloest (`kanban/seRuntime.ts`, Anker `runEvent(`) — dieselben
-Kontext-Schluessel sinngemaess; die gewaehlte Zeile ist in Ketten als
-Herkunft „gewaehlte Zeile" bereits adressierbar. NICHT im Editor ausloesen
-(`data-ff-editor`-Wache wie ueberall). **Runtime-Bytes aendern sich
-bewusst.**
-
-## V5 · Waehler-Umstellung: die acht Alt-Stellen (1–5 GEBAUT 2026-08-18)
-
-Der gemeinsame Waehler (`ui/molecules/waehler.tsx`: `WaehlerKnopf` fuer
-den zugeklappten Knopf, `WaehlerListe` fuer offene Listen; Vorbild:
-`editor/inspector/PropControl.tsx` und `editor/zentrale/
-ParameterZeile.tsx`) deckt ~14 von ~22 Auswahlstellen. Die acht
-Alt-Stellen einzeln umstellen, je Stelle ein pruefbarer Schritt:
-
-1. `editor/inspector/QuellenListe.tsx` — SelectControl mit
-   Kunstwert `'__keine__'` und Kunst-Option „(geloeschte Quelle)".
-2. `editor/inspector/AuswahlFolgeSektion.tsx` — SelectControl mit
-   `'__keiner__'` und „(geloeschter Baustein)".
-3. `editor/inspector/SchluesselPaarZeilen.tsx` — zwei `SchrittSelect`
-   ohne Suche ueber potenziell hunderte Felder.
-4. `editor/zentrale/DataSourceForm.tsx` — Quellenwahl-SelectControl
-   (Anker `— Quelle waehlen —`).
-5. `editor/zentrale/StepForm.tsx` — Popup-Seitenwahl per SchrittSelect
-   (Anker `keine Popup-Seite vorhanden`).
-6. `editor/zentrale/RelationAuswahl.tsx` — handgebaute Knopfliste
-   (WaehlerListe hat Suche + Gruppen eingebaut).
-7. `editor/zentrale/FeldUebernahmePicker.tsx` — eigener
-   Zwei-Stufen-Picker.
-8. `editor/canvas/FieldPicker.tsx` — das rohe optgroup-`<select>` im
-   `felder`-Block (90 Zeilen ueber der WaehlerListe derselben Datei).
-
-Mit der Umstellung sterben die fuenf Leer-Beschriftungen („— keine —" /
-„— keins —" / „— keinem —" / „— Quelle waehlen —" / „— Quelle —") und
-die Kunst-Optionen fuer Geloeschtes von selbst (der Waehler zeigt
-Geloeschtes rot). Editor-only: **Buendel und Referenz bleiben
-byte-gleich.**
-
-**Stand 2026-08-18: Stellen 1–5 gebaut. 6, 7 und 8 sind KEIN mechanischer
-Tausch — sie warten auf eine Nutzer-Entscheidung:**
-- **6 RelationAuswahl:** sucht heute ueber Name, Nummer UND Syntax
-  (`relationMatchesSearch`), hat Lesen/Schreiben-REITER mit Trefferzaehlern,
-  zweizeilige Eintraege (`verb · Nr.`) und Syntax-Tooltip. Der Waehler sucht
-  nur Name + Kennung, zeigt Gruppen statt Reiter, kennt eine Zeile. Umstellen
-  = das alles wegwerfen. Frage an den Nutzer: aufgeben oder Stelle so lassen?
-- **7 FeldUebernahmePicker:** zweistufig (Quelle → Feld, mit „← Quellen“), und
-  im Modus `ziel === 'idb'` ist die QUELLE die Antwort — dort gibt es keine
-  Felder. Der Waehler kennt keine zweite Stufe. Frage: Waehler um eine
-  zweite Stufe erweitern (eigene Etappe) oder Stelle so lassen?
-- **8 FieldPicker `felder`-Block:** technisch blockiert. Der Block sitzt IN
-  einem `AuswahlFenster`; ein `WaehlerKnopf` oeffnet ein ZWEITES als eigenes
-  Portal an `document.body`. Das aeussere schliesst bei jedem `pointerdown`
-  ausserhalb seines Teilbaums (`auswahl-fenster.tsx`, Capture-Phase —
-  `stopPropagation` im inneren Fenster kommt zu spaet), also wuerde ein Klick
-  in die innere Liste den FieldPicker zuklappen und die Wahl verschlucken.
-  Erst muss `AuswahlFenster` verschachtelte Fenster kennen (eigene Etappe,
-  beruehrt alle ~15 Waehler-Stellen).
 
 ## V6 · Popup: Groesser ziehen schafft Platz + Overlay-Bearbeitung
 
@@ -688,351 +360,447 @@ Zwei Etappen, ENTWURF VOR BAU (Kurzentwurf im Chat, Nutzer nickt):
   der Werkzeugleiste und ueber die oeffnende Kette; X schliesst; der
   Seiten-Reiter fuer Popups faellt.
 
-## V7 · Zusammenlegungen (Fundament fuer neue Bausteine) (GEBAUT 2026-08-18)
+---
 
-- **Nachschlage-Fenster einmal bauen:** Editor-Weg (Lit-Template) und
-  Laufzeit-Weg (imperativ) erzeugen dasselbe Fenster heute doppelt und
-  weichen schon ab (z-index nur im einen, data-Attribut nur im anderen).
-  EINE Bau-Funktion, zwei duenne Aufrufer.
-- **Inline-Umbenennen einmal:** die BasicBlock-Fassung wird nach `shared/`
-  gehoben, die Spaltentitel-Fassung (`spaltenBearbeiten`) ruft sie.
-- **Gemeinsamer Daten-Vorspann fuer Datenanzeigen:** Tabelle und Kanban
-  holen ihre Zeilen mit sechs identischen Schritten (Quelle finden →
-  rowsFor → Tagesfilter → Feldleser → Auswahl wiederfinden). EINE geteilte
-  Funktion in `shared/`; jede kuenftige Datenanzeige startet damit bei
-  drei Zeilen. Runtime aendert sich bewusst; SE-Delta in die Gesamtprobe.
+# Welle R — Reinigung (aufgenommen 2026-08-21, laeuft VOR allem anderen)
 
-Gebaut wie beschrieben: `blocks/shared/umbenennen.ts` (der eine Griff,
-BasicBlock und Spaltentitel rufen ihn) · `blocks/shared/datenVorspann.ts`
-(`holeDatenVorspann`; Tabelle und Kanban starten damit) · das
-Nachschlage-Fenster hat EIN Geruest (`fensterTpl` in `nachschlagen.ts`):
-die Laufzeit rendert dasselbe Template in einen Halter am body, die
-gewollten Unterschiede (ziehbar + z-index 40 nur Editor, Marker
-data-ff-nachschlagen nur Laufzeit) stehen benannt an EINER Stelle.
-Referenzabzug blieb gruen (Export ausserhalb des Buendels byte-gleich).
+**Nutzer-Ansage 2026-08-21:** „Ich will alles komplett sauber, bevor wir
+weiterbauen. Ich will keine 123239393 Baustellen gleichzeitig."
+**Kein Neubau, bis diese Welle leer ist.** Ein Paket zur Zeit, fertig machen,
+Pruefbuendel, Klickanleitung, naechstes. Nie zwei offen.
 
-## V8 · Greifen wird zuverlaessig (GEBAUT 2026-08-18)
+Herkunft der Funde: die dreistufige Gesamtanalyse aus 0.1. Jeder Fund unten
+ist an der genannten `datei:zeile` nachgeprueft. Wer ein Paket baut, liest
+die Stelle SELBST nach, bevor er anfasst -- diese Liste ist ein Zeiger,
+kein Ersatz fuer das Lesen.
 
-**Belegtes Problem:** Das Verschieben im Raster startet nur, wenn der
-pointerdown bis zum CanvasNode-Wrapper durchbubbelt
-(`editor/canvas/CanvasNode.tsx`, Anker `ziehePosition`). Etliche Stellen
-IM Baustein fangen ihn mit `stopPropagation` ab — ob Greifen klappt,
-haengt davon ab, WO im Baustein der Bediener zupackt. Belegte
-Abfang-Stellen: die Lupe (`blocks/formfeld/nachschlagen.ts`, Anker
-`@pointerdown` im `nachschlagFeldTpl`) · die Spalten-Steuerung
-(`blocks/tabelle/spaltenBearbeiten.ts`, Anker `@pointerdown=${stop}`) ·
-die `stop`-Durchreichung der Tabelle (`blocks/tabelle/TabelleBlock.ts` →
-`tabelleAnsicht`/`tabelleKoerper`, jede `@pointerdown`-Verwendung von
-`stop` einzeln pruefen) · weitere `pointerdown`-stops in `blocks/**`
-(greppen: `pointerdown` in blocks/, jede Stelle einzeln ansehen).
-
-**Regel danach (EINE fuer alle Bausteine):** Druecken + Bewegen (ab der
-bestehenden 4-px-Schwelle `ZUG_SCHWELLE` in `editor/canvas/rasterMove.ts`)
-zieht IMMER den Baustein, egal wo gegriffen; Klicken ohne Bewegung bleibt
-Klicken (waehlen, Lupe, Picker — deren Verhalten haengt an CLICK-Handlern
-und bleibt unveraendert). Umsetzung: die `stopPropagation`-Aufrufe auf
-POINTERDOWN in Baustein-Inhalten entfernen (die auf CLICK bleiben!);
-rasterMove schluckt den Folge-Klick ohnehin nur bei echtem Zug.
-AUSNAHMEN, die ihr pointerdown-stop BEHALTEN: die Editor-Anfasser und
-Knoepfe des BlockHost/der PopupSeite (bedienen den Zug selbst) und alles
-im DialogRahmen/AuswahlFenster (Fenster sollen nie ziehen).
-NICHT Teil dieser Etappe: der FLUSS-Zweig (Container-Kinder ziehen per
-nativem HTML5-Drag, `draggable` in CanvasNode) — eigenes Thema, nur
-benennen, nicht mit umbauen.
-Die Lupen-Ueberdeckung durch den Platzhalter ist bereits separat gefixt
-(`.ph-nachschlag`, Commit vom 2026-08-18).
-**Runtime-Bytes aendern sich bewusst** (blocks/-Stellen).
-Gebaut wie beschrieben: die vier pointerdown-Stops in Lupe, Spalten-Knoepfen
-und Suchfeld sind weg, die Regel steht als Kommentar bei `ZUG_SCHWELLE`
-(`editor/canvas/rasterMove.ts`) — die Ausnahmen (Anfasser, Fenster) blieben.
-
-## V9 · Hol-Quellen: der Geber wird eindeutig (GEBAUT 2026-08-18)
-
-**Belegtes Problem:** Zeigen ZWEI Bausteine dieselbe Geber-Quelle (zwei
-Beleg-Tabellen), ist „die gewaehlte Zeile der Quelle" mehrdeutig —
-`gewaehlteZeileDerQuelle` (`blocks/shared/holendeQuellen.ts`) nimmt heute
-still den ERSTEN Baustein in DOM-Reihenfolge, der irgendeine Auswahl
-traegt. Je nach Auswahl-Zustaenden bestimmt mal die eine, mal die andere
-Tabelle, welche Positionen geholt werden — fuer den Bediener
-unvorhersehbar (genau der gemeldete Fall: Tabelle 2 „beeinflusst"
-Tabelle 3, obwohl deren Folge auf Tabelle 1 zeigt).
-
-**Regel danach: der letzte Klick gewinnt.** Der Auswahl-Zustand
-(`blocks/shared/auswahl.ts`, Anker `const zustand = new Map`) merkt sich
-je Eintrag eine laufende Wahl-Nummer; `gewaehlteZeileDerQuelle` nimmt
-unter allen Gebern derselben Quelle die JUENGSTE Auswahl (Abwahl faellt
-auf die naechstjuengere zurueck, keine = leer). Deterministisch und
-intuitiv: die Positionen folgen dem zuletzt angeklickten Beleg, egal in
-welcher Tabelle. Im selben Zug: `letzterAbdruck` in `holendeQuellen.ts`
-wird bei `setzeAuswahlZurueck` mit geleert (Befund der Analyse: bleibt
-heute stehen und unterdrueckt danach das Neu-Holen).
-**Runtime-Bytes aendern sich bewusst**; SE-Delta in die Gesamtprobe.
-Gebaut wie beschrieben: der Auswahl-Zustand traegt eine Wahl-Nummer
-(`auswahlNummer`), `gewaehlteZeileDerQuelle` nimmt die juengste, und
-`letzterAbdruck` haengt per `beimAuswahlZuruecksetzen` am Zuruecksetzen. Die
-Such-Wurzel ist uebergebbar geworden (Muster `applyPopupStep`), weil ein
-DOM-Test eine neue Testumgebung waere — jsdom gibt es im Projekt nicht.
-
-Nicht in V, sondern in U4/U5: einheitliche Erfolgs-/Fehlermeldungen des
-EDITORS, das Master-Detail-Duplikat im Datencenter, EIN Speicherverhalten,
-Loesch-Regel-Anwendung (U0-3) auf die restlichen confirm()-Stellen.
+Reihenfolge nach NUTZEN, nicht nach Aufwand: erst was Daten kaputt macht
+oder Sekunden bringt, dann was unsichtbar falsch ist, zuletzt Ordnung.
 
 ---
 
-# Welle G — Belegerfassung in der Tabelle (beschlossen 2026-08-18)
+## R1 · Die Bestellung an SoftEngine (zuerst)
 
-Nutzer-Beschluss vom 2026-08-18 (eigenes Gespraech mit Screenshots der
-echten WinUI-Belegerfassung; Praezisierungen im Analyse-Chat). Ziel:
-Positionen DIREKT in der Tabelle erfassen, wie in der echten
-SoftEngine-Belegerfassung — so schnell wie moeglich, komplett ohne Maus
-moeglich (Maus geht immer). Massstab ist Tempo fuer geuebte Bediener,
-nicht Barrierefreiheit. **V7, das Fundament, ist GEBAUT (2026-08-18):**
-ein Nachschlage-Fenster statt zwei, ein Daten-Vorspann, ein Umbenennen.
+Drei Funde, eine Ursachenkette. Bringt als einziges Paket messbare Sekunden.
 
-**Leitsatz (Nutzer):** Alles, was die Maske selbst wissen kann, fuellt
-sie selbst — angehalten wird nur, wo ein Mensch entscheiden muss. Alles
-Automatische bleibt uebersteuerbar: Tab/Enter rauschen darueber hinweg,
-Pfeiltasten und Klick erreichen trotzdem jede Zelle.
+- **`core/data/dataSources.ts:89`** — `felderFor` springt bei allen Arten mit
+  `felderEinzeln: true` aus der Funktion, BEVOR der Filter „nur die von der
+  Maske benutzten Felder" laeuft. Das sind 7 von 8 Arten; nur `idb` nicht.
+  Gemessen an der echten Maske des Nutzers (ein Tabellen-Baustein, acht
+  Spalten): **81 Felder bestellt, 8 gezeigt.** Davon IDBID0001 mit 34 Feldern,
+  an die die Maske ueberhaupt nicht bindet — die Quelle dient nur als
+  Suchliste hinter einer Spalte.
+  Folge: SoftEngine macht fuer jeden gelieferten Wert eines 25-Zeichen-Feldes
+  einen Bild-Nachschlag (GET_RELATION 1911, s. S.0). Die drei im Log
+  gemessenen Treiber `ART_1_25`, `IDB_110_25`, `IDB_55_25` werden alle drei
+  bestellt und nirgends angezeigt.
+- **Dieselbe Stelle** — das Satzschluessel-Feld (`indexField`) wird im
+  `felderEinzeln`-Zweig NIE mitbestellt; es kommt erst in Zeile 95, die nie
+  erreicht wird. Die Laufzeit liest daraus `{PINDEX}`
+  (`blocks/tabelle/TabelleBlock.ts:266` ueber `satzIndexVon`) — die
+  Satznummer, in die eine Kette schreibt. **Heute folgenlos**, weil die Maske
+  des Nutzers noch keine Kette hat (`data-ff-aktionen` kommt im Export kein
+  einziges Mal vor). Beim ersten „Zeile anklicken -> in den Beleg schreiben"
+  ginge der PUT_RELATION ins Leere.
+- **`editor/zentrale/DataSourceForm.tsx:155-157`** — jede neue Datenquelle
+  bekommt hart `indexField: '0_10'`, unabhaengig von der Art. `0_10` ist der
+  Satzschluessel einer IDB-Tabelle; Beleg braucht `0_11`, Belegposition
+  `645_10`, Stammdaten gar keinen. Das Feld erscheint nirgends im Formular
+  und ist danach nie mehr aenderbar. Daher stammt das `0_10` an der
+  POS-Quelle des Nutzers.
+  Loesung: Standard-Satzschluessel in die Arten-Tabelle
+  (`core/data/quellenArten.ts`) aufnehmen, das Formular liest ihn von dort.
 
-**Abgrenzung:** G erfasst POSITIONEN in einen bestehenden Beleg
-(PUT_RELATION 82, belegt im behandlung-Log 2026-08-12, s. CLAUDE.md
-„Neue BELEGPOSITION"). „Beleg anlegen und sofort sehen" (R4) bleibt
-gestrichen. Geschrieben wird NUR ueber die sichtbare Kette am neuen
-Ereignis (dasselbe Muster wie „Karte verschoben" beim Kanban) — kein
-Auto-PUT, die Zusage bleibt.
+**Vor dem Commit:** dem Nutzer die neue SEvariablen seiner Maske Feld fuer
+Feld gegen die alte legen. Erst wenn er sagt, dass nichts fehlt, wird
+committet. **Risiko:** ein nur mittelbar gebrauchtes Feld (Suchfeld der
+Automatik, Schluessel einer Verknuepfung) koennte durch den Filter fallen —
+die Stellen `anzeigeSpalteIn` / `fensterSpaltenIn` vorher pruefen.
+**SE-Echttest Pflicht.**
 
-**Das Bild:** Die Erfassungszeile ist die naechste freie Zeile der
-Tabelle — eine FAEHIGKEIT des Tabellen-Bausteins (Registry-Props), KEIN
-neuer Baustein; eine Tabelle ohne Erfassungszeile exportiert byte-gleich
-wie heute. **An der Erfassungszeile wird NICHTS eingestellt**
-(Nutzer-Entscheidung 2026-08-18): sie leitet alles aus zwei Angaben ab,
-die es beide schon gibt — der Bindung der Spalte (am Spaltenkopf, wie
-immer) und der Verknuepfung des Bausteins („Woran erkennt man die
-zusammengehoerige Zeile?", Inspector, Prop `weitereQuellen`). Im Editor
-zeigt die Zeile darum nur Striche, keine Lupe und kein Rollen-Fenster;
-die Lupe am Formularfeld bleibt unberuehrt. Kern:
-`blocks/tabelle/erfassungsZellen.ts`.
+---
 
-Daraus die drei Zellenarten:
+## R2 · Die SoftEngine-Schicht (hoechste Fehlerdichte)
 
-- **Kein Feld gebunden** (z. B. Menge): frei tippen, keine Vorschlaege.
-- **Feld der Tabellen-Quelle** (z. B. `3_18`): tippen → Vorschlagsliste
-  direkt unter der Zelle (bis ~8 Treffer; gesucht wird in Nummer UND
-  Bezeichnung — Profis tippen „bay" fuer Baytril; angezeigt und
-  mitdurchsucht wird die erste ANDERE Spalte derselben Quelle). Enter
-  auf LEERER Zelle oeffnet das grosse Stamm-Fenster.
-- **Feld einer verknuepften Quelle** (z. B. `q-tier::5_4`): dasselbe,
-  aber nur die Saetze, deren Schluessel zum gewaehlten Satz der
-  Tabellen-Quelle passen. Genau EIN Treffer fuellt sich selbst.
+`src/softengine/` — 851 Zeilen, die vor dem 2026-08-21 **noch nie jemand
+gelesen hatte**. Vier bestaetigte Fehler, alle fuer den Nutzer unsichtbar,
+weil diese Schicht ausschliesslich im ERP laeuft.
 
-Die Uebernahme gilt immer fuer die GANZE Quelle: wer den Artikel waehlt,
-fuellt jede Spalte dieser Quelle mit — in beide Richtungen, das Suchwort
-darf auch in der Bezeichnungsspalte stehen. Ein neuer Satz der
-Tabellen-Quelle loest die verknuepften Saetze (sie hingen an seinem
-Schluessel) und bestimmt sie neu. Kein Partner gefunden → die Zelle
-bleibt leer, die Zeile bleibt stehen.
+- **`relations.ts:50` (`scalar`) + `:210`** — antwortet SoftEngine mit einem
+  leeren Wert (der voellig normale Fall „diese Nummer gibt es nicht"), wertet
+  die Maske das als „keine Antwort". Der Auftrag laeuft in den
+  6-Sekunden-Wecker, der Bediener bekommt „SoftEngine hat nicht geantwortet",
+  obwohl SoftEngine sofort und richtig geantwortet hat. Weil immer nur EINE
+  Frage gleichzeitig laufen darf, friert eine Kette mit drei solchen Fragen
+  **18 Sekunden** ein. Dass leere Antworten echt vorkommen, belegt das Projekt
+  selbst: der Positions-Lader erkennt genau daran das Ende der Liste.
+  *Loesung:* „Antwort da, Wert leer" von „gar keine Antwort" unterscheiden.
+- **`relations.ts:210` (mit `:40-43`)** — Frage und Antwort werden nirgends
+  einander zugeordnet. Die Maske nimmt den ersten Wert, den die naechste
+  beliebige Nachricht enthaelt. Laeuft Auftrag A in die Zeitueberschreitung
+  und startet B, nimmt B die verspaetete Antwort auf A als seine eigene. In
+  einer Kette „neue Satznummer holen, dann mit dieser Nummer schreiben"
+  **schreibt der Schreibschritt danach in den FALSCHEN Satz.** Verschaerfend:
+  die Liste akzeptierter Antwort-Schluessel enthaelt sehr allgemeine Namen
+  (ID, KEY, INDEX, VALUE) — auch eine Statusmeldung des Interface kann einen
+  laufenden Auftrag mit einem fremden Wert beenden.
+  *Loesung:* jede Anfrage bekommt eine Kennung, die in der Antwort
+  wiederauftaucht; der Horcher nimmt nur passende Antworten. Nach einer
+  Zeitueberschreitung eine kurze Sperrzeit.
+- **`relationLader.ts:86-116`** — bleibt eine Antwort aus, liefert `frage()`
+  den leeren String. Im Lader IST der leere String die Ende-Kennung. Ein
+  Beleg mit 40 Positionen, bei dem SoftEngine einmal nicht rechtzeitig
+  antwortet, zeigt danach 6 Positionen. **Die dafuer eingebaute Warnung
+  feuert genau dann nicht**, weil der Lader glaubt, das Ende sauber gesehen
+  zu haben. Haengt am ersten Fund.
+- **`data.ts:64` (`getField`) ueber `relations.ts:130`** — „Feld des
+  Ergebnisses von Schritt N" (waehlbar in der Kommandozentrale,
+  `ParameterZeile.tsx:101-109`) geht **immer leer hinaus**: die Stelle kennt
+  nur die Schluessel SATZNEU/SATZ/RAW, die echte SoftEngine-Antwort heisst
+  `RESULT`. Der gruene Test dazu benutzt eine erfundene Antwortform und deckt
+  den echten Fall nicht ab.
+  *Loesung:* wie im Positions-Lader den Text unter `RESULT` als Rohsatz
+  einpacken — oder `RESULT` in die Liste der Rohsatz-Schluessel aufnehmen.
+- **`core/data/relations.ts:144`** — `unknownPlaceholders` sucht mit
+  `/\{([A-Z_]+)\}/g`, ersetzt wird zur Laufzeit aber mit
+  `/\{([A-Za-z0-9_]+)\}/g`. Alles mit Ziffern oder Kleinbuchstaben rutscht
+  durch die Pruefung und geht leer hinaus.
 
-**MESSLATTE (Nutzer-Abnahme an der klickbaren Demo, 2026-08-18 abends) —
-jede G-Etappe wird an diesem Szenario gemessen:** Die Tabelle zeigt die
-Positionen des gewaehlten Belegs (Quelle der Tabelle = Belegpositionen).
-Spalten Artikelnummer + Bezeichnung sind an die ARTIKEL-Quelle gebunden;
-Tierart, Verabreichung und Wartezeit je an ihre eigene Quelle,
-selektiert ueber Artikelnummer bzw. Artikelnummer + Tierart; Menge frei.
-Erwartung: Artikel tippen („bay") → waehlen → Nummer UND Bezeichnung
-stehen da, der Cursor springt weiter · die Tierart-Liste zeigt nur die
-Tierarten DIESES Artikels; genau eine → fuellt sich selbst samt
-Verabreichung/Wartezeit, der Cursor landet auf der Menge · Menge tippen,
-Enter → Zeile bleibt stehen, naechste Zeile · EIN Knopf schreibt alle
-erfassten Zeilen untereinander. **Dazu die Nutzer-Entscheidung
-„Formularfeld-Prinzip": es zaehlt, was in der Zelle STEHT — Herkunft
-egal (gewaehlt oder frei getippt), keine Pruefung, keine Warnung.**
+**SE-Echttest Pflicht.**
 
-**Tasten (der Kern des Ganzen):** Enter uebernimmt den markierten
-Vorschlag und springt zur naechsten TIPPBAREN Zelle — es oeffnet nie
-erneut · Tab/Enter ueberspringen Zellen, die sich selbst gefuellt haben ·
-genau EIN moeglicher Treffer fuellt sich selbst (Ein-Treffer-Automatik) ·
-Escape zweistufig: erst Liste zu, dann Zelle leeren · Enter auf der
-letzten Zelle = „Zeile erfasst" — die Zeile wird normale Position, die
-Erfassung rueckt eine Zeile tiefer, der Cursor steht auf der ersten
-tippbaren Zelle · F3 wird nur abgefangen, solange der Fokus in der
-Maske liegt (sonst Browser-Suche!) — im Echttest bestaetigen, Enter ist
-der Hauptweg.
+---
 
-**Speichern: NICHT je Zeile** (Nutzer-Entscheidung 2026-08-18; hier stand
-bis dahin „je Position einzeln, sofort bei ,Zeile erfasst'"). Der
-Bediener erfasst beliebig viele Zeilen, ohne dass irgendetwas ins ERP
-geht. Geschrieben wird erst auf Knopfdruck — ein normaler
-Knopf-Baustein mit der ueblichen Relations-Kette, die dann einmal je
-erfasster Zeile laeuft (Etappe G4). Dass die frischen Positionen ueber
-den normalen SE-Push in der Tabelle erscheinen, ist Echttest-Punkt,
-kein Bau-Punkt.
+## R3 · WYSIWYG-Brueche (Regel 1)
 
-## G1 · Vorschlagsliste am Formularfeld (der geteilte Kern) (GEBAUT 2026-08-18)
+Vier Stellen, an denen Editor und Export/Laufzeit VERSCHIEDEN rechnen.
 
-Die Tipp-Vorschlagsliste entsteht EINMAL als geteiltes Teil
-(`blocks/shared/`); das Formularfeld (Typ `nachschlagen`) bekommt sie
-zuerst: Tippen ins Feld zeigt Treffer aus der Quelle, Pfeil hoch/runter
-waehlt, Enter uebernimmt, Escape schliesst; Enter auf LEEREM Feld
-oeffnet das grosse Fenster (heute geht das nur ueber die Lupe). Die
-Uebernahme beim Waehlen ist DIESELBE wie beim Fenster-Zeilenklick
-(Anker `onUebernehmen`/`oeffneNachschlagen` in
-`blocks/formfeld/nachschlagen.ts`) — herausziehen und teilen, nicht
-kopieren. V7 ist gebaut: das Fenster hat EIN Geruest (`fensterTpl`),
-G1 baut dagegen, nicht gegen zwei Fassungen.
-**Runtime-Bytes aendern sich bewusst.**
+- **`editor/canvas/useLitElement.ts:113-123`** — der Editor rechnet die
+  Bindungs-Vorschau selbst aus und sucht das Feld NUR unter den Quellen in
+  Reichweite. Findet er es nicht, zeigt er „nicht gebunden" — der Export
+  bindet es trotzdem.
+  *Loesung:* im Editor dieselbe Funktion benutzen wie der Export
+  (`feldKlarname` aus `core/data/dataSources.ts`).
+- **`useLitElement.ts:120` gegen `export/bindungsVorschau.ts:6-10`** — der
+  Editor ersetzt bei JEDER bindbaren Stelle den Anzeigewert durch den
+  Feld-Klarnamen; der Export nur bei Stellen mit `vorschauProp`, und die hat
+  allein das Formularfeld. **Karte (8 Stellen) und Text (1) zeigen im Editor
+  etwas anderes als im Export.**
+- **`blocks/kanban/seRuntime.ts:107`** (Ursache
+  `blocks/shared/datenVorspann.ts:20`) — **„Folgt der Auswahl von …" hat beim
+  Kanban-Brett ueberhaupt keine Wirkung.** Der Inspector bietet die
+  Einstellung an, der Export schreibt sie, die Laufzeit filtert nie.
+  *Loesung:* den Auswahl-Filter in den gemeinsamen Einstieg
+  `holeDatenVorspann` ziehen; die Tabelle nimmt ihn von dort statt selbst zu
+  filtern, das Kanban bekommt ihn geschenkt.
+- **`blocks/navi/seRuntime.ts:35` mit `export/exportMask.ts:160`** — der
+  Export haengt an JEDE Ansicht-Seite `hidden`. Es gibt genau EINE Stelle,
+  die es wieder wegnimmt: die Navi-Laufzeit. **Ohne Navigation in der Maske
+  ist eine zweite Seite in SoftEngine dauerhaft unsichtbar.**
+  *Loesung (kleinster Eingriff):* nur verborgen exportieren, wenn es in der
+  Maske ueberhaupt eine Navigation gibt.
 
-## G2 · Erfassungszeile: Zeile und Befuellen (GEBAUT 2026-08-18)
+**SE-Echttest Pflicht** (Kanban und Ansicht-Seite).
 
-Der Tabellen-Baustein bekommt den Schalter „Erfassungszeile" — ein
-Registry-Prop, kein Sondercode; neue Props = Round-Trip-Fall im
-Export-Test (Regel 9). Laufzeit: die gebundene Zelle nutzt die
-G1-Vorschlagsliste und das grosse Fenster, die ungebundene tippt frei.
-In G2 noch OHNE das volle Tasten-Ballett und OHNE Schreiben.
-**Runtime-Bytes aendern sich bewusst.**
+---
 
-**Nutzer-Korrektur (2026-08-18, waehrend des Baus):** Die
-Erfassungszeile ist die naechste FREIE Zeile — direkt unter der letzten
-Datenzeile, leere Tabelle → Zeile 1 ganz oben. Nicht unten am
-Tabellenrand hinter den Fuellzeilen.
+## R4 · Datenquellen-Verwaltung
 
-## G3 · Die Zelle leitet sich ab (GEBAUT 2026-08-18 — ohne Tastenfluss, s. G3b)
+- **`editor/zentrale/RelationenBereich.tsx:51` (mit `:133-135`)** — die
+  bearbeitete Relation wird aus der GEFILTERTEN Liste bestimmt, das Formular
+  hat kein `key`. Relation A bearbeiten, dann Reiter wechseln oder ins
+  Suchfeld tippen: A faellt aus der Liste, die Auswahl rutscht auf B, das
+  Formular zeigt weiter A. **Speichern schreibt A-Daten auf B.** Alle Ketten,
+  die B benutzen, zeigen danach auf eine Vorlage mit anderer Parameterzahl.
+  *Loesung:* waehrend des Bearbeitens aus der VOLLEN Liste aufloesen,
+  `key={auswahl.id}` ans Formular.
+- **`DataSourceForm.tsx:76` (und `:133-137`)** — ein Feld-Vorsatz mit einem
+  ungueltigen Zeichen (`LFA-`, `LFA.`, `L FA`) wird zu einem leeren String,
+  und ALLE Feldcodes werden ohne Vorsatz gebaut. Der Nutzer sieht seinen Text
+  weiter im Kasten. „Feld-Vorsatz" ist das einzige Eingabefeld des Formulars
+  ohne Fehleranzeige.
+- **`DataSourceForm.tsx:98`** — am Namen wird nur „nicht leer" geprueft. Der
+  Name ist aber der SCHLUESSEL: der Export schreibt ihn als `ALIAS`, die
+  Laufzeit sucht darueber die Zeilen (gross/klein egal). **Zwei Quellen
+  gleichen Namens: die zweite zeigt die Daten der ersten.** Bemerkenswert:
+  doppelte Feldcodes INNERHALB einer Quelle werden geprueft, doppelte
+  Quellennamen nicht.
+- **`editor/inspector/VerknuepfungenZone.tsx:53` (und `:130`)** — eine
+  Verknuepfung loeschen bricht still eine zweite, die ueber „Haengt an" daran
+  haengt; der Editor zeigt sie weiter als heil an.
+- **`editor/inspector/DatenFenster.tsx:79`** — die Zone „Zeigt" rendert den
+  Waehler „Datenquelle" immer, ohne zu fragen, ob der Baustein ueberhaupt
+  eine eigene Quelle fuehren darf. Die Wahl verpufft spurlos.
+- **`state/quellenOps.ts:37`** — zwei Stellen beantworten „wer benutzt diese
+  Quelle?" und antworten VERSCHIEDEN: `nutztQuelle` uebersieht
+  Tabellenspalten. Der Loesch-Hinweis bleibt aus, die Quelle wird ohne
+  Warnung geloescht.
 
-**Nutzer-Entscheidung 2026-08-18:** An der Erfassungszeile wird nichts
-mehr eingestellt — keine Rolle je Zelle, keine eigene Quelle je Spalte,
-keine Vorbelegung, keine Lupe in der Zelle. Was eine Zelle tut, steht
-schon in der Bindung der Spalte und in der Verknuepfung des Bausteins
-(die bleibt, wo sie ist: Baustein-Prop `weitereQuellen`, eingestellt im
-Inspector — kein Umzug ins Datencenter, keine zweite Terminologie).
-Die drei Zellenarten und die Uebernahme-Regeln stehen im Wellen-Kopf.
+---
 
-Der hier urspruenglich mit eingeplante Tastenfluss wurde NICHT
-mitgebaut (Ehrlichkeits-Korrektur in 0.1) — er ist Etappe G3b.
+## R5 · Erfassung und Nachschlagen
 
-**Gestrichen, nicht wieder vorschlagen:** die Vorbelegung („Menge 1" per
-Doppelklick in die Zelle) · die Rollen Nachschlagen/Folgt/Frei · die
-Nachschlage-Quelle an der Spalte.
+- **`blocks/formfeld/nachschlagen.ts:61` mit `inspector/PropControl.tsx:136-145`**
+  — Quelle am Nachschlage-Feld wechseln raeumt „Gespeichert wird" weg, die am
+  Ding eingestellten Fenster-Spalten aber nicht. Die Maske bestellt danach
+  Felder, die es in der neuen Quelle nicht gibt.
+  *Loesung:* in DERSELBEN Transaktion die Spaltenliste leeren, deren Quelle
+  auf die gewechselte Eigenschaft zeigt — damit es EIN Undo-Schritt bleibt.
+- **`blocks/tabelle/erfassungsAnschluss.ts:40`** — `erfassbareQuellen`/
+  `satzVon` werten JEDE Spalte mit Feldbindung aus, auch eine reine
+  Anzeige-Spalte aus einer Hilfstabelle. Dadurch meldet die Tabelle die
+  Fremdquelle als „erfasst" und ein bestehender Schreibvorgang wird still
+  leer. *Eine harmlose Anzeige-Spalte macht ein funktionierendes Schreiben
+  kaputt.*
+- **`blocks/formfeld/FormFeldBlock.ts:82`** — der bindbare Punkt `value` gibt
+  `vorschauProp: 'placeholder'` an. Bei Text/Zahl/Datum ist das richtig; beim
+  **Ankreuzfeld** ist `placeholder` der sichtbare Text daneben — der wird
+  ueberschrieben. *Loesung:* den einen bindbaren Punkt in zwei aufteilen.
+- **`blocks/tabelle/erfassungsBedienung.ts:133`** — in der letzten Zelle der
+  letzten Zeile ruft `taste()` `preventDefault()` und springt dann nirgendwo
+  hin: **mit Tab kommt man aus der Erfassung nicht mehr heraus.**
+  *Loesung:* die Sprungfunktion melden lassen, ob sie gesprungen ist; bei Tab
+  ohne Sprung den Browser sein Standardverhalten machen lassen.
+- **`export/benutzteQuellen.ts:70`** — `nurBeiErfassung`
+  (`core/blocks/listenBindung.ts:51`/`:97`) wird an genau EINER Stelle
+  gelesen, dem Inspector. Erfassung ausschalten raeumt „Sucht beim Erfassen
+  in" nicht ab; der Export bestellt die Hilfstabelle weiter.
+- **`blocks/formfeld/nachschlagen.ts:367`** — der ausdrueckliche Wunsch
+  „kein Rueckfokus" (`erfassungsBedienung.ts:61` uebergibt bewusst `null`)
+  wird verschluckt.
 
-**Enter auf der letzten Zelle laesst die Zeile STEHEN** (Nutzer-Ansage
-2026-08-18, siehe G4): sie wird die Zeile der Position und bleibt
-sichtbar. Die Erfassung rueckt eine Zeile tiefer, der Cursor steht auf
-deren erster tippbarer Zelle. **Kein Raeumen, kein Zuruecksprung in
-dieselbe Zeile** — und weiterhin kein Schreiben und kein Ereignis:
-geschrieben wird erst in G4, ueber den Knopf.
-**Runtime-Bytes aendern sich bewusst.**
+---
 
-## G3b · Der Tastenfluss (zack, zack, zack) (GEBAUT 2026-08-18)
+## R6 · Kleine Bedienfehler
 
-Nur Bedien-Logik an der bestehenden Erfassungszeile, kein neues Konzept:
+- **`editor/canvas/FieldPicker.tsx:115`** (Ursache
+  `inspector/controls/eingabeSitzung.ts:38`) — `useEingabeSitzung` gibt bei
+  JEDEM Rendern ein neues Objekt zurueck; beim Tippen eines Status-Klarnamens
+  wird **jeder Buchstabe ein eigener Rueckgaengig-Schritt** und spuelt die
+  Historie leer. *Loesung:* das Sitzungs-Objekt stabil merken.
+- **`editor/canvas/zieheGroesse.ts:49`** — nach dem Ziehen an einem
+  Groessen-Anfasser springt die Auswahl weg: `pointerdown` wird abgefangen,
+  der folgende `click` nicht. *Loesung:* denselben Klick-Schlucker anhaengen
+  wie beim Raster-Verschieben, aber nur wenn wirklich gezogen wurde.
+- **`editor/sidebar/BlockPalette.tsx:54`** — auf einer Popup-Seite legt der
+  Palette-Klick „Navigation" den Baustein unsichtbar auf der Hauptseite ab.
+  Das Ausweichen war eine bewusste Entscheidung (`617c3b0`); es fehlt nur das
+  Mitschalten. *Loesung:* beim Ausweichen auch auf die Hauptseite umschalten.
+- **`ui/molecules/editor-fenster.tsx:24`** — jedes Fenster meldet einen
+  eigenen Escape-Horcher an und haelt die Taste nicht auf: **Escape schliesst
+  alle uebereinanderliegenden Fenster auf einmal** (Inspector -> Daten ->
+  Feldwahl).
+- **`inspector/controls/NumberControl.tsx:71`** (und zwei weitere Stellen) —
+  `Historie.begin` legt sofort einen Schnappschuss an, auch wenn danach nichts
+  geschrieben wird: **Anfassen ohne Aendern erzeugt leere Undo-Schritte.**
+- **`editor/shell/Toolbar.tsx:30`** — die Loesch-Rueckfrage nennt
+  Ansicht-Seiten faelschlich „Popup-Seite(n)". Es gibt zwei Seitenarten.
 
-- Enter/Tab uebernehmen den markierten Vorschlag und springen zur
-  naechsten LEEREN Zelle — Selbstgefuelltes wird uebersprungen; Pfeile
-  und Klick erreichen trotzdem jede Zelle (Leitsatz im Wellen-Kopf).
-- Escape zweistufig: erst Liste zu, dann Zelle leeren; das Leeren loest
-  auch den gewaehlten Satz der Zellen-Quelle (sonst stuende der Wert
-  beim naechsten Rendern wieder da).
-- Enter in einer Zelle, fuer die es keinen einzigen moeglichen Satz
-  gibt (kein Partner), springt weiter statt nichts zu tun.
-- „Enter auf der letzten Zelle = Zeile erfasst" kommt erst mit G4 —
-  G3b baut das Springen INNERHALB der Zeile.
-- F3 bleibt zurueckgestellt (Echttest-Vorbehalt, Wellen-Kopf); Enter
-  ist der Hauptweg.
+---
 
-Der Tasten-Entscheid bleibt browserfrei pruefbar (`erfassungsLauf` /
-`vorschlagListe.tastenFolge`); nur das Fokus-Setzen selbst lebt in der
-Bedienung. **Runtime-Bytes aendern sich bewusst.**
+## R7 · Toter Code
 
-## G3c · Automatik-Anker: die werdende Zeile liefert die Schluessel (GEBAUT 2026-08-18)
+Rund zwoelf Fundstellen. Kein Fehler, aber alles davon sieht aus wie
+lebender Code und kostet bei jedem Umbau Lesezeit.
 
-**Befund (Demo-Abnahme 2026-08-18):** Einschraenkung und
-Ein-Treffer-Automatik haengen am gewaehlten Satz der TABELLEN-Quelle
-(`erfassungsLauf.ts`, Anker `fuelleVerknuepfte` / `eintraege`). Im
-Messlatten-Szenario ist die Tabellen-Quelle „Belegpositionen" — beim
-Erfassen einer NEUEN Position gibt es diesen Satz nie. Folge heute:
-nichts schraenkt ein, nichts fuellt sich; die Komfort-Automatik
-funktioniert nur, wenn die Tabelle den ARTIKELSTAMM anzeigt (so sind
-die G3-Tests gebaut) — genau andersherum als das Zielszenario.
+- **`export/preflight.ts` (286 Zeilen) + `preflight.test.ts` (205)** — kein
+  Aufrufer im Produkt, nur Tests; ausserdem 33 `preflightMask`-Zeilen in fuenf
+  weiteren Export-Tests. Zweimal unabhaengig bestaetigt. Der Nutzer hat
+  Warn-Anzeigen zweimal abbestellt (2026-08-10 und -18) — dieses Ergebnis
+  kann ihn gar nicht mehr erreichen.
+- **`core/data/dataSources.ts:69`** — `istOffenerSatz`, `sanitizeDataSources`,
+  `sanitizeRelationTemplates`: null Aufrufer. Dazu haengt ein halbfertiges
+  Feature: `DataSource.lieferung` schreibt kein Formular je, und das
+  Arten-Merkmal `varMoeglich` wird ausser in dieser einen toten Funktion
+  nirgends gelesen. **Als Paket entscheiden:** fertig bauen oder gemeinsam
+  entfernen (der `it.todo` in `datenquellen.test.ts` haengt daran, s.
+  Sperrliste „Offener Satz per VAR").
+- `softengine/geholteZeilen.ts:12` — `setzeGeholteZeilenZurueck`, nur Test.
+- `state/meldungen.ts:33` — `meldungen.leere()`, nur Test.
+- `blocks/shared/auswahl.ts:104` — `beimAuswahlZuruecksetzen` /
+  `setzeAuswahlZurueck`, nur Test.
+- **`blocks/tabelle/erfassungsLauf.ts:419`** — `kopie()` hat keinen Aufrufer,
+  **und fuenf Kommentare versprechen Zeilen-Werkzeuge, die es nicht gibt**
+  (`erfassungsAnschluss.ts:58` „einzeln loeschbar und duplizierbar", `:74`).
+- `blocks/tabelle/TabelleBlock.ts:237` — die Mechanik „Zeilen-Fokus merken und
+  wiederherstellen" laeuft nie an.
+- `editor/inspector/PropControl.tsx:83` — die Eigenschafts-Arten `textarea`
+  und `relation` benutzt kein einziger Baustein.
+- `blocks/kanban/KanbanSpalteBlock.ts:165` — der Kartenzaehler filtert nach
+  `data-ff-editor-helper`, das an Karten nie gesetzt wird.
+- `blocks/formfeld/nachschlagen.ts:310` — zweispaltiger Zweig unerreichbar,
+  der Kommentar darueber beschreibt Verhalten, das es nicht mehr gibt.
+- `blocks/formfeld/feldEigenschaften.ts:54` — tote Sichtbarkeits-Bedingung,
+  und der Kommentar `:60-61` widerspricht seit 2026-08-20 der Bindungsregel
+  daneben.
+- **`blocks/tabelle/erfassungsZeile.ts:9`** — der Kopf-Kommentar beschreibt
+  die Erfassungszeile genau falsch herum („die erste ist die Erfassungszeile,
+  immer oben"). Seit dem Umbau vom 2026-08-20 gilt das Gegenteil, in Versalien
+  nachzulesen in `erfassungsAnschluss.ts:60`.
 
-**Umbau:** Fehlt der Satz der Tabellen-Quelle, liefern die BEREITS
-GEWAEHLTEN Saetze der verknuepften Quellen die Schluesselwerte der
-werdenden Zeile — der gewaehlte Artikel liefert die Artikelnummer usw.
-Ein Schluesselwert wird generisch aufgeloest: erst am Satz der
-Tabellen-Quelle (wie heute), sonst ueber die Verknuepfungs-Paare an
-jedem anderen gewaehlten Satz. Einschraenkung und
-Ein-Treffer-Automatik laufen ueber diese Werte; die Automatik greift
-nur, wenn mindestens ein Schluesselwert bekannt ist (sonst wuerde ein
-einziger Satz im Stamm sich ungefragt selbst waehlen). Tests: das
-Messlatten-Szenario als eigener Fall in `erfassungsLauf.test.ts` —
-Tabellen-Quelle Positionen, Artikel verknuepft, KEIN gewaehlter
-Positions-Satz. **Runtime-Bytes aendern sich bewusst.**
+---
 
-## G4 · Erfasste Zeilen stehen lassen + EIN Knopf schreibt sie (GEBAUT 2026-08-18)
+## R8 · Doppelungen
 
-**Endgueltige Nutzer-Entscheidung 2026-08-18** — sie ersetzt den
-vorherigen G4-Text vollstaendig (der wollte ein Ereignis „Zeile erfasst"
-je Zeile und einen Ketten-Wert nur fuer frei getippte Zellen; beides ist
-weg, nicht wieder vorschlagen).
+- **`blocks/shared/DialogRahmen.ts:176` gegen `editor/canvas/zieheGroesse.ts:22-59`**
+  — zwei vollstaendige Zieh-Mechaniken fuer dieselbe Geste, obwohl CLAUDE.md
+  `zieheGroesse` ausdruecklich „die EINE" nennt. *Weg:* der Baustein darf den
+  React-Code nicht rufen, also meldet `DialogRahmen` die Groesse per Ereignis
+  und der Editor speichert nur.
+- **`editor/canvas/PopupSeite.tsx:15`** — `POPUP_MIN_BREITE`/`POPUP_MIN_HOEHE`
+  neben `DIALOG_MIN_BREITE`/`DIALOG_MIN_HOEHE` (`DialogRahmen.ts:26/27`),
+  gleiche Werte. **Exakt der Fehler, der bei `DIALOG_RAND` in C1 schon einmal
+  behoben wurde.**
+- `editor/inspector/optionColors.ts:7` — wortgleiche Kopie von `FARBEN` in
+  `blocks/text/TextBlock.ts:19-26` (und `:2-5` spiegelt
+  `blocks/shared/statusVariant.ts:67-74`).
+- `core/data/auswahlFolge.ts:30` — zeilengleich mit
+  `core/data/sourceLinks.ts:57-63` plus Deckelung; die Datei importiert
+  ohnehin schon aus sourceLinks.
+- `editor/zentrale/DatenquellenBereich.tsx:196` — zeichengleich mit
+  `RelationenBereich.tsx:176-188` (Block „Verwendung in dieser Maske" samt
+  Knopfzeile).
+- `state/useDataSources.ts` / `useRelations.ts` / `useMeldungen.ts` — drei
+  Dateien a zehn Zeilen, Unterschied nur der Store-Name. Der Store-Vertrag
+  ist bereits einheitlich (`state/Subject.ts`).
+- `blocks/shared/vorschlagListe.ts:119` — die Klapprichtung wird zweimal
+  gerechnet, eine Rechnung ist wirkungslos.
 
-- **Die Erfassungszeile IST die Tabellenzeile.** Der Bediener fuellt sie
-  Spalte fuer Spalte, drueckt Enter → genau diese Zeile bleibt sichtbar
-  stehen und ist ab da die Zeile der Position. Dabei wird **nichts
-  geschrieben und kein Ereignis gefeuert.** Die Erfassung rueckt eine
-  Zeile tiefer — selbes Spiel, beliebig viele Zeilen.
-- **Geschrieben wird ueber EINEN Knopf:** ein normaler Knopf-Baustein, an
-  dem der Nutzer seine Relations-Kette baut, exakt wie heute bei den
-  Formularfeldern. Beim Klick laeuft die Kette **einmal je erfasster
-  Zeile.**
-- **Neuer Herkunftstyp fuer Ketten-Parameter:** „Wert aus Erfassungszelle
-  <Spalte>" — liefert je Lauf den Wert der jeweiligen Zeile, fuer ALLE
-  Spalten verfuegbar (nicht nur fuer frei getippte).
-  **Praezisiert (Nutzer-Entscheidung 2026-08-18, Formularfeld-Prinzip):**
-  geliefert wird IMMER der sichtbare Zellwert — Herkunft egal, gewaehlt
-  oder frei getippt, keine Pruefung, keine Warnung.
-- **Nach dem Lauf werden die erfassten Zeilen geleert;** die echten
-  Positionen kommen ueber den SE-Push zurueck.
+---
 
-**Zum Pruefpunkt PUT_RELATION 82:** Der Mechanismus selbst ist
-PUT-agnostisch — die Kette baut der Nutzer sichtbar, G4 verdrahtet
-keine Relation fest. Die Deutung der `0` und der Leerstellen (CLAUDE.md
-„Neue BELEGPOSITION") gehoert damit zum KETTEN-Bau des Nutzers und zum
-SE-Echttest, nicht zum Code dieser Etappe. SE-Echttest durch den
-Nutzer. **Runtime-Bytes aendern sich bewusst.**
+## R9 · Regel 2 — generischer Code kennt einen Baustein
 
-## G5 · Entschlanken (GEBAUT 2026-08-18, inkl. G5b „Kopfzeile")
+Beides rutscht durch `check:regeln`, weil der Waechter nur `===`, `!==`,
+`.includes()` auf Typnamen und Importpfade prueft.
 
-Gebaut: Schalter „Schlank" · Fusszeile nur bei Bedarf · Spaltenname als
-Platzhalter in leeren Erfassungszellen · Inspector-Text berichtigt.
-**G5b (eigenes go): Schalter „Kopfzeile"** — bei „aus" faellt die
-Titelzeile in Editor UND Maske (WYSIWYG; die Rumpf-Messung rechnet ohne
-Kopf mit Hoehe 0). Die Bedien-Antwort: GEBUNDEN wird per Klick auf eine
-Zelle im Editor (derselbe Feld-Picker wie am Kopf, nur bei Kopf aus
-aktiv); UMBENANNT wird, indem man die Kopfzeile kurz einschaltet — ein
-Inline-Umbenennen in Strich-Zellen waere fragile DOM-Turnerei und ist
-bewusst nicht gebaut. Sortieren per Titelklick entfaellt an der Maske
-ohne Kopf (im Inspector-Text benannt).
+- **`editor/canvas/PopupSeite.tsx:53`** — liegt im generischen Canvas-Code
+  (`Canvas.tsx:115` entscheidet nur ueber `istFlaeche`), kennt aber die
+  Eigenschaftsnamen `breite`/`hoehe` des Popup-Bausteins auswendig und
+  schreibt sie direkt. *Weg:* der Baustein kann es selbst — `DialogRahmen`
+  hat bereits `ziehbar` + `DIALOG_GROESSE_EVENT`, das Nachschlage-Fenster
+  benutzt genau das.
+- **`core/blocks/bausteinName.ts:7`** — `TEXT_PROPS = ['label','heading',
+  'title','text','placeholder']`: generischer Code, der die Prop-Namen
+  einzelner Bausteine auswendig kennt. `title` gehoert zu keinem Baustein.
+  *Weg:* ein Merkmal `nameProp` in der `BlockDefinition`, das jeder Baustein
+  selbst deklariert.
 
-Nutzer-Wunsch, an der Demo gesehen und abgenommen (2026-08-18):
+---
 
-- **Schalter „schlank"** am Tabellen-Baustein (Registry-Prop wie
-  „Suchzeile"): Tafel-Rahmen weg, Polster enger, die Tabelle liegt
-  buendig auf der Maske. Standard bleibt das heutige Aussehen —
-  Bestandsmasken exportieren byte-gleich.
-- **Fusszeile nur bei Bedarf:** die Zeile „X Saetze · Seite n" erscheint
-  nur, wenn wirklich geblaettert wird oder ein Filter aktiv ist. Kein
-  eigener Schalter.
-- **Spaltenname als grauer Platzhalter in leeren Erfassungszellen**
-  (Formularfeld-Prinzip, „der Klarname ist die Vorschau") — hilft auch
-  MIT Kopfzeile.
-- **Schalter „Kopfzeile aus"** NUR zusammen mit der Antwort, wo dann
-  gebunden/umbenannt wird (Vorschlag: Klick auf die Erfassungszelle
-  oeffnet den Feld-Picker des Kopfes) — und mit dem Wissen, dass
-  Sortieren per Titelklick an der fertigen Maske entfaellt. Wenn das
-  beim Bau nicht sauber aufgeht: weglassen und dem Nutzer sagen, die
-  Platzhalter-Loesung reicht womoeglich.
-- Im selben Zug: der Inspector-Erklaertext der „Erfassungszeile"
-  beschreibt noch die gestrichene G2-Rollen-Welt
-  (`tabelleEigenschaften.ts`, Anker `'Erfassungszeile'`) — berichtigen.
+## R10 · Registry — Faehigkeiten und Defaults (= die alte Welle E)
 
-**Runtime-Bytes aendern sich bewusst.**
+Inhaltlich identisch mit E1/E2/E3 weiter unten; hier steht, was die
+Gesamtanalyse ergaenzt hat.
+
+- **Dreifach-Deklaration, empirisch bewiesen:** das Literal in
+  `registerBlockType({…})` hat 31 Felder, `BlockComponentStatic` 31,
+  `BlockDefinition` 31. Ein Pruefer hat testweise die Zeile
+  `addChildButton: BlockClass.addChildButton,` geloescht und danach
+  `tsc -b`, `eslint`, `check:regeln` und alle 649 Tests laufen lassen:
+  **alles gruen, die Faehigkeit war weg.** 9 der 31 Felder sind in
+  `BlockDefinition` Pflicht und wuerden auffallen; **22 verschwinden still.**
+- **Doppelte Standardwerte — kleiner als zunaechst angenommen.** Ein Pruefer
+  hat alle 15 Bausteine Feld fuer Feld verglichen: **keine einzige
+  Abweichung heute.** 4 von 15 haben gar keine Doppelung (Ansicht, Datum,
+  Navi, Kanban); 7 der doppelten Paare sind an beiden Stellen dieselbe
+  importierte Konstante und koennen strukturell nicht driften. Driftbar sind
+  **rund 18 wiederholte Literale** ('Klick mich', 'Feldname', 'ja'/'nein',
+  520, 380, 'normal', 'links' …).
+  Der Mechanismus dahinter ist trotzdem echt: `export/exportMask.ts:138`
+  laesst ein Attribut weg, sobald es dem Registry-Standard gleicht, und das
+  Element faellt dann auf sein Lit-Klassenfeld zurueck. Es gibt keinen
+  Waechter und keinen Typ-Zwang dagegen.
+
+---
+
+## R11 · Ballast
+
+- **Tests radikal ausduennen (Nutzer-Ansage 2026-08-21 „radikaler"):**
+  rund **3 900 von 9 084 Zeilen** raus — alles, was der Nutzer im Browser
+  selbst sieht (Sortierung, Suche, Seitengroesse, Vorschlagsliste,
+  Tierbilder, Auswahl, Duplizieren, Transaktion, Auswahl-Ops, Meldungen,
+  Felduebernahme, Bausteinname, Bindung, Tagfilter, holende/fremde Quellen,
+  Erfassungs-Messlatte) plus der tote Preflight-Test.
+  **Bleibt (~5 200 Zeilen), und zwar genau das, was er NIE sehen kann:**
+  `export/` (die Bytes nach SoftEngine) · Speicherung und Migrationen (dass
+  seine Arbeit einen Neustart ueberlebt) · `softengine/` und die
+  `seRuntime`/`seAktionen` (der ERP-Vertrag).
+  **Waechter:** `check:runtime` bleibt ganz. Von `check:regeln` bleiben
+  Zeichen-Pruefung, Buendel-Positivliste und Referenzabzug-Pflicht; die
+  Architektur-Polizei faellt (~200 von 378 Zeilen).
+- **Die Schrift, 27 KB, bedingungslos** — `export/exportMask.ts:216` bettet
+  `masken-schriften.css` in JEDE Maske ein, egal was sie zeigt. Das sind 12 %
+  jeder Maske und **mehr Ersparnis als die ganze Buendel-Aufteilung** (R12),
+  ohne deren Risiko. Die Tierbilder sind denselben Weg schon gegangen
+  (`4ba15e8`).
+- **`docs/Test-note.png`, 42 MB**, eingecheckt. Datei raus, `.gitignore` rein.
+  **Historie NICHT umschreiben** — Force-Push ist gesperrt (3.2).
+- **Browser-Ziel festschreiben** — `vite.runtime.config.ts` setzt kein
+  `build.target`. Es gilt, was Vite zufaellig als Standard hat. Laeuft heute,
+  ist aber Zufall statt Entscheidung: aendert Vite den Standard, aendert sich
+  der Export ohne Zutun. **Braucht eine Auskunft des Nutzers**, welche
+  Browser-Grundlage SoftEngine einbettet — nicht raten.
+
+---
+
+## R12 · Zuletzt
+
+- **Zyklus `blocks/tabelle` <-> `blocks/formfeld/nachschlagen`.** Existiert
+  mit Wert-Importen in beide Richtungen, ist aber **nachweislich harmlos**:
+  kein zyklisches Symbol wird zur Modul-Auswertungszeit gelesen, und die
+  zurueckimportierten Namen sind Funktionsdeklarationen, koennen also nicht
+  `undefined` sein. **Wird erst scharf, wenn jemand das Buendel in Stuecke
+  schneidet** — Zyklen ueber Stueck-Grenzen sind genau die Stelle, an der
+  Buendler eine kaputte Startreihenfolge erzeugen.
+  Wer ihn aufloest, braucht ZWEI Schritte: die Konstante `'ff-tabelle'` in ein
+  zyklusfreies Modul legen UND den Klassen-Import auf `import type`
+  umstellen (der TYP wird fuer `querySelector`/`.updateComplete`/
+  `.fokussiereSuche` weiter gebraucht). Dazu die beiden hart getippten
+  `<ff-tabelle>` in `nachschlagen.ts:314/416` auf dieselbe Konstante ziehen.
+- **Buendel pro Maske schneiden.** 83 % jeder Maske sind Code fuer alle 15
+  Bausteine. Der Kostenvorbehalt stimmt: was ein Register herausgibt, kann
+  der Buendler nicht mehr wegwerfen — realistisch bleiben 35-45 KB von 163.
+  **Das ist Ordnung, kein Tempo** (40 KB sparen Hundertstelsekunden). Nur
+  NACH dem Zyklus und NACH der Schrift.
+- **A10 / B2 — Besitz der Bibliotheken.** Editor = Instanz ueber Provider,
+  Bibliotheken = Modul-Singletons. Der Zusatz „das truegt in Tests" ist
+  **widerlegt**: es sind bewusst verschiedene Lebensdauern (die Bibliotheken
+  sollen eine Maskenuebernahme ueberleben). Bleibt reine Struktur, grosser
+  Aufwand, kein spuerbarer Gewinn. Der Nutzer will es trotzdem — zuletzt.
+- **Ein Haken vor dem Commit**, der das BESTEHENDE Pruefbuendel faehrt.
+  Keine neuen Tests, keine neue Testart. Heute prueft nur, wer daran denkt.
+- **Ein Wort pro Begriff:** Baustein, Quelle, **Schritt**. Nicht umbenennen —
+  wer eine Datei ohnehin anfasst, zieht sie mit. Gemessen: Block/Baustein
+  15:282 (erledigt), DataSource/Quelle 269:802, **Step/Schritt 98:76** (nur
+  hier aendert eine Ansage etwas).
+- **Kleine Paket-Updates.** 0 Sicherheitsluecken. TypeScript 7 und
+  Tailwind 4 **bleiben liegen** — grosse Spruenge ohne Gegenwert.
+
+---
+
+## Gekippt — nicht wieder aufnehmen
+
+Drei Befunde der ersten Analysestufe hat die Gegenpruefung widerlegt. Sie
+stehen hier, damit sie kein spaeterer Chat erneut „findet":
+
+- **Den `deepClone` in `state/Editor.ts` snapshot() entfernen: NEIN.**
+  Gesten sind geklammert (`Historie.record` steigt bei `_txDepth > 0` sofort
+  aus) — ein Zug ueber hundert Mausbewegungen macht EINEN Klon, nicht
+  hundert, und der liegt unter einer Millisekunde. Es gibt nichts zu
+  gewinnen. Dagegen steht ein echter Verlust: `props` und `childIds` sind
+  schreibbar typisiert, `editor.tree` nur oberflaechlich `Readonly`, und
+  `useLitElement.ts:107` reicht die lebenden Prop-Objekte per Referenz an die
+  Bausteine. **Der Klon ist die einzige Stelle, die die Unveraenderlichkeit
+  ueberhaupt erzwingt.** Bleibt, wie er ist.
+- **„Jede Aenderung rendert den ganzen Editor neu": ueberzogen.** 18
+  Abonnenten, kein `React.memo` — aber sechs davon haengen an geschlossenen
+  Dialogen und sind beim Tippen gar nicht montiert. Ohne Messung nicht
+  anfassen (Regel 10).
+- **„Der 500-Zeilen-Deckel gestaltet mit": falsch gezaehlt.** Der Waechter
+  zaehlt anders; die genannten Splitter-Dateien sind nicht aus Platzdruck
+  entstanden (`editorAngaben.ts` ist eine von ELF, je eine pro
+  Baustein-Ordner). Einzige echte Beobachtung: `TabelleBlock.ts` liegt mit
+  500 Zeilen exakt auf der Grenze und pendelt seit sieben Commits im Band
+  491-500.
 
 ---
 
@@ -1247,20 +1015,24 @@ Anforderung fuellen, Maskenverhalten sonst identisch.
 
 ## 5. Reihenfolge
 
-1. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung +
-   preflight-Mini-Frage. (Koralle ist beantwortet: JA, s. 0.1.)
-2. **Welle V:** ~~V1 → V0 → V3 → V4 → V5 → V8 → V9 → V7~~ (GEBAUT).
-   V6 braucht zuerst den Kurzentwurf mit dem Nutzer und tritt hinter
-   Welle G zurueck (Nutzer-Prio 2026-08-18).
-3. **Welle G:** ~~G1 → G2 → G3~~ (GEBAUT) → G3b → G3c → G4 → G5.
-4. **Innenumbau:** E1 → E3 → E2; A10 nur bei Bedarf; V6 nach
-   Kurzentwurf, sobald der Nutzer ihn will.
-5. **Neuentwurf:** U4 (Entwurfssitzung mit dem Nutzer) → U5 → U7a → U7b/c
-   → F3.
+**Neu ab 2026-08-21 (Nutzer-Ansage „erst alles sauber, dann weiterbauen"):**
+Welle R laeuft zuerst und ALLEIN. Kein Neubau, solange sie offen ist — die
+Verzahnungs-Erlaubnis von frueher ist damit ausgesetzt.
 
-Etappen aus 2. und 3. duerfen sich mit 4. verzahnen, solange Regel 3.1
-(ein Thema, ein Commit) und EIN federfuehrender Agent je Arbeitsbaum
-gelten.
+1. **Welle R (Reinigung):** R1 → R2 → R3 → R4 → R5 → R6 → R7/R8/R9 (duerfen
+   am Stueck, sind mechanisch) → R10 → R11 → R12.
+   R10 ersetzt in der Sache E1/E2/E3; die Langfassung steht weiter unten in
+   Welle E und bleibt die Bau-Anleitung dafuer.
+2. **Nutzer:** Gesamtprobe (7.0) + U10-Beobachtung. Die
+   preflight-Mini-Frage ist beantwortet — Loeschen, s. R7.
+3. **Welle S:** Belegerfassung (Tempo, Erfassung, Optik) — der eigentliche
+   Bau-Auftrag des Nutzers, wartet auf das Ende von Welle R.
+4. **Rest der alten Reihenfolge:** V6 nach Kurzentwurf → U4
+   (Entwurfssitzung) → U5 → U7a → U7b/c → F3.
+
+Innerhalb von Welle R gilt: **ein Paket zur Zeit, nie zwei offen** — dazu
+weiter Regel 3.1 (ein Thema, ein Commit) und EIN federfuehrender Agent je
+Arbeitsbaum.
 
 ---
 
