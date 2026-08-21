@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { gestenKlammer, type GestenKlammer } from '../../../state/history'
 
 export interface Eingabesitzung {
@@ -35,5 +35,10 @@ export function useEingabeSitzung(
 
   useEffect(() => beenden, [beenden])
 
-  return { beginnen, beenden }
+  // EIN Objekt fuer die ganze Lebensdauer. Gab die Sitzung bei jedem Rendern
+  // ein NEUES zurueck, sah jeder Aufrufer, der sie in eine Abhaengigkeits-Liste
+  // legt, eine Aenderung — der Aufraeumer des FieldPicker lief bei jedem
+  // Tastendruck und schloss die Tipp-Klammer. Ergebnis: jeder Buchstabe wurde
+  // ein eigener Rueckgaengig-Schritt und spuelte die Historie leer.
+  return useMemo(() => ({ beginnen, beenden }), [beginnen, beenden])
 }
