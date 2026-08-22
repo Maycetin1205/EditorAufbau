@@ -36,7 +36,9 @@
     box-shadow: 0 1px 3px rgba(20,30,50,.08);
     max-width: 100%;
   }
-  .rollbereich { max-height: 62vh; overflow: auto; }
+  /* Feste Höhe: die Tabellenfläche ist immer gleich groß (~14 Zeilen),
+     egal wie viele Positionen drin sind — nichts springt, keine Blindzeilen. */
+  .rollbereich { height: min(440px, 60vh); overflow: auto; }
   table { border-collapse: collapse; width: 100%; table-layout: fixed; }
   th, td {
     border: 1px solid var(--rand);
