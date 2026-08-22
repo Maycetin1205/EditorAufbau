@@ -562,11 +562,15 @@ function uebernehmeUndWeiter(i, roh, enter) {
   const c = COLS[i];
   if (!c.frei && listeOffen && vorschlaege[markiert]) {
     setzeHand(i, vorschlaege[markiert].wert);          // markierter Vorschlag
-  } else if (roh.trim() !== "") {
-    if (roh.trim() !== wert(zeile, c.key)) setzeHand(i, roh.trim());   // getippt
-  } else if (!c.frei && moeglicheWerte(zeile, c.key).length > 1) {
-    oeffnePicker(i);                                   // leer + mehrdeutig
-    return;
+  } else {
+    // Getippt oder geleert -> dieselbe Naht wie beim Blur. So kann kein
+    // Geisterwert im Modell zurueckbleiben, waehrend der Input leer ist.
+    uebernimmEntwurf();
+    // Leere, mehrdeutige Zelle (Modell jetzt sauber) -> grosses Fenster.
+    if (roh.trim() === "" && !c.frei && moeglicheWerte(zeile, c.key).length > 1) {
+      oeffnePicker(i);
+      return;
+    }
   }
   listeOffen = false; vorschlaege = [];
   const ziel = naechsteLeere(i);
