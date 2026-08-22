@@ -9,11 +9,9 @@
     --rand: #d5d9e0;
     --rand-stark: #b3bac6;
     --kopf-bg: #f2f4f7;
-    --zeile-bg: #ffffff;
     --zeile-alt: #fafbfc;
     --aktiv: #2563eb;
     --aktiv-bg: #eaf1ff;
-    --auto-bg: #f0fdf4;
     --auto-text: #15803d;
     --strich: #9aa3b2;
     --text: #1a1f2b;
@@ -28,7 +26,7 @@
     padding: 20px;
   }
   h1 { font-size: 18px; margin: 0 0 4px; }
-  .hinweis { color: #5b6472; font-size: 13px; margin: 0 0 16px; max-width: 780px; }
+  .hinweis { color: #5b6472; font-size: 13px; margin: 0 0 16px; max-width: 820px; }
   .hinweis b { color: var(--text); }
   .tafel {
     background: #fff;
@@ -72,7 +70,7 @@
   td.frei .zellinhalt { background: var(--menge-bg); }
   td.auto .zellinhalt { color: var(--auto-text); }
   .strich { color: var(--strich); }
-  .platzhalter { color: var(--strich); font-style: normal; }
+  .platzhalter { color: var(--strich); }
   .pickbar { cursor: pointer; }
   .pickbar:hover .zellinhalt { background: var(--aktiv-bg); }
   td.aktiv { box-shadow: inset 0 0 0 2px var(--aktiv); position: relative; z-index: 2; background: #fff; }
@@ -81,14 +79,16 @@
     width: 100%; height: 100%; border: 0; outline: 0; background: transparent;
     font: inherit; color: var(--text); padding: 0 8px;
   }
-  /* Vorschlagsliste — als feste Ebene am body, damit die Zelle (overflow:hidden)
-     und der Rollbereich sie nicht abschneiden. Position rechnet zeichneListe(). */
+  input.zelle::selection { background: #bfdbfe; }
+  /* Vorschlagsliste — feste Ebene am body, damit weder die Zelle
+     (overflow:hidden) noch der Rollbereich sie abschneidet.
+     Position rechnet positioniereListe(), auch bei Scrollen/Resize. */
   .liste {
-    position: fixed; min-width: 160px;
+    position: fixed;
     background: #fff; border: 1px solid var(--rand-stark); border-radius: 6px;
     box-shadow: 0 6px 18px rgba(20,30,50,.18); z-index: 50; max-height: 240px; overflow: auto;
   }
-  .liste-eintrag { padding: 5px 9px; cursor: pointer; display: flex; gap: 10px; align-items: baseline; }
+  .liste-eintrag { padding: 5px 9px; cursor: pointer; display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
   .liste-eintrag .neben { color: #6b7280; font-size: 12.5px; }
   .liste-eintrag.markiert { background: var(--aktiv-bg); }
   .liste-eintrag:hover { background: #f3f6fc; }
@@ -104,7 +104,7 @@
   .zaehler b { color: var(--text); font-variant-numeric: tabular-nums; }
   /* Picker-Fenster */
   .schatten {
-    position: fixed; inset: 0; background: rgba(15,23,42,.4); z-index: 40;
+    position: fixed; inset: 0; background: rgba(15,23,42,.4); z-index: 60;
     display: flex; align-items: center; justify-content: center;
   }
   .fenster {
@@ -125,7 +125,8 @@
     <b>Enter</b> übernehmen. Tierart/Verabreichung/Wartezeit füllen sich selbst, sobald der Artikel sie eindeutig
     bestimmt — sonst kommt ein <b>Picker</b>. <b>Enter/Tab</b> springen zur nächsten leeren Zelle, Selbstgefülltes
     wird übersprungen. <b>Enter</b> in der letzten Zelle (Menge) macht die Zeile fest und öffnet die nächste.
-    <b>Esc</b> schließt die Liste, nochmal <b>Esc</b> leert die Zelle. Spaltenbreite: am rechten Rand der Kopfzelle ziehen.
+    <b>Esc</b> schließt die Liste, nochmal <b>Esc</b> leert die Zelle. Beim Betreten einer Zelle ist ihr Inhalt
+    markiert — Tippen <b>ersetzt</b> ihn. Spaltenbreite: am rechten Rand der Kopfzelle ziehen.
   </p>
 
   <div class="tafel">
@@ -142,7 +143,7 @@
     <button class="haupt" id="btnSchreiben">Erfasste Zeilen schreiben</button>
     <button id="btnFuellen">200 Testzeilen anhängen</button>
     <span class="zaehler">
-      Tabellen-Renders: <b id="rc">0</b> · Erfasste Zeilen: <b id="zc">0</b>
+      Tabellen-Aufbauten: <b id="rc">0</b> · Zeilen-Zeichnungen: <b id="zr">0</b> · Erfasste Zeilen: <b id="zc">0</b>
     </span>
   </div>
 
@@ -150,14 +151,13 @@
 "use strict";
 
 /* ===================================================================
-   1) DUMMY-DATEN  — die "Tabelle gültiger Kombinationen"
+   1) DUMMY-DATEN — die "Tabelle gültiger Kombinationen"
    Jede Spalte (artNr, bez, tier, verab, warte) ist ein Feld über KOMBI.
    Im echten Editor kämen diese aus getrennten Quellen, per Schlüssel
    verbunden — die Filter-Logik ist identisch. Menge steht NICHT in KOMBI
    (frei tippbar).
 =================================================================== */
 const KOMBI = [
-  // artNr, bez, tier, verab, warte   (mehrere Zeilen je Artikel = mehrere Tierarten)
   { artNr:"ART001", bez:"Baytril 25mg Tabl.", tier:"Hund",  verab:"oral",      warte:"7 Tage"  },
   { artNr:"ART001", bez:"Baytril 25mg Tabl.", tier:"Katze", verab:"oral",      warte:"5 Tage"  },
   { artNr:"ART002", bez:"Baytril 50mg Inj.",  tier:"Rind",  verab:"Injektion", warte:"28 Tage" },
@@ -184,38 +184,46 @@ const COLS = [
 /* Spalten, die von KOMBI gedeckt werden (an der Filterung beteiligt). */
 const FILTER_COLS = COLS.filter(c => !c.frei).map(c => c.key);
 /* Was neben dem Treffer in der Vorschlagsliste steht (die "andere" Spalte). */
-const NEBEN = { artNr:"bez", bez:"artNr", tier:"" };
+const NEBEN = { artNr:"bez", bez:"artNr" };
 
 /* ===================================================================
    2) ZUSTAND
-   - erfasst: fertige Zeilen (nur Text, werden nie neu gerendert beim Tippen)
-   - zeile:   die eine Erfassungszeile { key: {w, q} }  q = 'hand'|'auto'
-   - aktiv:   Spaltenindex der aktiven Zelle in der Erfassungszeile (-1 = keine)
+   - erfasst: fertige Zeilen. Ihr DOM wird ANGEHÄNGT, nie neu gebaut.
+   - zeile:   die eine Erfassungszeile { key: {w, q, n} }
+              q = 'hand' (selbst gesetzt) | 'auto' (abgeleitet)
+              n = Reihenfolge der Hand-Setzung (der neueste gewinnt)
+   - aktiv:   Spaltenindex der aktiven Zelle (-1 = keine)
+   Der Tipp-Entwurf lebt NUR im aktiven <input> — deshalb kostet Tippen
+   nichts. Beim Verlassen der Zelle wird er über uebernimmEntwurf()
+   festgeschrieben (genau EINE Naht, s. Abschnitt 5).
 =================================================================== */
 let erfasst = [];
 let zeile = neueZeile();
 let aktiv = -1;
-let vorschlaege = [];   // aktuelle Vorschlagsliste
-let markiert = 0;       // hervorgehobener Vorschlag
+let vorschlaege = [];
+let markiert = 0;
 let listeOffen = false;
+let handZaehler = 0;
 
-let renderCount = 0;    // Beweis: Tippen erhöht das NICHT
-window.__renderCount = () => renderCount;
+let aufbauten = 0;      // volle Tabellen-Aufbauten
+let zeichnungen = 0;    // Zeichnungen NUR der Erfassungszeile
+window.__renderCount = () => aufbauten;
+window.__zeilenRender = () => zeichnungen;
 window.__debug = () => ({ zeile, aktiv, vorschlaege: vorschlaege.length, listeOffen, erfasst: erfasst.length });
 
 function neueZeile() {
   const z = {};
-  for (const c of COLS) z[c.key] = null; // {w, q} oder null
+  for (const c of COLS) z[c.key] = null;
   return z;
 }
 function wert(z, key) { return z[key] ? z[key].w : ""; }
 
 /* ===================================================================
-   3) DIE ABHÄNGIGE AUSWAHL  — als Filter, ohne if-Verschachtelung
-   Regel: Hand-Werte sind die WHERE-Bedingungen. Auto-Werte werden bei
-   jedem recompute frisch daraus abgeleitet. Hat eine Spalte im gefilterten
-   Set genau einen Wert -> auto füllen. Mehrere -> leer (Picker beim Betreten).
-   Funktioniert in BEIDE Richtungen: egal ob zuerst Artikel oder zuerst Tierart.
+   3) DIE ABHÄNGIGE AUSWAHL — als Filter, ohne if-Verschachtelung
+   Hand-Werte sind die WHERE-Bedingungen. Auto-Werte werden bei jedem
+   recompute frisch daraus abgeleitet: hat eine Spalte im gefilterten Set
+   genau einen Wert -> auto füllen; mehrere -> leer (Picker beim Betreten).
+   Funktioniert in BEIDE Richtungen: egal ob zuerst Artikel oder Tierart.
 =================================================================== */
 function handWerte(z, ausser) {
   const w = {};
@@ -226,20 +234,38 @@ function handWerte(z, ausser) {
   return w;
 }
 function gefiltert(werte) {
-  return KOMBI.filter(k => Object.keys(werte).every(key => String(k[key]) === String(werte[key])));
+  const keys = Object.keys(werte);
+  return KOMBI.filter(k => keys.every(key => String(k[key]) === String(werte[key])));
 }
 function distinct(arr) { return [...new Set(arr)]; }
 
 function recompute(z) {
-  // 1. alle Auto-Werte verwerfen — sie werden neu abgeleitet
   for (const key of FILTER_COLS) if (z[key] && z[key].q === "auto") z[key] = null;
-  // 2. aus den Hand-Werten das Set bilden und eindeutige Spalten auto-füllen
-  const set = gefiltert(handWerte(z, null));
-  if (Object.keys(handWerte(z, null)).length === 0) return; // nichts gewählt -> nichts ableiten
+  const hand = handWerte(z, null);
+  if (Object.keys(hand).length === 0) return;  // nichts gewählt -> nichts ableiten
+  const set = gefiltert(hand);
   for (const key of FILTER_COLS) {
     if (z[key] && z[key].q === "hand") continue;
     const werte = distinct(set.map(k => String(k[key])).filter(v => v !== ""));
     if (werte.length === 1) z[key] = { w: werte[0], q: "auto" };
+  }
+}
+
+/* Der neueste Hand-Wert gewinnt. Macht er die Menge gültiger Kombinationen
+   leer (ART002 kann es mit der zuvor gewählten Katze nicht geben), weichen
+   die ÄLTESTEN anderen Hand-Werte, bis wieder etwas passt — sonst bliebe
+   eine unmögliche Zeile stehen, in der nichts mehr vorschlägt.
+   Frei getippter Text, den es in den Daten gar nicht gibt, wirft NICHTS weg
+   (Formularfeld-Prinzip: es zählt, was in der Zelle steht). */
+function loeseKonflikt(neuKey, neuWert) {
+  if (gefiltert(handWerte(zeile, null)).length > 0) return;
+  if (!KOMBI.some(k => String(k[neuKey]) === String(neuWert))) return;
+  const andere = FILTER_COLS
+    .filter(k => k !== neuKey && zeile[k] && zeile[k].q === "hand")
+    .sort((a, b) => (zeile[a].n || 0) - (zeile[b].n || 0));
+  for (const k of andere) {
+    zeile[k] = null;
+    if (gefiltert(handWerte(zeile, null)).length > 0) return;
   }
 }
 
@@ -263,118 +289,103 @@ function baueVorschlaege(z, key, text) {
   return out;
 }
 
-/* Die möglichen Werte einer Spalte (für den Picker) */
+/* Die möglichen Werte einer Spalte (für den Picker). */
 function moeglicheWerte(z, key) {
   const set = gefiltert(handWerte(z, key));
   return distinct(set.map(k => String(k[key])).filter(v => v !== ""));
 }
 
 /* ===================================================================
-   4) RENDERN  — wird NUR bei Struktur-Änderungen gerufen, NIE beim Tippen
+   4) ZEICHNEN — drei getrennte Wege, das ist der Kern der Geschwindigkeit
+      zeichneKopf()      Spaltenbreiten + Titelzeile
+      zeichneErfasste()  ALLE erfassten Zeilen (nur bei Massen-Änderung)
+      haengeAn(z)        EINE fertige Zeile anhängen  -> O(1)
+      zeichneErfassung() NUR die Erfassungszeile      -> O(1), bei Navigation
+   Navigation und Tippen fassen die erfassten Zeilen NIE an.
 =================================================================== */
 const $ = id => document.getElementById(id);
+const aktivesInput = () => $("tbody").querySelector(".erfassung td.aktiv input");
 
-function render() {
-  renderCount++;
-  $("rc").textContent = renderCount;
+function zaehlerAn() {
+  $("rc").textContent = aufbauten;
+  $("zr").textContent = zeichnungen;
   $("zc").textContent = erfasst.length;
+}
 
-  // Spaltenbreiten (eine Quelle: COLS[i].breite)
+function breitenAn() {
   $("colgroup").innerHTML = COLS.map(c => `<col style="width:${c.breite}px">`).join("");
+}
 
-  // Kopf mit Zieh-Griffen
+function zeichneKopf() {
+  breitenAn();
   $("thead").innerHTML = "<tr>" + COLS.map((c, i) =>
-    `<th><div class="kopf-inhalt">${c.titel}<div class="griff" data-col="${i}"></div></div></th>`
+    `<th><div class="kopf-inhalt">${esc(c.titel)}<div class="griff" data-col="${i}"></div></div></th>`
   ).join("") + "</tr>";
-
-  // Erfasste Zeilen (statischer Text)
-  let html = "";
-  for (const z of erfasst) {
-    html += "<tr>" + COLS.map(c => {
-      const v = wert(z, c.key);
-      const auto = z[c.key] && z[c.key].q === "auto" ? " auto" : "";
-      const frei = c.frei ? " frei" : "";
-      return `<td class="${auto}${frei}"><div class="zellinhalt">${v ? esc(v) : '<span class="strich">–</span>'}</div></td>`;
-    }).join("") + "</tr>";
-  }
-
-  // Die Erfassungszeile
-  html += '<tr class="erfassung">' + COLS.map((c, i) => zelleErfassung(c, i)).join("") + "</tr>";
-
-  $("tbody").innerHTML = html;
-
-  // Griffe verdrahten
   $("thead").querySelectorAll(".griff").forEach(g => g.addEventListener("pointerdown", starteZiehen));
+}
 
-  // Aktive Zelle: Input + Liste
-  if (aktiv >= 0) {
-    const td = $("tbody").querySelector(`.erfassung td[data-col="${aktiv}"]`);
-    if (td) {
-      const inp = td.querySelector("input");
-      if (inp) {
-        inp.focus();
-        inp.setSelectionRange(inp.value.length, inp.value.length);
-      }
-      zeichneListe();
-    }
+function zeileHtml(z) {
+  return COLS.map(c => {
+    const v = wert(z, c.key);
+    const auto = z[c.key] && z[c.key].q === "auto" ? " auto" : "";
+    const frei = c.frei ? " frei" : "";
+    const klasse = (auto + frei).trim();
+    return `<td class="${klasse}"><div class="zellinhalt">${v ? esc(v) : '<span class="strich">–</span>'}</div></td>`;
+  }).join("");
+}
+
+/* Voller Aufbau der erfassten Zeilen. Nur beim Start und bei Massen-
+   Änderungen (Testzeilen anhängen) — NICHT bei Navigation. */
+function zeichneErfasste() {
+  aufbauten++;
+  const tb = $("tbody");
+  tb.innerHTML = erfasst.map(z => `<tr>${zeileHtml(z)}</tr>`).join("")
+    + '<tr class="erfassung" id="erfassungZeile"></tr>';
+  zeichneErfassung(false);
+}
+
+/* Eine fertige Zeile anhängen: ein einziges <tr> vor die Erfassungszeile.
+   Unabhängig davon, wie viele Zeilen schon dastehen. */
+function haengeAn(z) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = zeileHtml(z);
+  $("tbody").insertBefore(tr, $("erfassungZeile"));
+  zaehlerAn();
+}
+
+/* NUR die Erfassungszeile. Jede Navigation und jede Wertänderung geht hier
+   durch — sechs Zellen, egal wie groß die Tabelle ist. */
+function zeichneErfassung(markieren) {
+  zeichnungen++;
+  const tr = $("erfassungZeile");
+  if (!tr) return;
+  tr.innerHTML = COLS.map((c, i) => zelleErfassung(c, i)).join("");
+  zaehlerAn();
+  const inp = aktivesInput();
+  if (inp) {
+    inp.focus();
+    if (markieren) inp.select();
+    else inp.setSelectionRange(inp.value.length, inp.value.length);
   }
+  zeichneListe();
 }
 
 function zelleErfassung(c, i) {
   const v = wert(zeile, c.key);
   const auto = zeile[c.key] && zeile[c.key].q === "auto" ? " auto" : "";
   const frei = c.frei ? " frei" : "";
-  const pickbar = (!c.frei && !c.suchbar) ? " pickbar" : ""; // z.B. Verabreichung/Wartezeit per Klick
   if (i === aktiv) {
-    return `<td class="aktiv${auto}${frei}" data-col="${i}"><input class="zelle" value="${esc(v)}" data-col="${i}"></td>`;
+    return `<td class="aktiv${auto}${frei}" data-col="${i}">`
+      + `<input class="zelle" data-col="${i}" value="${esc(v)}"`
+      + ` autocomplete="off" autocapitalize="off" spellcheck="false"></td>`;
   }
+  const pickbar = (!c.frei && !c.suchbar) ? " pickbar" : "";
   const inhalt = v ? esc(v) : `<span class="platzhalter">${esc(c.titel)}</span>`;
-  return `<td class="${auto}${frei}${pickbar}" data-col="${i}"><div class="zellinhalt">${inhalt}</div></td>`;
+  return `<td class="${(auto + frei + pickbar).trim()}" data-col="${i}"><div class="zellinhalt">${inhalt}</div></td>`;
 }
 
 function esc(s) {
   return String(s).replace(/[&<>"]/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[m]));
-}
-
-/* Vorschlagsliste unter der aktiven Zelle — beim Tippen wird NUR das hier
-   aktualisiert, nicht die Tabelle. Sie lebt am body und wird per Rechteck des
-   Inputs positioniert; unten kein Platz -> klappt nach oben. */
-function zeichneListe() {
-  let liste = document.getElementById("vorschlagliste");
-  const td = $("tbody").querySelector(`.erfassung td.aktiv`);
-  const inp = td && td.querySelector("input");
-  if (!inp || !listeOffen || vorschlaege.length === 0) { if (liste) liste.remove(); return; }
-  if (!liste) { liste = document.createElement("div"); liste.id = "vorschlagliste"; liste.className = "liste"; document.body.appendChild(liste); }
-  const t = inp.value.trim();
-  liste.innerHTML = vorschlaege.map((v, i) =>
-    `<div class="liste-eintrag ${i === markiert ? "markiert" : ""}" data-i="${i}">
-       <span>${hervor(v.wert, t)}</span>${v.neben ? `<span class="neben">${hervor(v.neben, t)}</span>` : ""}
-     </div>`
-  ).join("");
-  liste.querySelectorAll(".liste-eintrag").forEach(e => {
-    // mousedown statt click: verhindert, dass der Input vorher den Fokus verliert
-    e.addEventListener("mousedown", ev => { ev.preventDefault(); waehleVorschlag(+e.dataset.i); });
-  });
-  // Positionieren am Input-Rechteck
-  const r = inp.getBoundingClientRect();
-  liste.style.left = Math.round(r.left) + "px";
-  liste.style.minWidth = Math.round(r.width) + "px";
-  liste.style.top = "0px"; // erst setzen, dann Höhe messen
-  const hoehe = liste.offsetHeight;
-  const platzUnten = window.innerHeight - r.bottom;
-  if (platzUnten < hoehe + 8 && r.top > hoehe + 8) liste.style.top = Math.round(r.top - hoehe) + "px";
-  else liste.style.top = Math.round(r.bottom) + "px";
-}
-
-/* Maus-Klick auf einen Vorschlag: übernehmen und weiterspringen (wie Enter,
-   aber es schließt die Zeile nie ab — Maus soll nicht ungewollt festmachen). */
-function waehleVorschlag(listenIndex) {
-  const i = aktiv;
-  if (i < 0 || !vorschlaege[listenIndex]) return;
-  setzeHand(i, vorschlaege[listenIndex].wert);
-  listeOffen = false; vorschlaege = [];
-  const ziel = naechsteLeere(i);
-  if (ziel !== -1) aktiviere(ziel); else render();
 }
 function hervor(s, t) {
   s = String(s);
@@ -384,32 +395,136 @@ function hervor(s, t) {
   return esc(s.slice(0, idx)) + "<mark>" + esc(s.slice(idx, idx + t.length)) + "</mark>" + esc(s.slice(idx + t.length));
 }
 
+/* Vorschlagsliste: Inhalt zeichnen ... */
+function zeichneListe() {
+  let liste = $("vorschlagliste");
+  const inp = aktivesInput();
+  if (!inp || !listeOffen || vorschlaege.length === 0) { if (liste) liste.remove(); return; }
+  if (!liste) {
+    liste = document.createElement("div");
+    liste.id = "vorschlagliste";
+    liste.className = "liste";
+    document.body.appendChild(liste);
+  }
+  const t = inp.value.trim();
+  liste.innerHTML = vorschlaege.map((v, i) =>
+    `<div class="liste-eintrag ${i === markiert ? "markiert" : ""}" data-i="${i}">`
+    + `<span>${hervor(v.wert, t)}</span>${v.neben ? `<span class="neben">${hervor(v.neben, t)}</span>` : ""}`
+    + `</div>`
+  ).join("");
+  liste.querySelectorAll(".liste-eintrag").forEach(e => {
+    // mousedown statt click: der Input darf den Fokus nicht vorher verlieren
+    e.addEventListener("mousedown", ev => { ev.preventDefault(); waehleVorschlag(+e.dataset.i); });
+  });
+  positioniereListe();
+}
+
+/* ... und getrennt davon positionieren. Weil die Liste fixiert am body
+   hängt, muss sie bei jedem Scrollen und Resize nachgeführt werden — sonst
+   steht sie in der Luft. Rollt die Zelle aus dem Sichtfenster, verschwindet
+   die Liste mit ihr. */
+function positioniereListe() {
+  const liste = $("vorschlagliste");
+  const inp = aktivesInput();
+  if (!liste || !inp) return;
+  const r = inp.getBoundingClientRect();
+  const roll = $("rollbereich").getBoundingClientRect();
+  if (r.bottom <= roll.top + 1 || r.top >= roll.bottom - 1) { liste.style.visibility = "hidden"; return; }
+  liste.style.visibility = "";
+  liste.style.left = Math.round(Math.min(r.left, window.innerWidth - 240)) + "px";
+  liste.style.minWidth = Math.round(Math.max(r.width, 220)) + "px";
+  const hoehe = liste.getBoundingClientRect().height;
+  const passtUnten = window.innerHeight - r.bottom >= hoehe + 8;
+  liste.style.top = Math.round(passtUnten || r.top < hoehe + 8 ? r.bottom : r.top - hoehe) + "px";
+}
+window.addEventListener("scroll", positioniereListe, true);  // true = auch der Rollbereich
+window.addEventListener("resize", positioniereListe);
+
 /* ===================================================================
    5) BEDIENUNG
+   EINE Naht fürs Verlassen einer Zelle: uebernimmEntwurf(). Jeder Weg aus
+   einer Zelle heraus geht hier durch, damit nie ein getippter Wert
+   verschwindet — der Entwurf lebt im DOM, nicht im Zustand.
 =================================================================== */
-function aktiviere(i) {
+function uebernimmEntwurf() {
+  const inp = aktivesInput();
+  if (!inp) return;
+  const i = +inp.dataset.col;
+  const c = COLS[i];
+  const roh = inp.value.trim();
+  if (roh === wert(zeile, c.key)) return;      // unverändert (auch: auto bleibt auto)
+  if (roh === "") { zeile[c.key] = null; if (!c.frei) recompute(zeile); return; }
+  setzeHand(i, roh);
+}
+
+/* Reine Navigation: schreibt NICHTS fest (die Aufrufer haben das erledigt). */
+function zeigeZelle(i) {
   aktiv = i;
   listeOffen = false;
   vorschlaege = [];
   markiert = 0;
-  render();
+  zeichneErfassung(true);   // Inhalt markieren: Tippen ersetzt, hängt nicht an
 }
 
-/* Klick auf eine Zelle der Erfassungszeile */
+/* Zellwechsel per Maus/Shift+Tab: erst festschreiben, dann wechseln. */
+function wechsleZu(i) {
+  uebernimmEntwurf();
+  zeigeZelle(i);
+}
+
+function setzeHand(i, w) {
+  const c = COLS[i];
+  zeile[c.key] = { w, q: "hand", n: ++handZaehler };
+  if (c.frei) return;
+  loeseKonflikt(c.key, w);
+  recompute(zeile);
+}
+
+function leereZelle(i) {
+  const c = COLS[i];
+  zeile[c.key] = null;
+  if (!c.frei) recompute(zeile);
+  listeOffen = false; vorschlaege = [];
+  zeichneErfassung(false);
+}
+
+function naechsteLeere(ab) {
+  for (let i = ab + 1; i < COLS.length; i++) if (!wert(zeile, COLS[i].key)) return i;
+  return -1;
+}
+
+function erfasseZeile() {
+  if (COLS.some(c => wert(zeile, c.key))) {
+    erfasst.push(zeile);
+    haengeAn(zeile);          // nur EIN <tr> dazu, kein Neuaufbau
+    zeile = neueZeile();
+  }
+  zeigeZelle(0);
+}
+
+/* Klick in eine Zelle der Erfassungszeile */
 $("tbody").addEventListener("mousedown", e => {
   const td = e.target.closest(".erfassung td");
   if (!td) return;
   const i = +td.dataset.col;
-  if (i === aktiv) return;
-  aktiviere(i);
+  if (i === aktiv) return;    // Klick in die eigene Zelle: Entwurf nicht antasten
+  wechsleZu(i);
 });
 
-/* Tippen: aktualisiert nur Draft (im Input) + Liste — NICHT die Tabelle */
+/* Verlässt der Fokus die Tabelle ganz (Knopf, Klick daneben), wird der
+   Entwurf trotzdem festgeschrieben. */
+$("tbody").addEventListener("focusout", e => {
+  const nach = e.relatedTarget;
+  if (nach && nach.closest && nach.closest("#tbody")) return;   // Wechsel innerhalb
+  if ($("vorschlagliste") || pickState) return;                 // Liste/Picker übernehmen selbst
+  uebernimmEntwurf();
+});
+
+/* Tippen: nur Entwurf (im Input) + Liste — die Tabelle bleibt unberührt */
 $("tbody").addEventListener("input", e => {
   const inp = e.target.closest("input.zelle");
   if (!inp) return;
-  const i = +inp.dataset.col;
-  const c = COLS[i];
+  const c = COLS[+inp.dataset.col];
   if (c.frei) { listeOffen = false; vorschlaege = []; zeichneListe(); return; }
   vorschlaege = baueVorschlaege(zeile, c.key, inp.value);
   listeOffen = inp.value.trim() !== "" && vorschlaege.length > 0;
@@ -422,81 +537,62 @@ $("tbody").addEventListener("keydown", e => {
   const inp = e.target.closest("input.zelle");
   if (!inp) return;
   const i = +inp.dataset.col;
-  const c = COLS[i];
   const k = e.key;
 
-  if (k === "ArrowDown" && listeOffen) { e.preventDefault(); markiert = (markiert + 1) % vorschlaege.length; zeichneListe(); return; }
-  if (k === "ArrowUp"   && listeOffen) { e.preventDefault(); markiert = (markiert - 1 + vorschlaege.length) % vorschlaege.length; zeichneListe(); return; }
-
+  if (listeOffen && (k === "ArrowDown" || k === "ArrowUp")) {
+    e.preventDefault();
+    markiert = (markiert + (k === "ArrowDown" ? 1 : -1) + vorschlaege.length) % vorschlaege.length;
+    zeichneListe();
+    return;
+  }
   if (k === "Escape") {
     e.preventDefault();
     if (listeOffen) { listeOffen = false; vorschlaege = []; zeichneListe(); return; }
-    leereZelle(i); return;
+    leereZelle(i);
+    return;
   }
-
   if (k === "Enter" || k === "Tab") {
     e.preventDefault();
-    if (k === "Tab" && e.shiftKey) { springeZurueck(i); return; }
+    if (k === "Tab" && e.shiftKey) { if (i > 0) wechsleZu(i - 1); return; }
     uebernehmeUndWeiter(i, inp.value, k === "Enter");
-    return;
   }
 });
 
 function uebernehmeUndWeiter(i, roh, enter) {
   const c = COLS[i];
-  // 1) Übernehmen
   if (!c.frei && listeOffen && vorschlaege[markiert]) {
-    setzeHand(i, vorschlaege[markiert].wert);
+    setzeHand(i, vorschlaege[markiert].wert);          // markierter Vorschlag
   } else if (roh.trim() !== "") {
-    setzeHand(i, roh.trim());
+    if (roh.trim() !== wert(zeile, c.key)) setzeHand(i, roh.trim());   // getippt
   } else if (!c.frei && moeglicheWerte(zeile, c.key).length > 1) {
-    // leere gebundene Zelle -> Picker (das "große Fenster")
-    oeffnePicker(i); return;
+    oeffnePicker(i);                                   // leer + mehrdeutig
+    return;
   }
-  // sonst: leer lassen (freie Zelle, oder keine möglichen Werte)
   listeOffen = false; vorschlaege = [];
-  // 2) Weiterspringen zur nächsten leeren Zelle
   const ziel = naechsteLeere(i);
-  if (ziel !== -1) { aktiviere(ziel); }
-  else if (enter) { erfasseZeile(); }
-  else { render(); } // Tab am Ende: stehen bleiben
+  if (ziel !== -1) zeigeZelle(ziel);
+  else if (enter) erfasseZeile();
+  else zeichneErfassung(false);                        // Tab am Ende: stehen bleiben
 }
 
-function setzeHand(i, w) {
-  const c = COLS[i];
-  zeile[c.key] = { w, q: "hand" };
-  if (!c.frei) recompute(zeile);
-}
-function leereZelle(i) {
-  const c = COLS[i];
-  zeile[c.key] = null;
-  if (!c.frei) recompute(zeile);
+/* Maus-Klick auf einen Vorschlag: übernehmen und weiterspringen — die Maus
+   schließt die Zeile nie ungewollt ab. */
+function waehleVorschlag(listenIndex) {
+  const i = aktiv;
+  if (i < 0 || !vorschlaege[listenIndex]) return;
+  setzeHand(i, vorschlaege[listenIndex].wert);
   listeOffen = false; vorschlaege = [];
-  render();
-}
-function naechsteLeere(ab) {
-  for (let i = ab + 1; i < COLS.length; i++) if (!wert(zeile, COLS[i].key)) return i;
-  return -1;
-}
-function springeZurueck(ab) {
-  for (let i = ab - 1; i >= 0; i--) { aktiviere(i); return; }
+  const ziel = naechsteLeere(i);
+  if (ziel !== -1) zeigeZelle(ziel); else zeichneErfassung(false);
 }
 
-function erfasseZeile() {
-  // mindestens ein Wert -> Zeile festmachen
-  if (COLS.some(c => wert(zeile, c.key))) {
-    erfasst.push(zeile);
-    zeile = neueZeile();
-  }
-  aktiviere(0);
-}
-
-/* Picker — das "große Fenster" für den mehrdeutigen Fall.
-   Der Picker hört auf SEIN EIGENES Element und bekommt den Fokus. So erreicht
-   ihn der Tastendruck, der ihn geöffnet hat, gar nicht erst (das Event blubbert
-   vom Zellen-Input hoch, NICHT durch den Picker) — erst die nächsten Tasten
-   landen hier. Ein globaler document-Listener würde denselben Enter doppelt
-   sehen: erst Zelle (öffnet), dann document (bestätigt sofort). */
+/* ===================================================================
+   6) PICKER — das "große Fenster" für den mehrdeutigen Fall.
+   Er hört auf SEIN EIGENES Element und bekommt den Fokus: so erreicht ihn
+   der Tastendruck, der ihn geöffnet hat, gar nicht erst. Ein globaler
+   document-Listener sähe denselben Enter zweimal — erst die Zelle (öffnet),
+   dann das Fenster (bestätigt sofort).
+=================================================================== */
 let pickState = null;
 function oeffnePicker(i) {
   const c = COLS[i];
@@ -517,39 +613,36 @@ function oeffnePicker(i) {
 
   const mal = () => schatten.querySelectorAll(".fenster-eintrag")
     .forEach((el, j) => el.classList.toggle("markiert", j === mark));
-  const schliesse = (fokusZurueck = true) => {
+  const schliesse = (fokusZurueck) => {
     schatten.remove();
     pickState = null;
-    if (fokusZurueck && aktiv >= 0) {
-      const inp = $("tbody").querySelector(".erfassung td.aktiv input");
-      if (inp) inp.focus();
-    }
+    if (fokusZurueck) { const inp = aktivesInput(); if (inp) inp.focus(); }
   };
   const waehle = (j) => {
     schliesse(false);
     setzeHand(i, werte[j]);
     const ziel = naechsteLeere(i);
-    if (ziel !== -1) aktiviere(ziel); else render();
+    if (ziel !== -1) zeigeZelle(ziel); else zeichneErfassung(false);
   };
 
   schatten.addEventListener("mousedown", ev => {
     const eintrag = ev.target.closest(".fenster-eintrag");
     if (eintrag) { ev.preventDefault(); waehle(+eintrag.dataset.j); return; }
-    if (ev.target.closest("[data-abbruch]") || ev.target === schatten) schliesse();
+    if (ev.target.closest("[data-abbruch]") || ev.target === schatten) schliesse(true);
   });
   schatten.addEventListener("keydown", ev => {
-    if (ev.key === "Escape")      { ev.preventDefault(); schliesse(); }
+    if (ev.key === "Escape")         { ev.preventDefault(); schliesse(true); }
     else if (ev.key === "ArrowDown") { ev.preventDefault(); mark = Math.min(mark + 1, werte.length - 1); mal(); }
     else if (ev.key === "ArrowUp")   { ev.preventDefault(); mark = Math.max(mark - 1, 0); mal(); }
-    else if (ev.key === "Enter")  { ev.preventDefault(); waehle(mark); }
+    else if (ev.key === "Enter")     { ev.preventDefault(); waehle(mark); }
   });
 
-  pickState = { el: schatten, schliesse };
+  pickState = { el: schatten };
   schatten.focus();
 }
 
 /* ===================================================================
-   6) SPALTENBREITE ZIEHEN  — schreibt in COLS[i].breite (eine Quelle)
+   7) SPALTENBREITE ZIEHEN — schreibt in COLS[i].breite (eine Quelle)
 =================================================================== */
 let zieh = null;
 function starteZiehen(e) {
@@ -562,37 +655,40 @@ function starteZiehen(e) {
 function zieheBreite(e) {
   if (!zieh) return;
   COLS[zieh.i].breite = Math.max(60, zieh.startB + (e.clientX - zieh.startX));
-  $("colgroup").innerHTML = COLS.map(c => `<col style="width:${c.breite}px">`).join(""); // nur Breiten
+  breitenAn();          // nur die <col>-Breiten, keine Zeile wird angefasst
+  positioniereListe();
 }
 function endeZiehen() { zieh = null; window.removeEventListener("pointermove", zieheBreite); }
 
 /* ===================================================================
-   7) WERKZEUG
+   8) WERKZEUG
 =================================================================== */
 $("btnSchreiben").addEventListener("click", () => {
-  // Demo: statt SoftEngine-PUT nur zeigen, was geschrieben würde
+  uebernimmEntwurf();
   if (erfasst.length === 0) { alert("Keine erfassten Zeilen."); return; }
   const zeilen = erfasst.map(z => COLS.map(c => wert(z, c.key)).join(" | "));
   alert("Würde " + erfasst.length + " Position(en) schreiben:\n\n" + zeilen.join("\n"));
 });
+
 $("btnFuellen").addEventListener("click", () => {
   for (let n = 0; n < 200; n++) {
     const k = KOMBI[n % KOMBI.length];
     const z = neueZeile();
-    z.artNr = { w: k.artNr, q: "hand" };
-    z.bez = { w: k.bez, q: "auto" };
-    z.tier = { w: k.tier, q: "auto" };
+    z.artNr = { w: k.artNr, q: "hand", n: 0 };
+    z.bez   = { w: k.bez,   q: "auto" };
+    z.tier  = { w: k.tier,  q: "auto" };
     z.verab = { w: k.verab, q: "auto" };
     z.warte = { w: k.warte, q: "auto" };
-    z.menge = { w: String((n % 9) + 1), q: "hand" };
+    z.menge = { w: String((n % 9) + 1), q: "hand", n: 0 };
     erfasst.push(z);
+    haengeAn(z);          // anhängen statt alles neu bauen
   }
-  render();
 });
 
 /* Start */
-render();
-aktiviere(0);
+zeichneKopf();
+zeichneErfasste();
+zeigeZelle(0);
 </script>
 </body>
 </html>
