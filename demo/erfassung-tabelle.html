@@ -124,12 +124,13 @@
   <h1>Belegpositionen erfassen — Demo</h1>
   <p class="hinweis">
     Tippen wie in Excel: <b>in die untere weiße Zeile</b> klicken, <b>„bay"</b> tippen, mit <b>↑/↓</b> wählen,
-    <b>Enter</b> übernehmen. Tierart/Verabreichung/Wartezeit füllen sich selbst, sobald der Artikel sie eindeutig
-    bestimmt — sonst kommt ein <b>Picker</b>. <b>Enter/Tab</b> springen zur nächsten leeren Zelle, Selbstgefülltes
+    <b>Enter</b> übernehmen. Tierart/Dosierung/Verabreichung füllen sich selbst, sobald der Artikel sie eindeutig
+    bestimmt — sonst kommt ein <b>Picker</b> (z.B. HUND hat mehrere Verabreichungen). <b>Enter/Tab</b> springen zur nächsten leeren Zelle, Selbstgefülltes
     wird übersprungen. <b>Enter</b> in der letzten Zelle (Menge) macht die Zeile fest und öffnet die nächste.
     <b>Esc</b> schließt die Liste, nochmal <b>Esc</b> leert die Zelle. Beim Betreten einer Zelle ist ihr Inhalt
     markiert — Tippen <b>ersetzt</b> ihn. Spaltenbreite: am rechten Rand der Kopfzelle ziehen.
   </p>
+  <p class="hinweis" style="margin-top:-8px"><b>Echte Quellen:</b> Artikelstamm (IDBID0003) + Verabreichung (IDBID0001), verknüpft über die Tierart — Feldcodes und die ersten Zeilen echt aus dem Repo, der Rest realistisch aufgefüllt.</p>
 
   <div class="tafel">
     <div class="rollbereich" id="rollbereich">
@@ -153,35 +154,70 @@
 "use strict";
 
 /* ===================================================================
-   1) DUMMY-DATEN — die "Tabelle gültiger Kombinationen"
-   Jede Spalte (artNr, bez, tier, verab, warte) ist ein Feld über KOMBI.
-   Im echten Editor kämen diese aus getrennten Quellen, per Schlüssel
-   verbunden — die Filter-Logik ist identisch. Menge steht NICHT in KOMBI
-   (frei tippbar).
+   1) ECHTE QUELLEN — aus dem Repo (erfassungsLauf.test.ts + behandlung-Maske)
+   Zwei getrennte SoftEngine-Quellen, verbunden ueber die Tierart:
+     - Artikelstamm  (IDBID0003): Feld 3_18=Artikelnr, 30_40=Bezeichnung,
+                                   40_4=Tierart, 901_30=Dosierung
+     - Verabreichung (IDBID0001, "ID0001"): 5_4=Code, 9_20=Klartext, 2_4=Tierart
+   Die ersten Zeilen jeder Quelle sind ECHT aus dem Repo; der Rest sind
+   realistische Beispielzeilen in derselben Form, damit Suche/Scrollen/Picker
+   etwas zu tun haben (fuer echten Massenbestand: Abzug aus SoftEngine
+   einspielen, Struktur bleibt). Im Editor sind das zwei Quellen; hier ueber
+   die Tierart zu EINER Kombi-Tabelle verbunden — die Filter-Logik ist gleich.
 =================================================================== */
-const KOMBI = [
-  { artNr:"ART001", bez:"Baytril 25mg Tabl.", tier:"Hund",  verab:"oral",      warte:"7 Tage"  },
-  { artNr:"ART001", bez:"Baytril 25mg Tabl.", tier:"Katze", verab:"oral",      warte:"5 Tage"  },
-  { artNr:"ART002", bez:"Baytril 50mg Inj.",  tier:"Rind",  verab:"Injektion", warte:"28 Tage" },
-  { artNr:"ART003", bez:"Metacam 5mg/ml",     tier:"Hund",  verab:"oral",      warte:"3 Tage"  },
-  { artNr:"ART003", bez:"Metacam 5mg/ml",     tier:"Katze", verab:"oral",      warte:"3 Tage"  },
-  { artNr:"ART003", bez:"Metacam 5mg/ml",     tier:"Pferd", verab:"oral",      warte:"6 Tage"  },
-  { artNr:"ART004", bez:"Metacam 20mg/ml",    tier:"Rind",  verab:"Injektion", warte:"15 Tage" },
-  { artNr:"ART005", bez:"Amoxicillin 150",    tier:"Hund",  verab:"oral",      warte:"1 Tag"   },
-  { artNr:"ART006", bez:"Novaminsulfon",      tier:"Pferd", verab:"Injektion", warte:"0 Tage"  },
-  { artNr:"ART006", bez:"Novaminsulfon",      tier:"Hund",  verab:"oral",      warte:"2 Tage"  },
-  { artNr:"ART007", bez:"Bayvantic Spot-on",  tier:"Hund",  verab:"topisch",   warte:"0 Tage"  },
-  { artNr:"ART008", bez:"Drontal Plus",       tier:"Hund",  verab:"oral",      warte:"0 Tage"  },
+const ARTIKELSTAMM = [
+  // nr(3_18)   bezeichnung(30_40)     tierart(40_4)  dosierung(901_30)
+  { nr:"ART03045", bez:"Baytril 25mg",     tier:"HUND",  dosis:"1 Tabl./10 kg" }, // echt (Repo)
+  { nr:"ART00112", bez:"Verband klein",    tier:"KATZ",  dosis:"\u2013" },          // echt (Repo)
+  { nr:"ART00999", bez:"Spritze 5ml",      tier:"VOGEL", dosis:"\u2013" },          // echt (Repo)
+  { nr:"ART03046", bez:"Baytril 50mg",     tier:"HUND",  dosis:"1 Tabl./20 kg" },
+  { nr:"ART03050", bez:"Metacam 5mg/ml",   tier:"HUND",  dosis:"0,2 ml/kg" },
+  { nr:"ART03051", bez:"Metacam 20mg/ml",  tier:"RIND",  dosis:"0,5 ml/kg" },
+  { nr:"ART03060", bez:"Amoxicillin 150",  tier:"HUND",  dosis:"1 ml/10 kg" },
+  { nr:"ART03061", bez:"Amoxicillin 150",  tier:"KATZ",  dosis:"0,5 ml/5 kg" },
+  { nr:"ART03070", bez:"Novaminsulfon",    tier:"PFERD", dosis:"10 ml" },
+  { nr:"ART03071", bez:"Novaminsulfon",    tier:"HUND",  dosis:"0,1 ml/kg" },
+  { nr:"ART03080", bez:"Bayvantic Spot-on",tier:"HUND",  dosis:"1 Pipette" },
+  { nr:"ART03090", bez:"Drontal Plus",     tier:"HUND",  dosis:"1 Tabl./10 kg" },
+  { nr:"ART00113", bez:"Verband gross",    tier:"KATZ",  dosis:"\u2013" },
+  { nr:"ART00997", bez:"Infusion NaCl",    tier:"PFERD", dosis:"500 ml" },
+  { nr:"ART00998", bez:"Kanuele 18G",      tier:"RIND",  dosis:"\u2013" },
+];
+const VERABREICHUNG = [
+  // code(5_4) klartext(9_20)  tierart(2_4)
+  { code:"ORAL", text:"oral",      tier:"HUND"  }, // echt (Repo)
+  { code:"INJ",  text:"Injektion", tier:"HUND"  }, // echt (Repo)
+  { code:"SALB", text:"Salbe",     tier:"KATZ"  }, // echt (Repo)
+  { code:"SPOT", text:"Spot-on",   tier:"HUND"  },
+  { code:"ORAL", text:"oral",      tier:"KATZ"  },
+  { code:"INJ",  text:"Injektion", tier:"RIND"  },
+  { code:"INJ",  text:"Injektion", tier:"PFERD" },
+  { code:"INF",  text:"Infusion",  tier:"PFERD" },
+  // VOGEL bewusst OHNE Eintrag: zeigt den Fall "kein Partner -> Zelle bleibt leer"
 ];
 
-/* Spalten — die EINE Quelle der Wahrheit für Breite und Bindung. */
+/* Left-Join ueber die Tierart -> die Kombi-Tabelle, auf der gefiltert wird.
+   Artikel ohne passende Verabreichung bleibt drin (verab leer). */
+function baueKombi() {
+  const out = [];
+  for (const a of ARTIKELSTAMM) {
+    const gaben = VERABREICHUNG.filter(g => g.tier === a.tier);
+    if (gaben.length === 0) out.push({ artNr:a.nr, bez:a.bez, tier:a.tier, dosis:a.dosis, verab:"" });
+    else for (const g of gaben) out.push({ artNr:a.nr, bez:a.bez, tier:a.tier, dosis:a.dosis, verab:g.text });
+  }
+  return out;
+}
+const KOMBI = baueKombi();
+
+/* Spalten — die EINE Quelle der Wahrheit fuer Breite und Bindung.
+   Klarnamen sichtbar, echte Feldcodes im Kommentar. */
 const COLS = [
-  { key:"artNr", titel:"Artikelnr",     breite:110, suchbar:true,  frei:false },
-  { key:"bez",   titel:"Bezeichnung",   breite:220, suchbar:true,  frei:false },
-  { key:"tier",  titel:"Tierart",       breite:120, suchbar:true,  frei:false },
-  { key:"verab", titel:"Verabreichung", breite:130, suchbar:false, frei:false },
-  { key:"warte", titel:"Wartezeit",     breite:110, suchbar:false, frei:false },
-  { key:"menge", titel:"Menge",         breite:90,  suchbar:false, frei:true  },
+  { key:"artNr", titel:"Artikelnr",     breite:110, suchbar:true,  frei:false }, // 3_18  (Artikelstamm)
+  { key:"bez",   titel:"Bezeichnung",   breite:190, suchbar:true,  frei:false }, // 30_40 (Artikelstamm)
+  { key:"tier",  titel:"Tierart",       breite:90,  suchbar:true,  frei:false }, // 40_4  (Artikelstamm)
+  { key:"dosis", titel:"Dosierung",     breite:120, suchbar:false, frei:false }, // 901_30(Artikelstamm)
+  { key:"verab", titel:"Verabreichung", breite:130, suchbar:true,  frei:false }, // 9_20  (Verabreichung)
+  { key:"menge", titel:"Menge",         breite:80,  suchbar:false, frei:true  }, // frei (Belegposition)
 ];
 /* Spalten, die von KOMBI gedeckt werden (an der Filterung beteiligt). */
 const FILTER_COLS = COLS.filter(c => !c.frei).map(c => c.key);
@@ -206,6 +242,8 @@ let vorschlaege = [];
 let markiert = 0;
 let listeOffen = false;
 let handZaehler = 0;
+let neuZeichnen = false;  // true, WÄHREND wir die Zeile neu zeichnen — dann darf
+                          // focusout nicht als "Nutzer hat die Zelle verlassen" gelten
 
 let aufbauten = 0;      // volle Tabellen-Aufbauten
 let zeichnungen = 0;    // Zeichnungen NUR der Erfassungszeile
@@ -341,8 +379,10 @@ function zeileHtml(z) {
 function zeichneErfasste() {
   aufbauten++;
   const tb = $("tbody");
+  neuZeichnen = true;
   tb.innerHTML = erfasst.map(z => `<tr>${zeileHtml(z)}</tr>`).join("")
     + '<tr class="erfassung" id="erfassungZeile"></tr>';
+  neuZeichnen = false;
   zeichneErfassung(false);
 }
 
@@ -361,14 +401,20 @@ function zeichneErfassung(markieren) {
   zeichnungen++;
   const tr = $("erfassungZeile");
   if (!tr) return;
+  // Das Ersetzen des Inhalts entfernt das alte, fokussierte Input -> das feuert
+  // focusout. Der Riegel sorgt dafuer, dass dieser SELBST ausgeloeste focusout
+  // nicht als "Zelle verlassen" gilt und einen alten Entwurf ins neue Modell
+  // schreibt (sonst wandert z.B. die Menge in die naechste Zeile).
+  neuZeichnen = true;
   tr.innerHTML = COLS.map((c, i) => zelleErfassung(c, i)).join("");
-  zaehlerAn();
   const inp = aktivesInput();
   if (inp) {
     inp.focus();
     if (markieren) inp.select();
     else inp.setSelectionRange(inp.value.length, inp.value.length);
   }
+  neuZeichnen = false;
+  zaehlerAn();
   zeichneListe();
 }
 
@@ -516,6 +562,7 @@ $("tbody").addEventListener("mousedown", e => {
 /* Verlässt der Fokus die Tabelle ganz (Knopf, Klick daneben), wird der
    Entwurf trotzdem festgeschrieben. */
 $("tbody").addEventListener("focusout", e => {
+  if (neuZeichnen) return;   // unser eigenes Neuzeichnen, kein echtes Verlassen
   const nach = e.relatedTarget;
   if (nach && nach.closest && nach.closest("#tbody")) return;   // Wechsel innerhalb
   if ($("vorschlagliste") || pickState) return;                 // Liste/Picker übernehmen selbst
@@ -570,6 +617,10 @@ function uebernehmeUndWeiter(i, roh, enter) {
     uebernimmEntwurf();
     // Leere, mehrdeutige Zelle (Modell jetzt sauber) -> grosses Fenster.
     if (roh.trim() === "" && !c.frei && moeglicheWerte(zeile, c.key).length > 1) {
+      // uebernimmEntwurf hat evtl. gerade einen Wert geleert (samt Autos) —
+      // die Zeile neu zeichnen, damit hinter dem Picker kein alter Wert
+      // stehen bleibt (auch nach Abbruch).
+      zeichneErfassung(false);
       oeffnePicker(i);
       return;
     }
@@ -683,8 +734,8 @@ $("btnFuellen").addEventListener("click", () => {
     z.artNr = { w: k.artNr, q: "hand", n: 0 };
     z.bez   = { w: k.bez,   q: "auto" };
     z.tier  = { w: k.tier,  q: "auto" };
+    z.dosis = { w: k.dosis, q: "auto" };
     z.verab = { w: k.verab, q: "auto" };
-    z.warte = { w: k.warte, q: "auto" };
     z.menge = { w: String((n % 9) + 1), q: "hand", n: 0 };
     erfasst.push(z);
     haengeAn(z);          // anhängen statt alles neu bauen
